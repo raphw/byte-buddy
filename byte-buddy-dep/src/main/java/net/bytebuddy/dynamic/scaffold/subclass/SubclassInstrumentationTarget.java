@@ -93,7 +93,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
      * Responsible for identifying the origin type that an instrumentation target represents when
      * {@link net.bytebuddy.instrumentation.Instrumentation.Target#getOriginType()} is invoked.
      */
-    public static enum OriginTypeIdentifier {
+    public enum OriginTypeIdentifier {
 
         /**
          * Identifies the super type of an instrumented type as the origin type.
@@ -122,6 +122,11 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
          * @return The origin type to the given type description.
          */
         protected abstract TypeDescription identify(TypeDescription typeDescription);
+
+        @Override
+        public String toString() {
+            return "SubclassInstrumentationTarget.OriginTypeIdentifier." + name();
+        }
     }
 
     /**

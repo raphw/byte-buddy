@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -53,5 +54,11 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
                 .bind(annotationDescription, source, target, instrumentationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Super.Binder.class).apply();
+        ObjectPropertyAssertion.of(Super.Instantiation.class).apply();
     }
 }

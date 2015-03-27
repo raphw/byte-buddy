@@ -28,7 +28,7 @@ public interface FieldAttributeAppender {
     /**
      * A field attribute appender that does not append any attributes.
      */
-    static enum NoOp implements FieldAttributeAppender, Factory {
+    enum NoOp implements FieldAttributeAppender, Factory {
 
         /**
          * The singleton instance.
@@ -44,12 +44,17 @@ public interface FieldAttributeAppender {
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
             /* do nothing */
         }
+
+        @Override
+        public String toString() {
+            return "FieldAttributeAppender.NoOp." + name();
+        }
     }
 
     /**
      * A factory that creates field attribute appenders for a given type.
      */
-    static interface Factory {
+    interface Factory {
 
         /**
          * Returns a field attribute appender that is applicable for a given type description.
@@ -63,7 +68,7 @@ public interface FieldAttributeAppender {
          * A field attribute appender factory that combines several field attribute appender factories to be
          * represented as a single factory.
          */
-        static class Compound implements Factory {
+        class Compound implements Factory {
 
             /**
              * The factories that this compound factory represents in their application order.
@@ -112,7 +117,7 @@ public interface FieldAttributeAppender {
      * Appends an annotation to a field. The visibility of the annotation is determined by the annotation type's
      * {@link java.lang.annotation.RetentionPolicy} annotation.
      */
-    static class ForAnnotation implements FieldAttributeAppender, Factory {
+    class ForAnnotation implements FieldAttributeAppender, Factory {
 
         /**
          * The annotations that this appender appends.
@@ -163,7 +168,7 @@ public interface FieldAttributeAppender {
      * Writes all annotations that are found on a field that belongs to a loaded type of the JVM as visible
      * annotations.
      */
-    static class ForLoadedField implements FieldAttributeAppender, Factory {
+    class ForLoadedField implements FieldAttributeAppender, Factory {
 
         /**
          * The field from which the annotations should be copied.
@@ -214,7 +219,7 @@ public interface FieldAttributeAppender {
      * A field attribute appender that combines several method attribute appenders to be represented as a single
      * field attribute appender.
      */
-    static class Compound implements FieldAttributeAppender {
+    class Compound implements FieldAttributeAppender {
 
         /**
          * The field attribute appenders this appender represents in their application order.

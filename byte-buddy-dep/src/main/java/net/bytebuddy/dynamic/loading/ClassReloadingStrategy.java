@@ -229,7 +229,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     /**
      * An engine which performs the actual redefinition of a {@link java.lang.Class}.
      */
-    public static enum Engine {
+    public enum Engine {
 
         /**
          * Redefines a class using
@@ -282,7 +282,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
          * @param redefinition {@code true} if the {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION} engine
          *                     is used.
          */
-        private Engine(boolean redefinition) {
+        Engine(boolean redefinition) {
             this.redefinition = redefinition;
         }
 
@@ -306,10 +306,15 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             return redefinition;
         }
 
+        @Override
+        public String toString() {
+            return "ClassReloadingStrategy.Engine." + name();
+        }
+
         /**
          * A class file transformer that applies a given {@link java.lang.instrument.ClassDefinition}.
          */
-        private static class ClassRedefinitionTransformer implements ClassFileTransformer {
+        protected static class ClassRedefinitionTransformer implements ClassFileTransformer {
 
             /**
              * A mapping of classes to be redefined to their redefined class definitions.
@@ -321,7 +326,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
              *
              * @param redefinedClasses A mapping of classes to be redefined to their redefined class definitions.
              */
-            private ClassRedefinitionTransformer(Map<Class<?>, ClassDefinition> redefinedClasses) {
+            protected ClassRedefinitionTransformer(Map<Class<?>, ClassDefinition> redefinedClasses) {
                 this.redefinedClasses = redefinedClasses;
             }
 
@@ -357,7 +362,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     /**
      * A strategy to apply for injecting classes into the bootstrap class loader.
      */
-    protected static interface BootstrapInjection {
+    protected interface BootstrapInjection {
 
         /**
          * Creates a class injector to use.
@@ -370,7 +375,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         /**
          * A disabled bootstrap injection strategy.
          */
-        static enum Disabled implements BootstrapInjection {
+        enum Disabled implements BootstrapInjection {
 
             /**
              * The singleton instance.
@@ -381,12 +386,17 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             public ClassInjector make(Instrumentation instrumentation) {
                 throw new IllegalStateException("Bootstrap injection is not enabled");
             }
+
+            @Override
+            public String toString() {
+                return "ClassReloadingStrategy.BootstrapInjection.Disabled." + name();
+            }
         }
 
         /**
          * An enabled bootstrap class loader injection strategy.
          */
-        static class Enabled implements BootstrapInjection {
+        class Enabled implements BootstrapInjection {
 
             /**
              * The folder to save jar files in.

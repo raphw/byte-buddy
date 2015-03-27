@@ -42,7 +42,7 @@ public class BridgeMethodResolverSimpleTest {
                 .process(target).getInvokableMethods();
         MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(2));
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(invokableMethods, conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = BridgeMethodResolver.Simple.of(invokableMethods, conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()),
                 is(relevantMethods.filter(not(isBridge())).getOnly()));
         verifyZeroInteractions(conflictHandler);
@@ -55,7 +55,7 @@ public class BridgeMethodResolverSimpleTest {
                 .process(target).getInvokableMethods();
         MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(3));
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(invokableMethods, conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = BridgeMethodResolver.Simple.of(invokableMethods, conflictHandler);
         for (MethodDescription methodDescription : relevantMethods.filter(isBridge())) {
             assertThat(bridgeMethodResolver.resolve(methodDescription), is(relevantMethods.filter(not(isBridge())).getOnly()));
         }
@@ -72,7 +72,7 @@ public class BridgeMethodResolverSimpleTest {
         when(conflictHandler.choose(any(MethodDescription.class), any(MethodList.class))).thenReturn(bridgeTarget);
         when(bridgeTarget.isResolved()).thenReturn(true);
         when(bridgeTarget.extract()).thenReturn(methodDescription);
-        BridgeMethodResolver bridgeMethodResolver = new BridgeMethodResolver.Simple(invokableMethods, conflictHandler);
+        BridgeMethodResolver bridgeMethodResolver = BridgeMethodResolver.Simple.of(invokableMethods, conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()), is(methodDescription));
         ArgumentCaptor<MethodList> capturedConflictHandlerCandidates = ArgumentCaptor.forClass(MethodList.class);
         verify(conflictHandler).choose(eq(relevantMethods.filter(isBridge()).getOnly()), capturedConflictHandlerCandidates.capture());
@@ -103,13 +103,19 @@ public class BridgeMethodResolverSimpleTest {
     }
 
     @Test
-    public void testBridgeTargetCandidateHashCodeEquals() throws Exception {
-        ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.BridgeTarget.Candidate.class).apply();
-    }
-
-    @Test
-    public void testBridgeTargetResolvedHashCodeEquals() throws Exception {
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.class).create(new ObjectPropertyAssertion.Creator<MethodList>() {
+            @Override
+            public MethodList create() {
+                return null;
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.Factory.class).apply();
         ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.BridgeTarget.Resolved.class).apply();
+        ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.ConflictHandler.Default.class).apply();
+        ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.BridgeTarget.Candidate.class).apply();
+        ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.BridgeTarget.Resolved.class).apply();
+        ObjectPropertyAssertion.of(BridgeMethodResolver.Simple.BridgeTarget.Unknown.class).apply();
     }
 
     private static class Foo<T> {

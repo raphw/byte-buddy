@@ -51,7 +51,7 @@ public @interface SuperCall {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCall> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCall> {
 
         /**
          * The singleton instance.
@@ -84,6 +84,11 @@ public @interface SuperCall {
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy()))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+        }
+
+        @Override
+        public String toString() {
+            return "SuperCall.Binder." + name();
         }
     }
 }

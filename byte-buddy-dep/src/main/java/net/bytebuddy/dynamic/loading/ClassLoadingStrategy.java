@@ -27,7 +27,7 @@ public interface ClassLoadingStrategy {
     /**
      * This class contains implementations of default class loading strategies.
      */
-    static enum Default implements WithDefaultProtectionDomain {
+    enum Default implements WithDefaultProtectionDomain {
 
         /**
          * This strategy creates a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} with the given
@@ -160,6 +160,11 @@ public interface ClassLoadingStrategy {
          */
         private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
+        @Override
+        public String toString() {
+            return "ClassLoadingStrategy.Default." + name();
+        }
+
         /**
          * A class loading strategy which applies a class loader injection while applying a given
          * {@link java.security.ProtectionDomain} on class injection.
@@ -275,7 +280,7 @@ public interface ClassLoadingStrategy {
     /**
      * A {@link ClassLoadingStrategy} that applies a default {@link java.security.ProtectionDomain}.
      */
-    static interface WithDefaultProtectionDomain extends ClassLoadingStrategy {
+    interface WithDefaultProtectionDomain extends ClassLoadingStrategy {
 
         /**
          * Overrides the implicitly set default {@link java.security.ProtectionDomain} with an explicit one.
@@ -290,7 +295,7 @@ public interface ClassLoadingStrategy {
      * A class loading strategy which allows class injection into the bootstrap class loader if
      * appropriate.
      */
-    public class ForBootstrapInjection implements ClassLoadingStrategy {
+    class ForBootstrapInjection implements ClassLoadingStrategy {
 
         /**
          * The instrumentation to use.

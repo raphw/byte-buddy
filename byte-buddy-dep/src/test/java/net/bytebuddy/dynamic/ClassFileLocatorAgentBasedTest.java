@@ -107,8 +107,7 @@ public class ClassFileLocatorAgentBasedTest {
                 return Arrays.<Class<?>>asList(otherIterator.next());
             }
         }).apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ExtractionClassFileTransformer.class)
-                .apply(new ClassFileLocator.AgentBased.ExtractionClassFileTransformer(mock(ClassLoader.class), "foo"));
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ExtractionClassFileTransformer.class).applyMutable();
     }
 
 

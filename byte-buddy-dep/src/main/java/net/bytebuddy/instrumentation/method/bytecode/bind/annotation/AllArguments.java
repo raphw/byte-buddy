@@ -51,7 +51,7 @@ public @interface AllArguments {
      * A directive for how an {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.AllArguments}
      * annotation on an array is to be interpreted.
      */
-    public static enum Assignment {
+    enum Assignment {
 
         /**
          * A strict assignment attempts to include <b>all</b> parameter values of the source method. If only one of these
@@ -78,7 +78,7 @@ public @interface AllArguments {
          *
          * @param strict {@code true} if this assignment is strict.
          */
-        private Assignment(boolean strict) {
+        Assignment(boolean strict) {
             this.strict = strict;
         }
 
@@ -90,6 +90,11 @@ public @interface AllArguments {
         protected boolean isStrict() {
             return strict;
         }
+
+        @Override
+        public String toString() {
+            return "AllArguments.Assignment." + name();
+        }
     }
 
     /**
@@ -99,7 +104,7 @@ public @interface AllArguments {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<AllArguments> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<AllArguments> {
 
         /**
          * The singleton instance.
@@ -136,6 +141,11 @@ public @interface AllArguments {
                 offset += sourceParameter.getStackSize().getSize();
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(arrayFactory.withValues(stackManipulations));
+        }
+
+        @Override
+        public String toString() {
+            return "AllArguments.Binder." + name();
         }
     }
 }

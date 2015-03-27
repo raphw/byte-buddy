@@ -58,7 +58,7 @@ public @interface DefaultCall {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCall> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCall> {
 
         /**
          * The singleton instance.
@@ -109,10 +109,15 @@ public @interface DefaultCall {
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
+        @Override
+        public String toString() {
+            return "DefaultCall.Binder." + name();
+        }
+
         /**
          * A default method locator is responsible for looking up a default method to a given source method.
          */
-        protected static interface DefaultMethodLocator {
+        protected interface DefaultMethodLocator {
 
             /**
              * Locates the correct default method to a given source method.
@@ -129,7 +134,7 @@ public @interface DefaultCall {
              * An implicit default method locator that only permits the invocation of a default method if the source
              * method itself represents a method that was defined on a default method interface.
              */
-            static enum Implicit implements DefaultMethodLocator {
+            enum Implicit implements DefaultMethodLocator {
 
                 /**
                  * The singleton instance.
@@ -153,12 +158,17 @@ public @interface DefaultCall {
                             ? specialMethodInvocation
                             : Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
                 }
+
+                @Override
+                public String toString() {
+                    return "DefaultCall.Binder.DefaultMethodLocator.Implicit." + name();
+                }
             }
 
             /**
              * An explicit default method locator attempts to look up a default method in the specified interface type.
              */
-            static class Explicit implements DefaultMethodLocator {
+            class Explicit implements DefaultMethodLocator {
 
                 /**
                  * A description of the type on which the default method should be invoked.

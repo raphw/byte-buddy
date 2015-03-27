@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -28,5 +29,10 @@ public class MethodRebaseResolverNoOpTest {
     @Test(expected = IllegalStateException.class)
     public void testAdditionalArgumentsAreIllegal() throws Exception {
         MethodRebaseResolver.NoOp.INSTANCE.resolve(methodDescription).getAdditionalArguments();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodRebaseResolver.NoOp.class).apply();
     }
 }

@@ -39,24 +39,24 @@ public class AndroidClassLoadingStrategyTest {
     @Rule
     public TestRule dexCompilerRule = new MockitoRule(this);
 
-    private File directory;
+    private File folder;
 
     @Mock
     private TypeDescription first, second;
 
     @Before
     public void setUp() throws Exception {
-        directory = File.createTempFile(FOO, TEMP);
-        assertThat(directory.delete(), is(true));
-        directory = new File(directory.getParentFile(), UUID.randomUUID().toString());
-        assertThat(directory.mkdir(), is(true));
+        folder = File.createTempFile(FOO, TEMP);
+        assertThat(folder.delete(), is(true));
+        folder = new File(folder.getParentFile(), UUID.randomUUID().toString());
+        assertThat(folder.mkdir(), is(true));
         when(first.getName()).thenReturn(FOO);
         when(second.getName()).thenReturn(BAR);
     }
 
     @After
     public void tearDown() throws Exception {
-        assertThat(directory.delete(), is(true));
+        assertThat(folder.delete(), is(true));
     }
 
     @Test
@@ -65,10 +65,10 @@ public class AndroidClassLoadingStrategyTest {
         ClassLoader classLoader = mock(ClassLoader.class);
         doReturn(Object.class).when(classLoader).loadClass(FOO);
         doReturn(Void.class).when(classLoader).loadClass(BAR);
-        when(dexProcessor.makeClassLoader(any(File.class), eq(directory), any(ClassLoader.class))).thenReturn(classLoader);
+        when(dexProcessor.makeClassLoader(any(File.class), eq(folder), any(ClassLoader.class))).thenReturn(classLoader);
         AndroidClassLoadingStrategy.DexProcessor.Conversion conversion = mock(AndroidClassLoadingStrategy.DexProcessor.Conversion.class);
         when(dexProcessor.create()).thenReturn(conversion);
-        ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(directory, dexProcessor);
+        ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(folder, dexProcessor);
         Map<TypeDescription, byte[]> unloaded = new HashMap<TypeDescription, byte[]>();
         unloaded.put(first, QUX);
         unloaded.put(second, BAZ);
@@ -78,7 +78,7 @@ public class AndroidClassLoadingStrategyTest {
         assertEquals(Object.class, loaded.get(first));
         assertEquals(Void.class, loaded.get(second));
         verify(dexProcessor).create();
-        verify(dexProcessor).makeClassLoader(any(File.class), eq(directory), eq(parentClassLoader));
+        verify(dexProcessor).makeClassLoader(any(File.class), eq(folder), eq(parentClassLoader));
         verifyNoMoreInteractions(dexProcessor);
         verify(conversion).register(FOO, QUX);
         verify(conversion).register(BAR, BAZ);
@@ -98,7 +98,7 @@ public class AndroidClassLoadingStrategyTest {
                 .make();
         ClassLoader classLoader = mock(ClassLoader.class);
         doReturn(Void.class).when(classLoader).loadClass(any(String.class));
-        ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(directory, new StubbedClassLoaderDexCompilation(classLoader));
+        ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(folder, new StubbedClassLoaderDexCompilation(classLoader));
         Map<TypeDescription, Class<?>> map = classLoadingStrategy.load(getClass().getClassLoader(), dynamicType.getAllTypes());
         assertThat(map.size(), is(1));
         assertEquals(Void.class, map.get(dynamicType.getTypeDescription()));
@@ -106,8 +106,12 @@ public class AndroidClassLoadingStrategyTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.class)
-                .apply(new AndroidClassLoadingStrategy(directory, mock(AndroidClassLoadingStrategy.DexProcessor.class)));
+        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.class).create(new ObjectPropertyAssertion.Creator<File>() {
+            @Override
+            public File create() {
+                return folder;
+            }
+        }).applyMutable();
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.class).apply();
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Conversion.class).create(new ObjectPropertyAssertion.Creator<DexFile>() {
             @Override

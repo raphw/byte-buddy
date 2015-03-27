@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -147,5 +148,11 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(targetType.isArray()).thenReturn(false);
         when(target.getTypeDescription()).thenReturn(targetType);
         AllArguments.Binder.INSTANCE.bind(annotationDescription, source, target, instrumentationTarget, assigner);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(AllArguments.Assignment.class).apply();
+        ObjectPropertyAssertion.of(AllArguments.Binder.class).apply();
     }
 }

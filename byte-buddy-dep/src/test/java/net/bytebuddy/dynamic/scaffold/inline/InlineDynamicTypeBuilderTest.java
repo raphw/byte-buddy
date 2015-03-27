@@ -534,11 +534,14 @@ public class InlineDynamicTypeBuilderTest {
                 when(mock.nextString()).thenReturn(FOO + System.identityHashCode(mock));
             }
         }).apply();
+        ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.class).apply();
+        ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation.class).apply();
         ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation.MethodRebaseDelegation.class).apply();
+        ObjectPropertyAssertion.of(InlineDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation.MethodRebaseDelegation.Factory.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Bar {
+    public @interface Bar {
         /* example annotation */
     }
 

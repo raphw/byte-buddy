@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind.annotation;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
 import org.junit.Rule;
@@ -96,5 +97,10 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testIllegalBinding() throws Exception {
         when(targetType.getName()).thenReturn(FOO);
         Origin.Binder.INSTANCE.bind(annotationDescription, source, target, instrumentationTarget, assigner);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Origin.Binder.class).apply();
     }
 }

@@ -97,7 +97,7 @@ public @interface Pipe {
      * A {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder}
      * for binding the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe} annotation.
      */
-    static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe>,
+    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe>,
             MethodLookupEngine.Factory,
             MethodLookupEngine {
 
@@ -385,7 +385,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Pipe.Binder.Redirection}'s
              * constructor.
              */
-            protected static enum ConstructorCall implements Instrumentation {
+            protected enum ConstructorCall implements Instrumentation {
 
                 /**
                  * The singleton instance.
@@ -400,7 +400,7 @@ public @interface Pipe {
                 /**
                  * Creates the constructor call singleton.
                  */
-                private ConstructorCall() {
+                ConstructorCall() {
                     this.objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
                             .getDeclaredMethods()
                             .filter(isConstructor())
@@ -415,6 +415,11 @@ public @interface Pipe {
                 @Override
                 public ByteCodeAppender appender(Target instrumentationTarget) {
                     return new Appender(instrumentationTarget.getTypeDescription());
+                }
+
+                @Override
+                public String toString() {
+                    return "Pipe.Binder.Redirection.ConstructorCall." + name();
                 }
 
                 /**

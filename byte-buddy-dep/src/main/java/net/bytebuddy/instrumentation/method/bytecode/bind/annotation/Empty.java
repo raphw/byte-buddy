@@ -22,7 +22,7 @@ public @interface Empty {
     /**
      * A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Empty} annotation.
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Empty> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Empty> {
 
         /**
          * The singleton instance.
@@ -41,6 +41,11 @@ public @interface Empty {
                                                                Instrumentation.Target instrumentationTarget,
                                                                Assigner assigner) {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(DefaultValue.of(target.getTypeDescription()));
+        }
+
+        @Override
+        public String toString() {
+            return "Empty.Binder." + name();
         }
     }
 }

@@ -21,7 +21,6 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MethodLookupEngineDefaultTest {
@@ -391,29 +390,35 @@ public class MethodLookupEngineDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.class).apply();
-        TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.class)
-                .apply(new MethodLookupEngine.Default.MethodBucket(typeDescription));
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+            }
+        }).applyMutable();
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.DefaultMethodLookup.class).apply();
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Enabled.class).applyMutable();
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Disabled.class).apply();
     }
 
-    private static interface SingleMethodInterface {
+    private interface SingleMethodInterface {
 
         void foo();
     }
 
-    private static interface SingleMethodOverridingInterface extends SingleMethodInterface {
+    private interface SingleMethodOverridingInterface extends SingleMethodInterface {
 
         @Override
         void foo();
     }
 
-    private static interface AdditionalMethodInterface extends SingleMethodOverridingInterface {
+    private interface AdditionalMethodInterface extends SingleMethodOverridingInterface {
 
         void bar();
     }
 
-    private static interface ConflictingSingleMethodInterface {
+    private interface ConflictingSingleMethodInterface {
 
         void foo();
     }

@@ -27,7 +27,7 @@ public interface AnnotationAppender {
      * Determines if an annotation should be written to a specified target and if the annotation should be marked
      * as being visible at runtime.
      */
-    static enum AnnotationVisibility {
+    enum AnnotationVisibility {
 
         /**
          * The annotation is preserved in the compiled class and visible at runtime.
@@ -60,7 +60,7 @@ public interface AnnotationAppender {
          * @param visible    {@code true} if this annotation is visible at runtime.
          * @param suppressed {@code true} if this annotation is added to a compiled class.
          */
-        private AnnotationVisibility(boolean visible, boolean suppressed) {
+        AnnotationVisibility(boolean visible, boolean suppressed) {
             this.visible = visible;
             this.suppressed = suppressed;
         }
@@ -105,12 +105,17 @@ public interface AnnotationAppender {
         public boolean isSuppressed() {
             return suppressed;
         }
+
+        @Override
+        public String toString() {
+            return "AnnotationAppender.AnnotationVisibility." + name();
+        }
     }
 
     /**
      * Represents a target for an annotation writing process.
      */
-    static interface Target {
+    interface Target {
 
         /**
          * Creates an annotation visitor that is going to consume an annotation writing.
@@ -125,7 +130,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java type.
          */
-        static class OnType implements Target {
+        class OnType implements Target {
 
             /**
              * The class visitor to write the annotation to.
@@ -166,7 +171,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java method or constructor.
          */
-        static class OnMethod implements Target {
+        class OnMethod implements Target {
 
             /**
              * The method visitor to write the annotation to.
@@ -207,7 +212,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java method or constructor parameter.
          */
-        static class OnMethodParameter implements Target {
+        class OnMethodParameter implements Target {
 
             /**
              * The method visitor to write the annotation to.
@@ -259,7 +264,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java field.
          */
-        static class OnField implements Target {
+        class OnField implements Target {
 
             /**
              * The field visitor to write the annotation to.
@@ -304,7 +309,7 @@ public interface AnnotationAppender {
      * A default implementation for an annotation appender that writes annotations to a given byte consumer
      * represented by an ASM {@link org.objectweb.asm.AnnotationVisitor}.
      */
-    static class Default implements AnnotationAppender {
+    class Default implements AnnotationAppender {
 
         /**
          * A constant for informing ASM over ignoring a given name.

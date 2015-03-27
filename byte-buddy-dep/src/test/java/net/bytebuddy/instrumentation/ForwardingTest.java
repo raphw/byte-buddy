@@ -60,6 +60,8 @@ public class ForwardingTest extends AbstractInstrumentationTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Forwarding.class).apply();
+        ObjectPropertyAssertion.of(Forwarding.PreparationHandler.ForInstanceField.class).apply();
+        ObjectPropertyAssertion.of(Forwarding.PreparationHandler.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(Forwarding.PreparationHandler.ForStaticInstance.class).apply();
         ObjectPropertyAssertion.of(Forwarding.Appender.class).skipSynthetic().apply();
     }

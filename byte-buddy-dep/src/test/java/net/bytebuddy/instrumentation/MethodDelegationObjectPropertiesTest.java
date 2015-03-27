@@ -10,7 +10,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.when;
 
-public class MethodDelegationEqualsHashCodeTest {
+public class MethodDelegationObjectPropertiesTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -68,6 +68,7 @@ public class MethodDelegationEqualsHashCodeTest {
         ObjectPropertyAssertion.of(MethodDelegation.InstrumentationDelegate.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.InstrumentationDelegate.ForInstanceField.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.InstrumentationDelegate.ForConstruction.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.InstrumentationDelegate.ForStaticMethod.class).apply();
     }
 
     public static class Foo {

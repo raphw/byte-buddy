@@ -1,6 +1,7 @@
 package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,5 +48,10 @@ public class InstrumentationSpecialMethodInvocationIllegalTest {
     @Test(expected = IllegalStateException.class)
     public void testApplicationIllegal() throws Exception {
         Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.SpecialMethodInvocation.Illegal.class).apply();
     }
 }

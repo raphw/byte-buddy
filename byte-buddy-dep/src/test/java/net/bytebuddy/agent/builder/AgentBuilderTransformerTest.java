@@ -47,6 +47,7 @@ public class AgentBuilderTransformerTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(AgentBuilder.Transformer.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Transformer.Compound.class).apply();
     }
 }

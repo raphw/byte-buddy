@@ -49,10 +49,15 @@ public enum SuperMethodCall implements Instrumentation {
         return new Compound(WithoutReturn.INSTANCE, nonNull(instrumentation));
     }
 
+    @Override
+    public String toString() {
+        return "SuperMethodCall." + name();
+    }
+
     /**
      * A super method invocation where the return value is dropped instead of returning from the method.
      */
-    protected static enum WithoutReturn implements Instrumentation {
+    protected enum WithoutReturn implements Instrumentation {
 
         /**
          * The singleton instance.
@@ -67,6 +72,11 @@ public enum SuperMethodCall implements Instrumentation {
         @Override
         public ByteCodeAppender appender(Target instrumentationTarget) {
             return new Appender(instrumentationTarget, Appender.TerminationHandler.DROPPING);
+        }
+
+        @Override
+        public String toString() {
+            return "SuperMethodCall.WithoutReturn." + name();
         }
     }
 
@@ -143,7 +153,7 @@ public enum SuperMethodCall implements Instrumentation {
         /**
          * A handler that determines how to handle the method return value.
          */
-        protected static enum TerminationHandler {
+        protected enum TerminationHandler {
 
             /**
              * A termination handler that returns the value of the super method invocation.
@@ -173,6 +183,11 @@ public enum SuperMethodCall implements Instrumentation {
              * @return The stack manipulation that implements this handler.
              */
             protected abstract StackManipulation of(MethodDescription methodDescription);
+
+            @Override
+            public String toString() {
+                return "SuperMethodCall.Appender.TerminationHandler." + name();
+            }
         }
     }
 }

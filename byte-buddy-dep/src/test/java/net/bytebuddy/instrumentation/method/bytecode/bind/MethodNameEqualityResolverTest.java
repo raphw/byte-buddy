@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.method.bytecode.bind;
 
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,5 +47,10 @@ public class MethodNameEqualityResolverTest extends AbstractAmbiguityResolverTes
         verify(leftMethod, atLeast(1)).getName();
         verify(right, atLeast(1)).getTarget();
         verify(rightMethod, atLeast(1)).getName();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodNameEqualityResolver.class).apply();
     }
 }

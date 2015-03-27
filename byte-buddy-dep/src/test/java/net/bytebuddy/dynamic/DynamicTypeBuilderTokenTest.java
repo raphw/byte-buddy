@@ -132,11 +132,12 @@ public class DynamicTypeBuilderTokenTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.MethodToken.class)
-                .apply(new DynamicType.Builder.AbstractBase.MethodToken(FOO,
-                        mock(TypeDescription.class),
-                        Collections.<TypeDescription>emptyList(),
-                        Collections.<TypeDescription>emptyList(),
-                        0));
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.FieldToken.class).applyMutable();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.MethodToken.class).create(new ObjectPropertyAssertion.Creator<TypeList>() {
+            @Override
+            public TypeList create() {
+                return new TypeList.Explicit(Collections.singletonList(mock(TypeDescription.class)));
+            }
+        }).applyMutable();
     }
 }

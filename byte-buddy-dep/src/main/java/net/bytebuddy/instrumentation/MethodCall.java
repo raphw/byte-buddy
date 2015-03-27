@@ -441,7 +441,7 @@ public class MethodCall implements Instrumentation {
      * A method locator is responsible for identifying the method that is to be invoked
      * by a {@link net.bytebuddy.instrumentation.MethodCall}.
      */
-    public static interface MethodLocator {
+    public interface MethodLocator {
 
         /**
          * Resolves the method to be invoked.
@@ -454,7 +454,7 @@ public class MethodCall implements Instrumentation {
         /**
          * A method locator that simply returns the intercepted method.
          */
-        static enum ForInterceptedMethod implements MethodLocator {
+        enum ForInterceptedMethod implements MethodLocator {
 
             /**
              * The singleton instance.
@@ -465,12 +465,17 @@ public class MethodCall implements Instrumentation {
             public MethodDescription resolve(MethodDescription instrumentedMethod) {
                 return instrumentedMethod;
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.MethodLocator.ForInterceptedMethod." + name();
+            }
         }
 
         /**
          * Invokes a given method.
          */
-        static class ForExplicitMethod implements MethodLocator {
+        class ForExplicitMethod implements MethodLocator {
 
             /**
              * The method to be invoked.
@@ -515,7 +520,7 @@ public class MethodCall implements Instrumentation {
      * A target handler is responsible for invoking a method for a
      * {@link net.bytebuddy.instrumentation.MethodCall}.
      */
-    protected static interface TargetHandler {
+    protected interface TargetHandler {
 
         /**
          * Creates a stack manipulation that represents the method's invocation.
@@ -538,7 +543,7 @@ public class MethodCall implements Instrumentation {
          * A target handler that invokes a method either on the instance of the instrumented
          * type or as a static method.
          */
-        static enum ForSelfOrStaticInvocation implements TargetHandler {
+        enum ForSelfOrStaticInvocation implements TargetHandler {
 
             /**
              * The singleton instance.
@@ -561,12 +566,17 @@ public class MethodCall implements Instrumentation {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.TargetHandler.ForSelfOrStaticInvocation." + name();
+            }
         }
 
         /**
          * Invokes a method in order to construct a new instance.
          */
-        static enum ForConstructingInvocation implements TargetHandler {
+        enum ForConstructingInvocation implements TargetHandler {
 
             /**
              * The singleton instance.
@@ -582,12 +592,17 @@ public class MethodCall implements Instrumentation {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.TargetHandler.ForConstructingInvocation." + name();
+            }
         }
 
         /**
          * A target handler that invokes a method on an instance that is stored in a static field.
          */
-        static class ForStaticField implements TargetHandler {
+        class ForStaticField implements TargetHandler {
 
             /**
              * The name prefix of the field to store the instance.
@@ -658,7 +673,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Creates a target handler that stores the instance to invoke a method on in an instance field.
          */
-        static class ForInstanceField implements TargetHandler {
+        class ForInstanceField implements TargetHandler {
 
             /**
              * The modifiers of the field.
@@ -732,7 +747,7 @@ public class MethodCall implements Instrumentation {
      * An argument loader is responsible for loading an argument for an invoked method
      * onto the operand stack.
      */
-    protected static interface ArgumentLoader {
+    protected interface ArgumentLoader {
 
         /**
          * Loads the argument that is represented by this instance onto the operand stack.
@@ -761,7 +776,7 @@ public class MethodCall implements Instrumentation {
         /**
          * An argument loader that loads the {@code null} value onto the operand stack.
          */
-        static enum ForNullConstant implements ArgumentLoader {
+        enum ForNullConstant implements ArgumentLoader {
 
             /**
              * The singleton instance.
@@ -784,12 +799,17 @@ public class MethodCall implements Instrumentation {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForNullConstant." + name();
+            }
         }
 
         /**
          * An argument loader that assigns the {@code this} reference to a parameter.
          */
-        static enum ForThisReference implements ArgumentLoader {
+        enum ForThisReference implements ArgumentLoader {
 
             /**
              * The singleton instance.
@@ -818,12 +838,17 @@ public class MethodCall implements Instrumentation {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForThisReference." + name();
+            }
         }
 
         /**
          * Loads a parameter of the instrumented method onto the operand stack.
          */
-        static class ForMethodParameter implements ArgumentLoader {
+        class ForMethodParameter implements ArgumentLoader {
 
             /**
              * The index of the parameter to be loaded onto the operand stack.
@@ -886,7 +911,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a value onto the operand stack that is stored in a static field.
          */
-        static class ForStaticField implements ArgumentLoader {
+        class ForStaticField implements ArgumentLoader {
 
             /**
              * The name prefix of the field to store the argument.
@@ -996,7 +1021,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a value onto the operand stack that is stored in an instance field.
          */
-        static class ForInstanceField implements ArgumentLoader {
+        class ForInstanceField implements ArgumentLoader {
 
             /**
              * The modifier to be applied to the instance field.
@@ -1076,7 +1101,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads the value of an existing field onto the operand stack.
          */
-        static class ForExistingField implements ArgumentLoader {
+        class ForExistingField implements ArgumentLoader {
 
             /**
              * The name of the field.
@@ -1151,7 +1176,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a {@code boolean} value onto the operand stack.
          */
-        static class ForBooleanConstant implements ArgumentLoader {
+        class ForBooleanConstant implements ArgumentLoader {
 
             /**
              * The {@code boolean} value to load onto the operand stack.
@@ -1207,7 +1232,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a {@code byte} value onto the operand stack.
          */
-        static class ForByteConstant implements ArgumentLoader {
+        class ForByteConstant implements ArgumentLoader {
 
             /**
              * The {@code boolean} value to load onto the operand stack.
@@ -1263,7 +1288,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a {@code short} value onto the operand stack.
          */
-        static class ForShortConstant implements ArgumentLoader {
+        class ForShortConstant implements ArgumentLoader {
 
             /**
              * The {@code short} value to load onto the operand stack.
@@ -1319,7 +1344,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a {@code char} value onto the operand stack.
          */
-        static class ForCharacterConstant implements ArgumentLoader {
+        class ForCharacterConstant implements ArgumentLoader {
 
             /**
              * The {@code char} value to load onto the operand stack.
@@ -1375,7 +1400,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads an {@code int} value onto the operand stack.
          */
-        static class ForIntegerConstant implements ArgumentLoader {
+        class ForIntegerConstant implements ArgumentLoader {
 
             /**
              * The {@code int} value to load onto the operand stack.
@@ -1431,7 +1456,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a {@code long} value onto the operand stack.
          */
-        static class ForLongConstant implements ArgumentLoader {
+        class ForLongConstant implements ArgumentLoader {
 
             /**
              * The {@code long} value to load onto the operand stack.
@@ -1489,7 +1514,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a {@code float} value onto the operand stack.
          */
-        static class ForFloatConstant implements ArgumentLoader {
+        class ForFloatConstant implements ArgumentLoader {
 
             /**
              * The {@code float} value to load onto the operand stack.
@@ -1545,7 +1570,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a {@code double} value onto the operand stack.
          */
-        static class ForDoubleConstant implements ArgumentLoader {
+        class ForDoubleConstant implements ArgumentLoader {
 
             /**
              * The {@code double} value to load onto the operand stack.
@@ -1602,7 +1627,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Loads a {@link java.lang.String} value onto the operand stack.
          */
-        static class ForTextConstant implements ArgumentLoader {
+        class ForTextConstant implements ArgumentLoader {
 
             /**
              * The {@link java.lang.String} value to load onto the operand stack.
@@ -1662,7 +1687,7 @@ public class MethodCall implements Instrumentation {
      * A method invoker is responsible for creating a method invokation that is to be applied by a
      * {@link net.bytebuddy.instrumentation.MethodCall}.
      */
-    protected static interface MethodInvoker {
+    protected interface MethodInvoker {
 
         /**
          * Invokes the method.
@@ -1677,7 +1702,7 @@ public class MethodCall implements Instrumentation {
          * Applies a standard invocation of the provided method, i.e. a static invocation for static methods,
          * a special invocation for constructors and private methods and a virtual invocation for any other method.
          */
-        static enum ForStandardInvocation implements MethodInvoker {
+        enum ForStandardInvocation implements MethodInvoker {
 
             /**
              * The singleton instance.
@@ -1691,12 +1716,17 @@ public class MethodCall implements Instrumentation {
                 }
                 return MethodInvocation.invoke(methodDescription);
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.MethodInvoker.ForStandardInvocation." + name();
+            }
         }
 
         /**
          * Applies a super method invocation of the provided method.
          */
-        static enum ForSuperMethodInvocation implements MethodInvoker {
+        enum ForSuperMethodInvocation implements MethodInvoker {
 
             /**
              * The singleton instance.
@@ -1712,12 +1742,17 @@ public class MethodCall implements Instrumentation {
                 }
                 return stackManipulation;
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.MethodInvoker.ForSuperMethodInvocation." + name();
+            }
         }
 
         /**
          * Invokes a method as a Java 8 default method.
          */
-        static enum ForDefaultMethodInvocation implements MethodInvoker {
+        enum ForDefaultMethodInvocation implements MethodInvoker {
 
             /**
              * The singleton instance.
@@ -1736,6 +1771,11 @@ public class MethodCall implements Instrumentation {
                 }
                 return stackManipulation;
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.MethodInvoker.ForDefaultMethodInvocation." + name();
+            }
         }
     }
 
@@ -1743,7 +1783,7 @@ public class MethodCall implements Instrumentation {
      * A termination handler is responsible to handle the return value of a method that is invoked via a
      * {@link net.bytebuddy.instrumentation.MethodCall}.
      */
-    protected static interface TerminationHandler {
+    protected interface TerminationHandler {
 
         /**
          * Returns a stack manipulation that handles the method return.
@@ -1762,7 +1802,7 @@ public class MethodCall implements Instrumentation {
         /**
          * Returns the return value of the method call from the intercepted method.
          */
-        static enum ForMethodReturn implements TerminationHandler {
+        enum ForMethodReturn implements TerminationHandler {
 
             /**
              * The singleton instance.
@@ -1784,13 +1824,18 @@ public class MethodCall implements Instrumentation {
                 return new StackManipulation.Compound(stackManipulation,
                         MethodReturn.returning(interceptedMethod.getReturnType()));
             }
+
+            @Override
+            public String toString() {
+                return "MethodCall.TerminationHandler.ForMethodReturn." + name();
+            }
         }
 
         /**
          * Drops the return value of the called method from the operand stack without returning from the intercepted
          * method.
          */
-        static enum ForChainedInvocation implements TerminationHandler {
+        enum ForChainedInvocation implements TerminationHandler {
 
             /**
              * The singleton instance.
@@ -1805,6 +1850,11 @@ public class MethodCall implements Instrumentation {
                 return Removal.pop(invokedMethod.isConstructor()
                         ? invokedMethod.getDeclaringType()
                         : invokedMethod.getReturnType());
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.TerminationHandler.ForChainedInvocation." + name();
             }
         }
     }

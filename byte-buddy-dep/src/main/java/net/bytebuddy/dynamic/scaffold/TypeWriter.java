@@ -50,17 +50,17 @@ public interface TypeWriter<T> {
     /**
      * An engine that is responsible for writing the actual class file.
      */
-    static interface Engine {
+    interface Engine {
 
         /**
          * A flag for ASM not to automatically compute any information such as operand stack sizes and stack map frames.
          */
-        static final int ASM_MANUAL_FLAG = 0;
+        int ASM_MANUAL_FLAG = 0;
 
         /**
          * The ASM API version to use.
          */
-        static final int ASM_API_VERSION = Opcodes.ASM5;
+        int ASM_API_VERSION = Opcodes.ASM5;
 
         /**
          * Creates the class file.
@@ -74,7 +74,7 @@ public interface TypeWriter<T> {
          * A type writer engine that copies the contents of a class file while allowing to override
          * method implementations.
          */
-        static class ForRedefinition implements Engine {
+        class ForRedefinition implements Engine {
 
             /**
              * Instructs the retention of a method in its original form if it is not redefined.
@@ -627,7 +627,7 @@ public interface TypeWriter<T> {
         /**
          * A type writer engine that creates a new dynamic type that is not based on an existent type.
          */
-        static class ForCreation implements Engine {
+        class ForCreation implements Engine {
 
             /**
              * The instrumented type that is created.
@@ -763,7 +763,7 @@ public interface TypeWriter<T> {
     /**
      * An field pool that allows a lookup for how to implement a field.
      */
-    static interface FieldPool {
+    interface FieldPool {
 
         /**
          * Returns the field attribute appender that matches a given field description or a default field
@@ -780,7 +780,7 @@ public interface TypeWriter<T> {
          *
          * @see net.bytebuddy.dynamic.scaffold.TypeWriter.FieldPool
          */
-        static interface Entry {
+        interface Entry {
 
             /**
              * Returns the field attribute appender for a given field.
@@ -810,7 +810,7 @@ public interface TypeWriter<T> {
              * {@link net.bytebuddy.instrumentation.attribute.FieldAttributeAppender.Factory}
              * for any field.
              */
-            static enum NoOp implements Entry {
+            enum NoOp implements Entry {
 
                 /**
                  * The singleton instance.
@@ -835,6 +835,11 @@ public interface TypeWriter<T> {
                             fieldDescription.getGenericSignature(),
                             null).visitEnd();
                 }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.FieldPool.Entry.NoOp." + name();
+                }
             }
 
             /**
@@ -842,7 +847,7 @@ public interface TypeWriter<T> {
              * {@link net.bytebuddy.instrumentation.attribute.FieldAttributeAppender.Factory}
              * for any field.
              */
-            static class Simple implements Entry {
+            class Simple implements Entry {
 
                 /**
                  * The field attribute appender factory that is represented by this entry.
@@ -919,7 +924,7 @@ public interface TypeWriter<T> {
     /**
      * An method pool that allows a lookup for how to implement a method.
      */
-    static interface MethodPool {
+    interface MethodPool {
 
         /**
          * Looks up a handler entry for a given method.
@@ -934,7 +939,7 @@ public interface TypeWriter<T> {
          *
          * @see net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool
          */
-        static interface Entry {
+        interface Entry {
 
             /**
              * Determines if this entry requires a method to be defined for a given instrumentation.
@@ -977,7 +982,7 @@ public interface TypeWriter<T> {
             /**
              * A skip entry that instructs to ignore a method.
              */
-            static enum Skip implements Entry, Factory {
+            enum Skip implements Entry, Factory {
 
                 /**
                  * The singleton instance.
@@ -1010,12 +1015,17 @@ public interface TypeWriter<T> {
                 public Entry compile(Instrumentation.Target instrumentationTarget) {
                     return this;
                 }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.MethodPool.Entry.Skip." + name();
+                }
             }
 
             /**
              * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry}.
              */
-            static interface Factory {
+            interface Factory {
 
                 /**
                  * Compiles a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry}.
@@ -1030,7 +1040,7 @@ public interface TypeWriter<T> {
              * A default implementation of {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry}
              * that is not to be ignored but is represented by a tuple of a byte code appender and a method attribute appender.
              */
-            static class Simple implements Entry {
+            class Simple implements Entry {
 
                 /**
                  * The byte code appender that is represented by this entry.
@@ -1122,7 +1132,7 @@ public interface TypeWriter<T> {
      *
      * @param <S> The best known loaded type for the dynamically created type.
      */
-    static class Default<S> implements TypeWriter<S> {
+    class Default<S> implements TypeWriter<S> {
 
         /**
          * The instrumented type that is to be written.

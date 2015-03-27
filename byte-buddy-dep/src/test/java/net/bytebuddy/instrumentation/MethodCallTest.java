@@ -428,8 +428,18 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         ObjectPropertyAssertion.of(MethodCall.WithoutSpecifiedTarget.class).apply();
         ObjectPropertyAssertion.of(MethodCall.Appender.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForExplicitMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForInterceptedMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForStandardInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForSuperMethodInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForDefaultMethodInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.ForChainedInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.ForMethodReturn.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForInstanceField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForSelfOrStaticInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForConstructingInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForNullConstant.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForThisReference.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForBooleanConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForByteConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForCharacterConstant.class).apply();

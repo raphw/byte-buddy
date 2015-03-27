@@ -107,6 +107,8 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(DefaultCall.Binder.class).apply();
+        ObjectPropertyAssertion.of(DefaultCall.Binder.DefaultMethodLocator.Implicit.class).apply();
         ObjectPropertyAssertion.of(DefaultCall.Binder.DefaultMethodLocator.Explicit.class).apply();
     }
 }

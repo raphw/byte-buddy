@@ -28,6 +28,6 @@ public class StubMethodOtherTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(SuperMethodCall.Appender.class).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(StubMethod.class).apply();
     }
 }

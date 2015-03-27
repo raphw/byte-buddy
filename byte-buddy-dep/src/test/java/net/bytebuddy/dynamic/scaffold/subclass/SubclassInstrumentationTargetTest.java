@@ -147,5 +147,6 @@ public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTa
                 when(mock.make(any(MethodList.class))).thenReturn(mock(BridgeMethodResolver.class));
             }
         }).apply();
+        ObjectPropertyAssertion.of(SubclassInstrumentationTarget.OriginTypeIdentifier.class).apply();
     }
 }

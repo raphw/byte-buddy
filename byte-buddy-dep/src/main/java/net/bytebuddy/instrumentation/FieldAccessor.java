@@ -221,7 +221,7 @@ public abstract class FieldAccessor implements Instrumentation {
     /**
      * A field locator allows to determine a field name for a given method.
      */
-    public static interface FieldLocator {
+    public interface FieldLocator {
 
         /**
          * Locates a field of a given name or throws an exception if no field with such a name exists.
@@ -234,7 +234,7 @@ public abstract class FieldAccessor implements Instrumentation {
         /**
          * A factory that only looks up fields in the instrumented type.
          */
-        static enum ForInstrumentedType implements Factory {
+        enum ForInstrumentedType implements Factory {
 
             /**
              * The singleton instance.
@@ -245,12 +245,17 @@ public abstract class FieldAccessor implements Instrumentation {
             public FieldLocator make(TypeDescription instrumentedType) {
                 return new ForGivenType(instrumentedType, instrumentedType);
             }
+
+            @Override
+            public String toString() {
+                return "FieldAccessor.FieldLocator.ForInstrumentedType." + name();
+            }
         }
 
         /**
          * A factory for creating a {@link net.bytebuddy.instrumentation.FieldAccessor.FieldLocator}.
          */
-        static interface Factory {
+        interface Factory {
 
             /**
              * Creates a field locator.
@@ -267,7 +272,7 @@ public abstract class FieldAccessor implements Instrumentation {
          * This emulates the Java language's field access where fields are shadowed when an extending class defines
          * a field with identical name.
          */
-        static class ForInstrumentedTypeHierarchy implements FieldLocator {
+        class ForInstrumentedTypeHierarchy implements FieldLocator {
 
             /**
              * The instrumented type for which a field is located.
@@ -315,7 +320,7 @@ public abstract class FieldAccessor implements Instrumentation {
              * A field locator factory creating a
              * {@link net.bytebuddy.instrumentation.FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy}.
              */
-            public static enum Factory implements FieldLocator.Factory {
+            public enum Factory implements FieldLocator.Factory {
 
                 /**
                  * The singleton instance.
@@ -326,13 +331,18 @@ public abstract class FieldAccessor implements Instrumentation {
                 public FieldLocator make(TypeDescription instrumentedType) {
                     return new ForInstrumentedTypeHierarchy(instrumentedType);
                 }
+
+                @Override
+                public String toString() {
+                    return "FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy.Factory." + name();
+                }
             }
         }
 
         /**
          * A field locator that only looks up fields that are defined for a given type.
          */
-        static class ForGivenType implements FieldLocator {
+        class ForGivenType implements FieldLocator {
 
             /**
              * The target type for which a field should be accessed.
@@ -431,7 +441,7 @@ public abstract class FieldAccessor implements Instrumentation {
      * A field name extractor is responsible for determining a field name to a method that is implemented
      * to access this method.
      */
-    public static interface FieldNameExtractor {
+    public interface FieldNameExtractor {
 
         /**
          * Extracts a field name to be accessed by a getter or setter method.
@@ -445,7 +455,7 @@ public abstract class FieldAccessor implements Instrumentation {
          * A {@link net.bytebuddy.instrumentation.FieldAccessor.FieldNameExtractor} that determines a field name
          * according to the rules of Java bean naming conventions.
          */
-        static enum ForBeanProperty implements FieldNameExtractor {
+        enum ForBeanProperty implements FieldNameExtractor {
 
             /**
              * The singleton instance.
@@ -469,13 +479,18 @@ public abstract class FieldAccessor implements Instrumentation {
                 }
                 return Character.toLowerCase(name.charAt(0)) + name.substring(1);
             }
+
+            @Override
+            public String toString() {
+                return "FieldAccessor.FieldNameExtractor.ForBeanProperty." + name();
+            }
         }
     }
 
     /**
      * A field accessor that can be configured to use a given assigner and runtime type use configuration.
      */
-    public static interface AssignerConfigurable extends Instrumentation {
+    public interface AssignerConfigurable extends Instrumentation {
 
         /**
          * Returns a field accessor that is identical to this field accessor but uses the given assigner
@@ -491,7 +506,7 @@ public abstract class FieldAccessor implements Instrumentation {
     /**
      * A field accessor that can be configured to locate a field in a specific manner.
      */
-    public static interface OwnerTypeLocatable extends AssignerConfigurable {
+    public interface OwnerTypeLocatable extends AssignerConfigurable {
 
         /**
          * Determines that a field should only be considered when it was defined in a given type.
@@ -524,7 +539,7 @@ public abstract class FieldAccessor implements Instrumentation {
      * Determines a field accessor that accesses a field of a given name which might not yet be
      * defined.
      */
-    public static interface FieldDefinable extends OwnerTypeLocatable {
+    public interface FieldDefinable extends OwnerTypeLocatable {
 
         /**
          * Defines a field with the given name in the instrumented type.
@@ -723,7 +738,7 @@ public abstract class FieldAccessor implements Instrumentation {
             return new ForNamedField(assigner,
                     dynamicallyTyped,
                     fieldName,
-                    new PreparationHandler.FieldDefiner(fieldName, nonVoid(typeDescription), nonNull(modifier)),
+                    PreparationHandler.FieldDefiner.of(fieldName, nonVoid(typeDescription), nonNull(modifier)),
                     FieldLocator.ForInstrumentedType.INSTANCE);
         }
 
@@ -806,7 +821,7 @@ public abstract class FieldAccessor implements Instrumentation {
         /**
          * A preparation handler is responsible for defining a field value on an instrumentation, if necessary.
          */
-        private static interface PreparationHandler {
+        protected interface PreparationHandler {
 
             /**
              * Prepares the instrumented type.
@@ -819,7 +834,7 @@ public abstract class FieldAccessor implements Instrumentation {
             /**
              * A non-operational preparation handler that does not alter the field.
              */
-            static enum NoOp implements PreparationHandler {
+            enum NoOp implements PreparationHandler {
 
                 /**
                  * The singleton instance.
@@ -830,12 +845,17 @@ public abstract class FieldAccessor implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public String toString() {
+                    return "FieldAccessor.ForNamedField.PreparationHandler.NoOp." + name();
+                }
             }
 
             /**
              * A preparation handler that actually defines a field on an instrumented type.
              */
-            static class FieldDefiner implements PreparationHandler {
+            class FieldDefiner implements PreparationHandler {
 
                 /**
                  * The name of the field that is defined by this preparation handler.
@@ -853,16 +873,27 @@ public abstract class FieldAccessor implements Instrumentation {
                 private final int modifiers;
 
                 /**
+                 * Creates a new field definer.
+                 *
+                 * @param name            The name of the field that is defined by this preparation handler.
+                 * @param typeDescription The type of the field that is to be defined.
+                 * @param modifiers       The modifiers of the field that is to be defined.
+                 */
+                protected FieldDefiner(String name, TypeDescription typeDescription, int modifiers) {
+                    this.name = name;
+                    this.typeDescription = typeDescription;
+                    this.modifiers = modifiers;
+                }
+
+                /**
                  * Creates a new preparation handler that defines a given field.
                  *
                  * @param name            The name of the field that is defined by this preparation handler.
                  * @param typeDescription The type of the field that is to be defined.
-                 * @param contributor     The modifier of the field that is to be defined.
+                 * @param contributor     The modifiers of the field that is to be defined.
                  */
-                public FieldDefiner(String name, TypeDescription typeDescription, ModifierContributor.ForField... contributor) {
-                    this.name = name;
-                    this.typeDescription = typeDescription;
-                    modifiers = resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor);
+                public static PreparationHandler of(String name, TypeDescription typeDescription, ModifierContributor.ForField... contributor) {
+                    return new FieldDefiner(name, typeDescription, resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor));
                 }
 
                 @Override

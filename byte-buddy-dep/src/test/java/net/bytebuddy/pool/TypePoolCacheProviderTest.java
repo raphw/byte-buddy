@@ -47,6 +47,6 @@ public class TypePoolCacheProviderTest {
 
     @Test
     public void testSimpleObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.CacheProvider.Simple.class).apply(new TypePool.CacheProvider.Simple());
+        ObjectPropertyAssertion.of(TypePool.CacheProvider.Simple.class).applyMutable();
     }
 }

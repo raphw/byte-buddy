@@ -10,10 +10,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.test.utility.CallTraceable;
-import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
+import net.bytebuddy.test.utility.*;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -172,6 +169,14 @@ public class SuperMethodCallOtherTest extends AbstractInstrumentationTest {
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().newInstance();
         assertThat(method.invoke(instance), is((Object) FOO));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(SuperMethodCall.class).apply();
+        ObjectPropertyAssertion.of(SuperMethodCall.WithoutReturn.class).apply();
+        ObjectPropertyAssertion.of(SuperMethodCall.Appender.class).apply();
+        ObjectPropertyAssertion.of(SuperMethodCall.Appender.TerminationHandler.class).apply();
     }
 
     public static class Foo extends CallTraceable {

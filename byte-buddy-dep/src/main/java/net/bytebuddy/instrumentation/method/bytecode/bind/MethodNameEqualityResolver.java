@@ -30,4 +30,9 @@ public enum MethodNameEqualityResolver implements MethodDelegationBinder.Ambigui
             return Resolution.AMBIGUOUS;
         }
     }
+
+    @Override
+    public String toString() {
+        return "MethodNameEqualityResolver." + name();
+    }
 }

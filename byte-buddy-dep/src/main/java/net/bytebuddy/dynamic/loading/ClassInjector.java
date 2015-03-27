@@ -27,7 +27,7 @@ public interface ClassInjector {
     /**
      * A convenience reference to the default protection domain which is {@code null}.
      */
-    static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
+    ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     /**
      * Injects the given types into the represented class loader.
@@ -40,7 +40,7 @@ public interface ClassInjector {
     /**
      * A class injector that uses reflective method calls.
      */
-    static class UsingReflection implements ClassInjector {
+    class UsingReflection implements ClassInjector {
 
         /**
          * A storage for the reflection method representations that are obtained on loading this classes.
@@ -171,7 +171,7 @@ public interface ClassInjector {
         /**
          * A storage for method representations in order to access a class loader reflectively.
          */
-        protected static interface ReflectionStore {
+        protected interface ReflectionStore {
 
             /**
              * Returns the method for finding a class on a class loader.
@@ -190,7 +190,7 @@ public interface ClassInjector {
             /**
              * Represents a successfully loaded method lookup.
              */
-            static class Resolved implements ReflectionStore {
+            class Resolved implements ReflectionStore {
 
                 /**
                  * The method for finding a class on a class loader.
@@ -251,7 +251,7 @@ public interface ClassInjector {
             /**
              * Represents an unsuccessfully loaded method lookup.
              */
-            static class Faulty implements ReflectionStore {
+            class Faulty implements ReflectionStore {
 
                 /**
                  * The message to display in an exception.
@@ -383,7 +383,7 @@ public interface ClassInjector {
      * A class injector using a {@link java.lang.instrument.Instrumentation} to append to either the boot classpath
      * or the system class path.
      */
-    static class UsingInstrumentation implements ClassInjector {
+    class UsingInstrumentation implements ClassInjector {
 
         /**
          * A prefix to use of generated files.
@@ -490,7 +490,7 @@ public interface ClassInjector {
         /**
          * A representation of the target to which Java classes should be appended to.
          */
-        public static enum Target {
+        public enum Target {
 
             /**
              * Representation of the bootstrap class loader.
@@ -519,6 +519,11 @@ public interface ClassInjector {
              * @param jarFile         The jar file to append.
              */
             protected abstract void inject(Instrumentation instrumentation, JarFile jarFile);
+
+            @Override
+            public String toString() {
+                return "ClassInjector.UsingInstrumentation.Target." + name();
+            }
         }
     }
 }

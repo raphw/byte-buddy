@@ -412,7 +412,8 @@ public class ByteBuddyTutorialExamplesTest {
                 .toString(), is("Hello!"));
     }
 
-    public static enum IntegerSum implements StackManipulation {
+    public enum IntegerSum implements StackManipulation {
+
         INSTANCE;
 
         @Override
@@ -427,7 +428,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    public static enum SumMethod implements ByteCodeAppender {
+    public enum SumMethod implements ByteCodeAppender {
         INSTANCE;
 
         @Override
@@ -452,7 +453,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    public static enum SumInstrumentation implements Instrumentation {
+    public enum SumInstrumentation implements Instrumentation {
         INSTANCE;
 
         @Override
@@ -466,7 +467,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    public static enum ToStringAssigner implements Assigner {
+    public enum ToStringAssigner implements Assigner {
         INSTANCE;
 
         @Override
@@ -485,7 +486,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    public static enum StringValueBinder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StringValue> {
+    public enum StringValueBinder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StringValue> {
 
         INSTANCE;
 
@@ -514,23 +515,23 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Unsafe {
+    private @interface Unsafe {
         /* empty */
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Secured {
+    private @interface Secured {
         /* empty */
     }
 
     @SuppressWarnings("unused")
-    public static interface Interceptor2 {
+    public interface Interceptor2 {
 
         String doSomethingElse();
     }
 
     @SuppressWarnings("unused")
-    public static interface InterceptionAccessor {
+    public interface InterceptionAccessor {
 
         Interceptor2 getInterceptor();
 
@@ -538,23 +539,23 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @SuppressWarnings("unused")
-    public static interface InstanceCreator {
+    public interface InstanceCreator {
 
         Object makeInstance();
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface RuntimeDefinition {
+    public @interface RuntimeDefinition {
 
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface StringValue {
+    public @interface StringValue {
 
         String value();
     }
 
-    private static @interface Rebase {
+    private @interface Rebase {
 
     }
 

@@ -144,11 +144,6 @@ public class TypeWriterMethodPoolEntryTest {
     }
 
     @Test
-    public void testSimpleEntryHashCodeEquals() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Entry.Simple.class).apply();
-    }
-
-    @Test
     public void testSkipEntry() throws Exception {
         assertThat(TypeWriter.MethodPool.Entry.Skip.INSTANCE.isDefineMethod(), is(false));
     }
@@ -169,5 +164,11 @@ public class TypeWriterMethodPoolEntryTest {
     @Test(expected = IllegalStateException.class)
     public void testSkipEntryWithoutAttributeAppender() throws Exception {
         TypeWriter.MethodPool.Entry.Skip.INSTANCE.getAttributeAppender();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Entry.Simple.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Entry.Skip.class).apply();
     }
 }

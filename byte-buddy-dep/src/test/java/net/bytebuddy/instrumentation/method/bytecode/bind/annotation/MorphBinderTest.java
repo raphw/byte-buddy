@@ -153,6 +153,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
                 when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
             }
         }).apply();
+        ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.StaticFieldConstructor.class).apply();
         ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.InstanceFieldConstructor.class).apply();
         ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.InstanceFieldConstructor.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
             @Override
@@ -167,10 +168,11 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
             }
         }).apply();
         ObjectPropertyAssertion.of(Morph.Binder.PrecomputedFinding.class).apply();
+        ObjectPropertyAssertion.of(Morph.Binder.DefaultMethodLocator.Implicit.class).apply();
         ObjectPropertyAssertion.of(Morph.Binder.DefaultMethodLocator.Explicit.class).apply();
     }
 
-    private static interface Foo {
+    private interface Foo {
 
     }
 }

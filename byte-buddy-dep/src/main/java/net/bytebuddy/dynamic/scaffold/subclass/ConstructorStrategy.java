@@ -44,7 +44,7 @@ public interface ConstructorStrategy {
     /**
      * Default implementations of constructor strategies.
      */
-    static enum Default implements ConstructorStrategy {
+    enum Default implements ConstructorStrategy {
 
         /**
          * This strategy is adding no constructors such that the instrumented type will by default not have any. This
@@ -128,6 +128,11 @@ public interface ConstructorStrategy {
                 default:
                     throw new AssertionError();
             }
+        }
+
+        @Override
+        public String toString() {
+            return "ConstructorStrategy.Default." + name();
         }
     }
 }

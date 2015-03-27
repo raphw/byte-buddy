@@ -170,7 +170,7 @@ public interface DynamicType {
      * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
      *            type itself, an interface or the direct super class.
      */
-    static interface Builder<T> {
+    interface Builder<T> {
 
         /**
          * Defines a class file format version for this builder for which the dynamic types should be created.
@@ -573,7 +573,7 @@ public interface DynamicType {
          * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
-        static interface MatchedMethodInterception<T> {
+        interface MatchedMethodInterception<T> {
 
             /**
              * Intercepts the currently selected method by a given instrumentation.
@@ -598,7 +598,7 @@ public interface DynamicType {
          * @param <S> The most specific known loaded type that is implemented by the created dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
-        static interface ExceptionDeclarableMethodInterception<S> extends MatchedMethodInterception<S> {
+        interface ExceptionDeclarableMethodInterception<S> extends MatchedMethodInterception<S> {
 
             /**
              * Defines a number of {@link java.lang.Throwable} types to be include in the exception declaration.
@@ -626,7 +626,7 @@ public interface DynamicType {
          * @param <S> The most specific known loaded type that is implemented by the created dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
-        static interface OptionalMatchedMethodInterception<S> extends MatchedMethodInterception<S>, Builder<S> {
+        interface OptionalMatchedMethodInterception<S> extends MatchedMethodInterception<S>, Builder<S> {
             /* This interface is merely a combinator of the matched method interception and the builder interfaces. */
         }
 
@@ -637,7 +637,7 @@ public interface DynamicType {
          * @param <S> The most specific known loaded type that is implemented by the created dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
-        static interface MethodAnnotationTarget<S> extends Builder<S> {
+        interface MethodAnnotationTarget<S> extends Builder<S> {
 
             /**
              * Defines an attribute appender factory to be applied onto the currently selected methods.
@@ -681,7 +681,7 @@ public interface DynamicType {
          * @param <S> The most specific known type of the dynamic type, usually the type itself, an interface or the
          *            direct super class.
          */
-        static interface FieldValueTarget<S> extends FieldAnnotationTarget<S> {
+        interface FieldValueTarget<S> extends FieldAnnotationTarget<S> {
 
             /**
              * Defines a {@code boolean} value to become the optional default value for the recently defined
@@ -745,7 +745,7 @@ public interface DynamicType {
             /**
              * A validator for assuring that a given value can be represented by a given primitive type.
              */
-            static enum NumericRangeValidator {
+            enum NumericRangeValidator {
 
                 /**
                  * A validator for {@code boolean} values.
@@ -793,7 +793,7 @@ public interface DynamicType {
                  * @param minimum The minimum {@code int} value that can be represented by this primitive type.
                  * @param maximum The maximum {@code int} value that can be represented by this primitive type.
                  */
-                private NumericRangeValidator(int minimum, int maximum) {
+                NumericRangeValidator(int minimum, int maximum) {
                     this.minimum = minimum;
                     this.maximum = maximum;
                 }
@@ -835,6 +835,11 @@ public interface DynamicType {
                     }
                     return value;
                 }
+
+                @Override
+                public String toString() {
+                    return "DynamicType.Builder.FieldValueTarget.NumericRangeValidator." + name();
+                }
             }
         }
 
@@ -844,7 +849,7 @@ public interface DynamicType {
          * @param <S> The most specific known type of the dynamic type, usually the type itself, an interface or the
          *            direct super class.
          */
-        static interface FieldAnnotationTarget<S> extends Builder<S> {
+        interface FieldAnnotationTarget<S> extends Builder<S> {
 
             /**
              * Defines an attribute appender factory to be applied onto the currently selected field.
@@ -874,7 +879,7 @@ public interface DynamicType {
          * @param <S> The most specific known loaded type that is implemented by the created dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
-        abstract static class AbstractBase<S> implements Builder<S> {
+        abstract class AbstractBase<S> implements Builder<S> {
 
             /**
              * The class file version specified for this builder.
@@ -1803,8 +1808,8 @@ public interface DynamicType {
 
                 @Override
                 public String toString() {
-                    return "FieldToken{" +
-                            "internalName='" + name + '\'' +
+                    return "DynamicType.Builder.AbstractBase.FieldToken{" +
+                            "name='" + name + '\'' +
                             ", fieldType=" + fieldType +
                             ", modifiers=" + modifiers + '}';
                 }
@@ -2605,7 +2610,7 @@ public interface DynamicType {
      * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
      *            type itself, an interface or the direct super class.
      */
-    static interface Loaded<T> extends DynamicType {
+    interface Loaded<T> extends DynamicType {
 
         /**
          * Returns the loaded main class.
@@ -2634,7 +2639,7 @@ public interface DynamicType {
      * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
      *            type itself, an interface or the direct super class.
      */
-    static interface Unloaded<T> extends DynamicType {
+    interface Unloaded<T> extends DynamicType {
 
         /**
          * Attempts to load this dynamic type including all of its auxiliary types, if any.
@@ -2650,7 +2655,7 @@ public interface DynamicType {
     /**
      * A default implementation of a dynamic type.
      */
-    static class Default implements DynamicType {
+    class Default implements DynamicType {
 
         /**
          * The file name extension for Java class files.

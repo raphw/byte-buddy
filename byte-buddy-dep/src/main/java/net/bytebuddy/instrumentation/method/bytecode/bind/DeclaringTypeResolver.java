@@ -30,4 +30,9 @@ public enum DeclaringTypeResolver implements MethodDelegationBinder.AmbiguityRes
             return Resolution.AMBIGUOUS;
         }
     }
+
+    @Override
+    public String toString() {
+        return "DeclaringTypeResolver." + name();
+    }
 }

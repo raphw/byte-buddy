@@ -72,6 +72,7 @@ public class ClassFileLocatorResolutionTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.Resolution.Explicit.class).apply();
+        ObjectPropertyAssertion.of(ClassFileLocator.Resolution.Illegal.class).apply();
     }
 
     private static class Foo {

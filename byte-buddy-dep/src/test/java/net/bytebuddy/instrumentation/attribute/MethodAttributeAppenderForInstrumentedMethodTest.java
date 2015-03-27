@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
@@ -49,5 +50,10 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         verify(methodDescription).getDeclaredAnnotations();
         verify(methodDescription).getParameters();
         verifyNoMoreInteractions(methodDescription);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodAttributeAppender.ForInstrumentedMethod.class).apply();
     }
 }

@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -126,6 +127,11 @@ public class ClassLoadingStrategyDefaultTest {
         Class<?> type = loaded.get(typeDescription);
         assertThat(type.getClassLoader(), is(classLoader));
         assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.class);
     }
 
     private static class Foo {

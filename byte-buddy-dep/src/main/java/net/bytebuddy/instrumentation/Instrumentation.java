@@ -70,7 +70,7 @@ public interface Instrumentation {
      * An instrumentation for an abstract method that does not append any code and will throw an exception if it is
      * attempted to be composed with other methods that do provide an implementation.
      */
-    static enum ForAbstractMethod implements Instrumentation, ByteCodeAppender {
+    enum ForAbstractMethod implements Instrumentation, ByteCodeAppender {
 
         /**
          * The singleton instance.
@@ -94,7 +94,12 @@ public interface Instrumentation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("Cannot implement an abstract method");
+        }
+
+        @Override
+        public String toString() {
+            return "Instrumentation.ForAbstractMethod." + name();
         }
     }
 
@@ -103,7 +108,7 @@ public interface Instrumentation {
      * the type such as a super method or default method invocation. Legal instances of special method invocations must
      * be equal to one another if they represent the same invocation target.
      */
-    static interface SpecialMethodInvocation extends StackManipulation {
+    interface SpecialMethodInvocation extends StackManipulation {
 
         /**
          * Returns the method that represents this special method invocation. This method can be different even for
@@ -124,7 +129,7 @@ public interface Instrumentation {
         /**
          * A canonical implementation of an illegal {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation}.
          */
-        static enum Illegal implements SpecialMethodInvocation {
+        enum Illegal implements SpecialMethodInvocation {
 
             /**
              * The singleton instance.
@@ -138,7 +143,7 @@ public interface Instrumentation {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context instrumentationContext) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Cannot implement an undefined method");
             }
 
             @Override
@@ -150,12 +155,17 @@ public interface Instrumentation {
             public TypeDescription getTypeDescription() {
                 throw new IllegalStateException("An illegal special method invocation must not be applied");
             }
+
+            @Override
+            public String toString() {
+                return "Instrumentation.SpecialMethodInvocation.Illegal." + name();
+            }
         }
 
         /**
          * A canonical implementation of a {@link net.bytebuddy.instrumentation.Instrumentation.SpecialMethodInvocation}.
          */
-        static class Simple implements SpecialMethodInvocation {
+        class Simple implements SpecialMethodInvocation {
 
             /**
              * The method description that is represented by this legal special method invocation.
@@ -262,7 +272,7 @@ public interface Instrumentation {
      * where it is the implementation's responsibility to cache expensive computations, especially such computations
      * that require reflective look-up.
      */
-    static interface Target {
+    interface Target {
 
         /**
          * Returns a description of the instrumented type.
@@ -306,7 +316,7 @@ public interface Instrumentation {
         /**
          * A strategy for looking up a method.
          */
-        static interface MethodLookup {
+        interface MethodLookup {
 
             /**
              * Resolves the target method that is actually invoked.
@@ -323,7 +333,7 @@ public interface Instrumentation {
             /**
              * Default implementations of a {@link net.bytebuddy.instrumentation.Instrumentation.Target.MethodLookup}.
              */
-            static enum Default implements MethodLookup {
+            enum Default implements MethodLookup {
 
                 /**
                  * An exact method lookup which directly invokes the given method.
@@ -348,6 +358,11 @@ public interface Instrumentation {
                                                      BridgeMethodResolver bridgeMethodResolver) {
                         return bridgeMethodResolver.resolve(invokableMethods.get(methodDescription.getUniqueSignature()));
                     }
+                };
+
+                @Override
+                public String toString() {
+                    return "Instrumentation.Target.MethodLookup.Default." + name();
                 }
             }
         }
@@ -355,7 +370,7 @@ public interface Instrumentation {
         /**
          * A factory for creating an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
          */
-        static interface Factory {
+        interface Factory {
 
             /**
              * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
@@ -370,7 +385,7 @@ public interface Instrumentation {
         /**
          * An abstract base implementation for an {@link net.bytebuddy.instrumentation.Instrumentation.Target}.
          */
-        abstract static class AbstractBase implements Target {
+        abstract class AbstractBase implements Target {
 
             /**
              * The type that is subject to instrumentation.
@@ -476,7 +491,7 @@ public interface Instrumentation {
      * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an instrumentation context and a
      * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type.
      */
-    static interface Context {
+    interface Context {
 
         /**
          * Registers an auxiliary type as required for the current instrumentation. Registering a type will cause the
@@ -505,12 +520,12 @@ public interface Instrumentation {
          * Represents an extractable view of an {@link net.bytebuddy.instrumentation.Instrumentation.Context} which
          * allows the retrieval of any registered auxiliary type.
          */
-        static interface ExtractableView extends Context {
+        interface ExtractableView extends Context {
 
             /**
              * A default modifier for a field that serves as a cache.
              */
-            static final int FIELD_CACHE_MODIFIER = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC;
+            int FIELD_CACHE_MODIFIER = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC;
 
             /**
              * Returns any {@link net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType} that was registered
@@ -537,7 +552,7 @@ public interface Instrumentation {
              * by providing a code injection by this instance. The injected code is added after the class is set up but
              * before any user code is run from within the type initializer.
              */
-            static interface InjectedCode {
+            interface InjectedCode {
 
                 /**
                  * Returns the injected code. This method must only be called if there is actual code injected as
@@ -557,7 +572,7 @@ public interface Instrumentation {
                 /**
                  * A canonical implementation of non-applicable injected code.
                  */
-                static enum None implements InjectedCode {
+                enum None implements InjectedCode {
 
                     /**
                      * The singleton instance.
@@ -573,6 +588,11 @@ public interface Instrumentation {
                     public boolean isDefined() {
                         return false;
                     }
+
+                    @Override
+                    public String toString() {
+                        return "Instrumentation.Context.ExtractableView.InjectedCode.None." + name();
+                    }
                 }
             }
         }
@@ -581,7 +601,7 @@ public interface Instrumentation {
          * A default implementation of an {@link net.bytebuddy.instrumentation.Instrumentation.Context.ExtractableView}
          * which serves as its own {@link net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType.MethodAccessorFactory}.
          */
-        static class Default implements Instrumentation.Context.ExtractableView, AuxiliaryType.MethodAccessorFactory {
+        class Default implements Instrumentation.Context.ExtractableView, AuxiliaryType.MethodAccessorFactory {
 
             /**
              * The default name suffix to be appended to an accessor method.
@@ -907,7 +927,7 @@ public interface Instrumentation {
             /**
              * Representation of a naming strategy for an auxiliary type.
              */
-            public static interface AuxiliaryTypeNamingStrategy {
+            public interface AuxiliaryTypeNamingStrategy {
 
                 /**
                  * NAmes an auxiliary type.
@@ -922,7 +942,7 @@ public interface Instrumentation {
                  * A naming strategy for an auxiliary type which returns the instrumented type's name with a fixed extension
                  * and a random number as a suffix. All generated names will be in the same package as the instrumented type.
                  */
-                static class SuffixingRandom implements AuxiliaryTypeNamingStrategy {
+                class SuffixingRandom implements AuxiliaryTypeNamingStrategy {
 
                     /**
                      * The suffix to append to the instrumented type for creating names for the auxiliary types.
@@ -1381,7 +1401,7 @@ public interface Instrumentation {
      *
      * @see net.bytebuddy.instrumentation.Instrumentation
      */
-    static class Compound implements Instrumentation {
+    class Compound implements Instrumentation {
 
         /**
          * All instrumentations that are represented by this compound instrumentation.
@@ -1435,7 +1455,7 @@ public interface Instrumentation {
     /**
      * A simple implementation of an instrumentation that does not register any members with the instrumented type.
      */
-    static class Simple implements Instrumentation {
+    class Simple implements Instrumentation {
 
         /**
          * The byte code appender to emmit.

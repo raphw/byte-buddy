@@ -283,7 +283,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
      * An inline dynamic type builder's target handler is responsible to proving any information that is required
      * for defining the type.
      */
-    public static interface TargetHandler {
+    public interface TargetHandler {
 
         /**
          * Prepares this target handler to a given set of type creation properties.
@@ -301,7 +301,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
          * Performs a subclass instrumentation which creates a redefinition of the given type by invoking the
          * actual super method when redefining a method.
          */
-        static enum ForRedefinitionInstrumentation implements TargetHandler {
+        enum ForRedefinitionInstrumentation implements TargetHandler {
 
             /**
              * The singleton instance.
@@ -314,12 +314,17 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                     TypeDescription instrumentedType) {
                 return Prepared.ForRedefinitionInstrumentation.INSTANCE;
             }
+
+            @Override
+            public String toString() {
+                return "InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation." + name();
+            }
         }
 
         /**
          * A prepared {@link InlineDynamicTypeBuilder.TargetHandler}.
          */
-        static interface Prepared {
+        interface Prepared {
 
             /**
              * Returns the method rebase resolver to be used when creating the dynamic type.
@@ -354,7 +359,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
              * A prepared target handler for an instrumentation that creates a redefinition of the given type by
              * invoking the actual super method when redefining a method.
              */
-            static enum ForRedefinitionInstrumentation implements Prepared {
+            enum ForRedefinitionInstrumentation implements Prepared {
 
                 /**
                  * The singleton instance.
@@ -381,6 +386,11 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 public List<DynamicType> getAuxiliaryTypes() {
                     return Collections.emptyList();
                 }
+
+                @Override
+                public String toString() {
+                    return "InlineDynamicTypeBuilder.TargetHandler.Prepared.ForRedefinitionInstrumentation." + name();
+                }
             }
 
             /**
@@ -388,7 +398,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
              * rebasing the original code of redefined method and by invoking these methods when a super method
              * should be invoked.
              */
-            static class ForRebaseInstrumentation implements Prepared {
+            class ForRebaseInstrumentation implements Prepared {
 
                 /**
                  * The suffix that is to be used when creating a placeholder type.
@@ -594,7 +604,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                     /**
                      * A factory for creating a method rebase delegation entry.
                      */
-                    protected static enum Factory implements TypeWriter.MethodPool.Entry.Factory {
+                    protected enum Factory implements TypeWriter.MethodPool.Entry.Factory {
 
                         /**
                          * The singleton instance.
@@ -605,6 +615,11 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                         public TypeWriter.MethodPool.Entry compile(Instrumentation.Target instrumentationTarget) {
                             return new MethodRebaseDelegation(instrumentationTarget);
                         }
+
+                        @Override
+                        public String toString() {
+                            return "InlineDynamicTypeBuilder.TargetHandler.Prepared.ForRebaseInstrumentation.MethodRebaseDelegation.Factory." + name();
+                        }
                     }
                 }
             }
@@ -614,7 +629,7 @@ public class InlineDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
          * Performs a rebase instrumentation which creates a redefinition of the given type by rebasing the original
          * code of redefined method and by invoking these methods when a super method should be invoked.
          */
-        static class ForRebaseInstrumentation implements TargetHandler {
+        class ForRebaseInstrumentation implements TargetHandler {
 
             /**
              * The method name transformer to apply during instrumentation.

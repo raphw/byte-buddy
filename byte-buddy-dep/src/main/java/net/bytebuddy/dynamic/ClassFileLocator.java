@@ -21,7 +21,7 @@ public interface ClassFileLocator {
     /**
      * The file extension for a Java class file.
      */
-    static final String CLASS_FILE_EXTENSION = ".class";
+    String CLASS_FILE_EXTENSION = ".class";
 
     /**
      * Locates the class file for a given type and returns the binary data of the class file.
@@ -35,7 +35,7 @@ public interface ClassFileLocator {
     /**
      * Represents a class file as binary data.
      */
-    static interface Resolution {
+    interface Resolution {
 
         /**
          * Checks if this binary representation is valid.
@@ -55,7 +55,7 @@ public interface ClassFileLocator {
         /**
          * A canonical representation of an illegal binary representation.
          */
-        static enum Illegal implements Resolution {
+        enum Illegal implements Resolution {
 
             /**
              * The singleton instance.
@@ -71,12 +71,17 @@ public interface ClassFileLocator {
             public byte[] resolve() {
                 throw new IllegalStateException("Could not read binary data");
             }
+
+            @Override
+            public String toString() {
+                return "ClassFileLocator.Resolution.Illegal." + name();
+            }
         }
 
         /**
          * Represents a byte array as binary data.
          */
-        static class Explicit implements Resolution {
+        class Explicit implements Resolution {
 
             /**
              * The represented data.
@@ -147,7 +152,7 @@ public interface ClassFileLocator {
     /**
      * A class file locator that queries a class loader for binary representations of class files.
      */
-    static class ForClassLoader implements ClassFileLocator {
+    class ForClassLoader implements ClassFileLocator {
 
         /**
          * The class loader to query.
@@ -224,7 +229,7 @@ public interface ClassFileLocator {
      * locator causes a class to be loaded in order to look up its class file. Also, this locator does deliberately not
      * support the look-up of classes that represent lambda expressions.
      */
-    static class AgentBased implements ClassFileLocator {
+    class AgentBased implements ClassFileLocator {
 
         /**
          * The name of the Byte Buddy agent class.
@@ -335,7 +340,7 @@ public interface ClassFileLocator {
         /**
          * A delegate that is queried for loading a class.
          */
-        public static interface ClassLoadingDelegate {
+        public interface ClassLoadingDelegate {
 
             /**
              * Loads a class by its name.
@@ -356,7 +361,7 @@ public interface ClassFileLocator {
             /**
              * A default implementation of a class loading delegate.
              */
-            static class Default implements ClassLoadingDelegate {
+            class Default implements ClassLoadingDelegate {
 
                 /**
                  * The underlying class loader.
@@ -419,7 +424,7 @@ public interface ClassFileLocator {
              * A class loading delegate that accounts for a {@code sun.reflect.DelegatingClassLoader} which
              * cannot load its own classes by name.
              */
-            static class ForDelegatingClassLoader extends Default {
+            class ForDelegatingClassLoader extends Default {
 
                 /**
                  * The name of the delegating class loader.
@@ -498,7 +503,7 @@ public interface ClassFileLocator {
                 /**
                  * Representation of a Java {@link java.lang.reflect.Field}.
                  */
-                protected static interface JavaField {
+                protected interface JavaField {
 
                     /**
                      * Reads a value from the underlying field.
@@ -512,7 +517,7 @@ public interface ClassFileLocator {
                     /**
                      * Represents a field that could be located.
                      */
-                    static class ForResolvedField implements JavaField {
+                    class ForResolvedField implements JavaField {
 
                         /**
                          * The represented field.
@@ -555,7 +560,7 @@ public interface ClassFileLocator {
                     /**
                      * Represents a field that could not be located.
                      */
-                    static class ForNonResolvedField implements JavaField {
+                    class ForNonResolvedField implements JavaField {
 
                         /**
                          * The exception that occurred when attempting to locate the field.
@@ -602,7 +607,7 @@ public interface ClassFileLocator {
              * be located by a class loader directly. This allows for locating classes that are loaded by
              * an anonymous class loader which does not register its classes in a system dictionary.
              */
-            static class Explicit implements ClassLoadingDelegate {
+            class Explicit implements ClassLoadingDelegate {
 
                 /**
                  * A class loading delegate that is queried for classes that are not registered explicitly.
@@ -773,7 +778,7 @@ public interface ClassFileLocator {
      * Any class file locator is queried in the supplied order until one locator is able to provide an input
      * stream of the class file.
      */
-    static class Compound implements ClassFileLocator {
+    class Compound implements ClassFileLocator {
 
         /**
          * The {@link ClassFileLocator}s which are represented by this compound

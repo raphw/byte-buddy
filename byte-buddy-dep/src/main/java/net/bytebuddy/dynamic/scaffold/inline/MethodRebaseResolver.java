@@ -22,7 +22,7 @@ public interface MethodRebaseResolver {
     /**
      * The modifier that is used for rebased methods.
      */
-    static final int REBASED_METHOD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+    int REBASED_METHOD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
     /**
      * Checks if a method is eligible for rebasing and resolves this possibly rebased method.
@@ -35,7 +35,7 @@ public interface MethodRebaseResolver {
     /**
      * A method rebase resolver that preserves any method in its original form.
      */
-    static enum NoOp implements MethodRebaseResolver {
+    enum NoOp implements MethodRebaseResolver {
 
         /**
          * The singleton instance.
@@ -46,6 +46,11 @@ public interface MethodRebaseResolver {
         public Resolution resolve(MethodDescription methodDescription) {
             return new Resolution.Preserved(methodDescription);
         }
+
+        @Override
+        public String toString() {
+            return "MethodRebaseResolver.NoOp." + name();
+        }
     }
 
     /**
@@ -53,7 +58,7 @@ public interface MethodRebaseResolver {
      *
      * @see MethodRebaseResolver
      */
-    static interface MethodNameTransformer {
+    interface MethodNameTransformer {
 
         /**
          * Transforms a method's name to an alternative name. For a given argument, this mapper must always provide
@@ -67,7 +72,7 @@ public interface MethodRebaseResolver {
         /**
          * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}.
          */
-        static class Suffixing implements MethodNameTransformer {
+        class Suffixing implements MethodNameTransformer {
 
             /**
              * The default suffix to add to an original method name.
@@ -122,7 +127,7 @@ public interface MethodRebaseResolver {
         /**
          * A method name transformer that adds a fixed prefix to an original method name.
          */
-        static class Prefixing implements MethodNameTransformer {
+        class Prefixing implements MethodNameTransformer {
 
             /**
              * The default prefix to add to an original method name.
@@ -178,7 +183,7 @@ public interface MethodRebaseResolver {
     /**
      * A resolution for a method that was checked by a {@link MethodRebaseResolver}.
      */
-    static interface Resolution {
+    interface Resolution {
 
         /**
          * Checks if this resolution represents a rebased method.
@@ -206,7 +211,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a non-rebased method.
          */
-        static class Preserved implements Resolution {
+        class Preserved implements Resolution {
 
             /**
              * The preserved method.
@@ -258,7 +263,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a rebased method.
          */
-        static class ForRebasedMethod implements Resolution {
+        class ForRebasedMethod implements Resolution {
 
             /**
              * The rebased method.
@@ -319,7 +324,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a rebased constructor.
          */
-        static class ForRebasedConstructor implements Resolution {
+        class ForRebasedConstructor implements Resolution {
 
             /**
              * The rebased constructor.
@@ -380,7 +385,7 @@ public interface MethodRebaseResolver {
      * renames rebased methods and adds an additional constructor placeholder parameter to constructors. Ignored
      * methods are never rebased.
      */
-    static class Default implements MethodRebaseResolver {
+    class Default implements MethodRebaseResolver {
 
         /**
          * Ignored methods which are never rebased.

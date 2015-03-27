@@ -68,5 +68,6 @@ public class ClassInjectorUsingInstrumentationTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassInjector.UsingInstrumentation.class).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingInstrumentation.Target.class).apply();
     }
 }

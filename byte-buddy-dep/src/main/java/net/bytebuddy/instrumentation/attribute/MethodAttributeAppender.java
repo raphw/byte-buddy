@@ -31,7 +31,7 @@ public interface MethodAttributeAppender {
     /**
      * A method attribute appender that does not append any attributes.
      */
-    static enum NoOp implements MethodAttributeAppender, Factory {
+    enum NoOp implements MethodAttributeAppender, Factory {
 
         /**
          * The singleton instance.
@@ -47,13 +47,18 @@ public interface MethodAttributeAppender {
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             /* do nothing */
         }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.NoOp." + name();
+        }
     }
 
     /**
      * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
      * method that is being created. This includes method and parameter annotations.
      */
-    static enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
+    enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
 
         /**
          * The singleton instance.
@@ -80,12 +85,17 @@ public interface MethodAttributeAppender {
         public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.ForInstrumentedMethod." + name();
+        }
     }
 
     /**
      * A factory that creates method attribute appenders for a given type.
      */
-    static interface Factory {
+    interface Factory {
 
         /**
          * Returns a method attribute appender that is applicable for a given type description.
@@ -99,7 +109,7 @@ public interface MethodAttributeAppender {
          * A method attribute appender factory that combines several method attribute appender factories to be
          * represented as a single factory.
          */
-        static class Compound implements Factory {
+        class Compound implements Factory {
 
             /**
              * The factories this compound factory represents in their application order.
@@ -148,7 +158,7 @@ public interface MethodAttributeAppender {
      * Appends an annotation to a method or method parameter. The visibility of the annotation is determined by the
      * annotation type's {@link java.lang.annotation.RetentionPolicy} annotation.
      */
-    static class ForAnnotation implements MethodAttributeAppender, Factory {
+    class ForAnnotation implements MethodAttributeAppender, Factory {
 
         /**
          * the annotations this method attribute appender is writing to its target.
@@ -217,7 +227,7 @@ public interface MethodAttributeAppender {
         /**
          * Represents the target on which this method attribute appender should write its annotations to.
          */
-        protected static interface Target {
+        protected interface Target {
 
             /**
              * Materializes the target for a given creation process.
@@ -233,7 +243,7 @@ public interface MethodAttributeAppender {
             /**
              * A method attribute appender target for writing annotations directly onto the method.
              */
-            static enum OnMethod implements Target {
+            enum OnMethod implements Target {
 
                 /**
                  * The singleton instance.
@@ -244,12 +254,17 @@ public interface MethodAttributeAppender {
                 public AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription) {
                     return new AnnotationAppender.Target.OnMethod(methodVisitor);
                 }
+
+                @Override
+                public String toString() {
+                    return "MethodAttributeAppender.ForAnnotation.Target.OnMethod." + name();
+                }
             }
 
             /**
              * A method attribute appender target for writing annotations onto a given method parameter.
              */
-            static class OnMethodParameter implements Target {
+            class OnMethodParameter implements Target {
 
                 /**
                  * The index of the parameter to write the annotation to.
@@ -298,7 +313,7 @@ public interface MethodAttributeAppender {
      * the target method and the given method must have compatible signatures, i.e. an identical number of method
      * parameters. Otherwise, an exception is thrown when this attribute appender is applied on a method.
      */
-    static class ForLoadedMethod implements MethodAttributeAppender, Factory {
+    class ForLoadedMethod implements MethodAttributeAppender, Factory {
 
         /**
          * The method of which the annotations are to be copied.
@@ -351,7 +366,7 @@ public interface MethodAttributeAppender {
      * the target method and the given constructor must have compatible signatures, i.e. an identical number of method
      * parameters. Otherwise, an exception is thrown when this attribute appender is applied on a method.
      */
-    static class ForLoadedConstructor implements MethodAttributeAppender, Factory {
+    class ForLoadedConstructor implements MethodAttributeAppender, Factory {
 
         /**
          * The constructor for which the annotations are to be copied.
@@ -401,7 +416,7 @@ public interface MethodAttributeAppender {
      * A method attribute appender that combines several method attribute appenders to be represented as a single
      * method attribute appender.
      */
-    static class Compound implements MethodAttributeAppender {
+    class Compound implements MethodAttributeAppender {
 
         /**
          * The method attribute appenders this compound appender represents in their application order.

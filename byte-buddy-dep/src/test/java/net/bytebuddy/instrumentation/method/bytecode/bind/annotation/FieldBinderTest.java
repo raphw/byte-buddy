@@ -226,6 +226,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Field.Binder.class).apply();
+        ObjectPropertyAssertion.of(Field.Binder.StaticFieldConstructor.class).apply();
         ObjectPropertyAssertion.of(Field.Binder.FieldLocator.Legal.class).apply();
         ObjectPropertyAssertion.of(Field.Binder.FieldLocator.Illegal.class).apply();
         ObjectPropertyAssertion.of(Field.Binder.FieldLocator.LookupEngine.ForHierarchy.class).apply();
@@ -247,6 +248,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
                 when(filteredFieldList.getOnly()).thenReturn(mock(FieldDescription.class));
             }
         }).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(Field.Binder.AccessType.class).apply();
         ObjectPropertyAssertion.of(Field.Binder.AccessType.Getter.class).apply();
         ObjectPropertyAssertion.of(Field.Binder.AccessType.Getter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
             @Override

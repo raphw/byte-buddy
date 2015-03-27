@@ -76,5 +76,6 @@ public class NamingStrategyTest {
     @Test
     public void testPrefixingRandomEqualsHashCode() throws Exception {
         ObjectPropertyAssertion.of(NamingStrategy.PrefixingRandom.class).apply();
+        ObjectPropertyAssertion.of(NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType.class).apply();
     }
 }

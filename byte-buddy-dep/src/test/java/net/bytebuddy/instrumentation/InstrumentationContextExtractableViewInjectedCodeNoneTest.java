@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation;
 
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -15,5 +16,10 @@ public class InstrumentationContextExtractableViewInjectedCodeNoneTest {
     @Test(expected = IllegalStateException.class)
     public void testApplicationThrowsException() throws Exception {
         Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE.getStackManipulation();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.Context.ExtractableView.InjectedCode.None.class).apply();
     }
 }

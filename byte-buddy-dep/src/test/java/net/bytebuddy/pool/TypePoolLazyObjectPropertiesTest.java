@@ -4,12 +4,9 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 
-import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class TypePoolLazyObjectPropertiesTest {
@@ -40,10 +37,13 @@ public class TypePoolLazyObjectPropertiesTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testInvocationHandlerObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationInvocationHandler.class)
-                .apply(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(mock(ClassLoader.class), Annotation.class, mock(Map.class)));
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationInvocationHandler.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return Object.class;
+            }
+        }).applyMutable();
     }
 
     @Test

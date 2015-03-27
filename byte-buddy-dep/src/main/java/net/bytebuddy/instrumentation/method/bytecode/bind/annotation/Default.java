@@ -33,7 +33,7 @@ public @interface Default {
     /**
      * A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Default} annotation.
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Default> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Default> {
 
         /**
          * The singleton instance.
@@ -60,6 +60,11 @@ public @interface Default {
                         instrumentationTarget,
                         annotation.loadSilent().serializableProxy()));
             }
+        }
+
+        @Override
+        public String toString() {
+            return "Default.Binder." + name();
         }
     }
 }

@@ -587,7 +587,7 @@ public class InvokeDynamic implements Instrumentation {
      * An invocation provider is responsible for loading the arguments of the invoked method onto the operand
      * stack and for creating the actual <i>invoke dynamic</i> instruction.
      */
-    protected static interface InvocationProvider {
+    protected interface InvocationProvider {
 
         /**
          * Creates a target for the invocation.
@@ -647,7 +647,7 @@ public class InvokeDynamic implements Instrumentation {
         /**
          * A target for a dynamic method invocation.
          */
-        static interface Target {
+        interface Target {
 
             /**
              * Resolves the target.
@@ -663,7 +663,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * Represents a resolved {@link net.bytebuddy.instrumentation.InvokeDynamic.InvocationProvider.Target}.
              */
-            static interface Resolved {
+            interface Resolved {
 
                 /**
                  * Returns the stack manipulation that loads the arguments onto the operand stack.
@@ -697,7 +697,7 @@ public class InvokeDynamic implements Instrumentation {
                  * A simple implementation of
                  * {@link net.bytebuddy.instrumentation.InvokeDynamic.InvocationProvider.Target.Resolved}.
                  */
-                static class Simple implements Resolved {
+                class Simple implements Resolved {
 
                     /**
                      * The stack manipulation that loads the arguments onto the operand stack.
@@ -792,7 +792,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * A target that requests to dynamically invoke a method to substitute for a given method.
              */
-            static class ForMethodDescription implements Target, Target.Resolved {
+            class ForMethodDescription implements Target, Target.Resolved {
 
                 /**
                  * The method that is being substituted.
@@ -859,7 +859,7 @@ public class InvokeDynamic implements Instrumentation {
          * An argument provider is responsible for loading arguments to a bootstrapped method onto the operand
          * stack and providing the types of these arguments.
          */
-        static interface ArgumentProvider {
+        interface ArgumentProvider {
 
             /**
              * Resolves an argument provider.
@@ -888,7 +888,7 @@ public class InvokeDynamic implements Instrumentation {
              * An argument provider that loads a reference to the intercepted instance and all arguments of
              * the intercepted method.
              */
-            static enum ForInterceptedMethodInstanceAndParameters implements ArgumentProvider {
+            enum ForInterceptedMethodInstanceAndParameters implements ArgumentProvider {
 
                 /**
                  * The singleton instance.
@@ -910,12 +910,17 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodInstanceAndParameters." + name();
+                }
             }
 
             /**
              * An argument provider that loads all arguments of the intercepted method.
              */
-            static enum ForInterceptedMethodParameters implements ArgumentProvider {
+            enum ForInterceptedMethodParameters implements ArgumentProvider {
 
                 /**
                  * The singleton instance.
@@ -934,13 +939,18 @@ public class InvokeDynamic implements Instrumentation {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters." + name();
+                }
             }
 
             /**
              * Represents wrapper types and types that could be stored in a class's constant pool as such
              * constant pool values.
              */
-            static enum ConstantPoolWrapper {
+            enum ConstantPoolWrapper {
 
                 /**
                  * Stores a {@link java.lang.Boolean} as a {@code boolean} and wraps it on load.
@@ -1038,7 +1048,7 @@ public class InvokeDynamic implements Instrumentation {
                  * @param primitiveType The primitive type that can be stored on the constant pool.
                  * @param wrapperType   The wrapper type that is to be represented.
                  */
-                private ConstantPoolWrapper(Class<?> primitiveType, Class<?> wrapperType) {
+                ConstantPoolWrapper(Class<?> primitiveType, Class<?> wrapperType) {
                     this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
                     this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
                 }
@@ -1080,6 +1090,11 @@ public class InvokeDynamic implements Instrumentation {
                  * @return An argument provider for this value.
                  */
                 protected abstract ArgumentProvider make(Object value);
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper." + name();
+                }
 
                 /**
                  * An argument provider that loads a primitive value from the constant pool and wraps it.
@@ -1149,7 +1164,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * A resolved {@link net.bytebuddy.instrumentation.InvokeDynamic.InvocationProvider.ArgumentProvider}.
              */
-            static interface Resolved {
+            interface Resolved {
 
                 /**
                  * Returns a stack manipulation that loads the arguments onto the operand stack.
@@ -1168,7 +1183,7 @@ public class InvokeDynamic implements Instrumentation {
                 /**
                  * A simple implementation of a resolved argument provider.
                  */
-                static class Simple implements Resolved {
+                class Simple implements Resolved {
 
                     /**
                      * A stack manipulation that loads the arguments onto the operand stack.
@@ -1241,7 +1256,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider that loads the intercepted instance.
              */
-            static class ForThisInstance implements ArgumentProvider {
+            class ForThisInstance implements ArgumentProvider {
 
                 /**
                  * The type as which the intercepted instance should be loaded onto the operand stack.
@@ -1297,7 +1312,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a value that is stored in a randomly named static field.
              */
-            static class ForStaticField implements ArgumentProvider {
+            class ForStaticField implements ArgumentProvider {
 
                 /**
                  * The prefix of any field generated by this argument provider.
@@ -1368,7 +1383,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider that loads a value from an instance field.
              */
-            static class ForInstanceField implements ArgumentProvider {
+            class ForInstanceField implements ArgumentProvider {
 
                 /**
                  * The modifier for the generated instance fields.
@@ -1441,7 +1456,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * Provides an argument from an existing field.
              */
-            static class ForExistingField implements ArgumentProvider {
+            class ForExistingField implements ArgumentProvider {
 
                 /**
                  * The name of the field.
@@ -1512,7 +1527,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider that loads an argument of the intercepted method.
              */
-            static class ForMethodParameter implements ArgumentProvider {
+            class ForMethodParameter implements ArgumentProvider {
 
                 /**
                  * The index of the parameter.
@@ -1568,7 +1583,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@code boolean} value.
              */
-            static class ForBooleanValue implements ArgumentProvider {
+            class ForBooleanValue implements ArgumentProvider {
 
                 /**
                  * The represented {@code boolean} value.
@@ -1619,7 +1634,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@code byte} value.
              */
-            static class ForByteValue implements ArgumentProvider {
+            class ForByteValue implements ArgumentProvider {
 
                 /**
                  * The represented {@code byte} value.
@@ -1670,7 +1685,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@code short} value.
              */
-            static class ForShortValue implements ArgumentProvider {
+            class ForShortValue implements ArgumentProvider {
 
                 /**
                  * The represented {@code short} value.
@@ -1721,7 +1736,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@code char} value.
              */
-            static class ForCharacterValue implements ArgumentProvider {
+            class ForCharacterValue implements ArgumentProvider {
 
                 /**
                  * The represented {@code char} value.
@@ -1772,7 +1787,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@code int} value.
              */
-            static class ForIntegerValue implements ArgumentProvider {
+            class ForIntegerValue implements ArgumentProvider {
 
                 /**
                  * The represented {@code int} value.
@@ -1823,7 +1838,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@code long} value.
              */
-            static class ForLongValue implements ArgumentProvider {
+            class ForLongValue implements ArgumentProvider {
 
                 /**
                  * The represented {@code long} value.
@@ -1874,7 +1889,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@code float} value.
              */
-            static class ForFloatValue implements ArgumentProvider {
+            class ForFloatValue implements ArgumentProvider {
 
                 /**
                  * The represented {@code float} value.
@@ -1925,7 +1940,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@code double} value.
              */
-            static class ForDoubleValue implements ArgumentProvider {
+            class ForDoubleValue implements ArgumentProvider {
 
                 /**
                  * The represented {@code double} value.
@@ -1977,7 +1992,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for a {@link java.lang.String} value.
              */
-            static class ForStringValue implements ArgumentProvider {
+            class ForStringValue implements ArgumentProvider {
 
                 /**
                  * The represented {@link java.lang.String} value.
@@ -2028,7 +2043,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * An argument provider for the {@code null} value.
              */
-            static class ForNullValue implements ArgumentProvider {
+            class ForNullValue implements ArgumentProvider {
 
                 /**
                  * The type to be represented by the {@code null} value.
@@ -2080,7 +2095,7 @@ public class InvokeDynamic implements Instrumentation {
         /**
          * Provides the name of the method that is to be bound by a dynamic method call.
          */
-        static interface NameProvider {
+        interface NameProvider {
 
             /**
              * Resolves the name given the intercepted method.
@@ -2093,7 +2108,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * A name provider that provides the name of the intercepted method.
              */
-            static enum ForInterceptedMethod implements NameProvider {
+            enum ForInterceptedMethod implements NameProvider {
 
                 /**
                  * The singleton instance.
@@ -2104,12 +2119,17 @@ public class InvokeDynamic implements Instrumentation {
                 public String resolve(MethodDescription methodDescription) {
                     return methodDescription.getInternalName();
                 }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.NameProvider.ForInterceptedMethod." + name();
+                }
             }
 
             /**
              * A name provider that provides an explicit name.
              */
-            static class ForExplicitName implements NameProvider {
+            class ForExplicitName implements NameProvider {
 
                 /**
                  * The name to be provided.
@@ -2153,7 +2173,7 @@ public class InvokeDynamic implements Instrumentation {
         /**
          * Provides the return type that is requested from the bootstrap method.
          */
-        static interface ReturnTypeProvider {
+        interface ReturnTypeProvider {
 
             /**
              * Resolves the return type that is requested from the bootstrap method.
@@ -2166,7 +2186,7 @@ public class InvokeDynamic implements Instrumentation {
             /**
              * Requests the return type of the intercepted method.
              */
-            static enum ForInterceptedMethod implements ReturnTypeProvider {
+            enum ForInterceptedMethod implements ReturnTypeProvider {
 
                 /**
                  * The singleton instance.
@@ -2177,12 +2197,17 @@ public class InvokeDynamic implements Instrumentation {
                 public TypeDescription resolve(MethodDescription methodDescription) {
                     return methodDescription.getReturnType();
                 }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForInterceptedMethod." + name();
+                }
             }
 
             /**
              * Requests an explicit return type.
              */
-            static class ForExplicitType implements ReturnTypeProvider {
+            class ForExplicitType implements ReturnTypeProvider {
 
                 /**
                  * The requested return type.
@@ -2227,7 +2252,7 @@ public class InvokeDynamic implements Instrumentation {
          * An invocation provider that requests a synthetic dynamic invocation where all arguments are explicitly
          * provided by the user.
          */
-        static class Default implements InvocationProvider {
+        class Default implements InvocationProvider {
 
             /**
              * The provider for the name of the intercepted method.
@@ -2448,7 +2473,7 @@ public class InvokeDynamic implements Instrumentation {
      * A termination handler is responsible to handle the return value of a method that is invoked via a
      * {@link net.bytebuddy.instrumentation.InvokeDynamic}.
      */
-    protected static interface TerminationHandler {
+    protected interface TerminationHandler {
 
         /**
          * Returns a stack manipulation that handles the method return.
@@ -2467,7 +2492,7 @@ public class InvokeDynamic implements Instrumentation {
         /**
          * Returns the return value of the dynamic invocation from the intercepted method.
          */
-        static enum ForMethodReturn implements TerminationHandler {
+        enum ForMethodReturn implements TerminationHandler {
 
             /**
              * The singleton instance.
@@ -2485,13 +2510,18 @@ public class InvokeDynamic implements Instrumentation {
                 }
                 return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType()));
             }
+
+            @Override
+            public String toString() {
+                return "InvokeDynamic.TerminationHandler.ForMethodReturn." + name();
+            }
         }
 
         /**
          * Drops the return value of the dynamic invocation from the operand stack without returning from the
          * intercepted method.
          */
-        static enum ForChainedInvocation implements TerminationHandler {
+        enum ForChainedInvocation implements TerminationHandler {
 
             /**
              * The singleton instance.
@@ -2506,6 +2536,11 @@ public class InvokeDynamic implements Instrumentation {
                 return Removal.pop(interceptedMethod.isConstructor()
                         ? interceptedMethod.getDeclaringType()
                         : interceptedMethod.getReturnType());
+            }
+
+            @Override
+            public String toString() {
+                return "InvokeDynamic.TerminationHandler.ForChainedInvocation." + name();
             }
         }
     }

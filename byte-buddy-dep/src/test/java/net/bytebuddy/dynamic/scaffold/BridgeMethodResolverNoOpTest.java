@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -22,5 +23,10 @@ public class BridgeMethodResolverNoOpTest {
     @Test
     public void testResolution() throws Exception {
         assertThat(BridgeMethodResolver.NoOp.INSTANCE.make(new MethodList.Empty()).resolve(methodDescription), is(methodDescription));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(BridgeMethodResolver.NoOp.class).apply();
     }
 }

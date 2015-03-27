@@ -89,10 +89,11 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
                 when(mock.value()).thenReturn("annotation" + System.identityHashCode(mock));
             }
         }).apply();
+        ObjectPropertyAssertion.of(MethodAttributeAppender.ForAnnotation.Target.OnMethod.class).apply();
         ObjectPropertyAssertion.of(MethodAttributeAppender.ForAnnotation.Target.OnMethodParameter.class).apply();
     }
 
-    public static @interface SimpleAnnotation {
+    public @interface SimpleAnnotation {
 
         String value();
     }

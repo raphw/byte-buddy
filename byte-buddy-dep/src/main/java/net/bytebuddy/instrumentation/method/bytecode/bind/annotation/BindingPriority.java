@@ -20,7 +20,7 @@ public @interface BindingPriority {
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.BindingPriority}
      * annotation.
      */
-    static final double DEFAULT = 1d;
+    double DEFAULT = 1d;
 
     /**
      * The binding priority for the annotated method. A method of higher priority will be preferred over a method
@@ -35,7 +35,7 @@ public @interface BindingPriority {
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.BindingPriority}
      * annotation.
      */
-    static enum Resolver implements MethodDelegationBinder.AmbiguityResolver {
+    enum Resolver implements MethodDelegationBinder.AmbiguityResolver {
 
         /**
          * The singleton instance.
@@ -66,6 +66,11 @@ public @interface BindingPriority {
             } else {
                 return Resolution.LEFT;
             }
+        }
+
+        @Override
+        public String toString() {
+            return "BindingPriority.Resolver." + name();
         }
     }
 }

@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -11,5 +12,10 @@ public class FieldAttributeAppenderNoOpTest extends AbstractFieldAttributeAppend
         FieldAttributeAppender.NoOp.INSTANCE.apply(fieldVisitor, fieldDescription);
         verifyZeroInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldAttributeAppender.NoOp.class).apply();
     }
 }

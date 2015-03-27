@@ -37,7 +37,7 @@ public interface MethodDelegationBinder {
      * Implementations are used as delegates for invoking a method that was bound
      * using a {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder}.
      */
-    public static interface MethodInvoker {
+    interface MethodInvoker {
 
         /**
          * Creates a method invocation for a given method.
@@ -51,7 +51,7 @@ public interface MethodDelegationBinder {
          * A simple method invocation that merely uses the most general form of method invocation as provided by
          * {@link net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation}.
          */
-        static enum Simple implements MethodInvoker {
+        enum Simple implements MethodInvoker {
 
             /**
              * The singleton instance.
@@ -62,12 +62,17 @@ public interface MethodDelegationBinder {
             public StackManipulation invoke(MethodDescription methodDescription) {
                 return MethodInvocation.invoke(methodDescription);
             }
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.MethodInvoker.Simple." + name();
+            }
         }
 
         /**
          * A method invocation that enforces a virtual invocation that is dispatched on a given type.
          */
-        static class Virtual implements MethodInvoker {
+        class Virtual implements MethodInvoker {
 
             /**
              * The type on which a method should be invoked virtually.
@@ -115,7 +120,7 @@ public interface MethodDelegationBinder {
      *
      * @param <T> The type of the identification token for this parameter binding.
      */
-    static interface ParameterBinding<T> extends StackManipulation {
+    interface ParameterBinding<T> extends StackManipulation {
 
         /**
          * Returns an identification token for this binding.
@@ -128,7 +133,7 @@ public interface MethodDelegationBinder {
          * A singleton representation of an illegal binding for a method parameter. An illegal binding usually
          * suggests that a source method cannot be bound to a specific target method.
          */
-        static enum Illegal implements ParameterBinding<Void> {
+        enum Illegal implements ParameterBinding<Void> {
 
             /**
              * The singleton instance.
@@ -149,12 +154,17 @@ public interface MethodDelegationBinder {
             public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
                 throw new IllegalStateException("An illegal parameter binding must not be applied");
             }
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.ParameterBinding.Illegal." + name();
+            }
         }
 
         /**
          * An anonymous binding of a target method parameter.
          */
-        static class Anonymous implements ParameterBinding<Object> {
+        class Anonymous implements ParameterBinding<Object> {
 
             /**
              * A pseudo-token that is not exposed and therefore anonymous.
@@ -195,17 +205,20 @@ public interface MethodDelegationBinder {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && anonymousToken.equals(((Anonymous) other).anonymousToken);
+                        && delegate.equals(((Anonymous) other).delegate);
             }
 
             @Override
             public int hashCode() {
-                return anonymousToken.hashCode();
+                return 31 * delegate.hashCode();
             }
 
             @Override
             public String toString() {
-                return "MethodDelegationBinder.ParameterBinding.Anonymous{delegate=" + delegate + '}';
+                return "MethodDelegationBinder.ParameterBinding.Anonymous{" +
+                        "anonymousToken=" + anonymousToken +
+                        ", delegate=" + delegate +
+                        '}';
             }
         }
 
@@ -217,7 +230,7 @@ public interface MethodDelegationBinder {
          * @param <T> The type of the identification token.
          * @see net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver
          */
-        static class Unique<T> implements ParameterBinding<T> {
+        class Unique<T> implements ParameterBinding<T> {
 
             /**
              * The token that identifies this parameter binding as unique.
@@ -266,6 +279,29 @@ public interface MethodDelegationBinder {
             public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
                 return delegate.apply(methodVisitor, instrumentationContext);
             }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Unique<?> unique = (Unique<?>) other;
+                return identificationToken.equals(unique.identificationToken) && delegate.equals(unique.delegate);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = identificationToken.hashCode();
+                result = 31 * result + delegate.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.ParameterBinding.Unique{" +
+                        "identificationToken=" + identificationToken +
+                        ", delegate=" + delegate +
+                        '}';
+            }
         }
     }
 
@@ -273,7 +309,7 @@ public interface MethodDelegationBinder {
      * A binding attempt created by a
      * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder}.
      */
-    static interface MethodBinding extends StackManipulation {
+    interface MethodBinding extends StackManipulation {
 
         /**
          * Returns the target method's parameter index for a given parameter binding token.
@@ -304,7 +340,7 @@ public interface MethodDelegationBinder {
          *
          * @see net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder
          */
-        static enum Illegal implements MethodBinding {
+        enum Illegal implements MethodBinding {
 
             /**
              * The singleton instance.
@@ -313,12 +349,12 @@ public interface MethodDelegationBinder {
 
             @Override
             public Integer getTargetParameterIndex(Object parameterBindingToken) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Method is not bound");
             }
 
             @Override
             public MethodDescription getTarget() {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Method is not bound");
             }
 
             @Override
@@ -328,7 +364,12 @@ public interface MethodDelegationBinder {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("Cannot delegate to an unbound method");
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.MethodBinding.Illegal." + name();
             }
         }
 
@@ -337,7 +378,7 @@ public interface MethodDelegationBinder {
          * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.MethodBinding}
          * by adding parameter bindings incrementally.
          */
-        static class Builder {
+        class Builder {
 
             /**
              * The method invoker for invoking the actual method that is bound.
@@ -420,17 +461,20 @@ public interface MethodDelegationBinder {
 
             @Override
             public String toString() {
-                return "MethodDelegationBinder.MethodBinding.Builder{" + "methodInvoker=" + methodInvoker
-                        + ", target=" + target
-                        + ", parameterStackManipulations=" + parameterStackManipulations +
-                        ", registeredTargetIndices=" + registeredTargetIndices + '}';
+                return "MethodDelegationBinder.MethodBinding.Builder{" +
+                        "methodInvoker=" + methodInvoker +
+                        ", target=" + target +
+                        ", parameterStackManipulations=" + parameterStackManipulations +
+                        ", registeredTargetIndices=" + registeredTargetIndices +
+                        ", nextParameterIndex=" + nextParameterIndex +
+                        '}';
             }
 
             /**
              * A method binding that was created by a
              * {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.MethodBinding.Builder}.
              */
-            private static class Build implements MethodBinding {
+            protected static class Build implements MethodBinding {
 
                 /**
                  * The target method this binding represents.
@@ -468,7 +512,7 @@ public interface MethodDelegationBinder {
                  *                                     parameter value onto the operand stack.
                  * @param terminatingStackManipulation The stack manipulation that is applied after the method invocation.
                  */
-                private Build(MethodDescription target,
+                protected Build(MethodDescription target,
                               Map<?, Integer> registeredTargetIndices,
                               StackManipulation methodInvocation,
                               List<StackManipulation> parameterStackManipulations,
@@ -534,7 +578,13 @@ public interface MethodDelegationBinder {
 
                 @Override
                 public String toString() {
-                    return "MethodBinding to " + target + " (" + (isValid() ? "valid" : "invalid") + ')';
+                    return "MethodDelegationBinder.MethodBinding.Builder.Build{" +
+                            "target=" + target +
+                            ", registeredTargetIndices=" + registeredTargetIndices +
+                            ", methodInvocation=" + methodInvocation +
+                            ", parameterStackManipulations=" + parameterStackManipulations +
+                            ", terminatingStackManipulation=" + terminatingStackManipulation +
+                            '}';
                 }
             }
         }
@@ -544,7 +594,7 @@ public interface MethodDelegationBinder {
      * Implementations of this interface are able to attempt the resolution of two successful bindings of a method
      * to two different target methods in order to identify a dominating binding.
      */
-    static interface AmbiguityResolver {
+    interface AmbiguityResolver {
 
         /**
          * Attempts to resolve to conflicting bindings.
@@ -563,7 +613,7 @@ public interface MethodDelegationBinder {
         /**
          * A resolution state of an attempt to resolve two conflicting bindings.
          */
-        static enum Resolution {
+        enum Resolution {
 
             /**
              * Describes a resolution state where no information about dominance could be gathered.
@@ -595,7 +645,7 @@ public interface MethodDelegationBinder {
              *
              * @param unresolved {@code true} if this resolution is unresolved.
              */
-            private Resolution(boolean unresolved) {
+            Resolution(boolean unresolved) {
                 this.unresolved = unresolved;
             }
 
@@ -627,12 +677,17 @@ public interface MethodDelegationBinder {
                         throw new AssertionError();
                 }
             }
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.AmbiguityResolver.Resolution." + name();
+            }
         }
 
         /**
          * An ambiguity resolver that does not attempt to resolve a conflicting binding.
          */
-        static enum NoOp implements AmbiguityResolver {
+        enum NoOp implements AmbiguityResolver {
 
             /**
              * The singleton instance.
@@ -643,13 +698,18 @@ public interface MethodDelegationBinder {
             public Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right) {
                 return Resolution.UNKNOWN;
             }
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.AmbiguityResolver.NoOp." + name();
+            }
         }
 
         /**
          * A chain of {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.AmbiguityResolver}s
          * that are applied in the given order until two bindings can be resolved.
          */
-        static class Chain implements AmbiguityResolver {
+        class Chain implements AmbiguityResolver {
 
             /**
              * A list of ambiguity resolvers that are applied by this chain in their order of application.
@@ -741,7 +801,7 @@ public interface MethodDelegationBinder {
      * <li>Find a best method among the successful bindings using the {@code AmbiguityResolver}.</li>
      * </ol>
      */
-    static class Processor {
+    class Processor {
 
         /**
          * Represents the index of the only value of two elements in a list.

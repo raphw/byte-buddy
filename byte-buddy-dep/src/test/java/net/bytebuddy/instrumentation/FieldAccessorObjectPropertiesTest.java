@@ -61,6 +61,11 @@ public class FieldAccessorObjectPropertiesTest {
         ObjectPropertyAssertion.of(FieldAccessor.ForUnnamedField.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForGivenType.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForGivenType.Factory.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForInstrumentedType.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldLocator.ForInstrumentedTypeHierarchy.Factory.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldNameExtractor.ForBeanProperty.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.ForNamedField.PreparationHandler.FieldDefiner.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.ForNamedField.PreparationHandler.NoOp.class).apply();
     }
 }

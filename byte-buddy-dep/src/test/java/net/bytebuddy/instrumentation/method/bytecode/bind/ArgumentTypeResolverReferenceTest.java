@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation.method.bytecode.bind;
 
 import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -229,5 +230,12 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
         verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ArgumentTypeResolver.class).apply();
+        ObjectPropertyAssertion.of(ArgumentTypeResolver.PrimitiveTypePrecedence.class).apply();
+        ObjectPropertyAssertion.of(ArgumentTypeResolver.ParameterIndexToken.class).apply();
     }
 }

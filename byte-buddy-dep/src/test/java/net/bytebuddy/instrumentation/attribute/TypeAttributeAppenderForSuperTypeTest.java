@@ -2,11 +2,10 @@ package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.asm.Type;
-
-import java.lang.annotation.Annotation;
 
 import static org.mockito.Mockito.*;
 
@@ -19,11 +18,16 @@ public class TypeAttributeAppenderForSuperTypeTest extends AbstractTypeAttribute
     public void testSuperTypeAnnotationAppender() throws Exception {
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(superType.getDeclaredAnnotations()).thenReturn(new AnnotationList
-                .ForLoadedAnnotation(new Annotation[]{new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()}));
+                .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         TypeAttributeAppender.ForSuperType.INSTANCE.apply(classVisitor, typeDescription);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(classVisitor);
         verify(typeDescription, atLeast(1)).getSupertype();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeAttributeAppender.ForSuperType.class).apply();
     }
 }

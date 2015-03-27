@@ -74,7 +74,7 @@ public @interface Origin {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Origin> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Origin> {
 
         /**
          * The singleton instance.
@@ -110,6 +110,11 @@ public @interface Origin {
                         " parameter is annotated with a Origin annotation with an argument not representing a Class" +
                         " Method, String, MethodType or MethodHandle type");
             }
+        }
+
+        @Override
+        public String toString() {
+            return "Origin.Binder." + name();
         }
     }
 }

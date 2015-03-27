@@ -78,6 +78,7 @@ public class FieldRegistryDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldRegistry.Default.class).apply();
+        ObjectPropertyAssertion.of(FieldRegistry.Compiled.NoOp.class).apply();
     }
 
     @Test

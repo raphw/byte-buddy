@@ -36,7 +36,7 @@ public interface NamingStrategy {
     /**
      * An description of a type which is to be named.
      */
-    static interface UnnamedType {
+    interface UnnamedType {
 
         /**
          * Returns this unnamed type's super class.
@@ -90,7 +90,7 @@ public interface NamingStrategy {
         /**
          * An unnamed type which is to be named by a naming strategy.
          */
-        static class Default implements UnnamedType {
+        class Default implements UnnamedType {
 
             /**
              * The unnamed type's super class.
@@ -221,7 +221,7 @@ public interface NamingStrategy {
      * An unbound {@link net.bytebuddy.NamingStrategy} where the actual naming strategy is still to be determined
      * in dependency of whether a type is to be subclasses, redefined or rebased.
      */
-    static interface Unbound {
+    interface Unbound {
 
         /**
          * Returns a naming strategy for subclassing a type.
@@ -252,7 +252,7 @@ public interface NamingStrategy {
          * their original name and where subclasses are named using a {@link net.bytebuddy.NamingStrategy.SuffixingRandom}
          * strategy.
          */
-        static class Default implements Unbound {
+        class Default implements Unbound {
 
             /**
              * The suffix to apply for generated subclasses.
@@ -305,7 +305,7 @@ public interface NamingStrategy {
         /**
          * A unified unbound naming strategy which always applies a given naming strategy.
          */
-        static class Unified implements Unbound {
+        class Unified implements Unbound {
 
             /**
              * The unified naming strategy.
@@ -368,7 +368,7 @@ public interface NamingStrategy {
      * necessary as it is illegal to define non-bootstrap classes in this name space. The same strategy is applied
      * when subclassing a signed type which is equally illegal.
      */
-    static class SuffixingRandom implements NamingStrategy {
+    class SuffixingRandom implements NamingStrategy {
 
         /**
          * The default package for defining types that are renamed to not be contained in the
@@ -480,7 +480,7 @@ public interface NamingStrategy {
         /**
          * A base name resolver is responsible for resolving a name onto which the suffix is appended.
          */
-        public static interface BaseNameResolver {
+        public interface BaseNameResolver {
 
             /**
              * Returns the resolved name.
@@ -493,7 +493,7 @@ public interface NamingStrategy {
             /**
              * Uses the unnamed type's super type's name as the resolved name.
              */
-            static enum ForUnnamedType implements BaseNameResolver {
+            enum ForUnnamedType implements BaseNameResolver {
 
                 /**
                  * The singleton instance.
@@ -504,12 +504,17 @@ public interface NamingStrategy {
                 public String resolve(UnnamedType unnamedType) {
                     return unnamedType.getSuperClass().getName();
                 }
+
+                @Override
+                public String toString() {
+                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType." + name();
+                }
             }
 
             /**
              * Uses a specific type's name as the resolved name.
              */
-            static class ForGivenType implements BaseNameResolver {
+            class ForGivenType implements BaseNameResolver {
 
                 /**
                  * The type description which represents the resolved name.
@@ -555,7 +560,7 @@ public interface NamingStrategy {
      * A naming strategy that creates a name by prefixing a given class and its package with another package and
      * by appending a random number to the class's simple name.
      */
-    static class PrefixingRandom implements NamingStrategy {
+    class PrefixingRandom implements NamingStrategy {
 
         /**
          * The package to prefix.
@@ -608,7 +613,7 @@ public interface NamingStrategy {
      * This strategy should only be used for one shot type generators since they will otherwise create types that
      * impose naming conflicts.
      */
-    static class Fixed implements NamingStrategy {
+    class Fixed implements NamingStrategy {
 
         /**
          * The fixed type name.

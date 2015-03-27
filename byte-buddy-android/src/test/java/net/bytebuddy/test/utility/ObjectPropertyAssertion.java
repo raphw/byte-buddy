@@ -190,11 +190,27 @@ public class ObjectPropertyAssertion<T> {
         } while ((currentType = currentType.getSuperclass()) != Object.class);
     }
 
-    public void apply(T instance) {
-        checkString(instance);
-        assertThat(instance, is(instance));
-        assertThat(instance, not(is((Object) null)));
-        assertThat(instance, not(is(new Object())));
+    public void applyMutable() throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        for (Constructor<?> constructor : type.getDeclaredConstructors()) {
+            if (constructor.isSynthetic() && skipSynthetic) {
+                continue;
+            }
+            constructor.setAccessible(true);
+            Class<?>[] parameterTypes = constructor.getParameterTypes();
+            Object[] actualArguments = new Object[parameterTypes.length];
+            Object[] otherArguments = new Object[parameterTypes.length];
+            int index = 0;
+            for (Class<?> parameterType : parameterTypes) {
+                putInstance(parameterType, actualArguments, otherArguments, index++);
+            }
+            @SuppressWarnings("unchecked")
+            T instance = (T) constructor.newInstance(actualArguments);
+            checkString(instance);
+            assertThat(instance, is(instance));
+            assertThat(instance, not(is((Object) null)));
+            assertThat(instance, not(is(new Object())));
+            assertThat(instance, not(is(constructor.newInstance(otherArguments))));
+        }
     }
 
     private void putInstance(Class<?> parameterType, Object actualArguments, Object otherArguments, int index) {
@@ -244,17 +260,17 @@ public class ObjectPropertyAssertion<T> {
         Array.set(otherArguments, index, otherArgument);
     }
 
-    public static interface Refinement<T> {
+    public interface Refinement<T> {
 
         void apply(T mock);
     }
 
-    public static interface Generator<T> {
+    public interface Generator<T> {
 
         Class<? extends T> generate();
     }
 
-    public static interface Creator<T> {
+    public interface Creator<T> {
 
         T create();
     }

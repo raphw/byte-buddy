@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
@@ -44,5 +45,10 @@ public class InstrumentationForAbstractMethodTest {
     @Test
     public void testPrepare() throws Exception {
         assertThat(Instrumentation.ForAbstractMethod.INSTANCE.prepare(instrumentedType), is(instrumentedType));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.ForAbstractMethod.class).apply();
     }
 }

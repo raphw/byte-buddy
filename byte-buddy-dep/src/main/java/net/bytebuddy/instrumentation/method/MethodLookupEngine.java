@@ -39,7 +39,7 @@ public interface MethodLookupEngine {
     /**
      * A factory for creating a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
      */
-    static interface Factory {
+    interface Factory {
 
         /**
          * Returns a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
@@ -54,7 +54,7 @@ public interface MethodLookupEngine {
      * A finding contains a class's extracted invokable methods which were computed by a
      * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
      */
-    static interface Finding {
+    interface Finding {
 
         /**
          * Returns the type description for which the finding was created.
@@ -82,7 +82,7 @@ public interface MethodLookupEngine {
         /**
          * A default implementation of a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Finding}.
          */
-        static class Default implements Finding {
+        class Default implements Finding {
 
             /**
              * The type that was analyzed for creating this finding.
@@ -164,7 +164,7 @@ public interface MethodLookupEngine {
      * This method description represents a method that is defined in a non-interface type and overrides a method
      * in another class it directly or indirectly extends.
      */
-    static class OverridenClassMethod extends MethodDescription.AbstractMethodDescription {
+    class OverridenClassMethod extends MethodDescription.AbstractMethodDescription {
 
         /**
          * Describes the index of the most specific method in the method chain in order to improve
@@ -293,7 +293,7 @@ public interface MethodLookupEngine {
      * This {@link net.bytebuddy.instrumentation.method.MethodDescription} represents methods that are defined
      * ambiguously on several interfaces of a common type.
      */
-    static class ConflictingInterfaceMethod extends MethodDescription.AbstractMethodDescription {
+    class ConflictingInterfaceMethod extends MethodDescription.AbstractMethodDescription {
 
         /**
          * An index that is guaranteed to exist but that expresses the fact that any method that is represented
@@ -456,7 +456,7 @@ public interface MethodLookupEngine {
      * However, conflicting interface methods are represented by
      * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.ConflictingInterfaceMethod} instances.
      */
-    static class Default implements MethodLookupEngine {
+    class Default implements MethodLookupEngine {
 
         /**
          * Determines if default method lookup is enabled.
@@ -513,7 +513,7 @@ public interface MethodLookupEngine {
          * some contexts and is normally fully irrelevant when writing types in class file formats that do not
          * support default methods.
          */
-        public static enum DefaultMethodLookup {
+        public enum DefaultMethodLookup {
 
             /**
              * Enables the extraction of default methods.
@@ -553,13 +553,18 @@ public interface MethodLookupEngine {
             public abstract Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
                                                                                Collection<TypeDescription> interfaces,
                                                                                Collection<TypeDescription> defaultMethodRelevantInterfaces);
+
+            @Override
+            public String toString() {
+                return "MethodLookupEngine.Default.DefaultMethodLookup." + name();
+            }
         }
 
         /**
          * A factory for creating {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default} lookup
          * engines.
          */
-        public static enum Factory implements MethodLookupEngine.Factory {
+        public enum Factory implements MethodLookupEngine.Factory {
 
             /**
              * The singleton instance.
@@ -571,6 +576,11 @@ public interface MethodLookupEngine {
                 return new Default(extractDefaultMethods
                         ? DefaultMethodLookup.ENABLED
                         : DefaultMethodLookup.DISABLED);
+            }
+
+            @Override
+            public String toString() {
+                return "MethodLookupEngine.Default.Factory." + name();
             }
         }
 
@@ -831,7 +841,7 @@ public interface MethodLookupEngine {
              * </li>
              * </ol>
              */
-            private static interface DefaultMethodLookup {
+            protected interface DefaultMethodLookup {
 
                 /**
                  * Announces the begin of the analysis of a given type.
@@ -859,7 +869,7 @@ public interface MethodLookupEngine {
                  * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup}
                  * that does not extract any default interfaces.
                  */
-                static enum Disabled implements MethodBucket.DefaultMethodLookup {
+                enum Disabled implements MethodBucket.DefaultMethodLookup {
 
                     /**
                      * The singleton instance.
@@ -868,17 +878,22 @@ public interface MethodLookupEngine {
 
                     @Override
                     public void begin(TypeDescription typeDescription) {
-
+                        /* do nothing */
                     }
 
                     @Override
                     public void register(MethodDescription methodDescription) {
-
+                        /* do nothing */
                     }
 
                     @Override
                     public void complete(TypeDescription typeDescription) {
+                        /* do nothing */
+                    }
 
+                    @Override
+                    public String toString() {
+                        return "MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Disabled." + name();
                     }
                 }
 
@@ -886,7 +901,7 @@ public interface MethodLookupEngine {
                  * A canonical implementation of an enabled
                  * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup}.
                  */
-                static class Enabled implements MethodBucket.DefaultMethodLookup {
+                class Enabled implements MethodBucket.DefaultMethodLookup {
 
                     /**
                      * The declared interfaces of an instrumented type that are to be extracted by this default
@@ -954,6 +969,15 @@ public interface MethodLookupEngine {
                     protected Map<TypeDescription, Set<MethodDescription>> materialize() {
                         defaultMethods.keySet().retainAll(declaredInterfaceTypes);
                         return Collections.unmodifiableMap(defaultMethods);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Enabled{" +
+                                "declaredInterfaceTypes=" + declaredInterfaceTypes +
+                                ", defaultMethods=" + defaultMethods +
+                                ", methodDeclarations=" + methodDeclarations +
+                                '}';
                     }
                 }
             }

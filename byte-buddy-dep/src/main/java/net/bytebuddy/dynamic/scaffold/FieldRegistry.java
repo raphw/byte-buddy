@@ -43,7 +43,7 @@ public interface FieldRegistry {
     /**
      * A {@link net.bytebuddy.dynamic.scaffold.FieldRegistry} which was prepared for a given instrumented type.
      */
-    static interface Prepared {
+    interface Prepared {
 
         /**
          * Compiled the field registry.
@@ -57,12 +57,12 @@ public interface FieldRegistry {
     /**
      * Represents a compiled field registry.
      */
-    static interface Compiled extends TypeWriter.FieldPool {
+    interface Compiled extends TypeWriter.FieldPool {
 
         /**
          * A no-op field registry that does not register annotations for any field.
          */
-        static enum NoOp implements Compiled {
+        enum NoOp implements Compiled {
 
             /**
              * The singleton instance.
@@ -73,13 +73,18 @@ public interface FieldRegistry {
             public Entry target(FieldDescription fieldDescription) {
                 return Entry.NoOp.INSTANCE;
             }
+
+            @Override
+            public String toString() {
+                return "FieldRegistry.Compiled.NoOp." + name();
+            }
         }
     }
 
     /**
      * A simple matcher for a field where fields can be uniquely identified by their identifier for a given type.
      */
-    static interface LatentFieldMatcher {
+    interface LatentFieldMatcher {
 
         /**
          * Returns the name of the matched field.
@@ -92,7 +97,7 @@ public interface FieldRegistry {
     /**
      * An immutable default implementation of a field registry.
      */
-    static class Default implements FieldRegistry {
+    class Default implements FieldRegistry {
 
         /**
          * Contains all non-prepared field registry entries mapped by the field name. This map should never be mutated.

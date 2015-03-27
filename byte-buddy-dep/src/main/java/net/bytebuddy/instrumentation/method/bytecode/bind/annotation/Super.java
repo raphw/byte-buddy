@@ -89,7 +89,7 @@ public @interface Super {
      *
      * @see net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Super
      */
-    static enum Instantiation {
+    enum Instantiation {
 
         /**
          * A proxy instance is instantiated by its constructor. For the constructor's arguments, the parameters default
@@ -168,6 +168,11 @@ public @interface Super {
         protected abstract StackManipulation proxyFor(TypeDescription parameterType,
                                                       Instrumentation.Target instrumentationTarget,
                                                       AnnotationDescription.Loadable<Super> annotation);
+
+        @Override
+        public String toString() {
+            return "Super.Instantiation." + name();
+        }
     }
 
     /**
@@ -177,7 +182,7 @@ public @interface Super {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Super> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Super> {
 
         /**
          * The singleton instance.
@@ -215,6 +220,11 @@ public @interface Super {
                         .getValue(STRATEGY, AnnotationDescription.EnumerationValue.class).load(Instantiation.class)
                         .proxyFor(target.getTypeDescription(), instrumentationTarget, annotation));
             }
+        }
+
+        @Override
+        public String toString() {
+            return "Super.Binder." + name();
         }
     }
 }

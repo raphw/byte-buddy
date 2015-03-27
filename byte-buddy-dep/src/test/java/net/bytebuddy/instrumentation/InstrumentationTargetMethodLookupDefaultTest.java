@@ -3,6 +3,7 @@ package net.bytebuddy.instrumentation;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -53,5 +54,10 @@ public class InstrumentationTargetMethodLookupDefaultTest {
         verifyNoMoreInteractions(invokableMethods);
         verify(bridgeMethodResolver).resolve(methodDescription);
         verifyNoMoreInteractions(bridgeMethodResolver);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Instrumentation.Target.MethodLookup.Default.class).apply();
     }
 }

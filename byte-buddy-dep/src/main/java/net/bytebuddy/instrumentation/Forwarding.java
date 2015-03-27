@@ -206,7 +206,7 @@ public class Forwarding implements Instrumentation {
         /**
          * A preparation handler for an unset instance that is stored in an instance field.
          */
-        static enum ForInstanceField implements PreparationHandler {
+        enum ForInstanceField implements PreparationHandler {
 
             /**
              * The singleton instance.
@@ -222,12 +222,17 @@ public class Forwarding implements Instrumentation {
             public StackManipulation loadFieldOwner() {
                 return MethodVariableAccess.REFERENCE.loadOffset(0);
             }
+
+            @Override
+            public String toString() {
+                return "Forwarding.PreparationHandler.ForInstanceField." + name();
+            }
         }
 
         /**
          * A preparation handler for an unset instance that is stored in a {@code static} field.
          */
-        static enum ForStaticField implements PreparationHandler {
+        enum ForStaticField implements PreparationHandler {
 
             /**
              * The singleton instance.
@@ -243,12 +248,17 @@ public class Forwarding implements Instrumentation {
             public StackManipulation loadFieldOwner() {
                 return StackManipulation.LegalTrivial.INSTANCE;
             }
+
+            @Override
+            public String toString() {
+                return "Forwarding.PreparationHandler.ForStaticField." + name();
+            }
         }
 
         /**
          * A preparation handler for an explicit instance that is stored in a {@code static} field.
          */
-        static class ForStaticInstance implements PreparationHandler {
+        class ForStaticInstance implements PreparationHandler {
 
             /**
              * The target of the delegation.

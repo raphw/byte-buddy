@@ -31,7 +31,7 @@ public interface LoadedTypeInitializer {
     /**
      * A loaded type initializer that does not do anything.
      */
-    static enum NoOp implements LoadedTypeInitializer {
+    enum NoOp implements LoadedTypeInitializer {
 
         /**
          * The singleton instance.
@@ -47,6 +47,11 @@ public interface LoadedTypeInitializer {
         public boolean isAlive() {
             return false;
         }
+
+        @Override
+        public String toString() {
+            return "LoadedTypeInitializer.NoOp." + name();
+        }
     }
 
     /**
@@ -54,7 +59,7 @@ public interface LoadedTypeInitializer {
      *
      * @param <T> The type of the value that is set as a value to the field.
      */
-    static class ForStaticField<T> implements LoadedTypeInitializer, Serializable {
+    class ForStaticField<T> implements LoadedTypeInitializer, Serializable {
 
         /**
          * A value for accessing a static field.
@@ -164,7 +169,7 @@ public interface LoadedTypeInitializer {
     /**
      * A compound loaded type initializer that combines several type initializers.
      */
-    static class Compound implements LoadedTypeInitializer, Serializable {
+    class Compound implements LoadedTypeInitializer, Serializable {
 
         /**
          * The loaded type initializers that are represented by this compound type initializer.

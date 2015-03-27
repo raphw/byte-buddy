@@ -70,11 +70,6 @@ public class TypeWriterFieldPoolEntryTest {
     }
 
     @Test
-    public void testSimpleEntryEntryHashCodeEquals() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.Simple.class).apply();
-    }
-
-    @Test
     public void testNoOpEntryWritesField() throws Exception {
         TypeWriter.FieldPool.Entry.NoOp.INSTANCE.apply(classVisitor, fieldDescription);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, null);
@@ -88,5 +83,11 @@ public class TypeWriterFieldPoolEntryTest {
         assertThat(TypeWriter.FieldPool.Entry.NoOp.INSTANCE.getDefaultValue(), nullValue());
         assertThat(TypeWriter.FieldPool.Entry.NoOp.INSTANCE.getFieldAppender(),
                 is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.Simple.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.NoOp.class).apply();
     }
 }

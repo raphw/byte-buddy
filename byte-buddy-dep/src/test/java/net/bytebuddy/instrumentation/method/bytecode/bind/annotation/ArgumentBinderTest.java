@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver;
 import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -123,6 +124,15 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         assertThat(argument, is(loadedArgument));
         assertThat(argument.hashCode(), is(loadedArgument.hashCode()));
         assertThat(argument.toString(), is(loadedArgument.toString()));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Argument.Binder.class).apply();
+        ObjectPropertyAssertion.of(Argument.BindingMechanic.class).apply();
+        ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.class).apply();
+        ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.class).applyMutable();
+
     }
 
     private static class Carrier {

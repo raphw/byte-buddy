@@ -63,7 +63,7 @@ public @interface Argument {
      * @see Argument#bindingMechanic()
      * @see net.bytebuddy.instrumentation.method.bytecode.bind.ArgumentTypeResolver
      */
-    static enum BindingMechanic {
+    enum BindingMechanic {
 
         /**
          * The binding is unique, i.e. only one such binding must be present among all parameters of a method. As a
@@ -123,6 +123,11 @@ public @interface Argument {
                                                                                   Assigner assigner,
                                                                                   boolean dynamicallyTyped,
                                                                                   int parameterOffset);
+
+        @Override
+        public String toString() {
+            return "Argument.BindingMechanic." + name();
+        }
     }
 
     /**
@@ -132,7 +137,7 @@ public @interface Argument {
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Argument> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Argument> {
 
         /**
          * The singleton instance.
@@ -164,6 +169,11 @@ public @interface Argument {
                     RuntimeType.Verifier.check(target),
                     source.getParameters().get(argument.value()).getOffset());
         }
+
+        @Override
+        public String toString() {
+            return "Argument.Binder." + name();
+        }
     }
 
     /**
@@ -173,7 +183,7 @@ public @interface Argument {
      *
      * @see TargetMethodAnnotationDrivenBinder.DefaultsProvider
      */
-    static enum NextUnboundAsDefaultsProvider implements TargetMethodAnnotationDrivenBinder.DefaultsProvider {
+    enum NextUnboundAsDefaultsProvider implements TargetMethodAnnotationDrivenBinder.DefaultsProvider {
 
         /**
          * The singleton instance.
@@ -211,6 +221,11 @@ public @interface Argument {
             return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
         }
 
+        @Override
+        public String toString() {
+            return "Argument.NextUnboundAsDefaultsProvider." + name();
+        }
+
         /**
          * An iterator that creates {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument}
          * annotations for any non-referenced index of the source method.
@@ -245,6 +260,13 @@ public @interface Argument {
             @Override
             public void remove() {
                 iterator.remove();
+            }
+
+            @Override
+            public String toString() {
+                return "Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator{" +
+                        "iterator=" + iterator +
+                        '}';
             }
 
             /**
@@ -305,7 +327,8 @@ public @interface Argument {
 
                 @Override
                 public String toString() {
-                    return "@" + Argument.class.getName() + "(bindingMechanic=" + BindingMechanic.UNIQUE.name()
+                    return "@" + Argument.class.getName()
+                            + "(bindingMechanic=" + BindingMechanic.UNIQUE.toString()
                             + ", value=" + parameterIndex + ")";
                 }
             }

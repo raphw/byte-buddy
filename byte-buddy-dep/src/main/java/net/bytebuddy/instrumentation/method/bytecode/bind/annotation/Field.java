@@ -52,7 +52,7 @@ public @interface Field {
      * A placeholder name to indicate that a field name should be inferred by the name of the intercepted
      * method by the Java bean naming conventions.
      */
-    static final String BEAN_PROPERTY = "";
+    String BEAN_PROPERTY = "";
 
     /**
      * Determines if the proxy should be serializable.
@@ -80,7 +80,7 @@ public @interface Field {
     /**
      * A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field} annotation.
      */
-    static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> {
+    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> {
 
         /**
          * A reference to the method that declares the field annotation's defining type property.
@@ -262,7 +262,7 @@ public @interface Field {
         /**
          * Represents an instrumentation for implementing a proxy type constructor when a static field is accessed.
          */
-        protected static enum StaticFieldConstructor implements Instrumentation {
+        protected enum StaticFieldConstructor implements Instrumentation {
 
             /**
              * The singleton instance.
@@ -277,7 +277,7 @@ public @interface Field {
             /**
              * Creates the constructor call singleton.
              */
-            private StaticFieldConstructor() {
+            StaticFieldConstructor() {
                 objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
                         .getDeclaredMethods()
                         .filter(isConstructor())
@@ -295,12 +295,17 @@ public @interface Field {
                         MethodInvocation.invoke(objectTypeDefaultConstructor),
                         MethodReturn.VOID);
             }
+
+            @Override
+            public String toString() {
+                return "Field.Binder.StaticFieldConstructor." + name();
+            }
         }
 
         /**
          * Determines the way a field is to be accessed.
          */
-        protected static enum AccessType {
+        protected enum AccessType {
 
             /**
              * Represents getter access for a field.
@@ -358,6 +363,11 @@ public @interface Field {
             protected abstract Instrumentation access(FieldDescription fieldDescription,
                                                       Assigner assigner,
                                                       AuxiliaryType.MethodAccessorFactory methodAccessorFactory);
+
+            @Override
+            public String toString() {
+                return "Field.Binder.AccessType." + name();
+            }
 
             /**
              * Instrumentation for a getter method.

@@ -135,7 +135,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      *
      * @param <T> The {@link java.lang.annotation.Annotation#annotationType()} handled by this parameter binder.
      */
-    public static interface ParameterBinder<T extends Annotation> {
+    public interface ParameterBinder<T extends Annotation> {
 
         /**
          * The annotation type that is handled by this parameter binder.
@@ -168,7 +168,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      *
      * @see net.bytebuddy.instrumentation.method.bytecode.bind.annotation.TargetMethodAnnotationDrivenBinder
      */
-    public static interface DefaultsProvider {
+    public interface DefaultsProvider {
 
         /**
          * Creates an iterator from which a value is pulled each time no processable annotation is found on a
@@ -187,7 +187,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * A defaults provider that does not supply any defaults. If this defaults provider is used, a target
          * method is required to annotate each parameter with a known annotation.
          */
-        static enum Empty implements DefaultsProvider {
+        enum Empty implements DefaultsProvider {
 
             /**
              * The singleton instance.
@@ -201,10 +201,15 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 return EmptyIterator.INSTANCE;
             }
 
+            @Override
+            public String toString() {
+                return "TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty." + name();
+            }
+
             /**
              * A trivial iterator without any elements.
              */
-            private static enum EmptyIterator implements Iterator<AnnotationDescription> {
+            private enum EmptyIterator implements Iterator<AnnotationDescription> {
 
                 /**
                  * The singleton instance.
@@ -233,7 +238,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      * Responsible for creating a {@link net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation}
      * that is applied after the interception method is applied.
      */
-    public static interface TerminationHandler {
+    public interface TerminationHandler {
 
         /**
          * Creates a stack manipulation that is to be applied after the method return.
@@ -248,7 +253,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * A termination handler that returns the return value of the interception method.
          */
-        static enum Returning implements TerminationHandler {
+        enum Returning implements TerminationHandler {
 
             /**
              * The singleton instance.
@@ -266,7 +271,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * A termination handler that pops the return value of the interception method.
          */
-        static enum Dropping implements TerminationHandler {
+        enum Dropping implements TerminationHandler {
 
             /**
              * The singleton instance.
@@ -379,7 +384,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * A handler is responsible for processing a parameter's binding.
          */
-        private static interface Handler {
+        private interface Handler {
 
             /**
              * Handles a parameter binding.
@@ -399,7 +404,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              * An unbound handler is a fallback for returning an illegal binding for parameters for which no parameter
              * binder could be located.
              */
-            static enum Unbound implements Handler {
+            enum Unbound implements Handler {
 
                 /**
                  * The singleton instance.
@@ -421,7 +426,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              *
              * @param <T> The annotation type of a given handler.
              */
-            static class Bound<T extends Annotation> implements Handler {
+            class Bound<T extends Annotation> implements Handler {
 
                 /**
                  * The parameter binder that is actually responsible for binding the parameter.

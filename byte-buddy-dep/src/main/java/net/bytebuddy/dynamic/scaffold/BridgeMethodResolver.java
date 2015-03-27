@@ -40,7 +40,7 @@ public interface BridgeMethodResolver {
      * A no-op implementation of a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver} which is simply
      * returning the method it is given to resolve.
      */
-    static enum NoOp implements BridgeMethodResolver, Factory {
+    enum NoOp implements BridgeMethodResolver, Factory {
 
         /**
          * The singleton instance.
@@ -56,13 +56,18 @@ public interface BridgeMethodResolver {
         public MethodDescription resolve(MethodDescription methodDescription) {
             return methodDescription;
         }
+
+        @Override
+        public String toString() {
+            return "BridgeMethodResolver.NoOp." + name();
+        }
     }
 
     /**
      * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver} for a given list of
      * relevant methods that can be called in a given context.
      */
-    static interface Factory {
+    interface Factory {
 
         /**
          * Creates a bridge method resolver for a given list of methods.
@@ -77,7 +82,7 @@ public interface BridgeMethodResolver {
      * A simple bridge method resolver which applies its resolution by analyzing non-generic types. When a type
      * inherits from a generic type and additionally overloads this method, this resolution might be ambiguous.
      */
-    static class Simple implements BridgeMethodResolver {
+    class Simple implements BridgeMethodResolver {
 
         /**
          * A map of all bridges mapped by their unique signature.
@@ -85,17 +90,26 @@ public interface BridgeMethodResolver {
         private final Map<String, BridgeTarget> bridges;
 
         /**
-         * Creates a new simple bridge method resolver.
+         * Creates a new simple bridge method resolver
+         * @param bridges  A map of all bridges mapped by their unique signature.
+         */
+        protected Simple(Map<String, BridgeTarget> bridges) {
+            this.bridges = bridges;
+        }
+
+        /**
+         * Creates a new bridge method resolver for the given list of methods.
          *
          * @param methodList      The relevant methods which can be called in a given context.
          * @param conflictHandler A conflict handler that is queried for handling ambiguous resolutions.
          */
-        public Simple(MethodList methodList, ConflictHandler conflictHandler) {
+        public static BridgeMethodResolver of(MethodList methodList, ConflictHandler conflictHandler) {
             MethodList bridgeMethods = methodList.filter(isBridge());
-            bridges = new HashMap<String, BridgeTarget>(bridgeMethods.size());
+            HashMap<String, BridgeTarget> bridges = new HashMap<String, BridgeTarget>(bridgeMethods.size());
             for (MethodDescription bridgeMethod : bridgeMethods) {
                 bridges.put(bridgeMethod.getUniqueSignature(), findBridgeTargetFor(bridgeMethod, conflictHandler));
             }
+            return new Simple(bridges);
         }
 
         /**
@@ -152,7 +166,7 @@ public interface BridgeMethodResolver {
          * A factory for creating {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple} instances
          * for any given default {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple.ConflictHandler}.
          */
-        public static enum Factory implements BridgeMethodResolver.Factory {
+        public enum Factory implements BridgeMethodResolver.Factory {
 
             /**
              * A factory for a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Factory} that implements the
@@ -185,20 +199,25 @@ public interface BridgeMethodResolver {
              *
              * @param conflictHandler The conflict handler for this factory.
              */
-            private Factory(ConflictHandler conflictHandler) {
+            Factory(ConflictHandler conflictHandler) {
                 this.conflictHandler = conflictHandler;
             }
 
             @Override
             public BridgeMethodResolver make(MethodList methodList) {
-                return new Simple(methodList, conflictHandler);
+                return Simple.of(methodList, conflictHandler);
+            }
+
+            @Override
+            public String toString() {
+                return "BridgeMethodResolver.Simple.Factory." + name();
             }
         }
 
         /**
          * A conflict handler is queried for resolving a bridge method with multiple possible target methods.
          */
-        public static interface ConflictHandler {
+        public interface ConflictHandler {
 
             /**
              * Returns a target method for the given bridge method out of the given list of candidate methods.
@@ -214,7 +233,7 @@ public interface BridgeMethodResolver {
              * Default implementations of a
              * {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple.ConflictHandler}.
              */
-            static enum Default implements ConflictHandler {
+            enum Default implements ConflictHandler {
 
                 /**
                  * A strategy that fails immediately when an ambiguous resolution is discovered.
@@ -245,6 +264,11 @@ public interface BridgeMethodResolver {
                     public BridgeTarget choose(MethodDescription bridgeMethod, MethodList targetCandidates) {
                         return new BridgeTarget.Resolved(bridgeMethod);
                     }
+                };
+
+                @Override
+                public String toString() {
+                    return "BridgeMethodResolver.Simple.ConflictHandler.Default." + name();
                 }
             }
         }
@@ -252,7 +276,7 @@ public interface BridgeMethodResolver {
         /**
          * A target of a resolved bridge method which is created by a {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver.Simple}.
          */
-        public static interface BridgeTarget {
+        public interface BridgeTarget {
 
             /**
              * Extracts the resolved bridge method target or throws an exception if no such target exists.
@@ -271,7 +295,7 @@ public interface BridgeMethodResolver {
             /**
              * Represents a bridge method with an unknown target method.
              */
-            static enum Unknown implements BridgeTarget {
+            enum Unknown implements BridgeTarget {
 
                 /**
                  * The singleton instance.
@@ -287,12 +311,17 @@ public interface BridgeMethodResolver {
                 public boolean isResolved() {
                     return true;
                 }
+
+                @Override
+                public String toString() {
+                    return "BridgeMethodResolver.Simple.BridgeTarget.Unknown." + name();
+                }
             }
 
             /**
              * Represents a bridge method with an unambiguously resolved target method.
              */
-            static class Resolved implements BridgeTarget {
+            class Resolved implements BridgeTarget {
 
                 /**
                  * The target method for this resolved bridge method.
@@ -339,7 +368,7 @@ public interface BridgeMethodResolver {
              * Represents a bridge method with a possible candidate target method which might however be another
              * bridge method.
              */
-            static class Candidate implements BridgeTarget {
+            class Candidate implements BridgeTarget {
 
                 /**
                  * The target method candidate for this resolved bridge method.

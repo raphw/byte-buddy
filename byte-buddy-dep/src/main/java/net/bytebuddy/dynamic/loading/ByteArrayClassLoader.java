@@ -149,7 +149,7 @@ public class ByteArrayClassLoader extends ClassLoader {
      * A persistence handler decides on weather the byte array that represents a loaded class is exposed by
      * the {@link java.lang.ClassLoader#getResourceAsStream(String)} method.
      */
-    public static enum PersistenceHandler {
+    public enum PersistenceHandler {
 
         /**
          * The manifest persistence handler retains all class file representations and makes them accessible.
@@ -204,7 +204,7 @@ public class ByteArrayClassLoader extends ClassLoader {
          *
          * @param manifest {@code true} if this persistence handler represents manifest class file storage.
          */
-        private PersistenceHandler(boolean manifest) {
+        PersistenceHandler(boolean manifest) {
             this.manifest = manifest;
         }
 
@@ -234,6 +234,11 @@ public class ByteArrayClassLoader extends ClassLoader {
          * @return An input stream representing the requested resource or {@code null} if no such resource is known.
          */
         protected abstract InputStream inputStream(String resourceName, Map<String, byte[]> typeDefinitions);
+
+        @Override
+        public String toString() {
+            return "ByteArrayClassLoader.PersistenceHandler." + name();
+        }
     }
 
     /**

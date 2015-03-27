@@ -12,5 +12,6 @@ public class DynamicTypeBuilderObjectPropertiesTest {
         ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.DefaultMatchedMethodInterception.class).skipSynthetic().apply();
         ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.DefaultMethodAnnotationTarget.class).skipSynthetic().apply();
         ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.DefaultOptionalMatchedMethodInterception.class).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.FieldValueTarget.NumericRangeValidator.class).apply();
     }
 }

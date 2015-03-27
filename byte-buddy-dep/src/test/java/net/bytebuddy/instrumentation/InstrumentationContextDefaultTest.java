@@ -613,14 +613,11 @@ public class InstrumentationContextDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Instrumentation.Context.Default.class)
-                .apply(new Instrumentation.Context.Default(mock(TypeDescription.class),
-                        mock(InstrumentedType.TypeInitializer.class),
-                        mock(ClassFileVersion.class)));
-        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheAppender.class);
-        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheEntry.class);
-        ObjectPropertyAssertion.of(Instrumentation.Context.Default.AccessorMethodDelegation.class);
-        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldSetter.class);
-        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldGetter.class);
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.class).applyMutable();
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheAppender.class).apply();
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldCacheEntry.class).apply();
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.AccessorMethodDelegation.class).apply();
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldSetter.class).apply();
+        ObjectPropertyAssertion.of(Instrumentation.Context.Default.FieldGetter.class).apply();
     }
 }

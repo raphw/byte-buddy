@@ -81,6 +81,7 @@ public class AgentBuilderListenerTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(AgentBuilder.Listener.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.Compound.class).apply();
     }
 }

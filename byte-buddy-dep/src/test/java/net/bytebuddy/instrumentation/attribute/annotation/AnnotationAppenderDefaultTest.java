@@ -136,12 +136,13 @@ public class AnnotationAppenderDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AnnotationAppender.Default.class).apply();
+        ObjectPropertyAssertion.of(AnnotationAppender.AnnotationVisibility.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Foo {
+    public @interface Foo {
 
-        static class Instance implements Foo {
+        class Instance implements Foo {
 
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -151,9 +152,9 @@ public class AnnotationAppenderDefaultTest {
     }
 
     @Retention(RetentionPolicy.SOURCE)
-    public static @interface FooSourceCodeRetention {
+    public @interface FooSourceCodeRetention {
 
-        static class Instance implements FooSourceCodeRetention {
+        class Instance implements FooSourceCodeRetention {
 
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -163,9 +164,9 @@ public class AnnotationAppenderDefaultTest {
     }
 
     @Retention(RetentionPolicy.CLASS)
-    public static @interface FooByteCodeRetention {
+    public @interface FooByteCodeRetention {
 
-        static class Instance implements FooByteCodeRetention {
+        class Instance implements FooByteCodeRetention {
 
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -174,9 +175,9 @@ public class AnnotationAppenderDefaultTest {
         }
     }
 
-    public static @interface FooNoRetention {
+    public @interface FooNoRetention {
 
-        static class Instance implements FooNoRetention {
+        class Instance implements FooNoRetention {
 
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -186,11 +187,11 @@ public class AnnotationAppenderDefaultTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Qux {
+    public @interface Qux {
 
         String value();
 
-        static class Instance implements Qux {
+        class Instance implements Qux {
 
             private final String value;
 
@@ -211,7 +212,7 @@ public class AnnotationAppenderDefaultTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Baz {
+    public @interface Baz {
 
         String value();
 
@@ -223,11 +224,11 @@ public class AnnotationAppenderDefaultTest {
 
         Class<?> type();
 
-        static enum Enum {
+        enum Enum {
             VALUE
         }
 
-        static class Instance implements Baz {
+        class Instance implements Baz {
 
             private final String value;
 

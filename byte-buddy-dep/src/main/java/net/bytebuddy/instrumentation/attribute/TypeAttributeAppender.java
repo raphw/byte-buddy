@@ -25,7 +25,7 @@ public interface TypeAttributeAppender {
     /**
      * A type attribute appender that does not append any attributes.
      */
-    static enum NoOp implements TypeAttributeAppender {
+    enum NoOp implements TypeAttributeAppender {
 
         /**
          * The singleton instance.
@@ -36,6 +36,11 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             /* do nothing */
         }
+
+        @Override
+        public String toString() {
+            return "TypeAttributeAppender.NoOp." + name();
+        }
     }
 
     /**
@@ -43,7 +48,7 @@ public interface TypeAttributeAppender {
      * instrumented type this type attribute appender is applied onto. The visibility for the annotation
      * will be inferred from the annotations' {@link java.lang.annotation.RetentionPolicy}.
      */
-    static enum ForSuperType implements TypeAttributeAppender {
+    enum ForSuperType implements TypeAttributeAppender {
 
         /**
          * The singleton instance.
@@ -58,13 +63,18 @@ public interface TypeAttributeAppender {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
+
+        @Override
+        public String toString() {
+            return "TypeAttributeAppender.ForSuperType." + name();
+        }
     }
 
     /**
      * An attribute appender that appends a single annotation to a given type. The visibility for the annotation
      * will be inferred from the annotation's {@link java.lang.annotation.RetentionPolicy}.
      */
-    static class ForAnnotation implements TypeAttributeAppender {
+    class ForAnnotation implements TypeAttributeAppender {
 
         /**
          * The annotations to write to the given type.
@@ -109,7 +119,7 @@ public interface TypeAttributeAppender {
     /**
      * Writes all annotations that are declared for a given Java type to the target type.
      */
-    static class ForType implements TypeAttributeAppender {
+    class ForType implements TypeAttributeAppender {
 
         /**
          * The class of which the declared annotations are to be copied.
@@ -163,7 +173,7 @@ public interface TypeAttributeAppender {
     /**
      * A compound type attribute appender that concatenates a number of other attribute appenders.
      */
-    static class Compound implements TypeAttributeAppender {
+    class Compound implements TypeAttributeAppender {
 
         /**
          * The type attribute appenders this compound appender represents in their application order.

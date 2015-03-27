@@ -686,7 +686,7 @@ public class MethodDelegation implements Instrumentation {
     /**
      * An instrumentation delegate is responsible for executing the actual method delegation.
      */
-    protected static interface InstrumentationDelegate {
+    protected interface InstrumentationDelegate {
 
         /**
          * Prepares the instrumented type.
@@ -715,7 +715,7 @@ public class MethodDelegation implements Instrumentation {
         /**
          * An instrumentation applied to a static method.
          */
-        static enum ForStaticMethod implements InstrumentationDelegate {
+        enum ForStaticMethod implements InstrumentationDelegate {
 
             /**
              * The singleton instance.
@@ -736,12 +736,17 @@ public class MethodDelegation implements Instrumentation {
             public MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType) {
                 return MethodDelegationBinder.MethodInvoker.Simple.INSTANCE;
             }
+
+            @Override
+            public String toString() {
+                return "MethodDelegation.InstrumentationDelegate.ForStaticMethod." + name();
+            }
         }
 
         /**
          * An instrumentation applied on a static field.
          */
-        static class ForStaticField implements InstrumentationDelegate {
+        class ForStaticField implements InstrumentationDelegate {
 
             /**
              * The name prefix for the {@code static} field that is containing the delegation target.
@@ -822,7 +827,7 @@ public class MethodDelegation implements Instrumentation {
         /**
          * An instrumentation applied on an instance field.
          */
-        static class ForInstanceField implements InstrumentationDelegate {
+        class ForInstanceField implements InstrumentationDelegate {
 
             /**
              * The name of the instance field that is containing the target of the method delegation.
@@ -887,7 +892,7 @@ public class MethodDelegation implements Instrumentation {
         /**
          * An instrumentation that creates new instances of a given type.
          */
-        static class ForConstruction implements InstrumentationDelegate {
+        class ForConstruction implements InstrumentationDelegate {
 
             /**
              * The type that is to be constructed.

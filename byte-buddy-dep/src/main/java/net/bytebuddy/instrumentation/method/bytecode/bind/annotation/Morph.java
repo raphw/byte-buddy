@@ -77,7 +77,7 @@ public @interface Morph {
     /**
      * A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph} annotation.
      */
-    static class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph>,
+    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph>,
             MethodLookupEngine.Factory,
             MethodLookupEngine {
 
@@ -238,7 +238,7 @@ public @interface Morph {
         /**
          * A default method locator is responsible for looking up a default method to a given source method.
          */
-        protected static interface DefaultMethodLocator {
+        protected interface DefaultMethodLocator {
 
             /**
              * Locates the correct default method to a given source method.
@@ -255,7 +255,7 @@ public @interface Morph {
              * An implicit default method locator that only permits the invocation of a default method if the source
              * method itself represents a method that was defined on a default method interface.
              */
-            static enum Implicit implements DefaultMethodLocator {
+            enum Implicit implements DefaultMethodLocator {
 
                 /**
                  * The singleton instance.
@@ -279,12 +279,17 @@ public @interface Morph {
                             ? specialMethodInvocation
                             : Instrumentation.SpecialMethodInvocation.Illegal.INSTANCE;
                 }
+
+                @Override
+                public String toString() {
+                    return "Morph.Binder.DefaultMethodLocator.Implicit." + name();
+                }
             }
 
             /**
              * An explicit default method locator attempts to look up a default method in the specified interface type.
              */
-            static class Explicit implements DefaultMethodLocator {
+            class Explicit implements DefaultMethodLocator {
 
                 /**
                  * A description of the type on which the default method should be invoked.
@@ -472,7 +477,7 @@ public @interface Morph {
             /**
              * Creates an instance of the proxy when instrumenting a static method.
              */
-            protected static enum StaticFieldConstructor implements Instrumentation {
+            protected enum StaticFieldConstructor implements Instrumentation {
 
                 /**
                  * The singleton instance.
@@ -487,7 +492,7 @@ public @interface Morph {
                 /**
                  * Creates the constructor call singleton.
                  */
-                private StaticFieldConstructor() {
+                StaticFieldConstructor() {
                     objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
                             .getDeclaredMethods()
                             .filter(isConstructor())
@@ -504,6 +509,11 @@ public @interface Morph {
                     return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadOffset(0),
                             MethodInvocation.invoke(objectTypeDefaultConstructor),
                             MethodReturn.VOID);
+                }
+
+                @Override
+                public String toString() {
+                    return "Morph.Binder.RedirectionProxy.StaticFieldConstructor." + name();
                 }
             }
 
