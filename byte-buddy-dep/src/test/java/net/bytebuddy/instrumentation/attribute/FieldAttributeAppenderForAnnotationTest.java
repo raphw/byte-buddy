@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
@@ -12,14 +13,16 @@ public class FieldAttributeAppenderForAnnotationTest extends AbstractFieldAttrib
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        new FieldAttributeAppender.ForAnnotation(new Qux.Instance()).apply(fieldVisitor, fieldDescription);
+        new FieldAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()))
+                .apply(fieldVisitor, fieldDescription);
         verifyZeroInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
     }
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        new FieldAttributeAppender.ForAnnotation(new Baz.Instance()).apply(fieldVisitor, fieldDescription);
+        new FieldAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+                .apply(fieldVisitor, fieldDescription);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
@@ -27,7 +30,8 @@ public class FieldAttributeAppenderForAnnotationTest extends AbstractFieldAttrib
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        new FieldAttributeAppender.ForAnnotation(new QuxBaz.Instance()).apply(fieldVisitor, fieldDescription);
+        new FieldAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()))
+                .apply(fieldVisitor, fieldDescription);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);

@@ -13,6 +13,8 @@ import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -250,13 +252,22 @@ public interface DynamicType {
         /**
          * Adds annotations to the currently constructed type.
          * <p>&nbsp;</p>
-         * Note: The annotations will not be visible to
-         * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         * Note: The annotations will not be visible to {@link net.bytebuddy.instrumentation.Instrumentation}s.
          *
          * @param annotation The annotations to be added to the currently constructed type.
          * @return A builder that will add the given annotation to the created type.
          */
         Builder<T> annotateType(Annotation... annotation);
+
+        /**
+         * Adds annotations to the currently constructed type.
+         * <p>&nbsp;</p>
+         * Note: The annotations will not be visible to {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         *
+         * @param annotation The annotations to be added to the currently constructed type.
+         * @return A builder that will add the given annotation to the created type.
+         */
+        Builder<T> annotateType(AnnotationDescription... annotation);
 
         /**
          * Adds an additional ASM {@link org.objectweb.asm.ClassVisitor} to this builder which will be applied in
@@ -671,6 +682,30 @@ public interface DynamicType {
              * methods.
              */
             MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Annotation... annotation);
+
+            /**
+             * Defines annotations to be added to the currently selected method.
+             * <p>&nbsp;</p>
+             * Note: The annotations will not be visible to
+             * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             *
+             * @param annotation The annotations to add to the currently selected methods.
+             * @return A builder where the given annotation will be added to the currently selected methods.
+             */
+            MethodAnnotationTarget<S> annotateMethod(AnnotationDescription... annotation);
+
+            /**
+             * Defines annotations to be added to a parameter of the currently selected methods.
+             * <p>&nbsp;</p>
+             * Note: The annotations will not be visible to
+             * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             *
+             * @param parameterIndex The index of the parameter to annotate.
+             * @param annotation     The annotations to add to a parameter of the currently selected methods.
+             * @return A builder where the given annotation will be added to a parameter of the currently selected
+             * methods.
+             */
+            MethodAnnotationTarget<S> annotateParameter(int parameterIndex, AnnotationDescription... annotation);
         }
 
         /**
@@ -863,13 +898,22 @@ public interface DynamicType {
             /**
              * Defines annotations to be added to the currently selected field.
              * <p>&nbsp;</p>
-             * Note: The annotations will not be visible to
-             * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             * Note: The annotations will not be visible to {@link net.bytebuddy.instrumentation.Instrumentation}s.
              *
              * @param annotation The annotations to add to the currently selected field.
              * @return A builder where the given annotation will be added to the currently selected field.
              */
             FieldAnnotationTarget<S> annotateField(Annotation... annotation);
+
+            /**
+             * Defines annotations to be added to the currently selected field.
+             * <p>&nbsp;</p>
+             * Note: The annotations will not be visible to {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             *
+             * @param annotation The annotations to add to the currently selected field.
+             * @return A builder where the given annotation will be added to the currently selected field.
+             */
+            FieldAnnotationTarget<S> annotateField(AnnotationDescription... annotation);
         }
 
         /**
@@ -1242,7 +1286,12 @@ public interface DynamicType {
 
             @Override
             public Builder<S> annotateType(Annotation... annotation) {
-                return attribute(new TypeAttributeAppender.ForAnnotation(nonNull(annotation)));
+                return attribute(new TypeAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+            }
+
+            @Override
+            public Builder<S> annotateType(AnnotationDescription... annotation) {
+                return attribute(new TypeAttributeAppender.ForAnnotation(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
             }
 
             @Override
@@ -1875,6 +1924,11 @@ public interface DynamicType {
                 }
 
                 @Override
+                public Builder<U> annotateType(AnnotationDescription... annotation) {
+                    return materialize().annotateType(annotation);
+                }
+
+                @Override
                 public Builder<U> classVisitor(ClassVisitorWrapper classVisitorWrapper) {
                     return materialize().classVisitor(classVisitorWrapper);
                 }
@@ -2023,8 +2077,7 @@ public interface DynamicType {
              * A {@link net.bytebuddy.dynamic.DynamicType.Builder} for which a field was recently defined such that attributes
              * can be added to this recently defined field.
              */
-            protected class DefaultFieldValueTarget extends AbstractDelegatingBuilder<S>
-                    implements FieldValueTarget<S> {
+            protected class DefaultFieldValueTarget extends AbstractDelegatingBuilder<S> implements FieldValueTarget<S> {
 
                 /**
                  * Representations of {@code boolean} values as JVM integers.
@@ -2164,7 +2217,17 @@ public interface DynamicType {
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(Annotation... annotation) {
-                    return attribute(new FieldAttributeAppender.ForAnnotation(nonNull(annotation)));
+                    return attribute(new FieldAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+                }
+
+                @Override
+                public FieldAnnotationTarget<S> annotateField(AnnotationDescription... annotation) {
+                    return attribute(new FieldAttributeAppender.ForAnnotation(Arrays.asList(nonNull(annotation))));
+                }
+
+                @Override
+                public Builder<S> annotateType(AnnotationDescription... annotation) {
+                    return null;
                 }
 
                 @Override
@@ -2462,12 +2525,22 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(Annotation... annotation) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(nonNull(annotation)));
+                    return attribute(new MethodAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Annotation... annotation) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, nonNull(annotation)));
+                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> annotateMethod(AnnotationDescription... annotation) {
+                    return attribute(new MethodAttributeAppender.ForAnnotation(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, AnnotationDescription... annotation) {
+                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
                 }
 
                 @Override

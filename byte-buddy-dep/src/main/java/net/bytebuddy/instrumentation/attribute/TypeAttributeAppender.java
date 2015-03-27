@@ -8,6 +8,7 @@ import org.objectweb.asm.ClassVisitor;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.ClassVisitor}.
@@ -79,15 +80,15 @@ public interface TypeAttributeAppender {
         /**
          * The annotations to write to the given type.
          */
-        private final AnnotationList annotations;
+        private final List<? extends AnnotationDescription> annotations;
 
         /**
          * Creates a new single annotation attribute appender.
          *
-         * @param annotation The annotations to append.
+         * @param annotations The annotations to append.
          */
-        public ForAnnotation(Annotation... annotation) {
-            this.annotations = new AnnotationList.ForLoadedAnnotation(annotation);
+        public ForAnnotation(List<? extends AnnotationDescription> annotations) {
+            this.annotations = annotations;
         }
 
         @Override

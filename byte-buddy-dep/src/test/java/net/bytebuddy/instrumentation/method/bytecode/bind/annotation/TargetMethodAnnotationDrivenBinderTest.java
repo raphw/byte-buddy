@@ -165,7 +165,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         doReturn(FirstPseudoAnnotation.class).when(firstParameterBinder).getHandledType();
         doReturn(FirstPseudoAnnotation.class).when(secondParameterBinder).getHandledType();
         new TargetMethodAnnotationDrivenBinder(
-                Arrays.asList(firstParameterBinder, secondParameterBinder),
+                Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
                 terminationHandler,
                 assigner,
@@ -231,7 +231,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 true);
         Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider, Collections.<AnnotationDescription>emptyList());
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
-                Arrays.asList(firstParameterBinder, secondParameterBinder),
+                Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
                 terminationHandler,
                 assigner,
@@ -266,7 +266,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider,
                 Arrays.asList(secondPseudoAnnotation, firstPseudoAnnotation));
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
-                Arrays.asList(firstParameterBinder, secondParameterBinder),
+                Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
                 terminationHandler,
                 assigner,
@@ -333,7 +333,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider,
                 Collections.singletonList(firstPseudoAnnotation));
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
-                Arrays.asList(firstParameterBinder, secondParameterBinder),
+                Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
                 terminationHandler,
                 assigner,
@@ -382,7 +382,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 true);
         Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider, Collections.<AnnotationDescription>emptyList());
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
-                Arrays.asList(firstParameterBinder, secondParameterBinder),
+                Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
                 terminationHandler,
                 assigner,
@@ -447,7 +447,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider,
                 Collections.singletonList(secondPseudoAnnotation));
         MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
-                Arrays.asList(firstParameterBinder, secondParameterBinder),
+                Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
                 defaultsProvider,
                 terminationHandler,
                 assigner,

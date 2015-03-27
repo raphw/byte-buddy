@@ -156,7 +156,7 @@ public class InlineDynamicTypeBuilderTest {
         Class<?> loaded = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isDeclaredBy(Object.class),
@@ -199,7 +199,7 @@ public class InlineDynamicTypeBuilderTest {
         Class<?> loaded = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isDeclaredBy(Object.class),
@@ -238,7 +238,7 @@ public class InlineDynamicTypeBuilderTest {
         Class<?> loaded = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isDeclaredBy(Object.class),
@@ -284,7 +284,7 @@ public class InlineDynamicTypeBuilderTest {
         Class<?> loaded = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isDeclaredBy(Object.class),
@@ -326,7 +326,7 @@ public class InlineDynamicTypeBuilderTest {
         Class<?> loaded = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isDeclaredBy(Object.class),
@@ -339,7 +339,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
-                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(simpleInstrumentation)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -376,7 +376,7 @@ public class InlineDynamicTypeBuilderTest {
         Class<?> loaded = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isDeclaredBy(Object.class),
@@ -389,7 +389,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
-                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .intercept(simpleInstrumentation)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -422,7 +422,7 @@ public class InlineDynamicTypeBuilderTest {
         Class<?> loaded = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isDeclaredBy(Object.class),
@@ -435,7 +435,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(new MethodRebaseResolver.MethodNameTransformer.Suffixing()))
-                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .throwing(IOException.class)
                 .withoutCode()
                 .make()
@@ -473,7 +473,7 @@ public class InlineDynamicTypeBuilderTest {
         Class<?> loaded = new InlineDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOOBAR),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isDeclaredBy(Object.class),
@@ -486,7 +486,7 @@ public class InlineDynamicTypeBuilderTest {
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE)
-                .defineMethod(BAR, int.class, Arrays.asList(long.class, Object.class), Visibility.PUBLIC)
+                .defineMethod(BAR, int.class, Arrays.<Class<?>>asList(long.class, Object.class), Visibility.PUBLIC)
                 .throwing(IOException.class)
                 .withoutCode()
                 .make()

@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.attribute;
 
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -23,14 +24,16 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(new Qux.Instance()).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()))
+                .apply(methodVisitor, methodDescription);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(methodDescription);
     }
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(new Baz.Instance()).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+                .apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(methodDescription);
@@ -38,7 +41,8 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(new QuxBaz.Instance()).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()))
+                .apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(methodDescription);
@@ -46,7 +50,8 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testAnnotationAppenderForParameterNoRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new Qux.Instance()).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotation(new Qux.Instance()))
+                .apply(methodVisitor, methodDescription);
         verifyZeroInteractions(methodVisitor);
         verify(methodDescription).getParameters();
         verifyNoMoreInteractions(methodDescription);
@@ -54,7 +59,8 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testAnnotationAppenderForParameterRuntimeRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new Baz.Instance()).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+                .apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getParameters();
@@ -63,7 +69,8 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test
     public void testAnnotationAppenderForParameterByteCodeRetention() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new QuxBaz.Instance()).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()))
+                .apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription).getParameters();
@@ -72,7 +79,8 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
 
     @Test(expected = IllegalArgumentException.class)
     public void testAnnotationAppenderNotEnoughParameters() throws Exception {
-        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX + 1, new Baz.Instance()).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForAnnotation(PARAMETER_INDEX + 1, new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+                .apply(methodVisitor, methodDescription);
     }
 
     @Test

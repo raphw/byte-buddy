@@ -12,6 +12,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.MethodVisitor}.
@@ -163,7 +164,7 @@ public interface MethodAttributeAppender {
         /**
          * the annotations this method attribute appender is writing to its target.
          */
-        private final AnnotationList annotations;
+        private final List<? extends AnnotationDescription> annotations;
 
         /**
          * The target to which the annotations are written to.
@@ -175,8 +176,8 @@ public interface MethodAttributeAppender {
          *
          * @param annotation The annotations to append to the target method.
          */
-        public ForAnnotation(Annotation... annotation) {
-            annotations = new AnnotationList.ForLoadedAnnotation(annotation);
+        public ForAnnotation(List<? extends AnnotationDescription> annotations) {
+            this.annotations = annotations;
             target = Target.OnMethod.INSTANCE;
         }
 
@@ -186,8 +187,8 @@ public interface MethodAttributeAppender {
          * @param parameterIndex The index of the target parameter.
          * @param annotation     The annotations to append to the target method parameter.
          */
-        public ForAnnotation(int parameterIndex, Annotation... annotation) {
-            annotations = new AnnotationList.ForLoadedAnnotation(annotation);
+        public ForAnnotation(int parameterIndex, List<? extends AnnotationDescription> annotations) {
+            this.annotations = annotations;
             target = new Target.OnMethodParameter(parameterIndex);
         }
 

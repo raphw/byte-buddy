@@ -15,6 +15,8 @@ import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
@@ -743,7 +745,7 @@ public class ByteBuddy {
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
-                new TypeAttributeAppender.ForAnnotation(nonNull(annotation)),
+                new TypeAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))),
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
@@ -1266,7 +1268,7 @@ public class ByteBuddy {
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(Annotation... annotation) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(nonNull(annotation)));
+            return attribute(new MethodAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
         }
 
         /**
@@ -1280,7 +1282,32 @@ public class ByteBuddy {
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, Annotation... annotation) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, nonNull(annotation)));
+            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+        }
+
+        /**
+         * Defines an method annotation for the currently selected methods.
+         *
+         * @param annotation The annotations to defined for the currently selected methods.
+         * @return A method annotation target that represents the current configuration with the additional
+         * annotations added to the currently selected methods.
+         */
+        public MethodAnnotationTarget annotateMethod(AnnotationDescription... annotation) {
+            return attribute(new MethodAttributeAppender.ForAnnotation(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
+        }
+
+        /**
+         * Defines an method annotation for a parameter of the currently selected methods.
+         *
+         * @param parameterIndex The index of the parameter for which the annotations should be applied
+         *                       with the first parameter index by {@code 0}.
+         * @param annotation     The annotations to defined for the currently selected methods' parameters
+         *                       ath the given index.
+         * @return A method annotation target that represents the current configuration with the additional
+         * annotations added to the currently selected methods' parameters at the given index.
+         */
+        public MethodAnnotationTarget annotateParameter(int parameterIndex, AnnotationDescription... annotation) {
+            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
         }
 
         @Override

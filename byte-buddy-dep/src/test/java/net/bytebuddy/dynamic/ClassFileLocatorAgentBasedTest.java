@@ -69,7 +69,8 @@ public class ClassFileLocatorAgentBasedTest {
     @Test
     public void testExplicitLookup() throws Exception {
         ClassFileLocator.AgentBased.ClassLoadingDelegate fallback = mock(ClassFileLocator.AgentBased.ClassLoadingDelegate.class);
-        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = new ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit(fallback, Collections.singletonList(Object.class));
+        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = new ClassFileLocator.AgentBased
+                .ClassLoadingDelegate.Explicit(fallback, Collections.<Class<?>>singletonList(Object.class));
         assertEquals(Object.class, classLoadingDelegate.locate(Object.class.getName()));
         doReturn(String.class).when(fallback).locate(String.class.getName());
         assertEquals(String.class, classLoadingDelegate.locate(String.class.getName()));
@@ -101,7 +102,7 @@ public class ClassFileLocatorAgentBasedTest {
                 })
                 .apply();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.JavaField.ForNonResolvedField.class).apply();
-        final Iterator<Class<?>> otherIterator = Arrays.asList(Integer.class, String.class, Object.class, Byte.class).iterator();
+        final Iterator<Class<?>> otherIterator = Arrays.<Class<?>>asList(Integer.class, String.class, Object.class, Byte.class).iterator();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.class).create(new ObjectPropertyAssertion.Creator<Collection<Class<?>>>() {
             @Override
             public Collection<Class<?>> create() {

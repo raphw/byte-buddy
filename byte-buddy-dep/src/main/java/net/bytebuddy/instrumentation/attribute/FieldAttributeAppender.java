@@ -10,6 +10,7 @@ import org.objectweb.asm.FieldVisitor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.FieldVisitor}.
@@ -122,15 +123,15 @@ public interface FieldAttributeAppender {
         /**
          * The annotations that this appender appends.
          */
-        private final AnnotationList annotations;
+        private final List<? extends AnnotationDescription> annotations;
 
         /**
          * Creates a new field annotation appender.
          *
-         * @param annotation The annotations to be appended to the field.
+         * @param annotations The annotations to be appended to the field.
          */
-        public ForAnnotation(Annotation... annotation) {
-            annotations = new AnnotationList.ForLoadedAnnotation(annotation);
+        public ForAnnotation(List<? extends AnnotationDescription> annotations) {
+            this.annotations = annotations;
         }
 
         @Override

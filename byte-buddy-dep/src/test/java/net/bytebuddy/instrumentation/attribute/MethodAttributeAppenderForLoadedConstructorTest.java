@@ -55,7 +55,7 @@ public class MethodAttributeAppenderForLoadedConstructorTest extends AbstractMet
     @Test
     public void testObjectProperties() throws Exception {
         Constructor<?> first = Sample.class.getDeclaredConstructor(), second = Sample.class.getDeclaredConstructor(Void.class);
-        final Iterator<Constructor<?>> iterator = Arrays.asList(first, second).iterator();
+        final Iterator<Constructor<?>> iterator = Arrays.<Constructor<?>>asList(first, second).iterator();
         ObjectPropertyAssertion.of(MethodAttributeAppender.ForLoadedConstructor.class).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
             @Override
             public Constructor<?> create() {

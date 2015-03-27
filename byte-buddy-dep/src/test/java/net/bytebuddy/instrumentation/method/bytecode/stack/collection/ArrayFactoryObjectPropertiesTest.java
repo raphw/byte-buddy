@@ -32,7 +32,7 @@ public class ArrayFactoryObjectPropertiesTest {
     @Test
     public void testIllegalArrayStackManipulation() throws Exception {
         assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class))
-                .new ArrayStackManipulation(Collections.singletonList(StackManipulation.Illegal.INSTANCE))
+                .new ArrayStackManipulation(Collections.<StackManipulation>singletonList(StackManipulation.Illegal.INSTANCE))
                 .isValid(), is(false));
     }
 
