@@ -194,7 +194,7 @@ public class ByteBuddyTest {
         ObjectPropertyAssertion.of(ByteBuddy.OptionalMethodInterception.class).apply();
     }
 
-    public static interface Foo {
+    public interface Foo {
         /* empty */
     }
 }

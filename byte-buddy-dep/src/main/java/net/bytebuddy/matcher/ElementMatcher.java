@@ -23,7 +23,7 @@ public interface ElementMatcher<T> {
      *
      * @param <S> The type of the object that is being matched.
      */
-    static interface Junction<S> extends ElementMatcher<S> {
+    interface Junction<S> extends ElementMatcher<S> {
 
         /**
          * Creates a conjunction where this matcher and the {@code other} matcher must both be matched in order
@@ -56,7 +56,7 @@ public interface ElementMatcher<T> {
          *
          * @param <V> The type of the object that is being matched.
          */
-        abstract static class AbstractBase<V> implements Junction<V> {
+        abstract class AbstractBase<V> implements Junction<V> {
 
             @Override
             public <U extends V> Junction<U> and(ElementMatcher<? super U> other) {
@@ -74,7 +74,7 @@ public interface ElementMatcher<T> {
          *
          * @param <W> The type of the object that is being matched.
          */
-        static class Conjunction<W> extends AbstractBase<W> {
+        class Conjunction<W> extends AbstractBase<W> {
 
             /**
              * The element matchers that constitute this conjunction.
@@ -121,7 +121,7 @@ public interface ElementMatcher<T> {
          *
          * @param <W> The type of the object that is being matched.
          */
-        static class Disjunction<W> extends AbstractBase<W> {
+        class Disjunction<W> extends AbstractBase<W> {
 
             /**
              * The element matchers that constitute this disjunction.

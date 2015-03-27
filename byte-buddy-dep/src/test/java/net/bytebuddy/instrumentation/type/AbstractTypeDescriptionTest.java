@@ -374,23 +374,23 @@ public abstract class AbstractTypeDescriptionTest {
         assertThat(describe(String.class).isConstantPool(), is(true));
     }
 
-    protected static interface SampleInterface {
+    protected interface SampleInterface {
 
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface SampleAnnotation {
+    private @interface SampleAnnotation {
 
     }
 
     @Inherited
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface OtherAnnotation {
+    private @interface OtherAnnotation {
 
         String value();
     }
 
-    public static interface SampleTransitiveInterface extends SampleInterface {
+    public interface SampleTransitiveInterface extends SampleInterface {
 
     }
 

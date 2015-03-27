@@ -14,8 +14,8 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.asm.Opcodes;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -38,7 +38,7 @@ public class NamingStrategyUnnamedTypeDefaultTest {
 
     @Before
     public void setUp() throws Exception {
-        interfaceTypes = Arrays.asList(interfaceType);
+        interfaceTypes = Collections.singletonList(interfaceType);
     }
 
     @Test

@@ -82,12 +82,12 @@ public class AnnotationListForLoadedAnnotationTest {
                 is((AnnotationList) new AnnotationList.ForLoadedAnnotation(foo)));
     }
 
-    private static @interface Foo {
+    private @interface Foo {
 
     }
 
     @Inherited
-    private static @interface Bar {
+    private @interface Bar {
 
     }
 }

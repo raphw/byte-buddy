@@ -32,7 +32,7 @@ public class MethodExceptionTypeMatcher<T extends MethodDescription> extends Ele
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && exceptionMatcher.equals(((MethodExceptionTypeMatcher) other).exceptionMatcher);
+                && exceptionMatcher.equals(((MethodExceptionTypeMatcher<?>) other).exceptionMatcher);
     }
 
     @Override

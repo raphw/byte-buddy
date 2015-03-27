@@ -250,8 +250,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
          */
         RETRANSFORMATION(false) {
             @Override
-            protected void apply(Instrumentation instrumentation,
-                                 Map<Class<?>, ClassDefinition> classDefinitions) throws UnmodifiableClassException {
+            protected void apply(Instrumentation instrumentation, Map<Class<?>, ClassDefinition> classDefinitions) throws UnmodifiableClassException {
                 ClassRedefinitionTransformer classRedefinitionTransformer = new ClassRedefinitionTransformer(classDefinitions);
                 synchronized (instrumentation) {
                     instrumentation.addTransformer(classRedefinitionTransformer, REDEFINE_CLASSES);

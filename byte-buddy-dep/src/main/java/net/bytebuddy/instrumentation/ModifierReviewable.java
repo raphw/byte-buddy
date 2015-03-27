@@ -12,7 +12,7 @@ public interface ModifierReviewable {
     /**
      * Representation of the default modifier.
      */
-    static final int EMPTY_MASK = 0;
+    int EMPTY_MASK = 0;
 
     /**
      * Specifies if the modifier described by this object is {@code final}.
@@ -171,7 +171,7 @@ public interface ModifierReviewable {
     /**
      * An abstract base implementation of a {@link net.bytebuddy.instrumentation.ModifierReviewable} class.
      */
-    abstract static class AbstractModifierReviewable implements ModifierReviewable {
+    abstract class AbstractModifierReviewable implements ModifierReviewable {
 
         @Override
         public boolean isAbstract() {

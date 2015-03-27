@@ -154,7 +154,7 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
     /**
      * A construction delegate is responsible for calling a isThrowable's constructor.
      */
-    public static interface ConstructionDelegate {
+    public interface ConstructionDelegate {
 
         /**
          * Creates a stack manipulation that creates pushes all constructor arguments onto the operand stack
@@ -167,7 +167,7 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
         /**
          * A construction delegate that calls the default constructor.
          */
-        static class ForDefaultConstructor implements ConstructionDelegate {
+        class ForDefaultConstructor implements ConstructionDelegate {
 
             /**
              * The type of the exception that is to be thrown.
@@ -221,7 +221,7 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
         /**
          * A construction delegate that calls a constructor that takes a single string as its argument.
          */
-        static class ForStringConstructor implements ConstructionDelegate {
+        class ForStringConstructor implements ConstructionDelegate {
 
             /**
              * The type of the exception that is to be thrown.

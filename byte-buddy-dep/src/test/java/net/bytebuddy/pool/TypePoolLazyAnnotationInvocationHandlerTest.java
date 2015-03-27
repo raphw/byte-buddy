@@ -243,16 +243,16 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
         verify(loadedAnnotationValue).resolve();
     }
 
-    public static enum Bar {
+    public enum Bar {
         VALUE
     }
 
-    public static @interface Foo {
+    public @interface Foo {
 
         String foo();
     }
 
-    public static @interface DefaultFoo {
+    public @interface DefaultFoo {
 
         String foo() default FOO;
     }

@@ -7,7 +7,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -56,7 +56,7 @@ public class TypePoolLazyMethodListTest {
 
     @Test
     public void testSubList() throws Exception {
-        assertThat(methodList.subList(0, 1), is((MethodList) new MethodList.Explicit(Arrays.asList(methodList.get(0)))));
+        assertThat(methodList.subList(0, 1), is((MethodList) new MethodList.Explicit(Collections.singletonList(methodList.get(0)))));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

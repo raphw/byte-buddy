@@ -104,21 +104,21 @@ public class MethodDelegationPipeTest extends AbstractInstrumentationTest {
                 .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
     }
 
-    public static interface ForwardingType<T, S> {
+    public interface ForwardingType<T, S> {
 
         S doPipe(T target);
     }
 
-    public static interface InheritingForwardingType extends ForwardingType<Object, Object> {
+    public interface InheritingForwardingType extends ForwardingType<Object, Object> {
         /* empty */
     }
 
-    static interface PackagePrivateForwardingType<T, S> {
+    interface PackagePrivateForwardingType<T, S> {
 
         S doPipe(T target);
     }
 
-    public static interface WrongParametersForwardingType<T extends Number, S> {
+    public interface WrongParametersForwardingType<T extends Number, S> {
 
         S doPipe(T target);
     }

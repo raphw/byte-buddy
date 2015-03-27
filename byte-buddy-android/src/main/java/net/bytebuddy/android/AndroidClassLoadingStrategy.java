@@ -160,7 +160,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
     /**
      * A dex processor is responsible for converting a collection of Java class files into a Android dex file.
      */
-    public static interface DexProcessor {
+    public interface DexProcessor {
 
         /**
          * Creates a new conversion process which allows to store several Java class files in the created dex
@@ -184,7 +184,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
         /**
          * Represents an ongoing conversion of several Java class files into an Android dex file.
          */
-        static interface Conversion {
+        interface Conversion {
 
             /**
              * Adds a Java class to the generated dex file.
@@ -207,7 +207,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
          * An implementation of a dex processor based on the Android SDK's <i>dx.jar</i> with an API that is
          * compatible to version 1.7.
          */
-        static class ForSdkCompiler implements DexProcessor {
+        class ForSdkCompiler implements DexProcessor {
 
             /**
              * The file name extension of a Java class file.

@@ -59,7 +59,7 @@ public interface MethodRegistry {
      * A {@link net.bytebuddy.dynamic.scaffold.MethodRegistry} that was prepared for a given
      * {@link net.bytebuddy.instrumentation.type.InstrumentedType}.
      */
-    static interface Prepared {
+    interface Prepared {
 
         /**
          * The readily prepared instrumented type with all optional members registered as they are required
@@ -93,7 +93,7 @@ public interface MethodRegistry {
     /**
      * Represents a compiled {@link net.bytebuddy.dynamic.scaffold.MethodRegistry}.
      */
-    static interface Compiled extends TypeWriter.MethodPool {
+    interface Compiled extends TypeWriter.MethodPool {
 
         /**
          * The readily prepared instrumented type with all optional members registered as they are required
@@ -131,7 +131,7 @@ public interface MethodRegistry {
      * A latent method matcher represents a method matcher that might not yet be assembled because it misses
      * information on the actual instrumented type.
      */
-    static interface LatentMethodMatcher {
+    interface LatentMethodMatcher {
 
         /**
          * Manifests a latent method matcher.
@@ -145,7 +145,7 @@ public interface MethodRegistry {
         /**
          * An wrapper implementation for an already assembled method matcher.
          */
-        static class Simple implements LatentMethodMatcher {
+        class Simple implements LatentMethodMatcher {
 
             /**
              * The method matcher that is represented by this instance.
@@ -187,7 +187,7 @@ public interface MethodRegistry {
     /**
      * A default implementation of a method registry.
      */
-    static class Default implements MethodRegistry {
+    class Default implements MethodRegistry {
 
         /**
          * A list of all entries in their registration order.

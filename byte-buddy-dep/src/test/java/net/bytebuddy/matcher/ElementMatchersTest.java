@@ -833,13 +833,13 @@ public class ElementMatchersTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface IsAnnotatedWithAnnotation {
+    private @interface IsAnnotatedWithAnnotation {
 
     }
 
     @Inherited
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface OtherAnnotation {
+    public @interface OtherAnnotation {
 
     }
 

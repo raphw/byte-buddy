@@ -34,7 +34,6 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class TypeWriterEngineForRedefinitionTest {
@@ -304,7 +303,7 @@ public class TypeWriterEngineForRedefinitionTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Bar {
+    public @interface Bar {
         /* empty */
     }
 

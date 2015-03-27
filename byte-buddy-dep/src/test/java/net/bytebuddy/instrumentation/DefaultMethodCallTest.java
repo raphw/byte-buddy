@@ -13,6 +13,7 @@ import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -168,7 +169,7 @@ public class DefaultMethodCallTest extends AbstractInstrumentationTest {
             public List<?> create() {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(typeDescription.isInterface()).thenReturn(true);
-                return Arrays.asList(typeDescription);
+                return Collections.singletonList(typeDescription);
             }
         }).apply();
         final TypeDescription removalType = mock(TypeDescription.class);

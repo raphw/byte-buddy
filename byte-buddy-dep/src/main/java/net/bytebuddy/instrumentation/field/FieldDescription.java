@@ -23,7 +23,7 @@ public interface FieldDescription extends ByteCodeElement {
     /**
      * An abstract base implementation of a field description.
      */
-    abstract static class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
+    abstract class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
 
         @Override
         public String getInternalName() {
@@ -81,7 +81,7 @@ public interface FieldDescription extends ByteCodeElement {
     /**
      * An implementation of a field description for a loaded field.
      */
-    static class ForLoadedField extends AbstractFieldDescription {
+    class ForLoadedField extends AbstractFieldDescription {
 
         /**
          * The represented loaded field.
@@ -132,7 +132,7 @@ public interface FieldDescription extends ByteCodeElement {
      * A latent field description describes a field that is not attached to a declaring
      * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
      */
-    static class Latent extends AbstractFieldDescription {
+    class Latent extends AbstractFieldDescription {
 
         /**
          * The name of the field.

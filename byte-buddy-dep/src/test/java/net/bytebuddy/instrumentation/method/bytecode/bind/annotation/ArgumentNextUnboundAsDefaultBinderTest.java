@@ -37,7 +37,7 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
     @Mock
     private TypeDescription firstParameter, secondParameter;
 
-    private ParameterList sourceParameters, targetParameters;
+    private ParameterList sourceParameters;
 
     @Mock
     private ParameterDescription firstTargetParameter, secondTargetParameter;
@@ -47,7 +47,7 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         when(firstParameter.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondParameter.getStackSize()).thenReturn(StackSize.ZERO);
         sourceParameters = ParameterList.Explicit.latent(source, Arrays.asList(firstParameter, secondParameter));
-        targetParameters = new ParameterList.Explicit(Arrays.asList(firstTargetParameter, secondTargetParameter));
+        ParameterList targetParameters = new ParameterList.Explicit(Arrays.asList(firstTargetParameter, secondTargetParameter));
         when(source.getParameters()).thenReturn(sourceParameters);
         when(target.getParameters()).thenReturn(targetParameters);
     }

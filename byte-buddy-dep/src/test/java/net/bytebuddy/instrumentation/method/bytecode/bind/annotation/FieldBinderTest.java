@@ -14,11 +14,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
@@ -44,7 +43,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         super.setUp();
         when(getterMethod.getDeclaringType()).thenReturn(getterType);
         when(setterMethod.getDeclaringType()).thenReturn(setterType);
-        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit(Arrays.asList(fieldDescription)));
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit(Collections.singletonList(fieldDescription)));
         when(fieldDescription.getFieldType()).thenReturn(fieldType);
         when(fieldType.getStackSize()).thenReturn(StackSize.ZERO);
     }
@@ -149,7 +148,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Arrays.asList(fieldType));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
         when(source.getParameters()).thenReturn(parameterList);
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
@@ -169,7 +168,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Arrays.asList(fieldType));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
         when(source.getParameters()).thenReturn(parameterList);
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
@@ -189,7 +188,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Arrays.asList(fieldType));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
         when(source.getParameters()).thenReturn(parameterList);
         when(source.getName()).thenReturn("setFoo");
         when(source.getSourceCodeName()).thenReturn("setFoo");
@@ -210,7 +209,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Arrays.asList(fieldType));
+        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
         when(source.getParameters()).thenReturn(parameterList);
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");

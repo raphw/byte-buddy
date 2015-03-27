@@ -14,7 +14,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -51,7 +51,7 @@ public class TypeWriterDefaultTest {
 
     @Before
     public void setUp() throws Exception {
-        explicitAuxiliaryTypes = Arrays.asList(firstAuxiliary);
+        explicitAuxiliaryTypes = Collections.singletonList(firstAuxiliary);
         when(engine.create(any(Instrumentation.Context.ExtractableView.class))).thenReturn(MAIN);
         when(firstAuxiliary.getTypeDescription()).thenReturn(otherAuxiliaryDescription);
         when(firstAuxiliary.getBytes()).thenReturn(FIRST);

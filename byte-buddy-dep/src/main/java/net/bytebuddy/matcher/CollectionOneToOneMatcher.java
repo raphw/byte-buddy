@@ -46,7 +46,7 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && elementMatchers.equals(((CollectionOneToOneMatcher) other).elementMatchers);
+                && elementMatchers.equals(((CollectionOneToOneMatcher<?>) other).elementMatchers);
     }
 
     @Override

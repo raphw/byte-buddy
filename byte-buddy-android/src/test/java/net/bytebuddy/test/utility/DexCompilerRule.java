@@ -60,7 +60,7 @@ public class DexCompilerRule implements MethodRule {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    public static @interface Enforce {
+    public @interface Enforce {
         /* empty */
     }
 

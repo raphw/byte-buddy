@@ -205,7 +205,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
      * Allows for the configuration of an {@link net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner}
      * of an {@link net.bytebuddy.instrumentation.InvocationHandlerAdapter}.
      */
-    protected static interface AssignerConfigurable extends Instrumentation {
+    protected interface AssignerConfigurable extends Instrumentation {
 
         /**
          * Configures an assigner to use with this invocation handler adapter.

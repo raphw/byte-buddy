@@ -25,7 +25,7 @@ public interface ClassVisitorWrapper {
     /**
      * An ordered, immutable chain of {@link net.bytebuddy.asm.ClassVisitorWrapper}s.
      */
-    static class Chain implements ClassVisitorWrapper {
+    class Chain implements ClassVisitorWrapper {
 
         /**
          * The class visitor wrappers that are represented by this chain in their order. This list must not be mutated.

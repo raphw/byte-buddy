@@ -12,6 +12,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -160,7 +161,7 @@ public class MethodDelegationBinderProcessorTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testInvisibleDoesNotBind() throws Exception {
-        List<MethodDescription> methodDescriptions = Arrays.asList(invisibleTarget);
+        List<MethodDescription> methodDescriptions = Collections.singletonList(invisibleTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         processor.process(instrumentationTarget, source, methodDescriptions);
     }

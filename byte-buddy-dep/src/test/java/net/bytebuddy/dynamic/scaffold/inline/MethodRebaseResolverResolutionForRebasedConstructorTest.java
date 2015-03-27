@@ -18,6 +18,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -52,7 +53,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
-        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(parameterType));
+        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Collections.singletonList(parameterType));
         when(methodDescription.getParameters()).thenReturn(parameterList);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(QUX);

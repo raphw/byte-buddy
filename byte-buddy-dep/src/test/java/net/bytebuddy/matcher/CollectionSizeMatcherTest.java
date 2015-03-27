@@ -3,7 +3,6 @@ package net.bytebuddy.matcher;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -22,7 +21,7 @@ public class CollectionSizeMatcherTest extends AbstractElementMatcherTest<Collec
 
     @Test
     public void testMatch() throws Exception {
-        when(collection.iterator()).thenReturn(Arrays.asList(new Object()).iterator());
+        when(collection.iterator()).thenReturn(Collections.singletonList(new Object()).iterator());
         assertThat(new CollectionSizeMatcher<Iterable<?>>(1).matches(collection), is(true));
         verify(collection).iterator();
         verifyNoMoreInteractions(collection);
@@ -30,7 +29,7 @@ public class CollectionSizeMatcherTest extends AbstractElementMatcherTest<Collec
 
     @Test
     public void testMatchCollection() throws Exception {
-        assertThat(new CollectionSizeMatcher<Iterable<?>>(1).matches(Arrays.asList(new Object())), is(true));
+        assertThat(new CollectionSizeMatcher<Iterable<?>>(1).matches(Collections.singletonList(new Object())), is(true));
     }
 
     @Test
@@ -43,6 +42,6 @@ public class CollectionSizeMatcherTest extends AbstractElementMatcherTest<Collec
 
     @Test
     public void testNoMatchCollection() throws Exception {
-        assertThat(new CollectionSizeMatcher<Iterable<?>>(0).matches(Arrays.asList(new Object())), is(false));
+        assertThat(new CollectionSizeMatcher<Iterable<?>>(0).matches(Collections.singletonList(new Object())), is(false));
     }
 }

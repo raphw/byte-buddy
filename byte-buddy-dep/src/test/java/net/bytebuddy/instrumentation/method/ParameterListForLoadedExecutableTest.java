@@ -49,7 +49,7 @@ public class ParameterListForLoadedExecutableTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Bar {
+    private @interface Bar {
         /* empty */
     }
 

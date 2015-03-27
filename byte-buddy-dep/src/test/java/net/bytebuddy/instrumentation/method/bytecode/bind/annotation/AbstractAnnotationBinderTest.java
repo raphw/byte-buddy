@@ -19,8 +19,6 @@ import org.mockito.Mock;
 import java.lang.annotation.Annotation;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.*;
 
 public abstract class AbstractAnnotationBinderTest<T extends Annotation> {

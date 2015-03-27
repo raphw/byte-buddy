@@ -20,7 +20,7 @@ import org.mockito.asm.Type;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -61,7 +61,7 @@ public class MethodConstantTest {
         when(methodDescription.getParameters()).thenReturn(parameterList);
         when(parameterList.asTypeList()).thenReturn(typeList);
         when(declaringType.getDescriptor()).thenReturn(BAR);
-        when(typeList.iterator()).thenReturn(Arrays.asList(parameterType).iterator());
+        when(typeList.iterator()).thenReturn(Collections.singletonList(parameterType).iterator());
         when(parameterType.getDescriptor()).thenReturn(QUX);
         when(fieldDescription.getFieldType()).thenReturn(fieldType);
         when(fieldDescription.isStatic()).thenReturn(true);

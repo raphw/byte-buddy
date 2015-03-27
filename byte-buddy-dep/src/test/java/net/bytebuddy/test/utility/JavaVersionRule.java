@@ -29,7 +29,7 @@ public class JavaVersionRule implements MethodRule {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    public static @interface Enforce {
+    public @interface Enforce {
 
         int value();
     }

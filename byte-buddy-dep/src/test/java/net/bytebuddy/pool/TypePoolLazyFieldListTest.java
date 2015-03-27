@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,7 +49,7 @@ public class TypePoolLazyFieldListTest {
 
     @Test
     public void testSubList() throws Exception {
-        assertThat(fieldList.subList(0, 1), is((FieldList) new FieldList.Explicit(Arrays.asList(fieldList.get(0)))));
+        assertThat(fieldList.subList(0, 1), is((FieldList) new FieldList.Explicit(Collections.singletonList(fieldList.get(0)))));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

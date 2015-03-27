@@ -14,7 +14,7 @@ public interface ModifierContributor {
     /**
      * The empty modifier.
      */
-    static final int EMPTY_MASK = 0;
+    int EMPTY_MASK = 0;
 
     /**
      * Returns the mask of this modifier.
@@ -26,21 +26,21 @@ public interface ModifierContributor {
     /**
      * A marker interface for modifiers that can be applied to methods.
      */
-    static interface ForMethod extends ModifierContributor {
+    interface ForMethod extends ModifierContributor {
         /* marker interface */
     }
 
     /**
      * A marker interface for modifiers that can be applied to fields.
      */
-    static interface ForField extends ModifierContributor {
+    interface ForField extends ModifierContributor {
         /* marker interface */
     }
 
     /**
      * A marker interface for modifiers that can be applied to types.
      */
-    static interface ForType extends ModifierContributor {
+    interface ForType extends ModifierContributor {
         /* marker interface */
     }
 }

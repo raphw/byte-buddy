@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -71,7 +71,7 @@ public class LoadedTypeInitializerCompoundTest {
         ObjectPropertyAssertion.of(LoadedTypeInitializer.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
             public List<?> create() {
-                return Arrays.asList(mock(LoadedTypeInitializer.class));
+                return Collections.singletonList(mock(LoadedTypeInitializer.class));
             }
         }).apply();
     }

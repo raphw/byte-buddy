@@ -142,21 +142,21 @@ public class MethodDelegationMorphTest extends AbstractInstrumentationTest {
                 .invoke(instance, QUX), is((Object) (FOO + BAR)));
     }
 
-    public static interface Morphing<T> {
+    public interface Morphing<T> {
 
         T morph(Object... arguments);
     }
 
-    public static interface InheritingMorphingType<T> extends Morphing<T> {
+    public interface InheritingMorphingType<T> extends Morphing<T> {
         /* empty */
     }
 
-    private static interface PackagePrivateMorphing<T> {
+    private interface PackagePrivateMorphing<T> {
 
         T morph(Object... arguments);
     }
 
-    private static interface WrongParametersMorphing<T> {
+    private interface WrongParametersMorphing<T> {
 
         T morph(Object arguments);
     }

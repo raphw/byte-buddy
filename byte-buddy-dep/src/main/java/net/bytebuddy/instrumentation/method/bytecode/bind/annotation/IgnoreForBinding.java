@@ -18,7 +18,7 @@ public @interface IgnoreForBinding {
     /**
      * A non-instantiable type that allows to check if a method should be ignored for binding.
      */
-    static final class Verifier {
+    final class Verifier {
 
         /**
          * As this is merely a utility method, the constructor is not supposed to be invoked.

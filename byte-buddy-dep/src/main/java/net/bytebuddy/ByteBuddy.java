@@ -399,7 +399,7 @@ public class ByteBuddy {
      * interface.
      */
     public DynamicType.Builder<?> makeInterface(TypeDescription typeDescription) {
-        return makeInterface(Arrays.asList(nonNull(typeDescription)));
+        return makeInterface(Collections.singletonList(nonNull(typeDescription)));
     }
 
     /**
@@ -1029,7 +1029,7 @@ public class ByteBuddy {
      *
      * @param <T> The type of the definable object.
      */
-    protected static interface Definable<T> {
+    protected interface Definable<T> {
 
         /**
          * Returns the value of this instance or the provided default value for an undefined definable.
@@ -1052,7 +1052,7 @@ public class ByteBuddy {
          *
          * @param <T> The type of the definable object.
          */
-        static class Undefined<T> implements Definable<T> {
+        class Undefined<T> implements Definable<T> {
 
             @Override
             public T resolve(T defaultValue) {
@@ -1085,7 +1085,7 @@ public class ByteBuddy {
          *
          * @param <T> The type of the definable object.
          */
-        static class Defined<T> implements Definable<T> {
+        class Defined<T> implements Definable<T> {
 
             /**
              * The value that is represented by this defined definable.
@@ -1132,7 +1132,7 @@ public class ByteBuddy {
     /**
      * Implementations of this interface are capable of defining a method interception for a given set of methods.
      */
-    public static interface MethodInterceptable {
+    public interface MethodInterceptable {
 
         /**
          * Intercepts the given method with the given instrumentation.

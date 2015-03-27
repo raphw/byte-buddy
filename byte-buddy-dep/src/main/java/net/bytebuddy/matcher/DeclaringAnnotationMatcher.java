@@ -32,7 +32,7 @@ public class DeclaringAnnotationMatcher<T extends AnnotatedElement> extends Elem
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && annotationMatcher.equals(((DeclaringAnnotationMatcher) other).annotationMatcher);
+                && annotationMatcher.equals(((DeclaringAnnotationMatcher<?>) other).annotationMatcher);
     }
 
     @Override

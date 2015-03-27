@@ -81,7 +81,7 @@ public class IntegerConstantTest {
         ObjectPropertyAssertion.of(IntegerConstant.ConstantPool.class).apply();
     }
 
-    private static enum PushType {
+    private enum PushType {
 
         BIPUSH,
         SIPUSH,

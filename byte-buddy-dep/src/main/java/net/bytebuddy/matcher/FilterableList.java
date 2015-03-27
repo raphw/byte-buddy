@@ -31,7 +31,7 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
     T getOnly();
 
     @Override
-    public S subList(int fromIndex, int toIndex);
+    S subList(int fromIndex, int toIndex);
 
     /**
      * An implementation of an empty {@link net.bytebuddy.matcher.FilterableList}.
@@ -39,7 +39,7 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
      * @param <T> The type of the collection's elements.
      * @param <S> The type of this list.
      */
-    static class Empty<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
+    class Empty<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
 
         @Override
         public T get(int index) {
@@ -81,7 +81,7 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
      * @param <T> The type of the collection's elements.
      * @param <S> The type of this list.
      */
-    abstract static class AbstractBase<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
+    abstract class AbstractBase<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
 
         @Override
         @SuppressWarnings("unchecked")

@@ -87,7 +87,7 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testNonVoidCollection() throws Exception {
-        List<TypeDescription> typeDescriptions = Arrays.asList(mock(TypeDescription.class));
+        List<TypeDescription> typeDescriptions = Collections.singletonList(mock(TypeDescription.class));
         assertThat(nonVoid(typeDescriptions), sameInstance(typeDescriptions));
     }
 
@@ -95,7 +95,7 @@ public class ByteBuddyCommonsTest {
     public void testNonVoidCollectionThrowsException() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.represents(void.class)).thenReturn(true);
-        nonVoid(Arrays.asList(typeDescription));
+        nonVoid(Collections.singletonList(typeDescription));
     }
 
     @Test
@@ -222,13 +222,13 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testIsNotEmpty() throws Exception {
-        List<String> list = Arrays.asList(FOO);
+        List<String> list = Collections.singletonList(FOO);
         assertThat(isNotEmpty(list, FOO), sameInstance(list));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsNotEmptyThrowsException() throws Exception {
-        isNotEmpty(Arrays.<String>asList(), FOO);
+        isNotEmpty(Collections.emptyList(), FOO);
     }
 
     @Test
@@ -239,7 +239,7 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsEmptyThrowsException() throws Exception {
-        isEmpty(Arrays.asList(BAR), FOO);
+        isEmpty(Collections.singletonList(BAR), FOO);
     }
 
     @Test
@@ -272,7 +272,7 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testIsThrowableForThrowables() throws Exception {
-        assertThat(isThrowable(Arrays.asList(first)), is(Arrays.asList(first)));
+        assertThat(isThrowable(Collections.singletonList(first)), is(Collections.singletonList(first)));
     }
 
     @Test(expected = IllegalArgumentException.class)

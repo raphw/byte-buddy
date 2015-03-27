@@ -9,7 +9,6 @@ import org.junit.Test;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -62,7 +61,7 @@ public class TypePoolLazyAnnotationListTest {
 
     @Test
     public void testSubList() throws Exception {
-        assertThat(annotationList.subList(0, 1), is((AnnotationList) new AnnotationList.Explicit(Arrays.asList(annotationList.get(0)))));
+        assertThat(annotationList.subList(0, 1), is((AnnotationList) new AnnotationList.Explicit(Collections.singletonList(annotationList.get(0)))));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -76,13 +75,13 @@ public class TypePoolLazyAnnotationListTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Foo {
+    private @interface Foo {
 
     }
 
     @Inherited
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface Bar {
+    private @interface Bar {
 
     }
 

@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,7 +32,7 @@ public class ArrayFactoryObjectPropertiesTest {
     @Test
     public void testIllegalArrayStackManipulation() throws Exception {
         assertThat(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class))
-                .new ArrayStackManipulation(Arrays.<StackManipulation>asList(StackManipulation.Illegal.INSTANCE))
+                .new ArrayStackManipulation(Collections.singletonList(StackManipulation.Illegal.INSTANCE))
                 .isValid(), is(false));
     }
 

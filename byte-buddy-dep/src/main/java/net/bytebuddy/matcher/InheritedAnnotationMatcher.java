@@ -32,7 +32,7 @@ public class InheritedAnnotationMatcher<T extends TypeDescription> extends Eleme
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && annotationMatcher.equals(((InheritedAnnotationMatcher) other).annotationMatcher);
+                && annotationMatcher.equals(((InheritedAnnotationMatcher<?>) other).annotationMatcher);
     }
 
     @Override

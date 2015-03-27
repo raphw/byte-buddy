@@ -19,7 +19,7 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
     /**
      * An abstract base implementation of a package description.
      */
-    public abstract static class AbstractPackageDescription implements PackageDescription {
+    abstract class AbstractPackageDescription implements PackageDescription {
 
         @Override
         public String getInternalName() {
@@ -51,7 +51,7 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
     /**
      * A simple implementation of a package without annotations.
      */
-    public static class Simple extends AbstractPackageDescription {
+    class Simple extends AbstractPackageDescription {
 
         /**
          * The name of the package.
@@ -87,7 +87,7 @@ public interface PackageDescription extends NamedElement, AnnotatedElement {
      * Represents a loaded {@link java.lang.Package} wrapped as a
      * {@link net.bytebuddy.instrumentation.type.PackageDescription}.
      */
-    public static class ForLoadedPackage extends AbstractPackageDescription {
+    class ForLoadedPackage extends AbstractPackageDescription {
 
         /**
          * The represented package.

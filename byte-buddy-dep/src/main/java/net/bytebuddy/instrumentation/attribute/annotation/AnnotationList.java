@@ -52,7 +52,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
     /**
      * Describes an array of loaded {@link java.lang.annotation.Annotation}s as an annotatoon list.
      */
-    static class ForLoadedAnnotation extends AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
+    class ForLoadedAnnotation extends AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
 
         /**
          * The represented annotations.
@@ -143,7 +143,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
     /**
      * Represents a list of explicitly provided annotation descriptions.
      */
-    static class Explicit extends AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
+    class Explicit extends AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
 
         /**
          * The list of represented annotation descriptions.
@@ -234,7 +234,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
     /**
      * Represents an empty annotation list.
      */
-    static class Empty extends FilterableList.Empty<AnnotationDescription, AnnotationList> implements AnnotationList {
+    class Empty extends FilterableList.Empty<AnnotationDescription, AnnotationList> implements AnnotationList {
 
         /**
          * Creates a list of empty annotation lists of the given dimension.

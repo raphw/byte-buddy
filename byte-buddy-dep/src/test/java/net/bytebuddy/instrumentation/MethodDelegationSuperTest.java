@@ -54,7 +54,7 @@ public class MethodDelegationSuperTest extends AbstractInstrumentationTest {
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
     }
 
-    public static interface Qux {
+    public interface Qux {
 
         Object qux();
     }

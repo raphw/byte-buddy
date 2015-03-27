@@ -26,7 +26,7 @@ public @interface RuntimeType {
     /**
      * A non-instantiable type that allows to check if a method or parameter should consider a runtime type.
      */
-    static final class Verifier {
+    final class Verifier {
 
         /**
          * As this is merely a utility method, the constructor is not supposed to be invoked.

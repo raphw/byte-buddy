@@ -91,7 +91,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface ShouldRebase {
+    private @interface ShouldRebase {
 
     }
 

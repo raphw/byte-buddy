@@ -73,7 +73,7 @@ public class TypeListExplicitTest {
 
     @Test
     public void testSubList() throws Exception {
-        assertThat(typeList.subList(0, 1), is((TypeList) new TypeList.Explicit(Arrays.asList(firstTypeDescription))));
+        assertThat(typeList.subList(0, 1), is((TypeList) new TypeList.Explicit(Collections.singletonList(firstTypeDescription))));
     }
 
     @Test

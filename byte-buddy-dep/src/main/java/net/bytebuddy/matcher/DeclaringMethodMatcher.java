@@ -32,7 +32,7 @@ public class DeclaringMethodMatcher<T extends TypeDescription> extends ElementMa
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && methodMatcher.equals(((DeclaringMethodMatcher) other).methodMatcher);
+                && methodMatcher.equals(((DeclaringMethodMatcher<?>) other).methodMatcher);
     }
 
     @Override

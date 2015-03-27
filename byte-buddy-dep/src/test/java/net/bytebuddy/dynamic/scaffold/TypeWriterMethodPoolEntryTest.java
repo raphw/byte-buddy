@@ -17,11 +17,10 @@ import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class TypeWriterMethodPoolEntryTest {
@@ -68,7 +67,7 @@ public class TypeWriterMethodPoolEntryTest {
         when(methodDescription.getAdjustedModifiers(any(Boolean.class))).thenReturn(MODIFIER);
         when(classVisitor.visitMethod(MODIFIER, FOO, BAR, QUX, new String[]{BAZ})).thenReturn(methodVisitor);
         when(first.apply(methodVisitor, instrumentationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit(Arrays.asList(parameterDescription)));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));
         when(parameterDescription.getModifiers()).thenReturn(MODIFIER);
         when(parameterDescription.getName()).thenReturn(FOO);
     }

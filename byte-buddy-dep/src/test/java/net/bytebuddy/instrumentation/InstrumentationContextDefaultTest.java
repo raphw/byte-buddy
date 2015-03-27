@@ -28,14 +28,12 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.aryEq;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class InstrumentationContextDefaultTest {
@@ -151,7 +149,7 @@ public class InstrumentationContextDefaultTest {
         when(firstSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialInvocation.apply(any(MethodVisitor.class), any(Instrumentation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        ParameterList firstSpecialMethodParameters = ParameterList.Explicit.latent(firstSpecialMethod, Arrays.asList(firstSpecialParameterType));
+        ParameterList firstSpecialMethodParameters = ParameterList.Explicit.latent(firstSpecialMethod, Collections.singletonList(firstSpecialParameterType));
         when(firstSpecialMethod.getParameters()).thenReturn(firstSpecialMethodParameters);
         when(secondSpecialInvocation.getMethodDescription()).thenReturn(secondSpecialMethod);
         when(secondSpecialInvocation.getTypeDescription()).thenReturn(secondSpecialType);
@@ -164,7 +162,7 @@ public class InstrumentationContextDefaultTest {
         when(secondSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Instrumentation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        ParameterList secondSpecialMethodParameters = ParameterList.Explicit.latent(secondSpecialMethod, Arrays.asList(secondSpecialParameterType));
+        ParameterList secondSpecialMethodParameters = ParameterList.Explicit.latent(secondSpecialMethod, Collections.singletonList(secondSpecialParameterType));
         when(secondSpecialMethod.getParameters()).thenReturn(secondSpecialMethodParameters);
         when(firstField.getFieldType()).thenReturn(firstFieldType);
         when(firstField.getName()).thenReturn(FOO);
@@ -421,7 +419,7 @@ public class InstrumentationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstMethodDescription = instrumentationContext.registerAccessorFor(firstSpecialInvocation);
-        assertThat(firstMethodDescription.getParameters(), is(ParameterList.Explicit.latent(firstMethodDescription, Arrays.asList(firstSpecialParameterType))));
+        assertThat(firstMethodDescription.getParameters(), is(ParameterList.Explicit.latent(firstMethodDescription, Collections.singletonList(firstSpecialParameterType))));
         assertThat(firstMethodDescription.getReturnType(), is(firstSpecialReturnType));
         assertThat(firstMethodDescription.getInternalName(), startsWith(FOO));
         assertThat(firstMethodDescription.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
@@ -429,7 +427,7 @@ public class InstrumentationContextDefaultTest {
         assertThat(instrumentationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         when(secondSpecialMethod.isStatic()).thenReturn(true);
         MethodDescription secondMethodDescription = instrumentationContext.registerAccessorFor(secondSpecialInvocation);
-        assertThat(secondMethodDescription.getParameters(), is(ParameterList.Explicit.latent(secondMethodDescription, Arrays.asList(secondSpecialParameterType))));
+        assertThat(secondMethodDescription.getParameters(), is(ParameterList.Explicit.latent(secondMethodDescription, Collections.singletonList(secondSpecialParameterType))));
         assertThat(secondMethodDescription.getReturnType(), is(secondSpecialReturnType));
         assertThat(secondMethodDescription.getInternalName(), startsWith(BAR));
         assertThat(secondMethodDescription.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
@@ -551,7 +549,7 @@ public class InstrumentationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstFieldSetter = instrumentationContext.registerSetterFor(firstField);
-        assertThat(firstFieldSetter.getParameters(), is(ParameterList.Explicit.latent(firstFieldSetter, Arrays.asList(firstFieldType))));
+        assertThat(firstFieldSetter.getParameters(), is(ParameterList.Explicit.latent(firstFieldSetter, Collections.singletonList(firstFieldType))));
         assertThat(firstFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
@@ -559,7 +557,7 @@ public class InstrumentationContextDefaultTest {
         assertThat(instrumentationContext.registerSetterFor(firstField), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldSetter = instrumentationContext.registerSetterFor(secondField);
-        assertThat(secondFieldSetter.getParameters(), is(ParameterList.Explicit.latent(secondFieldSetter, Arrays.asList(secondFieldType))));
+        assertThat(secondFieldSetter.getParameters(), is(ParameterList.Explicit.latent(secondFieldSetter, Collections.singletonList(secondFieldType))));
         assertThat(secondFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));

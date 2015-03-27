@@ -21,7 +21,6 @@ import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class RebaseInstrumentationTargetTest extends AbstractInstrumentationTargetTest {

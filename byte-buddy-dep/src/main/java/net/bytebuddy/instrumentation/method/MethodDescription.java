@@ -26,17 +26,17 @@ public interface MethodDescription extends ByteCodeElement {
     /**
      * The internal name of a Java constructor.
      */
-    static final String CONSTRUCTOR_INTERNAL_NAME = "<init>";
+    String CONSTRUCTOR_INTERNAL_NAME = "<init>";
 
     /**
      * The internal name of a Java static initializer.
      */
-    static final String TYPE_INITIALIZER_INTERNAL_NAME = "<clinit>";
+    String TYPE_INITIALIZER_INTERNAL_NAME = "<clinit>";
 
     /**
      * The type initializer of any representation of a type initializer.
      */
-    static final int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+    int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
     /**
      * Returns a description of the return type of the method described by this instance.
@@ -200,7 +200,7 @@ public interface MethodDescription extends ByteCodeElement {
     /**
      * An abstract base implementation of a method description.
      */
-    abstract static class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
+    abstract class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
 
         /**
          * A merger of all method modifiers that are visible in the Java source code.
@@ -464,7 +464,7 @@ public interface MethodDescription extends ByteCodeElement {
     /**
      * An implementation of a method description for a loaded constructor.
      */
-    static class ForLoadedConstructor extends AbstractMethodDescription {
+    class ForLoadedConstructor extends AbstractMethodDescription {
 
         /**
          * The loaded constructor that is represented by this instance.
@@ -559,7 +559,7 @@ public interface MethodDescription extends ByteCodeElement {
     /**
      * An implementation of a method description for a loaded method.
      */
-    static class ForLoadedMethod extends AbstractMethodDescription {
+    class ForLoadedMethod extends AbstractMethodDescription {
 
         /**
          * The loaded method that is represented by this instance.
@@ -672,7 +672,7 @@ public interface MethodDescription extends ByteCodeElement {
      * A latent method description describes a method that is not attached to a declaring
      * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
      */
-    static class Latent extends AbstractMethodDescription {
+    class Latent extends AbstractMethodDescription {
 
         /**
          * the internal name of this method.

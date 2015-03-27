@@ -38,7 +38,7 @@ public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && nameMatcher.equals(((NameMatcher) other).nameMatcher);
+                && nameMatcher.equals(((NameMatcher<?>) other).nameMatcher);
     }
 
     @Override

@@ -68,7 +68,7 @@ public interface AnnotationDescription {
      * Represents a value of an {@link java.lang.Enum} which is a value of an
      * {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}.
      */
-    static interface EnumerationValue {
+    interface EnumerationValue {
 
         /**
          * Returns the name of this instance's enumeration value.
@@ -96,7 +96,7 @@ public interface AnnotationDescription {
         /**
          * An adapter implementation of an enumeration value.
          */
-        abstract static class AbstractEnumerationValue implements EnumerationValue {
+        abstract class AbstractEnumerationValue implements EnumerationValue {
 
             @Override
             public boolean equals(Object other) {
@@ -119,7 +119,7 @@ public interface AnnotationDescription {
         /**
          * An enumeration value representing a loaded enumeration.
          */
-        static class ForLoadedEnumeration extends AbstractEnumerationValue {
+        class ForLoadedEnumeration extends AbstractEnumerationValue {
 
             /**
              * The enumeration value.
@@ -176,7 +176,7 @@ public interface AnnotationDescription {
      *
      * @param <S> The annotation type.
      */
-    static interface Loadable<S extends Annotation> extends AnnotationDescription {
+    interface Loadable<S extends Annotation> extends AnnotationDescription {
 
         /**
          * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
@@ -219,7 +219,7 @@ public interface AnnotationDescription {
     /**
      * An adapter implementaton of an annotation.
      */
-    abstract static class AbstractAnnotationDescription implements AnnotationDescription {
+    abstract class AbstractAnnotationDescription implements AnnotationDescription {
 
         @Override
         public <T> T getValue(MethodDescription methodDescription, Class<T> type) {
@@ -316,7 +316,7 @@ public interface AnnotationDescription {
      *
      * @param <S> The type of the annotation.
      */
-    static class ForLoadedAnnotation<S extends Annotation> extends AbstractAnnotationDescription.ForPrepared<S> implements Loadable<S> {
+    class ForLoadedAnnotation<S extends Annotation> extends AbstractAnnotationDescription.ForPrepared<S> implements Loadable<S> {
 
         /**
          * The represented annotation value.

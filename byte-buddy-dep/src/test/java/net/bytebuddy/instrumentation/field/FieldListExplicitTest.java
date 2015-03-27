@@ -9,6 +9,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -56,6 +57,6 @@ public class FieldListExplicitTest {
 
     @Test
     public void testSubList() throws Exception {
-        assertThat(fieldList.subList(0, 1), is((FieldList) new FieldList.Explicit(Arrays.asList(firstFieldDescription))));
+        assertThat(fieldList.subList(0, 1), is((FieldList) new FieldList.Explicit(Collections.singletonList(firstFieldDescription))));
     }
 }

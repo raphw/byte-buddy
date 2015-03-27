@@ -69,7 +69,7 @@ public class MethodDelegationDefaultTest extends AbstractInstrumentationTest {
         assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));
     }
 
-    public static interface DelegationNoDefaultInterface {
+    public interface DelegationNoDefaultInterface {
 
         String foo();
     }

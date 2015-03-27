@@ -29,7 +29,7 @@ public class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && negatedMatcher.equals(((NegatingMatcher) other).negatedMatcher);
+                && negatedMatcher.equals(((NegatingMatcher<?>) other).negatedMatcher);
     }
 
     @Override

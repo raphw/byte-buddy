@@ -52,14 +52,14 @@ public class AnnotationListExplicitTest {
 
     @Test
     public void testContainment() throws Exception {
-        AnnotationList annotationList = new AnnotationList.Explicit(Arrays.asList(foo));
+        AnnotationList annotationList = new AnnotationList.Explicit(Collections.singletonList(foo));
         assertThat(annotationList.isAnnotationPresent(Foo.class), is(true));
         assertThat(annotationList.isAnnotationPresent(Bar.class), is(false));
     }
 
     @Test
     public void testPreparation() throws Exception {
-        AnnotationList annotationList = new AnnotationList.Explicit(Arrays.asList(foo));
+        AnnotationList annotationList = new AnnotationList.Explicit(Collections.singletonList(foo));
         assertThat(annotationList.ofType(Foo.class), is(fooLoadable));
         assertThat(annotationList.ofType(Bar.class), nullValue());
     }
@@ -68,7 +68,7 @@ public class AnnotationListExplicitTest {
     @SuppressWarnings("unchecked")
     public void testMulti() throws Exception {
         Iterator<AnnotationDescription> annotationDescriptions = Arrays.asList(foo, bar).iterator();
-        for (AnnotationList annotationList : AnnotationList.Explicit.asList(Arrays.asList(Arrays.asList(foo), Arrays.asList(bar)))) {
+        for (AnnotationList annotationList : AnnotationList.Explicit.asList(Arrays.asList(Collections.singletonList(foo), Collections.singletonList(bar)))) {
             assertThat(annotationList.size(), is(1));
             assertThat(annotationList, hasItem(annotationDescriptions.next()));
         }
@@ -76,16 +76,16 @@ public class AnnotationListExplicitTest {
 
     @Test
     public void testSubList() throws Exception {
-        assertThat(new AnnotationList.Explicit(Arrays.asList(foo)).subList(0, 1),
-                is((AnnotationList) new AnnotationList.Explicit(Arrays.asList(foo))));
+        assertThat(new AnnotationList.Explicit(Collections.singletonList(foo)).subList(0, 1),
+                is((AnnotationList) new AnnotationList.Explicit(Collections.singletonList(foo))));
     }
 
-    private static @interface Foo {
+    private @interface Foo {
 
     }
 
     @Inherited
-    private static @interface Bar {
+    private @interface Bar {
 
     }
 }

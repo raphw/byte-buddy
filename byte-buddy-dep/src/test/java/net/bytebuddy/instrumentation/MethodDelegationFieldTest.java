@@ -160,40 +160,40 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
         MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, Object.class));
     }
 
-    public static interface Get<T> {
+    public interface Get<T> {
 
         T get();
     }
 
-    public static interface Set<T> {
+    public interface Set<T> {
 
         void set(T value);
     }
 
-    public static interface GetInherited<T> extends Get<T> {
+    public interface GetInherited<T> extends Get<T> {
         /* empty */
     }
 
-    public static interface SetInherited<T> extends Set<T> {
+    public interface SetInherited<T> extends Set<T> {
         /* empty */
     }
 
-    private static interface GetPrivate<T> {
+    private interface GetPrivate<T> {
 
         T get();
     }
 
-    private static interface SetPrivate<T> {
+    private interface SetPrivate<T> {
 
         void set(T value);
     }
 
-    public static interface GetIncorrect<T> {
+    public interface GetIncorrect<T> {
 
         T get(Object value);
     }
 
-    public static interface SetIncorrect<T> {
+    public interface SetIncorrect<T> {
 
         Object set(T value);
     }

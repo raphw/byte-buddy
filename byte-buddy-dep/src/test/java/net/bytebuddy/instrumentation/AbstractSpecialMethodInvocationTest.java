@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -36,7 +36,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
     @Before
     public void setUp() throws Exception {
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        parameterTypes = new TypeList.Explicit(Arrays.asList(parameterType));
+        parameterTypes = new TypeList.Explicit(Collections.singletonList(parameterType));
     }
 
     protected abstract Instrumentation.SpecialMethodInvocation make(String name,
@@ -88,7 +88,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(equalMethodButParameter.getReturnType()).thenReturn(returnType);
         TypeDescription parameterType = mock(TypeDescription.class);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        ParameterList equalMethodButParameterParameters = ParameterList.Explicit.latent(equalMethodButParameter, Arrays.asList(parameterType));
+        ParameterList equalMethodButParameterParameters = ParameterList.Explicit.latent(equalMethodButParameter, Collections.singletonList(parameterType));
         when(equalMethodButParameter.getParameters()).thenReturn(equalMethodButParameterParameters);
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButParameter)));
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(new Object())));

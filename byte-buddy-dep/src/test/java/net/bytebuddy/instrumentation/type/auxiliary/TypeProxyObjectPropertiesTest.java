@@ -7,7 +7,7 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.mockito.Mockito.when;
 
@@ -24,7 +24,7 @@ public class TypeProxyObjectPropertiesTest {
             public void apply(TypeDescription mock) {
                 FieldDescription fieldDescription = Mockito.mock(FieldDescription.class);
                 when(fieldDescription.getSourceCodeName()).thenReturn(TypeProxy.INSTANCE_FIELD);
-                when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit(Arrays.asList(fieldDescription)));
+                when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit(Collections.singletonList(fieldDescription)));
             }
         }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.AccessorMethodInvocation.class).skipSynthetic().apply();

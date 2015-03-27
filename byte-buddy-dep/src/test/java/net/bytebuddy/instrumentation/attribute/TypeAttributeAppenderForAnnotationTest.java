@@ -49,7 +49,7 @@ public class TypeAttributeAppenderForAnnotationTest extends AbstractTypeAttribut
         }).apply();
     }
 
-    public static @interface SimpleAnnotation {
+    public @interface SimpleAnnotation {
 
         String value();
     }

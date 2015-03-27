@@ -35,7 +35,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * An base implementation for a {@link net.bytebuddy.instrumentation.method.ParameterList}.
      */
-    abstract static class AbstractBase extends FilterableList.AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
+    abstract class AbstractBase extends FilterableList.AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
 
         @Override
         public boolean hasExplicitMetaData() {
@@ -52,7 +52,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
      * Represents a list of parameters for an executable, i.e. a {@link java.lang.reflect.Method} or
      * {@link java.lang.reflect.Constructor}.
      */
-    static class ForLoadedExecutable extends AbstractBase {
+    class ForLoadedExecutable extends AbstractBase {
 
         /**
          * Represents the {@code java.lang.reflect.Executable}'s {@code getParameters} method.
@@ -64,11 +64,10 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * whether they are available.
          */
         static {
-            JavaMethod getParameters, getDeclaringExecutable;
+            JavaMethod getParameters;
             try {
                 Class<?> executableType = Class.forName("java.lang.reflect.Executable");
                 getParameters = new JavaMethod.ForLoadedMethod(executableType.getDeclaredMethod("getParameters"));
-                Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
             } catch (Exception ignored) {
                 getParameters = JavaMethod.ForUnavailableMethod.INSTANCE;
             }
@@ -248,7 +247,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * A list of explicitly provided parameter descriptions.
      */
-    static class Explicit extends AbstractBase {
+    class Explicit extends AbstractBase {
 
         /**
          * The list of parameter descriptions that are represented by this list.
@@ -314,7 +313,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * An empty list of parameters.
      */
-    static class Empty extends FilterableList.Empty<ParameterDescription, ParameterList> implements ParameterList {
+    class Empty extends FilterableList.Empty<ParameterDescription, ParameterList> implements ParameterList {
 
         @Override
         public boolean hasExplicitMetaData() {

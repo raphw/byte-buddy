@@ -32,7 +32,7 @@ public class MethodParameterTypeMatcher<T extends ParameterList> extends Element
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && parameterMatcher.equals(((MethodParameterTypeMatcher) other).parameterMatcher);
+                && parameterMatcher.equals(((MethodParameterTypeMatcher<?>) other).parameterMatcher);
     }
 
     @Override

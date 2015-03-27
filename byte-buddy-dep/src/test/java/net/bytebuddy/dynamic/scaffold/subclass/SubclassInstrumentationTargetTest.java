@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -47,7 +46,7 @@ public class SubclassInstrumentationTargetTest extends AbstractInstrumentationTa
     public void setUp() throws Exception {
         when(parameterList.asTypeList()).thenReturn(parameterTypes);
         when(instrumentedType.getSupertype()).thenReturn(superType);
-        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Arrays.asList(superMethodConstructor)));
+        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(superMethodConstructor)));
         when(superType.getInternalName()).thenReturn(BAR);
         when(superMethod.getDeclaringType()).thenReturn(superType);
         when(superType.getStackSize()).thenReturn(StackSize.ZERO);

@@ -14,7 +14,7 @@ import org.mockito.asm.Type;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -50,7 +50,7 @@ public abstract class AbstractArrayFactoryTest {
     protected void testCreationUsing(Class<?> componentType, int storageOpcode) throws Exception {
         defineComponentType(componentType);
         CollectionFactory arrayFactory = ArrayFactory.targeting(componentTypeDescription);
-        StackManipulation arrayStackManipulation = arrayFactory.withValues(Arrays.asList(stackManipulation));
+        StackManipulation arrayStackManipulation = arrayFactory.withValues(Collections.singletonList(stackManipulation));
         assertThat(arrayStackManipulation.isValid(), is(true));
         verify(stackManipulation, atLeast(1)).isValid();
         StackManipulation.Size size = arrayStackManipulation.apply(methodVisitor, instrumentationContext);

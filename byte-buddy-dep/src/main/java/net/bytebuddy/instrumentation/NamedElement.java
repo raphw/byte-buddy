@@ -8,7 +8,7 @@ public interface NamedElement {
     /**
      * Represents an element without a name in the source code.
      */
-    static final String EMPTY_NAME = "";
+    String EMPTY_NAME = "";
 
     /**
      * Returns the internalName of this byte code element.

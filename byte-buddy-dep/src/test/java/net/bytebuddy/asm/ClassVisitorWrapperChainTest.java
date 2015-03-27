@@ -9,7 +9,6 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class ClassVisitorWrapperChainTest {

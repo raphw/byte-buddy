@@ -16,7 +16,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,7 +58,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodNameTransformer.transform(FOO)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(FOO)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(parameterType));
+        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Collections.singletonList(parameterType));
         when(methodDescription.getParameters()).thenReturn(parameterList);
     }
 
@@ -70,7 +70,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
-        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Arrays.asList(parameterType))));
+        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Collections.singletonList(parameterType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));

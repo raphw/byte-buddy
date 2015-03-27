@@ -71,7 +71,7 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
         assertThat(new MethodSortMatcher<MethodDescription>(sort).toString(), is(sort.getDescription()));
     }
 
-    private static enum MockEngine {
+    private enum MockEngine {
 
         CONSTRUCTOR {
             @Override

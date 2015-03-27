@@ -37,7 +37,7 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> implements Eleme
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && classLoaderMatcher.equals(((ClassLoaderHierarchyMatcher) other).classLoaderMatcher);
+                && classLoaderMatcher.equals(((ClassLoaderHierarchyMatcher<?>) other).classLoaderMatcher);
     }
 
     @Override

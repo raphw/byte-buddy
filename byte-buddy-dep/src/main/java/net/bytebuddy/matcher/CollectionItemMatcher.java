@@ -35,7 +35,7 @@ public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBa
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && elementMatcher.equals(((CollectionItemMatcher) other).elementMatcher);
+                && elementMatcher.equals(((CollectionItemMatcher<?>) other).elementMatcher);
     }
 
     @Override

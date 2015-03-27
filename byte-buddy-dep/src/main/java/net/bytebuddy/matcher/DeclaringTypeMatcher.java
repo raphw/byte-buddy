@@ -34,7 +34,7 @@ public class DeclaringTypeMatcher<T extends DeclaredInType> extends ElementMatch
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && typeMatcher.equals(((DeclaringTypeMatcher) other).typeMatcher);
+                && typeMatcher.equals(((DeclaringTypeMatcher<?>) other).typeMatcher);
     }
 
     @Override

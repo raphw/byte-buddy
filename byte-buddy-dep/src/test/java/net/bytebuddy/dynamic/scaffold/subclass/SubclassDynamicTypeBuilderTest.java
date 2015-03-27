@@ -201,7 +201,7 @@ public class SubclassDynamicTypeBuilderTest {
         Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -234,7 +234,7 @@ public class SubclassDynamicTypeBuilderTest {
         Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -273,7 +273,7 @@ public class SubclassDynamicTypeBuilderTest {
         Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -319,7 +319,7 @@ public class SubclassDynamicTypeBuilderTest {
         Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -361,7 +361,7 @@ public class SubclassDynamicTypeBuilderTest {
         Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -373,7 +373,7 @@ public class SubclassDynamicTypeBuilderTest {
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .defineConstructor(Arrays.<Class<?>>asList(), Visibility.PUBLIC)
+                .defineConstructor(Collections.emptyList(), Visibility.PUBLIC)
                 .throwing(IOException.class)
                 .intercept(SuperMethodCall.INSTANCE)
                 .make()
@@ -401,7 +401,7 @@ public class SubclassDynamicTypeBuilderTest {
         Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -454,7 +454,7 @@ public class SubclassDynamicTypeBuilderTest {
         Class<?> loaded = new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -516,7 +516,7 @@ public class SubclassDynamicTypeBuilderTest {
         new SubclassDynamicTypeBuilder<Object>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Object.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -537,7 +537,7 @@ public class SubclassDynamicTypeBuilderTest {
         new SubclassDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -562,7 +562,7 @@ public class SubclassDynamicTypeBuilderTest {
         assertThat(new SubclassDynamicTypeBuilder<Foo>(ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.Fixed(FOO),
                 new TypeDescription.ForLoadedType(Foo.class),
-                new TypeList.ForLoadedType(Arrays.<Class<?>>asList(Serializable.class)),
+                new TypeList.ForLoadedType(Collections.singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 none(),
@@ -587,7 +587,7 @@ public class SubclassDynamicTypeBuilderTest {
         ObjectPropertyAssertion.of(SubclassDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
             public List<?> create() {
-                return Arrays.asList(mock(TypeDescription.class));
+                return Collections.singletonList(mock(TypeDescription.class));
             }
         }).apply();
     }

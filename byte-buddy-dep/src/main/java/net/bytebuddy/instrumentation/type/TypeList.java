@@ -29,7 +29,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * Implementation of a type list for an array of loaded types.
      */
-    static class ForLoadedType extends AbstractBase<TypeDescription, TypeList> implements TypeList {
+    class ForLoadedType extends AbstractBase<TypeDescription, TypeList> implements TypeList {
 
         /**
          * The loaded types this type list represents.
@@ -88,7 +88,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * A wrapper implementation of an explicit list of types.
      */
-    static class Explicit extends AbstractBase<TypeDescription, TypeList> implements TypeList {
+    class Explicit extends AbstractBase<TypeDescription, TypeList> implements TypeList {
 
         /**
          * The list of type descriptions this list represents.
@@ -142,7 +142,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * An implementation of an empty type list.
      */
-    static class Empty extends FilterableList.Empty<TypeDescription, TypeList> implements TypeList {
+    class Empty extends FilterableList.Empty<TypeDescription, TypeList> implements TypeList {
 
         @Override
         public String[] toInternalNames() {

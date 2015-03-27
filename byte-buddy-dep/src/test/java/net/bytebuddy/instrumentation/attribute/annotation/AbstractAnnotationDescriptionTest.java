@@ -385,13 +385,13 @@ public abstract class AbstractAnnotationDescriptionTest {
                 .invoke(describe(annotation).prepare(annotation.annotationType()).load()), is(loadedValue));
     }
 
-    public static enum SampleEnumeration {
+    public enum SampleEnumeration {
         VALUE,
         OTHER
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface Sample {
+    public @interface Sample {
 
         boolean booleanValue();
 
@@ -445,7 +445,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public static @interface SampleDefault {
+    public @interface SampleDefault {
 
         boolean booleanValue() default BOOLEAN;
 

@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -144,7 +144,7 @@ public class MethodRebaseResolverDefaultTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(FOO));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(instrumentedType));
-        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Arrays.asList(placeholderType))));
+        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Collections.singletonList(placeholderType))));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getAdditionalArguments().isValid(), is(true));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);

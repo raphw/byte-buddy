@@ -14,6 +14,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -68,7 +69,7 @@ public class ClassFileLocatorAgentBasedTest {
     @Test
     public void testExplicitLookup() throws Exception {
         ClassFileLocator.AgentBased.ClassLoadingDelegate fallback = mock(ClassFileLocator.AgentBased.ClassLoadingDelegate.class);
-        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = new ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit(fallback, Arrays.<Class<?>>asList(Object.class));
+        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = new ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit(fallback, Collections.singletonList(Object.class));
         assertEquals(Object.class, classLoadingDelegate.locate(Object.class.getName()));
         doReturn(String.class).when(fallback).locate(String.class.getName());
         assertEquals(String.class, classLoadingDelegate.locate(String.class.getName()));
@@ -104,7 +105,7 @@ public class ClassFileLocatorAgentBasedTest {
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.class).create(new ObjectPropertyAssertion.Creator<Collection<Class<?>>>() {
             @Override
             public Collection<Class<?>> create() {
-                return Arrays.<Class<?>>asList(otherIterator.next());
+                return Collections.<Class<?>>singletonList(otherIterator.next());
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ExtractionClassFileTransformer.class).applyMutable();

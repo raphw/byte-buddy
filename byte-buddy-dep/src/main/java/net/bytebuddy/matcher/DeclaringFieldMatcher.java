@@ -32,7 +32,7 @@ public class DeclaringFieldMatcher<T extends TypeDescription> extends ElementMat
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && fieldMatcher.equals(((DeclaringFieldMatcher) other).fieldMatcher);
+                && fieldMatcher.equals(((DeclaringFieldMatcher<?>) other).fieldMatcher);
     }
 
     @Override

@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,8 +35,8 @@ public class DynamicTypeBuilderTokenTest {
 
     @Before
     public void setUp() throws Exception {
-        parameterTypes = new TypeList.Explicit(Arrays.asList(parameterType));
-        exceptionTypes = new TypeList.Explicit(Arrays.asList(exceptionType));
+        parameterTypes = new TypeList.Explicit(Collections.singletonList(parameterType));
+        exceptionTypes = new TypeList.Explicit(Collections.singletonList(exceptionType));
     }
 
     @Test
@@ -90,9 +89,9 @@ public class DynamicTypeBuilderTokenTest {
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, TargetType.DESCRIPTION, parameterTypes, exceptionTypes, QUX)
                 .resolveReturnType(singleType), is(singleType));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, parameterTypes, new TypeList.ForLoadedType(TargetType.class), QUX)
-                .resolveExceptionTypes(singleType), is((List<TypeDescription>) new TypeList.Explicit(Arrays.asList(singleType))));
+                .resolveExceptionTypes(singleType), is((List<TypeDescription>) new TypeList.Explicit(Collections.singletonList(singleType))));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, new TypeList.ForLoadedType(TargetType.class), exceptionTypes, QUX)
-                .resolveParameterTypes(singleType), is((List<TypeDescription>) new TypeList.Explicit(Arrays.asList(singleType))));
+                .resolveParameterTypes(singleType), is((List<TypeDescription>) new TypeList.Explicit(Collections.singletonList(singleType))));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, parameterTypes, exceptionTypes, QUX)
                 .resolveReturnType(mock(TypeDescription.class)), is(singleType));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, parameterTypes, exceptionTypes, QUX)

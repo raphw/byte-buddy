@@ -552,7 +552,7 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface SampleAnnotation {
+    private @interface SampleAnnotation {
 
     }
 

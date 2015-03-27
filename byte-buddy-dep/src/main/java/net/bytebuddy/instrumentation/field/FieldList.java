@@ -13,7 +13,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
     /**
      * An implementation of a field list for an array of loaded fields.
      */
-    static class ForLoadedField extends AbstractBase<FieldDescription, FieldList> implements FieldList {
+    class ForLoadedField extends AbstractBase<FieldDescription, FieldList> implements FieldList {
 
         /**
          * The loaded fields this field list represents.
@@ -48,7 +48,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
     /**
      * A wrapper implementation of a field list for a given list of field descriptions.
      */
-    static class Explicit extends AbstractBase<FieldDescription, FieldList> implements FieldList {
+    class Explicit extends AbstractBase<FieldDescription, FieldList> implements FieldList {
 
         /**
          * The list of field descriptions this list represents.
@@ -83,7 +83,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
     /**
      * An implementation of an empty field list.
      */
-    static class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
+    class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
 
     }
 }

@@ -95,16 +95,16 @@ public abstract class AbstractEnumerationValueTest {
         describe(Sample.FIRST).load(Other.class);
     }
 
-    public static enum Sample {
+    public enum Sample {
         FIRST,
         SECOND
     }
 
-    private static enum Other {
+    private enum Other {
         INSTANCE
     }
 
-    public static @interface Carrier {
+    public @interface Carrier {
 
         Sample value();
     }

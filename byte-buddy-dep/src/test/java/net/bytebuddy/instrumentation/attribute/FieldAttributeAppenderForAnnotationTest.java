@@ -49,7 +49,7 @@ public class FieldAttributeAppenderForAnnotationTest extends AbstractFieldAttrib
         }).apply();
     }
 
-    public static @interface SimpleAnnotation {
+    public @interface SimpleAnnotation {
 
         String value();
     }

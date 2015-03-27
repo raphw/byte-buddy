@@ -16,7 +16,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
      * are declared for a given type.
      */
-    static class ForLoadedType extends AbstractBase<MethodDescription, MethodList> implements MethodList {
+    class ForLoadedType extends AbstractBase<MethodDescription, MethodList> implements MethodList {
 
         /**
          * The loaded methods that are represented by this method list.
@@ -73,7 +73,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
     /**
      * A method list that is a wrapper for a given list of method descriptions.
      */
-    static class Explicit extends AbstractBase<MethodDescription, MethodList> implements MethodList {
+    class Explicit extends AbstractBase<MethodDescription, MethodList> implements MethodList {
 
         /**
          * The list of methods that is represented by this method list.
@@ -108,7 +108,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
     /**
      * An implementation of an empty method list.
      */
-    static class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
+    class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
 
     }
 }

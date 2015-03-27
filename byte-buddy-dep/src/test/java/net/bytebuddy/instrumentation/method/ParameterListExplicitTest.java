@@ -9,6 +9,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -54,7 +55,7 @@ public class ParameterListExplicitTest {
 
     @Test
     public void testSubList() throws Exception {
-        assertThat(parameterList.subList(0, 1), is((ParameterList) new ParameterList.Explicit(Arrays.asList(firstParameterDescription))));
+        assertThat(parameterList.subList(0, 1), is((ParameterList) new ParameterList.Explicit(Collections.singletonList(firstParameterDescription))));
     }
 
     @Test

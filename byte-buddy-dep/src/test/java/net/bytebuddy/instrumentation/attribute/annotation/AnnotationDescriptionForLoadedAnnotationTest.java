@@ -42,11 +42,11 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private static @interface PrivateAnnotation {
+    private @interface PrivateAnnotation {
 
         String value();
 
-        static enum Defect implements PrivateAnnotation {
+        enum Defect implements PrivateAnnotation {
 
             INSTANCE;
 

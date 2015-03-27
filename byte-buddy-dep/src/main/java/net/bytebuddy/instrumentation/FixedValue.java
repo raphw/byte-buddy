@@ -245,7 +245,7 @@ public abstract class FixedValue implements Instrumentation {
      * Represents a fixed value instrumentation that is using a default assigner for attempting to assign
      * the fixed value to the return type of the instrumented method.
      */
-    public static interface AssignerConfigurable extends Instrumentation {
+    public interface AssignerConfigurable extends Instrumentation {
 
         /**
          * Defines an explicit assigner to this fixed value instrumentation.

@@ -18,14 +18,11 @@ import org.mockito.stubbing.Answer;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 public abstract class AbstractInstrumentationTargetTest {
@@ -59,7 +56,7 @@ public abstract class AbstractInstrumentationTargetTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
-        when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Arrays.asList(invokableMethod)));
+        when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(invokableMethod)));
         when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultType, Collections.singleton(defaultMethod)));
         when(bridgeMethodResolverFactory.make(any(MethodList.class))).thenReturn(bridgeMethodResolver);
         when(methodLookup.resolve(any(MethodDescription.class), any(Map.class), eq(bridgeMethodResolver)))

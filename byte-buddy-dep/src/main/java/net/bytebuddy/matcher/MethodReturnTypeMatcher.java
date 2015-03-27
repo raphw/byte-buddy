@@ -32,7 +32,7 @@ public class MethodReturnTypeMatcher<T extends MethodDescription> extends Elemen
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && typeMatcher.equals(((MethodReturnTypeMatcher) other).typeMatcher);
+                && typeMatcher.equals(((MethodReturnTypeMatcher<?>) other).typeMatcher);
     }
 
     @Override

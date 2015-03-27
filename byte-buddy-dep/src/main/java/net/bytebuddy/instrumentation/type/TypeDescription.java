@@ -257,7 +257,7 @@ public interface TypeDescription extends ByteCodeElement {
     /**
      * An abstract base implementation of a type description.
      */
-    abstract static class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
+    abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
         /**
          * Collects all interfaces for a given type description.
@@ -520,7 +520,7 @@ public interface TypeDescription extends ByteCodeElement {
     /**
      * A type description implementation that represents a loaded type.
      */
-    static class ForLoadedType extends AbstractTypeDescription {
+    class ForLoadedType extends AbstractTypeDescription {
 
         /**
          * The loaded type this instance represents.
@@ -705,7 +705,7 @@ public interface TypeDescription extends ByteCodeElement {
     /**
      * A projection for an array type based on an existing {@link net.bytebuddy.instrumentation.type.TypeDescription}.
      */
-    static class ArrayProjection extends AbstractTypeDescription {
+    class ArrayProjection extends AbstractTypeDescription {
 
         /**
          * The modifiers of any array type.

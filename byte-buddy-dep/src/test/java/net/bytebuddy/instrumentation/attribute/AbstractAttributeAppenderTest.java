@@ -13,9 +13,9 @@ public abstract class AbstractAttributeAppenderTest {
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
-    protected static @interface Qux {
+    protected @interface Qux {
 
-        static class Instance implements Qux {
+        class Instance implements Qux {
 
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -25,9 +25,9 @@ public abstract class AbstractAttributeAppenderTest {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    protected static @interface Baz {
+    protected @interface Baz {
 
-        static class Instance implements Baz {
+        class Instance implements Baz {
 
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -37,9 +37,9 @@ public abstract class AbstractAttributeAppenderTest {
     }
 
     @Retention(RetentionPolicy.CLASS)
-    protected static @interface QuxBaz {
+    protected @interface QuxBaz {
 
-        static class Instance implements QuxBaz {
+        class Instance implements QuxBaz {
 
             @Override
             public Class<? extends Annotation> annotationType() {

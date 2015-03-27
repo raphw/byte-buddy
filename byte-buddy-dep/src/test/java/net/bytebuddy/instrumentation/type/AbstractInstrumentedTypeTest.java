@@ -12,7 +12,6 @@ import org.junit.rules.TestRule;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -78,16 +77,16 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(BAR,
                 returnType,
-                Arrays.asList(parameterType),
-                Arrays.asList(exceptionType),
+                Collections.singletonList(parameterType),
+                Collections.singletonList(exceptionType),
                 Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType(), is(returnType));
         assertThat(methodDescription.getParameters().size(), is(1));
-        assertThat(methodDescription.getParameters().asTypeList(), is(Arrays.asList(parameterType)));
+        assertThat(methodDescription.getParameters().asTypeList(), is(Collections.singletonList(parameterType)));
         assertThat(methodDescription.getExceptionTypes().size(), is(1));
-        assertThat(methodDescription.getExceptionTypes(), is(Arrays.asList(exceptionType)));
+        assertThat(methodDescription.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
     }
@@ -98,14 +97,14 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(BAR,
                 instrumentedType,
-                Arrays.asList(instrumentedType),
+                Collections.singletonList(instrumentedType),
                 Collections.<TypeDescription>emptyList(),
                 Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType(), is((TypeDescription) instrumentedType));
         assertThat(methodDescription.getParameters().size(), is(1));
-        assertThat(methodDescription.getParameters().asTypeList(), is(Arrays.asList((TypeDescription) instrumentedType)));
+        assertThat(methodDescription.getParameters().asTypeList(), is(Collections.singletonList((TypeDescription) instrumentedType)));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
