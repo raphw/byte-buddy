@@ -2,13 +2,11 @@ package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -174,7 +172,7 @@ public interface MethodAttributeAppender {
         /**
          * Create a new annotation appender for a method.
          *
-         * @param annotation The annotations to append to the target method.
+         * @param annotations The annotations to append to the target method.
          */
         public ForAnnotation(List<? extends AnnotationDescription> annotations) {
             this.annotations = annotations;
@@ -185,7 +183,7 @@ public interface MethodAttributeAppender {
          * Create a new annotation appender for a method parameter.
          *
          * @param parameterIndex The index of the target parameter.
-         * @param annotation     The annotations to append to the target method parameter.
+         * @param annotations    The annotations to append to the target method parameter.
          */
         public ForAnnotation(int parameterIndex, List<? extends AnnotationDescription> annotations) {
             this.annotations = annotations;

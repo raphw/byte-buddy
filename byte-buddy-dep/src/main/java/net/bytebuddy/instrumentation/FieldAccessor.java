@@ -891,6 +891,7 @@ public abstract class FieldAccessor implements Instrumentation {
                  * @param name            The name of the field that is defined by this preparation handler.
                  * @param typeDescription The type of the field that is to be defined.
                  * @param contributor     The modifiers of the field that is to be defined.
+                 * @return A corresponding preparation handler.
                  */
                 public static PreparationHandler of(String name, TypeDescription typeDescription, ModifierContributor.ForField... contributor) {
                     return new FieldDefiner(name, typeDescription, resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor));

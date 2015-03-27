@@ -329,6 +329,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @param parameterBinders A list of parameter binder delegates. Each such delegate is responsible for creating
          *                         a {@link net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder.ParameterBinding}
          *                         for a specific annotation.
+         * @return A corresponding delegation processor.
          */
         protected static DelegationProcessor of(List<ParameterBinder<?>> parameterBinders) {
             Map<TypeDescription, ParameterBinder<?>> parameterBinderMap = new HashMap<TypeDescription, ParameterBinder<?>>();

@@ -2,12 +2,10 @@ package net.bytebuddy.instrumentation.attribute;
 
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.FieldVisitor;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;

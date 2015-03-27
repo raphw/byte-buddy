@@ -103,6 +103,7 @@ public interface BridgeMethodResolver {
          *
          * @param methodList      The relevant methods which can be called in a given context.
          * @param conflictHandler A conflict handler that is queried for handling ambiguous resolutions.
+         * @return A corresponding bridge method resolver.
          */
         public static BridgeMethodResolver of(MethodList methodList, ConflictHandler conflictHandler) {
             MethodList bridgeMethods = methodList.filter(isBridge());
