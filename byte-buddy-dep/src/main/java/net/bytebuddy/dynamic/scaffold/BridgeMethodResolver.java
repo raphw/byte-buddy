@@ -90,8 +90,9 @@ public interface BridgeMethodResolver {
         private final Map<String, BridgeTarget> bridges;
 
         /**
-         * Creates a new simple bridge method resolver
-         * @param bridges  A map of all bridges mapped by their unique signature.
+         * Creates a new simple bridge method resolver.
+         *
+         * @param bridges A map of all bridges mapped by their unique signature.
          */
         protected Simple(Map<String, BridgeTarget> bridges) {
             this.bridges = bridges;

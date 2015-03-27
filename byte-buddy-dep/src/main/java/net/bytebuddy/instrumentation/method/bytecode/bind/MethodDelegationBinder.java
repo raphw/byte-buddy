@@ -513,10 +513,10 @@ public interface MethodDelegationBinder {
                  * @param terminatingStackManipulation The stack manipulation that is applied after the method invocation.
                  */
                 protected Build(MethodDescription target,
-                              Map<?, Integer> registeredTargetIndices,
-                              StackManipulation methodInvocation,
-                              List<StackManipulation> parameterStackManipulations,
-                              StackManipulation terminatingStackManipulation) {
+                                Map<?, Integer> registeredTargetIndices,
+                                StackManipulation methodInvocation,
+                                List<StackManipulation> parameterStackManipulations,
+                                StackManipulation terminatingStackManipulation) {
                     this.target = target;
                     this.registeredTargetIndices = new HashMap<Object, Integer>(registeredTargetIndices);
                     this.methodInvocation = methodInvocation;

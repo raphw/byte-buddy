@@ -22,7 +22,7 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
     /**
      * The prefix for names of an unnamed parameter.
      */
-    static final String NAME_PREFIX = "arg";
+    String NAME_PREFIX = "arg";
 
     /**
      * Returns the parameter's type.
@@ -71,7 +71,7 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
     /**
      * A base implementation of a method parameter description.
      */
-    abstract static class AbstractParameterDescription extends AbstractModifierReviewable implements ParameterDescription {
+    abstract class AbstractParameterDescription extends AbstractModifierReviewable implements ParameterDescription {
 
         @Override
         public String getName() {
@@ -140,12 +140,39 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
     /**
      * Description of a loaded parameter, represented by a Java 8 {@code java.lang.reflect.Parameter}.
      */
-    static class ForLoadedParameter extends AbstractParameterDescription {
+    class ForLoadedParameter extends AbstractParameterDescription {
 
         /**
          * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getType} method.
          */
         protected static final JavaMethod GET_TYPE;
+
+        /**
+         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getName} method.
+         */
+        private static final JavaMethod GET_NAME;
+
+        /**
+         * Java method representation for the {@code java.lang.reflect.Parameter}'s
+         * {@code getDeclaringExecutable} method.
+         */
+        private static final JavaMethod GET_DECLARING_EXECUTABLE;
+
+        /**
+         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code isNamePresent} method.
+         */
+        private static final JavaMethod IS_NAME_PRESENT;
+
+        /**
+         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getModifiers} method.
+         */
+        private static final JavaMethod GET_MODIFIERS;
+
+        /**
+         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getDeclaredAnnotations}
+         * method.
+         */
+        private static final JavaMethod GET_DECLARED_ANNOTATIONS;
 
         /**
          * Initializes the {@link net.bytebuddy.utility.JavaMethod} instances of this class dependant on
@@ -176,33 +203,6 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
             GET_DECLARED_ANNOTATIONS = getDeclaredAnnotations;
             GET_TYPE = getType;
         }
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getName} method.
-         */
-        private static final JavaMethod GET_NAME;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s
-         * {@code getDeclaringExecutable} method.
-         */
-        private static final JavaMethod GET_DECLARING_EXECUTABLE;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code isNamePresent} method.
-         */
-        private static final JavaMethod IS_NAME_PRESENT;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getModifiers} method.
-         */
-        private static final JavaMethod GET_MODIFIERS;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getDeclaredAnnotations}
-         * method.
-         */
-        private static final JavaMethod GET_DECLARED_ANNOTATIONS;
 
         /**
          * An instance of {@code java.lang.reflect.Parameter}.
@@ -422,7 +422,7 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
     /**
      * A latent description of a parameter that is not attached to a method or constructor.
      */
-    static class Latent extends AbstractParameterDescription {
+    class Latent extends AbstractParameterDescription {
 
         /**
          * The method that is declaring the parameter.
