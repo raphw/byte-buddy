@@ -453,6 +453,7 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForShortConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForTextConstant.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForClassConstant.class).apply();
     }
 
     public static class StaticMethod {

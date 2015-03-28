@@ -21,8 +21,9 @@ public class ArgumentBootstrap {
                              float arg6,
                              double arg7,
                              String arg8,
-                             Object arg9) {
-        return "" + arg0 + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9;
+                             Class<?> arg9,
+                             Object arg10) {
+        return "" + arg0 + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9 + arg10;
     }
 
     public static String bar(Boolean arg0,
@@ -34,8 +35,9 @@ public class ArgumentBootstrap {
                              Float arg6,
                              Double arg7,
                              String arg8,
-                             Object arg9) {
-        return "" + arg0 + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9;
+                             Class<?> arg9,
+                             Object arg10) {
+        return "" + arg0 + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9 + arg10;
     }
 
     public static String qux(String arg) {

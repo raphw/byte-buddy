@@ -31,9 +31,10 @@ public class ParameterBootstrap {
                                                       long arg5,
                                                       float arg6,
                                                       double arg7,
-                                                      String arg8)
+                                                      String arg8,
+                                                      Class<?> arg9)
             throws NoSuchMethodException, IllegalAccessException {
-        ParameterBootstrap.arguments = new Object[]{arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8};
+        ParameterBootstrap.arguments = new Object[]{arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9};
         return new ConstantCallSite(lookup.findStatic(ParameterBootstrap.class, methodName, methodType));
     }
 

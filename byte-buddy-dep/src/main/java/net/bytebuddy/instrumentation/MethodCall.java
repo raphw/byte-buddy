@@ -970,6 +970,8 @@ public class MethodCall implements Instrumentation {
                     return new ForFloatConstant((Float) value);
                 } else if (value.getClass() == Double.class) {
                     return new ForDoubleConstant((Double) value);
+                } else if (value.getClass() == Class.class) {
+                    return new ForClassConstant(new TypeDescription.ForLoadedType((Class<?>) value));
                 } else {
                     return new ForStaticField(value);
                 }
@@ -1678,6 +1680,64 @@ public class MethodCall implements Instrumentation {
             public String toString() {
                 return "MethodCall.ArgumentLoader.ForTextConstant{" +
                         "value='" + value + '\'' +
+                        '}';
+            }
+        }
+
+        /**
+         * Loads a {@link java.lang.Class} value onto the operand stack.
+         */
+        class ForClassConstant implements ArgumentLoader {
+
+            /**
+             * The type to load onto the operand stack.
+             */
+            private final TypeDescription typeDescription;
+
+            /**
+             * Creates a new class constant representation.
+             *
+             * @param typeDescription The type to represent.
+             */
+            public ForClassConstant(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription interceptedMethod,
+                                             TypeDescription targetType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        ClassConstant.of(typeDescription),
+                        assigner.assign(new TypeDescription.ForLoadedType(Class.class), targetType, dynamicallyTyped));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign Class value to " + targetType);
+                }
+                return stackManipulation;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && typeDescription.equals(((ForClassConstant) other).typeDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return typeDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForClassConstant{" +
+                        "typeDescription=" + typeDescription +
                         '}';
             }
         }

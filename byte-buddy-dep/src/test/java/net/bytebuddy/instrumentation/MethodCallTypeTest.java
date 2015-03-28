@@ -30,6 +30,8 @@ public class MethodCallTypeTest extends AbstractInstrumentationTest {
 
     private static final String STRING_VALUE = "foo";
 
+    private static final Class<?> CLASS_VALUE = Object.class;
+
     private static final boolean BOOLEAN_VALUE = true;
 
     private static final byte BYTE_VALUE = 42;
@@ -81,6 +83,7 @@ public class MethodCallTypeTest extends AbstractInstrumentationTest {
                 {DOUBLE_VALUE, true, false},
                 {NULL_CONSTANT, false, false},
                 {STRING_VALUE, true, false},
+                {CLASS_VALUE, true, false},
                 {REFERENCE_VALUE, true, true}
         });
     }

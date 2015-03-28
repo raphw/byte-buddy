@@ -325,10 +325,12 @@ public class InvokeDynamic implements Instrumentation {
     }
 
     /**
+     * <p>
      * Requires the bootstrap method to bootstrap a method that takes the specified arguments as its next parameters.
      * Note that any primitive parameters are passed as their wrapper types. Furthermore, values that can be stored
      * in the instrumented class's constant pool might be of different object identity when passed to the
      * bootstrapped method.
+     * </p>
      *
      * @param value The arguments to pass to the bootstrapped method.
      * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
@@ -1078,6 +1080,8 @@ public class InvokeDynamic implements Instrumentation {
                         return DOUBLE.make(value);
                     } else if (value instanceof String) {
                         return new ForStringValue((String) value);
+                    } else if (value instanceof Class) {
+                        return new ForClassValue(new TypeDescription.ForLoadedType((Class<?>) value));
                     } else {
                         return new ForStaticField(value);
                     }
@@ -2036,6 +2040,57 @@ public class InvokeDynamic implements Instrumentation {
                 public String toString() {
                     return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringValue{" +
                             "value='" + value + '\'' +
+                            '}';
+                }
+            }
+
+            /**
+             * An argument provider for a {@link java.lang.Class} constant.
+             */
+            class ForClassValue implements ArgumentProvider {
+
+                /**
+                 * The type that is represented by this constant.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates a new argument provider for the given type description.
+                 *
+                 * @param typeDescription The type to represent.
+                 */
+                public ForClassValue(TypeDescription typeDescription) {
+                    this.typeDescription= typeDescription;
+                }
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(ClassConstant.of(typeDescription), new TypeDescription.ForLoadedType(Class.class));
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && typeDescription.equals(((ForClassValue) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassValue{" +
+                            "typeDescription=" + typeDescription +
                             '}';
                 }
             }

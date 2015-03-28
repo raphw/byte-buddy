@@ -380,6 +380,7 @@ public interface TypeDescription extends ByteCodeElement {
                     || represents(float.class)
                     || represents(double.class)
                     || represents(String.class)
+                    || represents(Class.class)
                     || JavaType.METHOD_HANDLE.representedBy(this)
                     || JavaType.METHOD_TYPE.representedBy(this);
         }

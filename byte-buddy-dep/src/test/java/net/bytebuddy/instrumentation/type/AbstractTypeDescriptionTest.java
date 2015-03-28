@@ -372,6 +372,7 @@ public abstract class AbstractTypeDescriptionTest {
         assertThat(describe(int.class).isConstantPool(), is(true));
         assertThat(describe(Integer.class).isConstantPool(), is(false));
         assertThat(describe(String.class).isConstantPool(), is(true));
+        assertThat(describe(Class.class).isConstantPool(), is(true));
     }
 
     protected interface SampleInterface {

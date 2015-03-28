@@ -6,6 +6,7 @@ import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -39,6 +40,8 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     private static final float FLOAT = 42f;
 
     private static final double DOUBLE = 42d;
+
+    private static final Class<?> CLASS = Object.class;
 
     private static final String STANDARD_ARGUMENT_BOOTSTRAP = "net.bytebuddy.test.precompiled.StandardArgumentBootstrap";
 
@@ -110,6 +113,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @Ignore("Recompile bootstrap classes")
     public void testBootstrapWithArrayArgumentsWithArguments() throws Exception {
         Class<?> type = classLoader.loadClass(PARAMETER_BOOTSTRAP);
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
@@ -117,13 +121,13 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly(),
-                        BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO)
+                        BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS)
                         .withoutImplicitArguments(),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
-        assertThat(arguments.length, is(9));
+        assertThat(arguments.length, is(10));
         assertThat(arguments[0], is((Object) (BOOLEAN ? 1 : 0)));
         assertThat(arguments[1], is((Object) Integer.valueOf(BYTE)));
         assertThat(arguments[2], is((Object) Integer.valueOf(SHORT)));
@@ -133,10 +137,12 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         assertThat(arguments[6], is((Object) FLOAT));
         assertThat(arguments[7], is((Object) DOUBLE));
         assertThat(arguments[8], is((Object) FOO));
+        assertThat(arguments[9], is((Object) CLASS));
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @Ignore("Recompile bootstrap classes")
     public void testBootstrapWithExplicitArgumentsWithArguments() throws Exception {
         Class<?> type = classLoader.loadClass(PARAMETER_BOOTSTRAP);
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
@@ -144,7 +150,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly(),
-                        BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO)
+                        BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS)
                         .withoutImplicitArguments(),
                 classLoader,
                 isDeclaredBy(Simple.class));
@@ -160,6 +166,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         assertThat(arguments[6], is((Object) FLOAT));
         assertThat(arguments[7], is((Object) DOUBLE));
         assertThat(arguments[8], is((Object) FOO));
+        assertThat(arguments[9], is((Object) CLASS));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -171,6 +178,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @Ignore("Recompile bootstrap classes")
     public void testBootstrapOfMethodsWithParametersPrimitive() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -187,15 +195,16 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
                         .withLongValue(LONG)
                         .withFloatValue(FLOAT)
                         .withDoubleValue(DOUBLE)
-                        .withValue(FOO, value),
+                        .withValue(FOO, CLASS, value),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
-                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + value));
+                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + value));
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @Ignore("Recompile bootstrap classes")
     public void testBootstrapOfMethodsWithParametersWrapperConstantPool() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -204,16 +213,17 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAR, String.class)
                         .withoutImplicitArguments()
-                        .withValue(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, value),
+                        .withValue(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, value),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
-                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + value));
+                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + value));
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
+    @Ignore("Recompile bootstrap classes")
     public void testBootstrapOfMethodsWithParametersWrapperReference() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -222,12 +232,12 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAR, String.class)
                         .withoutImplicitArguments()
-                        .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, value),
+                        .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, value),
                 classLoader,
                 isDeclaredBy(Simple.class));
-        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(10));
+        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(11));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
-                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + value));
+                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + value));
     }
 
     @Test
@@ -414,6 +424,8 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleValue.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForExistingField.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstanceField.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringValue.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassValue.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForThisInstance.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple.class).apply();
