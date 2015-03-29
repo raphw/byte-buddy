@@ -116,6 +116,16 @@ public enum JavaType {
         return typeLookup.load();
     }
 
+    /**
+     * Checks if the given instance is of the represented type.
+     *
+     * @param value The value to check.
+     * @return {@code true} if the given value is of this represented type.
+     */
+    public boolean isInstance(Object value) {
+        return representedBy(new TypeDescription.ForLoadedType(value.getClass()));
+    }
+
     @Override
     public String toString() {
         return "JavaType." + name();

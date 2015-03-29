@@ -26,7 +26,12 @@ public enum TypeManifestation implements ModifierContributor.ForType {
     /**
      * Modifier for an interface.
      */
-    INTERFACE(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT);
+    INTERFACE(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT),
+
+    /**
+     * Modifier for an annotation.
+     */
+    ANNOTATION(Opcodes.ACC_ANNOTATION | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT);
 
     /**
      * The mask the modifier contributor.
@@ -72,6 +77,15 @@ public enum TypeManifestation implements ModifierContributor.ForType {
      */
     public boolean isInterface() {
         return (mask & Opcodes.ACC_INTERFACE) != 0;
+    }
+
+    /**
+     * Returns {@code true} if a type represents an annotation type.
+     *
+     * @return {@code true} if a type represents an annotation type.
+     */
+    public boolean isAnnotation() {
+        return (mask & Opcodes.ACC_ANNOTATION) != 0;
     }
 
     @Override

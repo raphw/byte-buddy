@@ -79,7 +79,7 @@ public abstract class MethodConstant implements StackManipulation {
     @Override
     public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
         Size argumentSize = prepare(methodVisitor)
-                .aggregate(ArrayFactory.targeting(new TypeDescription.ForLoadedType(Class.class))
+                .aggregate(ArrayFactory.targeting(TypeDescription.CLASS)
                         .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList()))
                         .apply(methodVisitor, instrumentationContext));
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,

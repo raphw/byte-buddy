@@ -349,14 +349,14 @@ public class ByteBuddy {
         TypeDescription actualSuperType = isExtendable(superType);
         List<TypeDescription> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).isInterface()) {
-            actualSuperType = new TypeDescription.ForLoadedType(Object.class);
-            interfaceTypes = join(superType, interfaceTypes);
+            actualSuperType = TypeDescription.OBJECT;
+            interfaceTypes = joinUnique(superType, interfaceTypes);
         }
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 nonNull(namingStrategy.subclass(superType)),
                 actualSuperType,
                 interfaceTypes,
-                modifiers.resolve(superType.getModifiers() & ~TypeManifestation.INTERFACE.getMask()),
+                modifiers.resolve(superType.getModifiers() & ~TypeManifestation.ANNOTATION.getMask()),
                 typeAttributeAppender,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -379,7 +379,7 @@ public class ByteBuddy {
      */
     @SuppressWarnings("unchecked")
     public <T> DynamicType.Builder<T> makeInterface(Class<T> type) {
-        return (DynamicType.Builder<T>) makeInterface(new TypeDescription.ForLoadedType(nonNull(type)));
+        return (DynamicType.Builder<T>) makeInterface(Collections.<TypeDescription>singletonList(new TypeDescription.ForLoadedType(nonNull(type))));
     }
 
     /**
@@ -394,17 +394,6 @@ public class ByteBuddy {
     }
 
     /**
-     * Creates a dynamic type builder for an interface that extends a number of given interface.
-     *
-     * @param typeDescription The interface type to extend.
-     * @return A dynamic type builder for this configuration that defines an interface that extends the specified
-     * interface.
-     */
-    public DynamicType.Builder<?> makeInterface(TypeDescription typeDescription) {
-        return makeInterface(Collections.singletonList(nonNull(typeDescription)));
-    }
-
-    /**
      * Creates a dynamic type builder for an interface that extends a number of given interfaces.
      *
      * @param typeDescriptions The interface types to extend.
@@ -413,10 +402,33 @@ public class ByteBuddy {
      */
     public DynamicType.Builder<?> makeInterface(List<TypeDescription> typeDescriptions) {
         return new SubclassDynamicTypeBuilder<Object>(classFileVersion,
-                namingStrategy.subclass(new TypeDescription.ForLoadedType(Object.class)),
-                new TypeDescription.ForLoadedType(Object.class),
+                namingStrategy.create(),
+                TypeDescription.OBJECT,
                 join(interfaceTypes, nonNull(typeDescriptions)),
-                modifiers.resolve(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC),
+                modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.INTERFACE.getMask(),
+                typeAttributeAppender,
+                ignoredMethods,
+                bridgeMethodResolverFactory,
+                classVisitorWrapperChain,
+                new FieldRegistry.Default(),
+                methodRegistry,
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                ConstructorStrategy.Default.NO_CONSTRUCTORS);
+    }
+
+    /**
+     * Creates a dynamic type builder for a new annotation type.
+     *
+     * @return A builder for a new annotation type.
+     */
+    public DynamicType.Builder<?> makeAnnotation() {
+        return new SubclassDynamicTypeBuilder<Object>(classFileVersion,
+                namingStrategy.create(),
+                TypeDescription.OBJECT,
+                Collections.<TypeDescription>singletonList(new TypeDescription.ForLoadedType(Annotation.class)),
+                modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.ANNOTATION.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -777,7 +789,7 @@ public class ByteBuddy {
     public OptionalMethodInterception withImplementing(TypeDescription... type) {
         return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
-                join(interfaceTypes, isInterface(Arrays.asList(type))),
+                joinUnique(interfaceTypes, isInterface(Arrays.asList(type))),
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,

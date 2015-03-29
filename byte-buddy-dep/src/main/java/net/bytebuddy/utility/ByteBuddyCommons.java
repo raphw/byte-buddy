@@ -244,6 +244,31 @@ public final class ByteBuddyCommons {
         return result;
     }
 
+    public static <T> List<T> joinUnique(List<? extends T> list, T element) {
+        return list.contains(element)
+                ? new ArrayList<T>(list)
+                : join(list, element);
+    }
+
+    public static <T> List<T> joinUnique(T element, List<? extends T> list) {
+        return list.contains(element)
+                ? new ArrayList<T>(list)
+                : join(element, list);
+    }
+
+    public static <T> List<T> joinUnique(List<? extends T> leftList, List<? extends T> rightList) {
+        List<T> result = new ArrayList<T>(leftList.size() + rightList.size());
+        result.addAll(leftList);
+        Set<T> addedElements = new HashSet<T>(leftList.size() + rightList.size());
+        addedElements.addAll(addedElements);
+        for (T element : rightList) {
+            if (addedElements.add(element)) {
+                result.add(element);
+            }
+        }
+        return result;
+    }
+
     /**
      * Validates that a string represents a valid Java identifier, i.e. is not a Java keyword and is built up
      * by Java identifier compatible characters.

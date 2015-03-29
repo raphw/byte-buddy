@@ -1619,7 +1619,7 @@ public interface DynamicType {
                                    List<? extends TypeDescription> exceptionTypes,
                                    int modifiers) {
                     this(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                            new TypeDescription.ForLoadedType(void.class),
+                            TypeDescription.VOID,
                             parameterTypes,
                             exceptionTypes,
                             modifiers);
@@ -2625,7 +2625,7 @@ public interface DynamicType {
                     return AbstractBase.this.materialize(classFileVersion,
                             namingStrategy,
                             targetType,
-                            join(interfaceTypes, isInterface(Arrays.asList(interfaceType))),
+                            joinUnique(interfaceTypes, isInterface(Arrays.asList(interfaceType))),
                             modifiers,
                             attributeAppender,
                             ignoredMethods,

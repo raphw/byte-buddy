@@ -113,7 +113,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
-    @Ignore("Recompile bootstrap classes")
     public void testBootstrapWithArrayArgumentsWithArguments() throws Exception {
         Class<?> type = classLoader.loadClass(PARAMETER_BOOTSTRAP);
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
@@ -121,28 +120,23 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly(),
-                        BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS)
+                        INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS)
                         .withoutImplicitArguments(),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
-        assertThat(arguments.length, is(10));
-        assertThat(arguments[0], is((Object) (BOOLEAN ? 1 : 0)));
-        assertThat(arguments[1], is((Object) Integer.valueOf(BYTE)));
-        assertThat(arguments[2], is((Object) Integer.valueOf(SHORT)));
-        assertThat(arguments[3], is((Object) Integer.valueOf(CHARACTER)));
-        assertThat(arguments[4], is((Object) INTEGER));
-        assertThat(arguments[5], is((Object) LONG));
-        assertThat(arguments[6], is((Object) FLOAT));
-        assertThat(arguments[7], is((Object) DOUBLE));
-        assertThat(arguments[8], is((Object) FOO));
-        assertThat(arguments[9], is((Object) CLASS));
+        assertThat(arguments.length, is(6));
+        assertThat(arguments[0], is((Object) INTEGER));
+        assertThat(arguments[1], is((Object) LONG));
+        assertThat(arguments[2], is((Object) FLOAT));
+        assertThat(arguments[3], is((Object) DOUBLE));
+        assertThat(arguments[4], is((Object) FOO));
+        assertThat(arguments[5], is((Object) CLASS));
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
-    @Ignore("Recompile bootstrap classes")
     public void testBootstrapWithExplicitArgumentsWithArguments() throws Exception {
         Class<?> type = classLoader.loadClass(PARAMETER_BOOTSTRAP);
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
@@ -150,23 +144,19 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly(),
-                        BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS)
+                        INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS)
                         .withoutImplicitArguments(),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
-        assertThat(arguments.length, is(9));
-        assertThat(arguments[0], is((Object) (BOOLEAN ? 1 : 0)));
-        assertThat(arguments[1], is((Object) Integer.valueOf(BYTE)));
-        assertThat(arguments[2], is((Object) Integer.valueOf(SHORT)));
-        assertThat(arguments[3], is((Object) Integer.valueOf(CHARACTER)));
-        assertThat(arguments[4], is((Object) INTEGER));
-        assertThat(arguments[5], is((Object) LONG));
-        assertThat(arguments[6], is((Object) FLOAT));
-        assertThat(arguments[7], is((Object) DOUBLE));
-        assertThat(arguments[8], is((Object) FOO));
-        assertThat(arguments[9], is((Object) CLASS));
+        assertThat(arguments.length, is(6));
+        assertThat(arguments[0], is((Object) INTEGER));
+        assertThat(arguments[1], is((Object) LONG));
+        assertThat(arguments[2], is((Object) FLOAT));
+        assertThat(arguments[3], is((Object) DOUBLE));
+        assertThat(arguments[4], is((Object) FOO));
+        assertThat(arguments[5], is((Object) CLASS));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -178,7 +168,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
-    @Ignore("Recompile bootstrap classes")
     public void testBootstrapOfMethodsWithParametersPrimitive() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -204,7 +193,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
-    @Ignore("Recompile bootstrap classes")
     public void testBootstrapOfMethodsWithParametersWrapperConstantPool() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -223,7 +211,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
 
     @Test
     @JavaVersionRule.Enforce(7)
-    @Ignore("Recompile bootstrap classes")
     public void testBootstrapOfMethodsWithParametersWrapperReference() throws Exception {
         Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);

@@ -1653,7 +1653,7 @@ public class MethodCall implements Instrumentation {
                                              boolean dynamicallyTyped) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         new TextConstant(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(String.class), targetType, dynamicallyTyped));
+                        assigner.assign(TypeDescription.STRING, targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign String value to " + targetType);
                 }
@@ -1711,7 +1711,7 @@ public class MethodCall implements Instrumentation {
                                              boolean dynamicallyTyped) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         ClassConstant.of(typeDescription),
-                        assigner.assign(new TypeDescription.ForLoadedType(Class.class), targetType, dynamicallyTyped));
+                        assigner.assign(TypeDescription.CLASS, targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + targetType);
                 }

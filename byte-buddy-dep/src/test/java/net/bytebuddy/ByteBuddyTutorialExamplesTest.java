@@ -181,7 +181,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @Test
     public void testFieldsAndMethodsDetailedMatcher() throws Exception {
-        assertThat(new TypeDescription.ForLoadedType(Object.class)
+        assertThat(TypeDescription.OBJECT
                 .getDeclaredMethods()
                 .filter(named("toString").and(returns(String.class)).and(takesArguments(0))).size(), is(1));
     }
@@ -476,8 +476,7 @@ public class ByteBuddyTutorialExamplesTest {
                                         TypeDescription targetType,
                                         boolean dynamicallyTyped) {
             if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
-                MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
-                        .getDeclaredMethods()
+                MethodDescription toStringMethod = TypeDescription.OBJECT.getDeclaredMethods()
                         .filter(named("toString"))
                         .getOnly();
                 return MethodInvocation.invoke(toStringMethod).virtual(sourceType);

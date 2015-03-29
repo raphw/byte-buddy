@@ -22,6 +22,7 @@ import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -145,9 +146,9 @@ public class InvokeDynamic implements Instrumentation {
      *
      * @param bootstrapMethod The bootstrap method or constructor that is used to link the instrumented method.
      * @param argument        The arguments that are handed to the bootstrap method. Any argument must be saved in the
-     *                        constant pool, i.e. primitive types (represented as their wrapper types), the
-     *                        {@link java.lang.String} type as well as {@code MethodType} and {@code MethodHandle}
-     *                        instances.
+     *                        constant pool, i.e. primitive types (represented as their wrapper types) with a size of
+     *                        at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     *                        as {@code MethodType} and {@code MethodHandle} instances.
      * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -156,8 +157,21 @@ public class InvokeDynamic implements Instrumentation {
         if (!bootstrapMethod.isBootstrap(arguments)) {
             throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
         }
+        List<Object> wrappedArguments = new ArrayList<Object>(arguments.size());
+        for (Object anArgument : argument) {
+            if (anArgument instanceof Class) {
+                anArgument = Type.getType((Class<?>) anArgument);
+            } else if (anArgument instanceof TypeDescription) {
+                anArgument = Type.getType(((TypeDescription) anArgument).getDescriptor());
+            } else if (anArgument instanceof TypeDescription.MethodTypeToken) {
+                anArgument = ((TypeDescription.MethodTypeToken) anArgument).resolve();
+            } else if (anArgument instanceof TypeDescription.MethodHandleToken) {
+                anArgument = ((TypeDescription.MethodHandleToken) anArgument).resolve();
+            }
+            wrappedArguments.add(anArgument);
+        }
         return new WithImplicitTarget(bootstrapMethod,
-                arguments,
+                wrappedArguments,
                 new InvocationProvider.Default(),
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 defaultAssigner(),
@@ -2017,7 +2031,7 @@ public class InvokeDynamic implements Instrumentation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(new TextConstant(value), new TypeDescription.ForLoadedType(String.class));
+                    return new Resolved.Simple(new TextConstant(value), TypeDescription.STRING);
                 }
 
                 @Override
@@ -2068,7 +2082,7 @@ public class InvokeDynamic implements Instrumentation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(ClassConstant.of(typeDescription), new TypeDescription.ForLoadedType(Class.class));
+                    return new Resolved.Simple(ClassConstant.of(typeDescription), TypeDescription.CLASS);
                 }
 
                 @Override

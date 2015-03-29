@@ -493,8 +493,7 @@ public @interface Morph {
                  * Creates the constructor call singleton.
                  */
                 StaticFieldConstructor() {
-                    objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
-                            .getDeclaredMethods()
+                    objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods()
                             .filter(isConstructor())
                             .getOnly();
                 }
@@ -718,7 +717,7 @@ public @interface Morph {
                             parameterLoading[index] = new StackManipulation.Compound(arrayReference,
                                     IntegerConstant.forValue(index),
                                     ArrayAccess.REFERENCE.load(),
-                                    assigner.assign(new TypeDescription.ForLoadedType(Object.class), parameterType, true));
+                                    assigner.assign(TypeDescription.OBJECT, parameterType, true));
                             index++;
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(

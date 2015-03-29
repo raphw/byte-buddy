@@ -1349,11 +1349,11 @@ public interface AgentBuilder {
                                     new TextConstant(Nexus.class.getName()),
                                     MethodInvocation.invoke(loadClass),
                                     new TextConstant("initialize"),
-                                    ArrayFactory.targeting(new TypeDescription.ForLoadedType(Class.class))
-                                            .withValues(Collections.singletonList(ClassConstant.of(new TypeDescription.ForLoadedType(Class.class)))),
+                                    ArrayFactory.targeting(TypeDescription.CLASS)
+                                            .withValues(Collections.singletonList(ClassConstant.of(TypeDescription.CLASS))),
                                     MethodInvocation.invoke(getDeclaredMethod),
                                     NullConstant.INSTANCE,
-                                    ArrayFactory.targeting(new TypeDescription.ForLoadedType(Object.class))
+                                    ArrayFactory.targeting(TypeDescription.OBJECT)
                                             .withValues(Collections.singletonList(ClassConstant.of(instrumentedType))),
                                     MethodInvocation.invoke(invokeMethod),
                                     Removal.SINGLE

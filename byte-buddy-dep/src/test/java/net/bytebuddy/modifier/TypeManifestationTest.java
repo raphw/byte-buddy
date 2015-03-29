@@ -26,6 +26,7 @@ public class TypeManifestationTest extends AbstractModifierContributorTest {
                 {TypeManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT},
                 {TypeManifestation.FINAL, Opcodes.ACC_FINAL},
                 {TypeManifestation.INTERFACE, Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT},
+                {TypeManifestation.ANNOTATION, Opcodes.ACC_ANNOTATION | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT}
         });
     }
 
@@ -35,5 +36,6 @@ public class TypeManifestationTest extends AbstractModifierContributorTest {
                 is((expectedModifier & Opcodes.ACC_ABSTRACT) != 0 && (expectedModifier & Opcodes.ACC_INTERFACE) == 0));
         assertThat(((TypeManifestation) modifierContributor).isFinal(), is((expectedModifier & Opcodes.ACC_FINAL) != 0));
         assertThat(((TypeManifestation) modifierContributor).isInterface(), is((expectedModifier & Opcodes.ACC_INTERFACE) != 0));
+        assertThat(((TypeManifestation) modifierContributor).isAnnotation(), is((expectedModifier & Opcodes.ACC_ANNOTATION) != 0));
     }
 }

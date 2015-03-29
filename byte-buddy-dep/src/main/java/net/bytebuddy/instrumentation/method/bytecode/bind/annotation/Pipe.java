@@ -401,8 +401,7 @@ public @interface Pipe {
                  * Creates the constructor call singleton.
                  */
                 ConstructorCall() {
-                    this.objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
-                            .getDeclaredMethods()
+                    this.objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods()
                             .filter(isConstructor())
                             .getOnly();
                 }
@@ -585,7 +584,7 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadOffset(1),
-                                assigner.assign(new TypeDescription.ForLoadedType(Object.class), redirectedMethod.getDeclaringType(), true),
+                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType(), true),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
                                 assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), true),

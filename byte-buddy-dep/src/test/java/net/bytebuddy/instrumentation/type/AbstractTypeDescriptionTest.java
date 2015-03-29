@@ -353,16 +353,16 @@ public abstract class AbstractTypeDescriptionTest {
 
     @Test
     public void testWrapperType() throws Exception {
-        assertThat(describe(Object.class).isWrapper(), is(false));
-        assertThat(describe(Boolean.class).isWrapper(), is(true));
-        assertThat(describe(Byte.class).isWrapper(), is(true));
-        assertThat(describe(Short.class).isWrapper(), is(true));
-        assertThat(describe(Character.class).isWrapper(), is(true));
-        assertThat(describe(Integer.class).isWrapper(), is(true));
-        assertThat(describe(Long.class).isWrapper(), is(true));
-        assertThat(describe(Float.class).isWrapper(), is(true));
-        assertThat(describe(Double.class).isWrapper(), is(true));
-        assertThat(describe(Void.class).isWrapper(), is(false));
+        assertThat(describe(Object.class).isPrimitiveWrapper(), is(false));
+        assertThat(describe(Boolean.class).isPrimitiveWrapper(), is(true));
+        assertThat(describe(Byte.class).isPrimitiveWrapper(), is(true));
+        assertThat(describe(Short.class).isPrimitiveWrapper(), is(true));
+        assertThat(describe(Character.class).isPrimitiveWrapper(), is(true));
+        assertThat(describe(Integer.class).isPrimitiveWrapper(), is(true));
+        assertThat(describe(Long.class).isPrimitiveWrapper(), is(true));
+        assertThat(describe(Float.class).isPrimitiveWrapper(), is(true));
+        assertThat(describe(Double.class).isPrimitiveWrapper(), is(true));
+        assertThat(describe(Void.class).isPrimitiveWrapper(), is(false));
     }
 
     @Test

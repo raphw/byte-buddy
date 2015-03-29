@@ -85,14 +85,14 @@ public abstract class FixedValue implements Instrumentation {
     public static AssignerConfigurable value(Object fixedValue) {
         if (fixedValue == null) {
             return new ForPoolValue(NullConstant.INSTANCE,
-                    new TypeDescription.ForLoadedType(Object.class),
+                    TypeDescription.OBJECT,
                     defaultAssigner(),
                     true);
         }
         Class<?> type = fixedValue.getClass();
         if (type == String.class) {
             return new ForPoolValue(new TextConstant((String) fixedValue),
-                    new TypeDescription.ForLoadedType(String.class),
+                    TypeDescription.STRING,
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Boolean.class) {
@@ -155,7 +155,7 @@ public abstract class FixedValue implements Instrumentation {
     public static AssignerConfigurable reference(Object fixedValue) {
         if (fixedValue == null) {
             return new ForPoolValue(NullConstant.INSTANCE,
-                    new TypeDescription.ForLoadedType(Object.class),
+                    TypeDescription.OBJECT,
                     defaultAssigner(),
                     true);
         }

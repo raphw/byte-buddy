@@ -278,8 +278,7 @@ public @interface Field {
              * Creates the constructor call singleton.
              */
             StaticFieldConstructor() {
-                objectTypeDefaultConstructor = new TypeDescription.ForLoadedType(Object.class)
-                        .getDeclaredMethods()
+                objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods()
                         .filter(isConstructor())
                         .getOnly();
             }

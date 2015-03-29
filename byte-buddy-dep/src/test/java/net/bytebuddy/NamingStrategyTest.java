@@ -66,7 +66,7 @@ public class NamingStrategyTest {
 
     @Test
     public void testPrefixingRandom() throws Exception {
-        when(unnamedType.getSuperClass()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(unnamedType.getSuperClass()).thenReturn(TypeDescription.OBJECT);
         NamingStrategy namingStrategy = new NamingStrategy.PrefixingRandom(FOO);
         assertThat(namingStrategy.name(unnamedType), startsWith(FOO + "." + Object.class.getName()));
         verify(unnamedType).getSuperClass();

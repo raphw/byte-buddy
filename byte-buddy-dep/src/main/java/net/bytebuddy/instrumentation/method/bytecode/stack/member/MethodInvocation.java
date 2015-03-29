@@ -248,7 +248,7 @@ public enum MethodInvocation {
                                          TypeDescription returnType,
                                          List<? extends TypeDescription> methodType,
                                          List<?> arguments) {
-            return methodDescription.isBootstrap(arguments)
+            return methodDescription.isBootstrap()
                     ? new DynamicInvocation(methodName, returnType, new TypeList.Explicit(methodType), methodDescription, arguments)
                     : Illegal.INSTANCE;
         }

@@ -12,7 +12,6 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -371,12 +370,16 @@ public interface MethodDescription extends ByteCodeElement {
             }
             for (Object argument : arguments) {
                 TypeDescription typeDescription = new TypeDescription.ForLoadedType(argument.getClass());
-                if (!typeDescription.isConstantPool() && !typeDescription.isWrapper()) {
+                if (!typeDescription.isConstantPool()
+                        && !typeDescription.represents(Integer.class)
+                        && !typeDescription.represents(Long.class)
+                        && !typeDescription.represents(Float.class)
+                        && !typeDescription.represents(Double.class)) {
                     throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
                 }
             }
             List<TypeDescription> parameterTypes = getParameters().asTypeList();
-            // The following assumes that the bootstrap method is a valid bootstrap method.
+            // The following assumes that the bootstrap method is a valid one, as checked above.
             if (parameterTypes.size() < 4) {
                 return arguments.size() == 0 || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
             } else {
@@ -387,14 +390,13 @@ public interface MethodDescription extends ByteCodeElement {
                     if (!finalParameterCheck) {
                         Class<?> argumentType = argumentIterator.next().getClass();
                         finalParameterCheck = !parameterType.isAssignableFrom(argumentType)
-                                && !(parameterType.represents(int.class) && Arrays.<Class<?>>asList(Boolean.class,
-                                Byte.class,
-                                Short.class,
-                                Character.class,
-                                Integer.class).contains(argumentType))
+                                && !(parameterType.represents(int.class) && argumentType == Integer.class)
                                 && !(parameterType.represents(long.class) && argumentType == Long.class)
                                 && !(parameterType.represents(float.class) && argumentType == Float.class)
-                                && !(parameterType.represents(double.class) && argumentType == Double.class);
+                                && !(parameterType.represents(double.class) && argumentType == Double.class)
+                                && !(parameterType.represents(Class.class) && argumentType.isAssignableFrom(TypeDescription.class))
+                                && !(JavaType.METHOD_TYPE.representedBy(parameterType) && argumentType.isAssignableFrom(TypeDescription.MethodTypeToken.class))
+                                && !(JavaType.METHOD_HANDLE.representedBy(parameterType) && argumentType.isAssignableFrom(TypeDescription.MethodHandleToken.class));
                     }
                     if (finalParameterCheck) {
                         return index == parameterTypes.size() && parameterType.represents(Object[].class);
@@ -487,7 +489,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public TypeDescription getReturnType() {
-            return new TypeDescription.ForLoadedType(void.class);
+            return TypeDescription.VOID;
         }
 
         @Override
@@ -737,7 +739,7 @@ public interface MethodDescription extends ByteCodeElement {
         public static MethodDescription typeInitializerOf(TypeDescription declaringType) {
             return new Latent(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME,
                     declaringType,
-                    new TypeDescription.ForLoadedType(void.class),
+                    TypeDescription.VOID,
                     new TypeList.Empty(),
                     TYPE_INITIALIZER_MODIFIER,
                     Collections.<TypeDescription>emptyList());

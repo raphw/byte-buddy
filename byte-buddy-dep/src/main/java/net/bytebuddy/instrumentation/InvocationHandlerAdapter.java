@@ -123,7 +123,7 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
     private List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
         TypeList parameterTypes = instrumentedMethod.getParameters().asTypeList();
         List<StackManipulation> instruction = new ArrayList<StackManipulation>(parameterTypes.size());
-        TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
+        TypeDescription objectType = TypeDescription.OBJECT;
         int currentIndex = 1;
         for (TypeDescription parameterType : parameterTypes) {
             instruction.add(new StackManipulation.Compound(
@@ -165,19 +165,18 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
                                           MethodDescription instrumentedMethod,
                                           TypeDescription instrumentedType,
                                           StackManipulation preparingManipulation) {
-        TypeDescription objectType = new TypeDescription.ForLoadedType(Object.class);
         TypeDescription invocationHandlerType = new TypeDescription.ForLoadedType(InvocationHandler.class);
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 preparingManipulation,
                 FieldAccess.forField(instrumentedType.getDeclaredFields()
                         .filter((named(fieldName))).getOnly()).getter(),
-                MethodVariableAccess.forType(objectType).loadOffset(0),
+                MethodVariableAccess.forType(TypeDescription.OBJECT).loadOffset(0),
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod).cached()
                         : MethodConstant.forMethod(instrumentedMethod),
-                ArrayFactory.targeting(objectType).withValues(argumentValuesOf(instrumentedMethod)),
+                ArrayFactory.targeting(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(invocationHandlerType.getDeclaredMethods().getOnly()),
-                assigner.assign(objectType, instrumentedMethod.getReturnType(), true),
+                assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType(), true),
                 MethodReturn.returning(instrumentedMethod.getReturnType())
         ).apply(methodVisitor, instrumentationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

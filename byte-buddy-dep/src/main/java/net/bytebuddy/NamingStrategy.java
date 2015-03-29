@@ -248,11 +248,23 @@ public interface NamingStrategy {
         NamingStrategy rebase(TypeDescription typeDescription);
 
         /**
+         * Returns a naming strategy for a type without an explicit base.
+         *
+         * @return A naming strategy for a type without an explicit base.
+         */
+        NamingStrategy create();
+
+        /**
          * A default unbound {@link net.bytebuddy.NamingStrategy} where rebased or redefined classes keep
          * their original name and where subclasses are named using a {@link net.bytebuddy.NamingStrategy.SuffixingRandom}
          * strategy.
          */
         class Default implements Unbound {
+
+            /**
+             * The type name used for created classes.
+             */
+            public static final String CREATION_NAME = "net.bytebuddy.generated.Type";
 
             /**
              * The suffix to apply for generated subclasses.
@@ -281,6 +293,11 @@ public interface NamingStrategy {
             @Override
             public NamingStrategy rebase(TypeDescription typeDescription) {
                 return new Fixed(typeDescription.getName());
+            }
+
+            @Override
+            public NamingStrategy create() {
+                return new SuffixingRandom(suffix, new SuffixingRandom.BaseNameResolver.ForFixedValue(CREATION_NAME));
             }
 
             @Override
@@ -333,6 +350,11 @@ public interface NamingStrategy {
 
             @Override
             public NamingStrategy rebase(TypeDescription typeDescription) {
+                return namingStrategy;
+            }
+
+            @Override
+            public NamingStrategy create() {
                 return namingStrategy;
             }
 
@@ -550,6 +572,38 @@ public interface NamingStrategy {
                 public String toString() {
                     return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType{" +
                             "typeDescription=" + typeDescription +
+                            '}';
+                }
+            }
+
+            class ForFixedValue implements BaseNameResolver {
+
+                private final String name;
+
+                public ForFixedValue(String name) {
+                    this.name = name;
+                }
+
+                @Override
+                public String resolve(UnnamedType unnamedType) {
+                    return name;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && name.equals(((ForFixedValue) other).name);
+                }
+
+                @Override
+                public int hashCode() {
+                    return name.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue{" +
+                            "name='" + name + '\'' +
                             '}';
                 }
             }

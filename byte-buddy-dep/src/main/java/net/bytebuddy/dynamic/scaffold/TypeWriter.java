@@ -589,7 +589,7 @@ public interface TypeWriter<T> {
                         injectorProxyMethod = new MethodDescription.Latent(
                                 String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, RandomString.make()),
                                 instrumentedType,
-                                new TypeDescription.ForLoadedType(void.class),
+                                TypeDescription.VOID,
                                 new TypeList.Empty(),
                                 TYPE_INITIALIZER_PROXY_MODIFIERS,
                                 Collections.<TypeDescription>emptyList());
@@ -700,7 +700,7 @@ public interface TypeWriter<T> {
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
                         (instrumentedType.getSupertype() == null
-                                ? new TypeDescription.ForLoadedType(Object.class)
+                                ? TypeDescription.OBJECT
                                 : instrumentedType.getSupertype()).getInternalName(),
                         instrumentedType.getInterfaces().toInternalNames());
                 attributeAppender.apply(classVisitor, instrumentedType);
