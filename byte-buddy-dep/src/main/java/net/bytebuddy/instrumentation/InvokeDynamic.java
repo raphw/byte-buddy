@@ -2060,7 +2060,7 @@ public class InvokeDynamic implements Instrumentation {
                  * @param typeDescription The type to represent.
                  */
                 public ForClassValue(TypeDescription typeDescription) {
-                    this.typeDescription= typeDescription;
+                    this.typeDescription = typeDescription;
                 }
 
                 @Override
