@@ -180,7 +180,7 @@ public interface JavaMethod {
 
         @Override
         public String toString() {
-            return "JavaMethod.ForLoadedMethod{" +
+            return "JavaMethod.ForLoadedConstructor{" +
                     "constructor=" + constructor +
                     '}';
         }

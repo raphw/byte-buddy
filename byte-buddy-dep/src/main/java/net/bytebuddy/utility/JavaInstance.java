@@ -459,10 +459,13 @@ public interface JavaInstance {
         }
 
         /**
-         * The Java method to reveal the execution context of a {@code MethodHandle}.
+         * The Java method to reveal the execution context of a {@code MethodHandle} as {@code MethodHandleInfo}.
          */
         private static final JavaMethod REVEAL_DIRECT;
 
+        /**
+         * The Java method to construct a {@code MethodHandleInfo} instance for Java 7 where revealing is not yet supported.
+         */
         private static final JavaMethod NEW_METHOD_HANDLE_INFO;
 
         /**
