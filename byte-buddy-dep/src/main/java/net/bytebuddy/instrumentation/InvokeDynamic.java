@@ -2987,6 +2987,11 @@ public class InvokeDynamic implements Instrumentation {
         private final Object value;
 
         /**
+         * An argument provider that represents the argument with an implicit type.
+         */
+        private final InvocationProvider.ArgumentProvider argumentProvider;
+
+        /**
          * Creates a new invoke dynamic instance with an implicit field type for the provided value.
          *
          * @param bootstrapMethod    The bootstrap method.
@@ -3006,6 +3011,7 @@ public class InvokeDynamic implements Instrumentation {
                                         Object value) {
             super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, dynamicallyTyped);
             this.value = value;
+            this.argumentProvider = InvocationProvider.ArgumentProvider.ForStaticField.of(value);
         }
 
         /**
@@ -3030,10 +3036,10 @@ public class InvokeDynamic implements Instrumentation {
             if (!typeDescription.isInstance(value)) {
                 throw new IllegalArgumentException("Cannot assign " + value + " to " + typeDescription);
             }
+            InvocationProvider.ArgumentProvider argumentProvider = new InvocationProvider.ArgumentProvider.ForStaticField(value, typeDescription);
             return new InvokeDynamic(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.appendArguments(Collections.<InvocationProvider.ArgumentProvider>singletonList(new InvocationProvider
-                            .ArgumentProvider.ForStaticField(value, typeDescription))),
+                    invocationProvider.appendArguments(Collections.singletonList(argumentProvider)),
                     terminationHandler,
                     assigner,
                     dynamicallyTyped);
@@ -3045,10 +3051,9 @@ public class InvokeDynamic implements Instrumentation {
          * @return An invoke dynamic instance with the representated value of this instance added to the invocation provider.
          */
         private InvokeDynamic materialize() {
-
             return new InvokeDynamic(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.appendArguments(Collections.singletonList(InvocationProvider.ArgumentProvider.ForStaticField.of(value))),
+                    invocationProvider.appendArguments(Collections.singletonList(argumentProvider)),
                     terminationHandler,
                     assigner,
                     dynamicallyTyped);

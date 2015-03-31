@@ -230,7 +230,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
                         .withReference(makeMethodHandle()).as(JavaType.METHOD_HANDLE.load()) // avoid direct method handle
                         .withReference(value),
                 classLoader,
-        isDeclaredBy(Simple.class));
+                isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(13));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
                 is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeMethodType(CLASS) + makeMethodHandle() + value));

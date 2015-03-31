@@ -2,6 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
@@ -9,6 +10,8 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.*;
+import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,35 +57,34 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
     }
 
-
     @Test
     public void testStaticMethodInvocationWithoutArguments() throws Exception {
-        DynamicType.Loaded<StaticMethod> loaded = instrument(StaticMethod.class,
-                MethodCall.invoke(StaticMethod.class.getDeclaredMethod(BAR)),
-                StaticMethod.class.getClassLoader(),
+        DynamicType.Loaded<SimpleMethod> loaded = instrument(SimpleMethod.class,
+                MethodCall.invoke(SimpleMethod.class.getDeclaredMethod(BAR)),
+                SimpleMethod.class.getClassLoader(),
                 named(FOO));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        StaticMethod instance = loaded.getLoaded().newInstance();
+        SimpleMethod instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is(BAR));
-        assertNotEquals(StaticMethod.class, instance.getClass());
-        assertThat(instance, instanceOf(StaticMethod.class));
+        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance, instanceOf(SimpleMethod.class));
     }
 
     @Test
     public void testExternalStaticMethodInvocationWithoutArguments() throws Exception {
-        DynamicType.Loaded<StaticMethod> loaded = instrument(StaticMethod.class,
+        DynamicType.Loaded<SimpleMethod> loaded = instrument(SimpleMethod.class,
                 MethodCall.invoke(StaticExternalMethod.class.getDeclaredMethod(BAR)),
-                StaticMethod.class.getClassLoader(),
+                SimpleMethod.class.getClassLoader(),
                 named(FOO));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        StaticMethod instance = loaded.getLoaded().newInstance();
+        SimpleMethod instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is(BAR));
-        assertNotEquals(StaticMethod.class, instance.getClass());
-        assertThat(instance, instanceOf(StaticMethod.class));
+        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance, instanceOf(SimpleMethod.class));
     }
 
     @Test
@@ -360,6 +362,56 @@ public class MethodCallTest extends AbstractInstrumentationTest {
     }
 
     @Test
+    public void testUnloadedType() throws Exception {
+        DynamicType.Loaded<SimpleMethod> loaded = instrument(SimpleMethod.class,
+                MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
+                        .with(new TypeDescription.ForLoadedType(Object.class), new TypeDescription.ForLoadedType(String.class)),
+                SimpleMethod.class.getClassLoader(),
+                named(FOO));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        SimpleMethod instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), is("" + Object.class + String.class));
+        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance, instanceOf(SimpleMethod.class));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testJava7Types() throws Exception {
+        DynamicType.Loaded<SimpleMethod> loaded = instrument(SimpleMethod.class,
+                MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
+                        .with(makeMethodHandle(), makeMethodType(void.class)),
+                SimpleMethod.class.getClassLoader(),
+                named(FOO));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        SimpleMethod instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), is("" + makeMethodHandle() + makeMethodType(void.class)));
+        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance, instanceOf(SimpleMethod.class));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testJava7TypesExplicit() throws Exception {
+        DynamicType.Loaded<SimpleMethod> loaded = instrument(SimpleMethod.class,
+                MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
+                        .with(JavaInstance.MethodHandle.of(makeMethodHandle()), JavaInstance.MethodType.of(makeMethodType(void.class))),
+                SimpleMethod.class.getClassLoader(),
+                named(FOO));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        SimpleMethod instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(), is("" + makeMethodHandle() + makeMethodType(void.class)));
+        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance, instanceOf(SimpleMethod.class));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethod() throws Exception {
         DynamicType.Loaded<?> loaded = instrument(Object.class,
@@ -454,9 +506,10 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForShortConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForTextConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForClassConstant.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForJavaInstance.class).apply();
     }
 
-    public static class StaticMethod {
+    public static class SimpleMethod {
 
         public String foo() {
             return null;
@@ -483,10 +536,6 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         public String bar() {
             return BAR;
         }
-    }
-
-    public static class SuperConstructorCall {
-        /* empty */
     }
 
     public static class SelfReference {
@@ -560,5 +609,21 @@ public class MethodCallTest extends AbstractInstrumentationTest {
         public static String bar(String value) {
             return null;
         }
+    }
+
+    private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
+        return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
+    }
+
+    public static class Foo {
+        public static String bar(Object arg0, Object arg1) {
+            return "" + arg0 + arg1;
+        }
+    }
+
+    private static Object makeMethodHandle() throws Exception {
+        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
+        return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findStatic", Class.class, String.class, JavaType.METHOD_TYPE.load())
+                .invoke(lookup, Foo.class, BAR, makeMethodType(String.class, Object.class, Object.class));
     }
 }

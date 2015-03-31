@@ -21,6 +21,7 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -229,6 +230,13 @@ public class MethodCall implements Instrumentation {
                 dynamicallyTyped);
     }
 
+    /**
+     * Defines the given types to be provided as arguments to the invoked method where the represented types
+     * are stored in the generated class's constant pool.
+     *
+     * @param typeDescription The type descriptions to provide as arguments.
+     * @return A method call that hands the provided arguments to the invoked method.
+     */
     public MethodCall with(TypeDescription... typeDescription) {
         List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(typeDescription.length);
         for (TypeDescription aTypeDescription : typeDescription) {
@@ -243,6 +251,13 @@ public class MethodCall implements Instrumentation {
                 dynamicallyTyped);
     }
 
+    /**
+     * Defines the given Java instances to be provided as arguments to the invoked method where the given
+     * instances are stored in the generated class's constant pool.
+     *
+     * @param javaInstance The Java instances to provide as arguments.
+     * @return A method call that hands the provided arguments to the invoked method.
+     */
     public MethodCall with(JavaInstance... javaInstance) {
         List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(javaInstance.length);
         for (JavaInstance aJavaInstance : javaInstance) {
@@ -981,26 +996,30 @@ public class MethodCall implements Instrumentation {
             public static ArgumentLoader of(Object value) {
                 if (value == null) {
                     return ForNullConstant.INSTANCE;
-                } else if (value.getClass() == String.class) {
+                } else if (value instanceof String) {
                     return new ForTextConstant((String) value);
-                } else if (value.getClass() == Boolean.class) {
+                } else if (value instanceof Boolean) {
                     return new ForBooleanConstant((Boolean) value);
-                } else if (value.getClass() == Byte.class) {
+                } else if (value instanceof Byte) {
                     return new ForByteConstant((Byte) value);
-                } else if (value.getClass() == Short.class) {
+                } else if (value instanceof Short) {
                     return new ForShortConstant((Short) value);
-                } else if (value.getClass() == Character.class) {
+                } else if (value instanceof Character) {
                     return new ForCharacterConstant((Character) value);
-                } else if (value.getClass() == Integer.class) {
+                } else if (value instanceof Integer) {
                     return new ForIntegerConstant((Integer) value);
-                } else if (value.getClass() == Long.class) {
+                } else if (value instanceof Long) {
                     return new ForLongConstant((Long) value);
-                } else if (value.getClass() == Float.class) {
+                } else if (value instanceof Float) {
                     return new ForFloatConstant((Float) value);
-                } else if (value.getClass() == Double.class) {
+                } else if (value instanceof Double) {
                     return new ForDoubleConstant((Double) value);
-                } else if (value.getClass() == Class.class) {
+                } else if (value instanceof Class) {
                     return new ForClassConstant(new TypeDescription.ForLoadedType((Class<?>) value));
+                } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
+                    return new ForJavaInstance(JavaInstance.MethodHandle.of(value));
+                } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
+                    return new ForJavaInstance(JavaInstance.MethodType.of(value));
                 } else {
                     return new ForStaticField(value);
                 }
@@ -1771,10 +1790,21 @@ public class MethodCall implements Instrumentation {
             }
         }
 
+        /**
+         * Loads a Java instance onto the operand stack.
+         */
         class ForJavaInstance implements ArgumentLoader {
 
+            /**
+             * The Java instance to load onto the operand stack.
+             */
             private final JavaInstance javaInstance;
 
+            /**
+             * Creates a new argument loader for a Java instance.
+             *
+             * @param javaInstance The Java instance to load as an argument.
+             */
             public ForJavaInstance(JavaInstance javaInstance) {
                 this.javaInstance = javaInstance;
             }
