@@ -51,7 +51,7 @@ public interface JavaMethod {
 
         @Override
         public Object invoke(Object instance, Object... argument) {
-            throw new IllegalStateException("Java language feature is not available for current virtual machine");
+            throw new IllegalStateException("This feature is not available for current version / configuration of the Java virtual machine");
         }
 
         @Override
