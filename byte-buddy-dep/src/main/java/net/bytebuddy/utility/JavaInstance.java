@@ -463,6 +463,8 @@ public interface JavaInstance {
          */
         private static final JavaMethod REVEAL_DIRECT;
 
+        private static final JavaMethod NEW_METHOD_HANDLE_INFO;
+
         /**
          * The Java method to receive a {@code MethodHandle} instance.
          */
@@ -502,22 +504,44 @@ public interface JavaInstance {
          * Locates the Java methods for calling methods on {@code MethodHandle} instances, if those are available.
          */
         static {
-            JavaMethod revealDirect, lookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray;
+            JavaMethod revealDirect, newMethodHandleInfo, lookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray;
             try {
                 Class<?> methodHandlesLookup = JavaType.METHOD_HANDLES_LOOKUP.load();
-                revealDirect = new JavaMethod.ForLoadedMethod(methodHandlesLookup.getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
+                try {
+                    revealDirect = new JavaMethod.ForLoadedMethod(methodHandlesLookup.getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
+                } catch (Exception ignored) {
+                    revealDirect = JavaMethod.ForUnavailableMethod.INSTANCE;
+                }
                 Class<?> methodHandles = Class.forName("java.lang.invoke.MethodHandles");
                 lookup = new JavaMethod.ForLoadedMethod(methodHandles.getDeclaredMethod("publicLookup"));
                 Class<?> methodHandleInfo = Class.forName("java.lang.invoke.MethodHandleInfo");
-                getName = new JavaMethod.ForLoadedMethod(methodHandleInfo.getDeclaredMethod("getName"));
-                getDeclaringClass = new JavaMethod.ForLoadedMethod(methodHandleInfo.getDeclaredMethod("getDeclaringClass"));
-                getReferenceKind = new JavaMethod.ForLoadedMethod(methodHandleInfo.getDeclaredMethod("getReferenceKind"));
-                getMethodType = new JavaMethod.ForLoadedMethod(methodHandleInfo.getDeclaredMethod("getMethodType"));
+                if (revealDirect.isInvokable()) {
+                    newMethodHandleInfo = JavaMethod.ForUnavailableMethod.INSTANCE;
+                } else {
+                    Constructor<?> newMethodHandleInfoConstructor = methodHandleInfo.getDeclaredConstructor(JavaType.METHOD_HANDLE.load());
+                    newMethodHandleInfoConstructor.setAccessible(true);
+                    newMethodHandleInfo = new JavaMethod.ForLoadedConstructor(newMethodHandleInfoConstructor);
+                }
+                Method getNameMethod = methodHandleInfo.getDeclaredMethod("getName");
+                Method getDeclaringClassMethod = methodHandleInfo.getDeclaredMethod("getDeclaringClass");
+                Method getReferenceKindMethod = methodHandleInfo.getDeclaredMethod("getReferenceKind");
+                Method getMethodTypeMethod = methodHandleInfo.getDeclaredMethod("getMethodType");
+                getName = new JavaMethod.ForLoadedMethod(getNameMethod);
+                getDeclaringClass = new JavaMethod.ForLoadedMethod(getDeclaringClassMethod);
+                getReferenceKind = new JavaMethod.ForLoadedMethod(getReferenceKindMethod);
+                getMethodType = new JavaMethod.ForLoadedMethod(getMethodTypeMethod);
+                if (!revealDirect.isInvokable()) {
+                    getNameMethod.setAccessible(true);
+                    getDeclaringClassMethod.setAccessible(true);
+                    getReferenceKindMethod.setAccessible(true);
+                    getMethodTypeMethod.setAccessible(true);
+                }
                 Class<?> methodType = JavaType.METHOD_TYPE.load();
                 returnType = new JavaMethod.ForLoadedMethod(methodType.getDeclaredMethod("returnType"));
                 parameterArray = new JavaMethod.ForLoadedMethod(methodType.getDeclaredMethod("parameterArray"));
             } catch (Exception ignored) {
                 revealDirect = JavaMethod.ForUnavailableMethod.INSTANCE;
+                newMethodHandleInfo = JavaMethod.ForUnavailableMethod.INSTANCE;
                 lookup = JavaMethod.ForUnavailableMethod.INSTANCE;
                 getName = JavaMethod.ForUnavailableMethod.INSTANCE;
                 getDeclaringClass = JavaMethod.ForUnavailableMethod.INSTANCE;
@@ -527,6 +551,7 @@ public interface JavaInstance {
                 parameterArray = JavaMethod.ForUnavailableMethod.INSTANCE;
             }
             REVEAL_DIRECT = revealDirect;
+            NEW_METHOD_HANDLE_INFO = newMethodHandleInfo;
             LOOKUP = lookup;
             GET_NAME = getName;
             GET_DECLARING_CLASS = getDeclaringClass;
@@ -538,6 +563,7 @@ public interface JavaInstance {
 
         /**
          * Creates a method handles representation of a loaded method handle which is analyzed using a public {@code MethodHandles.Lookup} object.
+         * A method handle can only
          *
          * @param methodHandle The loaded method handle to represent.
          * @return A  representation of the loaded method handle
@@ -559,7 +585,9 @@ public interface JavaInstance {
             } else if (!JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isInstance(lookup)) {
                 throw new IllegalArgumentException("Expected method handle lookup object: " + lookup);
             }
-            Object methodHandleInfo = REVEAL_DIRECT.invoke(lookup, methodHandle);
+            Object methodHandleInfo = REVEAL_DIRECT.isInvokable()
+                    ? REVEAL_DIRECT.invoke(lookup, methodHandle)
+                    : NEW_METHOD_HANDLE_INFO.invokeStatic(methodHandle);
             Object methodType = GET_METHOD_TYPE.invoke(methodHandleInfo);
             return new MethodHandle(HandleType.of((Integer) GET_REFERENCE_KIND.invoke(methodHandleInfo)),
                     new TypeDescription.ForLoadedType((Class<?>) GET_DECLARING_CLASS.invoke(methodHandleInfo)),

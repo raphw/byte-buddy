@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -120,6 +121,67 @@ public interface JavaMethod {
         public String toString() {
             return "JavaMethod.ForLoadedMethod{" +
                     "method=" + method +
+                    '}';
+        }
+    }
+
+    /**
+     * Represents a constructor that can be invoked.
+     */
+    class ForLoadedConstructor implements JavaMethod {
+
+        /**
+         * The constructor to invoke.
+         */
+        private final Constructor<?> constructor;
+
+        /**
+         * Creates a new representation for a loaded constructor.
+         *
+         * @param constructor The constructor to invoke.
+         */
+        public ForLoadedConstructor(Constructor<?> constructor) {
+            this.constructor = constructor;
+        }
+
+        @Override
+        public boolean isInvokable() {
+            return true;
+        }
+
+        @Override
+        public Object invoke(Object instance, Object... argument) {
+            throw new IllegalStateException("Cannot invoke constructor on an instance");
+        }
+
+        @Override
+        public Object invokeStatic(Object... argument) {
+            try {
+                return constructor.newInstance(argument);
+            } catch (InstantiationException e) {
+                throw new IllegalStateException("Cannot initiate class", e);
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException("Cannot invoke dynamically-linked method", e);
+            } catch (InvocationTargetException e) {
+                throw new IllegalStateException("Exception when invoking method", e.getCause());
+            }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && constructor.equals(((ForLoadedConstructor) other).constructor);
+        }
+
+        @Override
+        public int hashCode() {
+            return constructor.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "JavaMethod.ForLoadedMethod{" +
+                    "constructor=" + constructor +
                     '}';
         }
     }
