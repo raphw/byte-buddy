@@ -192,7 +192,9 @@ public interface MethodDescription extends ByteCodeElement {
      * Checks if the method is a bootstrap method that accepts the given arguments.
      *
      * @param arguments The arguments that the bootstrap method is expected to accept where primitive values
-     *                  are to be represented as their wrapper types.
+     *                  are to be represented as their wrapper types, loaded types by {@link TypeDescription},
+     *                  method handles by {@link net.bytebuddy.utility.JavaInstance.MethodHandle} instances and
+     *                  method types by {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
      * @return {@code true} if the method is a bootstrap method that accepts the given arguments.
      */
     boolean isBootstrap(List<?> arguments);
@@ -400,7 +402,7 @@ public interface MethodDescription extends ByteCodeElement {
                                 && !(parameterType.represents(double.class) && argumentType == Double.class)
                                 && !(parameterType.represents(Class.class) && TypeDescription.class.isAssignableFrom(argumentType))
                                 && !(parameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub()) && JavaInstance.MethodHandle.class.isAssignableFrom(argumentType))
-                                && !(parameterType.isAssignableFrom(JavaType.METHOD_TYPE.getTypeStub()) && JavaInstance.MethodType.class.isAssignableFrom(argumentType));
+                                && !(parameterType.equals(JavaType.METHOD_TYPE.getTypeStub()) && JavaInstance.MethodType.class.isAssignableFrom(argumentType));
                     }
                     if (finalParameterCheck) {
                         return index == parameterTypes.size() && parameterType.represents(Object[].class);

@@ -16,8 +16,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 
 @RunWith(Parameterized.class)
-public class FixedValueConstantPoolTypesTest<T extends CallTraceable>
-        extends AbstractInstrumentationTest {
+public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar";
 

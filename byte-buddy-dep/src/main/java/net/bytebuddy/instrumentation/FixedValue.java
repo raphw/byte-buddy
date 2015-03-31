@@ -68,18 +68,20 @@ public abstract class FixedValue implements Instrumentation {
      * with the given value. The following Java types can be inlined:
      * <ul>
      * <li>The {@link java.lang.String} type.</li>
+     * <li>The {@link java.lang.Class} type.</li>
      * <li>All primitive types and their wrapper type, i.e. {@link java.lang.Boolean}, {@link java.lang.Byte},
      * {@link java.lang.Short}, {@link java.lang.Character}, {@link java.lang.Integer}, {@link java.lang.Long},
      * {@link java.lang.Float} and {@link java.lang.Double}.</li>
      * <li>A {@code null} reference.</li>
+     * <li>From Java 7 on, instances of {@code java.lang.invoke.MethodType} and {@code java.lang.invoke.MethodHandle}.</li>
      * </ul>
      * <p>&nbsp;</p>
      * If possible, the constant pool value is substituted by a byte code instruction that creates the value. (This is
      * possible for integer types and types that are presented by integers inside the JVM ({@code boolean}, {@code byte},
      * {@code short}, {@code char}) and for the {@code null} value. Additionally, several common constants of
-     * the {@code float}, {@code double} and {@code long} types can be represented by opcode constants. Note that the
-     * Java 7 types {@code java.lang.invoke.MethodHandle} and {@code java.lang.invoke.MethodType} are are currently not
-     * supported for constant pool storage.
+     * the {@code float}, {@code double} and {@code long} types can be represented by opcode constants.
+     * <p>&nbsp;</p>
+     * Note that method handles or (method) types require to be visible to a class's class loader.
      *
      * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
      * @return An instrumentation for the given {@code fixedValue}.
@@ -142,7 +144,7 @@ public abstract class FixedValue implements Instrumentation {
                     new TypeDescription.ForLoadedType(double.class),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
-        } else if (JavaType.METHOD_HANDLE.getTypeStub().represents(type)) {
+        } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
             return new ForPoolValue(MethodHandleConstant.of(JavaInstance.MethodHandle.of(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     defaultAssigner(),
@@ -198,13 +200,25 @@ public abstract class FixedValue implements Instrumentation {
         return new ForStaticField(isValidIdentifier(fieldName), fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
     }
 
-    public static AssignerConfigurable value(TypeDescription typeDescription) {
-        return new ForPoolValue(ClassConstant.of(typeDescription),
+    /**
+     * Returns the given type in form of a loaded type. The value is loaded from the written class's constant pool.
+     *
+     * @param fixedValue The type to return from the method.
+     * @return An instrumentation for the given {@code fixedValue}.
+     */
+    public static AssignerConfigurable value(TypeDescription fixedValue) {
+        return new ForPoolValue(ClassConstant.of(fixedValue),
                 TypeDescription.CLASS,
                 defaultAssigner(),
                 defaultConsiderRuntimeType());
     }
 
+    /**
+     * Returns the loaded version of the given {@link JavaInstance}. The value is loaded from the written class's constant pool.
+     *
+     * @param fixedValue The type to return from the method.
+     * @return An instrumentation for the given {@code fixedValue}.
+     */
     public static AssignerConfigurable value(JavaInstance fixedValue) {
         return new ForPoolValue(fixedValue.asStackManipulation(),
                 fixedValue.getInstanceType(),

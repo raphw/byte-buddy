@@ -1,11 +1,13 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -19,6 +21,9 @@ import static org.mockito.Mockito.when;
 public class JavaInstanceMethodHandleTest {
 
     private static final String BAR = "bar", QUX = "qux";
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
     @SuppressWarnings("unchecked")
@@ -121,17 +126,34 @@ public class JavaInstanceMethodHandleTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(7)
     public void testMethodHandleOfLoadedMethodHandle() throws Exception {
         Method publicLookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup");
         Object lookup = publicLookup.invoke(null);
         Method unreflect = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
-        Object method = unreflect.invoke(lookup, Foo.class.getDeclaredMethod(BAR, Void.class));
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.of(method);
+        Object methodHandleLoaded = unreflect.invoke(lookup, Foo.class.getDeclaredMethod(BAR, Void.class));
+        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.of(methodHandleLoaded);
         assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.INVOKE_VIRTUAL));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(7)
+    public void testMethodHandleLoadedIllegal() throws Exception {
+        JavaInstance.MethodHandle.of(new Object());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(7)
+    public void testMethodHandleLoadedLookupIllegal() throws Exception {
+        Method publicLookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup");
+        Object lookup = publicLookup.invoke(null);
+        Method unreflect = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
+        Object methodHandleLoaded = unreflect.invoke(lookup, Foo.class.getDeclaredMethod(BAR, Void.class));
+        JavaInstance.MethodHandle.of(methodHandleLoaded, new Object());
     }
 
     @Test(expected = IllegalArgumentException.class)
