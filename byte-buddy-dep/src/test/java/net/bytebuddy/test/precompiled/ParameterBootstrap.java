@@ -1,9 +1,6 @@
 package net.bytebuddy.test.precompiled;
 
-import java.lang.invoke.CallSite;
-import java.lang.invoke.ConstantCallSite;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import java.lang.invoke.*;
 
 public class ParameterBootstrap {
 
@@ -28,9 +25,11 @@ public class ParameterBootstrap {
                                                       float arg2,
                                                       double arg3,
                                                       String arg4,
-                                                      Class<?> arg5)
+                                                      Class<?> arg5,
+                                                      MethodType arg6,
+                                                      MethodHandle arg7)
             throws NoSuchMethodException, IllegalAccessException {
-        ParameterBootstrap.arguments = new Object[]{arg0, arg1, arg2, arg3, arg4, arg5};
+        ParameterBootstrap.arguments = new Object[]{arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7};
         return new ConstantCallSite(lookup.findStatic(ParameterBootstrap.class, methodName, methodType));
     }
 

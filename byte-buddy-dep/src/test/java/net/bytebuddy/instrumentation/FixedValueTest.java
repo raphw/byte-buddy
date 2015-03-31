@@ -75,7 +75,7 @@ public class FixedValueTest extends AbstractInstrumentationTest {
     }
 
     private static Object makeMethodHandle() throws Exception {
-        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("lookup").invoke(null);
+        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
         return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findVirtual", Class.class, String.class, JavaType.METHOD_TYPE.load())
                 .invoke(lookup, Qux.class, BAR, makeMethodType(Object.class));
     }

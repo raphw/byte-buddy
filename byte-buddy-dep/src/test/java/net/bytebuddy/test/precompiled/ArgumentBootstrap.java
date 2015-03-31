@@ -1,9 +1,6 @@
 package net.bytebuddy.test.precompiled;
 
-import java.lang.invoke.CallSite;
-import java.lang.invoke.ConstantCallSite;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import java.lang.invoke.*;
 
 public class ArgumentBootstrap {
 
@@ -20,10 +17,15 @@ public class ArgumentBootstrap {
                              long arg5,
                              float arg6,
                              double arg7,
-                             String arg8,
-                             Class<?> arg9,
-                             Object arg10) {
-        return "" + arg0 + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9 + arg10;
+                             Class<?> arg8,
+                             MethodType arg9,
+                             MethodHandle arg10,
+                             String arg11,
+                             Class<?> arg12,
+                             MethodType arg13,
+                             MethodHandle arg14,
+                             Object arg15) {
+        return "" + arg0 + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9 + arg10 + arg11 + arg12 + arg13 + arg14 + arg15;
     }
 
     public static String bar(Boolean arg0,
@@ -36,8 +38,10 @@ public class ArgumentBootstrap {
                              Double arg7,
                              String arg8,
                              Class<?> arg9,
-                             Object arg10) {
-        return "" + arg0 + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9 + arg10;
+                             MethodType arg10,
+                             MethodHandle arg11,
+                             Object arg12) {
+        return "" + arg0 + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9 + arg10 + arg11 + arg12;
     }
 
     public static String qux(String arg) {
