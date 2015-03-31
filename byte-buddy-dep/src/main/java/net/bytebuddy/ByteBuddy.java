@@ -764,6 +764,29 @@ public class ByteBuddy {
     }
 
     /**
+     * Defines a new type annotation for this configuration that replaces the currently defined type
+     * attribute appender.
+     *
+     * @param annotation The type annotations to define for this configuration.
+     * @return A new configuration that represents this configuration with the given annotations as its new
+     * type attribute appender.
+     */
+    public ByteBuddy withTypeAnnotation(AnnotationDescription... annotation) {
+        return new ByteBuddy(classFileVersion,
+                namingStrategy,
+                interfaceTypes,
+                ignoredMethods,
+                bridgeMethodResolverFactory,
+                classVisitorWrapperChain,
+                methodRegistry,
+                modifiers,
+                new TypeAttributeAppender.ForAnnotation(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))),
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory);
+    }
+
+    /**
      * Defines all dynamic types that are created by this configuration to implement the given interface.
      *
      * @param type The interface type to implement.

@@ -15,6 +15,7 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
+import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
@@ -350,7 +351,8 @@ public interface DynamicType {
                                         int modifiers);
 
         /**
-         * Defines a new field for this type.
+         * Defines a new field for this type. The annotations of the given field are not copied and
+         * must be added manually if they are required.
          *
          * @param field The field that the generated type should imitate.
          * @return An interception delegate that exclusively matches the new method.
@@ -358,6 +360,15 @@ public interface DynamicType {
         FieldValueTarget<T> defineField(Field field);
 
         /**
+         * Defines a new field for this type. The annotations of the given field are not copied and
+         * must be added manually if they are required.
+         *
+         * @param fieldDescription The field that the generated type should imitate.
+         * @return An interception delegate that exclusively matches the new method.
+         */
+        FieldValueTarget<T> defineField(FieldDescription fieldDescription);
+
+        /**
          * Defines a new method for this type.
          * <p>&nbsp;</p>
          * Note that a method definition overrides any method of identical signature that was defined in a super
@@ -438,7 +449,8 @@ public interface DynamicType {
                                                               int modifiers);
 
         /**
-         * Defines a new method for this type.
+         * Defines a new method for this type. Declared exceptions or annotations of the method are not copied and must
+         * be added manually.
          * <p>&nbsp;</p>
          * Note that a method definition overrides any method of identical signature that was defined in a super
          * type what is only valid if the method is of at least broader visibility and if the overridden method
@@ -448,6 +460,19 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new method.
          */
         ExceptionDeclarableMethodInterception<T> defineMethod(Method method);
+
+        /**
+         * Defines a new method for this type. Declared exceptions or annotations of the method are not copied and must
+         * be added manually.
+         * <p>&nbsp;</p>
+         * Note that a method definition overrides any method of identical signature that was defined in a super
+         * type what is only valid if the method is of at least broader visibility and if the overridden method
+         * is not {@code final}.
+         *
+         * @param methodDescription The method that the generated type should imitate.
+         * @return An interception delegate that exclusively matches the new method.
+         */
+        ExceptionDeclarableMethodInterception<T> defineMethod(MethodDescription methodDescription);
 
         /**
          * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
@@ -1396,6 +1421,18 @@ public interface DynamicType {
             }
 
             @Override
+            public FieldValueTarget<S> defineField(FieldDescription fieldDescription) {
+                return defineField(fieldDescription.getName(),
+                        fieldDescription.getFieldType(),
+                        fieldDescription.getModifiers());
+            }
+
+            @Override
+            public Unloaded<S> make() {
+                return null;
+            }
+
+            @Override
             public ExceptionDeclarableMethodInterception<S> defineMethod(String name,
                                                                          TypeDescription returnType,
                                                                          List<? extends TypeDescription> parameterTypes,
@@ -1413,6 +1450,14 @@ public interface DynamicType {
                         method.getReturnType(),
                         Arrays.asList(method.getParameterTypes()),
                         method.getModifiers());
+            }
+
+            @Override
+            public ExceptionDeclarableMethodInterception<S> defineMethod(MethodDescription methodDescription) {
+                return defineMethod(methodDescription.getName(),
+                        methodDescription.getReturnType(),
+                        methodDescription.getParameters().asTypeList(),
+                        methodDescription.getModifiers());
             }
 
             @Override
@@ -1959,11 +2004,6 @@ public interface DynamicType {
                 }
 
                 @Override
-                public FieldValueTarget<U> defineField(Field field) {
-                    return materialize().defineField(field);
-                }
-
-                @Override
                 public FieldValueTarget<U> defineField(String name, Class<?> fieldType, int modifiers) {
                     return materialize().defineField(name, fieldType, modifiers);
                 }
@@ -1973,6 +2013,16 @@ public interface DynamicType {
                                                        TypeDescription fieldTypeDescription,
                                                        int modifiers) {
                     return materialize().defineField(name, fieldTypeDescription, modifiers);
+                }
+
+                @Override
+                public FieldValueTarget<U> defineField(Field field) {
+                    return materialize().defineField(field);
+                }
+
+                @Override
+                public FieldValueTarget<U> defineField(FieldDescription fieldDescription) {
+                    return materialize().defineField(fieldDescription);
                 }
 
                 @Override
@@ -2010,6 +2060,11 @@ public interface DynamicType {
                 @Override
                 public ExceptionDeclarableMethodInterception<U> defineMethod(Method method) {
                     return materialize().defineMethod(method);
+                }
+
+                @Override
+                public ExceptionDeclarableMethodInterception<U> defineMethod(MethodDescription methodDescription) {
+                    return materialize().defineMethod(methodDescription);
                 }
 
                 @Override

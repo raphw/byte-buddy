@@ -100,10 +100,10 @@ public interface JavaInstance {
         @Override
         public Object asConstantPoolValue() {
             StringBuilder stringBuilder = new StringBuilder("(");
-            for (TypeDescription parameterType : parameterTypes) {
+            for (TypeDescription parameterType : getParameterTypes()) {
                 stringBuilder.append(parameterType.getDescriptor());
             }
-            return Type.getMethodType(stringBuilder.append(")").append(returnType.getDescriptor()).toString());
+            return Type.getMethodType(stringBuilder.append(")").append(getReturnType().getDescriptor()).toString());
         }
 
         @Override
@@ -370,11 +370,11 @@ public interface JavaInstance {
         @Override
         public Object asConstantPoolValue() {
             StringBuilder stringBuilder = new StringBuilder("(");
-            for (TypeDescription parameterType : parameterTypes) {
+            for (TypeDescription parameterType : getParameterTypes()) {
                 stringBuilder.append(parameterType.getDescriptor());
             }
-            String descriptor = stringBuilder.append(")").append(returnType.getDescriptor()).toString();
-            return new Handle(handleType.getIdentifier(), ownerType.getInternalName(), name, descriptor);
+            String descriptor = stringBuilder.append(")").append(getReturnType().getDescriptor()).toString();
+            return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), descriptor);
         }
 
         @Override
