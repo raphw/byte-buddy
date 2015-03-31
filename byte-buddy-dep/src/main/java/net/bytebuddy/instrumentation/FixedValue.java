@@ -12,6 +12,8 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.FieldAccess;
 import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -56,7 +58,7 @@ public abstract class FixedValue implements Instrumentation {
      * @return An instrumentation that represents the {@code null} value.
      */
     public static Instrumentation nullValue() {
-        return value(null);
+        return value((Object) null);
     }
 
     /**
@@ -93,6 +95,11 @@ public abstract class FixedValue implements Instrumentation {
         if (type == String.class) {
             return new ForPoolValue(new TextConstant((String) fixedValue),
                     TypeDescription.STRING,
+                    defaultAssigner(),
+                    defaultConsiderRuntimeType());
+        } else if (type == Class.class) {
+            return new ForPoolValue(ClassConstant.of(new TypeDescription.ForLoadedType(type)),
+                    TypeDescription.CLASS,
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else if (type == Boolean.class) {
@@ -133,6 +140,16 @@ public abstract class FixedValue implements Instrumentation {
         } else if (type == Double.class) {
             return new ForPoolValue(DoubleConstant.forValue((Double) fixedValue),
                     new TypeDescription.ForLoadedType(double.class),
+                    defaultAssigner(),
+                    defaultConsiderRuntimeType());
+        } else if (JavaType.METHOD_HANDLE.getTypeStub().represents(type)) {
+            return new ForPoolValue(MethodHandleConstant.of(JavaInstance.MethodHandle.of(fixedValue)),
+                    new TypeDescription.ForLoadedType(type),
+                    defaultAssigner(),
+                    defaultConsiderRuntimeType());
+        } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
+            return new ForPoolValue(MethodTypeConstant.of(JavaInstance.MethodType.of(fixedValue)),
+                    new TypeDescription.ForLoadedType(type),
                     defaultAssigner(),
                     defaultConsiderRuntimeType());
         } else {
@@ -179,6 +196,20 @@ public abstract class FixedValue implements Instrumentation {
             throw new IllegalArgumentException("The fixed value must not be null");
         }
         return new ForStaticField(isValidIdentifier(fieldName), fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
+    }
+
+    public static AssignerConfigurable value(TypeDescription typeDescription) {
+        return new ForPoolValue(ClassConstant.of(typeDescription),
+                TypeDescription.CLASS,
+                defaultAssigner(),
+                defaultConsiderRuntimeType());
+    }
+
+    public static AssignerConfigurable value(JavaInstance fixedValue) {
+        return new ForPoolValue(fixedValue.asStackManipulation(),
+                fixedValue.getTypeDescription(),
+                defaultAssigner(),
+                defaultConsiderRuntimeType());
     }
 
     /**

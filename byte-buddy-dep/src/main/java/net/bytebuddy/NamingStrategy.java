@@ -576,10 +576,21 @@ public interface NamingStrategy {
                 }
             }
 
+            /**
+             * A base name resolver that simply returns a fixed value.
+             */
             class ForFixedValue implements BaseNameResolver {
 
+                /**
+                 * The fixed base name.
+                 */
                 private final String name;
 
+                /**
+                 * Creates a new base name resolver for a fixed name.
+                 *
+                 * @param name The fixed name
+                 */
                 public ForFixedValue(String name) {
                     this.name = name;
                 }

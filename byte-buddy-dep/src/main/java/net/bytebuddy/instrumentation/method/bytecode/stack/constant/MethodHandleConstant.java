@@ -5,9 +5,12 @@ import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.JavaInstance;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 /**
  * A constant for a Java 7 {@code java.lang.invoke.MethodHandle}.
@@ -46,6 +49,18 @@ public class MethodHandleConstant implements StackManipulation {
                 methodDescription.getDeclaringType().getInternalName(),
                 methodDescription.getInternalName(),
                 methodDescription.getDescriptor()));
+    }
+
+    public static StackManipulation of(JavaInstance.MethodHandle methodHandle) {
+        Type[] parameterType = new Type[methodHandle.getParameterTypes().size()];
+        int index = 0;
+        for (TypeDescription typeDescription : methodHandle.getParameterTypes()) {
+            parameterType[index++] = Type.getType(typeDescription.getDescriptor());
+        }
+        return new MethodHandleConstant(new Handle(methodHandle.getHandleType().getIdentifier(),
+                methodHandle.getOwnerType().getInternalName(),
+                methodHandle.getName(),
+                Type.getMethodDescriptor(Type.getType(methodHandle.getReturnType().getDescriptor()), parameterType)));
     }
 
     /**

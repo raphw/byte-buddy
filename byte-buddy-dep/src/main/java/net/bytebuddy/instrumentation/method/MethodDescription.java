@@ -5,6 +5,7 @@ import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -329,8 +330,8 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public boolean isBootstrap() {
             if ((isMethod() && (!isStatic()
-                    || !(JavaType.CALL_SITE.isAssignableFrom(getReturnType()) || JavaType.CALL_SITE.isAssignableTo(getReturnType()))))
-                    || (isConstructor() && !JavaType.CALL_SITE.isAssignableFrom(getDeclaringType()))) {
+                    || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getReturnType()) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(getReturnType()))))
+                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType()))) {
                 return false;
             }
             TypeList parameterTypes = getParameters().asTypeList();
@@ -340,16 +341,16 @@ public interface MethodDescription extends ByteCodeElement {
                 case 1:
                     return parameterTypes.getOnly().represents(Object[].class);
                 case 2:
-                    return JavaType.METHOD_TYPES_LOOKUP.isAssignableTo(parameterTypes.get(0))
+                    return JavaType.METHOD_TYPES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && parameterTypes.get(1).represents(Object[].class);
                 case 3:
-                    return JavaType.METHOD_TYPES_LOOKUP.isAssignableTo(parameterTypes.get(0))
+                    return JavaType.METHOD_TYPES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && (parameterTypes.get(2).represents(Object[].class) || JavaType.METHOD_TYPE.isAssignableTo(parameterTypes.get(2)));
+                            && (parameterTypes.get(2).represents(Object[].class) || JavaType.METHOD_TYPE.getTypeStub().isAssignableTo(parameterTypes.get(2)));
                 default:
-                    if (!(JavaType.METHOD_TYPES_LOOKUP.isAssignableTo(parameterTypes.get(0))
+                    if (!(JavaType.METHOD_TYPES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && (JavaType.METHOD_TYPE.isAssignableTo(parameterTypes.get(2))))) {
+                            && (JavaType.METHOD_TYPE.getTypeStub().isAssignableTo(parameterTypes.get(2))))) {
                         return false;
                     }
                     int parameterIndex = 4;
@@ -369,12 +370,15 @@ public interface MethodDescription extends ByteCodeElement {
                 return false;
             }
             for (Object argument : arguments) {
-                TypeDescription typeDescription = new TypeDescription.ForLoadedType(argument.getClass());
-                if (!typeDescription.isConstantPool()
-                        && !typeDescription.represents(Integer.class)
-                        && !typeDescription.represents(Long.class)
-                        && !typeDescription.represents(Float.class)
-                        && !typeDescription.represents(Double.class)) {
+                Class<?> argumentType = argument.getClass();
+                if (!(argumentType == String.class
+                        || argumentType == Integer.class
+                        || argumentType == Long.class
+                        || argumentType == Float.class
+                        || argumentType == Double.class
+                        || TypeDescription.class.isAssignableFrom(argumentType)
+                        || JavaInstance.MethodHandle.class.isAssignableFrom(argumentType)
+                        || JavaInstance.MethodType.class.isAssignableFrom(argumentType))) {
                     throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
                 }
             }
@@ -389,14 +393,14 @@ public interface MethodDescription extends ByteCodeElement {
                     boolean finalParameterCheck = !argumentIterator.hasNext();
                     if (!finalParameterCheck) {
                         Class<?> argumentType = argumentIterator.next().getClass();
-                        finalParameterCheck = !parameterType.isAssignableFrom(argumentType)
+                        finalParameterCheck = !(parameterType.represents(String.class) && argumentType == String.class)
                                 && !(parameterType.represents(int.class) && argumentType == Integer.class)
                                 && !(parameterType.represents(long.class) && argumentType == Long.class)
                                 && !(parameterType.represents(float.class) && argumentType == Float.class)
                                 && !(parameterType.represents(double.class) && argumentType == Double.class)
-                                && !(parameterType.represents(Class.class) && argumentType.isAssignableFrom(TypeDescription.class))
-                                && !(JavaType.METHOD_TYPE.representedBy(parameterType) && argumentType.isAssignableFrom(TypeDescription.MethodTypeToken.class))
-                                && !(JavaType.METHOD_HANDLE.representedBy(parameterType) && argumentType.isAssignableFrom(TypeDescription.MethodHandleToken.class));
+                                && !(parameterType.represents(Class.class) && TypeDescription.class.isAssignableFrom(argumentType))
+                                && !(parameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub()) && JavaInstance.MethodHandle.class.isAssignableFrom(argumentType))
+                                && !(parameterType.isAssignableFrom(JavaType.METHOD_TYPE.getTypeStub()) && JavaInstance.MethodType.class.isAssignableFrom(argumentType));
                     }
                     if (finalParameterCheck) {
                         return index == parameterTypes.size() && parameterType.represents(Object[].class);

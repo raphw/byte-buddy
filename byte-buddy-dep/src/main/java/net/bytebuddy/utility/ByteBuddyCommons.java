@@ -244,23 +244,56 @@ public final class ByteBuddyCommons {
         return result;
     }
 
+    /**
+     * Joins a list with an element only if the element is not yet contained in the list.
+     *
+     * @param list    The list of elements to be joined together with the element.
+     * @param element The additional element to join to the end of the list.
+     * @param <T>     The most specific common type of the list and the element.
+     * @return The list joined with the element if not yet contained.
+     */
     public static <T> List<T> joinUnique(List<? extends T> list, T element) {
         return list.contains(element)
                 ? new ArrayList<T>(list)
                 : join(list, element);
     }
 
+    /**
+     * Joins a list with an element only if the element is not yet contained in the list.
+     *
+     * @param element The additional element to join to the beginning of the list.
+     * @param list    The list of elements to be joined together with the element.
+     * @param <T>     The most specific common type of the list and the element.
+     * @return The list joined with the element if not yet contained.
+     */
     public static <T> List<T> joinUnique(T element, List<? extends T> list) {
-        return list.contains(element)
-                ? new ArrayList<T>(list)
-                : join(element, list);
+        if (list.contains(element)) {
+            List<T> result = new ArrayList<T>(list.size() + 1);
+            result.add(element);
+            for (T item : list) {
+                if (!item.equals(element)) {
+                    result.add(item);
+                }
+            }
+            return result;
+        } else {
+            return join(element, list);
+        }
     }
 
+    /**
+     * Joins two lists with only adding the elements of the right list if they are not yet contained.
+     *
+     * @param leftList  The left list.
+     * @param rightList The right list.
+     * @param <T>       The most specific common type of both lists.
+     * @return A combination of both lists.
+     */
     public static <T> List<T> joinUnique(List<? extends T> leftList, List<? extends T> rightList) {
         List<T> result = new ArrayList<T>(leftList.size() + rightList.size());
         result.addAll(leftList);
         Set<T> addedElements = new HashSet<T>(leftList.size() + rightList.size());
-        addedElements.addAll(addedElements);
+        addedElements.addAll(leftList);
         for (T element : rightList) {
             if (addedElements.add(element)) {
                 result.add(element);

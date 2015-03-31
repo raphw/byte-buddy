@@ -101,10 +101,10 @@ public @interface Origin {
                         : MethodConstant.forMethod(source));
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.getUniqueSignature()));
-            } else if (JavaType.METHOD_HANDLE.representedBy(parameterType)) {
+            } else if (parameterType.equals(JavaType.METHOD_HANDLE.getTypeStub())) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodHandleConstant.of(source));
-            } else if (JavaType.METHOD_TYPE.representedBy(parameterType)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodTypeConstant(source));
+            } else if (parameterType.equals(JavaType.METHOD_TYPE.getTypeStub())) {
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodTypeConstant.of(source));
             } else {
                 throw new IllegalStateException("The " + target + " method's " + target.getIndex() +
                         " parameter is annotated with a Origin annotation with an argument not representing a Class" +

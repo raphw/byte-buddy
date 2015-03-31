@@ -26,6 +26,14 @@ public interface JavaMethod {
     Object invoke(Object instance, Object... argument);
 
     /**
+     * Invokes a static method.
+     *
+     * @param argument The arguments for the method.
+     * @return The return value.
+     */
+    Object invokeStatic(Object... argument);
+
+    /**
      * Represents a method that cannot be invoked.
      */
     enum ForUnavailableMethod implements JavaMethod {
@@ -44,6 +52,12 @@ public interface JavaMethod {
         public Object invoke(Object instance, Object... argument) {
             throw new IllegalStateException("Java language feature is not available for current virtual machine");
         }
+
+        @Override
+        public Object invokeStatic(Object... argument) {
+            return invoke(null, argument);
+        }
+
 
         @Override
         public String toString() {
@@ -84,6 +98,11 @@ public interface JavaMethod {
             } catch (InvocationTargetException e) {
                 throw new IllegalStateException("Exception when invoking method", e.getCause());
             }
+        }
+
+        @Override
+        public Object invokeStatic(Object... argument) {
+            return invoke(null, argument);
         }
 
         @Override

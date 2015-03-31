@@ -20,6 +20,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -218,6 +219,34 @@ public class MethodCall implements Instrumentation {
         List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(argument.length);
         for (Object anArgument : argument) {
             argumentLoaders.add(ArgumentLoader.ForStaticField.of(anArgument));
+        }
+        return new MethodCall(methodLocator,
+                targetHandler,
+                join(this.argumentLoaders, argumentLoaders),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public MethodCall with(TypeDescription... typeDescription) {
+        List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(typeDescription.length);
+        for (TypeDescription aTypeDescription : typeDescription) {
+            argumentLoaders.add(new ArgumentLoader.ForClassConstant(nonNull(aTypeDescription)));
+        }
+        return new MethodCall(methodLocator,
+                targetHandler,
+                join(this.argumentLoaders, argumentLoaders),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public MethodCall with(JavaInstance... javaInstance) {
+        List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(javaInstance.length);
+        for (JavaInstance aJavaInstance : javaInstance) {
+            argumentLoaders.add(new ArgumentLoader.ForJavaInstance(nonNull(aJavaInstance)));
         }
         return new MethodCall(methodLocator,
                 targetHandler,
@@ -1738,6 +1767,53 @@ public class MethodCall implements Instrumentation {
             public String toString() {
                 return "MethodCall.ArgumentLoader.ForClassConstant{" +
                         "typeDescription=" + typeDescription +
+                        '}';
+            }
+        }
+
+        class ForJavaInstance implements ArgumentLoader {
+
+            private final JavaInstance javaInstance;
+
+            public ForJavaInstance(JavaInstance javaInstance) {
+                this.javaInstance = javaInstance;
+            }
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription interceptedMethod,
+                                             TypeDescription targetType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        javaInstance.asStackManipulation(),
+                        assigner.assign(javaInstance.getTypeDescription(), targetType, dynamicallyTyped));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign Class value to " + targetType);
+                }
+                return stackManipulation;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && javaInstance.equals(((ForJavaInstance) other).javaInstance);
+            }
+
+            @Override
+            public int hashCode() {
+                return javaInstance.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForJavaInstance{" +
+                        "javaInstance=" + javaInstance +
                         '}';
             }
         }

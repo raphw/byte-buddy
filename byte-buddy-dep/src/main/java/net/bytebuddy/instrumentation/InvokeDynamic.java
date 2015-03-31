@@ -19,6 +19,8 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -116,10 +118,13 @@ public class InvokeDynamic implements Instrumentation {
      *
      * @param method   The bootstrap method that is used to link the instrumented method.
      * @param argument The arguments that are handed to the bootstrap method. Any argument must be saved in the
-     *                 constant pool, i.e. primitive types (represented as their wrapper types), the
-     *                 {@link java.lang.String} type as well as {@code MethodType} and {@code MethodHandle} instances.
-     * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
-     * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
+     *                 constant pool, i.e. primitive types (represented as their wrapper types) with a size of
+     *                 at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     *                 as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
+     *                 it is also possible to supply unloaded types as {@link TypeDescription},
+     *                 {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
+     *                 {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                 instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Method method, Object... argument) {
         return bootstrap(new MethodDescription.ForLoadedMethod(nonNull(method)), argument);
@@ -131,8 +136,12 @@ public class InvokeDynamic implements Instrumentation {
      *
      * @param constructor The bootstrap constructor that is used to link the instrumented method.
      * @param argument    The arguments that are handed to the bootstrap method. Any argument must be saved in the
-     *                    constant pool, i.e. primitive types (represented as their wrapper types), the
-     *                    {@link java.lang.String} type as well as {@code MethodType} and {@code MethodHandle} instances.
+     *                    constant pool, i.e. primitive types (represented as their wrapper types) with a size of
+     *                    at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     *                    as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
+     *                    it is also possible to supply unloaded types as {@link TypeDescription},
+     *                    {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
+     *                    {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
      * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -148,30 +157,39 @@ public class InvokeDynamic implements Instrumentation {
      * @param argument        The arguments that are handed to the bootstrap method. Any argument must be saved in the
      *                        constant pool, i.e. primitive types (represented as their wrapper types) with a size of
      *                        at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
-     *                        as {@code MethodType} and {@code MethodHandle} instances.
+     *                        as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
+     *                        it is also possible to supply unloaded types as {@link TypeDescription},
+     *                        {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
+     *                        {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
      * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(MethodDescription bootstrapMethod, Object... argument) {
-        List<?> arguments = Arrays.asList(nonNull(argument));
-        if (!bootstrapMethod.isBootstrap(arguments)) {
-            throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
-        }
-        List<Object> wrappedArguments = new ArrayList<Object>(arguments.size());
+        List<Object> arguments = new ArrayList<Object>(argument.length);
         for (Object anArgument : argument) {
             if (anArgument instanceof Class) {
-                anArgument = Type.getType((Class<?>) anArgument);
-            } else if (anArgument instanceof TypeDescription) {
-                anArgument = Type.getType(((TypeDescription) anArgument).getDescriptor());
-            } else if (anArgument instanceof TypeDescription.MethodTypeToken) {
-                anArgument = ((TypeDescription.MethodTypeToken) anArgument).resolve();
-            } else if (anArgument instanceof TypeDescription.MethodHandleToken) {
-                anArgument = ((TypeDescription.MethodHandleToken) anArgument).resolve();
+                anArgument = new TypeDescription.ForLoadedType((Class<?>) anArgument);
+            } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(anArgument)) {
+                anArgument = JavaInstance.MethodHandle.of(anArgument);
+            } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(anArgument)) {
+                anArgument = JavaInstance.MethodType.of(anArgument);
             }
-            wrappedArguments.add(anArgument);
+            arguments.add(anArgument);
+        }
+        if (!bootstrapMethod.isBootstrap(arguments)) {
+            throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + Arrays.toString(argument));
+        }
+        List<Object> serializedArguments = new ArrayList<Object>(argument.length);
+        for (Object anArgument : arguments) {
+            if (anArgument instanceof TypeDescription) {
+                anArgument = Type.getType(((TypeDescription) anArgument).getDescriptor());
+            } else if (anArgument instanceof JavaInstance) {
+                anArgument = ((JavaInstance) anArgument).asConstantPoolValue();
+            }
+            serializedArguments.add(anArgument);
         }
         return new WithImplicitTarget(bootstrapMethod,
-                wrappedArguments,
+                serializedArguments,
                 new InvocationProvider.Default(),
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 defaultAssigner(),
@@ -374,6 +392,32 @@ public class InvokeDynamic implements Instrumentation {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (Object aValue : value) {
             argumentProviders.add(new InvocationProvider.ArgumentProvider.ForStaticField(nonNull(aValue)));
+        }
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                invocationProvider.appendArguments(argumentProviders),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public InvokeDynamic withValue(TypeDescription... typeDescription) {
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(typeDescription.length);
+        for (TypeDescription aTypeDescription : typeDescription) {
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForClassValue(nonNull(aTypeDescription)));
+        }
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                invocationProvider.appendArguments(argumentProviders),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public InvokeDynamic withValue(JavaInstance... javaInstance) {
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(javaInstance.length);
+        for (JavaInstance aJavaInstance : javaInstance) {
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForJavaInstance(nonNull(aJavaInstance)));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -2157,6 +2201,28 @@ public class InvokeDynamic implements Instrumentation {
                     return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForNullValue{" +
                             "typeDescription=" + typeDescription +
                             '}';
+                }
+            }
+
+            class ForJavaInstance implements ArgumentProvider {
+
+                private final JavaInstance javaInstance;
+
+                public ForJavaInstance(JavaInstance javaInstance) {
+                    this.javaInstance = javaInstance;
+                }
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(javaInstance.asStackManipulation(), javaInstance.getTypeDescription());
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
                 }
             }
         }

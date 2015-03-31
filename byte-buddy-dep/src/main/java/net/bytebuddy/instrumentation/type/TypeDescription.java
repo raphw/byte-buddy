@@ -3,24 +3,23 @@ package net.bytebuddy.instrumentation.type;
 import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.field.FieldList;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
 import net.bytebuddy.utility.JavaType;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
@@ -276,284 +275,6 @@ public interface TypeDescription extends ByteCodeElement {
      */
     boolean isPrimitiveWrapper();
 
-    interface MethodTypeToken {
-
-        class Default implements MethodTypeToken {
-
-            public static MethodTypeToken of(Class<?> returnType, Class<?>... parameterType) {
-                return new Default(new ForLoadedType(nonNull(returnType)), new TypeList.ForLoadedType(nonNull(parameterType)));
-            }
-
-            public static MethodTypeToken of(Method method) {
-                return of(new MethodDescription.ForLoadedMethod(nonNull(method)));
-            }
-
-            public static MethodTypeToken of(Constructor<?> constructor) {
-                return of(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
-            }
-
-            public static MethodTypeToken of(MethodDescription methodDescription) {
-                return new Default(methodDescription.getReturnType(), methodDescription.getParameters().asTypeList());
-            }
-
-            public static MethodTypeToken ofSetter(Field field) {
-                return ofSetter(new FieldDescription.ForLoadedField(nonNull(field)));
-            }
-
-            public static MethodTypeToken ofSetter(FieldDescription fieldDescription) {
-                return new Default(TypeDescription.VOID, Collections.singletonList(fieldDescription.getFieldType()));
-            }
-
-            public static MethodTypeToken ofGetter(Field field) {
-                return ofGetter(new FieldDescription.ForLoadedField(nonNull(field)));
-            }
-
-            public static MethodTypeToken ofGetter(FieldDescription fieldDescription) {
-                return new Default(fieldDescription.getFieldType(), Collections.<TypeDescription>emptyList());
-            }
-
-            private final TypeDescription returnType;
-
-            private final List<? extends TypeDescription> parameterTypes;
-
-            public Default(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
-                this.returnType = returnType;
-                this.parameterTypes = parameterTypes;
-            }
-
-            @Override
-            public Object resolve() {
-                StringBuilder stringBuilder = new StringBuilder("(");
-                for (TypeDescription parameterType : parameterTypes) {
-                    stringBuilder.append(parameterType.getDescriptor());
-                }
-                return Type.getMethodType(stringBuilder.append(")").append(returnType.getDescriptor()).toString());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Default that = (Default) other;
-                return parameterTypes.equals(that.parameterTypes) && returnType.equals(that.returnType);
-
-            }
-
-            @Override
-            public int hashCode() {
-                int result = returnType.hashCode();
-                result = 31 * result + parameterTypes.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypeDescription.MethodTypeToken.Default{" +
-                        "returnType=" + returnType +
-                        ", parameterTypes=" + parameterTypes +
-                        '}';
-            }
-        }
-
-        Object resolve();
-    }
-
-    static interface MethodHandleToken {
-
-        class Default implements MethodHandleToken {
-
-            protected enum HandleType {
-
-                INVOKE_VIRTUAL(Opcodes.H_INVOKEVIRTUAL),
-
-                INVOKE_STATIC(Opcodes.H_INVOKESTATIC),
-
-                INVOKE_SPECIAL(Opcodes.H_INVOKESPECIAL),
-
-                INVOKE_INTERFACE(Opcodes.H_INVOKEINTERFACE),
-
-                INVOKE_SPECIAL_CONSTRUCTOR(Opcodes.H_NEWINVOKESPECIAL),
-
-                PUT_FIELD(Opcodes.H_PUTFIELD),
-
-                GET_FIELD(Opcodes.H_GETFIELD),
-
-                PUT_STATIC_FIELD(Opcodes.H_PUTSTATIC),
-
-                GET_STATIC_FIELD(Opcodes.H_GETSTATIC);
-
-                final int identifier;
-
-                HandleType(int identifier) {
-                    this.identifier = identifier;
-                }
-
-                public int getIdentifier() {
-                    return identifier;
-                }
-
-                public static HandleType of(MethodDescription methodDescription) {
-                    if (methodDescription.isStatic()) {
-                        return INVOKE_STATIC;
-                    } else if (methodDescription.isPrivate()) {
-                        return INVOKE_SPECIAL;
-                    } else if (methodDescription.isConstructor()) {
-                        return INVOKE_SPECIAL_CONSTRUCTOR;
-                    } else if (methodDescription.getDeclaringType().isInterface()) {
-                        return INVOKE_INTERFACE;
-                    } else {
-                        return INVOKE_VIRTUAL;
-                    }
-                }
-
-                public static HandleType ofSpecial(MethodDescription methodDescription) {
-                    if (methodDescription.isStatic() || methodDescription.isAbstract()) {
-                        throw new IllegalArgumentException("Cannot invoke " + methodDescription + " via invokespecial");
-                    }
-                    return methodDescription.isConstructor()
-                            ? INVOKE_SPECIAL_CONSTRUCTOR
-                            : INVOKE_SPECIAL;
-                }
-
-                public static HandleType ofGetter(FieldDescription fieldDescription) {
-                    return fieldDescription.isStatic()
-                            ? GET_STATIC_FIELD
-                            : GET_FIELD;
-                }
-
-                public static HandleType ofSetter(FieldDescription fieldDescription) {
-                    return fieldDescription.isStatic()
-                            ? PUT_STATIC_FIELD
-                            : PUT_FIELD;
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.MethodHandleToken.Default.HandleType." + name();
-                }
-            }
-
-            public static MethodHandleToken of(Method method) {
-                return of(new MethodDescription.ForLoadedMethod(nonNull(method)));
-            }
-
-            public static MethodHandleToken of(Constructor<?> constructor) {
-                return of(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
-            }
-
-            public static MethodHandleToken of(MethodDescription methodDescription) {
-                return new Default(HandleType.of(methodDescription),
-                        methodDescription.getDeclaringType(),
-                        methodDescription.getInternalName(),
-                        methodDescription.getReturnType(),
-                        methodDescription.getParameters().asTypeList());
-            }
-
-            public static MethodHandleToken ofSpecial(Method method) {
-                return ofSpecial(new MethodDescription.ForLoadedMethod(nonNull(method)));
-            }
-
-            public static MethodHandleToken ofSpecial(MethodDescription methodDescription) {
-                return new Default(HandleType.ofSpecial(methodDescription),
-                        methodDescription.getDeclaringType(),
-                        methodDescription.getInternalName(),
-                        methodDescription.getReturnType(),
-                        methodDescription.getParameters().asTypeList());
-            }
-
-            public static MethodHandleToken ofGetter(Field field) {
-                return ofGetter(new FieldDescription.ForLoadedField(field));
-            }
-
-            public static MethodHandleToken ofGetter(FieldDescription fieldDescription) {
-                return new Default(HandleType.ofGetter(fieldDescription),
-                        fieldDescription.getDeclaringType(),
-                        fieldDescription.getInternalName(),
-                        fieldDescription.getFieldType(),
-                        Collections.<TypeDescription>emptyList());
-            }
-
-            public static MethodHandleToken ofSetter(Field field) {
-                return ofSetter(new FieldDescription.ForLoadedField(field));
-            }
-
-            public static MethodHandleToken ofSetter(FieldDescription fieldDescription) {
-                return new Default(HandleType.ofSetter(fieldDescription),
-                        fieldDescription.getDeclaringType(),
-                        fieldDescription.getInternalName(),
-                        TypeDescription.VOID,
-                        Collections.singletonList(fieldDescription.getFieldType()));
-            }
-
-            private final HandleType handleType;
-
-            private final TypeDescription ownerType;
-
-            private final String name;
-
-            private final TypeDescription returnType;
-
-            private final List<? extends TypeDescription> parameterTypes;
-
-            protected Default(HandleType handleType,
-                           TypeDescription ownerType,
-                           String name,
-                           TypeDescription returnType,
-                           List<? extends TypeDescription> parameterTypes) {
-                this.handleType = handleType;
-                this.ownerType = ownerType;
-                this.name = name;
-                this.returnType = returnType;
-                this.parameterTypes = parameterTypes;
-            }
-
-            @Override
-            public Object resolve() {
-                StringBuilder stringBuilder = new StringBuilder("(");
-                for (TypeDescription parameterType : parameterTypes) {
-                    stringBuilder.append(parameterType.getDescriptor());
-                }
-                String descriptor = stringBuilder.append(")").append(returnType.getDescriptor()).toString();
-                return new Handle(handleType.getIdentifier(), ownerType.getInternalName(), name, descriptor);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Default aDefault = (Default) other;
-                return handleType == aDefault.handleType
-                        && name.equals(aDefault.name)
-                        && ownerType.equals(aDefault.ownerType)
-                        && parameterTypes.equals(aDefault.parameterTypes)
-                        && returnType.equals(aDefault.returnType);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = handleType.hashCode();
-                result = 31 * result + ownerType.hashCode();
-                result = 31 * result + name.hashCode();
-                result = 31 * result + returnType.hashCode();
-                result = 31 * result + parameterTypes.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypeDescription.MethodHandleToken.Default{" +
-                        "handleType=" + handleType +
-                        ", ownerType=" + ownerType +
-                        ", name='" + name + '\'' +
-                        ", returnType=" + returnType +
-                        ", parameterTypes=" + parameterTypes +
-                        '}';
-            }
-        }
-
-        Object resolve();
-    }
-
     /**
      * An abstract base implementation of a type description.
      */
@@ -681,8 +402,8 @@ public interface TypeDescription extends ByteCodeElement {
                     || represents(double.class)
                     || represents(String.class)
                     || represents(Class.class)
-                    || JavaType.METHOD_HANDLE.representedBy(this)
-                    || JavaType.METHOD_TYPE.representedBy(this);
+                    || JavaType.METHOD_HANDLE.getTypeStub().equals(this)
+                    || JavaType.METHOD_TYPE.getTypeStub().equals(this);
         }
 
         @Override
@@ -1229,6 +950,126 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public int getModifiers() {
             return ARRAY_MODIFIERS;
+        }
+    }
+
+    /**
+     * A latent type description for a type without methods or fields.
+     */
+    class Latent extends AbstractTypeDescription.OfSimpleType {
+
+        /**
+         * The name of the type.
+         */
+        private final String name;
+
+        /**
+         * The modifiers of the type.
+         */
+        private final int modifiers;
+
+        /**
+         * The super type or {@code null} if no such type exists.
+         */
+        private final TypeDescription superType;
+
+        /**
+         * The interfaces that this type implements.
+         */
+        private final List<? extends TypeDescription> interfaces;
+
+        /**
+         * Creates a new latent type.
+         *
+         * @param name       The name of the type.
+         * @param modifiers  The modifiers of the type.
+         * @param superType  The super type or {@code null} if no such type exists.
+         * @param interfaces The interfaces that this type implements.
+         */
+        public Latent(String name, int modifiers, TypeDescription superType, List<? extends TypeDescription> interfaces) {
+            this.name = name;
+            this.modifiers = modifiers;
+            this.superType = superType;
+            this.interfaces = interfaces;
+        }
+
+        @Override
+        public TypeDescription getSupertype() {
+            return superType;
+        }
+
+        @Override
+        public TypeList getInterfaces() {
+            return new TypeList.Explicit(interfaces);
+        }
+
+        @Override
+        public MethodDescription getEnclosingMethod() {
+            return null;
+        }
+
+        @Override
+        public TypeDescription getEnclosingType() {
+            return null;
+        }
+
+        @Override
+        public String getCanonicalName() {
+            return getName().replace('$', '.');
+        }
+
+        @Override
+        public boolean isAnonymousClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isLocalClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isMemberClass() {
+            return false;
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.Empty();
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            return new MethodList.Empty();
+        }
+
+        @Override
+        public PackageDescription getPackage() {
+            String name = getName();
+            int index = name.lastIndexOf('.');
+            return index == -1
+                    ? null
+                    : new PackageDescription.Simple(name.substring(0, index));
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return null;
+        }
+
+        @Override
+        public int getModifiers() {
+            return modifiers;
+        }
+
+        @Override
+        public String getName() {
+            return name;
         }
     }
 }

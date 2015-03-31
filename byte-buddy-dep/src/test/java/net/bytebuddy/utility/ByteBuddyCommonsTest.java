@@ -191,6 +191,24 @@ public class ByteBuddyCommonsTest {
     }
 
     @Test
+    public void testJoinListAndElementUnique() throws Exception {
+        assertThat(joinUnique(Arrays.asList(FOO, BAR), QUX), is(Arrays.asList(FOO, BAR, QUX)));
+        assertThat(joinUnique(Arrays.asList(FOO, BAR), FOO), is(Arrays.asList(FOO, BAR)));
+    }
+
+    @Test
+    public void testJoinElementAndListUnique() throws Exception {
+        assertThat(joinUnique(QUX, Arrays.asList(FOO, BAR)), is(Arrays.asList(QUX, FOO, BAR)));
+        assertThat(joinUnique(BAR, Arrays.asList(FOO, BAR)), is(Arrays.asList(BAR, FOO)));
+    }
+
+    @Test
+    public void testJoinListAndListUnique() throws Exception {
+        assertThat(joinUnique(Arrays.asList(FOO, BAR), Arrays.asList(QUX, BAZ)), is(Arrays.asList(FOO, BAR, QUX, BAZ)));
+        assertThat(joinUnique(Arrays.asList(FOO, BAR), Arrays.asList(BAR, QUX)), is(Arrays.asList(FOO, BAR, QUX)));
+    }
+
+    @Test
     public void testIsValidIdentifier() throws Exception {
         assertThat(isValidIdentifier(FOO), is(FOO));
     }

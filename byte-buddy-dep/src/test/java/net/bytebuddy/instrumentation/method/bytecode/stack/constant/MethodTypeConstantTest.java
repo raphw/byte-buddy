@@ -43,7 +43,7 @@ public class MethodTypeConstantTest {
 
     @Test
     public void testApplication() throws Exception {
-        StackManipulation stackManipulation = new MethodTypeConstant(methodDescription);
+        StackManipulation stackManipulation = MethodTypeConstant.of(methodDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, instrumentationContext);
         assertThat(size.getSizeImpact(), is(1));

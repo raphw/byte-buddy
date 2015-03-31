@@ -50,12 +50,12 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
-     * @param throwable The type of the isThrowable.
+     * @param exceptionType The type of the isThrowable.
      * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
-    public static Instrumentation throwing(Class<? extends Throwable> throwable) {
-        return throwing(new TypeDescription.ForLoadedType(nonNull(throwable)));
+    public static Instrumentation throwing(Class<? extends Throwable> exceptionType) {
+        return throwing(new TypeDescription.ForLoadedType(nonNull(exceptionType)));
     }
 
     /**
@@ -63,15 +63,15 @@ public class ExceptionMethod implements Instrumentation, ByteCodeAppender {
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
-     * @param throwable The type of the isThrowable.
+     * @param exceptionType The type of the isThrowable.
      * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
-    public static Instrumentation throwing(TypeDescription throwable) {
-        if (!throwable.isAssignableTo(Throwable.class)) {
-            throw new IllegalArgumentException(throwable + " does not extend throwable");
+    public static Instrumentation throwing(TypeDescription exceptionType) {
+        if (!exceptionType.isAssignableTo(Throwable.class)) {
+            throw new IllegalArgumentException(exceptionType + " does not extend throwable");
         }
-        return new ExceptionMethod(nonNull(throwable), new ConstructionDelegate.ForDefaultConstructor(throwable));
+        return new ExceptionMethod(nonNull(exceptionType), new ConstructionDelegate.ForDefaultConstructor(exceptionType));
     }
 
     /**

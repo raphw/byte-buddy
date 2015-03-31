@@ -4,6 +4,8 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
+import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.utility.JavaInstance;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
 
@@ -22,13 +24,21 @@ public class MethodTypeConstant implements StackManipulation {
      */
     private final Type methodType;
 
-    /**
-     * Creates a new method type constant.
-     *
-     * @param methodDescription The method description of the represented type.
-     */
-    public MethodTypeConstant(MethodDescription methodDescription) {
-        methodType = Type.getMethodType(methodDescription.getDescriptor());
+    public static StackManipulation of(MethodDescription methodDescription) {
+        return new MethodTypeConstant(Type.getMethodType(methodDescription.getDescriptor()));
+    }
+
+    public static StackManipulation of(JavaInstance.MethodType methodType) {
+        Type[] parameterType = new Type[methodType.getParameterTypes().size()];
+        int index = 0;
+        for (TypeDescription typeDescription : methodType.getParameterTypes()) {
+            parameterType[index++] = Type.getType(typeDescription.getDescriptor());
+        }
+        return new MethodTypeConstant(Type.getMethodType(Type.getType(methodType.getReturnType().getDescriptor()), parameterType));
+    }
+
+    public MethodTypeConstant(Type methodType) {
+        this.methodType = methodType;
     }
 
     @Override
