@@ -24,7 +24,7 @@ public enum JavaType {
     /**
      * The Java 7 {@code java.lang.invoke.MethodTypes.Lookup} type.
      */
-    METHOD_TYPES_LOOKUP("java.lang.invoke.MethodHandles$Lookup", Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL),
+    METHOD_HANDLES_LOOKUP("java.lang.invoke.MethodHandles$Lookup", Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL),
 
     /**
      * The Java 7 {@code java.lang.invoke.CallSite} type.

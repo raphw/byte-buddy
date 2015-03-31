@@ -441,7 +441,7 @@ public interface ClassFileLocator {
                  */
                 private static final JavaField CLASSES_FIELD;
 
-                /**
+                /*
                  * Locates the {@link java.lang.ClassLoader}'s field that contains all loaded classes.
                  */
                 static {

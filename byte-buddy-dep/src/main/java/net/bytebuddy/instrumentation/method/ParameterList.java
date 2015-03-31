@@ -59,7 +59,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          */
         private static final JavaMethod GET_PARAMETERS;
 
-        /**
+        /*
          * Initializes the {@link net.bytebuddy.utility.JavaMethod} instances of this class dependant on
          * whether they are available.
          */

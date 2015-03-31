@@ -47,7 +47,7 @@ public interface ClassInjector {
          */
         private static final ReflectionStore REFLECTION_STORE;
 
-        /**
+        /*
          * Obtains the reflective instances used by this injector or a no-op instance that throws the exception
          * that occurred when attempting to obtain the reflective member instances.
          */

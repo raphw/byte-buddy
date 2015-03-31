@@ -96,7 +96,7 @@ public @interface Morph {
          */
         private static final MethodDescription DEFAULT_TARGET;
 
-        /**
+        /*
          * Looks up references for all annotation properties of the morph annotation.
          */
         static {

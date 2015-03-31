@@ -146,7 +146,7 @@ public @interface Super {
          */
         private static final MethodDescription CONSTRUCTOR_PARAMETERS;
 
-        /**
+        /*
          * Extracts method references to the annotation methods.
          */
         static {
@@ -194,7 +194,7 @@ public @interface Super {
          */
         private static final MethodDescription STRATEGY;
 
-        /**
+        /*
          * Extracts method references of the super annotation.
          */
         static {

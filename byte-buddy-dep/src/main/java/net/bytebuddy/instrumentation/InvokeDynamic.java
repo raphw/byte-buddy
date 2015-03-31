@@ -2217,7 +2217,7 @@ public class InvokeDynamic implements Instrumentation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(javaInstance.asStackManipulation(), javaInstance.getTypeDescription());
+                    return new Resolved.Simple(javaInstance.asStackManipulation(), javaInstance.getInstanceType());
                 }
 
                 @Override

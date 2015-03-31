@@ -75,7 +75,7 @@ public @interface DefaultCall {
          */
         private static final MethodDescription SERIALIZABLE_PROXY;
 
-        /**
+        /*
          * Finds references to the methods of the default call annotation.
          */
         static {

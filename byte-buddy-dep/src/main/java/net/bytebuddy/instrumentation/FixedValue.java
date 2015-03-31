@@ -207,7 +207,7 @@ public abstract class FixedValue implements Instrumentation {
 
     public static AssignerConfigurable value(JavaInstance fixedValue) {
         return new ForPoolValue(fixedValue.asStackManipulation(),
-                fixedValue.getTypeDescription(),
+                fixedValue.getInstanceType(),
                 defaultAssigner(),
                 defaultConsiderRuntimeType());
     }

@@ -174,7 +174,7 @@ public interface ParameterDescription extends AnnotatedElement, NamedElement, Mo
          */
         private static final JavaMethod GET_DECLARED_ANNOTATIONS;
 
-        /**
+        /*
          * Initializes the {@link net.bytebuddy.utility.JavaMethod} instances of this class dependant on
          * whether they are available.
          */

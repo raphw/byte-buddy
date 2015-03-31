@@ -341,14 +341,14 @@ public interface MethodDescription extends ByteCodeElement {
                 case 1:
                     return parameterTypes.getOnly().represents(Object[].class);
                 case 2:
-                    return JavaType.METHOD_TYPES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
+                    return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && parameterTypes.get(1).represents(Object[].class);
                 case 3:
-                    return JavaType.METHOD_TYPES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
+                    return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
                             && (parameterTypes.get(2).represents(Object[].class) || JavaType.METHOD_TYPE.getTypeStub().isAssignableTo(parameterTypes.get(2)));
                 default:
-                    if (!(JavaType.METHOD_TYPES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
+                    if (!(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
                             && (JavaType.METHOD_TYPE.getTypeStub().isAssignableTo(parameterTypes.get(2))))) {
                         return false;

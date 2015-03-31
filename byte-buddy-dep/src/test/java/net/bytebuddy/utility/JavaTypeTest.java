@@ -36,9 +36,9 @@ public class JavaTypeTest {
 
     @Test
     public void testMethodTypesLookup() throws Exception {
-        assertThat(JavaType.METHOD_TYPES_LOOKUP.getTypeStub().getName(), is("java.lang.invoke.MethodHandles$Lookup"));
-        assertThat(JavaType.METHOD_TYPES_LOOKUP.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL));
-        assertThat(JavaType.METHOD_TYPES_LOOKUP.getTypeStub().getSupertype(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getName(), is("java.lang.invoke.MethodHandles$Lookup"));
+        assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL));
+        assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getSupertype(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
     }
 
     @Test
@@ -53,7 +53,7 @@ public class JavaTypeTest {
     public void testLoading() throws Exception {
         assertThat(JavaType.METHOD_HANDLE.load(), notNullValue(Class.class));
         assertThat(JavaType.METHOD_TYPE.load(), notNullValue(Class.class));
-        assertThat(JavaType.METHOD_TYPES_LOOKUP.load(), notNullValue(Class.class));
+        assertThat(JavaType.METHOD_HANDLES_LOOKUP.load(), notNullValue(Class.class));
         assertThat(JavaType.CALL_SITE.load(), notNullValue(Class.class));
     }
 

@@ -17,7 +17,7 @@ public class RandomString {
      */
     private static final char[] SYMBOL;
 
-    /**
+    /*
      * Creates the symbol array.
      */
     static {

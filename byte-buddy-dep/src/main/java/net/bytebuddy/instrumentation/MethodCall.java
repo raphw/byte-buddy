@@ -1787,7 +1787,7 @@ public class MethodCall implements Instrumentation {
                                              boolean dynamicallyTyped) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         javaInstance.asStackManipulation(),
-                        assigner.assign(javaInstance.getTypeDescription(), targetType, dynamicallyTyped));
+                        assigner.assign(javaInstance.getInstanceType(), targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + targetType);
                 }

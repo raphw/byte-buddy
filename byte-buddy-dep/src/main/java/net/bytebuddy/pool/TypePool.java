@@ -294,7 +294,7 @@ public interface TypePool {
          */
         private static final String ARRAY_SYMBOL = "[";
 
-        /**
+        /*
          * Initializes the maps of primitive type names and descriptors.
          */
         static {

@@ -97,7 +97,7 @@ public @interface Field {
          */
         private static final MethodDescription SERIALIZABLE_PROXY;
 
-        /**
+        /*
          * Fetches a reference to all annotation properties.
          */
         static {
