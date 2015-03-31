@@ -24,10 +24,22 @@ public class MethodTypeConstant implements StackManipulation {
      */
     private final Type methodType;
 
+    /**
+     * Transforms the given method into a stack manipulation that loads its type onto the operand stack.
+     *
+     * @param methodDescription The method of which the method type should be loaded onto the operand stack.
+     * @return A stack manipulation that loads the method type of the given method onto the operand stack.
+     */
     public static StackManipulation of(MethodDescription methodDescription) {
         return new MethodTypeConstant(Type.getMethodType(methodDescription.getDescriptor()));
     }
 
+    /**
+     * Transforms the given method type into a stack manipulation that loads its type onto the operand stack.
+     *
+     * @param methodType The method type that should be loaded onto the operand stack.
+     * @return A stack manipulation that loads the given method type.
+     */
     public static StackManipulation of(JavaInstance.MethodType methodType) {
         Type[] parameterType = new Type[methodType.getParameterTypes().size()];
         int index = 0;
@@ -37,7 +49,12 @@ public class MethodTypeConstant implements StackManipulation {
         return new MethodTypeConstant(Type.getMethodType(Type.getType(methodType.getReturnType().getDescriptor()), parameterType));
     }
 
-    public MethodTypeConstant(Type methodType) {
+    /**
+     * Creates a method type constant for the given method type.
+     *
+     * @param methodType The represented method type.
+     */
+    protected MethodTypeConstant(Type methodType) {
         this.methodType = methodType;
     }
 

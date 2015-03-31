@@ -51,6 +51,12 @@ public class MethodHandleConstant implements StackManipulation {
                 methodDescription.getDescriptor()));
     }
 
+    /**
+     * Creates stack manipulation for loading the provided method handle onto the operand stack.
+     *
+     * @param methodHandle The method handle to load onto the operand stack.
+     * @return A stack manipulation for loading the provided method handle onto the operand stack.
+     */
     public static StackManipulation of(JavaInstance.MethodHandle methodHandle) {
         Type[] parameterType = new Type[methodHandle.getParameterTypes().size()];
         int index = 0;
