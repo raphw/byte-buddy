@@ -125,8 +125,8 @@ public class InvokeDynamic implements Instrumentation {
      *                 {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
      *                 {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
      *                 instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
-     * @return An invoke dynamic instrumentation that bootstraps its call site with the provided bootstrap method and
-     * while handing the given arguments to the bootstrap method.
+     * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
+     * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Method method, Object... argument) {
         return bootstrap(new MethodDescription.ForLoadedMethod(nonNull(method)), argument);
@@ -519,6 +519,26 @@ public class InvokeDynamic implements Instrumentation {
     }
 
     /**
+     * Passes a parameter of the instrumented method to the bootstrapped method.
+     *
+     * @param index The index of the parameter that should be passed to the bootstrapped method.
+     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument
+     * with its implicit type.
+     */
+    public WithImplicitArgumentType withArgument(int index) {
+        if (index < 0) {
+            throw new IllegalArgumentException("Method parameter indices cannot be negative: " + index);
+        }
+        return new WithImplicitArgumentType(bootstrapMethod,
+                handleArguments,
+                invocationProvider,
+                terminationHandler,
+                assigner,
+                dynamicallyTyped,
+                index);
+    }
+
+    /**
      * Passes references to {@code this} onto the operand stack where the instance is represented as
      * the given types.
      *
@@ -544,6 +564,35 @@ public class InvokeDynamic implements Instrumentation {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
                 invocationProvider.appendArguments(argumentProviders),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    /**
+     * Adds all method arguments to the the bootstrapped method.
+     *
+     * @return This invoke dynamic instrumentation with all parameters of the instrumented method added.
+     */
+    public InvokeDynamic withMethodArguments() {
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                invocationProvider.appendArgument(InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.INSTANCE),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    /**
+     * Adds a potential {@code this} reference and all method arguments to the the bootstrapped method.
+     *
+     * @return This invoke dynamic instrumentation with a potential {@code this} reference and all
+     * parameters of the instrumented method added.
+     */
+    public InvokeDynamic withImplicitAndMethodArguments() {
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                invocationProvider.appendArgument(InvocationProvider.ArgumentProvider.ForInterceptedMethodInstanceAndParameters.INSTANCE),
                 terminationHandler,
                 assigner,
                 dynamicallyTyped);
@@ -1452,16 +1501,6 @@ public class InvokeDynamic implements Instrumentation {
                 private final String name;
 
                 /**
-                 * Creates a new argument provider that stores the given value in a static field of the instance type.
-                 *
-                 * @param value The value that is to be provided to the bootstrapped method.
-                 * @return A corresponding argument provider.
-                 */
-                public static ArgumentProvider of(Object value) {
-                    return new ForStaticField(value, new TypeDescription.ForLoadedType(value.getClass()));
-                }
-
-                /**
                  * Creates a new argument provider that stores the given value in a static field.
                  *
                  * @param value           The value that is to be provided to the bootstrapped method.
@@ -1473,13 +1512,28 @@ public class InvokeDynamic implements Instrumentation {
                     name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
                 }
 
+                /**
+                 * Creates a new argument provider that stores the given value in a static field of the instance type.
+                 *
+                 * @param value The value that is to be provided to the bootstrapped method.
+                 * @return A corresponding argument provider.
+                 */
+                public static ArgumentProvider of(Object value) {
+                    return new ForStaticField(value, new TypeDescription.ForLoadedType(value.getClass()));
+                }
+
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType,
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
-                    return new Resolved.Simple(FieldAccess.forField(fieldDescription).getter(), fieldDescription.getFieldType());
+                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(), typeDescription, dynamicallyTyped);
+                    if (!stackManipulation.isValid()) {
+                        throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + typeDescription);
+                    }
+                    return new Resolved.Simple(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
+                            stackManipulation), fieldDescription.getFieldType());
                 }
 
                 @Override
@@ -1707,6 +1761,77 @@ public class InvokeDynamic implements Instrumentation {
                 public String toString() {
                     return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter{" +
                             "index=" + index +
+                            '}';
+                }
+            }
+
+            /**
+             * An argument provider that loads an argument of the intercepted method.
+             */
+            class ForExplicitTypedMethodParameter implements ArgumentProvider {
+
+                /**
+                 * The index of the parameter.
+                 */
+                private final int index;
+
+                /**
+                 * The type of this method parameter.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates an argument provider for an argument of the intercepted method.
+                 *
+                 * @param index           The index of the parameter.
+                 * @param typeDescription The type of this method parameter.
+                 */
+                public ForExplicitTypedMethodParameter(int index, TypeDescription typeDescription) {
+                    this.index = index;
+                    this.typeDescription = typeDescription;
+                }
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    ParameterList parameters = instrumentedMethod.getParameters();
+                    if (index >= parameters.size()) {
+                        throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
+                    }
+                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getTypeDescription(),
+                            typeDescription,
+                            dynamicallyTyped);
+                    if (!stackManipulation.isValid()) {
+                        throw new IllegalArgumentException("Cannot assign " + parameters.get(index) + " to " + typeDescription);
+                    }
+                    return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.forType(parameters.get(index)
+                            .getTypeDescription()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && index == ((ForExplicitTypedMethodParameter) other).index
+                            && typeDescription.equals(((ForExplicitTypedMethodParameter) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return index + 31 * typeDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter{" +
+                            "index=" + index +
+                            ", typeDescription=" + typeDescription +
                             '}';
                 }
             }
@@ -2779,10 +2904,162 @@ public class InvokeDynamic implements Instrumentation {
     }
 
     /**
+     * An abstract delegator that allows to specify a configuration for any specification of an argument.
+     */
+    protected abstract static class AbstractDelegator extends InvokeDynamic {
+
+        /**
+         * Creates a new abstract delegator for a dynamic method invocation.
+         *
+         * @param bootstrapMethod    The bootstrap method.
+         * @param handleArguments    The arguments that are provided to the bootstrap method.
+         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
+         * @param terminationHandler A handler that handles the method return.
+         * @param assigner           The assigner to be used.
+         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         */
+        public AbstractDelegator(MethodDescription bootstrapMethod,
+                                 List<?> handleArguments,
+                                 InvocationProvider invocationProvider,
+                                 TerminationHandler terminationHandler,
+                                 Assigner assigner,
+                                 boolean dynamicallyTyped) {
+            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, dynamicallyTyped);
+        }
+
+        /**
+         * Resolves the current configuration into a fully initialized invoke dynamic instance.
+         *
+         * @return The fully resolved invoke dynamic instance.
+         */
+        protected abstract InvokeDynamic materialize();
+
+        @Override
+        public InvokeDynamic withBooleanValue(boolean... value) {
+            return materialize().withBooleanValue(value);
+        }
+
+        @Override
+        public InvokeDynamic withByteValue(byte... value) {
+            return materialize().withByteValue(value);
+        }
+
+        @Override
+        public InvokeDynamic withShortValue(short... value) {
+            return materialize().withShortValue(value);
+        }
+
+        @Override
+        public InvokeDynamic withCharacterValue(char... value) {
+            return materialize().withCharacterValue(value);
+        }
+
+        @Override
+        public InvokeDynamic withIntegerValue(int... value) {
+            return materialize().withIntegerValue(value);
+        }
+
+        @Override
+        public InvokeDynamic withLongValue(long... value) {
+            return materialize().withLongValue(value);
+        }
+
+        @Override
+        public InvokeDynamic withFloatValue(float... value) {
+            return materialize().withFloatValue(value);
+        }
+
+        @Override
+        public InvokeDynamic withDoubleValue(double... value) {
+            return materialize().withDoubleValue(value);
+        }
+
+        @Override
+        public InvokeDynamic withValue(Object... value) {
+            return materialize().withValue(value);
+        }
+
+        @Override
+        public WithImplicitFieldType withReference(Object value) {
+            return materialize().withReference(value);
+        }
+
+        @Override
+        public InvokeDynamic withReference(Object... value) {
+            return materialize().withReference(value);
+        }
+
+        @Override
+        public InvokeDynamic withType(TypeDescription... typeDescription) {
+            return materialize().withType(typeDescription);
+        }
+
+        @Override
+        public InvokeDynamic withInstance(JavaInstance... javaInstance) {
+            return materialize().withInstance(javaInstance);
+        }
+
+        @Override
+        public InvokeDynamic withNullValue(Class<?>... type) {
+            return materialize().withNullValue(type);
+        }
+
+        @Override
+        public InvokeDynamic withNullValue(TypeDescription... typeDescription) {
+            return materialize().withNullValue(typeDescription);
+        }
+
+        @Override
+        public InvokeDynamic withArgument(int... index) {
+            return materialize().withArgument(index);
+        }
+
+        @Override
+        public WithImplicitArgumentType withArgument(int index) {
+            return materialize().withArgument(index);
+        }
+
+        @Override
+        public InvokeDynamic withThis(Class<?>... type) {
+            return materialize().withThis(type);
+        }
+
+        @Override
+        public InvokeDynamic withThis(TypeDescription... typeDescription) {
+            return materialize().withThis(typeDescription);
+        }
+
+        @Override
+        public InvokeDynamic withMethodArguments() {
+            return materialize().withMethodArguments();
+        }
+
+        @Override
+        public InvokeDynamic withImplicitAndMethodArguments() {
+            return materialize().withImplicitAndMethodArguments();
+        }
+
+        @Override
+        public InvokeDynamic withInstanceField(String fieldName, Class<?> fieldType) {
+            return materialize().withInstanceField(fieldName, fieldType);
+        }
+
+        @Override
+        public InvokeDynamic withInstanceField(String fieldName, TypeDescription fieldType) {
+            return materialize().withInstanceField(fieldName, fieldType);
+        }
+
+        @Override
+        public InvokeDynamic withField(String... fieldName) {
+            return materialize().withField(fieldName);
+        }
+    }
+
+    /**
      * Representation of an {@link net.bytebuddy.instrumentation.InvokeDynamic} instrumentation where the bootstrapped
      * method is passed a {@code this} reference, if available, and any arguments of the instrumented method.
      */
-    public static class WithImplicitArguments extends InvokeDynamic {
+    public static class WithImplicitArguments extends AbstractDelegator {
 
         /**
          * Creates a new dynamic method invocation with implicit arguments.
@@ -2813,8 +3090,8 @@ public class InvokeDynamic implements Instrumentation {
          *
          * @return This instrumentation where the bootstrapped method is not passed any arguments.
          */
-        public InvokeDynamic withoutImplicitArguments() {
-            return new WithImplicitArguments(bootstrapMethod,
+        public InvokeDynamic withoutArguments() {
+            return new InvokeDynamic(bootstrapMethod,
                     handleArguments,
                     invocationProvider.withoutArguments(),
                     terminationHandler,
@@ -2822,21 +3099,18 @@ public class InvokeDynamic implements Instrumentation {
                     dynamicallyTyped);
         }
 
-        /**
-         * Returns an instance of this instrumentation where only the explicit arguments of an intercepted method but
-         * not the {@code this} reference, if available, are passed to the bootstrapped method.
-         *
-         * @return This instrumentation where only the arguments of the intercepted method but not the {@code this}
-         * reference of the intercepted method, if available, are passed to the bootstrapped method.
-         */
-        public InvokeDynamic withMethodArgumentsOnly() {
+        @Override
+        protected InvokeDynamic materialize() {
+            return withoutArguments();
+        }
+
+        @Override
+        public WithImplicitArguments withAssigner(Assigner assigner, boolean dynamicallyTyped) {
             return new WithImplicitArguments(bootstrapMethod,
                     handleArguments,
-                    invocationProvider
-                            .withoutArguments()
-                            .appendArgument(InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.INSTANCE),
+                    invocationProvider,
                     terminationHandler,
-                    assigner,
+                    nonNull(assigner),
                     dynamicallyTyped);
         }
 
@@ -2979,7 +3253,7 @@ public class InvokeDynamic implements Instrumentation {
     /**
      * A step in the invoke dynamic domain specific language that allows to explicitly specify a field type for a reference value.
      */
-    public static class WithImplicitFieldType extends InvokeDynamic {
+    public static class WithImplicitFieldType extends AbstractDelegator {
 
         /**
          * The value that is supplied as the next argument to the bootstrapped method.
@@ -3033,135 +3307,22 @@ public class InvokeDynamic implements Instrumentation {
          * appended to the arguments of the bootstrapped method.
          */
         public InvokeDynamic as(TypeDescription typeDescription) {
-            if (!typeDescription.isInstance(value)) {
-                throw new IllegalArgumentException("Cannot assign " + value + " to " + typeDescription);
-            }
-            InvocationProvider.ArgumentProvider argumentProvider = new InvocationProvider.ArgumentProvider.ForStaticField(value, typeDescription);
             return new InvokeDynamic(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.appendArguments(Collections.singletonList(argumentProvider)),
-                    terminationHandler,
-                    assigner,
-                    dynamicallyTyped);
-        }
-
-        /**
-         * Resolves the current configuration, i.e. adds the value to the invocation provider.
-         *
-         * @return An invoke dynamic instance with the representated value of this instance added to the invocation provider.
-         */
-        private InvokeDynamic materialize() {
-            return new InvokeDynamic(bootstrapMethod,
-                    handleArguments,
-                    invocationProvider.appendArguments(Collections.singletonList(argumentProvider)),
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForStaticField(value, nonNull(typeDescription))),
                     terminationHandler,
                     assigner,
                     dynamicallyTyped);
         }
 
         @Override
-        public InvokeDynamic withBooleanValue(boolean... value) {
-            return materialize().withBooleanValue(value);
-        }
-
-        @Override
-        public InvokeDynamic withByteValue(byte... value) {
-            return materialize().withByteValue(value);
-        }
-
-        @Override
-        public InvokeDynamic withShortValue(short... value) {
-            return materialize().withShortValue(value);
-        }
-
-        @Override
-        public InvokeDynamic withCharacterValue(char... value) {
-            return materialize().withCharacterValue(value);
-        }
-
-        @Override
-        public InvokeDynamic withIntegerValue(int... value) {
-            return materialize().withIntegerValue(value);
-        }
-
-        @Override
-        public InvokeDynamic withLongValue(long... value) {
-            return materialize().withLongValue(value);
-        }
-
-        @Override
-        public InvokeDynamic withFloatValue(float... value) {
-            return materialize().withFloatValue(value);
-        }
-
-        @Override
-        public InvokeDynamic withDoubleValue(double... value) {
-            return materialize().withDoubleValue(value);
-        }
-
-        @Override
-        public InvokeDynamic withValue(Object... value) {
-            return materialize().withValue(value);
-        }
-
-        @Override
-        public WithImplicitFieldType withReference(Object value) {
-            return materialize().withReference(value);
-        }
-
-        @Override
-        public InvokeDynamic withReference(Object... value) {
-            return materialize().withReference(value);
-        }
-
-        @Override
-        public InvokeDynamic withType(TypeDescription... typeDescription) {
-            return materialize().withType(typeDescription);
-        }
-
-        @Override
-        public InvokeDynamic withInstance(JavaInstance... javaInstance) {
-            return materialize().withInstance(javaInstance);
-        }
-
-        @Override
-        public InvokeDynamic withNullValue(Class<?>... type) {
-            return materialize().withNullValue(type);
-        }
-
-        @Override
-        public InvokeDynamic withNullValue(TypeDescription... typeDescription) {
-            return materialize().withNullValue(typeDescription);
-        }
-
-        @Override
-        public InvokeDynamic withArgument(int... index) {
-            return materialize().withArgument(index);
-        }
-
-        @Override
-        public InvokeDynamic withThis(Class<?>... type) {
-            return materialize().withThis(type);
-        }
-
-        @Override
-        public InvokeDynamic withThis(TypeDescription... typeDescription) {
-            return materialize().withThis(typeDescription);
-        }
-
-        @Override
-        public InvokeDynamic withInstanceField(String fieldName, Class<?> fieldType) {
-            return materialize().withInstanceField(fieldName, fieldType);
-        }
-
-        @Override
-        public InvokeDynamic withInstanceField(String fieldName, TypeDescription fieldType) {
-            return materialize().withInstanceField(fieldName, fieldType);
-        }
-
-        @Override
-        public InvokeDynamic withField(String... fieldName) {
-            return materialize().withField(fieldName);
+        protected InvokeDynamic materialize() {
+            return new InvokeDynamic(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.appendArgument(argumentProvider),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
         }
 
         @Override
@@ -3191,7 +3352,7 @@ public class InvokeDynamic implements Instrumentation {
 
         @Override
         public String toString() {
-            return "InvokeDynamic.WithImplicitArguments{" +
+            return "InvokeDynamic.WithImplicitFieldType{" +
                     "bootstrapMethod=" + bootstrapMethod +
                     ", handleArguments=" + handleArguments +
                     ", invocationProvider=" + invocationProvider +
@@ -3199,6 +3360,115 @@ public class InvokeDynamic implements Instrumentation {
                     ", assigner=" + assigner +
                     ", dynamicallyTyped=" + dynamicallyTyped +
                     ", value=" + value +
+                    '}';
+        }
+    }
+
+    /**
+     * An invoke dynamic instrumentation where the last argument is an implicitly typed method argument.
+     */
+    public static class WithImplicitArgumentType extends AbstractDelegator {
+
+        /**
+         * The index of the method argument.
+         */
+        private final int index;
+
+        /**
+         * Creates a new invoke dynamic instance with an implicit field type for the provided value.
+         *
+         * @param bootstrapMethod    The bootstrap method.
+         * @param handleArguments    The arguments that are provided to the bootstrap method.
+         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
+         * @param terminationHandler A handler that handles the method return.
+         * @param assigner           The assigner to be used.
+         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         * @param index              The index of of the argument to supply to the bootstapped method.
+         */
+        protected WithImplicitArgumentType(MethodDescription bootstrapMethod,
+                                           List<?> handleArguments,
+                                           InvocationProvider invocationProvider,
+                                           TerminationHandler terminationHandler,
+                                           Assigner assigner,
+                                           boolean dynamicallyTyped,
+                                           int index) {
+            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, dynamicallyTyped);
+            this.index = index;
+        }
+
+        /**
+         * Defines the given argument to be treated as an instance of the provided type.
+         *
+         * @param type The type as which the provided argument should be handed to the bootstrap method.
+         * @return An invoke dynamic instance with the same configuration as this instance but with the provided argument
+         * appended to the arguments of the bootstrapped method.
+         */
+        public InvokeDynamic as(Class<?> type) {
+            return as(new TypeDescription.ForLoadedType(nonNull(type)));
+        }
+
+        /**
+         * Defines the given argument to be treated as an instance of the provided type.
+         *
+         * @param typeDescription The type as which the provided argument should be handed to the bootstrap method.
+         * @return An invoke dynamic instance with the same configuration as this instance but with the provided argument
+         * appended to the arguments of the bootstrapped method.
+         */
+        public InvokeDynamic as(TypeDescription typeDescription) {
+            return new InvokeDynamic(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider
+                            .ForExplicitTypedMethodParameter(index, nonNull(typeDescription))),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        @Override
+        protected InvokeDynamic materialize() {
+            return new InvokeDynamic(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForMethodParameter(index)),
+                    terminationHandler,
+                    assigner,
+                    dynamicallyTyped);
+        }
+
+        @Override
+        public InvokeDynamic withAssigner(Assigner assigner, boolean dynamicallyTyped) {
+            return materialize().withAssigner(assigner, dynamicallyTyped);
+        }
+
+        @Override
+        public Instrumentation andThen(Instrumentation instrumentation) {
+            return materialize().andThen(instrumentation);
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return materialize().prepare(instrumentedType);
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target instrumentationTarget) {
+            return materialize().appender(instrumentationTarget);
+        }
+
+        @Override
+        protected InvocationProvider getInvocationProvider() {
+            return materialize().getInvocationProvider();
+        }
+
+        @Override
+        public String toString() {
+            return "InvokeDynamic.WithImplicitArgumentType{" +
+                    "bootstrapMethod=" + bootstrapMethod +
+                    ", handleArguments=" + handleArguments +
+                    ", invocationProvider=" + invocationProvider +
+                    ", terminationHandler=" + terminationHandler +
+                    ", assigner=" + assigner +
+                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    ", index=" + index +
                     '}';
         }
     }

@@ -76,7 +76,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
                 continue;
             }
             DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
-                    InvokeDynamic.bootstrap(method).withoutImplicitArguments(),
+                    InvokeDynamic.bootstrap(method).withoutArguments(),
                     classLoader,
                     isDeclaredBy(Simple.class));
             assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
@@ -88,7 +88,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     public void testBootstrapConstructor() throws Exception {
         for (Constructor<?> constructor : classLoader.loadClass(STANDARD_ARGUMENT_BOOTSTRAP).getDeclaredConstructors()) {
             DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
-                    InvokeDynamic.bootstrap(constructor).withoutImplicitArguments(),
+                    InvokeDynamic.bootstrap(constructor).withoutArguments(),
                     classLoader,
                     isDeclaredBy(Simple.class));
             assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
@@ -104,7 +104,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly())
-                        .withoutImplicitArguments(),
+                        .withoutArguments(),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
@@ -122,7 +122,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly(),
                         INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle())
-                        .withoutImplicitArguments(),
+                        .withoutArguments(),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
@@ -148,7 +148,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly(),
                         INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle())
-                        .withoutImplicitArguments(),
+                        .withoutArguments(),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
@@ -168,7 +168,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithExplicitArgumentsWithoutArgumentsThrowsException() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(classLoader.loadClass(PARAMETER_BOOTSTRAP));
-        InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly()).withoutImplicitArguments();
+        InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly()).withoutArguments();
     }
 
     @Test
@@ -179,7 +179,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(FOO, String.class)
-                        .withoutImplicitArguments()
                         .withBooleanValue(BOOLEAN)
                         .withByteValue(BYTE)
                         .withShortValue(SHORT)
@@ -207,7 +206,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAR, String.class)
-                        .withoutImplicitArguments()
                         .withValue(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle(), value),
                 classLoader,
                 isDeclaredBy(Simple.class));
@@ -225,7 +223,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAR, String.class)
-                        .withoutImplicitArguments()
                         .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS))
                         .withReference(makeMethodHandle()).as(JavaType.METHOD_HANDLE.load()) // avoid direct method handle
                         .withReference(value),
@@ -244,7 +241,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withoutImplicitArguments()
                         .withInstanceField(FOO, String.class),
                 classLoader,
                 isDeclaredBy(Simple.class));
@@ -264,7 +260,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<SimpleWithField> dynamicType = instrument(SimpleWithField.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withoutImplicitArguments()
                         .withField(FOO),
                 classLoader,
                 isDeclaredBy(SimpleWithField.class));
@@ -284,7 +279,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         instrument(SimpleWithFieldInvisible.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withoutImplicitArguments()
                         .withField(FOO),
                 classLoader,
                 isDeclaredBy(SimpleWithFieldInvisible.class));
@@ -298,7 +292,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withoutImplicitArguments()
                         .withNullValue(String.class),
                 classLoader,
                 isDeclaredBy(Simple.class));
@@ -314,7 +307,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Simple> dynamicType = instrument(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAZ, String.class)
-                        .withoutImplicitArguments()
                         .withThis(Object.class),
                 classLoader,
                 isDeclaredBy(Simple.class));
@@ -331,7 +323,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<SimpleWithArgument> dynamicType = instrument(SimpleWithArgument.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withoutImplicitArguments()
                         .withArgument(0),
                 classLoader,
                 isDeclaredBy(SimpleWithArgument.class));
@@ -346,7 +337,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                 .invoke(QUX, String.class)
-                .withoutImplicitArguments()
                 .withArgument(-1);
     }
 
@@ -358,7 +348,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         instrument(SimpleWithArgument.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withoutImplicitArguments()
                         .withArgument(1),
                 classLoader,
                 isDeclaredBy(SimpleWithArgument.class));
@@ -372,7 +361,6 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<SimpleWithArgument> dynamicType = instrument(SimpleWithArgument.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withoutImplicitArguments()
                         .withArgument(0)
                         .andThen(FixedValue.value(BAZ)),
                 classLoader,
@@ -389,7 +377,7 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<SimpleWithArgument> dynamicType = instrument(SimpleWithArgument.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withMethodArgumentsOnly(),
+                        .withMethodArguments(),
                 classLoader,
                 isDeclaredBy(SimpleWithArgument.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
@@ -425,11 +413,13 @@ public class InvokeDynamicTest extends AbstractInstrumentationTest {
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForThisInstance.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaInstance.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodInstanceAndParameters.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.TerminationHandler.ForMethodReturn.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.TerminationHandler.ForChainedInvocation.class).apply();
     }
