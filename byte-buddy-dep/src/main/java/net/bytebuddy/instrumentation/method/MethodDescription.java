@@ -276,7 +276,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public String getGenericSignature() {
-            return null; // Currently, generic signatures are not supported.
+            return null; // Currently, generic signatures are supported poorly.
         }
 
         @Override

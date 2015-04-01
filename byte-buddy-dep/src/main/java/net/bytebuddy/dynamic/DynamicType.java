@@ -560,6 +560,7 @@ public interface DynamicType {
          * {@link net.bytebuddy.matcher.ElementMatchers#isTypeInitializer()} for a matcher for this initializer
          * which can be intercepted using
          * {@link net.bytebuddy.dynamic.DynamicType.Builder#invokable(net.bytebuddy.matcher.ElementMatcher)}.
+         * Declared exceptions or annotations of the method are not copied and must be added manually.
          * <p>&nbsp;</p>
          * Note that a constructor's implementation must call another constructor of the same class or a constructor of
          * its super class. This constructor call must be hardcoded inside of the constructor's method body. Before
@@ -570,6 +571,37 @@ public interface DynamicType {
          * @return An interception delegate that exclusively matches the new constructor.
          */
         ExceptionDeclarableMethodInterception<T> defineConstructor(Constructor<?> constructor);
+
+        /**
+         * Defines a new constructor for this type. A constructor must not be {@code static}. Instead, a static type
+         * initializer is added automatically if such an initializer is required. See
+         * {@link net.bytebuddy.matcher.ElementMatchers#isTypeInitializer()} for a matcher for this initializer
+         * which can be intercepted using
+         * {@link net.bytebuddy.dynamic.DynamicType.Builder#invokable(net.bytebuddy.matcher.ElementMatcher)}.
+         * Declared exceptions or annotations of the method are not copied and must be added manually.
+         * <p>&nbsp;</p>
+         * Note that a constructor's implementation must call another constructor of the same class or a constructor of
+         * its super class. This constructor call must be hardcoded inside of the constructor's method body. Before
+         * this constructor call is made, it is not legal to call any methods or to read any fields of the instance
+         * under construction.
+         *
+         * @param methodDescription The constructor for the generated type to imitate.
+         * @return An interception delegate that exclusively matches the new constructor.
+         */
+        ExceptionDeclarableMethodInterception<T> defineConstructor(MethodDescription methodDescription);
+
+        /**
+         * Defines a new method or constructor for this type. Declared exceptions or annotations of the method
+         * are not copied and must be added manually.
+         * <p>&nbsp;</p>
+         * Note that a method definition overrides any method of identical signature that was defined in a super
+         * type what is only valid if the method is of at least broader visibility and if the overridden method
+         * is not {@code final}.
+         *
+         * @param methodDescription The method tor constructor hat the generated type should imitate.
+         * @return An interception delegate that exclusively matches the new method or constructor.
+         */
+        ExceptionDeclarableMethodInterception<T> define(MethodDescription methodDescription);
 
         /**
          * Selects a set of methods of this type for instrumentation.
@@ -1428,11 +1460,6 @@ public interface DynamicType {
             }
 
             @Override
-            public Unloaded<S> make() {
-                return null;
-            }
-
-            @Override
             public ExceptionDeclarableMethodInterception<S> defineMethod(String name,
                                                                          TypeDescription returnType,
                                                                          List<? extends TypeDescription> parameterTypes,
@@ -1454,6 +1481,9 @@ public interface DynamicType {
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineMethod(MethodDescription methodDescription) {
+                if (!methodDescription.isMethod()) {
+                    throw new IllegalArgumentException("Not a method: " + methodDescription);
+                }
                 return defineMethod(methodDescription.getName(),
                         methodDescription.getReturnType(),
                         methodDescription.getParameters().asTypeList(),
@@ -1498,6 +1528,14 @@ public interface DynamicType {
             }
 
             @Override
+            public ExceptionDeclarableMethodInterception<S> defineConstructor(MethodDescription methodDescription) {
+                if (!methodDescription.isConstructor()) {
+                    throw new IllegalArgumentException("Not a constructor: " + methodDescription);
+                }
+                return defineConstructor(methodDescription.getParameters().asTypeList(), methodDescription.getModifiers());
+            }
+
+            @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(
                     Iterable<Class<?>> parameterTypes,
                     int modifiers) {
@@ -1515,6 +1553,13 @@ public interface DynamicType {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodToken(nonVoid(parameterTypes),
                         Collections.<TypeDescription>emptyList(),
                         modifiers));
+            }
+
+            @Override
+            public ExceptionDeclarableMethodInterception<S> define(MethodDescription methodDescription) {
+                return methodDescription.isMethod()
+                        ? defineMethod(methodDescription)
+                        : defineConstructor(methodDescription);
             }
 
             @Override
@@ -1984,8 +2029,7 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> bridgeMethodResolverFactory(
-                        BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+                public Builder<U> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                     return materialize().bridgeMethodResolverFactory(bridgeMethodResolverFactory);
                 }
 
@@ -2074,22 +2118,19 @@ public interface DynamicType {
                 }
 
                 @Override
-                public ExceptionDeclarableMethodInterception<U> defineConstructor(
-                        List<? extends TypeDescription> parameterTypes,
+                public ExceptionDeclarableMethodInterception<U> defineConstructor(List<? extends TypeDescription> parameterTypes,
                         ModifierContributor.ForMethod... modifier) {
                     return materialize().defineConstructor(parameterTypes, modifier);
                 }
 
                 @Override
-                public ExceptionDeclarableMethodInterception<U> defineConstructor(
-                        Iterable<Class<?>> parameterTypes,
+                public ExceptionDeclarableMethodInterception<U> defineConstructor(Iterable<Class<?>> parameterTypes,
                         int modifiers) {
                     return materialize().defineConstructor(parameterTypes, modifiers);
                 }
 
                 @Override
-                public ExceptionDeclarableMethodInterception<U> defineConstructor(
-                        List<? extends TypeDescription> parameterTypes,
+                public ExceptionDeclarableMethodInterception<U> defineConstructor(List<? extends TypeDescription> parameterTypes,
                         int modifiers) {
                     return materialize().defineConstructor(parameterTypes, modifiers);
                 }
@@ -2097,6 +2138,16 @@ public interface DynamicType {
                 @Override
                 public ExceptionDeclarableMethodInterception<U> defineConstructor(Constructor<?> constructor) {
                     return materialize().defineConstructor(constructor);
+                }
+
+                @Override
+                public ExceptionDeclarableMethodInterception<U> defineConstructor(MethodDescription methodDescription) {
+                    return materialize().defineConstructor(methodDescription);
+                }
+
+                @Override
+                public ExceptionDeclarableMethodInterception<U> define(MethodDescription methodDescription) {
+                    return materialize().define(methodDescription);
                 }
 
                 @Override
@@ -2278,11 +2329,6 @@ public interface DynamicType {
                 @Override
                 public FieldAnnotationTarget<S> annotateField(AnnotationDescription... annotation) {
                     return attribute(new FieldAttributeAppender.ForAnnotation(Arrays.asList(nonNull(annotation))));
-                }
-
-                @Override
-                public Builder<S> annotateType(AnnotationDescription... annotation) {
-                    return null;
                 }
 
                 @Override
