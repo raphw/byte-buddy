@@ -2,8 +2,11 @@ package net.bytebuddy.utility;
 
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,6 +15,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class JavaInstanceMethodTypeTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private static final String BAR = "bar", QUX = "qux";
 
@@ -87,6 +93,7 @@ public class JavaInstanceMethodTypeTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(7)
     public void testMethodTypeOfLoadedMethodType() throws Exception {
         Object loadedMethodType = JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class)
                 .invoke(null, void.class, new Class<?>[]{Object.class});
