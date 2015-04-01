@@ -87,6 +87,11 @@ public interface TypeWriter<T> {
             private static final MethodVisitor IGNORE_METHOD = null;
 
             /**
+             * Indicates to ignore an annotation to not be visited.
+             */
+            private static final AnnotationVisitor IGNORE_ANNOTATION = null;
+
+            /**
              * Indicates that a class has no super type, namely the {@link java.lang.Object} type.
              */
             private static final TypeDescription NO_SUPER_TYPE = null;
@@ -460,6 +465,11 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public AnnotationVisitor visitAnnotationDefault() {
+                        return IGNORE_ANNOTATION; // Annotation types can never be rebased.
+                    }
+
+                    @Override
                     public void visitCode() {
                         if (byteCodeAppender.appendsCode()) {
                             actualMethodVisitor.visitCode();
@@ -533,6 +543,11 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public AnnotationVisitor visitAnnotationDefault() {
+                        return IGNORE_ANNOTATION;
+                    }
+
+                    @Override
                     public void visitCode() {
                         mv = IGNORE_METHOD;
                     }
@@ -541,9 +556,7 @@ public interface TypeWriter<T> {
                     public void visitEnd() {
                         if (byteCodeAppender.appendsCode()) {
                             actualMethodVisitor.visitCode();
-                            ByteCodeAppender.Size size = byteCodeAppender.apply(actualMethodVisitor,
-                                    instrumentationContext,
-                                    methodDescription);
+                            ByteCodeAppender.Size size = byteCodeAppender.apply(actualMethodVisitor, instrumentationContext, methodDescription);
                             actualMethodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                         }
                         actualMethodVisitor.visitEnd();
@@ -551,8 +564,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{"
-                                +
+                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{" +
                                 "actualMethodVisitor=" + actualMethodVisitor +
                                 ", byteCodeAppender=" + byteCodeAppender +
                                 ", methodDescription=" + methodDescription +
@@ -569,8 +581,7 @@ public interface TypeWriter<T> {
                     /**
                      * The modifiers for the method that consumes the original type initializer.
                      */
-                    private static final int TYPE_INITIALIZER_PROXY_MODIFIERS =
-                            Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+                    private static final int TYPE_INITIALIZER_PROXY_MODIFIERS = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
                     /**
                      * A prefix for the name of the method that represents the original type initializer.
