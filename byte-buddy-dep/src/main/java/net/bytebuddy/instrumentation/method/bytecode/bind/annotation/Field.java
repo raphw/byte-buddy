@@ -460,11 +460,6 @@ public @interface Field {
                     }
 
                     @Override
-                    public boolean appendsCode() {
-                        return true;
-                    }
-
-                    @Override
                     public Size apply(MethodVisitor methodVisitor,
                                       Context instrumentationContext,
                                       MethodDescription instrumentedMethod) {
@@ -606,11 +601,6 @@ public @interface Field {
                     }
 
                     @Override
-                    public boolean appendsCode() {
-                        return true;
-                    }
-
-                    @Override
                     public Size apply(MethodVisitor methodVisitor,
                                       Context instrumentationContext,
                                       MethodDescription instrumentedMethod) {
@@ -734,11 +724,6 @@ public @interface Field {
                             .getDeclaredFields()
                             .filter((named(AccessorProxy.FIELD_NAME)))
                             .getOnly();
-                }
-
-                @Override
-                public boolean appendsCode() {
-                    return true;
                 }
 
                 @Override

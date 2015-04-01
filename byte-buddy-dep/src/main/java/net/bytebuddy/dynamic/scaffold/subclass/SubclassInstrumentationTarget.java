@@ -9,6 +9,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -158,9 +159,9 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
         }
 
         @Override
-        public Instrumentation.Target make(MethodLookupEngine.Finding finding) {
+        public Instrumentation.Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods) {
             return new SubclassInstrumentationTarget(finding, bridgeMethodResolverFactory, originTypeIdentifier);
-        }
+        } // TODO: Change impl for changes
 
         @Override
         public boolean equals(Object other) {

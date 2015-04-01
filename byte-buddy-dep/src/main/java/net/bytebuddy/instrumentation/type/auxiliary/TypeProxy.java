@@ -309,11 +309,6 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
             }
 
             @Override
-            public boolean appendsCode() {
-                return true;
-            }
-
-            @Override
             public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                         REFLECTION_FACTORY_INTERNAL_NAME,
@@ -807,11 +802,6 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
             protected Appender(TypeDescription instrumentedType) {
                 fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields()
                         .filter((named(INSTANCE_FIELD))).getOnly()).getter();
-            }
-
-            @Override
-            public boolean appendsCode() {
-                return true;
             }
 
             @Override

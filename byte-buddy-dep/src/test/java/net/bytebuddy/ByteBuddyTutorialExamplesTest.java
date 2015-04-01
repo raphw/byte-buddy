@@ -430,12 +430,10 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     public enum SumMethod implements ByteCodeAppender {
+
         INSTANCE;
 
-        @Override
-        public boolean appendsCode() {
-            return true;
-        }
+        // TODO: Update tutorial!
 
         @Override
         public Size apply(MethodVisitor methodVisitor,

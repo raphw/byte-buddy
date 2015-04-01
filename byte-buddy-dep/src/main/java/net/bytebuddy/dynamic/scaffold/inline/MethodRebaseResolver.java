@@ -1,11 +1,14 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
 import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.Opcodes;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -31,27 +34,6 @@ public interface MethodRebaseResolver {
      * @return A resolution for the given method.
      */
     Resolution resolve(MethodDescription methodDescription);
-
-    /**
-     * A method rebase resolver that preserves any method in its original form.
-     */
-    enum NoOp implements MethodRebaseResolver {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public Resolution resolve(MethodDescription methodDescription) {
-            return new Resolution.Preserved(methodDescription);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodRebaseResolver.NoOp." + name();
-        }
-    }
 
     /**
      * A method name transformer provides a unique mapping of a method's name to an alternative name.
@@ -381,86 +363,89 @@ public interface MethodRebaseResolver {
     }
 
     /**
-     * A default implementation of a {@link MethodRebaseResolver} which
-     * renames rebased methods and adds an additional constructor placeholder parameter to constructors. Ignored
-     * methods are never rebased.
+     * A method rebase resolver that preserves any method in its original form.
      */
-    class Default implements MethodRebaseResolver {
+    enum Forbidden implements MethodRebaseResolver {
 
         /**
-         * Ignored methods which are never rebased.
+         * The singleton instance.
          */
-        private final ElementMatcher<? super MethodDescription> ignoredMethods;
+        INSTANCE;
 
-        /**
-         * A placeholder type which is added to a rebased constructor.
-         */
-        private final TypeDescription placeholderType;
+        @Override
+        public Resolution resolve(MethodDescription methodDescription) {
+            return new Resolution.Preserved(methodDescription);
+        }
 
-        /**
-         * A transformer for renaming a rebased method.
-         */
+        @Override
+        public String toString() {
+            return "MethodRebaseResolver.NoOp." + name();
+        }
+    }
+
+    abstract class AbstractBase implements MethodRebaseResolver {
+
+        protected final Set<? extends MethodDescription> instrumentedMethods;
+
+        protected AbstractBase(Set<? extends MethodDescription> instrumentedMethods) {
+            this.instrumentedMethods = instrumentedMethods;
+        }
+
+        @Override
+        public Resolution resolve(MethodDescription methodDescription) {
+            return instrumentedMethods.contains(methodDescription)
+                    ? rebase(methodDescription)
+                    : new Resolution.Preserved(methodDescription);
+        }
+
+        protected abstract Resolution rebase(MethodDescription methodDescription);
+    }
+
+    class MethodsOnly extends AbstractBase {
+
+        public static MethodRebaseResolver of(MethodList instrumentedMethods, MethodNameTransformer methodNameTransformer) {
+            return new MethodsOnly(new HashSet<MethodDescription>(instrumentedMethods), methodNameTransformer);
+        }
+
         private final MethodNameTransformer methodNameTransformer;
 
-        /**
-         * Creates a default method rebase resolver.
-         *
-         * @param ignoredMethods        Ignored methods which are never rebased.
-         * @param placeholderType       A placeholder type which is added to a rebased constructor.
-         * @param methodNameTransformer A transformer for renaming a rebased method.
-         */
-        public Default(ElementMatcher<? super MethodDescription> ignoredMethods,
+        public MethodsOnly(Set<? extends MethodDescription> instrumentedMethods, MethodNameTransformer methodNameTransformer) {
+            super(instrumentedMethods);
+            this.methodNameTransformer = methodNameTransformer;
+        }
+
+        @Override
+        protected Resolution rebase(MethodDescription methodDescription) {
+            if (methodDescription.isConstructor()) {
+                throw new IllegalArgumentException();
+            }
+            return new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
+        }
+    }
+
+    class Enabled extends AbstractBase {
+
+        public static MethodRebaseResolver of(MethodList instrumentedMethods, TypeDescription typeDescription, MethodNameTransformer methodNameTransformer) {
+            return new Enabled(new HashSet<MethodDescription>(instrumentedMethods), typeDescription, methodNameTransformer);
+        }
+
+        private final TypeDescription placeholderType;
+
+        private final MethodNameTransformer methodNameTransformer;
+
+        public Enabled(Set<? extends MethodDescription> instrumentedMethods,
                        TypeDescription placeholderType,
                        MethodNameTransformer methodNameTransformer) {
-            this.ignoredMethods = ignoredMethods;
+            super(instrumentedMethods);
             this.placeholderType = placeholderType;
             this.methodNameTransformer = methodNameTransformer;
         }
 
         @Override
-        public Resolution resolve(MethodDescription methodDescription) {
-            return ignoredMethods.matches(methodDescription)
-                    ? new Resolution.Preserved(methodDescription)
-                    : rebase(methodDescription);
-        }
-
-        /**
-         * Resolves a rebase method of a given method.
-         *
-         * @param methodDescription The method to rebase.
-         * @return The resolution for the given method.
-         */
-        private Resolution rebase(MethodDescription methodDescription) {
+        protected Resolution rebase(MethodDescription methodDescription) {
             return methodDescription.isConstructor()
                     ? new Resolution.ForRebasedConstructor(methodDescription, placeholderType)
                     : new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Default aDefault = (Default) other;
-            return ignoredMethods.equals(aDefault.ignoredMethods)
-                    && placeholderType.equals(aDefault.placeholderType)
-                    && methodNameTransformer.equals(aDefault.methodNameTransformer);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = ignoredMethods.hashCode();
-            result = 31 * result + placeholderType.hashCode();
-            result = 31 * result + methodNameTransformer.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodRebaseResolver.Default{" +
-                    "ignoredMethods=" + ignoredMethods +
-                    ", placeholderType=" + placeholderType +
-                    ", methodNameTransformer=" + methodNameTransformer +
-                    '}';
         }
     }
 }

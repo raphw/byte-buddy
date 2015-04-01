@@ -307,11 +307,6 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
             }
 
             @Override
-            public boolean appendsCode() {
-                return true;
-            }
-
-            @Override
             public Size apply(MethodVisitor methodVisitor,
                               Context instrumentationContext,
                               MethodDescription instrumentedMethod) {
@@ -419,11 +414,6 @@ public abstract class InvocationHandlerAdapter implements Instrumentation {
              */
             protected Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
-            }
-
-            @Override
-            public boolean appendsCode() {
-                return true;
             }
 
             @Override

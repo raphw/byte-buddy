@@ -107,11 +107,6 @@ public enum SuperMethodCall implements Instrumentation {
         }
 
         @Override
-        public boolean appendsCode() {
-            return true;
-        }
-
-        @Override
         public Size apply(MethodVisitor methodVisitor,
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {

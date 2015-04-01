@@ -282,11 +282,6 @@ public class MethodCallProxy implements AuxiliaryType {
             }
 
             @Override
-            public boolean appendsCode() {
-                return true;
-            }
-
-            @Override
             public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
                 StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadOffset(0);
                 FieldList fieldList = instrumentedType.getDeclaredFields();
@@ -401,11 +396,6 @@ public class MethodCallProxy implements AuxiliaryType {
              */
             private Appender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
-            }
-
-            @Override
-            public boolean appendsCode() {
-                return true;
             }
 
             @Override

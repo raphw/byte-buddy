@@ -356,11 +356,6 @@ public abstract class FixedValue implements Instrumentation {
         }
 
         @Override
-        public boolean appendsCode() {
-            return true;
-        }
-
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
             return apply(methodVisitor, instrumentationContext, instrumentedMethod, loadedType, valueLoadInstruction);
         }
@@ -507,11 +502,6 @@ public abstract class FixedValue implements Instrumentation {
             private StaticFieldByteCodeAppender(TypeDescription instrumentedType) {
                 fieldGetAccess = FieldAccess.forField(instrumentedType.getDeclaredFields()
                         .filter((named(fieldName))).getOnly()).getter();
-            }
-
-            @Override
-            public boolean appendsCode() {
-                return true;
             }
 
             @Override

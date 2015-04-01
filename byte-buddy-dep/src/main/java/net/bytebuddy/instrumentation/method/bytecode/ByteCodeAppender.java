@@ -21,14 +21,6 @@ import java.util.Arrays;
 public interface ByteCodeAppender {
 
     /**
-     * Determines if this byte code appender offers an (possibly empty) implementation of a method.
-     *
-     * @return {@code true} if this byte code appender requires this method to be implemented or {@code false} if this
-     * appender describes an abstract method.
-     */
-    boolean appendsCode();
-
-    /**
      * Applies this byte code appender to a type creation process.
      *
      * @param methodVisitor          The method visitor to which the byte code appender writes its code to.
@@ -131,16 +123,6 @@ public interface ByteCodeAppender {
         }
 
         @Override
-        public boolean appendsCode() {
-            for (ByteCodeAppender byteCodeAppender : this.byteCodeAppender) {
-                if (byteCodeAppender.appendsCode()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
         public Size apply(MethodVisitor methodVisitor,
                           Instrumentation.Context instrumentationContext,
                           MethodDescription instrumentedMethod) {
@@ -187,11 +169,6 @@ public interface ByteCodeAppender {
          */
         public Simple(StackManipulation... stackManipulation) {
             this.stackManipulation = new StackManipulation.Compound(stackManipulation);
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return true;
         }
 
         @Override

@@ -1111,11 +1111,6 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean appendsCode() {
-                    return true;
-                }
-
-                @Override
                 public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
                     throw new IllegalStateException("Initialization strategy illegally applied to " + instrumentedMethod);
                 }

@@ -198,11 +198,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                         targetType,
                                         interfaceTypes,
                                         modifiers,
-                                        namingStrategy))))
-                .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
-                                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE),
-                        methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
-                        MethodRegistry.Compiled.Entry.Skip.INSTANCE);
+                                        namingStrategy))),
+                        new SubclassOverridableMethods(ignoredMethods))
+                .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory, SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE),
+                        methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()));
         return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
                 compiledMethodRegistry.getLoadedTypeInitializer(),
                 compiledMethodRegistry.getTypeInitializer(),
@@ -210,9 +209,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 classFileVersion,
                 new TypeWriter.Engine.ForCreation(compiledMethodRegistry.getInstrumentedType(),
                         classFileVersion,
-                        compiledMethodRegistry.getInvokableMethods().filter(isOverridable()
-                                .and(not(ignoredMethods))
-                                .<MethodDescription>or(isDeclaredBy(compiledMethodRegistry.getInstrumentedType()))),
+                        compiledMethodRegistry.getInstrumentedMethods(),
                         classVisitorWrapperChain,
                         attributeAppender,
                         fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
@@ -268,5 +265,19 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                 ", constructorStrategy=" + constructorStrategy +
                 '}';
+    }
+
+    protected static class SubclassOverridableMethods implements MethodRegistry.LatentMethodMatcher {
+
+        private final ElementMatcher<? super MethodDescription> ignoredMethods;
+
+        public SubclassOverridableMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
+            this.ignoredMethods = ignoredMethods;
+        }
+
+        @Override
+        public ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription) {
+            return isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(typeDescription));
+        }
     }
 }

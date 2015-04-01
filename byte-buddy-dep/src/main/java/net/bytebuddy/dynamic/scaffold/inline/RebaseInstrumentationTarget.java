@@ -9,6 +9,9 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocati
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.HashSet;
+import java.util.List;
+
 /**
  * An instrumentation target for redefining a given type while preserving the original methods within the
  * instrumented type.
@@ -118,8 +121,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
          * @param resolution       The resolution of the rebased method.
          * @param instrumentedType The instrumented type on which this method is to be invoked.
          */
-        protected RebasedMethodSpecialMethodInvocation(MethodRebaseResolver.Resolution resolution,
-                                                       TypeDescription instrumentedType) {
+        protected RebasedMethodSpecialMethodInvocation(MethodRebaseResolver.Resolution resolution, TypeDescription instrumentedType) {
             this.instrumentedType = instrumentedType;
             methodDescription = resolution.getResolvedMethod();
             stackManipulation = new Compound(resolution.getAdditionalArguments(), resolution.getResolvedMethod().isStatic()
@@ -135,8 +137,7 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
          * @param instrumentedType The instrumented type on which this method is to be invoked.
          * @return A special method invocation for the given method.
          */
-        public static Instrumentation.SpecialMethodInvocation of(MethodRebaseResolver.Resolution resolution,
-                                                                 TypeDescription instrumentedType) {
+        public static Instrumentation.SpecialMethodInvocation of(MethodRebaseResolver.Resolution resolution, TypeDescription instrumentedType) {
             return resolution.getResolvedMethod().isAbstract()
                     ? Illegal.INSTANCE
                     : new RebasedMethodSpecialMethodInvocation(resolution, instrumentedType);
@@ -202,48 +203,19 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
          */
         private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
 
-        /**
-         * A method rebase resolver to be used when calling a rebased method.
-         */
-        private final MethodRebaseResolver methodRebaseResolver;
+        private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
 
-        /**
-         * Creates a new factory for creating a {@link net.bytebuddy.dynamic.scaffold.inline.RebaseInstrumentationTarget}.
-         *
-         * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
-         * @param methodRebaseResolver        A method rebase resolver to be used when calling a rebased method.
-         */
         public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                       MethodRebaseResolver methodRebaseResolver) {
+                       MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
             this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
-            this.methodRebaseResolver = methodRebaseResolver;
+            this.methodNameTransformer = methodNameTransformer;
         }
 
         @Override
-        public Instrumentation.Target make(MethodLookupEngine.Finding finding) {
+        public Instrumentation.Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods) {
             return new RebaseInstrumentationTarget(finding,
                     bridgeMethodResolverFactory,
-                    methodRebaseResolver);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && bridgeMethodResolverFactory.equals(((Factory) other).bridgeMethodResolverFactory)
-                    && methodRebaseResolver.equals(((Factory) other).methodRebaseResolver);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * bridgeMethodResolverFactory.hashCode() + methodRebaseResolver.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "RebaseInstrumentationTarget.Factory{" +
-                    "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
-                    ", methodRebaseResolver=" + methodRebaseResolver +
-                    '}';
+                    MethodRebaseResolver(new HashSet<MethodDescription>(instrumentedMethods), null, methodNameTransformer));
         }
     }
 }

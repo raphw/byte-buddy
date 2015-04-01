@@ -17,6 +17,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -65,43 +66,6 @@ public interface Instrumentation {
      * {@link net.bytebuddy.instrumentation.Instrumentation#prepare(net.bytebuddy.instrumentation.type.InstrumentedType)}.
      */
     ByteCodeAppender appender(Target instrumentationTarget);
-
-    /**
-     * An instrumentation for an abstract method that does not append any code and will throw an exception if it is
-     * attempted to be composed with other methods that do provide an implementation.
-     */
-    enum ForAbstractMethod implements Instrumentation, ByteCodeAppender {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType;
-        }
-
-        @Override
-        public ByteCodeAppender appender(Target instrumentationTarget) {
-            return this;
-        }
-
-        @Override
-        public boolean appendsCode() {
-            return false;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-            throw new IllegalStateException("Cannot implement an abstract method");
-        }
-
-        @Override
-        public String toString() {
-            return "Instrumentation.ForAbstractMethod." + name();
-        }
-    }
 
     /**
      * Represents an type-specific method invocation on the current instrumented type which is not legal from outside
@@ -379,7 +343,7 @@ public interface Instrumentation {
              * @param finding The finding of a method lookup engine on analyzing the instrumented type.
              * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
              */
-            Target make(MethodLookupEngine.Finding finding);
+            Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods);
         }
 
         /**
@@ -1029,19 +993,17 @@ public interface Instrumentation {
                     manipulation = typeInitializer.isDefined()
                             ? new StackManipulation.Compound(typeInitializer.getStackManipulation(), manipulation)
                             : manipulation;
-                    ByteCodeAppender byteCodeAppender = originalEntry.isDefineMethod()
-                            ? new Compound(new Simple(manipulation), originalEntry.getByteCodeAppender())
-                            : new Simple(manipulation, MethodReturn.VOID);
-                    return new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries), byteCodeAppender),
-                            originalEntry.isDefineMethod()
-                                    ? originalEntry.getAttributeAppender()
-                                    : MethodAttributeAppender.NoOp.INSTANCE);
+                    return null; // Refactor this!
+//                    ByteCodeAppender byteCodeAppender = originalEntry.getSort().isDefined()
+//                            ? new Compound(new Simple(manipulation), originalEntry.getByteCodeAppender())
+//                            : new Simple(manipulation, MethodReturn.VOID);
+//                    return new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries), byteCodeAppender),
+//                            originalEntry.getSort().isDefined()
+//                                    ? originalEntry.getAttributeAppender()
+//                                    : MethodAttributeAppender.NoOp.INSTANCE);
                 }
 
-                @Override
-                public boolean appendsCode() {
-                    return registeredFieldCacheEntries.size() > 0;
-                }
+                // TODO: Does maybe not append code?
 
                 @Override
                 public Size apply(MethodVisitor methodVisitor,
@@ -1141,11 +1103,31 @@ public interface Instrumentation {
                 }
             }
 
+            protected abstract static class AbstractDelegationEntry extends TypeWriter.MethodPool.Entry.AbstractDefiningEntry implements ByteCodeAppender {
+
+                @Override
+                public Sort getSort() {
+                    return Sort.IMPLEMENT;
+                }
+
+                @Override
+                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void applyBody(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription methodDescription) {
+                    methodVisitor.visitCode();
+                    Size size = apply(methodVisitor, instrumentationContext, methodDescription);
+                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                }
+            }
+
             /**
              * An implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry} for implementing
              * an accessor method.
              */
-            protected static class AccessorMethodDelegation implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+            protected static class AccessorMethodDelegation extends AbstractDelegationEntry {
 
                 /**
                  * The stack manipulation that represents the requested special method invocation.
@@ -1163,21 +1145,6 @@ public interface Instrumentation {
                 }
 
                 @Override
-                public ByteCodeAppender getByteCodeAppender() {
-                    return this;
-                }
-
-                @Override
-                public boolean isDefineMethod() {
-                    return true;
-                }
-
-                @Override
-                public boolean appendsCode() {
-                    return true;
-                }
-
-                @Override
                 public Size apply(MethodVisitor methodVisitor,
                                   Instrumentation.Context instrumentationContext,
                                   MethodDescription instrumentedMethod) {
@@ -1187,26 +1154,6 @@ public interface Instrumentation {
                             MethodReturn.returning(instrumentedMethod.getReturnType())
                     ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                }
-
-                @Override
-                public void apply(ClassVisitor classVisitor,
-                                  Instrumentation.Context instrumentationContext,
-                                  MethodDescription methodDescription) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
-                            methodDescription.getInternalName(),
-                            methodDescription.getDescriptor(),
-                            methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
-                    methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, instrumentationContext, methodDescription);
-                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                    methodVisitor.visitEnd();
-                }
-
-                @Override
-                public MethodAttributeAppender getAttributeAppender() {
-                    return MethodAttributeAppender.NoOp.INSTANCE;
                 }
 
                 @Override
@@ -1229,7 +1176,7 @@ public interface Instrumentation {
             /**
              * An implementation for a field getter.
              */
-            protected static class FieldGetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+            protected static class FieldGetter extends AbstractDelegationEntry {
 
                 /**
                  * The field to read from.
@@ -1246,26 +1193,6 @@ public interface Instrumentation {
                 }
 
                 @Override
-                public boolean isDefineMethod() {
-                    return true;
-                }
-
-                @Override
-                public ByteCodeAppender getByteCodeAppender() {
-                    return this;
-                }
-
-                @Override
-                public MethodAttributeAppender getAttributeAppender() {
-                    return MethodAttributeAppender.NoOp.INSTANCE;
-                }
-
-                @Override
-                public boolean appendsCode() {
-                    return true;
-                }
-
-                @Override
                 public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             fieldDescription.isStatic()
@@ -1275,19 +1202,6 @@ public interface Instrumentation {
                             MethodReturn.returning(fieldDescription.getFieldType())
                     ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                }
-
-                @Override
-                public void apply(ClassVisitor classVisitor, Context instrumentationContext, MethodDescription methodDescription) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
-                            methodDescription.getInternalName(),
-                            methodDescription.getDescriptor(),
-                            methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
-                    methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, instrumentationContext, methodDescription);
-                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                    methodVisitor.visitEnd();
                 }
 
                 @Override
@@ -1312,7 +1226,7 @@ public interface Instrumentation {
             /**
              * An implementation for a field setter.
              */
-            protected static class FieldSetter implements TypeWriter.MethodPool.Entry, ByteCodeAppender {
+            protected static class FieldSetter extends AbstractDelegationEntry {
 
                 /**
                  * The field to write to.
@@ -1329,26 +1243,6 @@ public interface Instrumentation {
                 }
 
                 @Override
-                public boolean isDefineMethod() {
-                    return true;
-                }
-
-                @Override
-                public ByteCodeAppender getByteCodeAppender() {
-                    return this;
-                }
-
-                @Override
-                public MethodAttributeAppender getAttributeAppender() {
-                    return MethodAttributeAppender.NoOp.INSTANCE;
-                }
-
-                @Override
-                public boolean appendsCode() {
-                    return true;
-                }
-
-                @Override
                 public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
@@ -1356,19 +1250,6 @@ public interface Instrumentation {
                             MethodReturn.VOID
                     ).apply(methodVisitor, instrumentationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                }
-
-                @Override
-                public void apply(ClassVisitor classVisitor, Context instrumentationContext, MethodDescription methodDescription) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getModifiers(),
-                            methodDescription.getInternalName(),
-                            methodDescription.getDescriptor(),
-                            methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
-                    methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, instrumentationContext, methodDescription);
-                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                    methodVisitor.visitEnd();
                 }
 
                 @Override

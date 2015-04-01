@@ -442,11 +442,6 @@ public @interface Pipe {
                     }
 
                     @Override
-                    public boolean appendsCode() {
-                        return true;
-                    }
-
-                    @Override
                     public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
                         StackManipulation thisReference = MethodVariableAccess.forType(instrumentedMethod.getDeclaringType()).loadOffset(0);
                         FieldList fieldList = instrumentedType.getDeclaredFields();
@@ -564,11 +559,6 @@ public @interface Pipe {
                      */
                     private Appender(TypeDescription instrumentedType) {
                         this.instrumentedType = instrumentedType;
-                    }
-
-                    @Override
-                    public boolean appendsCode() {
-                        return true;
                     }
 
                     @Override

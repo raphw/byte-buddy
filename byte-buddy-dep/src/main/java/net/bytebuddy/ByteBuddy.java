@@ -1200,42 +1200,13 @@ public class ByteBuddy {
          */
         protected final ElementMatcher<? super MethodDescription> methodMatcher;
 
-        /**
-         * The instrumentation that was defined for the current method selection.
-         */
-        protected final Instrumentation instrumentation;
+        protected final MethodRegistry.Prepareable prepareable;
 
         /**
          * The method attribute appender factory that was defined for the current method selection.
          */
         protected final MethodAttributeAppender.Factory attributeAppenderFactory;
 
-        /**
-         * Creates a new method annotation target.
-         *
-         * @param classFileVersion                      The currently defined class file version.
-         * @param namingStrategy                        The currently defined naming strategy.
-         * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
-         *                                              by any dynamically created type.
-         * @param ignoredMethods                        The methods to always be ignored.
-         * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any instrumentation
-         *                                              process.
-         * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any instrumentation
-         *                                              process.
-         * @param methodRegistry                        The currently valid method registry.
-         * @param modifiers                             The modifiers to define for any instrumentation process.
-         * @param typeAttributeAppender                 The type attribute appender to apply to any instrumentation process.
-         * @param methodLookupEngineFactory             The method lookup engine factory to apply to this configuration.
-         * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any field
-         *                                              definition.
-         * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
-         *                                              method definition or instrumentation.
-         * @param methodMatcher                         The method matcher representing the current method selection.
-         * @param instrumentation                       The instrumentation that was defined for the current method
-         *                                              selection.
-         * @param attributeAppenderFactory              The method attribute appender factory that was defined for the
-         *                                              current method selection.
-         */
         protected MethodAnnotationTarget(ClassFileVersion classFileVersion,
                                          NamingStrategy.Unbound namingStrategy,
                                          List<TypeDescription> interfaceTypes,
@@ -1249,7 +1220,7 @@ public class ByteBuddy {
                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                          ElementMatcher<? super MethodDescription> methodMatcher,
-                                         Instrumentation instrumentation,
+                                         MethodRegistry.Prepareable prepareable,
                                          MethodAttributeAppender.Factory attributeAppenderFactory) {
             super(classFileVersion,
                     namingStrategy,
@@ -1264,7 +1235,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory);
             this.methodMatcher = methodMatcher;
-            this.instrumentation = instrumentation;
+            this.prepareable = prepareable;
             this.attributeAppenderFactory = attributeAppenderFactory;
         }
 
@@ -1290,7 +1261,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    instrumentation,
+                    prepareable,
                     new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory,
                             nonNull(attributeAppenderFactory)));
         }
@@ -1354,7 +1325,7 @@ public class ByteBuddy {
                     bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
                     methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(methodMatcher),
-                            instrumentation,
+                            prepareable,
                             attributeAppenderFactory),
                     modifiers,
                     typeAttributeAppender,
@@ -1374,7 +1345,7 @@ public class ByteBuddy {
                 return false;
             MethodAnnotationTarget that = (MethodAnnotationTarget) other;
             return attributeAppenderFactory.equals(that.attributeAppenderFactory)
-                    && instrumentation.equals(that.instrumentation)
+                    && prepareable.equals(that.prepareable)
                     && methodMatcher.equals(that.methodMatcher);
         }
 
@@ -1382,7 +1353,7 @@ public class ByteBuddy {
         public int hashCode() {
             int result = super.hashCode();
             result = 31 * result + methodMatcher.hashCode();
-            result = 31 * result + instrumentation.hashCode();
+            result = 31 * result + prepareable.hashCode();
             result = 31 * result + attributeAppenderFactory.hashCode();
             return result;
         }
@@ -1392,7 +1363,7 @@ public class ByteBuddy {
             return "ByteBuddy.MethodAnnotationTarget{" +
                     "base=" + super.toString() +
                     ", methodMatcher=" + methodMatcher +
-                    ", instrumentation=" + instrumentation +
+                    ", prepareable=" + prepareable +
                     ", attributeAppenderFactory=" + attributeAppenderFactory +
                     '}';
         }
@@ -1809,13 +1780,27 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    nonNull(instrumentation),
+                    new MethodRegistry.Prepareable.ForInstrumentation(nonNull(instrumentation)),
                     MethodAttributeAppender.NoOp.INSTANCE);
         }
 
         @Override
         public MethodAnnotationTarget withoutCode() {
-            return intercept(Instrumentation.ForAbstractMethod.INSTANCE);
+            return new MethodAnnotationTarget(classFileVersion,
+                    namingStrategy,
+                    interfaceTypes,
+                    ignoredMethods,
+                    bridgeMethodResolverFactory,
+                    classVisitorWrapperChain,
+                    methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
+                    methodLookupEngineFactory,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory,
+                    methodMatcher,
+                    MethodRegistry.Prepareable.ForAbstractMethod.INSTANCE,
+                    MethodAttributeAppender.NoOp.INSTANCE);
         }
 
         /**

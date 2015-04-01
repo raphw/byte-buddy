@@ -588,11 +588,6 @@ public @interface Morph {
                     }
 
                     @Override
-                    public boolean appendsCode() {
-                        return true;
-                    }
-
-                    @Override
                     public Size apply(MethodVisitor methodVisitor,
                                       Context instrumentationContext,
                                       MethodDescription instrumentedMethod) {
@@ -699,11 +694,6 @@ public @interface Morph {
                      */
                     protected Appender(Target instrumentationTarget) {
                         typeDescription = instrumentationTarget.getTypeDescription();
-                    }
-
-                    @Override
-                    public boolean appendsCode() {
-                        return true;
                     }
 
                     @Override

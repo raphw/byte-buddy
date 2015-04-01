@@ -2411,13 +2411,16 @@ public interface DynamicType {
                 public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             latentMethodMatcher,
-                            nonNull(instrumentation),
+                            new MethodRegistry.Prepareable.ForInstrumentation(nonNull(instrumentation)),
                             defaultMethodAttributeAppenderFactory);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
-                    return intercept(Instrumentation.ForAbstractMethod.INSTANCE);
+                    return new DefaultMethodAnnotationTarget(methodTokens,
+                            latentMethodMatcher,
+                            MethodRegistry.Prepareable.ForAbstractMethod.INSTANCE,
+                            defaultMethodAttributeAppenderFactory);
                 }
 
                 @Override
@@ -2566,32 +2569,20 @@ public interface DynamicType {
                  */
                 private final List<MethodToken> methodTokens;
 
-                /**
-                 * The instrumentation that is to be applied to the matched methods.
-                 */
-                private final Instrumentation instrumentation;
+                private final MethodRegistry.Prepareable prepareable;
 
                 /**
                  * The method attribute appender factory to be applied to the matched methods.
                  */
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
-                /**
-                 * Creates a new subclass method annotation target.
-                 *
-                 * @param methodTokens             A latent method matcher that identifies the methods that are supposed to be
-                 *                                 intercepted by the later defined instrumentation.
-                 * @param latentMethodMatcher      A list of all method tokens that were previously defined.
-                 * @param instrumentation          The instrumentation that is to be applied to the matched methods.
-                 * @param attributeAppenderFactory The method attribute appender factory to be applied to the matched methods.
-                 */
                 private DefaultMethodAnnotationTarget(List<MethodToken> methodTokens,
                                                       MethodRegistry.LatentMethodMatcher latentMethodMatcher,
-                                                      Instrumentation instrumentation,
+                                                      MethodRegistry.Prepareable prepareable,
                                                       MethodAttributeAppender.Factory attributeAppenderFactory) {
                     this.latentMethodMatcher = latentMethodMatcher;
                     this.methodTokens = methodTokens;
-                    this.instrumentation = instrumentation;
+                    this.prepareable = prepareable;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                 }
 
@@ -2607,7 +2598,7 @@ public interface DynamicType {
                             bridgeMethodResolverFactory,
                             classVisitorWrapperChain,
                             fieldRegistry,
-                            methodRegistry.prepend(latentMethodMatcher, instrumentation, attributeAppenderFactory),
+                            methodRegistry.prepend(latentMethodMatcher, prepareable, attributeAppenderFactory),
                             methodLookupEngineFactory,
                             defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
@@ -2619,7 +2610,7 @@ public interface DynamicType {
                 public MethodAnnotationTarget<S> attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             latentMethodMatcher,
-                            instrumentation,
+                            prepareable,
                             new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory,
                                     nonNull(attributeAppenderFactory)));
                 }
@@ -2653,7 +2644,7 @@ public interface DynamicType {
                         return false;
                     DefaultMethodAnnotationTarget that = (DefaultMethodAnnotationTarget) other;
                     return attributeAppenderFactory.equals(that.attributeAppenderFactory)
-                            && instrumentation.equals(that.instrumentation)
+                            && prepareable.equals(that.prepareable)
                             && latentMethodMatcher.equals(that.latentMethodMatcher)
                             && methodTokens.equals(that.methodTokens)
                             && AbstractBase.this.equals(that.getDynamicTypeBuilder());
@@ -2663,7 +2654,7 @@ public interface DynamicType {
                 public int hashCode() {
                     int result = methodTokens.hashCode();
                     result = 31 * result + latentMethodMatcher.hashCode();
-                    result = 31 * result + instrumentation.hashCode();
+                    result = 31 * result + prepareable.hashCode();
                     result = 31 * result + attributeAppenderFactory.hashCode();
                     result = 31 * result + AbstractBase.this.hashCode();
                     return result;
@@ -2675,7 +2666,7 @@ public interface DynamicType {
                             "base=" + AbstractBase.this +
                             ", methodTokens=" + methodTokens +
                             ", latentMethodMatcher=" + latentMethodMatcher +
-                            ", instrumentation=" + instrumentation +
+                            ", prepareable=" + prepareable +
                             ", attributeAppenderFactory=" + attributeAppenderFactory +
                             '}';
                 }

@@ -14,6 +14,11 @@ import java.lang.reflect.Array;
 public interface AnnotationAppender {
 
     /**
+     * A constant for informing ASM over ignoring a given name.
+     */
+    String NO_NAME = null;
+
+    /**
      * Terminally writes the given annotation to the specified target.
      *
      * @param annotation           The annotation to be written.
@@ -312,11 +317,6 @@ public interface AnnotationAppender {
     class Default implements AnnotationAppender {
 
         /**
-         * A constant for informing ASM over ignoring a given name.
-         */
-        private static final String ASM_IGNORE_NAME = null;
-
-        /**
          * The target onto which an annotation write process is to be applied.
          */
         private final Target target;
@@ -354,7 +354,7 @@ public interface AnnotationAppender {
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param annotation        The annotation to be written.
          */
-        private void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation) {
+        private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation) {
             for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
                 apply(annotationVisitor, methodDescription.getReturnType(), methodDescription.getName(), annotation.getValue(methodDescription));
             }
@@ -369,7 +369,7 @@ public interface AnnotationAppender {
          * @param name              The name of the annotation type.
          * @param value             The annotation's value.
          */
-        private void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
+        public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
             if (valueType.isAnnotation()) {
                 handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value);
             } else if (valueType.isEnum()) {
@@ -381,7 +381,7 @@ public interface AnnotationAppender {
                 int length = Array.getLength(value);
                 TypeDescription componentType = valueType.getComponentType();
                 for (int index = 0; index < length; index++) {
-                    apply(arrayVisitor, componentType, ASM_IGNORE_NAME, Array.get(value, index));
+                    apply(arrayVisitor, componentType, NO_NAME, Array.get(value, index));
                 }
                 arrayVisitor.visitEnd();
             } else {

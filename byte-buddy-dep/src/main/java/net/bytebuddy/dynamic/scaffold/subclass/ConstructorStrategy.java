@@ -123,7 +123,7 @@ public interface ConstructorStrategy {
                 case IMITATE_SUPER_TYPE:
                 case IMITATE_SUPER_TYPE_PUBLIC:
                     return methodRegistry.append(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
-                            SuperMethodCall.INSTANCE,
+                            new MethodRegistry.Prepareable.ForInstrumentation(SuperMethodCall.INSTANCE),
                             defaultMethodAttributeAppenderFactory);
                 default:
                     throw new AssertionError();

@@ -37,11 +37,6 @@ public enum StubMethod implements Instrumentation, ByteCodeAppender {
     }
 
     @Override
-    public boolean appendsCode() {
-        return true;
-    }
-
-    @Override
     public Size apply(MethodVisitor methodVisitor,
                       Context instrumentationContext,
                       MethodDescription instrumentedMethod) {

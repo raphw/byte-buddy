@@ -10,6 +10,7 @@ import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
+import net.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.ParameterDescription;
@@ -390,7 +391,7 @@ public interface TypeWriter<T> {
                  */
                 private MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
                     TypeWriter.MethodPool.Entry entry = methodPool.target(methodDescription);
-                    if (!entry.isDefineMethod()) {
+                    if (!entry.getSort().isDefined()) {
                         return super.visitMethod(methodDescription.getModifiers(),
                                 methodDescription.getInternalName(),
                                 methodDescription.getDescriptor(),
@@ -398,15 +399,14 @@ public interface TypeWriter<T> {
                                 methodDescription.getExceptionTypes().toInternalNames());
                     }
                     MethodVisitor methodVisitor = super.visitMethod(
-                            methodDescription.getAdjustedModifiers(entry.getByteCodeAppender().appendsCode()),
+                            methodDescription.getAdjustedModifiers(entry.getSort().isImplemented()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
                             methodDescription.getExceptionTypes().toInternalNames());
-                    entry.getAttributeAppender().apply(methodVisitor, methodDescription);
                     return abstractOrigin
-                            ? new AttributeObtainingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription)
-                            : new CodePreservingMethodVisitor(methodVisitor, entry.getByteCodeAppender(), methodDescription);
+                            ? new AttributeObtainingMethodVisitor(methodVisitor, entry, methodDescription)
+                            : new CodePreservingMethodVisitor(methodVisitor, entry, methodDescription);
                 }
 
                 @Override
@@ -432,10 +432,7 @@ public interface TypeWriter<T> {
                      */
                     private final MethodVisitor actualMethodVisitor;
 
-                    /**
-                     * The byte code appender to apply to the actual method.
-                     */
-                    private final ByteCodeAppender byteCodeAppender;
+                    private final MethodPool.Entry entry;
 
                     /**
                      * A description of the actual method.
@@ -447,21 +444,15 @@ public interface TypeWriter<T> {
                      */
                     private final MethodRebaseResolver.Resolution resolution;
 
-                    /**
-                     * Creates a code preserving method visitor.
-                     *
-                     * @param actualMethodVisitor The method visitor of the actual method.
-                     * @param byteCodeAppender    The byte code appender to apply to the actual method.
-                     * @param methodDescription   A description of the actual method.
-                     */
                     private CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
-                                                        ByteCodeAppender byteCodeAppender,
+                                                        MethodPool.Entry entry,
                                                         MethodDescription methodDescription) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
-                        this.byteCodeAppender = byteCodeAppender;
+                        this.entry = entry;
                         this.methodDescription = methodDescription;
                         this.resolution = methodRebaseResolver.resolve(methodDescription);
+                        entry.applyHead(actualMethodVisitor, methodDescription);
                     }
 
                     @Override
@@ -471,13 +462,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitCode() {
-                        if (byteCodeAppender.appendsCode()) {
-                            actualMethodVisitor.visitCode();
-                            ByteCodeAppender.Size size = byteCodeAppender.apply(actualMethodVisitor,
-                                    instrumentationContext,
-                                    methodDescription);
-                            actualMethodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                        }
+                        entry.applyBody(actualMethodVisitor, instrumentationContext, methodDescription);
                         actualMethodVisitor.visitEnd();
                         mv = resolution.isRebased()
                                 ? cv.visitMethod(resolution.getResolvedMethod().getModifiers(),
@@ -498,7 +483,7 @@ public interface TypeWriter<T> {
                     public String toString() {
                         return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.CodePreservingMethodVisitor{" +
                                 "actualMethodVisitor=" + actualMethodVisitor +
-                                ", byteCodeAppender=" + byteCodeAppender +
+                                ", entry=" + entry +
                                 ", methodDescription=" + methodDescription +
                                 ", resolution=" + resolution +
                                 '}';
@@ -516,30 +501,21 @@ public interface TypeWriter<T> {
                      */
                     private final MethodVisitor actualMethodVisitor;
 
-                    /**
-                     * The byte code appender to apply to the actual method.
-                     */
-                    private final ByteCodeAppender byteCodeAppender;
+                    private final MethodPool.Entry entry;
 
                     /**
                      * A description of the method that is currently written.
                      */
                     private final MethodDescription methodDescription;
 
-                    /**
-                     * Creates a new attribute obtaining method visitor.
-                     *
-                     * @param actualMethodVisitor The method visitor to which the actual method is to be written to.
-                     * @param byteCodeAppender    The byte code appender to apply to the actual method.
-                     * @param methodDescription   A description of the method that is currently written.
-                     */
                     public AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor,
-                                                           ByteCodeAppender byteCodeAppender,
+                                                           MethodPool.Entry entry,
                                                            MethodDescription methodDescription) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
-                        this.byteCodeAppender = byteCodeAppender;
+                        this.entry = entry;
                         this.methodDescription = methodDescription;
+                        entry.applyHead(actualMethodVisitor, methodDescription);
                     }
 
                     @Override
@@ -554,11 +530,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitEnd() {
-                        if (byteCodeAppender.appendsCode()) {
-                            actualMethodVisitor.visitCode();
-                            ByteCodeAppender.Size size = byteCodeAppender.apply(actualMethodVisitor, instrumentationContext, methodDescription);
-                            actualMethodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                        }
+                        entry.applyBody(actualMethodVisitor, instrumentationContext, methodDescription);
                         actualMethodVisitor.visitEnd();
                     }
 
@@ -566,7 +538,7 @@ public interface TypeWriter<T> {
                     public String toString() {
                         return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{" +
                                 "actualMethodVisitor=" + actualMethodVisitor +
-                                ", byteCodeAppender=" + byteCodeAppender +
+                                ", entry=" + entry +
                                 ", methodDescription=" + methodDescription +
                                 '}';
                     }
@@ -952,84 +924,37 @@ public interface TypeWriter<T> {
          */
         interface Entry {
 
-            /**
-             * Determines if this entry requires a method to be defined for a given instrumentation.
-             *
-             * @return {@code true} if a method should be defined for a given instrumentation.
-             */
-            boolean isDefineMethod();
+            Sort getSort();
 
-            /**
-             * The byte code appender to be used for the instrumentation by this entry. Must not
-             * be called if {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry#isDefineMethod()}
-             * returns {@code false}.
-             *
-             * @return The byte code appender that is responsible for the instrumentation of a method matched for
-             * this entry.
-             */
-            ByteCodeAppender getByteCodeAppender();
+            void apply(ClassVisitor classVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription);
 
-            /**
-             * The method attribute appender that is to be used for the instrumentation by this entry.  Must not
-             * be called if {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry#isDefineMethod()}
-             * returns {@code false}.
-             *
-             * @return The method attribute appender that is responsible for the instrumentation of a method matched for
-             * this entry.
-             */
-            MethodAttributeAppender getAttributeAppender();
+            void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription);
 
-            /**
-             * Writes the method that is represented by this entry to the provided class visitor.
-             *
-             * @param classVisitor           The class visitor to which this entry is to be written to.
-             * @param instrumentationContext The instrumentation context to use for writing this method.
-             * @param methodDescription      A description of the method that is to be written
-             */
-            void apply(ClassVisitor classVisitor,
-                       Instrumentation.Context instrumentationContext,
-                       MethodDescription methodDescription);
+            void applyBody(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription);
 
-            /**
-             * A skip entry that instructs to ignore a method.
-             */
-            enum Skip implements Entry, Factory {
+            enum Sort {
 
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
+                SKIP(false, false),
 
-                @Override
-                public boolean isDefineMethod() {
-                    return false;
+                DEFINE(true, false),
+
+                IMPLEMENT(true, true);
+
+                private final boolean define;
+
+                private final boolean implement;
+
+                Sort(boolean define, boolean implement) {
+                    this.define = define;
+                    this.implement = implement;
                 }
 
-                @Override
-                public ByteCodeAppender getByteCodeAppender() {
-                    throw new IllegalStateException();
+                public boolean isDefined() {
+                    return define;
                 }
 
-                @Override
-                public MethodAttributeAppender getAttributeAppender() {
-                    throw new IllegalStateException();
-                }
-
-                @Override
-                public void apply(ClassVisitor classVisitor,
-                                  Instrumentation.Context instrumentationContext,
-                                  MethodDescription methodDescription) {
-                    /* do nothing */
-                }
-
-                @Override
-                public Entry compile(Instrumentation.Target instrumentationTarget) {
-                    return this;
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.MethodPool.Entry.Skip." + name();
+                public boolean isImplemented() {
+                    return implement;
                 }
             }
 
@@ -1047,55 +972,12 @@ public interface TypeWriter<T> {
                 Entry compile(Instrumentation.Target instrumentationTarget);
             }
 
-            /**
-             * A default implementation of {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry}
-             * that is not to be ignored but is represented by a tuple of a byte code appender and a method attribute appender.
-             */
-            class Simple implements Entry {
-
-                /**
-                 * The byte code appender that is represented by this entry.
-                 */
-                private final ByteCodeAppender byteCodeAppender;
-
-                /**
-                 * The method attribute appender that is represented by this entry.
-                 */
-                private final MethodAttributeAppender methodAttributeAppender;
-
-                /**
-                 * Creates a new simple entry of a method pool.
-                 *
-                 * @param byteCodeAppender        The byte code appender that is represented by this entry.
-                 * @param methodAttributeAppender The method attribute appender that is represented by this entry.
-                 */
-                public Simple(ByteCodeAppender byteCodeAppender, MethodAttributeAppender methodAttributeAppender) {
-                    this.byteCodeAppender = byteCodeAppender;
-                    this.methodAttributeAppender = methodAttributeAppender;
-                }
+            abstract class AbstractDefiningEntry implements Entry {
 
                 @Override
-                public boolean isDefineMethod() {
-                    return true;
-                }
-
-                @Override
-                public ByteCodeAppender getByteCodeAppender() {
-                    return byteCodeAppender;
-                }
-
-                @Override
-                public MethodAttributeAppender getAttributeAppender() {
-                    return methodAttributeAppender;
-                }
-
-                @Override
-                public void apply(ClassVisitor classVisitor,
-                                  Instrumentation.Context instrumentationContext,
-                                  MethodDescription methodDescription) {
-                    boolean appendsCode = byteCodeAppender.appendsCode();
+                public void apply(ClassVisitor classVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription) {
                     MethodVisitor methodVisitor = classVisitor
-                            .visitMethod(methodDescription.getAdjustedModifiers(appendsCode),
+                            .visitMethod(methodDescription.getAdjustedModifiers(getSort().isImplemented()),
                                     methodDescription.getInternalName(),
                                     methodDescription.getDescriptor(),
                                     methodDescription.getGenericSignature(),
@@ -1106,20 +988,88 @@ public interface TypeWriter<T> {
                             methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
                         }
                     }
-                    methodAttributeAppender.apply(methodVisitor, methodDescription);
-                    if (appendsCode) {
-                        methodVisitor.visitCode();
-                        ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, instrumentationContext, methodDescription);
-                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                    }
+                    applyHead(methodVisitor, methodDescription);
+                    applyBody(methodVisitor, instrumentationContext, methodDescription);
                     methodVisitor.visitEnd();
+                }
+            }
+
+            enum ForSkippedMethod implements Entry, Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public void apply(ClassVisitor classVisitor,
+                                  Instrumentation.Context instrumentationContext,
+                                  MethodDescription methodDescription) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void applyBody(MethodVisitor methodVisitor,
+                                      Instrumentation.Context instrumentationContext,
+                                      MethodDescription methodDescription) {
+                    throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
+                }
+
+                @Override
+                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
+                }
+
+                @Override
+                public Sort getSort() {
+                    return Sort.SKIP;
+                }
+
+                @Override
+                public Entry compile(Instrumentation.Target instrumentationTarget) {
+                    return this;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.MethodPool.Entry.Skip." + name();
+                }
+            }
+
+            class ForImplementation extends AbstractDefiningEntry {
+
+                private final ByteCodeAppender byteCodeAppender;
+
+                private final MethodAttributeAppender methodAttributeAppender;
+
+                public ForImplementation(ByteCodeAppender byteCodeAppender, MethodAttributeAppender methodAttributeAppender) {
+                    this.byteCodeAppender = byteCodeAppender;
+                    this.methodAttributeAppender = methodAttributeAppender;
+                }
+
+                @Override
+                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void applyBody(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription) {
+                    methodAttributeAppender.apply(methodVisitor, methodDescription);
+                    methodVisitor.visitCode();
+                    ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, instrumentationContext, methodDescription);
+                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                }
+
+                @Override
+                public Sort getSort() {
+                    return Sort.IMPLEMENT;
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && byteCodeAppender.equals(((Simple) other).byteCodeAppender)
-                            && methodAttributeAppender.equals(((Simple) other).methodAttributeAppender);
+                            && byteCodeAppender.equals(((ForImplementation) other).byteCodeAppender)
+                            && methodAttributeAppender.equals(((ForImplementation) other).methodAttributeAppender);
                 }
 
                 @Override
@@ -1129,8 +1079,106 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.MethodPool.Entry.Simple{" +
+                    return "TypeWriter.MethodPool.Entry.ForImplementation{" +
                             "byteCodeAppender=" + byteCodeAppender +
+                            ", methodAttributeAppender=" + methodAttributeAppender +
+                            '}';
+                }
+            }
+
+            class ForAbstractMethod extends AbstractDefiningEntry {
+
+                private final MethodAttributeAppender methodAttributeAppender;
+
+                public ForAbstractMethod(MethodAttributeAppender methodAttributeAppender) {
+                    this.methodAttributeAppender = methodAttributeAppender;
+                }
+
+                @Override
+                public Sort getSort() {
+                    return Sort.DEFINE;
+                }
+
+                @Override
+                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void applyBody(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription) {
+                    methodAttributeAppender.apply(methodVisitor, methodDescription);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && methodAttributeAppender.equals(((ForAbstractMethod) other).methodAttributeAppender);
+                }
+
+                @Override
+                public int hashCode() {
+                    return methodAttributeAppender.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.MethodPool.Entry.ForAbstractMethod{" +
+                            "methodAttributeAppender=" + methodAttributeAppender +
+                            '}';
+                }
+            }
+
+            class ForAnnotationDefaultValue extends AbstractDefiningEntry {
+
+                private final Object annotationValue;
+
+                private final MethodAttributeAppender methodAttributeAppender;
+
+                public ForAnnotationDefaultValue(Object annotationValue, MethodAttributeAppender methodAttributeAppender) {
+                    this.annotationValue = annotationValue;
+                    this.methodAttributeAppender = methodAttributeAppender;
+                }
+
+                @Override
+                public Sort getSort() {
+                    return Sort.DEFINE;
+                }
+
+                @Override
+                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    AnnotationAppender.Default.apply(methodVisitor.visitAnnotationDefault(),
+                            methodDescription.getReturnType(),
+                            AnnotationAppender.NO_NAME,
+                            annotationValue);
+                }
+
+                @Override
+                public void applyBody(MethodVisitor methodVisitor,
+                                      Instrumentation.Context instrumentationContext,
+                                      MethodDescription methodDescription) {
+                    methodAttributeAppender.apply(methodVisitor, methodDescription);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForAnnotationDefaultValue that = (ForAnnotationDefaultValue) other;
+                    return annotationValue.equals(that.annotationValue) && methodAttributeAppender.equals(that.methodAttributeAppender);
+
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = annotationValue.hashCode();
+                    result = 31 * result + methodAttributeAppender.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue{" +
+                            "annotationValue=" + annotationValue +
                             ", methodAttributeAppender=" + methodAttributeAppender +
                             '}';
                 }
