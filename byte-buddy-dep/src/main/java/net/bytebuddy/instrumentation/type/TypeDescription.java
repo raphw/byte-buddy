@@ -276,6 +276,13 @@ public interface TypeDescription extends ByteCodeElement {
     boolean isPrimitiveWrapper();
 
     /**
+     * Checks if instances of this type can be defined as values of an annotation.
+     *
+     * @return {@code true} if instances of this type can be defined as values of an annotation.
+     */
+    boolean isAnnotationValue();
+
+    /**
      * An abstract base implementation of a type description.
      */
     abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
@@ -416,6 +423,16 @@ public interface TypeDescription extends ByteCodeElement {
                     || represents(Long.class)
                     || represents(Float.class)
                     || represents(Double.class);
+        }
+
+        @Override
+        public boolean isAnnotationValue() {
+            return isPrimitive()
+                    || represents(String.class)
+                    || isEnum()
+                    || isAnnotation()
+                    || isAssignableTo(TypeDescription.class)
+                    || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationValue());
         }
 
         @Override

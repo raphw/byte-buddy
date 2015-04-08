@@ -624,13 +624,21 @@ public interface DynamicType {
         MatchedMethodInterception<T> constructor(ElementMatcher<? super MethodDescription> methodMatcher);
 
         /**
-         * Selects a set of byte code methods of this type for instrumentation.
+         * Selects a set of byte code level methods, i.e. methods, construcors and the type initializer of
+         * this type for instrumentation.
          *
          * @param methodMatcher A matcher describing the byte code methods to be intercepted by this instrumentation.
          * @return An interception delegate for byte code methods matching the given method matcher.
          */
         MatchedMethodInterception<T> invokable(ElementMatcher<? super MethodDescription> methodMatcher);
 
+        /**
+         * Selects a set of byte code level methods, i.e. methods, construcors and the type initializer of
+         * this type for instrumentation.
+         *
+         * @param methodMatcher A latent matcher describing the byte code methods to be intercepted by this instrumentation.
+         * @return An interception delegate for byte code methods matching the given method matcher.
+         */
         MatchedMethodInterception<T> invokable(LatentMethodMatcher methodMatcher);
 
         /**
@@ -691,6 +699,10 @@ public interface DynamicType {
              * types.
              */
             MatchedMethodInterception<S> throwing(TypeDescription... type);
+
+            MethodAnnotationTarget<S> withDefaultValue(Object value);
+
+            MethodAnnotationTarget<S> withUnloadedDefaultValue(Object value);
         }
 
         /**
@@ -998,6 +1010,9 @@ public interface DynamicType {
              */
             protected final NamingStrategy namingStrategy;
 
+            /**
+             * The naming strategy for auxiliary types specified for this builder.
+             */
             protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
             /**
@@ -1077,6 +1092,7 @@ public interface DynamicType {
              *
              * @param classFileVersion                      The class file version for the created dynamic type.
              * @param namingStrategy                        The naming strategy for naming the dynamic type.
+             * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
              * @param targetType                            A description of the type that the dynamic type should represent.
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -1615,6 +1631,7 @@ public interface DynamicType {
              *
              * @param classFileVersion                      The class file version for the created dynamic type.
              * @param namingStrategy                        The naming strategy for naming the dynamic type.
+             * @param auxiliaryTypeNamingStrategy           The naming strategy for naming the auxiliary type of the dynamic type.
              * @param targetType                            A description of the type that the dynamic type should represent.
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -1675,13 +1692,15 @@ public interface DynamicType {
                         && methodLookupEngineFactory.equals(that.methodLookupEngineFactory)
                         && methodRegistry.equals(that.methodRegistry)
                         && methodTokens.equals(that.methodTokens)
-                        && namingStrategy.equals(that.namingStrategy);
+                        && namingStrategy.equals(that.namingStrategy)
+                        && auxiliaryTypeNamingStrategy.equals(that.auxiliaryTypeNamingStrategy);
             }
 
             @Override
             public int hashCode() {
                 int result = classFileVersion.hashCode();
                 result = 31 * result + namingStrategy.hashCode();
+                result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
                 result = 31 * result + targetType.hashCode();
                 result = 31 * result + interfaceTypes.hashCode();
                 result = 31 * result + modifiers;
@@ -2371,10 +2390,8 @@ public interface DynamicType {
                 @Override
                 @SuppressWarnings("unchecked")
                 public boolean equals(Object other) {
-                    if (this == other)
-                        return true;
-                    if (other == null || getClass() != other.getClass())
-                        return false;
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
                     DefaultFieldValueTarget that = (DefaultFieldValueTarget) other;
                     return attributeAppenderFactory.equals(that.attributeAppenderFactory)
                             && !(defaultValue != null ?
@@ -2420,6 +2437,9 @@ public interface DynamicType {
              */
             protected class DefaultMatchedMethodInterception implements MatchedMethodInterception<S> {
 
+                /**
+                 * The latent method matcher that identifies this interception.
+                 */
                 private final LatentMethodMatcher methodMatcher;
 
                 /**
@@ -2532,6 +2552,19 @@ public interface DynamicType {
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
                     return materialize(methodToken).withoutCode();
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value) {
+                    return withUnloadedDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(value, methodToken.getReturnType()));
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withUnloadedDefaultValue(Object value) {
+                    return new DefaultMethodAnnotationTarget(join(methodTokens, methodToken),
+                            methodToken,
+                            MethodRegistry.Handler.ForAnnotationValue.of(value, methodToken.getReturnType()),
+                            MethodAttributeAppender.NoOp.INSTANCE);
                 }
 
                 /**

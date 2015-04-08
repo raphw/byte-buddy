@@ -23,13 +23,6 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
  */
 public interface MethodRegistry {
 
-    /**
-     * Prepends matched handler and attribute appender factory to this registry.
-     * @param methodMatcher A latent method matcher to identify when handler and factory are to be applied.
-     * @param handler The handler to apply for any matched method.
-     * @param attributeAppenderFactory The attribute appeder
-     * @return
-     */
     MethodRegistry prepend(LatentMethodMatcher methodMatcher,
                            Handler handler,
                            MethodAttributeAppender.Factory attributeAppenderFactory);
@@ -144,6 +137,47 @@ public interface MethodRegistry {
             @Override
             public String toString() {
                 return "MethodRegistry.Preparable.ForAbstractMethod." + name();
+            }
+        }
+
+        class ForAnnotationValue implements Handler, Compiled {
+
+            public static Handler of(Object annotationValue, TypeDescription typeDescription) {
+                if (!typeDescription.isAnnotationValue()) {
+                    throw new IllegalArgumentException("Not an annotation value type: " + typeDescription);
+                } else if (!typeDescription.isInstance(annotationValue)
+                        || (annotationValue.getClass() == Boolean.class && typeDescription.represents(boolean.class))
+                        || (annotationValue.getClass() == Byte.class && typeDescription.represents(byte.class))
+                        || (annotationValue.getClass() == Short.class && typeDescription.represents(short.class))
+                        || (annotationValue.getClass() == Character.class && typeDescription.represents(char.class))
+                        || (annotationValue.getClass() == Integer.class && typeDescription.represents(int.class))
+                        || (annotationValue.getClass() == Long.class && typeDescription.represents(long.class))
+                        || (annotationValue.getClass() == Float.class && typeDescription.represents(float.class))
+                        || (annotationValue.getClass() == Double.class && typeDescription.represents(double.class))) {
+                    throw new IllegalArgumentException(annotationValue + " is no instance of " + typeDescription);
+                }
+                return new ForAnnotationValue(annotationValue);
+            }
+
+            private final Object annotationValue;
+
+            protected ForAnnotationValue(Object annotationValue) {
+                this.annotationValue = annotationValue;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public Compiled compile(Instrumentation.Target instrumentationTarget) {
+                return this;
+            }
+
+            @Override
+            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
+                return new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(annotationValue, attributeAppender);
             }
         }
     }
