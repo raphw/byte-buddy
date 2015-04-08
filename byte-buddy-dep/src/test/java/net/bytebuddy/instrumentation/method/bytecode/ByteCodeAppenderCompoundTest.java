@@ -43,17 +43,6 @@ public class ByteCodeAppenderCompoundTest {
     }
 
     @Test
-    public void testAppendsCode() throws Exception {
-        when(first.appendsCode()).thenReturn(true);
-        assertThat(compound.appendsCode(), is(true));
-    }
-
-    @Test
-    public void testDoesNotAppendCode() throws Exception {
-        assertThat(compound.appendsCode(), is(false));
-    }
-
-    @Test
     public void testApplication() throws Exception {
         when(first.apply(methodVisitor, instrumentationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(MINIMUM, MAXIMUM));
         when(second.apply(methodVisitor, instrumentationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(MAXIMUM, MINIMUM));

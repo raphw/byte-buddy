@@ -14,6 +14,8 @@ import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.anyOf;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
@@ -22,27 +24,29 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
 public interface MethodRegistry {
 
     MethodRegistry prepend(LatentMethodMatcher methodMatcher,
-                           Prepareable prepareable,
+                           Handler handler,
                            MethodAttributeAppender.Factory attributeAppenderFactory);
 
     MethodRegistry append(LatentMethodMatcher methodMatcher,
-                          Prepareable prepareable,
+                          Handler handler,
                           MethodAttributeAppender.Factory attributeAppenderFactory);
 
-    Prepared prepare(InstrumentedType instrumentedType, MethodLookupEngine methodLookupEngine, ElementMatcher<? super MethodDescription> methodFilter);
+    Prepared prepare(InstrumentedType instrumentedType,
+                     MethodLookupEngine methodLookupEngine,
+                     LatentMethodMatcher methodFilter);
 
-    interface Prepareable {
+    interface Handler {
 
         InstrumentedType prepare(InstrumentedType instrumentedType);
 
-        Prepareable.Compiled compile(Instrumentation.Target instrumentationTarget);
+        Handler.Compiled compile(Instrumentation.Target instrumentationTarget);
 
         interface Compiled {
 
             TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender);
         }
 
-        class ForInstrumentation implements Prepareable {
+        class ForInstrumentation implements Handler {
 
             private final Instrumentation instrumentation;
 
@@ -78,7 +82,7 @@ public interface MethodRegistry {
                         '}';
             }
 
-            protected static class Compiled implements Prepareable.Compiled {
+            protected static class Compiled implements Handler.Compiled {
 
                 private final ByteCodeAppender byteCodeAppender;
 
@@ -111,7 +115,7 @@ public interface MethodRegistry {
             }
         }
 
-        enum ForAbstractMethod implements Prepareable, Compiled {
+        enum ForAbstractMethod implements Handler, Compiled {
 
             INSTANCE;
 
@@ -175,43 +179,46 @@ public interface MethodRegistry {
 
         @Override
         public MethodRegistry prepend(LatentMethodMatcher methodMatcher,
-                                      Prepareable prepareable,
+                                      Handler handler,
                                       MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return new Default(join(new Entry(methodMatcher, prepareable, attributeAppenderFactory), entries));
+            return new Default(join(new Entry(methodMatcher, handler, attributeAppenderFactory), entries));
         }
 
         @Override
         public MethodRegistry append(LatentMethodMatcher methodMatcher,
-                                     Prepareable prepareable,
+                                     Handler handler,
                                      MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return new Default(join(entries, new Entry(methodMatcher, prepareable, attributeAppenderFactory)));
+            return new Default(join(entries, new Entry(methodMatcher, handler, attributeAppenderFactory)));
         }
 
         @Override
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodLookupEngine methodLookupEngine,
-                                               ElementMatcher<? super MethodDescription> methodFilter) {
-            MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
+                                               LatentMethodMatcher methodFilter) {
             Map<MethodDescription, Entry> instrumentations = new HashMap<MethodDescription, Entry>();
-            Set<Prepareable> prepareables = new HashSet<Prepareable>(entries.size());
+            Set<Handler> handlers = new HashSet<Handler>(entries.size());
             int helperMethodIndex = instrumentedType.getDeclaredMethods().size();
-            for (MethodDescription methodDescription : finding.getInvokableMethods().filter(methodFilter)) {
+            for (Entry entry : entries) {
+                if (handlers.add(entry.getHandler())) {
+                    instrumentedType = entry.getHandler().prepare(instrumentedType);
+                    MethodList helperMethods = instrumentedType.getDeclaredMethods();
+                    for (MethodDescription helperMethod : helperMethods.subList(helperMethodIndex, helperMethods.size())) {
+                        instrumentations.put(helperMethod, entry);
+                    }
+                    helperMethodIndex = helperMethods.size();
+                }
+            }
+            MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
+            ElementMatcher<? super MethodDescription> instrumented = not(anyOf(instrumentations.keySet())).and(methodFilter.manifest(instrumentedType));
+            for (MethodDescription methodDescription : finding.getInvokableMethods().filter(instrumented)) {
                 for (Entry entry : entries) {
-                    if (entry.matches(methodDescription, instrumentedType)) {
-                        if (prepareables.add(entry.getPrepareable())) {
-                            instrumentedType = entry.getPrepareable().prepare(instrumentedType);
-                            MethodList helperMethods = instrumentedType.getDeclaredMethods();
-                            for (MethodDescription helperMethod : helperMethods.subList(helperMethodIndex, helperMethods.size())) {
-                                instrumentations.put(helperMethod, entry);
-                            }
-                            helperMethodIndex = helperMethods.size();
-                        }
+                    if (entry.manifest(instrumentedType).matches(methodDescription)) {
                         instrumentations.put(methodDescription, entry);
+                        break;
                     }
                 }
             }
             return new Prepared(instrumentations,
-                    instrumentedType.detach(),
                     instrumentedType.getLoadedTypeInitializer(),
                     instrumentedType.getTypeInitializer(),
                     finding);
@@ -240,20 +247,20 @@ public interface MethodRegistry {
 
             private final LatentMethodMatcher methodMatcher;
 
-            private final Prepareable prepareable;
+            private final Handler handler;
 
             private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
             protected Entry(LatentMethodMatcher methodMatcher,
-                            Prepareable prepareable,
+                            Handler handler,
                             MethodAttributeAppender.Factory attributeAppenderFactory) {
                 this.methodMatcher = methodMatcher;
-                this.prepareable = prepareable;
+                this.handler = handler;
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
 
-            protected Prepareable getPrepareable() {
-                return prepareable;
+            protected Handler getHandler() {
+                return handler;
             }
 
             protected MethodAttributeAppender.Factory getAppenderFactory() {
@@ -261,8 +268,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public boolean matches(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return methodMatcher.matches(methodDescription, instrumentedType);
+            public ElementMatcher<? super MethodDescription> manifest(TypeDescription instrumentedType) {
+                return methodMatcher.manifest(instrumentedType);
             }
 
             @Override
@@ -271,14 +278,14 @@ public interface MethodRegistry {
                 if (other == null || getClass() != other.getClass()) return false;
                 Entry entry = (Entry) other;
                 return methodMatcher.equals(entry.methodMatcher)
-                        && prepareable.equals(entry.prepareable)
+                        && handler.equals(entry.handler)
                         && attributeAppenderFactory.equals(entry.attributeAppenderFactory);
             }
 
             @Override
             public int hashCode() {
                 int result = methodMatcher.hashCode();
-                result = 31 * result + prepareable.hashCode();
+                result = 31 * result + handler.hashCode();
                 result = 31 * result + attributeAppenderFactory.hashCode();
                 return result;
             }
@@ -287,7 +294,7 @@ public interface MethodRegistry {
             public String toString() {
                 return "MethodRegistry.Default.Entry{" +
                         "methodMatcher=" + methodMatcher +
-                        ", prepareable=" + prepareable +
+                        ", prepareable=" + handler +
                         ", attributeAppenderFactory=" + attributeAppenderFactory +
                         '}';
             }
@@ -297,8 +304,6 @@ public interface MethodRegistry {
 
             private final Map<MethodDescription, Entry> instrumentations;
 
-            private final TypeDescription instrumentedType;
-
             private final LoadedTypeInitializer loadedTypeInitializer;
 
             private final InstrumentedType.TypeInitializer typeInitializer;
@@ -306,11 +311,10 @@ public interface MethodRegistry {
             private final MethodLookupEngine.Finding finding;
 
             public Prepared(Map<MethodDescription, Entry> instrumentations,
-                            TypeDescription instrumentedType,
                             LoadedTypeInitializer loadedTypeInitializer,
-                            InstrumentedType.TypeInitializer typeInitializer, MethodLookupEngine.Finding finding) {
+                            InstrumentedType.TypeInitializer typeInitializer,
+                            MethodLookupEngine.Finding finding) {
                 this.instrumentations = instrumentations;
-                this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
                 this.finding = finding;
@@ -318,7 +322,7 @@ public interface MethodRegistry {
 
             @Override
             public TypeDescription getInstrumentedType() {
-                return instrumentedType;
+                return finding.getTypeDescription();
             }
 
             @Override
@@ -338,24 +342,24 @@ public interface MethodRegistry {
 
             @Override
             public MethodRegistry.Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory) {
-                Map<Prepareable, Prepareable.Compiled> compilationCache = new HashMap<Prepareable, Prepareable.Compiled>(instrumentations.size());
+                Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>(instrumentations.size());
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(instrumentations.size());
                 Map<MethodDescription, TypeWriter.MethodPool.Entry> entries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>(instrumentations.size());
                 Instrumentation.Target instrumentationTarget = instrumentationTargetFactory.make(finding, getInstrumentedMethods());
                 for (Map.Entry<MethodDescription, Entry> entry : instrumentations.entrySet()) {
-                    Prepareable.Compiled cachedEntry = compilationCache.get(entry.getValue().getPrepareable());
+                    Handler.Compiled cachedEntry = compilationCache.get(entry.getValue().getHandler());
                     if (cachedEntry == null) {
-                        cachedEntry = entry.getValue().getPrepareable().compile(instrumentationTarget);
-                        compilationCache.put(entry.getValue().getPrepareable(), cachedEntry);
+                        cachedEntry = entry.getValue().getHandler().compile(instrumentationTarget);
+                        compilationCache.put(entry.getValue().getHandler(), cachedEntry);
                     }
                     MethodAttributeAppender cachedAttributeAppender = attributeAppenderCache.get(entry.getValue().getAppenderFactory());
                     if (cachedAttributeAppender == null) {
-                        cachedAttributeAppender = entry.getValue().getAppenderFactory().make(instrumentedType);
+                        cachedAttributeAppender = entry.getValue().getAppenderFactory().make(finding.getTypeDescription());
                         attributeAppenderCache.put(entry.getValue().getAppenderFactory(), cachedAttributeAppender);
                     }
                     entries.put(entry.getKey(), cachedEntry.assemble(cachedAttributeAppender));
                 }
-                return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries);
+                return new Compiled(finding.getTypeDescription(), loadedTypeInitializer, typeInitializer, entries);
             }
 
             @Override
@@ -364,7 +368,6 @@ public interface MethodRegistry {
                 if (other == null || getClass() != other.getClass()) return false;
                 Prepared prepared = (Prepared) other;
                 return instrumentations.equals(prepared.instrumentations)
-                        && instrumentedType.equals(prepared.instrumentedType)
                         && loadedTypeInitializer.equals(prepared.loadedTypeInitializer)
                         && typeInitializer.equals(prepared.typeInitializer)
                         && finding.equals(prepared.finding);
@@ -373,7 +376,6 @@ public interface MethodRegistry {
             @Override
             public int hashCode() {
                 int result = instrumentations.hashCode();
-                result = 31 * result + instrumentedType.hashCode();
                 result = 31 * result + loadedTypeInitializer.hashCode();
                 result = 31 * result + typeInitializer.hashCode();
                 result = 31 * result + finding.hashCode();
@@ -384,7 +386,6 @@ public interface MethodRegistry {
             public String toString() {
                 return "MethodRegistry.Default.Prepared{" +
                         "instrumentations=" + instrumentations +
-                        ", instrumentedType=" + instrumentedType +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +
                         ", finding=" + finding +

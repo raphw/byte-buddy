@@ -22,53 +22,53 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 public class SubclassInstrumentationTargetFactoryTest {
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    @Mock
-    private BridgeMethodResolver.Factory bridgeMethodResolverFactory;
-
-    @Mock
-    private MethodLookupEngine.Finding finding;
-
-    @Mock
-    private TypeDescription instrumentedType, superType;
-
-    private Instrumentation.Target.Factory factory;
-
-    @Before
-    public void setUp() throws Exception {
-        when(finding.getInvokableMethods()).thenReturn(new MethodList.Empty());
-        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
-        when(finding.getTypeDescription()).thenReturn(instrumentedType);
-        when(instrumentedType.getSupertype()).thenReturn(superType);
-        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        factory = new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
-                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE);
-    }
-
-    @Test
-    public void testReturnsSubclassInstrumentationTarget() throws Exception {
-        assertThat(factory.make(finding) instanceof SubclassInstrumentationTarget, is(true));
-    }
-
-    @Test
-    public void testOriginTypeSuperType() throws Exception {
-        assertThat(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
-                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE).make(finding)
-                .getOriginType(), is(superType));
-    }
-
-    @Test
-    public void testOriginTypeLevelType() throws Exception {
-        assertThat(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
-                SubclassInstrumentationTarget.OriginTypeIdentifier.LEVEL_TYPE).make(finding)
-                .getOriginType(), is(instrumentedType));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(SubclassInstrumentationTarget.Factory.class).apply();
-    }
+//
+//    @Rule
+//    public TestRule mockitoRule = new MockitoRule(this);
+//
+//    @Mock
+//    private BridgeMethodResolver.Factory bridgeMethodResolverFactory;
+//
+//    @Mock
+//    private MethodLookupEngine.Finding finding;
+//
+//    @Mock
+//    private TypeDescription instrumentedType, superType;
+//
+//    private Instrumentation.Target.Factory factory;
+//
+//    @Before
+//    public void setUp() throws Exception {
+//        when(finding.getInvokableMethods()).thenReturn(new MethodList.Empty());
+//        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
+//        when(finding.getTypeDescription()).thenReturn(instrumentedType);
+//        when(instrumentedType.getSupertype()).thenReturn(superType);
+//        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+//        factory = new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+//                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE);
+//    }
+//
+//    @Test
+//    public void testReturnsSubclassInstrumentationTarget() throws Exception {
+//        assertThat(factory.make(finding) instanceof SubclassInstrumentationTarget, is(true));
+//    }
+//
+//    @Test
+//    public void testOriginTypeSuperType() throws Exception {
+//        assertThat(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+//                SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE).make(finding)
+//                .getOriginType(), is(superType));
+//    }
+//
+//    @Test
+//    public void testOriginTypeLevelType() throws Exception {
+//        assertThat(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+//                SubclassInstrumentationTarget.OriginTypeIdentifier.LEVEL_TYPE).make(finding)
+//                .getOriginType(), is(instrumentedType));
+//    }
+//
+//    @Test
+//    public void testObjectProperties() throws Exception {
+//        ObjectPropertyAssertion.of(SubclassInstrumentationTarget.Factory.class).apply();
+//    }
 }

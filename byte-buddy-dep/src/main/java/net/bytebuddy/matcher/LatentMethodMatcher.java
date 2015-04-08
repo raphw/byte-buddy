@@ -5,7 +5,7 @@ import net.bytebuddy.instrumentation.type.TypeDescription;
 
 public interface LatentMethodMatcher {
 
-    boolean matches(MethodDescription methodDescription, TypeDescription instrumentedType);
+    ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription);
 
     class Simple implements LatentMethodMatcher {
 
@@ -16,8 +16,8 @@ public interface LatentMethodMatcher {
         }
 
         @Override
-        public boolean matches(MethodDescription methodDescription, TypeDescription instrumentedType) {
-            return methodMatcher.matches(methodDescription);
+        public ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription) {
+            return methodMatcher;
         }
     }
 }

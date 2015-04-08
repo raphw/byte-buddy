@@ -9,7 +9,6 @@ import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
-import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
@@ -19,6 +18,7 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -156,7 +156,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         InstrumentedType instrumentedType = new InlineInstrumentedType(classFileVersion, targetType, interfaceTypes, modifiers, namingStrategy);
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(applyRecordedMembersTo(instrumentedType),
                 methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
-                isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType).and(not(anyOf(targetType.getDeclaredMethods())))));
+                InlineInstrumentationMatcher.of(ignoredMethods, targetType));
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Enabled.make(preparedMethodRegistry.getInstrumentedMethods(),
                 instrumentedType,
                 classFileVersion,

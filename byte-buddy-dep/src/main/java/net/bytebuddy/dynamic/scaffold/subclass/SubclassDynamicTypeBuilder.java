@@ -17,12 +17,15 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.isOverridable;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * Creates a dynamic type on basis of loaded types where the dynamic type extends the loaded types.
@@ -178,7 +181,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
                 .prepare(applyConstructorStrategy(applyRecordedMembersTo(instrumentedType)),
                         methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
-                        isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType)))
+                        new InstrumentableMatcher(ignoredMethods))
                 .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
                         SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE));
         return TypeWriter.Default.<T>forCreation(compiledMethodRegistry,
@@ -204,5 +207,19 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     methodDescription.getModifiers());
         }
         return instrumentedType;
+    }
+
+    protected static class InstrumentableMatcher implements LatentMethodMatcher {
+
+        private final ElementMatcher<? super MethodDescription> ignoredMethods;
+
+        public InstrumentableMatcher(ElementMatcher<? super MethodDescription> ignoredMethods) {
+            this.ignoredMethods = ignoredMethods;
+        }
+
+        @Override
+        public ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription) {
+            return isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(typeDescription));
+        }
     }
 }

@@ -233,7 +233,7 @@ public interface TypeWriter<T> {
 
             Sort getSort();
 
-            Entry mergeWith(ByteCodeAppender byteCodeAppender)
+            Entry prepend(ByteCodeAppender byteCodeAppender);
 
             void apply(ClassVisitor classVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription);
 
@@ -314,6 +314,7 @@ public interface TypeWriter<T> {
                 public void apply(ClassVisitor classVisitor,
                                   Instrumentation.Context instrumentationContext,
                                   MethodDescription methodDescription) {
+                    System.out.println("Skipped: " + methodDescription);
                     /* do nothing */
                 }
 
@@ -332,6 +333,11 @@ public interface TypeWriter<T> {
                 @Override
                 public Sort getSort() {
                     return Sort.SKIP;
+                }
+
+                @Override
+                public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                    return new ForImplementation(byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE);
                 }
 
                 @Override
@@ -367,6 +373,11 @@ public interface TypeWriter<T> {
                     methodVisitor.visitCode();
                     ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, instrumentationContext, methodDescription);
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                }
+
+                @Override
+                public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                    return new ForImplementation(new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender), methodAttributeAppender);
                 }
 
                 @Override
@@ -419,6 +430,11 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                    return new ForImplementation(byteCodeAppender, methodAttributeAppender);
+                }
+
+                @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && methodAttributeAppender.equals(((ForAbstractMethod) other).methodAttributeAppender);
@@ -466,6 +482,11 @@ public interface TypeWriter<T> {
                                       Instrumentation.Context instrumentationContext,
                                       MethodDescription methodDescription) {
                     methodAttributeAppender.apply(methodVisitor, methodDescription);
+                }
+
+                @Override
+                public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                    return new ForImplementation(byteCodeAppender, methodAttributeAppender);
                 }
 
                 @Override

@@ -500,8 +500,7 @@ public abstract class FixedValue implements Instrumentation {
              * @param instrumentedType The instrumented type that is subject of the instrumentation.
              */
             private StaticFieldByteCodeAppender(TypeDescription instrumentedType) {
-                fieldGetAccess = FieldAccess.forField(instrumentedType.getDeclaredFields()
-                        .filter((named(fieldName))).getOnly()).getter();
+                fieldGetAccess = FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(fieldName))).getOnly()).getter();
             }
 
             @Override

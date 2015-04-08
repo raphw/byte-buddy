@@ -20,12 +20,6 @@ public class TargetTypeTest {
     }
 
     @Test
-    public void testMemberInaccessibility() throws Exception {
-        // Fails in Cobertura due to added methods but is ignored there.
-        assertThat(TargetType.class.getDeclaredMethods().length, is(0));
-    }
-
-    @Test
     public void testConstructorIsHidden() throws Exception {
         MatcherAssert.assertThat(TargetType.class.getDeclaredConstructors().length, is(1));
         Constructor<?> constructor = TargetType.class.getDeclaredConstructor();

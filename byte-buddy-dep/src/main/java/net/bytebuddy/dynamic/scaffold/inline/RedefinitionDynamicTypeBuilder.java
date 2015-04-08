@@ -19,6 +19,7 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -145,7 +146,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
         InstrumentedType instrumentedType = new InlineInstrumentedType(classFileVersion, targetType, interfaceTypes, modifiers, namingStrategy);
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(applyRecordedMembersTo(instrumentedType),
                 methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
-                isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType).and(not(anyOf(targetType.getDeclaredMethods())))))
+                InlineInstrumentationMatcher.of(ignoredMethods, targetType))
                 .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory, SubclassInstrumentationTarget.OriginTypeIdentifier.LEVEL_TYPE));
         return TypeWriter.Default.<T>forRedefinition(compiledMethodRegistry,
                 fieldRegistry.prepare(instrumentedType).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),

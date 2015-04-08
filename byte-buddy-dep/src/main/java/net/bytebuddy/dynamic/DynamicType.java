@@ -1770,12 +1770,12 @@ public interface DynamicType {
                 }
 
                 @Override
-                public boolean matches(MethodDescription methodDescription, TypeDescription instrumentedType) {
+                public ElementMatcher<? super MethodDescription> manifest(TypeDescription instrumentedType) {
                     return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName)
                             ? isConstructor()
                             : ElementMatchers.<MethodDescription>named(internalName))
                             .and(returns(resolveReturnType(instrumentedType)))
-                            .<MethodDescription>and(takesArguments(resolveParameterTypes(instrumentedType))).matches(methodDescription);
+                            .<MethodDescription>and(takesArguments(resolveParameterTypes(instrumentedType)));
                 }
 
                 /**
@@ -2437,7 +2437,7 @@ public interface DynamicType {
                 public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             methodMatcher,
-                            new MethodRegistry.Prepareable.ForInstrumentation(nonNull(instrumentation)),
+                            new MethodRegistry.Handler.ForInstrumentation(nonNull(instrumentation)),
                             defaultMethodAttributeAppenderFactory);
                 }
 
@@ -2445,7 +2445,7 @@ public interface DynamicType {
                 public MethodAnnotationTarget<S> withoutCode() {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             methodMatcher,
-                            MethodRegistry.Prepareable.ForAbstractMethod.INSTANCE,
+                            MethodRegistry.Handler.ForAbstractMethod.INSTANCE,
                             defaultMethodAttributeAppenderFactory);
                 }
 
@@ -2589,7 +2589,7 @@ public interface DynamicType {
                  */
                 private final List<MethodToken> methodTokens;
 
-                private final MethodRegistry.Prepareable prepareable;
+                private final MethodRegistry.Handler handler;
 
                 /**
                  * The method attribute appender factory to be applied to the matched methods.
@@ -2598,11 +2598,11 @@ public interface DynamicType {
 
                 private DefaultMethodAnnotationTarget(List<MethodToken> methodTokens,
                                                       LatentMethodMatcher methodMatcher,
-                                                      MethodRegistry.Prepareable prepareable,
+                                                      MethodRegistry.Handler handler,
                                                       MethodAttributeAppender.Factory attributeAppenderFactory) {
                     this.methodMatcher = methodMatcher;
                     this.methodTokens = methodTokens;
-                    this.prepareable = prepareable;
+                    this.handler = handler;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                 }
 
@@ -2619,7 +2619,7 @@ public interface DynamicType {
                             bridgeMethodResolverFactory,
                             classVisitorWrapperChain,
                             fieldRegistry,
-                            methodRegistry.prepend(methodMatcher, prepareable, attributeAppenderFactory),
+                            methodRegistry.prepend(methodMatcher, handler, attributeAppenderFactory),
                             methodLookupEngineFactory,
                             defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
@@ -2631,7 +2631,7 @@ public interface DynamicType {
                 public MethodAnnotationTarget<S> attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             methodMatcher,
-                            prepareable,
+                            handler,
                             new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory,
                                     nonNull(attributeAppenderFactory)));
                 }
@@ -2665,7 +2665,7 @@ public interface DynamicType {
                         return false;
                     DefaultMethodAnnotationTarget that = (DefaultMethodAnnotationTarget) other;
                     return attributeAppenderFactory.equals(that.attributeAppenderFactory)
-                            && prepareable.equals(that.prepareable)
+                            && handler.equals(that.handler)
                             && methodMatcher.equals(that.methodMatcher)
                             && methodTokens.equals(that.methodTokens)
                             && AbstractBase.this.equals(that.getDynamicTypeBuilder());
@@ -2675,7 +2675,7 @@ public interface DynamicType {
                 public int hashCode() {
                     int result = methodTokens.hashCode();
                     result = 31 * result + methodMatcher.hashCode();
-                    result = 31 * result + prepareable.hashCode();
+                    result = 31 * result + handler.hashCode();
                     result = 31 * result + attributeAppenderFactory.hashCode();
                     result = 31 * result + AbstractBase.this.hashCode();
                     return result;
@@ -2687,7 +2687,7 @@ public interface DynamicType {
                             "base=" + AbstractBase.this +
                             ", methodTokens=" + methodTokens +
                             ", methodMatcher=" + methodMatcher +
-                            ", prepareable=" + prepareable +
+                            ", handler=" + handler +
                             ", attributeAppenderFactory=" + attributeAppenderFactory +
                             '}';
                 }

@@ -115,8 +115,6 @@ public interface InstrumentedType extends TypeDescription {
          */
         TypeInitializer expandWith(StackManipulation stackManipulation);
 
-        StackManipulation terminateWith(StackManipulation stackManipulation);
-
         StackManipulation terminate();
 
         /**
@@ -137,11 +135,6 @@ public interface InstrumentedType extends TypeDescription {
             @Override
             public TypeInitializer expandWith(StackManipulation stackManipulation) {
                 return new Simple(stackManipulation);
-            }
-
-            @Override
-            public StackManipulation terminateWith(StackManipulation stackManipulation) {
-                return null;
             }
 
             @Override
@@ -193,11 +186,6 @@ public interface InstrumentedType extends TypeDescription {
             @Override
             public TypeInitializer expandWith(StackManipulation stackManipulation) {
                 return new Simple(new StackManipulation.Compound(this.stackManipulation, stackManipulation));
-            }
-
-            @Override
-            public StackManipulation terminateWith(StackManipulation stackManipulation) {
-                return new StackManipulation.Compound(this.stackManipulation, stackManipulation);
             }
 
             @Override

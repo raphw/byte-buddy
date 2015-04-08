@@ -4,6 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
+import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
@@ -334,13 +335,6 @@ public interface Instrumentation {
          */
         interface Factory {
 
-            /**
-             * Creates an {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given instrumented
-             * type's description.
-             *
-             * @param finding The finding of a method lookup engine on analyzing the instrumented type.
-             * @return An {@link net.bytebuddy.instrumentation.Instrumentation.Target} for the given type description.
-             */
             Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods);
         }
 
@@ -841,22 +835,27 @@ public interface Instrumentation {
             @Override
             public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
                 canRegisterFieldCache = false;
-                MethodDescription typeInitializerMethod = MethodDescription.Latent.typeInitializerOf(instrumentedType);
                 InstrumentedType.TypeInitializer typeInitializer = this.typeInitializer;
+                for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
+                    classVisitor.visitField(entry.getValue().getModifiers(),
+                            entry.getValue().getInternalName(),
+                            entry.getValue().getDescriptor(),
+                            entry.getValue().getGenericSignature(),
+                            NO_DEFAULT_VALUE).visitEnd();
+                    typeInitializer = typeInitializer.expandWith(entry.getKey().storeIn(entry.getValue()));
+                }
                 if (injectedCode.isDefined()) {
                     typeInitializer = typeInitializer.expandWith(injectedCode.getStackManipulation());
                 }
-                for (FieldCacheEntry fieldCacheEntry : registeredFieldCacheEntries.keySet()) {
-                    typeInitializer = typeInitializer.expandWith(fieldCacheEntry);
-                }
+                MethodDescription typeInitializerMethod = MethodDescription.Latent.typeInitializerOf(instrumentedType);
                 TypeWriter.MethodPool.Entry initializerEntry = methodPool.target(typeInitializerMethod);
-                for (FieldDescription fieldDescription : registeredFieldCacheEntries.values()) {
-                    classVisitor.visitField(fieldDescription.getModifiers(),
-                            fieldDescription.getInternalName(),
-                            fieldDescription.getDescriptor(),
-                            fieldDescription.getGenericSignature(),
-                            NO_DEFAULT_VALUE).visitEnd();
+                if (initializerEntry.getSort().isImplemented() && typeInitializer.isDefined()) {
+                    initializerEntry = initializerEntry.prepend(new ByteCodeAppender.Simple(typeInitializer));
+                } else if (typeInitializer.isDefined()) {
+                    initializerEntry = new TypeWriter.MethodPool.Entry.ForImplementation(new ByteCodeAppender
+                            .Simple(typeInitializer.terminate()), MethodAttributeAppender.NoOp.INSTANCE);
                 }
+                initializerEntry.apply(classVisitor, this, typeInitializerMethod);
                 for (Map.Entry<MethodDescription, TypeWriter.MethodPool.Entry> entry : accessorMethodEntries.entrySet()) {
                     entry.getValue().apply(classVisitor, this, entry.getKey());
                 }
@@ -880,42 +879,6 @@ public interface Instrumentation {
                         ", randomString=" + randomString +
                         ", canRegisterFieldCache=" + canRegisterFieldCache +
                         '}';
-            }
-
-            protected static class InitializerEntry extends TypeWriter.MethodPool.Entry.AbstractDefiningEntry {
-
-                private final TypeWriter.MethodPool.Entry userEntry;
-
-                private final InstrumentedType.TypeInitializer typeInitializer;
-
-                public InitializerEntry(TypeWriter.MethodPool.Entry userEntry, InstrumentedType.TypeInitializer typeInitializer) {
-                    this.userEntry = userEntry;
-                    this.typeInitializer = typeInitializer;
-                }
-
-                @Override
-                public Sort getSort() {
-                    return typeInitializer.isDefined() || userEntry.getSort().isDefined()
-                            ? Sort.DEFINE
-                            : Sort.SKIP;
-                }
-
-                @Override
-                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                    if (userEntry.getSort().isDefined()) {
-                        userEntry.applyHead(methodVisitor, methodDescription);
-                    }
-                }
-
-                @Override
-                public void applyBody(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription methodDescription) {
-
-                    if (userEntry.getSort().isImplemented()) {
-                        userEntry.applyBody(methodVisitor, instrumentationContext, methodDescription);
-                    } else {
-                        typeInitializer.terminate().apply(meth)
-                    }
-                }
             }
 
             /**
@@ -992,6 +955,10 @@ public interface Instrumentation {
                             ", fieldType=" + fieldType +
                             '}';
                 }
+
+                public StackManipulation storeIn(FieldDescription fieldDescription) {
+                    return new Compound(this, FieldAccess.forField(fieldDescription).putter());
+                }
             }
 
             protected abstract static class AbstractDelegationEntry extends TypeWriter.MethodPool.Entry.AbstractDefiningEntry implements ByteCodeAppender {
@@ -1011,6 +978,11 @@ public interface Instrumentation {
                     methodVisitor.visitCode();
                     Size size = apply(methodVisitor, instrumentationContext, methodDescription);
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                }
+
+                @Override
+                public TypeWriter.MethodPool.Entry prepend(ByteCodeAppender byteCodeAppender) {
+                    throw new UnsupportedOperationException("Cannot prepend code to a delegator");
                 }
             }
 
