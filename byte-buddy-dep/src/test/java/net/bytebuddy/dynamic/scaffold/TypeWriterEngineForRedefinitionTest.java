@@ -36,7 +36,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class TypeWriterEngineForRedefinitionTest {
+public class TypeWriterEngineForRedefinitionTest { // TODO: Redo
 //
 //    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 //

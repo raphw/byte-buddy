@@ -21,7 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class RebaseInstrumentationTargetFactoryTest {
+public class RebaseInstrumentationTargetFactoryTest { // TODO: Redo
 //
 //    @Rule
 //    public TestRule mockitoRule = new MockitoRule(this);

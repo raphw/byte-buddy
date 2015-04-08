@@ -27,7 +27,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class MethodRegistryDefaultTest {
+public class MethodRegistryDefaultTest { // TODO: Redo
 /*
     private static final int BASIC_SIZE = 1, EXTENDED_SIZE = 2;
 

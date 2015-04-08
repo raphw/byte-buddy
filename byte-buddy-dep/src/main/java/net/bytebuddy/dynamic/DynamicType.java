@@ -1602,7 +1602,7 @@ public interface DynamicType {
 
             @Override
             public MatchedMethodInterception<S> invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
-                return invokable(new LatentMethodMatcher.Simple(nonNull(methodMatcher)));
+                return invokable(new LatentMethodMatcher.Resolved(nonNull(methodMatcher)));
             }
 
             @Override
@@ -1770,7 +1770,7 @@ public interface DynamicType {
                 }
 
                 @Override
-                public ElementMatcher<? super MethodDescription> manifest(TypeDescription instrumentedType) {
+                public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
                     return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName)
                             ? isConstructor()
                             : ElementMatchers.<MethodDescription>named(internalName))

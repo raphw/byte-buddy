@@ -6,8 +6,8 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
-import net.bytebuddy.dynamic.scaffold.inline.RebaseDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
+import net.bytebuddy.dynamic.scaffold.inline.RebaseDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.RedefinitionDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
@@ -53,6 +53,9 @@ public class ByteBuddy {
      */
     public static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
 
+    /**
+     * The default suffix when defining a naming strategy for auxiliary types.
+     */
     public static final String BYTE_BUDDY_DEFAULT_SUFFIX = "auxiliary";
 
     /**
@@ -65,6 +68,9 @@ public class ByteBuddy {
      */
     protected final NamingStrategy.Unbound namingStrategy;
 
+    /**
+     * The naming strategy for auxiliary types of the current configuation.
+     */
     protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
     /**
@@ -153,6 +159,7 @@ public class ByteBuddy {
      *
      * @param classFileVersion                      The currently defined class file version.
      * @param namingStrategy                        The currently defined naming strategy.
+     * @param auxiliaryTypeNamingStrategy           The currently defined naming strategy for auxiliary types.
      * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
      *                                              by any dynamically created type.
      * @param ignoredMethods                        The methods to always be ignored.
@@ -843,7 +850,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                new LatentMethodMatcher.Simple(isDeclaredBy(anyOf((Object[]) type))));
+                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf((Object[]) type))));
     }
 
     /**
@@ -1001,15 +1008,21 @@ public class ByteBuddy {
     }
 
     /**
-     * Intercepts a given selection of byte code methods that can be a method or a constructor.
+     * Intercepts a given selection of byte code level methods, i.e. a method, a constructor or the type initializer.
      *
      * @param methodMatcher The method matcher representing all byte code methods to intercept.
      * @return A matched method interception for the given selection.
      */
     public MatchedMethodInterception invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
-        return invokeable(new LatentMethodMatcher.Simple(nonNull(methodMatcher)));
+        return invokeable(new LatentMethodMatcher.Resolved(nonNull(methodMatcher)));
     }
 
+    /**
+     * Intercepts a given selection of byte code level methods, i.e. a method, a constructor or the type initializer.
+     *
+     * @param methodMatcher The latent method matcher representing all byte code methods to intercept.
+     * @return A matched method interception for the given selection.
+     */
     public MatchedMethodInterception invokeable(LatentMethodMatcher methodMatcher) {
         return new MatchedMethodInterception(nonNull(methodMatcher));
     }
@@ -1052,6 +1065,7 @@ public class ByteBuddy {
                 && methodRegistry.equals(byteBuddy.methodRegistry)
                 && modifiers.equals(byteBuddy.modifiers)
                 && namingStrategy.equals(byteBuddy.namingStrategy)
+                && auxiliaryTypeNamingStrategy.equals(byteBuddy.auxiliaryTypeNamingStrategy)
                 && typeAttributeAppender.equals(byteBuddy.typeAttributeAppender);
     }
 
@@ -1059,6 +1073,7 @@ public class ByteBuddy {
     public int hashCode() {
         int result = classFileVersion.hashCode();
         result = 31 * result + namingStrategy.hashCode();
+        result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
         result = 31 * result + interfaceTypes.hashCode();
         result = 31 * result + ignoredMethods.hashCode();
         result = 31 * result + bridgeMethodResolverFactory.hashCode();
@@ -1077,6 +1092,7 @@ public class ByteBuddy {
         return "ByteBuddy{" +
                 "classFileVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
+                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", interfaceTypes=" + interfaceTypes +
                 ", ignoredMethods=" + ignoredMethods +
                 ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
@@ -1393,7 +1409,19 @@ public class ByteBuddy {
         @Override
         public String toString() {
             return "ByteBuddy.MethodAnnotationTarget{" +
-                    "base=" + super.toString() +
+                    "classFileVersion=" + classFileVersion +
+                    ", namingStrategy=" + namingStrategy +
+                    ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                    ", interfaceTypes=" + interfaceTypes +
+                    ", ignoredMethods=" + ignoredMethods +
+                    ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                    ", classVisitorWrapperChain=" + classVisitorWrapperChain +
+                    ", methodRegistry=" + methodRegistry +
+                    ", modifiers=" + modifiers +
+                    ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                    ", typeAttributeAppender=" + typeAttributeAppender +
+                    ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
+                    ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                     ", methodMatcher=" + methodMatcher +
                     ", prepareable=" + handler +
                     ", attributeAppenderFactory=" + attributeAppenderFactory +
@@ -1489,6 +1517,7 @@ public class ByteBuddy {
             return "ByteBuddy.OptionalMethodInterception{" +
                     "classFileVersion=" + classFileVersion +
                     ", namingStrategy=" + namingStrategy +
+                    ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                     ", interfaceTypes=" + interfaceTypes +
                     ", ignoredMethods=" + ignoredMethods +
                     ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +

@@ -88,7 +88,7 @@ public interface ConstructorStrategy {
 
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Simple(isConstructor()),
+                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
                         new MethodRegistry.Handler.ForInstrumentation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory);
             }
@@ -112,7 +112,7 @@ public interface ConstructorStrategy {
 
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Simple(isConstructor()),
+                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
                         new MethodRegistry.Handler.ForInstrumentation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory);
             }
@@ -134,7 +134,7 @@ public interface ConstructorStrategy {
 
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Simple(isConstructor()),
+                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
                         new MethodRegistry.Handler.ForInstrumentation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory);
             }

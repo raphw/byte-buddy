@@ -34,8 +34,8 @@ public class InlineInstrumentationMatcher implements LatentMethodMatcher {
     }
 
     @Override
-    public ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription) {
-        return not(ignoredMethods).and(isOverridable().or(isDeclaredBy(typeDescription))
-                .or(isDeclaredBy(typeDescription).and(not(predefinedMethodSignatures))));
+    public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
+        return not(ignoredMethods).and(isOverridable().or(isDeclaredBy(instrumentedType))
+                .or(isDeclaredBy(instrumentedType).and(not(predefinedMethodSignatures))));
     }
 }

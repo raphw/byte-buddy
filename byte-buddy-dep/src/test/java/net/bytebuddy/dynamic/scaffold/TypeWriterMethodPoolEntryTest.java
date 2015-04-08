@@ -23,7 +23,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class TypeWriterMethodPoolEntryTest {
+public class TypeWriterMethodPoolEntryTest { // TODO: Redo
 //
 //    private static final int MODIFIER = 42;
 //

@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.type;
 
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
@@ -9,6 +10,8 @@ import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.mockito.Mock;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
@@ -26,6 +29,12 @@ public abstract class AbstractInstrumentedTypeTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
+    private MethodVisitor methodVisitor;
+
+    @Mock
+    private Instrumentation.Context instrumentationContext;
 
     protected abstract InstrumentedType makePlainInstrumentedType();
 
@@ -160,7 +169,8 @@ public abstract class AbstractInstrumentedTypeTest {
         instrumentedType = instrumentedType.withInitializer(stackManipulation);
         InstrumentedType.TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
         assertThat(typeInitializer.isDefined(), is(true));
-//        assertThat(typeInitializer.getStackManipulation(), is(stackManipulation));
+        typeInitializer.apply(methodVisitor, instrumentationContext);
+        verify(stackManipulation).apply(methodVisitor, instrumentationContext);
     }
 
     @Test
@@ -168,10 +178,14 @@ public abstract class AbstractInstrumentedTypeTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         StackManipulation first = mock(StackManipulation.class), second = mock(StackManipulation.class);
+        when(first.apply(methodVisitor, instrumentationContext)).thenReturn(new StackManipulation.Size(0, 0));
+        when(second.apply(methodVisitor, instrumentationContext)).thenReturn(new StackManipulation.Size(0, 0));
         instrumentedType = instrumentedType.withInitializer(first).withInitializer(second);
         InstrumentedType.TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
         assertThat(typeInitializer.isDefined(), is(true));
-//        assertThat(typeInitializer.getStackManipulation(), is((StackManipulation) new StackManipulation.Compound(first, second)));
+        typeInitializer.apply(methodVisitor, instrumentationContext);
+        verify(first).apply(methodVisitor, instrumentationContext);
+        verify(second).apply(methodVisitor, instrumentationContext);
     }
 
     @Test

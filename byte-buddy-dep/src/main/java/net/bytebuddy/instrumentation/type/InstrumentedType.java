@@ -115,6 +115,11 @@ public interface InstrumentedType extends TypeDescription {
          */
         TypeInitializer expandWith(StackManipulation stackManipulation);
 
+        /**
+         * Completes this type initializer with a return statement for a {@code void} method.
+         *
+         * @return A compound stack manipulation that terminates this stack manipulation.
+         */
         StackManipulation terminate();
 
         /**
@@ -139,7 +144,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public StackManipulation terminate() {
-                return null;
+                throw new IllegalStateException("Cannot terminate non-defined type initializer");
             }
 
             @Override
@@ -149,7 +154,7 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
-                return null;
+                throw new IllegalStateException("Cannot apply non-defined type initializer");
             }
 
             @Override

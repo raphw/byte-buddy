@@ -23,6 +23,13 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
  */
 public interface MethodRegistry {
 
+    /**
+     * Prepends matched handler and attribute appender factory to this registry.
+     * @param methodMatcher A latent method matcher to identify when handler and factory are to be applied.
+     * @param handler The handler to apply for any matched method.
+     * @param attributeAppenderFactory The attribute appeder
+     * @return
+     */
     MethodRegistry prepend(LatentMethodMatcher methodMatcher,
                            Handler handler,
                            MethodAttributeAppender.Factory attributeAppenderFactory);
@@ -209,10 +216,10 @@ public interface MethodRegistry {
                 }
             }
             MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
-            ElementMatcher<? super MethodDescription> instrumented = not(anyOf(instrumentations.keySet())).and(methodFilter.manifest(instrumentedType));
+            ElementMatcher<? super MethodDescription> instrumented = not(anyOf(instrumentations.keySet())).and(methodFilter.resolve(instrumentedType));
             for (MethodDescription methodDescription : finding.getInvokableMethods().filter(instrumented)) {
                 for (Entry entry : entries) {
-                    if (entry.manifest(instrumentedType).matches(methodDescription)) {
+                    if (entry.resolve(instrumentedType).matches(methodDescription)) {
                         instrumentations.put(methodDescription, entry);
                         break;
                     }
@@ -268,8 +275,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public ElementMatcher<? super MethodDescription> manifest(TypeDescription instrumentedType) {
-                return methodMatcher.manifest(instrumentedType);
+            public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
+                return methodMatcher.resolve(instrumentedType);
             }
 
             @Override

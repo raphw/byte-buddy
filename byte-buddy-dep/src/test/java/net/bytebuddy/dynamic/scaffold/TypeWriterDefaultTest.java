@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-public class TypeWriterDefaultTest {
+public class TypeWriterDefaultTest { // TODO: Redo
 //
 //    private static final byte[] MAIN = new byte[42], FIRST = new byte[42 * 2];
 //
