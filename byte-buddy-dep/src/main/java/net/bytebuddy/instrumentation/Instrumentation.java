@@ -559,17 +559,20 @@ public interface Instrumentation {
          */
         class Default implements Instrumentation.Context.ExtractableView, AuxiliaryType.MethodAccessorFactory {
 
+            /**
+             * Indicates that a field should be defined without a default value.
+             */
             private static final Object NO_DEFAULT_VALUE = null;
 
             /**
-             * The default name suffix to be appended to an accessor method.
+             * The name suffix to be appended to an accessor method.
              */
-            public static final String DEFAULT_ACCESSOR_METHOD_SUFFIX = "accessor";
+            public static final String ACCESSOR_METHOD_SUFFIX = "accessor";
 
             /**
-             * The default name suffix to be prepended to a cache field.
+             * The name prefix to be prepended to a field storing a cached value.
              */
-            public static final String DEFAULT_FIELD_CACHE_PREFIX = "cachedValue";
+            public static final String FIELD_CACHE_PREFIX = "cachedValue";
 
             /**
              * The instrumented type that this instance represents.
@@ -585,16 +588,6 @@ public interface Instrumentation {
              * The class file version that the instrumented type is written in.
              */
             private final ClassFileVersion classFileVersion;
-
-            /**
-             * The name suffix to be appended to an accessor method.
-             */
-            private final String accessorMethodSuffix;
-
-            /**
-             * The name prefix to be prepended to a cache field.
-             */
-            private final String fieldCachePrefix;
 
             /**
              * The naming strategy for naming auxiliary types that are registered.
@@ -643,41 +636,22 @@ public interface Instrumentation {
              */
             private boolean canRegisterFieldCache;
 
-            public Default(TypeDescription instrumentedType,
-                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                           InstrumentedType.TypeInitializer typeInitializer,
-                           ClassFileVersion classFileVersion) {
-                this(instrumentedType,
-                        auxiliaryTypeNamingStrategy,
-                        typeInitializer,
-                        classFileVersion,
-                        DEFAULT_ACCESSOR_METHOD_SUFFIX,
-                        DEFAULT_FIELD_CACHE_PREFIX);
-            }
-
             /**
-             * Creates a new delegate.
+             * Creates a new instrumentation context.
              *
              * @param instrumentedType            The description of the type that is currently subject of creation.
+             * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              * @param typeInitializer             The type initializer of the created instrumented type.
              * @param classFileVersion            The class file version of the created class.
-             * @param accessorMethodSuffix        A suffix that is added to any accessor method where the method name is
-             *                                    prefixed by the accessed method's name.
-             * @param fieldCachePrefix            A prefix that is added to any field cache.
-             * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              */
             public Default(TypeDescription instrumentedType,
                            AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                            InstrumentedType.TypeInitializer typeInitializer,
-                           ClassFileVersion classFileVersion,
-                           String accessorMethodSuffix,
-                           String fieldCachePrefix) {
+                           ClassFileVersion classFileVersion) {
                 this.instrumentedType = instrumentedType;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
                 this.classFileVersion = classFileVersion;
-                this.accessorMethodSuffix = accessorMethodSuffix;
-                this.fieldCachePrefix = fieldCachePrefix;
                 registeredAccessorMethods = new HashMap<Instrumentation.SpecialMethodInvocation, MethodDescription>();
                 registeredGetters = new HashMap<FieldDescription, MethodDescription>();
                 registeredSetters = new HashMap<FieldDescription, MethodDescription>();
@@ -693,7 +667,7 @@ public interface Instrumentation {
                 MethodDescription accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
                 if (accessorMethod == null) {
                     String name = String.format("%s$%s$%s", specialMethodInvocation.getMethodDescription().getInternalName(),
-                            accessorMethodSuffix,
+                            ACCESSOR_METHOD_SUFFIX,
                             randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
@@ -732,7 +706,7 @@ public interface Instrumentation {
                 MethodDescription accessorMethod = registeredGetters.get(fieldDescription);
                 if (accessorMethod == null) {
                     String name = String.format("%s$%s$%s", fieldDescription.getName(),
-                            accessorMethodSuffix,
+                            ACCESSOR_METHOD_SUFFIX,
                             randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
@@ -761,7 +735,7 @@ public interface Instrumentation {
                 MethodDescription accessorMethod = registeredSetters.get(fieldDescription);
                 if (accessorMethod == null) {
                     String name = String.format("%s$%s$%s", fieldDescription.getName(),
-                            accessorMethodSuffix,
+                            ACCESSOR_METHOD_SUFFIX,
                             randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
@@ -810,7 +784,7 @@ public interface Instrumentation {
                     return fieldCache;
                 }
                 validateFieldCacheAccessibility();
-                fieldCache = new FieldDescription.Latent(String.format("%s$%s", fieldCachePrefix, randomString.nextString()),
+                fieldCache = new FieldDescription.Latent(String.format("%s$%s", FIELD_CACHE_PREFIX, randomString.nextString()),
                         instrumentedType,
                         fieldType,
                         FIELD_CACHE_MODIFIER);
@@ -867,8 +841,6 @@ public interface Instrumentation {
                         "instrumentedType=" + instrumentedType +
                         ", typeInitializer=" + typeInitializer +
                         ", classFileVersion=" + classFileVersion +
-                        ", accessorMethodSuffix='" + accessorMethodSuffix + '\'' +
-                        ", fieldCachePrefix='" + fieldCachePrefix + '\'' +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", registeredAccessorMethods=" + registeredAccessorMethods +
                         ", registeredGetters=" + registeredGetters +
@@ -909,12 +881,13 @@ public interface Instrumentation {
                 }
 
                 /**
-                 * Returns the field value that is represented by this field cache entry.
+                 * Returns a stack manipulation where the represented value is stored in the given field.
                  *
-                 * @return The field value that is represented by this field cache entry.
+                 * @param fieldDescription A static field in which the value is to be stored.
+                 * @return A stack manipulation that represents this storage.
                  */
-                public StackManipulation getFieldValue() {
-                    return fieldValue;
+                public StackManipulation storeIn(FieldDescription fieldDescription) {
+                    return new Compound(this, FieldAccess.forField(fieldDescription).putter());
                 }
 
                 /**
@@ -955,12 +928,11 @@ public interface Instrumentation {
                             ", fieldType=" + fieldType +
                             '}';
                 }
-
-                public StackManipulation storeIn(FieldDescription fieldDescription) {
-                    return new Compound(this, FieldAccess.forField(fieldDescription).putter());
-                }
             }
 
+            /**
+             * An abstract method pool entry that delegates the implementation of a method to itself.
+             */
             protected abstract static class AbstractDelegationEntry extends TypeWriter.MethodPool.Entry.AbstractDefiningEntry implements ByteCodeAppender {
 
                 @Override
