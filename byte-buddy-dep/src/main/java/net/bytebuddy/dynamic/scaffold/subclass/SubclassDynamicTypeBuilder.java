@@ -15,6 +15,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.ArrayList;
@@ -30,34 +31,11 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  */
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
-    /**
-     * The constructor strategy that is applied by this builder.
-     */
     private final ConstructorStrategy constructorStrategy;
 
-    /**
-     * Creates a new immutable type builder for a subclassing a given class.
-     *
-     * @param classFileVersion                      The class file version for the created dynamic type.
-     * @param namingStrategy                        The naming strategy for naming the dynamic type.
-     * @param superType                             The super class that the dynamic type should extend.
-     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
-     * @param modifiers                             The modifiers to be represented by the dynamic type.
-     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
-     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
-     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
-     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
-     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
-     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
-     *                                              no specific appender was specified for a given field.
-     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
-     *                                              if no specific appender was specified for a given method.
-     * @param constructorStrategy                   The strategy for creating constructors when defining this dynamic type.
-     */
     public SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                       NamingStrategy namingStrategy,
+                                      AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                       TypeDescription superType,
                                       List<? extends TypeDescription> interfaceTypes,
                                       int modifiers,
@@ -73,6 +51,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       ConstructorStrategy constructorStrategy) {
         this(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 superType,
                 new ArrayList<TypeDescription>(interfaceTypes),
                 modifiers,
@@ -118,6 +97,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      */
     protected SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                          NamingStrategy namingStrategy,
+                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                          TypeDescription superType,
                                          List<TypeDescription> interfaceTypes,
                                          int modifiers,
@@ -135,6 +115,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          ConstructorStrategy constructorStrategy) {
         super(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 superType,
                 interfaceTypes,
                 modifiers,
@@ -155,6 +136,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     @Override
     protected DynamicType.Builder<T> materialize(ClassFileVersion classFileVersion,
                                                  NamingStrategy namingStrategy,
+                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  TypeDescription targetType,
                                                  List<TypeDescription> interfaceTypes,
                                                  int modifiers,
@@ -171,6 +153,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  List<MethodToken> methodTokens) {
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 targetType,
                 interfaceTypes,
                 modifiers,
@@ -190,31 +173,20 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
+        InstrumentedType instrumentedType = new SubclassInstrumentedType(classFileVersion, targetType, interfaceTypes, modifiers, namingStrategy);
         MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
                 .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
-                .prepare(
-                        applyConstructorStrategy(
-                                applyRecordedMembersTo(new SubclassInstrumentedType(classFileVersion,
-                                        targetType,
-                                        interfaceTypes,
-                                        modifiers,
-                                        namingStrategy))),
-                        new SubclassOverridableMethods(ignoredMethods))
-                .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory, SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE),
-                        methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()));
-        return new TypeWriter.Default<T>(compiledMethodRegistry.getInstrumentedType(),
-                compiledMethodRegistry.getLoadedTypeInitializer(),
-                compiledMethodRegistry.getTypeInitializer(),
-                Collections.<DynamicType>emptyList(),
-                classFileVersion,
-                new TypeWriter.Engine.ForCreation(compiledMethodRegistry.getInstrumentedType(),
-                        classFileVersion,
-                        compiledMethodRegistry.getInstrumentedMethods(),
-                        classVisitorWrapperChain,
-                        attributeAppender,
-                        fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
-                        compiledMethodRegistry))
-                .make();
+                .prepare(applyConstructorStrategy(applyRecordedMembersTo(instrumentedType)),
+                        methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
+                        isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType)))
+                .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+                        SubclassInstrumentationTarget.OriginTypeIdentifier.SUPER_TYPE));
+        return TypeWriter.Default.<T>forCreation(compiledMethodRegistry,
+                fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                auxiliaryTypeNamingStrategy,
+                classVisitorWrapperChain,
+                attributeAppender,
+                classFileVersion).make();
     }
 
     /**
@@ -232,52 +204,5 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     methodDescription.getModifiers());
         }
         return instrumentedType;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && super.equals(other)
-                && constructorStrategy.equals(((SubclassDynamicTypeBuilder) other).constructorStrategy);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + constructorStrategy.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "SubclassDynamicTypeBuilder{" +
-                "classFileVersion=" + classFileVersion +
-                ", namingStrategy=" + namingStrategy +
-                ", superType=" + targetType +
-                ", interfaceTypes=" + interfaceTypes +
-                ", modifiers=" + modifiers +
-                ", attributeAppender=" + attributeAppender +
-                ", ignoredMethods=" + ignoredMethods +
-                ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
-                ", classVisitorWrapperChain=" + classVisitorWrapperChain +
-                ", fieldRegistry=" + fieldRegistry +
-                ", methodRegistry=" + methodRegistry +
-                ", methodLookupEngineFactory=" + methodLookupEngineFactory +
-                ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
-                ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
-                ", constructorStrategy=" + constructorStrategy +
-                '}';
-    }
-
-    protected static class SubclassOverridableMethods implements MethodRegistry.LatentMethodMatcher {
-
-        private final ElementMatcher<? super MethodDescription> ignoredMethods;
-
-        public SubclassOverridableMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
-            this.ignoredMethods = ignoredMethods;
-        }
-
-        @Override
-        public ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription) {
-            return isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(typeDescription));
-        }
     }
 }

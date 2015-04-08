@@ -198,24 +198,18 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
      */
     public static class Factory implements Instrumentation.Target.Factory {
 
-        /**
-         * A factory for creating a bridge method resolver.
-         */
         private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
 
-        private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
+        private final MethodRebaseResolver methodRebaseResolver;
 
-        public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                       MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+        public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory, MethodRebaseResolver methodRebaseResolver) {
             this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
-            this.methodNameTransformer = methodNameTransformer;
+            this.methodRebaseResolver = methodRebaseResolver;
         }
 
         @Override
         public Instrumentation.Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods) {
-            return new RebaseInstrumentationTarget(finding,
-                    bridgeMethodResolverFactory,
-                    MethodRebaseResolver(new HashSet<MethodDescription>(instrumentedMethods), null, methodNameTransformer));
+            return new RebaseInstrumentationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver);
         }
     }
 }

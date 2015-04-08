@@ -161,7 +161,7 @@ public class SubclassInstrumentationTarget extends Instrumentation.Target.Abstra
         @Override
         public Instrumentation.Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods) {
             return new SubclassInstrumentationTarget(finding, bridgeMethodResolverFactory, originTypeIdentifier);
-        } // TODO: Change impl for changes
+        }
 
         @Override
         public boolean equals(Object other) {

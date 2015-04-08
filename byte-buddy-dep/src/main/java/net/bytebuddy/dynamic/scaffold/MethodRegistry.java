@@ -6,13 +6,14 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
+import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
@@ -20,21 +21,26 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
  */
 public interface MethodRegistry {
 
-    MethodRegistry prepend(LatentMethodMatcher latentMethodMatcher,
+    MethodRegistry prepend(LatentMethodMatcher methodMatcher,
                            Prepareable prepareable,
                            MethodAttributeAppender.Factory attributeAppenderFactory);
 
-    MethodRegistry append(LatentMethodMatcher latentMethodMatcher,
+    MethodRegistry append(LatentMethodMatcher methodMatcher,
                           Prepareable prepareable,
                           MethodAttributeAppender.Factory attributeAppenderFactory);
 
-    Prepared prepare(InstrumentedType instrumentedType, LatentMethodMatcher enforcedMethods);
+    Prepared prepare(InstrumentedType instrumentedType, MethodLookupEngine methodLookupEngine, ElementMatcher<? super MethodDescription> methodFilter);
 
     interface Prepareable {
 
         InstrumentedType prepare(InstrumentedType instrumentedType);
 
-        TypeWriter.MethodPool.Entry toEntry(Instrumentation.Target instrumentationTarget, MethodAttributeAppender attributeAppender);
+        Prepareable.Compiled compile(Instrumentation.Target instrumentationTarget);
+
+        interface Compiled {
+
+            TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender);
+        }
 
         class ForInstrumentation implements Prepareable {
 
@@ -50,12 +56,62 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Entry toEntry(Instrumentation.Target instrumentationTarget, MethodAttributeAppender attributeAppender) {
-                return new TypeWriter.MethodPool.Entry.ForImplementation(instrumentation.appender(instrumentationTarget), attributeAppender);
+            public Compiled compile(Instrumentation.Target instrumentationTarget) {
+                return new Compiled(instrumentation.appender(instrumentationTarget));
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentation.equals(((ForInstrumentation) other).instrumentation);
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentation.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Preparable.ForInstrumentation{" +
+                        "instrumentation=" + instrumentation +
+                        '}';
+            }
+
+            protected static class Compiled implements Prepareable.Compiled {
+
+                private final ByteCodeAppender byteCodeAppender;
+
+                protected Compiled(ByteCodeAppender byteCodeAppender) {
+                    this.byteCodeAppender = byteCodeAppender;
+                }
+
+                @Override
+                public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
+                    return new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, attributeAppender);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && byteCodeAppender.equals(((Compiled) other).byteCodeAppender);
+                }
+
+                @Override
+                public int hashCode() {
+                    return byteCodeAppender.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodRegistry.Preparable.ForInstrumentation.Compiled{" +
+                            "byteCodeAppender=" + byteCodeAppender +
+                            '}';
+                }
             }
         }
 
-        enum ForAbstractMethod implements Prepareable {
+        enum ForAbstractMethod implements Prepareable, Compiled {
 
             INSTANCE;
 
@@ -65,8 +121,18 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Entry toEntry(Instrumentation.Target instrumentationTarget, MethodAttributeAppender attributeAppender) {
+            public Compiled compile(Instrumentation.Target instrumentationTarget) {
+                return this;
+            }
+
+            @Override
+            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
                 return new TypeWriter.MethodPool.Entry.ForAbstractMethod(attributeAppender);
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Preparable.ForAbstractMethod." + name();
             }
         }
     }
@@ -75,9 +141,13 @@ public interface MethodRegistry {
 
         TypeDescription getInstrumentedType();
 
+        MethodList getInstrumentedMethods();
+
         LoadedTypeInitializer getLoadedTypeInitializer();
 
-        Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory, MethodLookupEngine methodLookupEngine);
+        InstrumentedType.TypeInitializer getTypeInitializer();
+
+        Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory);
     }
 
     interface Compiled extends TypeWriter.MethodPool {
@@ -89,63 +159,6 @@ public interface MethodRegistry {
         InstrumentedType.TypeInitializer getTypeInitializer();
 
         MethodList getInstrumentedMethods();
-    }
-
-    /**
-     * A latent method matcher represents a method matcher that might not yet be assembled because it misses
-     * information on the actual instrumented type.
-     */
-    interface LatentMethodMatcher {
-
-        /**
-         * Manifests a latent method matcher.
-         *
-         * @param typeDescription The description of the type that is subject to instrumentation.
-         * @return A method matcher that represents the manifested version of this latent method matcher for the
-         * given instrumented type description.
-         */
-        ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription);
-
-        /**
-         * An wrapper implementation for an already assembled method matcher.
-         */
-        class Simple implements LatentMethodMatcher {
-
-            /**
-             * The method matcher that is represented by this instance.
-             */
-            private final ElementMatcher<? super MethodDescription> methodMatcher;
-
-            /**
-             * Creates a new wrapper.
-             *
-             * @param methodMatcher The method matcher to be wrapped by this instance.
-             */
-            public Simple(ElementMatcher<? super MethodDescription> methodMatcher) {
-                this.methodMatcher = methodMatcher;
-            }
-
-            @Override
-            public ElementMatcher<? super MethodDescription> manifest(TypeDescription instrumentedType) {
-                return methodMatcher;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && methodMatcher.equals(((Simple) other).methodMatcher);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodMatcher.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.LatentMethodMatcher.Simple{methodMatcher=" + methodMatcher + '}';
-            }
-        }
     }
 
     class Default implements MethodRegistry {
@@ -161,60 +174,80 @@ public interface MethodRegistry {
         }
 
         @Override
-        public MethodRegistry prepend(LatentMethodMatcher latentMethodMatcher,
+        public MethodRegistry prepend(LatentMethodMatcher methodMatcher,
                                       Prepareable prepareable,
                                       MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return new Default(join(new Entry(latentMethodMatcher, prepareable, attributeAppenderFactory), entries));
+            return new Default(join(new Entry(methodMatcher, prepareable, attributeAppenderFactory), entries));
         }
 
         @Override
-        public MethodRegistry append(LatentMethodMatcher latentMethodMatcher,
+        public MethodRegistry append(LatentMethodMatcher methodMatcher,
                                      Prepareable prepareable,
                                      MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return new Default(join(entries, new Entry(latentMethodMatcher, prepareable, attributeAppenderFactory)));
+            return new Default(join(entries, new Entry(methodMatcher, prepareable, attributeAppenderFactory)));
         }
 
         @Override
-        public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType, LatentMethodMatcher enforcedMethods) {
-            List<Entry> prefixedEntries = new LinkedList<Entry>();
+        public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
+                                               MethodLookupEngine methodLookupEngine,
+                                               ElementMatcher<? super MethodDescription> methodFilter) {
+            MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
+            Map<MethodDescription, Entry> instrumentations = new HashMap<MethodDescription, Entry>();
             Set<Prepareable> prepareables = new HashSet<Prepareable>(entries.size());
-            for (Entry entry : entries) {
-                // Only call the preparation method of an instrumentation if the instrumentation was not yet prepared.
-                if (prepareables.add(entry.getPrepareable())) {
-                    MethodList beforePreparation = instrumentedType.getDeclaredMethods();
-                    instrumentedType = entry.getPrepareable().prepare(instrumentedType);
-                    // If an instrumentation adds methods to the instrumented type, those methods should be
-                    // handled by this instrumentation. Thus an additional matcher that matches these exact methods
-                    // is registered, in case that the instrumentation actually added methods. These matcher must be
-                    // prepended to any other entry such that they become of higher precedence to manually registered
-                    // method interceptions. Otherwise, those user interceptions could match the methods that were
-                    // added by the instrumentation.
-                    if (beforePreparation.size() < instrumentedType.getDeclaredMethods().size()) {
-                        prefixedEntries.add(new Entry(new ListDifferenceMethodMatcher(beforePreparation, instrumentedType.getDeclaredMethods()),
-                                entry.getPrepareable(),
-                                MethodAttributeAppender.NoOp.INSTANCE));
+            int helperMethodIndex = instrumentedType.getDeclaredMethods().size();
+            for (MethodDescription methodDescription : finding.getInvokableMethods().filter(methodFilter)) {
+                for (Entry entry : entries) {
+                    if (entry.matches(methodDescription, instrumentedType)) {
+                        if (prepareables.add(entry.getPrepareable())) {
+                            instrumentedType = entry.getPrepareable().prepare(instrumentedType);
+                            MethodList helperMethods = instrumentedType.getDeclaredMethods();
+                            for (MethodDescription helperMethod : helperMethods.subList(helperMethodIndex, helperMethods.size())) {
+                                instrumentations.put(helperMethod, entry);
+                            }
+                            helperMethodIndex = helperMethods.size();
+                        }
+                        instrumentations.put(methodDescription, entry);
                     }
                 }
             }
-            return new Prepared(instrumentedType.detach(),
+            return new Prepared(instrumentations,
+                    instrumentedType.detach(),
                     instrumentedType.getLoadedTypeInitializer(),
                     instrumentedType.getTypeInitializer(),
-                    enforcedMethods.manifest(instrumentedType),
-                    join(prefixedEntries, entries));
+                    finding);
         }
 
-        protected static class Entry {
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && entries.equals(((Default) other).entries);
 
-            private final LatentMethodMatcher latentMethodMatcher;
+        }
+
+        @Override
+        public int hashCode() {
+            return entries.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodRegistry.Default{" +
+                    "entries=" + entries +
+                    '}';
+        }
+
+        protected static class Entry implements LatentMethodMatcher {
+
+            private final LatentMethodMatcher methodMatcher;
 
             private final Prepareable prepareable;
 
             private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
-            protected Entry(LatentMethodMatcher latentMethodMatcher,
+            protected Entry(LatentMethodMatcher methodMatcher,
                             Prepareable prepareable,
                             MethodAttributeAppender.Factory attributeAppenderFactory) {
-                this.latentMethodMatcher = latentMethodMatcher;
+                this.methodMatcher = methodMatcher;
                 this.prepareable = prepareable;
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
@@ -223,108 +256,46 @@ public interface MethodRegistry {
                 return prepareable;
             }
 
-            protected Manifest manifest(TypeDescription instrumentedType) {
-                return new Manifest(latentMethodMatcher.manifest(instrumentedType), prepareable, attributeAppenderFactory);
-            }
-
-            protected static class Manifest implements ElementMatcher<MethodDescription> {
-
-                private final ElementMatcher<? super MethodDescription> methodMatcher;
-
-                private final Prepareable prepareable;
-
-                private final MethodAttributeAppender.Factory attributeAppenderFactory;
-
-                public Manifest(ElementMatcher<? super MethodDescription> methodMatcher,
-                                Prepareable prepareable,
-                                MethodAttributeAppender.Factory attributeAppenderFactory) {
-                    this.methodMatcher = methodMatcher;
-                    this.prepareable = prepareable;
-                    this.attributeAppenderFactory = attributeAppenderFactory;
-                }
-
-                @Override
-                public boolean matches(MethodDescription target) {
-                    return methodMatcher.matches(target);
-                }
-
-                public Compiled compile(Instrumentation.Target instrumentationTarget) {
-                    return new Compiled(methodMatcher, prepareable.toEntry(instrumentationTarget,
-                            attributeAppenderFactory.make(instrumentationTarget.getTypeDescription())));
-                }
-            }
-
-            protected static class Compiled implements ElementMatcher<MethodDescription> {
-
-                private final ElementMatcher<? super MethodDescription> elementMatcher;
-
-                private final TypeWriter.MethodPool.Entry entry;
-
-                public Compiled(ElementMatcher<? super MethodDescription> elementMatcher, TypeWriter.MethodPool.Entry entry) {
-                    this.elementMatcher = elementMatcher;
-                    this.entry = entry;
-                }
-
-                @Override
-                public boolean matches(MethodDescription target) {
-                    return elementMatcher.matches(target);
-                }
-
-                public TypeWriter.MethodPool.Entry getEntry() {
-                    return entry;
-                }
-            }
-        }
-
-        /**
-         * A method matcher that matches methods that are found in only one of two lists.
-         */
-        protected static class ListDifferenceMethodMatcher implements ElementMatcher<MethodDescription>, LatentMethodMatcher {
-
-            /**
-             * The methods that are matched by this instance.
-             */
-            private final MethodList matchedMethods;
-
-            /**
-             * Creates a new list difference method matcher.
-             *
-             * @param beforeMethods A list of methods that should not be matched.
-             * @param afterMethods  The same list after adding additional methods. The order of the methods in
-             *                      this list must not be altered.
-             */
-            protected ListDifferenceMethodMatcher(MethodList beforeMethods, MethodList afterMethods) {
-                matchedMethods = afterMethods.subList(beforeMethods.size(), afterMethods.size());
+            protected MethodAttributeAppender.Factory getAppenderFactory() {
+                return attributeAppenderFactory;
             }
 
             @Override
-            public boolean matches(MethodDescription methodDescription) {
-                return matchedMethods.filter(is(methodDescription)).size() == 1;
-            }
-
-            @Override
-            public ElementMatcher<? super MethodDescription> manifest(TypeDescription typeDescription) {
-                return this;
+            public boolean matches(MethodDescription methodDescription, TypeDescription instrumentedType) {
+                return methodMatcher.matches(methodDescription, instrumentedType);
             }
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && matchedMethods.equals(((ListDifferenceMethodMatcher) other).matchedMethods);
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Entry entry = (Entry) other;
+                return methodMatcher.equals(entry.methodMatcher)
+                        && prepareable.equals(entry.prepareable)
+                        && attributeAppenderFactory.equals(entry.attributeAppenderFactory);
             }
 
             @Override
             public int hashCode() {
-                return matchedMethods.hashCode();
+                int result = methodMatcher.hashCode();
+                result = 31 * result + prepareable.hashCode();
+                result = 31 * result + attributeAppenderFactory.hashCode();
+                return result;
             }
 
             @Override
             public String toString() {
-                return "oneOf(" + matchedMethods + ')';
+                return "MethodRegistry.Default.Entry{" +
+                        "methodMatcher=" + methodMatcher +
+                        ", prepareable=" + prepareable +
+                        ", attributeAppenderFactory=" + attributeAppenderFactory +
+                        '}';
             }
         }
 
         protected static class Prepared implements MethodRegistry.Prepared {
+
+            private final Map<MethodDescription, Entry> instrumentations;
 
             private final TypeDescription instrumentedType;
 
@@ -332,20 +303,17 @@ public interface MethodRegistry {
 
             private final InstrumentedType.TypeInitializer typeInitializer;
 
-            private final ElementMatcher<? super MethodDescription> ignoredMethods;
+            private final MethodLookupEngine.Finding finding;
 
-            private final List<Default.Entry> entries;
-
-            public Prepared(TypeDescription instrumentedType,
+            public Prepared(Map<MethodDescription, Entry> instrumentations,
+                            TypeDescription instrumentedType,
                             LoadedTypeInitializer loadedTypeInitializer,
-                            InstrumentedType.TypeInitializer typeInitializer,
-                            ElementMatcher<? super MethodDescription> ignoredMethods,
-                            List<Default.Entry> entries) {
+                            InstrumentedType.TypeInitializer typeInitializer, MethodLookupEngine.Finding finding) {
+                this.instrumentations = instrumentations;
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
-                this.ignoredMethods = ignoredMethods;
-                this.entries = entries;
+                this.finding = finding;
             }
 
             @Override
@@ -359,90 +327,147 @@ public interface MethodRegistry {
             }
 
             @Override
-            public MethodRegistry.Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory, MethodLookupEngine methodLookupEngine) {
-                Map<Entry, Entry.Manifest> manifestationCache = new HashMap<Entry, Entry.Manifest>(entries.size());
-                List<Entry.Manifest> manifestEntries = new ArrayList<Entry.Manifest>(entries.size());
-                for (Entry entry : entries) {
-                    Entry.Manifest manifestEntry = manifestationCache.get(entry);
-                    if (manifestEntry == null) {
-                        manifestEntry = entry.manifest(instrumentedType);
-                        manifestationCache.put(entry, manifestEntry);
-                    }
-                    manifestEntries.add(manifestEntry);
-                }
-                MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
-                MethodList instrumentedMethods = finding.getInvokableMethods().filter(not(matchesAny(manifestEntries)).or(ignoredMethods));
-                Instrumentation.Target instrumentationTarget = instrumentationTargetFactory.make(finding, instrumentedMethods);
-                Map<Entry.Manifest, Entry.Compiled> compilationCache = new HashMap<Entry.Manifest, Entry.Compiled>(entries.size());
-                List<Entry.Compiled> compiledEntries = new ArrayList<Entry.Compiled>(entries.size());
-                for (Entry.Manifest entry : manifestEntries) {
-                    Entry.Compiled compiledEntry = compilationCache.get(entry);
-                    if (compiledEntry == null) {
-                        compiledEntry = entry.compile(instrumentationTarget);
-                        compilationCache.put(entry, compiledEntry);
-                    }
-                    compiledEntries.add(compiledEntry);
-                }
-                return new Compiled(instrumentedType,
-                        loadedTypeInitializer,
-                        typeInitializer,
-                        instrumentedMethods,
-                        compiledEntries);
+            public InstrumentedType.TypeInitializer getTypeInitializer() {
+                return typeInitializer;
             }
 
-            protected static class Compiled implements MethodRegistry.Compiled {
+            @Override
+            public MethodList getInstrumentedMethods() {
+                return new MethodList.Explicit(new ArrayList<MethodDescription>(instrumentations.keySet()));
+            }
 
-                private final TypeDescription instrumentedType;
-
-                private final LoadedTypeInitializer loadedTypeInitializer;
-
-                private final InstrumentedType.TypeInitializer typeInitializer;
-
-                private final MethodList instrumentedMethods;
-
-                private final List<Default.Entry.Compiled> compiledEntries;
-
-                public Compiled(TypeDescription instrumentedType,
-                                LoadedTypeInitializer loadedTypeInitializer,
-                                InstrumentedType.TypeInitializer typeInitializer,
-                                MethodList instrumentedMethods,
-                                List<Default.Entry.Compiled> compiledEntries) {
-                    this.instrumentedType = instrumentedType;
-                    this.loadedTypeInitializer = loadedTypeInitializer;
-                    this.typeInitializer = typeInitializer;
-                    this.instrumentedMethods = instrumentedMethods;
-                    this.compiledEntries = compiledEntries;
-                }
-
-                @Override
-                public TypeDescription getInstrumentedType() {
-                    return instrumentedType;
-                }
-
-                @Override
-                public LoadedTypeInitializer getLoadedTypeInitializer() {
-                    return loadedTypeInitializer;
-                }
-
-                @Override
-                public InstrumentedType.TypeInitializer getTypeInitializer() {
-                    return typeInitializer;
-                }
-
-                @Override
-                public MethodList getInstrumentedMethods() {
-                    return instrumentedMethods;
-                }
-
-                @Override
-                public Entry target(MethodDescription methodDescription) {
-                    for (Default.Entry.Compiled compiledEntry : compiledEntries) {
-                        if (compiledEntry.matches(methodDescription)) {
-                            return compiledEntry.getEntry();
-                        }
+            @Override
+            public MethodRegistry.Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory) {
+                Map<Prepareable, Prepareable.Compiled> compilationCache = new HashMap<Prepareable, Prepareable.Compiled>(instrumentations.size());
+                Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(instrumentations.size());
+                Map<MethodDescription, TypeWriter.MethodPool.Entry> entries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>(instrumentations.size());
+                Instrumentation.Target instrumentationTarget = instrumentationTargetFactory.make(finding, getInstrumentedMethods());
+                for (Map.Entry<MethodDescription, Entry> entry : instrumentations.entrySet()) {
+                    Prepareable.Compiled cachedEntry = compilationCache.get(entry.getValue().getPrepareable());
+                    if (cachedEntry == null) {
+                        cachedEntry = entry.getValue().getPrepareable().compile(instrumentationTarget);
+                        compilationCache.put(entry.getValue().getPrepareable(), cachedEntry);
                     }
-                    throw new IllegalArgumentException("Not an instrumented method: " + methodDescription);
+                    MethodAttributeAppender cachedAttributeAppender = attributeAppenderCache.get(entry.getValue().getAppenderFactory());
+                    if (cachedAttributeAppender == null) {
+                        cachedAttributeAppender = entry.getValue().getAppenderFactory().make(instrumentedType);
+                        attributeAppenderCache.put(entry.getValue().getAppenderFactory(), cachedAttributeAppender);
+                    }
+                    entries.put(entry.getKey(), cachedEntry.assemble(cachedAttributeAppender));
                 }
+                return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Prepared prepared = (Prepared) other;
+                return instrumentations.equals(prepared.instrumentations)
+                        && instrumentedType.equals(prepared.instrumentedType)
+                        && loadedTypeInitializer.equals(prepared.loadedTypeInitializer)
+                        && typeInitializer.equals(prepared.typeInitializer)
+                        && finding.equals(prepared.finding);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentations.hashCode();
+                result = 31 * result + instrumentedType.hashCode();
+                result = 31 * result + loadedTypeInitializer.hashCode();
+                result = 31 * result + typeInitializer.hashCode();
+                result = 31 * result + finding.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Default.Prepared{" +
+                        "instrumentations=" + instrumentations +
+                        ", instrumentedType=" + instrumentedType +
+                        ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
+                        ", finding=" + finding +
+                        '}';
+            }
+        }
+
+        protected static class Compiled implements MethodRegistry.Compiled {
+
+            private final TypeDescription instrumentedType;
+
+            private final LoadedTypeInitializer loadedTypeInitializer;
+
+            private final InstrumentedType.TypeInitializer typeInitializer;
+
+            private final Map<MethodDescription, Entry> instrumentations;
+
+            public Compiled(TypeDescription instrumentedType,
+                            LoadedTypeInitializer loadedTypeInitializer,
+                            InstrumentedType.TypeInitializer typeInitializer,
+                            Map<MethodDescription, Entry> instrumentations) {
+                this.instrumentedType = instrumentedType;
+                this.loadedTypeInitializer = loadedTypeInitializer;
+                this.typeInitializer = typeInitializer;
+                this.instrumentations = instrumentations;
+            }
+
+            @Override
+            public TypeDescription getInstrumentedType() {
+                return instrumentedType;
+            }
+
+            @Override
+            public LoadedTypeInitializer getLoadedTypeInitializer() {
+                return loadedTypeInitializer;
+            }
+
+            @Override
+            public InstrumentedType.TypeInitializer getTypeInitializer() {
+                return typeInitializer;
+            }
+
+            @Override
+            public MethodList getInstrumentedMethods() {
+                return new MethodList.Explicit(new ArrayList<MethodDescription>(instrumentations.keySet()));
+            }
+
+            @Override
+            public Entry target(MethodDescription methodDescription) {
+                Entry entry = instrumentations.get(methodDescription);
+                return entry == null
+                        ? Entry.ForSkippedMethod.INSTANCE
+                        : entry;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Compiled compiled = (Compiled) other;
+                return instrumentedType.equals(compiled.instrumentedType)
+                        && loadedTypeInitializer.equals(compiled.loadedTypeInitializer)
+                        && typeInitializer.equals(compiled.typeInitializer)
+                        && instrumentations.equals(compiled.instrumentations);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentedType.hashCode();
+                result = 31 * result + loadedTypeInitializer.hashCode();
+                result = 31 * result + typeInitializer.hashCode();
+                result = 31 * result + instrumentations.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Default.Compiled{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
+                        ", instrumentations=" + instrumentations +
+                        '}';
             }
         }
     }

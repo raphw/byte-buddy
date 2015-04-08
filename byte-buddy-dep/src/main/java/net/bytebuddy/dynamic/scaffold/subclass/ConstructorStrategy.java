@@ -6,6 +6,7 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -56,6 +57,11 @@ public interface ConstructorStrategy {
             public MethodList extractConstructors(TypeDescription superType) {
                 return new MethodList.Empty();
             }
+
+            @Override
+            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+                return methodRegistry;
+            }
         },
 
         /**
@@ -79,6 +85,13 @@ public interface ConstructorStrategy {
                             "is visible to %s", instrumentedType.getSupertype(), instrumentedType));
                 }
             }
+
+            @Override
+            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+                return methodRegistry.append(new LatentMethodMatcher.Simple(isConstructor()),
+                        new MethodRegistry.Prepareable.ForInstrumentation(SuperMethodCall.INSTANCE),
+                        defaultMethodAttributeAppenderFactory);
+            }
         },
 
         /**
@@ -96,6 +109,13 @@ public interface ConstructorStrategy {
                         : superType.getDeclaredMethods()
                         .filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)));
             }
+
+            @Override
+            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+                return methodRegistry.append(new LatentMethodMatcher.Simple(isConstructor()),
+                        new MethodRegistry.Prepareable.ForInstrumentation(SuperMethodCall.INSTANCE),
+                        defaultMethodAttributeAppenderFactory);
+            }
         },
 
         /**
@@ -111,24 +131,14 @@ public interface ConstructorStrategy {
                         ? new MethodList.Empty()
                         : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()));
             }
-        };
 
-        @Override
-        public MethodRegistry inject(MethodRegistry methodRegistry,
-                                     MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-            switch (this) {
-                case NO_CONSTRUCTORS:
-                    return methodRegistry;
-                case DEFAULT_CONSTRUCTOR:
-                case IMITATE_SUPER_TYPE:
-                case IMITATE_SUPER_TYPE_PUBLIC:
-                    return methodRegistry.append(new MethodRegistry.LatentMethodMatcher.Simple(isConstructor()),
-                            new MethodRegistry.Prepareable.ForInstrumentation(SuperMethodCall.INSTANCE),
-                            defaultMethodAttributeAppenderFactory);
-                default:
-                    throw new AssertionError();
+            @Override
+            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+                return methodRegistry.append(new LatentMethodMatcher.Simple(isConstructor()),
+                        new MethodRegistry.Prepareable.ForInstrumentation(SuperMethodCall.INSTANCE),
+                        defaultMethodAttributeAppenderFactory);
             }
-        }
+        };
 
         @Override
         public String toString() {

@@ -4,7 +4,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
@@ -17,7 +16,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodVariable
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
-import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -567,15 +565,17 @@ public interface Instrumentation {
          */
         class Default implements Instrumentation.Context.ExtractableView, AuxiliaryType.MethodAccessorFactory {
 
+            private static final Object NO_DEFAULT_VALUE = null;
+
             /**
              * The default name suffix to be appended to an accessor method.
              */
-            private static final String DEFAULT_ACCESSOR_METHOD_SUFFIX = "accessor";
+            public static final String DEFAULT_ACCESSOR_METHOD_SUFFIX = "accessor";
 
             /**
              * The default name suffix to be prepended to a cache field.
              */
-            private static final String DEFAULT_FIELD_CACHE_PREFIX = "cachedValue";
+            public static final String DEFAULT_FIELD_CACHE_PREFIX = "cachedValue";
 
             /**
              * The instrumented type that this instance represents.
@@ -605,7 +605,7 @@ public interface Instrumentation {
             /**
              * The naming strategy for naming auxiliary types that are registered.
              */
-            private final AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy;
+            private final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
             /**
              * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation.
@@ -649,23 +649,16 @@ public interface Instrumentation {
              */
             private boolean canRegisterFieldCache;
 
-            /**
-             * Creates a new delegate. This constructor implicitly defines default naming strategies for created accessor
-             * method and registered auxiliary types.
-             *
-             * @param instrumentedType The description of the type that is currently subject of creation.
-             * @param typeInitializer  The type initializer of the created instrumented type.
-             * @param classFileVersion The class file version of the created class.
-             */
             public Default(TypeDescription instrumentedType,
+                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                            InstrumentedType.TypeInitializer typeInitializer,
                            ClassFileVersion classFileVersion) {
                 this(instrumentedType,
+                        auxiliaryTypeNamingStrategy,
                         typeInitializer,
                         classFileVersion,
                         DEFAULT_ACCESSOR_METHOD_SUFFIX,
-                        DEFAULT_FIELD_CACHE_PREFIX,
-                        new AuxiliaryTypeNamingStrategy.SuffixingRandom(DEFAULT_ACCESSOR_METHOD_SUFFIX));
+                        DEFAULT_FIELD_CACHE_PREFIX);
             }
 
             /**
@@ -680,17 +673,17 @@ public interface Instrumentation {
              * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              */
             public Default(TypeDescription instrumentedType,
+                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                            InstrumentedType.TypeInitializer typeInitializer,
                            ClassFileVersion classFileVersion,
                            String accessorMethodSuffix,
-                           String fieldCachePrefix,
-                           AuxiliaryTypeNamingStrategy auxiliaryTypeNamingStrategy) {
+                           String fieldCachePrefix) {
                 this.instrumentedType = instrumentedType;
+                this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
                 this.classFileVersion = classFileVersion;
                 this.accessorMethodSuffix = accessorMethodSuffix;
                 this.fieldCachePrefix = fieldCachePrefix;
-                this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 registeredAccessorMethods = new HashMap<Instrumentation.SpecialMethodInvocation, MethodDescription>();
                 registeredGetters = new HashMap<FieldDescription, MethodDescription>();
                 registeredSetters = new HashMap<FieldDescription, MethodDescription>();
@@ -735,8 +728,7 @@ public interface Instrumentation {
              * @param specialMethodInvocation The special method invocation that the accessor method should invoke.
              * @param accessorMethod          The accessor method for this invocation.
              */
-            private void registerAccessor(Instrumentation.SpecialMethodInvocation specialMethodInvocation,
-                                          MethodDescription accessorMethod) {
+            private void registerAccessor(Instrumentation.SpecialMethodInvocation specialMethodInvocation, MethodDescription accessorMethod) {
                 registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
                 accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
             }
@@ -765,8 +757,7 @@ public interface Instrumentation {
              * @param fieldDescription The field to read.
              * @param accessorMethod   The accessor method for this field.
              */
-            private void registerGetter(FieldDescription fieldDescription,
-                                        MethodDescription accessorMethod) {
+            private void registerGetter(FieldDescription fieldDescription, MethodDescription accessorMethod) {
                 registeredGetters.put(fieldDescription, accessorMethod);
                 accessorMethodEntries.put(accessorMethod, new FieldGetter(fieldDescription));
             }
@@ -795,8 +786,7 @@ public interface Instrumentation {
              * @param fieldDescription The field to write to.
              * @param accessorMethod   The accessor method for this field.
              */
-            private void registerSetter(FieldDescription fieldDescription,
-                                        MethodDescription accessorMethod) {
+            private void registerSetter(FieldDescription fieldDescription, MethodDescription accessorMethod) {
                 registeredSetters.put(fieldDescription, accessorMethod);
                 accessorMethodEntries.put(accessorMethod, new FieldSetter(fieldDescription));
             }
@@ -851,17 +841,21 @@ public interface Instrumentation {
             @Override
             public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
                 canRegisterFieldCache = false;
-                MethodDescription typeInitializer = MethodDescription.Latent.typeInitializerOf(instrumentedType);
-                FieldCacheAppender.resolve(methodPool.target(typeInitializer),
-                        registeredFieldCacheEntries,
-                        this.typeInitializer,
-                        injectedCode).apply(classVisitor, this, typeInitializer);
+                MethodDescription typeInitializerMethod = MethodDescription.Latent.typeInitializerOf(instrumentedType);
+                InstrumentedType.TypeInitializer typeInitializer = this.typeInitializer;
+                if (injectedCode.isDefined()) {
+                    typeInitializer = typeInitializer.expandWith(injectedCode.getStackManipulation());
+                }
+                for (FieldCacheEntry fieldCacheEntry : registeredFieldCacheEntries.keySet()) {
+                    typeInitializer = typeInitializer.expandWith(fieldCacheEntry);
+                }
+                TypeWriter.MethodPool.Entry initializerEntry = methodPool.target(typeInitializerMethod);
                 for (FieldDescription fieldDescription : registeredFieldCacheEntries.values()) {
                     classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
-                            null).visitEnd();
+                            NO_DEFAULT_VALUE).visitEnd();
                 }
                 for (Map.Entry<MethodDescription, TypeWriter.MethodPool.Entry> entry : accessorMethodEntries.entrySet()) {
                     entry.getValue().apply(classVisitor, this, entry.getKey());
@@ -888,152 +882,39 @@ public interface Instrumentation {
                         '}';
             }
 
-            /**
-             * Representation of a naming strategy for an auxiliary type.
-             */
-            public interface AuxiliaryTypeNamingStrategy {
+            protected static class InitializerEntry extends TypeWriter.MethodPool.Entry.AbstractDefiningEntry {
 
-                /**
-                 * NAmes an auxiliary type.
-                 *
-                 * @param auxiliaryType    The auxiliary type to name.
-                 * @param instrumentedType The instrumented type for which an auxiliary type is registered.
-                 * @return The fully qualified name for the given auxiliary type.
-                 */
-                String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType);
+                private final TypeWriter.MethodPool.Entry userEntry;
 
-                /**
-                 * A naming strategy for an auxiliary type which returns the instrumented type's name with a fixed extension
-                 * and a random number as a suffix. All generated names will be in the same package as the instrumented type.
-                 */
-                class SuffixingRandom implements AuxiliaryTypeNamingStrategy {
+                private final InstrumentedType.TypeInitializer typeInitializer;
 
-                    /**
-                     * The suffix to append to the instrumented type for creating names for the auxiliary types.
-                     */
-                    private final String suffix;
-
-                    /**
-                     * An instance for creating random values.
-                     */
-                    private final RandomString randomString;
-
-                    /**
-                     * Creates a new suffixing random naming strategy.
-                     *
-                     * @param suffix The suffix to extend to the instrumented type.
-                     */
-                    public SuffixingRandom(String suffix) {
-                        this.suffix = suffix;
-                        randomString = new RandomString();
-                    }
-
-                    @Override
-                    public String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType) {
-                        return String.format("%s$%s$%s", instrumentedType.getName(), suffix, randomString.nextString());
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && suffix.equals(((SuffixingRandom) other).suffix);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return suffix.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Instrumentation.Context.Default.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
-                    }
-                }
-            }
-
-            /**
-             * A byte code appender that writes the field cache entries to a given {@link org.objectweb.asm.MethodVisitor}.
-             */
-            protected static class FieldCacheAppender implements ByteCodeAppender {
-
-                /**
-                 * The map of registered field cache entries.
-                 */
-                private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
-
-                /**
-                 * Creates a new field cache appender.
-                 *
-                 * @param registeredFieldCacheEntries A map of field cache entries to their field descriptions.
-                 */
-                private FieldCacheAppender(Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries) {
-                    this.registeredFieldCacheEntries = registeredFieldCacheEntries;
-                }
-
-                /**
-                 * Resolves the actual method pool entry to be applied for a given set of field cache entries and the
-                 * provided {@link net.bytebuddy.instrumentation.Instrumentation.Context.ExtractableView.InjectedCode}.
-                 *
-                 * @param originalEntry               The original entry that is provided by the user.
-                 * @param registeredFieldCacheEntries A map of registered field cache entries.
-                 * @param typeInitializer             Any explicitly specified type initializer to execute.
-                 * @param injectedCode                Potential code that is to be injected into the type initializer.
-                 * @return The entry to apply to the type initializer.
-                 */
-                protected static TypeWriter.MethodPool.Entry resolve(TypeWriter.MethodPool.Entry originalEntry,
-                                                                     Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries,
-                                                                     InstrumentedType.TypeInitializer typeInitializer,
-                                                                     InjectedCode injectedCode) {
-                    if (registeredFieldCacheEntries.size() == 0 && !typeInitializer.isDefined() && !injectedCode.isDefined()) {
-                        return originalEntry;
-                    }
-                    StackManipulation manipulation = injectedCode.isDefined()
-                            ? injectedCode.getStackManipulation()
-                            : StackManipulation.LegalTrivial.INSTANCE;
-                    manipulation = typeInitializer.isDefined()
-                            ? new StackManipulation.Compound(typeInitializer.getStackManipulation(), manipulation)
-                            : manipulation;
-                    return null; // Refactor this!
-//                    ByteCodeAppender byteCodeAppender = originalEntry.getSort().isDefined()
-//                            ? new Compound(new Simple(manipulation), originalEntry.getByteCodeAppender())
-//                            : new Simple(manipulation, MethodReturn.VOID);
-//                    return new TypeWriter.MethodPool.Entry.Simple(new Compound(new FieldCacheAppender(registeredFieldCacheEntries), byteCodeAppender),
-//                            originalEntry.getSort().isDefined()
-//                                    ? originalEntry.getAttributeAppender()
-//                                    : MethodAttributeAppender.NoOp.INSTANCE);
-                }
-
-                // TODO: Does maybe not append code?
-
-                @Override
-                public Size apply(MethodVisitor methodVisitor,
-                                  Instrumentation.Context instrumentationContext,
-                                  MethodDescription instrumentedMethod) {
-                    StackManipulation[] fieldInitialization = new StackManipulation[registeredFieldCacheEntries.size()];
-                    int currentIndex = 0;
-                    for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
-                        fieldInitialization[currentIndex++] = new StackManipulation
-                                .Compound(entry.getKey().getFieldValue(), FieldAccess.forField(entry.getValue()).putter());
-                    }
-                    StackManipulation.Size stackSize = new StackManipulation.Compound(fieldInitialization)
-                            .apply(methodVisitor, instrumentationContext);
-                    return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+                public InitializerEntry(TypeWriter.MethodPool.Entry userEntry, InstrumentedType.TypeInitializer typeInitializer) {
+                    this.userEntry = userEntry;
+                    this.typeInitializer = typeInitializer;
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && registeredFieldCacheEntries.equals(((FieldCacheAppender) other).registeredFieldCacheEntries);
+                public Sort getSort() {
+                    return typeInitializer.isDefined() || userEntry.getSort().isDefined()
+                            ? Sort.DEFINE
+                            : Sort.SKIP;
                 }
 
                 @Override
-                public int hashCode() {
-                    return registeredFieldCacheEntries.hashCode();
+                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    if (userEntry.getSort().isDefined()) {
+                        userEntry.applyHead(methodVisitor, methodDescription);
+                    }
                 }
 
                 @Override
-                public String toString() {
-                    return "Instrumentation.Context.Default.FieldCacheAppender{registeredFieldCacheEntries=" + registeredFieldCacheEntries + '}';
+                public void applyBody(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription methodDescription) {
+
+                    if (userEntry.getSort().isImplemented()) {
+                        userEntry.applyBody(methodVisitor, instrumentationContext, methodDescription);
+                    } else {
+                        typeInitializer.terminate().apply(meth)
+                    }
                 }
             }
 
@@ -1041,7 +922,7 @@ public interface Instrumentation {
              * A field cache entry for uniquely identifying a cached field. A cached field is described by the stack
              * manipulation that loads the field's value onto the operand stack and the type of the field.
              */
-            protected static class FieldCacheEntry {
+            protected static class FieldCacheEntry implements StackManipulation {
 
                 /**
                  * The field value that is represented by this field cache entry.
@@ -1080,6 +961,16 @@ public interface Instrumentation {
                  */
                 public TypeDescription getFieldType() {
                     return fieldType;
+                }
+
+                @Override
+                public boolean isValid() {
+                    return fieldValue.isValid();
+                }
+
+                @Override
+                public Size apply(MethodVisitor methodVisitor, Context instrumentationContext) {
+                    return fieldValue.apply(methodVisitor, instrumentationContext);
                 }
 
                 @Override

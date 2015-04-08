@@ -1,5 +1,6 @@
 package net.bytebuddy.instrumentation.type;
 
+import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.LoadedTypeInitializer;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
@@ -10,6 +11,8 @@ import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.method.ParameterList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
+import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
+import org.objectweb.asm.MethodVisitor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,7 +98,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * A type initializer is responsible for defining a type's static initialization block.
      */
-    interface TypeInitializer {
+    interface TypeInitializer extends StackManipulation {
 
         /**
          * Indicates if this type initializer is defined.
@@ -112,13 +115,9 @@ public interface InstrumentedType extends TypeDescription {
          */
         TypeInitializer expandWith(StackManipulation stackManipulation);
 
-        /**
-         * Returns the stack manipulation of this type initializer. This method must only be called
-         * if this type initializer is defined.
-         *
-         * @return The stack manipulation of this type initializer.
-         */
-        StackManipulation getStackManipulation();
+        StackManipulation terminateWith(StackManipulation stackManipulation);
+
+        StackManipulation terminate();
 
         /**
          * Canonical implementation of a non-defined type initializer.
@@ -141,8 +140,23 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public StackManipulation getStackManipulation() {
-                throw new IllegalStateException("Cannot execute a non-defined type initializer");
+            public StackManipulation terminateWith(StackManipulation stackManipulation) {
+                return null;
+            }
+
+            @Override
+            public StackManipulation terminate() {
+                return null;
+            }
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                return null;
             }
 
             @Override
@@ -182,8 +196,23 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public StackManipulation getStackManipulation() {
-                return stackManipulation;
+            public StackManipulation terminateWith(StackManipulation stackManipulation) {
+                return new StackManipulation.Compound(this.stackManipulation, stackManipulation);
+            }
+
+            @Override
+            public StackManipulation terminate() {
+                return new StackManipulation.Compound(this.stackManipulation, MethodReturn.VOID);
+            }
+
+            @Override
+            public boolean isValid() {
+                return stackManipulation.isValid();
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+                return stackManipulation.apply(methodVisitor, instrumentationContext);
             }
 
             @Override

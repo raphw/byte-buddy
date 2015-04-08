@@ -103,9 +103,7 @@ public @interface Super {
                 TypeDescription[] constructorParameters = annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class);
                 List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(constructorParameters.length);
                 for (TypeDescription constructorParameter : constructorParameters) {
-                    typeDescriptions.add(constructorParameter.represents(TargetType.class)
-                            ? TargetType.DESCRIPTION
-                            : constructorParameter);
+                    typeDescriptions.add(TargetType.resolve(constructorParameter, instrumentationTarget.getTypeDescription()));
                 }
                 return new TypeProxy.ForSuperMethodByConstructor(parameterType,
                         instrumentationTarget,

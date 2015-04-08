@@ -622,7 +622,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
         @Override
         public AssignerConfigurable in(TypeDescription typeDescription) {
-            return nonNull(typeDescription).represents(TargetType.class)
+            return typeDescription.represents(TargetType.class)
                     ? in(FieldLocator.ForInstrumentedType.INSTANCE)
                     : in(new FieldLocator.ForGivenType.Factory(typeDescription));
         }
@@ -899,9 +899,7 @@ public abstract class FieldAccessor implements Instrumentation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(name,
-                            typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription,
-                            modifiers);
+                    return instrumentedType.withField(name, TargetType.resolve(typeDescription, instrumentedType), modifiers);
                 }
 
                 @Override

@@ -45,7 +45,6 @@ public class ByteCodeAppenderSimpleTest {
     @Test
     public void testApplication() throws Exception {
         ByteCodeAppender byteCodeAppender = new ByteCodeAppender.Simple(first, second);
-        assertThat(byteCodeAppender.appendsCode(), is(true));
         ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, instrumentationContext, methodDescription);
         assertThat(size.getLocalVariableSize(), is(STACK_SIZE));
         assertThat(size.getOperandStackSize(), is(0));

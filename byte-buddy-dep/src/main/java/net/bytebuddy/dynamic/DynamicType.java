@@ -21,8 +21,10 @@ import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 import org.objectweb.asm.Opcodes;
 
 import java.io.*;
@@ -214,6 +216,8 @@ public interface DynamicType {
          * @return A builder that creates a type by applying the given naming strategy.
          */
         Builder<T> name(NamingStrategy namingStrategy);
+
+        Builder<T> name(AuxiliaryType.NamingStrategy namingStrategy);
 
         /**
          * Defines modifiers for the created dynamic type.
@@ -627,6 +631,8 @@ public interface DynamicType {
          */
         MatchedMethodInterception<T> invokable(ElementMatcher<? super MethodDescription> methodMatcher);
 
+        MatchedMethodInterception<T> invokable(LatentMethodMatcher methodMatcher);
+
         /**
          * Creates the dynamic type without loading it.
          *
@@ -992,6 +998,8 @@ public interface DynamicType {
              */
             protected final NamingStrategy namingStrategy;
 
+            protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
+
             /**
              * The target type description that is specified for this builder.
              */
@@ -1090,6 +1098,7 @@ public interface DynamicType {
              */
             protected AbstractBase(ClassFileVersion classFileVersion,
                                    NamingStrategy namingStrategy,
+                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                    TypeDescription targetType,
                                    List<TypeDescription> interfaceTypes,
                                    int modifiers,
@@ -1106,6 +1115,7 @@ public interface DynamicType {
                                    List<MethodToken> methodTokens) {
                 this.classFileVersion = classFileVersion;
                 this.namingStrategy = namingStrategy;
+                this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.targetType = targetType;
                 this.interfaceTypes = interfaceTypes;
                 this.modifiers = modifiers;
@@ -1120,19 +1130,6 @@ public interface DynamicType {
                 this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
                 this.fieldTokens = fieldTokens;
                 this.methodTokens = methodTokens;
-            }
-
-            /**
-             * If a type is represented by a {@link net.bytebuddy.dynamic.TargetType} placeholder, this method
-             * substitutes the type by the instrumented type.
-             *
-             * @param type             The type to consider for substitution.
-             * @param instrumentedType The instrumented type which the type might be substituted against.
-             * @return The actually represented type.
-             */
-            private static TypeDescription considerSubstitution(TypeDescription type,
-                                                                TypeDescription instrumentedType) {
-                return type.represents(TargetType.class) ? instrumentedType : type;
             }
 
             /**
@@ -1204,6 +1201,7 @@ public interface DynamicType {
             public Builder<S> classFileVersion(ClassFileVersion classFileVersion) {
                 return materialize(nonNull(classFileVersion),
                         namingStrategy,
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1224,6 +1222,7 @@ public interface DynamicType {
             public Builder<S> name(String name) {
                 return materialize(classFileVersion,
                         new NamingStrategy.Fixed(isValidTypeName(name)),
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1244,6 +1243,28 @@ public interface DynamicType {
             public Builder<S> name(NamingStrategy namingStrategy) {
                 return materialize(classFileVersion,
                         nonNull(namingStrategy),
+                        auxiliaryTypeNamingStrategy,
+                        targetType,
+                        interfaceTypes,
+                        modifiers,
+                        attributeAppender,
+                        ignoredMethods,
+                        bridgeMethodResolverFactory,
+                        classVisitorWrapperChain,
+                        fieldRegistry,
+                        methodRegistry,
+                        methodLookupEngineFactory,
+                        defaultFieldAttributeAppenderFactory,
+                        defaultMethodAttributeAppenderFactory,
+                        fieldTokens,
+                        methodTokens);
+            }
+
+            @Override
+            public Builder<S> name(AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy) {
+                return materialize(classFileVersion,
+                        namingStrategy,
+                        nonNull(auxiliaryTypeNamingStrategy),
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1264,6 +1285,7 @@ public interface DynamicType {
             public Builder<S> modifiers(ModifierContributor.ForType... modifier) {
                 return materialize(classFileVersion,
                         namingStrategy,
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         resolveModifierContributors(TYPE_MODIFIER_MASK, nonNull(modifier)),
@@ -1284,6 +1306,7 @@ public interface DynamicType {
             public Builder<S> modifiers(int modifiers) {
                 return materialize(classFileVersion,
                         namingStrategy,
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1304,6 +1327,7 @@ public interface DynamicType {
             public Builder<S> ignoreMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
                 return materialize(classFileVersion,
                         namingStrategy,
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1325,6 +1349,7 @@ public interface DynamicType {
             public Builder<S> attribute(TypeAttributeAppender attributeAppender) {
                 return materialize(classFileVersion,
                         namingStrategy,
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1355,6 +1380,7 @@ public interface DynamicType {
             public Builder<S> classVisitor(ClassVisitorWrapper classVisitorWrapper) {
                 return materialize(classFileVersion,
                         namingStrategy,
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1375,6 +1401,7 @@ public interface DynamicType {
             public Builder<S> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
                 return materialize(classFileVersion,
                         namingStrategy,
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1395,6 +1422,7 @@ public interface DynamicType {
             public Builder<S> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                 return materialize(classFileVersion,
                         namingStrategy,
+                        auxiliaryTypeNamingStrategy,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1574,8 +1602,12 @@ public interface DynamicType {
 
             @Override
             public MatchedMethodInterception<S> invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
-                return new DefaultMatchedMethodInterception(
-                        new MethodRegistry.LatentMethodMatcher.Simple(nonNull(methodMatcher)), methodTokens);
+                return invokable(new LatentMethodMatcher.Simple(nonNull(methodMatcher)));
+            }
+
+            @Override
+            public MatchedMethodInterception<S> invokable(LatentMethodMatcher methodMatcher) {
+                return new DefaultMatchedMethodInterception(nonNull(methodMatcher), methodTokens);
             }
 
             /**
@@ -1605,6 +1637,7 @@ public interface DynamicType {
              */
             protected abstract Builder<S> materialize(ClassFileVersion classFileVersion,
                                                       NamingStrategy namingStrategy,
+                                                      AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                       TypeDescription targetType,
                                                       List<TypeDescription> interfaceTypes,
                                                       int modifiers,
@@ -1669,7 +1702,7 @@ public interface DynamicType {
             /**
              * A method token representing a latent method that is defined for the built dynamic type.
              */
-            protected static class MethodToken implements MethodRegistry.LatentMethodMatcher {
+            protected static class MethodToken implements LatentMethodMatcher {
 
                 /**
                  * The internal name of the method.
@@ -1737,12 +1770,12 @@ public interface DynamicType {
                 }
 
                 @Override
-                public ElementMatcher<? super MethodDescription> manifest(TypeDescription instrumentedType) {
+                public boolean matches(MethodDescription methodDescription, TypeDescription instrumentedType) {
                     return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName)
                             ? isConstructor()
                             : ElementMatchers.<MethodDescription>named(internalName))
                             .and(returns(resolveReturnType(instrumentedType)))
-                            .<MethodDescription>and(takesArguments(resolveParameterTypes(instrumentedType)));
+                            .<MethodDescription>and(takesArguments(resolveParameterTypes(instrumentedType))).matches(methodDescription);
                 }
 
                 /**
@@ -1753,7 +1786,7 @@ public interface DynamicType {
                  * @return A type description for the actual return type.
                  */
                 protected TypeDescription resolveReturnType(TypeDescription instrumentedType) {
-                    return considerSubstitution(returnType, instrumentedType);
+                    return TargetType.resolve(returnType, instrumentedType);
                 }
 
                 /**
@@ -1764,11 +1797,7 @@ public interface DynamicType {
                  * @return A list of type descriptions for the actual parameter types.
                  */
                 protected List<TypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
-                    List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(this.parameterTypes.size());
-                    for (TypeDescription parameterType : this.parameterTypes) {
-                        parameterTypes.add(considerSubstitution(parameterType, instrumentedType));
-                    }
-                    return parameterTypes;
+                    return TargetType.resolve(parameterTypes, instrumentedType);
                 }
 
                 /**
@@ -1780,7 +1809,7 @@ public interface DynamicType {
                 protected List<TypeDescription> resolveExceptionTypes(TypeDescription instrumentedType) {
                     List<TypeDescription> exceptionTypes = new ArrayList<TypeDescription>(this.exceptionTypes.size());
                     for (TypeDescription exceptionType : this.exceptionTypes) {
-                        exceptionTypes.add(considerSubstitution(exceptionType, instrumentedType));
+                        exceptionTypes.add(TargetType.resolve(exceptionType, instrumentedType));
                     }
                     return exceptionTypes;
                 }
@@ -1899,7 +1928,7 @@ public interface DynamicType {
                  * @return A type description for the actual field type.
                  */
                 protected TypeDescription resolveFieldType(TypeDescription instrumentedType) {
-                    return considerSubstitution(fieldType, instrumentedType);
+                    return TargetType.resolve(fieldType, instrumentedType);
                 }
 
                 /**
@@ -1985,6 +2014,11 @@ public interface DynamicType {
 
                 @Override
                 public Builder<U> name(NamingStrategy namingStrategy) {
+                    return materialize().name(namingStrategy);
+                }
+
+                @Override
+                public Builder<U> name(AuxiliaryType.NamingStrategy namingStrategy) {
                     return materialize().name(namingStrategy);
                 }
 
@@ -2119,19 +2153,17 @@ public interface DynamicType {
 
                 @Override
                 public ExceptionDeclarableMethodInterception<U> defineConstructor(List<? extends TypeDescription> parameterTypes,
-                        ModifierContributor.ForMethod... modifier) {
+                                                                                  ModifierContributor.ForMethod... modifier) {
                     return materialize().defineConstructor(parameterTypes, modifier);
                 }
 
                 @Override
-                public ExceptionDeclarableMethodInterception<U> defineConstructor(Iterable<Class<?>> parameterTypes,
-                        int modifiers) {
+                public ExceptionDeclarableMethodInterception<U> defineConstructor(Iterable<Class<?>> parameterTypes, int modifiers) {
                     return materialize().defineConstructor(parameterTypes, modifiers);
                 }
 
                 @Override
-                public ExceptionDeclarableMethodInterception<U> defineConstructor(List<? extends TypeDescription> parameterTypes,
-                        int modifiers) {
+                public ExceptionDeclarableMethodInterception<U> defineConstructor(List<? extends TypeDescription> parameterTypes, int modifiers) {
                     return materialize().defineConstructor(parameterTypes, modifiers);
                 }
 
@@ -2156,13 +2188,17 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MatchedMethodInterception<U> constructor(
-                        ElementMatcher<? super MethodDescription> methodMatcher) {
+                public MatchedMethodInterception<U> constructor(ElementMatcher<? super MethodDescription> methodMatcher) {
                     return materialize().constructor(methodMatcher);
                 }
 
                 @Override
                 public MatchedMethodInterception<U> invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
+                    return materialize().invokable(methodMatcher);
+                }
+
+                @Override
+                public MatchedMethodInterception<U> invokable(LatentMethodMatcher methodMatcher) {
                     return materialize().invokable(methodMatcher);
                 }
 
@@ -2237,6 +2273,7 @@ public interface DynamicType {
                 protected DynamicType.Builder<S> materialize() {
                     return AbstractBase.this.materialize(classFileVersion,
                             namingStrategy,
+                            auxiliaryTypeNamingStrategy,
                             targetType,
                             interfaceTypes,
                             modifiers,
@@ -2383,34 +2420,23 @@ public interface DynamicType {
              */
             protected class DefaultMatchedMethodInterception implements MatchedMethodInterception<S> {
 
-                /**
-                 * A latent method matcher that identifies the methods that are supposed to be intercepted by the later
-                 * defined instrumentation.
-                 */
-                private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
+                private final LatentMethodMatcher methodMatcher;
 
                 /**
                  * A list of all method tokens that were previously defined.
                  */
                 private final List<MethodToken> methodTokens;
 
-                /**
-                 * Creates a new subclass matched method interception.
-                 *
-                 * @param latentMethodMatcher A latent method matcher that identifies the methods that are supposed to be
-                 *                            intercepted by the later defined instrumentation.
-                 * @param methodTokens        A list of all method tokens that were previously defined.
-                 */
-                private DefaultMatchedMethodInterception(MethodRegistry.LatentMethodMatcher latentMethodMatcher,
+                private DefaultMatchedMethodInterception(LatentMethodMatcher methodMatcher,
                                                          List<MethodToken> methodTokens) {
-                    this.latentMethodMatcher = latentMethodMatcher;
+                    this.methodMatcher = methodMatcher;
                     this.methodTokens = methodTokens;
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
-                            latentMethodMatcher,
+                            methodMatcher,
                             new MethodRegistry.Prepareable.ForInstrumentation(nonNull(instrumentation)),
                             defaultMethodAttributeAppenderFactory);
                 }
@@ -2418,7 +2444,7 @@ public interface DynamicType {
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
                     return new DefaultMethodAnnotationTarget(methodTokens,
-                            latentMethodMatcher,
+                            methodMatcher,
                             MethodRegistry.Prepareable.ForAbstractMethod.INSTANCE,
                             defaultMethodAttributeAppenderFactory);
                 }
@@ -2431,14 +2457,14 @@ public interface DynamicType {
                     if (other == null || getClass() != other.getClass())
                         return false;
                     DefaultMatchedMethodInterception that = (DefaultMatchedMethodInterception) other;
-                    return latentMethodMatcher.equals(that.latentMethodMatcher)
+                    return methodMatcher.equals(that.methodMatcher)
                             && methodTokens.equals(that.methodTokens)
                             && AbstractBase.this.equals(that.getDynamicTypeBuilder());
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = latentMethodMatcher.hashCode();
+                    int result = methodMatcher.hashCode();
                     result = 31 * result + methodTokens.hashCode();
                     result = 31 * result + AbstractBase.this.hashCode();
                     return result;
@@ -2448,7 +2474,7 @@ public interface DynamicType {
                 public String toString() {
                     return "DynamicType.Builder.AbstractBase.DefaultMatchedMethodInterception{" +
                             "base=" + AbstractBase.this +
-                            ", latentMethodMatcher=" + latentMethodMatcher +
+                            ", methodMatcher=" + methodMatcher +
                             ", methodTokens=" + methodTokens +
                             '}';
                 }
@@ -2467,8 +2493,7 @@ public interface DynamicType {
              * A {@link net.bytebuddy.dynamic.DynamicType.Builder.ExceptionDeclarableMethodInterception} which allows the
              * definition of exceptions for a recently defined method.
              */
-            protected class DefaultExceptionDeclarableMethodInterception
-                    implements ExceptionDeclarableMethodInterception<S> {
+            protected class DefaultExceptionDeclarableMethodInterception implements ExceptionDeclarableMethodInterception<S> {
 
                 /**
                  * The method token for which exceptions can be defined additionally.
@@ -2555,14 +2580,9 @@ public interface DynamicType {
              * A {@link net.bytebuddy.dynamic.DynamicType.Builder.MethodAnnotationTarget} which allows the definition of
              * annotations for a recently identified method.
              */
-            protected class DefaultMethodAnnotationTarget extends AbstractDelegatingBuilder<S>
-                    implements MethodAnnotationTarget<S> {
+            protected class DefaultMethodAnnotationTarget extends AbstractDelegatingBuilder<S> implements MethodAnnotationTarget<S> {
 
-                /**
-                 * A latent method matcher that identifies the methods that are supposed to be intercepted by the later
-                 * defined instrumentation.
-                 */
-                private final MethodRegistry.LatentMethodMatcher latentMethodMatcher;
+                private final LatentMethodMatcher methodMatcher;
 
                 /**
                  * A list of all method tokens that were previously defined.
@@ -2577,10 +2597,10 @@ public interface DynamicType {
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
                 private DefaultMethodAnnotationTarget(List<MethodToken> methodTokens,
-                                                      MethodRegistry.LatentMethodMatcher latentMethodMatcher,
+                                                      LatentMethodMatcher methodMatcher,
                                                       MethodRegistry.Prepareable prepareable,
                                                       MethodAttributeAppender.Factory attributeAppenderFactory) {
-                    this.latentMethodMatcher = latentMethodMatcher;
+                    this.methodMatcher = methodMatcher;
                     this.methodTokens = methodTokens;
                     this.prepareable = prepareable;
                     this.attributeAppenderFactory = attributeAppenderFactory;
@@ -2590,6 +2610,7 @@ public interface DynamicType {
                 protected DynamicType.Builder<S> materialize() {
                     return AbstractBase.this.materialize(classFileVersion,
                             namingStrategy,
+                            auxiliaryTypeNamingStrategy,
                             targetType,
                             interfaceTypes,
                             modifiers,
@@ -2598,7 +2619,7 @@ public interface DynamicType {
                             bridgeMethodResolverFactory,
                             classVisitorWrapperChain,
                             fieldRegistry,
-                            methodRegistry.prepend(latentMethodMatcher, prepareable, attributeAppenderFactory),
+                            methodRegistry.prepend(methodMatcher, prepareable, attributeAppenderFactory),
                             methodLookupEngineFactory,
                             defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
@@ -2609,7 +2630,7 @@ public interface DynamicType {
                 @Override
                 public MethodAnnotationTarget<S> attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
-                            latentMethodMatcher,
+                            methodMatcher,
                             prepareable,
                             new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory,
                                     nonNull(attributeAppenderFactory)));
@@ -2645,7 +2666,7 @@ public interface DynamicType {
                     DefaultMethodAnnotationTarget that = (DefaultMethodAnnotationTarget) other;
                     return attributeAppenderFactory.equals(that.attributeAppenderFactory)
                             && prepareable.equals(that.prepareable)
-                            && latentMethodMatcher.equals(that.latentMethodMatcher)
+                            && methodMatcher.equals(that.methodMatcher)
                             && methodTokens.equals(that.methodTokens)
                             && AbstractBase.this.equals(that.getDynamicTypeBuilder());
                 }
@@ -2653,7 +2674,7 @@ public interface DynamicType {
                 @Override
                 public int hashCode() {
                     int result = methodTokens.hashCode();
-                    result = 31 * result + latentMethodMatcher.hashCode();
+                    result = 31 * result + methodMatcher.hashCode();
                     result = 31 * result + prepareable.hashCode();
                     result = 31 * result + attributeAppenderFactory.hashCode();
                     result = 31 * result + AbstractBase.this.hashCode();
@@ -2665,7 +2686,7 @@ public interface DynamicType {
                     return "DynamicType.Builder.AbstractBase.DefaultMethodAnnotationTarget{" +
                             "base=" + AbstractBase.this +
                             ", methodTokens=" + methodTokens +
-                            ", latentMethodMatcher=" + latentMethodMatcher +
+                            ", methodMatcher=" + methodMatcher +
                             ", prepareable=" + prepareable +
                             ", attributeAppenderFactory=" + attributeAppenderFactory +
                             '}';
@@ -2684,8 +2705,7 @@ public interface DynamicType {
             /**
              * Allows for the direct implementation of an interface after its implementation was specified.
              */
-            protected class DefaultOptionalMatchedMethodInterception extends AbstractDelegatingBuilder<S>
-                    implements OptionalMatchedMethodInterception<S> {
+            protected class DefaultOptionalMatchedMethodInterception extends AbstractDelegatingBuilder<S> implements OptionalMatchedMethodInterception<S> {
 
                 /**
                  * A list of all interfaces to implement.
@@ -2716,6 +2736,7 @@ public interface DynamicType {
                 protected DynamicType.Builder<S> materialize() {
                     return AbstractBase.this.materialize(classFileVersion,
                             namingStrategy,
+                            auxiliaryTypeNamingStrategy,
                             targetType,
                             joinUnique(interfaceTypes, isInterface(Arrays.asList(interfaceType))),
                             modifiers,

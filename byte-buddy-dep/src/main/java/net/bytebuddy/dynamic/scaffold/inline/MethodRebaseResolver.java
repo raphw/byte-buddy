@@ -1,15 +1,22 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
 import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
 import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.instrumentation.type.auxiliary.TrivialType;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
@@ -34,6 +41,8 @@ public interface MethodRebaseResolver {
      * @return A resolution for the given method.
      */
     Resolution resolve(MethodDescription methodDescription);
+
+    List<DynamicType> getAuxiliaryTypes();
 
     /**
      * A method name transformer provides a unique mapping of a method's name to an alternative name.
@@ -378,9 +387,15 @@ public interface MethodRebaseResolver {
         }
 
         @Override
+        public List<DynamicType> getAuxiliaryTypes() {
+            return Collections.emptyList();
+        }
+
+        @Override
         public String toString() {
             return "MethodRebaseResolver.NoOp." + name();
         }
+
     }
 
     abstract class AbstractBase implements MethodRebaseResolver {
@@ -403,7 +418,7 @@ public interface MethodRebaseResolver {
 
     class MethodsOnly extends AbstractBase {
 
-        public static MethodRebaseResolver of(MethodList instrumentedMethods, MethodNameTransformer methodNameTransformer) {
+        protected static MethodRebaseResolver of(MethodList instrumentedMethods, MethodNameTransformer methodNameTransformer) {
             return new MethodsOnly(new HashSet<MethodDescription>(instrumentedMethods), methodNameTransformer);
         }
 
@@ -421,20 +436,37 @@ public interface MethodRebaseResolver {
             }
             return new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
         }
+
+        @Override
+        public List<DynamicType> getAuxiliaryTypes() {
+            return Collections.emptyList();
+        }
     }
 
     class Enabled extends AbstractBase {
 
-        public static MethodRebaseResolver of(MethodList instrumentedMethods, TypeDescription typeDescription, MethodNameTransformer methodNameTransformer) {
-            return new Enabled(new HashSet<MethodDescription>(instrumentedMethods), typeDescription, methodNameTransformer);
+        public static MethodRebaseResolver make(MethodList instrumentedMethods,
+                                                TypeDescription instrumentedType,
+                                                ClassFileVersion classFileVersion,
+                                                AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                MethodNameTransformer methodNameTransformer) {
+            return instrumentedMethods.filter(isConstructor()).isEmpty()
+                    ? MethodsOnly.of(instrumentedMethods, methodNameTransformer)
+                    : of(instrumentedMethods, TrivialType.INSTANCE.make(auxiliaryTypeNamingStrategy.name(TrivialType.INSTANCE, instrumentedType),
+                            classFileVersion,
+                            AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE), methodNameTransformer);
         }
 
-        private final TypeDescription placeholderType;
+        protected static MethodRebaseResolver of(MethodList instrumentedMethods, DynamicType placeholderType, MethodNameTransformer methodNameTransformer) {
+            return new Enabled(new HashSet<MethodDescription>(instrumentedMethods), placeholderType, methodNameTransformer);
+        }
+
+        private final DynamicType placeholderType;
 
         private final MethodNameTransformer methodNameTransformer;
 
         public Enabled(Set<? extends MethodDescription> instrumentedMethods,
-                       TypeDescription placeholderType,
+                       DynamicType placeholderType,
                        MethodNameTransformer methodNameTransformer) {
             super(instrumentedMethods);
             this.placeholderType = placeholderType;
@@ -444,8 +476,13 @@ public interface MethodRebaseResolver {
         @Override
         protected Resolution rebase(MethodDescription methodDescription) {
             return methodDescription.isConstructor()
-                    ? new Resolution.ForRebasedConstructor(methodDescription, placeholderType)
+                    ? new Resolution.ForRebasedConstructor(methodDescription, placeholderType.getTypeDescription())
                     : new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
+        }
+
+        @Override
+        public List<DynamicType> getAuxiliaryTypes() {
+            return Collections.singletonList(placeholderType);
         }
     }
 }

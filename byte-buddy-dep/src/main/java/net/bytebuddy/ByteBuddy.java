@@ -6,8 +6,9 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
-import net.bytebuddy.dynamic.scaffold.inline.InlineDynamicTypeBuilder;
+import net.bytebuddy.dynamic.scaffold.inline.RebaseDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
+import net.bytebuddy.dynamic.scaffold.inline.RedefinitionDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.instrumentation.Instrumentation;
@@ -21,7 +22,9 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.modifier.TypeManifestation;
 import org.objectweb.asm.Opcodes;
 
@@ -50,6 +53,8 @@ public class ByteBuddy {
      */
     public static final String BYTE_BUDDY_DEFAULT_PREFIX = "ByteBuddy";
 
+    public static final String BYTE_BUDDY_DEFAULT_SUFFIX = "auxiliary";
+
     /**
      * The class file version of the current configuration.
      */
@@ -59,6 +64,8 @@ public class ByteBuddy {
      * The naming strategy of the current configuration.
      */
     protected final NamingStrategy.Unbound namingStrategy;
+
+    protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
     /**
      * A list of interface types to be implemented by any class that is implemented by the current configuration.
@@ -128,6 +135,7 @@ public class ByteBuddy {
     public ByteBuddy(ClassFileVersion classFileVersion) {
         this(nonNull(classFileVersion),
                 new NamingStrategy.Unbound.Default(BYTE_BUDDY_DEFAULT_PREFIX),
+                new AuxiliaryType.NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_SUFFIX),
                 new TypeList.Empty(),
                 isDefaultFinalizer().or(isSynthetic().and(not(isVisibilityBridge()))),
                 BridgeMethodResolver.Simple.Factory.FAIL_ON_REQUEST,
@@ -163,6 +171,7 @@ public class ByteBuddy {
      */
     protected ByteBuddy(ClassFileVersion classFileVersion,
                         NamingStrategy.Unbound namingStrategy,
+                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                         List<TypeDescription> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
@@ -175,6 +184,7 @@ public class ByteBuddy {
                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
         this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
+        this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
         this.interfaceTypes = interfaceTypes;
         this.ignoredMethods = ignoredMethods;
         this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
@@ -354,6 +364,7 @@ public class ByteBuddy {
         }
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 nonNull(namingStrategy.subclass(superType)),
+                auxiliaryTypeNamingStrategy,
                 actualSuperType,
                 interfaceTypes,
                 modifiers.resolve(superType.getModifiers() & ~TypeManifestation.ANNOTATION.getMask()),
@@ -403,6 +414,7 @@ public class ByteBuddy {
     public DynamicType.Builder<?> makeInterface(List<TypeDescription> typeDescriptions) {
         return new SubclassDynamicTypeBuilder<Object>(classFileVersion,
                 namingStrategy.create(),
+                auxiliaryTypeNamingStrategy,
                 TypeDescription.OBJECT,
                 join(interfaceTypes, nonNull(typeDescriptions)),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.INTERFACE.getMask(),
@@ -426,6 +438,7 @@ public class ByteBuddy {
     public DynamicType.Builder<?> makeAnnotation() {
         return new SubclassDynamicTypeBuilder<Object>(classFileVersion,
                 namingStrategy.create(),
+                auxiliaryTypeNamingStrategy,
                 TypeDescription.OBJECT,
                 Collections.<TypeDescription>singletonList(new TypeDescription.ForLoadedType(Annotation.class)),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.ANNOTATION.getMask(),
@@ -497,8 +510,9 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType, ClassFileLocator classFileLocator) {
-        return new InlineDynamicTypeBuilder<T>(classFileVersion,
+        return new RedefinitionDynamicTypeBuilder<T>(classFileVersion,
                 nonNull(namingStrategy.redefine(levelType)),
+                auxiliaryTypeNamingStrategy,
                 nonNull(levelType),
                 interfaceTypes,
                 modifiers.resolve(levelType.getModifiers()),
@@ -511,8 +525,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                nonNull(classFileLocator),
-                InlineDynamicTypeBuilder.TargetHandler.ForRedefinitionInstrumentation.INSTANCE);
+                nonNull(classFileLocator));
     }
 
     /**
@@ -625,8 +638,9 @@ public class ByteBuddy {
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
                                              ClassFileLocator classFileLocator,
                                              MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
-        return new InlineDynamicTypeBuilder<T>(classFileVersion,
+        return new RebaseDynamicTypeBuilder<T>(classFileVersion,
                 nonNull(namingStrategy.rebase(levelType)),
+                auxiliaryTypeNamingStrategy,
                 levelType,
                 interfaceTypes,
                 modifiers.resolve(levelType.getModifiers()),
@@ -640,7 +654,7 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 nonNull(classFileLocator),
-                new InlineDynamicTypeBuilder.TargetHandler.ForRebaseInstrumentation(nonNull(methodNameTransformer)));
+                nonNull(methodNameTransformer));
     }
 
     /**
@@ -652,6 +666,7 @@ public class ByteBuddy {
     public ByteBuddy withClassFileVersion(ClassFileVersion classFileVersion) {
         return new ByteBuddy(nonNull(classFileVersion),
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -673,6 +688,7 @@ public class ByteBuddy {
     public ByteBuddy withNamingStrategy(NamingStrategy.Unbound namingStrategy) {
         return new ByteBuddy(classFileVersion,
                 nonNull(namingStrategy),
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -705,6 +721,7 @@ public class ByteBuddy {
     public ByteBuddy withModifiers(ModifierContributor.ForType... modifierContributor) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -728,6 +745,7 @@ public class ByteBuddy {
     public ByteBuddy withAttribute(TypeAttributeAppender typeAttributeAppender) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -751,6 +769,7 @@ public class ByteBuddy {
     public ByteBuddy withTypeAnnotation(Annotation... annotation) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -774,6 +793,7 @@ public class ByteBuddy {
     public ByteBuddy withTypeAnnotation(AnnotationDescription... annotation) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -812,6 +832,7 @@ public class ByteBuddy {
     public OptionalMethodInterception withImplementing(TypeDescription... type) {
         return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 joinUnique(interfaceTypes, isInterface(Arrays.asList(type))),
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -822,7 +843,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                isDeclaredBy(anyOf((Object[]) type)));
+                new LatentMethodMatcher.Simple(isDeclaredBy(anyOf((Object[]) type))));
     }
 
     /**
@@ -839,6 +860,7 @@ public class ByteBuddy {
     public ByteBuddy withIgnoredMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 nonNull(ignoredMethods),
                 bridgeMethodResolverFactory,
@@ -865,6 +887,7 @@ public class ByteBuddy {
     public ByteBuddy withBridgeMethodResolver(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 nonNull(bridgeMethodResolverFactory),
@@ -888,6 +911,7 @@ public class ByteBuddy {
     public ByteBuddy withClassVisitor(ClassVisitorWrapper classVisitorWrapper) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -913,6 +937,7 @@ public class ByteBuddy {
     public ByteBuddy withMethodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -937,6 +962,7 @@ public class ByteBuddy {
     public ByteBuddy withDefaultFieldAttributeAppender(FieldAttributeAppender.Factory attributeAppenderFactory) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -961,6 +987,7 @@ public class ByteBuddy {
     public ByteBuddy withDefaultMethodAttributeAppender(MethodAttributeAppender.Factory attributeAppenderFactory) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
+                auxiliaryTypeNamingStrategy,
                 interfaceTypes,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
@@ -980,6 +1007,10 @@ public class ByteBuddy {
      * @return A matched method interception for the given selection.
      */
     public MatchedMethodInterception invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
+        return invokeable(new LatentMethodMatcher.Simple(nonNull(methodMatcher)));
+    }
+
+    public MatchedMethodInterception invokeable(LatentMethodMatcher methodMatcher) {
         return new MatchedMethodInterception(nonNull(methodMatcher));
     }
 
@@ -1198,7 +1229,7 @@ public class ByteBuddy {
         /**
          * The method matcher representing the current method selection.
          */
-        protected final ElementMatcher<? super MethodDescription> methodMatcher;
+        protected final LatentMethodMatcher methodMatcher;
 
         protected final MethodRegistry.Prepareable prepareable;
 
@@ -1209,6 +1240,7 @@ public class ByteBuddy {
 
         protected MethodAnnotationTarget(ClassFileVersion classFileVersion,
                                          NamingStrategy.Unbound namingStrategy,
+                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                          List<TypeDescription> interfaceTypes,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
                                          BridgeMethodResolver.Factory bridgeMethodResolverFactory,
@@ -1219,11 +1251,12 @@ public class ByteBuddy {
                                          MethodLookupEngine.Factory methodLookupEngineFactory,
                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                         ElementMatcher<? super MethodDescription> methodMatcher,
+                                         LatentMethodMatcher methodMatcher,
                                          MethodRegistry.Prepareable prepareable,
                                          MethodAttributeAppender.Factory attributeAppenderFactory) {
             super(classFileVersion,
                     namingStrategy,
+                    auxiliaryTypeNamingStrategy,
                     interfaceTypes,
                     ignoredMethods,
                     bridgeMethodResolverFactory,
@@ -1250,6 +1283,7 @@ public class ByteBuddy {
         public MethodAnnotationTarget attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
             return new MethodAnnotationTarget(classFileVersion,
                     namingStrategy,
+                    auxiliaryTypeNamingStrategy,
                     interfaceTypes,
                     ignoredMethods,
                     bridgeMethodResolverFactory,
@@ -1262,8 +1296,7 @@ public class ByteBuddy {
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
                     prepareable,
-                    new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory,
-                            nonNull(attributeAppenderFactory)));
+                    new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory, nonNull(attributeAppenderFactory)));
         }
 
         /**
@@ -1320,13 +1353,12 @@ public class ByteBuddy {
         protected ByteBuddy materialize() {
             return new ByteBuddy(classFileVersion,
                     namingStrategy,
+                    auxiliaryTypeNamingStrategy,
                     interfaceTypes,
                     ignoredMethods,
                     bridgeMethodResolverFactory,
                     classVisitorWrapperChain,
-                    methodRegistry.prepend(new MethodRegistry.LatentMethodMatcher.Simple(methodMatcher),
-                            prepareable,
-                            attributeAppenderFactory),
+                    methodRegistry.prepend(methodMatcher, prepareable, attributeAppenderFactory),
                     modifiers,
                     typeAttributeAppender,
                     methodLookupEngineFactory,
@@ -1377,7 +1409,7 @@ public class ByteBuddy {
         /**
          * The method matcher that defines the selected that is represented by this instance.
          */
-        protected final ElementMatcher<? super MethodDescription> methodMatcher;
+        protected final LatentMethodMatcher methodMatcher;
 
         /**
          * Creates a new optional method interception.
@@ -1403,6 +1435,7 @@ public class ByteBuddy {
          */
         protected OptionalMethodInterception(ClassFileVersion classFileVersion,
                                              NamingStrategy.Unbound namingStrategy,
+                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                              List<TypeDescription> interfaceTypes,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
                                              BridgeMethodResolver.Factory bridgeMethodResolverFactory,
@@ -1413,9 +1446,10 @@ public class ByteBuddy {
                                              MethodLookupEngine.Factory methodLookupEngineFactory,
                                              FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                              MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                             ElementMatcher<? super MethodDescription> methodMatcher) {
+                                             LatentMethodMatcher methodMatcher) {
             super(classFileVersion,
                     namingStrategy,
+                    auxiliaryTypeNamingStrategy,
                     interfaceTypes,
                     ignoredMethods,
                     bridgeMethodResolverFactory,
@@ -1500,6 +1534,7 @@ public class ByteBuddy {
          */
         protected Proxy(ClassFileVersion classFileVersion,
                         NamingStrategy.Unbound namingStrategy,
+                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                         List<TypeDescription> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
@@ -1512,6 +1547,7 @@ public class ByteBuddy {
                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
             super(classFileVersion,
                     namingStrategy,
+                    auxiliaryTypeNamingStrategy,
                     interfaceTypes,
                     ignoredMethods,
                     bridgeMethodResolverFactory,
@@ -1729,6 +1765,36 @@ public class ByteBuddy {
         }
 
         @Override
+        public <T> DynamicType.Builder<T> makeInterface(Class<T> type) {
+            return materialize().makeInterface(type);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makeInterface(Class<?>... type) {
+            return materialize().makeInterface(type);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makeInterface(List<TypeDescription> typeDescriptions) {
+            return materialize().makeInterface(typeDescriptions);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makeAnnotation() {
+            return materialize().makeAnnotation();
+        }
+
+        @Override
+        public ByteBuddy withTypeAnnotation(AnnotationDescription... annotation) {
+            return materialize().withTypeAnnotation(annotation);
+        }
+
+        @Override
+        public MatchedMethodInterception invokeable(LatentMethodMatcher methodMatcher) {
+            return materialize().invokeable(methodMatcher);
+        }
+
+        @Override
         public MatchedMethodInterception method(ElementMatcher<? super MethodDescription> methodMatcher) {
             return materialize().method(methodMatcher);
         }
@@ -1754,14 +1820,14 @@ public class ByteBuddy {
         /**
          * A method matcher that represents the current method selection.
          */
-        protected final ElementMatcher<? super MethodDescription> methodMatcher;
+        protected final LatentMethodMatcher methodMatcher;
 
         /**
          * Creates a new matched method interception.
          *
          * @param methodMatcher The method matcher representing the current method selection.
          */
-        protected MatchedMethodInterception(ElementMatcher<? super MethodDescription> methodMatcher) {
+        protected MatchedMethodInterception(LatentMethodMatcher methodMatcher) {
             this.methodMatcher = methodMatcher;
         }
 
@@ -1769,6 +1835,7 @@ public class ByteBuddy {
         public MethodAnnotationTarget intercept(Instrumentation instrumentation) {
             return new MethodAnnotationTarget(classFileVersion,
                     namingStrategy,
+                    auxiliaryTypeNamingStrategy,
                     interfaceTypes,
                     ignoredMethods,
                     bridgeMethodResolverFactory,
@@ -1788,6 +1855,7 @@ public class ByteBuddy {
         public MethodAnnotationTarget withoutCode() {
             return new MethodAnnotationTarget(classFileVersion,
                     namingStrategy,
+                    auxiliaryTypeNamingStrategy,
                     interfaceTypes,
                     ignoredMethods,
                     bridgeMethodResolverFactory,

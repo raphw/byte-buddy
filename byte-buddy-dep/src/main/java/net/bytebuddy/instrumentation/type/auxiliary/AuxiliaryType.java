@@ -6,7 +6,9 @@ import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.ModifierContributor;
 import net.bytebuddy.instrumentation.field.FieldDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.modifier.SyntheticState;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
 /**
@@ -108,6 +110,69 @@ public interface AuxiliaryType {
             @Override
             public String toString() {
                 return "AuxiliaryType.MethodAccessorFactory.Illegal." + name();
+            }
+        }
+    }
+
+    /**
+     * Representation of a naming strategy for an auxiliary type.
+     */
+    interface NamingStrategy {
+
+        /**
+         * NAmes an auxiliary type.
+         *
+         * @param auxiliaryType    The auxiliary type to name.
+         * @param instrumentedType The instrumented type for which an auxiliary type is registered.
+         * @return The fully qualified name for the given auxiliary type.
+         */
+        String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType);
+
+        /**
+         * A naming strategy for an auxiliary type which returns the instrumented type's name with a fixed extension
+         * and a random number as a suffix. All generated names will be in the same package as the instrumented type.
+         */
+        class SuffixingRandom implements NamingStrategy {
+
+            /**
+             * The suffix to append to the instrumented type for creating names for the auxiliary types.
+             */
+            private final String suffix;
+
+            /**
+             * An instance for creating random values.
+             */
+            private final RandomString randomString;
+
+            /**
+             * Creates a new suffixing random naming strategy.
+             *
+             * @param suffix The suffix to extend to the instrumented type.
+             */
+            public SuffixingRandom(String suffix) {
+                this.suffix = suffix;
+                randomString = new RandomString();
+            }
+
+            @Override
+            public String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType) {
+                return String.format("%s$%s$%s", instrumentedType.getName(), suffix, randomString.nextString());
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && suffix.equals(((SuffixingRandom) other).suffix);
+            }
+
+            @Override
+            public int hashCode() {
+                return suffix.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Instrumentation.Context.Default.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
             }
         }
     }

@@ -17,6 +17,7 @@ import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.hamcrest.CoreMatchers;
@@ -49,6 +50,7 @@ public abstract class AbstractInstrumentationTest {
         return new SubclassDynamicTypeBuilder<T>(
                 ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.SuffixingRandom(SUFFIX),
+                new AuxiliaryType.NamingStrategy.SuffixingRandom(SUFFIX),
                 new TypeDescription.ForLoadedType(target),
                 new TypeList.ForLoadedType(Arrays.asList(interfaces)),
                 Opcodes.ACC_PUBLIC,
