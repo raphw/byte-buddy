@@ -6,6 +6,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.StubMethod;
+import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.After;
@@ -15,17 +16,20 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
     private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.ParameterNames";
 
@@ -51,6 +55,79 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest
 
     public static class Foo {
         /* empty */
+    }
+
+    @Test
+    public void testConstructorRetentionNoAuxiliaryType() throws Exception {
+        DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
+                .rebase(Bar.class)
+                .make();
+        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(0));
+        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(0));
+        Field field = type.getDeclaredField(BAR);
+        assertThat(field.get(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) FOO));
+    }
+
+    @Test
+    public void testConstructorRebaseSingleAuxiliaryType() throws Exception {
+        DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
+                .rebase(Bar.class)
+                .constructor(any()).intercept(SuperMethodCall.INSTANCE)
+                .make();
+        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(1));
+        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(2));
+        assertThat(type.getDeclaredMethods().length, is(0));
+        Field field = type.getDeclaredField(BAR);
+        assertThat(field.get(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) FOO));
+    }
+
+    public static class Bar {
+
+        public final String bar;
+
+        public Bar(String bar) {
+            this.bar = bar;
+        }
+    }
+
+    @Test
+    public void testMethodRebase() throws Exception {
+        DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
+                .rebase(Qux.class)
+                .method(named(BAR)).intercept(StubMethod.INSTANCE)
+                .make();
+        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(0));
+        Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(3));
+        assertThat(type.getDeclaredMethod(FOO).invoke(null), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(BAR).invoke(null), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
+    }
+
+    public static class Qux {
+
+        public static String foo;
+
+        public static String foo() {
+            try {
+                return foo;
+            } finally {
+                foo = FOO;
+            }
+        }
+
+        public static String bar() {
+            try {
+                return foo;
+            } finally {
+                foo = FOO;
+            }
+        }
     }
 
     @Test
