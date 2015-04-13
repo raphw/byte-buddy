@@ -20,7 +20,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
+public class FieldBinderTest extends AbstractAnnotationBinderTest<FieldProxy> {
 
     private static final String FOO = "foo";
 
@@ -34,7 +34,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
     private FieldDescription fieldDescription;
 
     public FieldBinderTest() {
-        super(Field.class);
+        super(FieldProxy.class);
     }
 
     @Override
@@ -49,14 +49,14 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
     }
 
     @Override
-    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> getSimpleBinder() {
-        return new Field.Binder(getterMethod, setterMethod);
+    protected TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> getSimpleBinder() {
+        return new FieldProxy.Binder(getterMethod, setterMethod);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalType() throws Exception {
         when(target.getTypeDescription()).thenReturn(mock(TypeDescription.class));
-        new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -67,7 +67,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
     public void testGetterForImplicitNamedFieldInHierarchy() throws Exception {
         when(target.getTypeDescription()).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
-        when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
+        when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(fieldType);
         when(source.getParameters()).thenReturn(new ParameterList.Empty());
@@ -75,7 +75,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getSourceCodeName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        MethodDelegationBinder.ParameterBinding<?> binding = new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -94,7 +94,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        MethodDelegationBinder.ParameterBinding<?> binding = new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -106,7 +106,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
     public void testGetterForImplicitNamedFieldInNamedType() throws Exception {
         when(target.getTypeDescription()).thenReturn(getterType);
         doReturn(Foo.class).when(annotation).definingType();
-        when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
+        when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(fieldType);
         when(source.getParameters()).thenReturn(new ParameterList.Empty());
@@ -114,7 +114,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getSourceCodeName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        MethodDelegationBinder.ParameterBinding<?> binding = new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -133,7 +133,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getName()).thenReturn("getFoo");
         when(source.getInternalName()).thenReturn("getFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        MethodDelegationBinder.ParameterBinding<?> binding = new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -145,7 +145,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
     public void testSetterForImplicitNamedFieldInHierarchy() throws Exception {
         when(target.getTypeDescription()).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
-        when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
+        when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
@@ -153,7 +153,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        MethodDelegationBinder.ParameterBinding<?> binding = new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -173,7 +173,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        MethodDelegationBinder.ParameterBinding<?> binding = new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -185,7 +185,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
     public void testSetterForImplicitNamedFieldInNamedType() throws Exception {
         when(target.getTypeDescription()).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
-        when(annotation.value()).thenReturn(Field.BEAN_PROPERTY);
+        when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
@@ -194,7 +194,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        MethodDelegationBinder.ParameterBinding<?> binding = new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -214,7 +214,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = new Field.Binder(getterMethod, setterMethod).bind(annotationDescription,
+        MethodDelegationBinder.ParameterBinding<?> binding = new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
                 instrumentationTarget,
@@ -224,17 +224,17 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Field.Binder.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.StaticFieldConstructor.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.FieldLocator.Legal.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.FieldLocator.Illegal.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.FieldLocator.LookupEngine.ForHierarchy.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.FieldLocator.LookupEngine.ForExplicitType.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.FieldLocator.LookupEngine.Illegal.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.FieldLocator.Resolution.Resolved.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.FieldLocator.Resolution.Unresolved.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.InstanceFieldConstructor.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.InstanceFieldConstructor.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
+        ObjectPropertyAssertion.of(FieldProxy.Binder.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.StaticFieldConstructor.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.Legal.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.Illegal.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupEngine.ForHierarchy.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupEngine.ForExplicitType.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupEngine.Illegal.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.Resolution.Resolved.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.Resolution.Unresolved.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.InstanceFieldConstructor.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.InstanceFieldConstructor.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
             @Override
             @SuppressWarnings("unchecked")
             public void apply(Instrumentation.Target mock) {
@@ -247,22 +247,22 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<Field> {
                 when(filteredFieldList.getOnly()).thenReturn(mock(FieldDescription.class));
             }
         }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(Field.Binder.AccessType.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.AccessType.Getter.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.AccessType.Getter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
+        ObjectPropertyAssertion.of(FieldProxy.Binder.AccessType.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.AccessType.Getter.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.AccessType.Getter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
             @Override
             public void apply(Instrumentation.Target mock) {
                 when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
             }
         }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(Field.Binder.AccessType.Setter.class).apply();
-        ObjectPropertyAssertion.of(Field.Binder.AccessType.Setter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
+        ObjectPropertyAssertion.of(FieldProxy.Binder.AccessType.Setter.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.AccessType.Setter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation.Target>() {
             @Override
             public void apply(Instrumentation.Target mock) {
                 when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
             }
         }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(Field.Binder.AccessorProxy.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.AccessorProxy.class).apply();
     }
 
     public static class Foo {

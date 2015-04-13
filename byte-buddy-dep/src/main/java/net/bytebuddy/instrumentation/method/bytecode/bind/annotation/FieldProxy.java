@@ -40,13 +40,13 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * used, it needs to be installed with two types. The getter type must be defined in a single-method interface
  * with a single method that returns an {@link java.lang.Object} type and takes no arguments. The getter interface
  * must similarly return {@code void} and take a single {@link java.lang.Object} argument. After installing these
- * interfaces with the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field.Binder}, this
+ * interfaces with the {@link FieldProxy.Binder}, this
  * binder needs to be registered with a {@link net.bytebuddy.instrumentation.MethodDelegation} before it can be used.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface Field {
+public @interface FieldProxy {
 
     /**
      * A placeholder name to indicate that a field name should be inferred by the name of the intercepted
@@ -78,9 +78,9 @@ public @interface Field {
     Class<?> definingType() default void.class;
 
     /**
-     * A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field} annotation.
+     * A binder for the {@link FieldProxy} annotation.
      */
-    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> {
+    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> {
 
         /**
          * A reference to the method that declares the field annotation's defining type property.
@@ -101,7 +101,7 @@ public @interface Field {
          * Fetches a reference to all annotation properties.
          */
         static {
-            MethodList methodList = new TypeDescription.ForLoadedType(Field.class).getDeclaredMethods();
+            MethodList methodList = new TypeDescription.ForLoadedType(FieldProxy.class).getDeclaredMethods();
             DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
@@ -118,7 +118,7 @@ public @interface Field {
         private final MethodDescription setterMethod;
 
         /**
-         * Creates a new binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field}
+         * Creates a new binder for the {@link FieldProxy}
          * annotation.
          *
          * @param getterMethod The getter method to be implemented by a getter proxy.
@@ -132,7 +132,7 @@ public @interface Field {
         /**
          * Creates a binder by installing two proxy types which are implemented by this binder if a field getter
          * or a field setter is requested by using the
-         * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field} annotation.
+         * {@link FieldProxy} annotation.
          *
          * @param getterType The type which should be used for getter proxies. The type must
          *                   represent an interface which defines a single method which returns an
@@ -142,10 +142,10 @@ public @interface Field {
          *                   represent an interface which defines a single method which returns {@code void}
          *                   and takes a signle {@link java.lang.Object}-typed argument. The use of generics
          *                   is permitted.
-         * @return A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field}
+         * @return A binder for the {@link FieldProxy}
          * annotation.
          */
-        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> install(Class<?> getterType,
+        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(Class<?> getterType,
                                                                                         Class<?> setterType) {
             return install(new TypeDescription.ForLoadedType(nonNull(getterType)), new TypeDescription.ForLoadedType(nonNull(setterType)));
         }
@@ -153,7 +153,7 @@ public @interface Field {
         /**
          * Creates a binder by installing two proxy types which are implemented by this binder if a field getter
          * or a field setter is requested by using the
-         * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field} annotation.
+         * {@link FieldProxy} annotation.
          *
          * @param getterType The type which should be used for getter proxies. The type must
          *                   represent an interface which defines a single method which returns an
@@ -163,10 +163,10 @@ public @interface Field {
          *                   represent an interface which defines a single method which returns {@code void}
          *                   and takes a signle {@link java.lang.Object}-typed argument. The use of generics
          *                   is permitted.
-         * @return A binder for the {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field}
+         * @return A binder for the {@link FieldProxy}
          * annotation.
          */
-        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Field> install(TypeDescription getterType,
+        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(TypeDescription getterType,
                                                                                         TypeDescription setterType) {
             MethodDescription getterMethod = onlyMethod(nonNull(getterType));
             if (!getterMethod.getReturnType().represents(Object.class)) {
@@ -206,12 +206,12 @@ public @interface Field {
         }
 
         @Override
-        public Class<Field> getHandledType() {
-            return Field.class;
+        public Class<FieldProxy> getHandledType() {
+            return FieldProxy.class;
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Field> annotation,
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<FieldProxy> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Instrumentation.Target instrumentationTarget,
@@ -253,7 +253,7 @@ public @interface Field {
 
         @Override
         public String toString() {
-            return "Field.Binder{" +
+            return "FieldProxy.Binder{" +
                     "getterMethod=" + getterMethod +
                     ", setterMethod=" + setterMethod +
                     '}';
@@ -297,7 +297,7 @@ public @interface Field {
 
             @Override
             public String toString() {
-                return "Field.Binder.StaticFieldConstructor." + name();
+                return "FieldProxy.Binder.StaticFieldConstructor." + name();
             }
         }
 
@@ -365,7 +365,7 @@ public @interface Field {
 
             @Override
             public String toString() {
-                return "Field.Binder.AccessType." + name();
+                return "FieldProxy.Binder.AccessType." + name();
             }
 
             /**
@@ -433,7 +433,7 @@ public @interface Field {
 
                 @Override
                 public String toString() {
-                    return "Field.Binder.AccessType.Getter{" +
+                    return "FieldProxy.Binder.AccessType.Getter{" +
                             "accessedField=" + accessedField +
                             ", assigner=" + assigner +
                             ", methodAccessorFactory=" + methodAccessorFactory +
@@ -501,7 +501,7 @@ public @interface Field {
 
                     @Override
                     public String toString() {
-                        return "Field.Binder.AccessType.Getter.Appender{" +
+                        return "FieldProxy.Binder.AccessType.Getter.Appender{" +
                                 "getter=" + Getter.this +
                                 "typeDescription=" + typeDescription +
                                 '}';
@@ -574,7 +574,7 @@ public @interface Field {
 
                 @Override
                 public String toString() {
-                    return "Field.Binder.AccessType.Setter{" +
+                    return "FieldProxy.Binder.AccessType.Setter{" +
                             "accessedField=" + accessedField +
                             ", assigner=" + assigner +
                             ", methodAccessorFactory=" + methodAccessorFactory +
@@ -644,7 +644,7 @@ public @interface Field {
 
                     @Override
                     public String toString() {
-                        return "Field.Binder.AccessType.Setter.Appender{" +
+                        return "FieldProxy.Binder.AccessType.Setter.Appender{" +
                                 "setter=" + Setter.this +
                                 "typeDescription=" + typeDescription +
                                 '}';
@@ -698,14 +698,14 @@ public @interface Field {
 
             @Override
             public String toString() {
-                return "Field.Binder.InstanceFieldConstructor{" +
+                return "FieldProxy.Binder.InstanceFieldConstructor{" +
                         "instrumentedType=" + instrumentedType +
                         '}';
             }
 
             /**
              * An appender for implementing an
-             * {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field.Binder.InstanceFieldConstructor}.
+             * {@link FieldProxy.Binder.InstanceFieldConstructor}.
              */
             protected static class Appender implements ByteCodeAppender {
 
@@ -753,7 +753,7 @@ public @interface Field {
 
                 @Override
                 public String toString() {
-                    return "Field.Binder.InstanceFieldConstructor.Appender{" +
+                    return "FieldProxy.Binder.InstanceFieldConstructor.Appender{" +
                             "fieldDescription=" + fieldDescription +
                             '}';
                 }
@@ -769,7 +769,7 @@ public @interface Field {
              * Returns a field locator for a given field.
              *
              * @param fieldName         The field's name which might represent
-             *                          {@link net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field#BEAN_PROPERTY}
+             *                          {@link FieldProxy#BEAN_PROPERTY}
              *                          if the field's name should be derived from a method's name.
              * @param methodDescription The intercepted method.
              * @return An appropriate field locator.
@@ -837,7 +837,7 @@ public @interface Field {
 
                     @Override
                     public String toString() {
-                        return "Field.Binder.FieldLocator.Resolution.Unresolved{}";
+                        return "FieldProxy.Binder.FieldLocator.Resolution.Unresolved{}";
                     }
                 }
 
@@ -883,7 +883,7 @@ public @interface Field {
 
                     @Override
                     public String toString() {
-                        return "Field.Binder.FieldLocator.Resolution.Resolved{" +
+                        return "FieldProxy.Binder.FieldLocator.Resolution.Resolved{" +
                                 "fieldDescription=" + fieldDescription +
                                 '}';
                     }
@@ -925,7 +925,7 @@ public @interface Field {
 
                     @Override
                     public String toString() {
-                        return "Field.Binder.FieldLocator.LookupEngine.Illegal{}";
+                        return "FieldProxy.Binder.FieldLocator.LookupEngine.Illegal{}";
                     }
                 }
 
@@ -974,7 +974,7 @@ public @interface Field {
 
                     @Override
                     public String toString() {
-                        return "Field.Binder.FieldLocator.LookupEngine.ForHierarchy{" +
+                        return "FieldProxy.Binder.FieldLocator.LookupEngine.ForHierarchy{" +
                                 "fieldName='" + fieldName + '\'' +
                                 '}';
                     }
@@ -1030,7 +1030,7 @@ public @interface Field {
 
                     @Override
                     public String toString() {
-                        return "Field.Binder.FieldLocator.LookupEngine.ForExplicitType{" +
+                        return "FieldProxy.Binder.FieldLocator.LookupEngine.ForExplicitType{" +
                                 "fieldName='" + fieldName + '\'' +
                                 ", typeDescription=" + typeDescription +
                                 '}';
@@ -1097,7 +1097,7 @@ public @interface Field {
 
                 @Override
                 public String toString() {
-                    return "Field.Binder.FieldLocator.Legal{" +
+                    return "FieldProxy.Binder.FieldLocator.Legal{" +
                             "fieldName='" + fieldName + '\'' +
                             '}';
                 }
@@ -1125,7 +1125,7 @@ public @interface Field {
 
                 @Override
                 public String toString() {
-                    return "Field.Binder.FieldLocator.Illegal{}";
+                    return "FieldProxy.Binder.FieldLocator.Illegal{}";
                 }
             }
         }
@@ -1257,7 +1257,7 @@ public @interface Field {
 
             @Override
             public String toString() {
-                return "Field.Binder.AccessorProxy{" +
+                return "FieldProxy.Binder.AccessorProxy{" +
                         "accessedField=" + accessedField +
                         ", instrumentedType=" + instrumentedType +
                         ", assigner=" + assigner +

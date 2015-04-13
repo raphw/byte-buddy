@@ -38,7 +38,7 @@ public class AnnotationVisibilityTest {
                 {Empty.class},
                 {Pipe.class},
                 {Morph.class},
-                {Field.class}
+                {FieldProxy.class}
         });
     }
 

@@ -2,7 +2,7 @@ package net.bytebuddy.instrumentation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Argument;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Field;
+import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.FieldProxy;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test
     public void testExplicitFieldAccess() throws Exception {
         DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(Swap.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         Explicit explicit = loaded.getLoaded().newInstance();
         assertThat(explicit.foo, is(FOO));
         explicit.swap();
@@ -33,7 +33,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test
     public void testExplicitFieldAccessSerializable() throws Exception {
         DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(SwapSerializable.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         Explicit explicit = loaded.getLoaded().newInstance();
         assertThat(explicit.foo, is(FOO));
         explicit.swap();
@@ -43,7 +43,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test
     public void testExplicitFieldAccessStatic() throws Exception {
         DynamicType.Loaded<ExplicitStatic> loaded = instrument(ExplicitStatic.class, MethodDelegation.to(Swap.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         ExplicitStatic explicit = loaded.getLoaded().newInstance();
         assertThat(ExplicitStatic.foo, is(FOO));
         explicit.swap();
@@ -53,7 +53,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test
     public void testImplicitFieldGetterAccess() throws Exception {
         DynamicType.Loaded<ImplicitGetter> loaded = instrument(ImplicitGetter.class, MethodDelegation.to(GetInterceptor.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         ImplicitGetter implicitGetter = loaded.getLoaded().newInstance();
         assertThat(implicitGetter.foo, is(FOO));
         assertThat(implicitGetter.getFoo(), is(FOO + BAR));
@@ -63,7 +63,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test
     public void testImplicitFieldSetterAccess() throws Exception {
         DynamicType.Loaded<ImplicitSetter> loaded = instrument(ImplicitSetter.class, MethodDelegation.to(SetInterceptor.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         ImplicitSetter implicitSetter = loaded.getLoaded().newInstance();
         assertThat(implicitSetter.foo, is(FOO));
         implicitSetter.setFoo(BAR);
@@ -73,7 +73,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test
     public void testExplicitFieldAccessImplicitTarget() throws Exception {
         DynamicType.Loaded<ExplicitInherited> loaded = instrument(ExplicitInherited.class, MethodDelegation.to(Swap.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         ExplicitInherited explicitInherited = loaded.getLoaded().newInstance();
         assertThat(((Explicit) explicitInherited).foo, is(FOO));
         assertThat(explicitInherited.foo, is(QUX));
@@ -85,7 +85,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test
     public void testExplicitFieldAccessExplicitTarget() throws Exception {
         DynamicType.Loaded<ExplicitInherited> loaded = instrument(ExplicitInherited.class, MethodDelegation.to(SwapInherited.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         ExplicitInherited explicitInherited = loaded.getLoaded().newInstance();
         assertThat(((Explicit) explicitInherited).foo, is(FOO));
         assertThat(explicitInherited.foo, is(QUX));
@@ -97,7 +97,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test(expected = ClassCastException.class)
     public void testIncompatibleGetterTypeThrowsException() throws Exception {
         DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(GetterIncompatible.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         Explicit explicit = loaded.getLoaded().newInstance();
         explicit.swap();
     }
@@ -105,59 +105,59 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
     @Test(expected = ClassCastException.class)
     public void testIncompatibleSetterTypeThrowsException() throws Exception {
         DynamicType.Loaded<Explicit> loaded = instrument(Explicit.class, MethodDelegation.to(SetterIncompatible.class)
-                .appendParameterBinder(Field.Binder.install(Get.class, Set.class)));
+                .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
         Explicit explicit = loaded.getLoaded().newInstance();
         explicit.swap();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGetterTypeDoesNotDeclareCorrectMethodThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Serializable.class, Set.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Serializable.class, Set.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSetterTypeDoesNotDeclareCorrectMethodThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, Serializable.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Serializable.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGetterTypeDoesInheritFromOtherTypeThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(GetInherited.class, Set.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(GetInherited.class, Set.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSetterTypeDoesInheritFromOtherTypeThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, SetInherited.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, SetInherited.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGetterTypeNonPublicThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(GetPrivate.class, Set.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(GetPrivate.class, Set.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSetterTypeNonPublicThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, SetPrivate.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, SetPrivate.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSetterTypeIncorrectSignatureThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(GetIncorrect.class, Set.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(GetIncorrect.class, Set.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGetterTypeIncorrectSignatureThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, SetIncorrect.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, SetIncorrect.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGetterTypeNotInterfaceThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Object.class, Set.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Object.class, Set.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testSetterTypeNotInterfaceThrowsException() throws Exception {
-        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(Field.Binder.install(Get.class, Object.class));
+        MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Object.class));
     }
 
     public interface Get<T> {
@@ -200,7 +200,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     public static class Swap {
 
-        public static void swap(@Field(FOO) Get<String> getter, @Field(FOO) Set<String> setter) {
+        public static void swap(@FieldProxy(FOO) Get<String> getter, @FieldProxy(FOO) Set<String> setter) {
             assertThat(getter, not(instanceOf(Serializable.class)));
             assertThat(setter, not(instanceOf(Serializable.class)));
             setter.set(getter.get() + BAR);
@@ -230,8 +230,8 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     public static class SwapInherited {
 
-        public static void swap(@Field(value = FOO, definingType = Explicit.class) Get<String> getter,
-                                @Field(value = FOO, definingType = Explicit.class) Set<String> setter) {
+        public static void swap(@FieldProxy(value = FOO, definingType = Explicit.class) Get<String> getter,
+                                @FieldProxy(value = FOO, definingType = Explicit.class) Set<String> setter) {
             assertThat(getter, not(instanceOf(Serializable.class)));
             assertThat(setter, not(instanceOf(Serializable.class)));
             setter.set(getter.get() + BAR);
@@ -260,7 +260,7 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     public static class GetInterceptor {
 
-        public static String get(@Field Get<String> getter, @Field Set<String> setter) {
+        public static String get(@FieldProxy Get<String> getter, @FieldProxy Set<String> setter) {
             setter.set(getter.get() + BAR);
             return getter.get();
         }
@@ -279,15 +279,15 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     public static class SetInterceptor {
 
-        public static void set(@Argument(0) String value, @Field Get<String> getter, @Field Set<String> setter) {
+        public static void set(@Argument(0) String value, @FieldProxy Get<String> getter, @FieldProxy Set<String> setter) {
             setter.set(getter.get() + value);
         }
     }
 
     public static class SwapSerializable {
 
-        public static void swap(@Field(value = FOO, serializableProxy = true) Get<String> getter,
-                                @Field(value = FOO, serializableProxy = true) Set<String> setter) {
+        public static void swap(@FieldProxy(value = FOO, serializableProxy = true) Get<String> getter,
+                                @FieldProxy(value = FOO, serializableProxy = true) Set<String> setter) {
             assertThat(getter, instanceOf(Serializable.class));
             assertThat(setter, instanceOf(Serializable.class));
             setter.set(getter.get() + BAR);
@@ -296,14 +296,14 @@ public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
 
     public static class GetterIncompatible {
 
-        public static void swap(@Field(FOO) Get<Integer> getter, @Field(FOO) Set<String> setter) {
+        public static void swap(@FieldProxy(FOO) Get<Integer> getter, @FieldProxy(FOO) Set<String> setter) {
             Integer value = getter.get();
         }
     }
 
     public static class SetterIncompatible {
 
-        public static void swap(@Field(FOO) Get<String> getter, @Field(FOO) Set<Integer> setter) {
+        public static void swap(@FieldProxy(FOO) Get<String> getter, @FieldProxy(FOO) Set<Integer> setter) {
             setter.set(0);
         }
     }

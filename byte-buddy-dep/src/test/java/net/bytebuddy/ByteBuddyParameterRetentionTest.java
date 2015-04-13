@@ -108,7 +108,7 @@ public class ByteBuddyParameterRetentionTest {
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.getDeclaredMethods().length, is(7));
+        assertThat(dynamicType.getDeclaredMethods().length, is(3));
         Class<?> executable = Class.forName("java.lang.reflect.Executable");
         Method getParameters = executable.getDeclaredMethod("getParameters");
         Class<?> parameter = Class.forName("java.lang.reflect.Parameter");
@@ -183,7 +183,7 @@ public class ByteBuddyParameterRetentionTest {
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.getDeclaredMethods().length, is(7));
+        assertThat(dynamicType.getDeclaredMethods().length, is(3));
         Class<?> executable = Class.forName("java.lang.reflect.Executable");
         Method getParameters = executable.getDeclaredMethod("getParameters");
         Class<?> parameter = Class.forName("java.lang.reflect.Parameter");

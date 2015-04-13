@@ -68,8 +68,7 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
         DynamicType.Loaded<Foo> loaded = instrument(Foo.class, MethodDelegation.to(OriginString.class));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), instanceOf(String.class));
-        assertThat(instance.foo(),
-                is((Object) new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(FOO)).getUniqueSignature()));
+        assertThat(instance.foo(),is((Object) Foo.class.getDeclaredMethod(FOO).toString()));
     }
 
     @Test
@@ -111,14 +110,14 @@ public class MethodDelegationOriginTest extends AbstractInstrumentationTest {
 
     public static class OriginMethod {
 
-        public static Object foo(@Origin Method method) {
+        public static Object foo(@Origin(cache = false) Method method) {
             return method;
         }
     }
 
     public static class OriginMethodWithCache {
 
-        public static Object foo(@Origin(cacheMethod = true) Method method) {
+        public static Object foo(@Origin(cache = true) Method method) {
             return method;
         }
     }

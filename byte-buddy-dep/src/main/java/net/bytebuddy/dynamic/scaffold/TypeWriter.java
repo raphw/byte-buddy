@@ -314,7 +314,6 @@ public interface TypeWriter<T> {
                 public void apply(ClassVisitor classVisitor,
                                   Instrumentation.Context instrumentationContext,
                                   MethodDescription methodDescription) {
-                    System.out.println("Skipped: " + methodDescription);
                     /* do nothing */
                 }
 
@@ -850,6 +849,7 @@ public interface TypeWriter<T> {
                                                  String descriptor,
                                                  String genericSignature,
                                                  String[] exceptionTypeInternalName) {
+                    // TODO: Check if this works for final field assignments inside, maybe cheat with names? Check constructor final reassignment in general
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
                         TypeInitializerInjection injectedCode = new TypeInitializerInjection();
                         this.injectedCode = injectedCode;
