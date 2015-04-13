@@ -77,12 +77,9 @@
                                         </relocation>
                                     </relocations>
                                     <transformers>
-                                        <transformer
-                                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                             <manifestEntries>
-                                                <Bundle-SymbolicName>
-                                                    ${project.groupId}.${project.artifactId}
-                                                </Bundle-SymbolicName>
+                                                <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                                                 <Bundle-Name>${project.name}</Bundle-Name>
                                                 <Bundle-Description>${project.description}</Bundle-Description>
                                                 <Bundle-Version>${project.version}</Bundle-Version>
