@@ -634,7 +634,7 @@ public interface TypeWriter<T> {
                     methodRegistry.getInstrumentedMethods(),
                     classFileLocator,
                     targetType,
-                    MethodRebaseResolver.Forbidden.INSTANCE);
+                    MethodRebaseResolver.Disabled.INSTANCE);
         }
 
         protected Default(TypeDescription instrumentedType,

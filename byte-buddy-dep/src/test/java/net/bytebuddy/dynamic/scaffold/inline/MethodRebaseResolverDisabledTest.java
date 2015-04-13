@@ -10,10 +10,9 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
-public class MethodRebaseResolverResolutionPreservedTest {
+public class MethodRebaseResolverDisabledTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -22,15 +21,20 @@ public class MethodRebaseResolverResolutionPreservedTest {
     private MethodDescription methodDescription;
 
     @Test
-    public void testPreservation() throws Exception {
-        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.Preserved(methodDescription);
+    public void testResolutionPreservesMethod() throws Exception {
+        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Disabled.INSTANCE.resolve(methodDescription);
         assertThat(resolution.isRebased(), is(false));
-        assertThat(resolution.getResolvedMethod(), is(methodDescription));
         assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.LegalTrivial.INSTANCE));
+        assertThat(resolution.getResolvedMethod(), is(methodDescription));
+    }
+
+    @Test
+    public void testNoAuxiliaryTypes() throws Exception {
+        assertThat(MethodRebaseResolver.Disabled.INSTANCE.getAuxiliaryTypes().size(), is(0));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.Preserved.class).apply();
+        ObjectPropertyAssertion.of(MethodRebaseResolver.Disabled.class).apply();
     }
 }

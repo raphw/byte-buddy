@@ -55,8 +55,8 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(typeDescription.getDescriptor()).thenReturn(BAR);
-        when(methodNameTransformer.transform(FOO)).thenReturn(QUX);
-        when(otherMethodNameTransformer.transform(FOO)).thenReturn(FOO + BAR);
+        when(methodNameTransformer.transform(methodDescription)).thenReturn(QUX);
+        when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Collections.singletonList(parameterType));
         when(methodDescription.getParameters()).thenReturn(parameterList);
@@ -91,7 +91,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         }).refine(new ObjectPropertyAssertion.Refinement<MethodRebaseResolver.MethodNameTransformer>() {
             @Override
             public void apply(MethodRebaseResolver.MethodNameTransformer mock) {
-                when(mock.transform(any(String.class))).thenReturn(FOO + System.identityHashCode(mock));
+                when(mock.transform(any(MethodDescription.class))).thenReturn(FOO + System.identityHashCode(mock));
             }
         }).apply();
     }

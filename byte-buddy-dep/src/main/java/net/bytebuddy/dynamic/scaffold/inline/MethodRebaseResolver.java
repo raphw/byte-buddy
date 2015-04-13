@@ -42,6 +42,11 @@ public interface MethodRebaseResolver {
      */
     Resolution resolve(MethodDescription methodDescription);
 
+    /**
+     * Returns a (potentially empty) list of auxiliary types that are required by this method rebase resolver.
+     *
+     * @return A list of auxiliary types that are required by this method rebase resolver.
+     */
     List<DynamicType> getAuxiliaryTypes();
 
     /**
@@ -55,10 +60,10 @@ public interface MethodRebaseResolver {
          * Transforms a method's name to an alternative name. For a given argument, this mapper must always provide
          * the same return value.
          *
-         * @param originalName The original name.
+         * @param methodDescription The original method.
          * @return The alternative name.
          */
-        String transform(String originalName);
+        String transform(MethodDescription methodDescription);
 
         /**
          * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}.
@@ -92,8 +97,8 @@ public interface MethodRebaseResolver {
             }
 
             @Override
-            public String transform(String originalName) {
-                return String.format("%s$%s", originalName, suffix);
+            public String transform(MethodDescription methodDescription) {
+                return String.format("%s$%s", methodDescription.getInternalName(), suffix);
             }
 
             @Override
@@ -147,8 +152,8 @@ public interface MethodRebaseResolver {
             }
 
             @Override
-            public String transform(String originalName) {
-                return String.format("%s%s", prefix, originalName);
+            public String transform(MethodDescription methodDescription) {
+                return String.format("%s%s", prefix, methodDescription.getInternalName());
             }
 
             @Override
@@ -231,7 +236,7 @@ public interface MethodRebaseResolver {
 
             @Override
             public StackManipulation getAdditionalArguments() {
-                throw new IllegalStateException("A non-rebased method never requires additional arguments");
+                return StackManipulation.LegalTrivial.INSTANCE;
             }
 
             @Override
@@ -270,7 +275,7 @@ public interface MethodRebaseResolver {
              */
             public ForRebasedMethod(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
                 this.methodDescription = new MethodDescription.Latent(
-                        methodNameTransformer.transform(methodDescription.getInternalName()),
+                        methodNameTransformer.transform(methodDescription),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
                         methodDescription.getParameters().asTypeList(),
@@ -374,7 +379,7 @@ public interface MethodRebaseResolver {
     /**
      * A method rebase resolver that preserves any method in its original form.
      */
-    enum Forbidden implements MethodRebaseResolver {
+    enum Disabled implements MethodRebaseResolver {
 
         /**
          * The singleton instance.
@@ -393,15 +398,26 @@ public interface MethodRebaseResolver {
 
         @Override
         public String toString() {
-            return "MethodRebaseResolver.NoOp." + name();
+            return "MethodRebaseResolver.Disabled." + name();
         }
 
     }
 
+    /**
+     * An abstract base implementation for a method rebase resolver.
+     */
     abstract class AbstractBase implements MethodRebaseResolver {
 
+        /**
+         * A set containing all instrumented methods.
+         */
         protected final Set<? extends MethodDescription> instrumentedMethods;
 
+        /**
+         * Creates a method rebase resolver.
+         *
+         * @param instrumentedMethods A set containing all instrumented methods.
+         */
         protected AbstractBase(Set<? extends MethodDescription> instrumentedMethods) {
             this.instrumentedMethods = instrumentedMethods;
         }
@@ -413,18 +429,54 @@ public interface MethodRebaseResolver {
                     : new Resolution.Preserved(methodDescription);
         }
 
+        /**
+         * Resolves a method that is instrumented.
+         *
+         * @param methodDescription The method to be rebased.
+         * @return A resolution for the given method.
+         */
         protected abstract Resolution rebase(MethodDescription methodDescription);
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && instrumentedMethods.equals(((AbstractBase) other).instrumentedMethods);
+        }
+
+        @Override
+        public int hashCode() {
+            return instrumentedMethods.hashCode();
+        }
     }
 
+    /**
+     * A partly enabled method rebase resolver that is only capable of rebasing methods but not constructors.
+     */
     class MethodsOnly extends AbstractBase {
 
+        /**
+         * Creates a new method rebase resolver that is only capable of rebasing methods but not constructors.
+         *
+         * @param instrumentedMethods   The instrumented methods that should be rebased.
+         * @param methodNameTransformer The method name transformer to use for rebasing method names.
+         * @return A suitable method rebase resolver.
+         */
         protected static MethodRebaseResolver of(MethodList instrumentedMethods, MethodNameTransformer methodNameTransformer) {
             return new MethodsOnly(new HashSet<MethodDescription>(instrumentedMethods), methodNameTransformer);
         }
 
+        /**
+         * The method name transformer to use for rebasing method names.
+         */
         private final MethodNameTransformer methodNameTransformer;
 
-        public MethodsOnly(Set<? extends MethodDescription> instrumentedMethods, MethodNameTransformer methodNameTransformer) {
+        /**
+         * Creates a new methods-only method rebase resolver.
+         *
+         * @param instrumentedMethods   The instrumented methods that are to be rebased.
+         * @param methodNameTransformer The method name transformer to use for rebasing methods.
+         */
+        protected MethodsOnly(Set<? extends MethodDescription> instrumentedMethods, MethodNameTransformer methodNameTransformer) {
             super(instrumentedMethods);
             this.methodNameTransformer = methodNameTransformer;
         }
@@ -441,10 +493,45 @@ public interface MethodRebaseResolver {
         public List<DynamicType> getAuxiliaryTypes() {
             return Collections.emptyList();
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && super.equals(other)
+                    && methodNameTransformer.equals(((MethodsOnly) other).methodNameTransformer);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + methodNameTransformer.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodRebaseResolver.MethodsOnly{" +
+                    "instrumentedMethods=" + instrumentedMethods +
+                    ", methodNameTransformer=" + methodNameTransformer +
+                    '}';
+        }
     }
 
+    /**
+     * A fully enabled method rebase resolver that is capable of rebasing both methods and constructors.
+     */
     class Enabled extends AbstractBase {
 
+        /**
+         * Creates a method rebase resolver which is only capable of rebasing constructors if the instrumented methods suggest this.
+         *
+         * @param instrumentedMethods         The instrumented methods to consider for rebasement.
+         * @param instrumentedType            The instrumented type.
+         * @param classFileVersion            The class file version to define a potential auxiliary type in.
+         * @param auxiliaryTypeNamingStrategy A naming strategy to apply when naming an auxiliary type.
+         * @param methodNameTransformer       The method name transformer to use.
+         * @return Returns a method rebase resolver that is capable of rebasing any of the instrumented methods.
+         */
         public static MethodRebaseResolver make(MethodList instrumentedMethods,
                                                 TypeDescription instrumentedType,
                                                 ClassFileVersion classFileVersion,
@@ -453,21 +540,42 @@ public interface MethodRebaseResolver {
             return instrumentedMethods.filter(isConstructor()).isEmpty()
                     ? MethodsOnly.of(instrumentedMethods, methodNameTransformer)
                     : of(instrumentedMethods, TrivialType.INSTANCE.make(auxiliaryTypeNamingStrategy.name(TrivialType.INSTANCE, instrumentedType),
-                            classFileVersion,
-                            AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE), methodNameTransformer);
+                    classFileVersion,
+                    AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE), methodNameTransformer);
         }
 
+        /**
+         * Creates a fully enabled method rebase resolver.
+         *
+         * @param instrumentedMethods   The instrumented methods.
+         * @param placeholderType       The placeholder type to use as when rebasing constructors.
+         * @param methodNameTransformer The method name transformer to use.
+         * @return A suitable method rebase resolver.
+         */
         protected static MethodRebaseResolver of(MethodList instrumentedMethods, DynamicType placeholderType, MethodNameTransformer methodNameTransformer) {
             return new Enabled(new HashSet<MethodDescription>(instrumentedMethods), placeholderType, methodNameTransformer);
         }
 
+        /**
+         * The placeholder type to use for rebasing constructors.
+         */
         private final DynamicType placeholderType;
 
+        /**
+         * The method name transformer to use.
+         */
         private final MethodNameTransformer methodNameTransformer;
 
-        public Enabled(Set<? extends MethodDescription> instrumentedMethods,
-                       DynamicType placeholderType,
-                       MethodNameTransformer methodNameTransformer) {
+        /**
+         * Creates a new enabled method rebase resolver.
+         *
+         * @param instrumentedMethods   A set of methods that are to be rebased.
+         * @param placeholderType       The placeholder type to use for rebasing constructors.
+         * @param methodNameTransformer The method name transformer to use.
+         */
+        protected Enabled(Set<? extends MethodDescription> instrumentedMethods,
+                          DynamicType placeholderType,
+                          MethodNameTransformer methodNameTransformer) {
             super(instrumentedMethods);
             this.placeholderType = placeholderType;
             this.methodNameTransformer = methodNameTransformer;
@@ -483,6 +591,31 @@ public interface MethodRebaseResolver {
         @Override
         public List<DynamicType> getAuxiliaryTypes() {
             return Collections.singletonList(placeholderType);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && super.equals(other)
+                    && placeholderType.equals(((Enabled) other).placeholderType)
+                    && methodNameTransformer.equals(((Enabled) other).methodNameTransformer);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + placeholderType.hashCode();
+            result = 31 * result + methodNameTransformer.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodRebaseResolver.Enabled{" +
+                    "instrumentedMethods=" + instrumentedMethods +
+                    ", placeholderType=" + placeholderType +
+                    ", methodNameTransformer=" + methodNameTransformer +
+                    '}';
         }
     }
 }
