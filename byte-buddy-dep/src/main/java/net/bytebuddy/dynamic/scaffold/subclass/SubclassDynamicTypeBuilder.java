@@ -23,9 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.isOverridable;
-import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Creates a dynamic type on basis of loaded types where the dynamic type extends a given type.
@@ -221,7 +219,6 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
 
-
     /**
      * Applies this builder's constructor strategy to the given instrumented type.
      *
@@ -239,17 +236,82 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return instrumentedType;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && super.equals(other)
+                && constructorStrategy.equals(((SubclassDynamicTypeBuilder<?>) other).constructorStrategy);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + constructorStrategy.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "SubclassDynamicTypeBuilder{" +
+                "classFileVersion=" + classFileVersion +
+                ", namingStrategy=" + namingStrategy +
+                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", targetType=" + targetType +
+                ", interfaceTypes=" + interfaceTypes +
+                ", modifiers=" + modifiers +
+                ", attributeAppender=" + attributeAppender +
+                ", ignoredMethods=" + ignoredMethods +
+                ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                ", classVisitorWrapperChain=" + classVisitorWrapperChain +
+                ", fieldRegistry=" + fieldRegistry +
+                ", methodRegistry=" + methodRegistry +
+                ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
+                ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
+                ", fieldTokens=" + fieldTokens +
+                ", methodTokens=" + methodTokens +
+                ", constructorStrategy=" + constructorStrategy +
+                '}';
+    }
+
+    /**
+     * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type.
+     */
     protected static class InstrumentableMatcher implements LatentMethodMatcher {
 
+        /**
+         * A matcher for the ignored methods.
+         */
         private final ElementMatcher<? super MethodDescription> ignoredMethods;
 
-        public InstrumentableMatcher(ElementMatcher<? super MethodDescription> ignoredMethods) {
+        /**
+         * Creates a latent method matcher that matches all methods that are to be instrumented by a {@link SubclassDynamicTypeBuilder}.
+         *
+         * @param ignoredMethods A matcher for the ignored methods.
+         */
+        protected InstrumentableMatcher(ElementMatcher<? super MethodDescription> ignoredMethods) {
             this.ignoredMethods = ignoredMethods;
         }
 
         @Override
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
             return isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && ignoredMethods.equals(((InstrumentableMatcher) other).ignoredMethods);
+        }
+
+        @Override
+        public int hashCode() {
+            return ignoredMethods.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "SubclassDynamicTypeBuilder.InstrumentableMatcher{" +
+                    "ignoredMethods=" + ignoredMethods +
+                    '}';
         }
     }
 }

@@ -10,6 +10,7 @@ import net.bytebuddy.instrumentation.StubMethod;
 import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,6 +22,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -154,5 +157,15 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         assertThat(getModifiers.invoke(methodParameter[0]), is((Object) Opcodes.ACC_FINAL));
         assertThat(getModifiers.invoke(methodParameter[1]), is((Object) 0));
         assertThat(getModifiers.invoke(methodParameter[2]), is((Object) 0));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(RedefinitionDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(new Object());
+            }
+        }).apply();
     }
 }

@@ -9,7 +9,6 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocati
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -198,10 +197,22 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
      */
     public static class Factory implements Instrumentation.Target.Factory {
 
+        /**
+         * The bridge method resolver factory to use.
+         */
         private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
 
+        /**
+         * The method rebase resolver to use.
+         */
         private final MethodRebaseResolver methodRebaseResolver;
 
+        /**
+         * Creates a new factory for a rebase instrumentation target.
+         *
+         * @param bridgeMethodResolverFactory The bridge method resolver factory to use.
+         * @param methodRebaseResolver        The method rebase resolver to use.
+         */
         public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory, MethodRebaseResolver methodRebaseResolver) {
             this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
             this.methodRebaseResolver = methodRebaseResolver;
@@ -210,6 +221,28 @@ public class RebaseInstrumentationTarget extends Instrumentation.Target.Abstract
         @Override
         public Instrumentation.Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods) {
             return new RebaseInstrumentationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && bridgeMethodResolverFactory.equals(((Factory) other).bridgeMethodResolverFactory)
+                    && methodRebaseResolver.equals(((Factory) other).methodRebaseResolver);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = bridgeMethodResolverFactory.hashCode();
+            result = 31 * result + methodRebaseResolver.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "RebaseInstrumentationTarget.Factory{" +
+                    "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                    ", methodRebaseResolver=" + methodRebaseResolver +
+                    '}';
         }
     }
 }
