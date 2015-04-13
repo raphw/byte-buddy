@@ -20,7 +20,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class FieldBinderTest extends AbstractAnnotationBinderTest<FieldProxy> {
+public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProxy> {
+
+    // TODO: Update tutorial
 
     private static final String FOO = "foo";
 
@@ -33,7 +35,7 @@ public class FieldBinderTest extends AbstractAnnotationBinderTest<FieldProxy> {
     @Mock
     private FieldDescription fieldDescription;
 
-    public FieldBinderTest() {
+    public FieldProxyBinderTest() {
         super(FieldProxy.class);
     }
 

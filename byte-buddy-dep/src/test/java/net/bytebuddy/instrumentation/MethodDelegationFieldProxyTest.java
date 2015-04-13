@@ -11,7 +11,7 @@ import java.io.Serializable;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationFieldTest extends AbstractInstrumentationTest {
+public class MethodDelegationFieldProxyTest extends AbstractInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
