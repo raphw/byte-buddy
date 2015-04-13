@@ -652,10 +652,10 @@ public interface DynamicType {
          * Defines an instrumentation for a method that was added to this instrumentation or a to method selection
          * of existing methods.
          *
-         * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
+         * @param <S> The most specific known loaded type that is implemented by the created dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
-        interface MatchedMethodInterception<T> {
+        interface MatchedMethodInterception<S> {
 
             /**
              * Intercepts the currently selected method by a given instrumentation.
@@ -663,14 +663,18 @@ public interface DynamicType {
              * @param instrumentation An instrumentation to apply to the currently selected method.
              * @return A builder which will intercept the currently selected methods by the given instrumentation.
              */
-            MethodAnnotationTarget<T> intercept(Instrumentation instrumentation);
+            MethodAnnotationTarget<S> intercept(Instrumentation instrumentation);
 
             /**
              * Implements the currently selected methods as {@code abstract} methods.
              *
              * @return A builder which will implement the currently selected methods as {@code abstract} methods.
              */
-            MethodAnnotationTarget<T> withoutCode();
+            MethodAnnotationTarget<S> withoutCode();
+
+            MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type);
+
+            MethodAnnotationTarget<S> withDefaultValue(Object value);
         }
 
         /**
@@ -699,10 +703,6 @@ public interface DynamicType {
              * types.
              */
             MatchedMethodInterception<S> throwing(TypeDescription... type);
-
-            MethodAnnotationTarget<S> withDefaultValue(Object value);
-
-            MethodAnnotationTarget<S> withUnloadedDefaultValue(Object value);
         }
 
         /**
@@ -2470,6 +2470,23 @@ public interface DynamicType {
                 }
 
                 @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
+                    TypeDescription typeDescription = new TypeDescription.ForLoadedType(nonNull(type));
+                    if (!typeDescription.isAnnotationValue()) {
+                        throw new IllegalArgumentException("Not an annotation value: " + type);
+                    }
+                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(value, typeDescription));
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value) {
+                    return new DefaultMethodAnnotationTarget(methodTokens,
+                            methodMatcher,
+                            new MethodRegistry.Handler.ForAnnotationValue(value),
+                            MethodAttributeAppender.NoOp.INSTANCE);
+                }
+
+                @Override
                 @SuppressWarnings("unchecked")
                 public boolean equals(Object other) {
                     if (this == other)
@@ -2531,8 +2548,7 @@ public interface DynamicType {
 
                 @Override
                 public MatchedMethodInterception<S> throwing(Class<?>... type) {
-                    return throwing(
-                            new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
+                    return throwing(new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
                 }
 
                 @Override
@@ -2555,16 +2571,13 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MethodAnnotationTarget<S> withDefaultValue(Object value) {
-                    return withUnloadedDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(value, methodToken.getReturnType()));
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
+                    return materialize(methodToken).withDefaultValue(value, type);
                 }
 
                 @Override
-                public MethodAnnotationTarget<S> withUnloadedDefaultValue(Object value) {
-                    return new DefaultMethodAnnotationTarget(join(methodTokens, methodToken),
-                            methodToken,
-                            MethodRegistry.Handler.ForAnnotationValue.of(value, methodToken.getReturnType()),
-                            MethodAttributeAppender.NoOp.INSTANCE);
+                public MethodAnnotationTarget<S> withDefaultValue(Object value) {
+                    return materialize(methodToken).withDefaultValue(value);
                 }
 
                 /**
@@ -2756,13 +2769,22 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
-                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType)))
-                            .intercept(nonNull(instrumentation));
+                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).intercept(nonNull(instrumentation));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
                     return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).withoutCode();
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
+                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).withDefaultValue(value, type);
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value) {
+                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).withDefaultValue(value);
                 }
 
                 @Override

@@ -142,26 +142,9 @@ public interface MethodRegistry {
 
         class ForAnnotationValue implements Handler, Compiled {
 
-            public static Handler of(Object annotationValue, TypeDescription typeDescription) {
-                if (!typeDescription.isAnnotationValue()) {
-                    throw new IllegalArgumentException("Not an annotation value type: " + typeDescription);
-                } else if (!typeDescription.isInstance(annotationValue)
-                        || (annotationValue.getClass() == Boolean.class && typeDescription.represents(boolean.class))
-                        || (annotationValue.getClass() == Byte.class && typeDescription.represents(byte.class))
-                        || (annotationValue.getClass() == Short.class && typeDescription.represents(short.class))
-                        || (annotationValue.getClass() == Character.class && typeDescription.represents(char.class))
-                        || (annotationValue.getClass() == Integer.class && typeDescription.represents(int.class))
-                        || (annotationValue.getClass() == Long.class && typeDescription.represents(long.class))
-                        || (annotationValue.getClass() == Float.class && typeDescription.represents(float.class))
-                        || (annotationValue.getClass() == Double.class && typeDescription.represents(double.class))) {
-                    throw new IllegalArgumentException(annotationValue + " is no instance of " + typeDescription);
-                }
-                return new ForAnnotationValue(annotationValue);
-            }
-
             private final Object annotationValue;
 
-            protected ForAnnotationValue(Object annotationValue) {
+            public ForAnnotationValue(Object annotationValue) {
                 this.annotationValue = annotationValue;
             }
 
