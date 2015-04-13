@@ -28,14 +28,39 @@ import static net.bytebuddy.matcher.ElementMatchers.isOverridable;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
- * Creates a dynamic type on basis of loaded types where the dynamic type extends the loaded types.
+ * Creates a dynamic type on basis of loaded types where the dynamic type extends a given type.
  *
  * @param <T> The best known loaded type representing the built dynamic type.
  */
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
+    /**
+     * A strategy that is used to define and implement constructors based on the subclassed type.
+     */
     private final ConstructorStrategy constructorStrategy;
 
+    /**
+     * Creates a new immutable type builder for a subclassing a given class.
+     *
+     * @param classFileVersion                      The class file version for the created dynamic type.
+     * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param superType                             The super class that the dynamic type should extend.
+     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
+     * @param modifiers                             The modifiers to be represented by the dynamic type.
+     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
+     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
+     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
+     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
+     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
+     *                                              no specific appender was specified for a given field.
+     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
+     *                                              if no specific appender was specified for a given method.
+     * @param constructorStrategy                   The strategy for creating constructors during the final definition
+     *                                              phase of this dynamic type.
+     */
     public SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                       NamingStrategy namingStrategy,
                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -176,10 +201,13 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType instrumentedType = new SubclassInstrumentedType(classFileVersion, targetType, interfaceTypes, modifiers, namingStrategy);
         MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
                 .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
-                .prepare(applyConstructorStrategy(applyRecordedMembersTo(instrumentedType)),
+                .prepare(applyConstructorStrategy(applyRecordedMembersTo(new SubclassInstrumentedType(classFileVersion,
+                                targetType,
+                                interfaceTypes,
+                                modifiers,
+                                namingStrategy))),
                         methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
                         new InstrumentableMatcher(ignoredMethods))
                 .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory,
@@ -191,6 +219,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 attributeAppender,
                 classFileVersion).make();
     }
+
+
 
     /**
      * Applies this builder's constructor strategy to the given instrumented type.

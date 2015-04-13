@@ -331,7 +331,7 @@ public class ByteBuddyTutorialExamplesTest {
         Class<? extends UserType> dynamicUserType = byteBuddy
                 .subclass(UserType.class)
                 .method(not(isDeclaredBy(Object.class))).intercept(MethodDelegation.toInstanceField(Interceptor2.class, "interceptor"))
-                .implement(InterceptionAccessor.class).intercept(FieldAccessor.ofBeanxperty())
+                .implement(InterceptionAccessor.class).intercept(FieldAccessor.ofBeanProperty())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

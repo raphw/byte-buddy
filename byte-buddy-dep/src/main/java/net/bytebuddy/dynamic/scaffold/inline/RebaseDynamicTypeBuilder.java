@@ -18,24 +18,52 @@ import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
-
-
+/**
+ * A dynamic type builder that rebases a given type, i.e. it behaves like if a subclass was defined where any methods
+ * are later inlined into the rebased type and the original methods are copied while using a different name space.
+ *
+ * @param <T> The actual type of the rebased type.
+ */
 public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
     /**
-     * A locator for finding a class file.
+     * A locator for finding a class file to a given type.
      */
     private final ClassFileLocator classFileLocator;
 
+    /**
+     * A name transformer that transforms names of any rebased method.
+     */
     private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
 
+    /**
+     * Creates a new rebase dynamic type builder.
+     *
+     * @param classFileVersion                      The class file version for the created dynamic type.
+     * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
+     * @param levelType                             The type that is to be rebased.
+     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
+     * @param modifiers                             The modifiers to be represented by the dynamic type.
+     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
+     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
+     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
+     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
+     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
+     *                                              no specific appender was specified for a given field.
+     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
+     *                                              if no specific appender was specified for a given method.
+     * @param classFileLocator                      A locator for finding a class file to a given type.
+     * @param methodNameTransformer                 A name transformer that transforms names of any rebased method.
+     */
     public RebaseDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                     NamingStrategy namingStrategy,
                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -73,6 +101,33 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 methodNameTransformer);
     }
 
+    /**
+     * Creates a new rebase dynamic type builder.
+     *
+     * @param classFileVersion                      The class file version for the created dynamic type.
+     * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
+     * @param levelType                             The type that is to be rebased.
+     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
+     * @param modifiers                             The modifiers to be represented by the dynamic type.
+     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
+     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
+     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
+     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
+     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
+     *                                              no specific appender was specified for a given field.
+     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
+     *                                              if no specific appender was specified for a given method.
+     * @param fieldTokens                           A list of field representations that were added explicitly to this
+     *                                              dynamic type.
+     * @param methodTokens                          A list of method representations that were added explicitly to this
+     *                                              dynamic type.
+     * @param classFileLocator                      A locator for finding a class file to a given type.
+     * @param methodNameTransformer                 A name transformer that transforms names of any rebased method.
+     */
     protected RebaseDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                        NamingStrategy namingStrategy,
                                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -153,12 +208,15 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType instrumentedType = new InlineInstrumentedType(classFileVersion, targetType, interfaceTypes, modifiers, namingStrategy);
-        MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(applyRecordedMembersTo(instrumentedType),
+        MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(applyRecordedMembersTo(new InlineInstrumentedType(classFileVersion,
+                        targetType,
+                        interfaceTypes,
+                        modifiers,
+                        namingStrategy)),
                 methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
                 InlineInstrumentationMatcher.of(ignoredMethods, targetType));
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Enabled.make(preparedMethodRegistry.getInstrumentedMethods(),
-                instrumentedType,
+                preparedMethodRegistry.getInstrumentedType(),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
@@ -173,5 +231,46 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 classFileLocator,
                 targetType,
                 methodRebaseResolver).make();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && super.equals(other)
+                && classFileLocator.equals(((RebaseDynamicTypeBuilder<?>) other).classFileLocator)
+                && methodNameTransformer.equals(((RebaseDynamicTypeBuilder<?>) other).methodNameTransformer);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + classFileLocator.hashCode();
+        result = 31 * result + methodNameTransformer.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "RebaseDynamicTypeBuilder{" +
+                "classFileVersion=" + classFileVersion +
+                ", namingStrategy=" + namingStrategy +
+                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", targetType=" + targetType +
+                ", interfaceTypes=" + interfaceTypes +
+                ", modifiers=" + modifiers +
+                ", attributeAppender=" + attributeAppender +
+                ", ignoredMethods=" + ignoredMethods +
+                ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                ", classVisitorWrapperChain=" + classVisitorWrapperChain +
+                ", fieldRegistry=" + fieldRegistry +
+                ", methodRegistry=" + methodRegistry +
+                ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
+                ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
+                ", fieldTokens=" + fieldTokens +
+                ", methodTokens=" + methodTokens +
+                ", classFileLocator=" + classFileLocator +
+                ", methodNameTransformer=" + methodNameTransformer +
+                '}';
     }
 }

@@ -27,10 +27,40 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
+/**
+ * A dynamic type builder that redefines a given type, i.e. it replaces any redefined method with another implementation.
+ *
+ * @param <T> The actual type of the rebased type.
+ */
 public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
+    /**
+     * A locator for finding a class file to a given type.
+     */
     private final ClassFileLocator classFileLocator;
 
+    /**
+     * Creates a new redefinition dynamic type builder.
+     *
+     * @param classFileVersion                      The class file version for the created dynamic type.
+     * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
+     * @param levelType                             The type that is to be redefined.
+     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
+     * @param modifiers                             The modifiers to be represented by the dynamic type.
+     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
+     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
+     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
+     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
+     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
+     *                                              no specific appender was specified for a given field.
+     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
+     *                                              if no specific appender was specified for a given method.
+     * @param classFileLocator                      A locator for finding a class file to a given type.
+     */
     public RedefinitionDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                           NamingStrategy namingStrategy,
                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -66,6 +96,32 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 classFileLocator);
     }
 
+    /**
+     * Creates a new redefinition dynamic type builder.
+     *
+     * @param classFileVersion                      The class file version for the created dynamic type.
+     * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
+     * @param levelType                             The type that is to be redefined.
+     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
+     * @param modifiers                             The modifiers to be represented by the dynamic type.
+     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
+     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
+     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
+     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
+     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
+     *                                              no specific appender was specified for a given field.
+     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
+     *                                              if no specific appender was specified for a given method.
+     * @param fieldTokens                           A list of field representations that were added explicitly to this
+     *                                              dynamic type.
+     * @param methodTokens                          A list of method representations that were added explicitly to this
+     *                                              dynamic type.
+     * @param classFileLocator                      A locator for finding a class file.
+     */
     protected RedefinitionDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                              NamingStrategy namingStrategy,
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -143,18 +199,57 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        InstrumentedType instrumentedType = new InlineInstrumentedType(classFileVersion, targetType, interfaceTypes, modifiers, namingStrategy);
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(applyRecordedMembersTo(instrumentedType),
+        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(applyRecordedMembersTo(new InlineInstrumentedType(classFileVersion,
+                        targetType,
+                        interfaceTypes,
+                        modifiers,
+                        namingStrategy)),
                 methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
                 InlineInstrumentationMatcher.of(ignoredMethods, targetType))
                 .compile(new SubclassInstrumentationTarget.Factory(bridgeMethodResolverFactory, SubclassInstrumentationTarget.OriginTypeIdentifier.LEVEL_TYPE));
         return TypeWriter.Default.<T>forRedefinition(compiledMethodRegistry,
-                fieldRegistry.prepare(instrumentedType).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
                 auxiliaryTypeNamingStrategy,
                 classVisitorWrapperChain,
                 attributeAppender,
                 classFileVersion,
                 classFileLocator,
                 targetType).make();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && super.equals(other)
+                && classFileLocator.equals(((RedefinitionDynamicTypeBuilder<?>) other).classFileLocator);
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + classFileLocator.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "RedefinitionDynamicTypeBuilder{" +
+                "classFileVersion=" + classFileVersion +
+                ", namingStrategy=" + namingStrategy +
+                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", targetType=" + targetType +
+                ", interfaceTypes=" + interfaceTypes +
+                ", modifiers=" + modifiers +
+                ", attributeAppender=" + attributeAppender +
+                ", ignoredMethods=" + ignoredMethods +
+                ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
+                ", classVisitorWrapperChain=" + classVisitorWrapperChain +
+                ", fieldRegistry=" + fieldRegistry +
+                ", methodRegistry=" + methodRegistry +
+                ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
+                ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
+                ", fieldTokens=" + fieldTokens +
+                ", methodTokens=" + methodTokens +
+                ", classFileLocator=" + classFileLocator +
+                '}';
     }
 }
