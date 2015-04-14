@@ -9,6 +9,7 @@ import net.bytebuddy.instrumentation.MethodCall;
 import net.bytebuddy.instrumentation.StubMethod;
 import net.bytebuddy.instrumentation.SuperMethodCall;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
@@ -113,6 +114,18 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
     }
 
+    @Test
+    public void testDefineDefaultValue() throws Exception {
+        Class<?> dynamicType = new ByteBuddy()
+                .rebase(Baz.class)
+                .method(named(FOO)).withDefaultValue(FOO)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicType.getDeclaredMethods().length, is(1));
+        assertThat(dynamicType.getDeclaredMethod(FOO).getDefaultValue(), is((Object) FOO));
+    }
+
     public static class Qux {
 
         public static String foo;
@@ -132,6 +145,11 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
                 foo = FOO;
             }
         }
+    }
+
+    public @interface Baz {
+
+        String foo();
     }
 
     @Test

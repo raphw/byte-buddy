@@ -285,12 +285,11 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription) {
-                    MethodVisitor methodVisitor = classVisitor
-                            .visitMethod(methodDescription.getAdjustedModifiers(getSort().isImplemented()),
-                                    methodDescription.getInternalName(),
-                                    methodDescription.getDescriptor(),
-                                    methodDescription.getGenericSignature(),
-                                    methodDescription.getExceptionTypes().toInternalNames());
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getAdjustedModifiers(getSort().isImplemented()),
+                            methodDescription.getInternalName(),
+                            methodDescription.getDescriptor(),
+                            methodDescription.getGenericSignature(),
+                            methodDescription.getExceptionTypes().toInternalNames());
                     ParameterList parameterList = methodDescription.getParameters();
                     if (parameterList.hasExplicitMetaData()) {
                         for (ParameterDescription parameterDescription : parameterList) {
@@ -826,9 +825,9 @@ public interface TypeWriter<T> {
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
-                            instrumentedType.getSupertype() == NO_SUPER_TYPE ?
-                                    null :
-                                    instrumentedType.getSupertype().getInternalName(),
+                            (instrumentedType.getSupertype() == NO_SUPER_TYPE ?
+                                    TypeDescription.OBJECT :
+                                    instrumentedType.getSupertype()).getInternalName(),
                             instrumentedType.getInterfaces().toInternalNames());
                     attributeAppender.apply(this, instrumentedType);
                 }

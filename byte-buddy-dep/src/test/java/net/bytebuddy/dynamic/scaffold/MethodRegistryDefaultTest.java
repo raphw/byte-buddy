@@ -6,10 +6,10 @@ import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
 import net.bytebuddy.instrumentation.method.MethodDescription;
 import net.bytebuddy.instrumentation.method.MethodList;
 import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
 import net.bytebuddy.instrumentation.type.InstrumentedType;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -17,242 +17,188 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
-import java.lang.reflect.Field;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-public class MethodRegistryDefaultTest { // TODO: Redo
-/*
-    private static final int BASIC_SIZE = 1, EXTENDED_SIZE = 2;
+public class MethodRegistryDefaultTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private InstrumentedType basicInstrumentedType, extendedInstrumentedType;
+    private LatentMethodMatcher firstMatcher, secondMatcher, methodFilter;
 
     @Mock
-    private Instrumentation.Target basicInstrumentationTarget, extendedInstrumentationTarget;
+    private MethodRegistry.Handler firstHandler, secondHandler;
 
     @Mock
-    private Instrumentation.Target.Factory instrumentationTargetFactory;
+    private MethodRegistry.Handler.Compiled firstCompiledHandler, secondCompiledHandler;
 
     @Mock
-    private MethodList basicMethodList, extendedMethodList, croppedMethodList, singleSize, zeroSize;
+    private MethodAttributeAppender.Factory firstFactory, secondFactory;
 
     @Mock
-    private MethodDescription unknownMethod, knownMethod, instrumentationAppendedMethod;
+    private MethodAttributeAppender firstAppender, secondAppender;
 
     @Mock
-    private MethodRegistry.Compiled.Entry.Factory fallbackFactory;
+    private InstrumentedType firstType, secondType, thirdType;
 
     @Mock
-    private MethodRegistry.Compiled.Entry fallback;
-
-    @Mock
-    private MethodRegistry.LatentMethodMatcher latentMatchesKnownMethod;
-
-    @Mock
-    private ElementMatcher<? super MethodDescription> matchesKnownMethod;
-
-    @Mock
-    private Instrumentation simpleInstrumentation, otherInstrumentation, extendingInstrumentation;
-
-    @Mock
-    private MethodAttributeAppender.Factory simpleAttributeAppenderFactory, otherAttributeAppenderFactory;
-
-    @Mock
-    private MethodAttributeAppender simpleAttributeAppender, otherAttributeAppender;
-
-    @Mock
-    private ByteCodeAppender simpleByteCodeAppender, otherByteCodeAppender;
+    private TypeDescription typeDescription;
 
     @Mock
     private MethodLookupEngine methodLookupEngine;
 
     @Mock
-    private MethodLookupEngine.Finding basicFinding, extendedFinding;
+    private MethodDescription instrumentedMethod, firstMethod, secondMethod, thirdMethod;
+
+    @Mock
+    private MethodLookupEngine.Finding finding;
+
+    @Mock
+    private InstrumentedType.TypeInitializer typeInitializer;
 
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
 
     @Mock
-    private InstrumentedType.TypeInitializer typeInitializer;
+    private ElementMatcher<? super MethodDescription> resolvedMethodFilter, firstFilter, secondFilter;
+
+    @Mock
+    private Instrumentation.Target.Factory instrumentationTargetFactory;
+
+    @Mock
+    private Instrumentation.Target instrumentationTarget;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(fallbackFactory.compile(any(Instrumentation.Target.class))).thenReturn(fallback);
-        when(latentMatchesKnownMethod.manifest(any(TypeDescription.class))).thenReturn((ElementMatcher) matchesKnownMethod);
-        when(matchesKnownMethod.matches(knownMethod)).thenReturn(true);
-        when(basicInstrumentedType.getDeclaredMethods()).thenReturn(basicMethodList);
-        when(basicMethodList.size()).thenReturn(BASIC_SIZE);
-        when(basicFinding.getInvokableMethods()).thenReturn(basicMethodList);
-        when(basicInstrumentationTarget.getTypeDescription()).thenReturn(basicInstrumentedType);
-        when(extendedInstrumentationTarget.getTypeDescription()).thenReturn(extendedInstrumentedType);
-        when(methodLookupEngine.process(basicInstrumentedType)).thenReturn(basicFinding);
-        when(methodLookupEngine.process(extendedInstrumentedType)).thenReturn(extendedFinding);
-        when(instrumentationTargetFactory.make(basicFinding)).thenReturn(basicInstrumentationTarget);
-        when(instrumentationTargetFactory.make(extendedFinding)).thenReturn(extendedInstrumentationTarget);
-        when(extendedInstrumentedType.getDeclaredMethods()).thenReturn(extendedMethodList);
-        when(extendedMethodList.size()).thenReturn(EXTENDED_SIZE);
-        when(extendedFinding.getInvokableMethods()).thenReturn(extendedMethodList);
-        when(extendedMethodList.subList(anyInt(), anyInt())).thenReturn(croppedMethodList);
-        when(zeroSize.size()).thenReturn(0);
-        when(singleSize.size()).thenReturn(1);
-        when(croppedMethodList.filter(any(ElementMatcher.class))).thenAnswer(new Answer<MethodList>() {
-            @Override
-            public MethodList answer(InvocationOnMock invocation) throws Throwable {
-                Field field = invocation.getArguments()[0].getClass().getDeclaredField("value");
-                field.setAccessible(true);
-                return field.get(invocation.getArguments()[0]) == instrumentationAppendedMethod ? singleSize : zeroSize;
-            }
-        });
-        when(simpleInstrumentation.prepare(any(InstrumentedType.class))).thenReturn(basicInstrumentedType);
-        when(simpleInstrumentation.appender(any(Instrumentation.Target.class))).thenReturn(simpleByteCodeAppender);
-        when(simpleAttributeAppenderFactory.make(any(InstrumentedType.class))).thenReturn(simpleAttributeAppender);
-        when(otherInstrumentation.prepare(any(InstrumentedType.class))).thenReturn(basicInstrumentedType);
-        when(otherInstrumentation.appender(any(Instrumentation.Target.class))).thenReturn(otherByteCodeAppender);
-        when(otherAttributeAppenderFactory.make(any(InstrumentedType.class))).thenReturn(otherAttributeAppender);
-        when(extendingInstrumentation.prepare(any(InstrumentedType.class))).thenReturn(extendedInstrumentedType);
-        when(extendingInstrumentation.appender(any(Instrumentation.Target.class))).thenReturn(simpleByteCodeAppender);
-        when(basicInstrumentedType.detach()).thenReturn(basicInstrumentedType);
-        when(extendedInstrumentedType.detach()).thenReturn(extendedInstrumentedType);
-        when(basicInstrumentedType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
-        when(extendedInstrumentedType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
-        when(basicInstrumentedType.getTypeInitializer()).thenReturn(typeInitializer);
-        when(extendedInstrumentedType.getTypeInitializer()).thenReturn(typeInitializer);
+        when(firstHandler.prepare(firstType)).thenReturn(secondType);
+        when(secondHandler.prepare(secondType)).thenReturn(thirdType);
+        when(firstHandler.compile(instrumentationTarget)).thenReturn(firstCompiledHandler);
+        when(secondHandler.compile(instrumentationTarget)).thenReturn(secondCompiledHandler);
+        when(thirdType.getTypeInitializer()).thenReturn(typeInitializer);
+        when(thirdType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
+        when(methodLookupEngine.process(thirdType)).thenReturn(finding);
+        when(finding.getTypeDescription()).thenReturn(typeDescription);
+        when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(instrumentedMethod)));
+        when(firstType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(firstMethod)));
+        when(secondType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(secondMethod)));
+        when(thirdType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(thirdMethod)));
+        when(methodFilter.resolve(thirdType)).thenReturn((ElementMatcher) resolvedMethodFilter);
+        when(firstMatcher.resolve(thirdType)).thenReturn((ElementMatcher) firstFilter);
+        when(secondMatcher.resolve(thirdType)).thenReturn((ElementMatcher) secondFilter);
+        when(firstFactory.make(typeDescription)).thenReturn(firstAppender);
+        when(secondFactory.make(typeDescription)).thenReturn(secondAppender);
+        when(instrumentationTargetFactory.make(finding, new MethodList.Explicit(Collections.singletonList(instrumentedMethod))))
+                .thenReturn(instrumentationTarget);
     }
 
     @Test
-    public void testFallbackReturnedForEmptyRegistry() throws Exception {
-        assertThat(new MethodRegistry.Default()
-                        .prepare(basicInstrumentedType)
-                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)
-                        .target(unknownMethod),
-                is(fallback)
-        );
+    public void testNonMatchedIsNotIncluded() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
     }
 
     @Test
-    public void testSingleEntryRegistry() throws Exception {
-        MethodRegistry.Compiled compiled = new MethodRegistry.Default()
-                .prepend(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                .prepare(basicInstrumentedType)
-                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
-        assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
-        assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
-        assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
-        assertThat(compiled.target(unknownMethod), is(fallback));
-        verify(simpleInstrumentation).prepare(basicInstrumentedType);
-        verify(simpleInstrumentation).appender(basicInstrumentationTarget);
-        verifyNoMoreInteractions(simpleInstrumentation);
-        verify(simpleAttributeAppenderFactory).make(basicInstrumentedType);
-        verifyNoMoreInteractions(simpleAttributeAppenderFactory);
-        verify(fallbackFactory).compile(basicInstrumentationTarget);
-        verifyNoMoreInteractions(fallbackFactory);
+    public void testIgnoredIsNotIncluded() throws Exception {
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
     }
 
     @Test
-    public void testDoubleEntryRegistryOnlyPreparedOnce() throws Exception {
-        MethodRegistry.Compiled compiled = new MethodRegistry.Default()
-                .prepend(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                .prepend(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                .prepare(basicInstrumentedType)
-                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
-        assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
-        assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
-        assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
-        assertThat(compiled.target(unknownMethod), is(fallback));
-        verify(simpleInstrumentation).prepare(basicInstrumentedType);
-        verify(simpleInstrumentation).appender(basicInstrumentationTarget);
-        verifyNoMoreInteractions(simpleInstrumentation);
-        verify(simpleAttributeAppenderFactory, times(2)).make(basicInstrumentedType);
-        verifyNoMoreInteractions(simpleAttributeAppenderFactory);
-        verify(fallbackFactory).compile(basicInstrumentationTarget);
-        verifyNoMoreInteractions(fallbackFactory);
+    public void testMatchedFirst() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
     }
 
     @Test
-    public void testDoubleEntryRegistryReturnsLastPrepended() throws Exception {
-        MethodRegistry.Compiled compiled = new MethodRegistry.Default()
-                .prepend(latentMatchesKnownMethod, otherInstrumentation, otherAttributeAppenderFactory)
-                .prepend(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                .prepare(basicInstrumentedType)
-                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
-        assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
-        assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
-        assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
-        assertThat(compiled.target(unknownMethod), is(fallback));
-        verify(simpleInstrumentation).prepare(basicInstrumentedType);
-        verify(simpleInstrumentation).appender(basicInstrumentationTarget);
-        verify(simpleAttributeAppenderFactory).make(basicInstrumentedType);
-        verifyNoMoreInteractions(simpleInstrumentation);
-        verifyNoMoreInteractions(simpleAttributeAppenderFactory);
-        verify(otherInstrumentation).prepare(basicInstrumentedType);
-        verify(otherInstrumentation).appender(basicInstrumentationTarget);
-        verify(otherAttributeAppenderFactory).make(basicInstrumentedType);
-        verifyNoMoreInteractions(otherInstrumentation);
-        verifyNoMoreInteractions(otherAttributeAppenderFactory);
-        verify(fallbackFactory).compile(basicInstrumentationTarget);
-        verifyNoMoreInteractions(fallbackFactory);
+    public void testMatchedSecond() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
     }
 
     @Test
-    public void testDoubleEntryRegistryReturnsFirstAppended() throws Exception {
-        MethodRegistry.Compiled compiled = new MethodRegistry.Default()
-                .append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                .append(latentMatchesKnownMethod, otherInstrumentation, otherAttributeAppenderFactory)
-                .prepare(basicInstrumentedType)
-                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
-        assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
-        assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
-        assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
-        assertThat(compiled.target(unknownMethod), is(fallback));
-        verify(simpleInstrumentation).prepare(basicInstrumentedType);
-        verify(simpleInstrumentation).appender(basicInstrumentationTarget);
-        verify(simpleAttributeAppenderFactory).make(basicInstrumentedType);
-        verifyNoMoreInteractions(simpleInstrumentation);
-        verifyNoMoreInteractions(simpleAttributeAppenderFactory);
-        verify(otherInstrumentation).prepare(basicInstrumentedType);
-        verify(otherInstrumentation).appender(basicInstrumentationTarget);
-        verify(otherAttributeAppenderFactory).make(basicInstrumentedType);
-        verifyNoMoreInteractions(otherInstrumentation);
-        verifyNoMoreInteractions(otherAttributeAppenderFactory);
-        verify(fallbackFactory).compile(basicInstrumentationTarget);
-        verifyNoMoreInteractions(fallbackFactory);
+    public void testMultipleRegistryDoesNotPrepareMultipleTimes() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .append(secondMatcher, firstHandler, secondFactory)
+                .append(secondMatcher, firstHandler, firstFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testAppendedMethodsAreHandledByAppendingInstrumentation() throws Exception {
-        MethodRegistry.Compiled compiled = new MethodRegistry.Default()
-                .append(latentMatchesKnownMethod, extendingInstrumentation, simpleAttributeAppenderFactory)
-                .prepare(basicInstrumentedType)
-                .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory);
-        assertThat(compiled.target(knownMethod).isDefineMethod(), is(true));
-        assertThat(compiled.target(knownMethod).getAttributeAppender(), is(simpleAttributeAppender));
-        assertThat(compiled.target(knownMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
-        assertThat(compiled.target(unknownMethod), is(fallback));
-        verify(extendingInstrumentation).prepare(basicInstrumentedType);
-        verify(extendingInstrumentation).appender(extendedInstrumentationTarget);
-        verify(simpleAttributeAppenderFactory).make(extendedInstrumentedType);
-        verifyNoMoreInteractions(simpleInstrumentation);
-        verifyNoMoreInteractions(simpleAttributeAppenderFactory);
-        verify(extendedMethodList).subList(BASIC_SIZE, EXTENDED_SIZE);
-        assertThat(compiled.target(instrumentationAppendedMethod).isDefineMethod(), is(true));
-        assertThat(compiled.target(instrumentationAppendedMethod).getByteCodeAppender(), is(simpleByteCodeAppender));
-        assertThat(compiled.target(instrumentationAppendedMethod).getAttributeAppender(),
-                is((MethodAttributeAppender) MethodAttributeAppender.NoOp.INSTANCE));
-        verify(croppedMethodList, times(7) *//* for 7 calls to compiled.target *//*).filter(any(ElementMatcher.class));
-        verify(fallbackFactory).compile(extendedInstrumentationTarget);
-        verifyNoMoreInteractions(fallbackFactory);
+    public void testCompiled() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter)
+                .compile(instrumentationTargetFactory);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
     }
 
     @Test
@@ -261,39 +207,5 @@ public class MethodRegistryDefaultTest { // TODO: Redo
         ObjectPropertyAssertion.of(MethodRegistry.Default.Entry.class).apply();
         ObjectPropertyAssertion.of(MethodRegistry.Default.Prepared.class).apply();
         ObjectPropertyAssertion.of(MethodRegistry.Default.Compiled.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Default.Compiled.Entry.class).apply();
     }
-
-    @Test
-    public void testCompiledHashCodeEquals() throws Exception {
-        assertThat(new MethodRegistry.Default()
-                        .prepare(basicInstrumentedType)
-                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)
-                        .hashCode(),
-                is(new MethodRegistry.Default()
-                        .prepare(basicInstrumentedType)
-                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)
-                        .hashCode()));
-        assertThat(new MethodRegistry.Default()
-                        .prepare(basicInstrumentedType)
-                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory),
-                is(new MethodRegistry.Default()
-                        .prepare(basicInstrumentedType)
-                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)));
-        assertThat(new MethodRegistry.Default()
-                        .append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                        .prepare(basicInstrumentedType)
-                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)
-                        .hashCode(),
-                not(is(new MethodRegistry.Default()
-                        .hashCode())));
-        assertThat(new MethodRegistry.Default()
-                        .append(latentMatchesKnownMethod, simpleInstrumentation, simpleAttributeAppenderFactory)
-                        .prepare(basicInstrumentedType)
-                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory),
-                not(is(new MethodRegistry.Default()
-                        .prepare(basicInstrumentedType)
-                        .compile(instrumentationTargetFactory, methodLookupEngine, fallbackFactory)))
-        );
-    }*/
 }

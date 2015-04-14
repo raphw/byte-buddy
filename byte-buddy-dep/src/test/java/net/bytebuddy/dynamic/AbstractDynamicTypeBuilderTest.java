@@ -18,6 +18,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractDynamicTypeBuilderTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar", TO_STRING = "toString";
 
     private static final boolean BOOLEAN_VALUE = true;
 
@@ -141,5 +142,17 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(type.getDeclaredField(FLOAT_FIELD).get(null), is((Object) FLOAT_VALUE));
         assertThat(type.getDeclaredField(DOUBLE_FIELD).get(null), is((Object) DOUBLE_VALUE));
         assertThat(type.getDeclaredField(STRING_FIELD).get(null), is((Object) FOO));
+    }
+
+    @Test
+    public void testApplicationOrder() throws Exception {
+        assertThat(create()
+                .method(named(TO_STRING)).intercept(new Instrumentation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .method(named(TO_STRING)).intercept(new Instrumentation.Simple(new TextConstant(BAR), MethodReturn.REFERENCE))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance()
+                .toString(), is(BAR));
     }
 }

@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import jdk.internal.org.objectweb.asm.util.ASMifier;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -113,6 +114,18 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest
         assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
     }
 
+    @Test
+    public void testDefineDefaultValue() throws Exception {
+        Class<?> dynamicType = new ByteBuddy()
+                .rebase(Baz.class)
+                .method(named(FOO)).withDefaultValue(FOO)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicType.getDeclaredMethods().length, is(1));
+        assertThat(dynamicType.getDeclaredMethod(FOO).getDefaultValue(), is((Object) FOO));
+    }
+
     public static class Qux {
 
         public static String foo;
@@ -132,6 +145,11 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest
                 foo = FOO;
             }
         }
+    }
+
+    public @interface Baz {
+
+        String foo();
     }
 
     @Test

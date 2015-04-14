@@ -23,33 +23,92 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
  */
 public interface MethodRegistry {
 
+    /**
+     * Prepends the given instrumentation configuration to this method registry, i.e. this configuration is applied first.
+     *
+     * @param methodMatcher            A matcher to identify all entries that are to be matched.
+     * @param handler                  The handler to instrument any matched method.
+     * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
+     * @return A mutated version of this method registry.
+     */
     MethodRegistry prepend(LatentMethodMatcher methodMatcher,
                            Handler handler,
                            MethodAttributeAppender.Factory attributeAppenderFactory);
 
+    /**
+     * Appends the given instrumentation configuration to this method registry, i.e. this configuration is applied last.
+     *
+     * @param methodMatcher            A matcher to identify all entries that are to be matched.
+     * @param handler                  The handler to instrument any matched method.
+     * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
+     * @return A mutated version of this method registry.
+     */
     MethodRegistry append(LatentMethodMatcher methodMatcher,
                           Handler handler,
                           MethodAttributeAppender.Factory attributeAppenderFactory);
 
+    /**
+     * Prepares this method registry.
+     *
+     * @param instrumentedType   The instrumented type that should be created.
+     * @param methodLookupEngine A method lookup engine to analyze the fully prepared type.
+     * @param methodFilter       A filter that only matches methods that should be instrumented.
+     * @return A preprated version of this method registry.
+     */
     Prepared prepare(InstrumentedType instrumentedType,
                      MethodLookupEngine methodLookupEngine,
                      LatentMethodMatcher methodFilter);
 
+    /**
+     * A handler for implementing a method.
+     */
     interface Handler {
 
+        /**
+         * Prepares the instrumented type for this handler.
+         *
+         * @param instrumentedType The instrumented type to prepare.
+         * @return The prepared instrumented type.
+         */
         InstrumentedType prepare(InstrumentedType instrumentedType);
 
+        /**
+         * Compiles this handler.
+         *
+         * @param instrumentationTarget The instrumentation target to compile this handler for.
+         * @return A compiled handler.
+         */
         Handler.Compiled compile(Instrumentation.Target instrumentationTarget);
 
+        /**
+         * A compiled handler for implementing a method.
+         */
         interface Compiled {
 
+            /**
+             * Assembles this compiled entry with a method attribute appender.
+             *
+             * @param attributeAppender The method attribute appender to apply together with this handler.
+             * @return A method pool entry representing this handler and the given attribute appender.
+             */
             TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender);
         }
 
+        /**
+         * A handler for a method that is implemented as byte code.
+         */
         class ForInstrumentation implements Handler {
 
+            /**
+             * The instrumentation to apply.
+             */
             private final Instrumentation instrumentation;
 
+            /**
+             * Creates a new handler for instrumenting a method with byte code.
+             *
+             * @param instrumentation The instrumentation to apply.
+             */
             public ForInstrumentation(Instrumentation instrumentation) {
                 this.instrumentation = instrumentation;
             }
@@ -77,15 +136,26 @@ public interface MethodRegistry {
 
             @Override
             public String toString() {
-                return "MethodRegistry.Preparable.ForInstrumentation{" +
+                return "MethodRegistry.Handler.ForInstrumentation{" +
                         "instrumentation=" + instrumentation +
                         '}';
             }
 
+            /**
+             * A compiled handler for implementing a method.
+             */
             protected static class Compiled implements Handler.Compiled {
 
+                /**
+                 * The byte code appender to apply.
+                 */
                 private final ByteCodeAppender byteCodeAppender;
 
+                /**
+                 * Creates a new compiled instrumentation.
+                 *
+                 * @param byteCodeAppender The byte code appender to apply.
+                 */
                 protected Compiled(ByteCodeAppender byteCodeAppender) {
                     this.byteCodeAppender = byteCodeAppender;
                 }
@@ -108,15 +178,21 @@ public interface MethodRegistry {
 
                 @Override
                 public String toString() {
-                    return "MethodRegistry.Preparable.ForInstrumentation.Compiled{" +
+                    return "MethodRegistry.Handler.ForInstrumentation.Compiled{" +
                             "byteCodeAppender=" + byteCodeAppender +
                             '}';
                 }
             }
         }
 
+        /**
+         * A handler for defining an abstract or native method.
+         */
         enum ForAbstractMethod implements Handler, Compiled {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -136,14 +212,25 @@ public interface MethodRegistry {
 
             @Override
             public String toString() {
-                return "MethodRegistry.Preparable.ForAbstractMethod." + name();
+                return "MethodRegistry.Handler.ForAbstractMethod." + name();
             }
         }
 
+        /**
+         * A handler for defining a default annotation value for a method.
+         */
         class ForAnnotationValue implements Handler, Compiled {
 
+            /**
+             * The annotation value to set as a default value.
+             */
             private final Object annotationValue;
 
+            /**
+             * Creates a handler for defining a default annotation value for a method.
+             *
+             * @param annotationValue The annotation value to set as a default value.
+             */
             public ForAnnotationValue(Object annotationValue) {
                 this.annotationValue = annotationValue;
             }
@@ -162,41 +249,125 @@ public interface MethodRegistry {
             public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
                 return new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(annotationValue, attributeAppender);
             }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && annotationValue.equals(((ForAnnotationValue) other).annotationValue);
+            }
+
+            @Override
+            public int hashCode() {
+                return annotationValue.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Handler.ForAnnotationValue{" +
+                        "annotationValue=" + annotationValue +
+                        '}';
+            }
         }
     }
 
+    /**
+     * A method registry that fully prepared the instrumented type.
+     */
     interface Prepared {
 
+        /**
+         * Returns the fully prepared instrumented type.
+         *
+         * @return The fully prepared instrumented type.
+         */
         TypeDescription getInstrumentedType();
 
+        /**
+         * Returns a list of all methods that should be instrumented.
+         *
+         * @return A list of all methods that should be instrumented.
+         */
         MethodList getInstrumentedMethods();
 
+        /**
+         * Returns the loaded type initializer of the instrumented type.
+         *
+         * @return The loaded type initializer of the instrumented type.
+         */
         LoadedTypeInitializer getLoadedTypeInitializer();
 
+        /**
+         * The type initializer of the instrumented type.
+         *
+         * @return The type initializer of the instrumented type.
+         */
         InstrumentedType.TypeInitializer getTypeInitializer();
 
+        /**
+         * Compiles this prepared method registry.
+         *
+         * @param instrumentationTargetFactory A factory for creating an instrumentation target.
+         * @return A factory for creating an instrumentation target.
+         */
         Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory);
     }
 
+    /**
+     * A compiled version of a method registry.
+     */
     interface Compiled extends TypeWriter.MethodPool {
 
+        /**
+         * Returns the instrumented type that is to be created.
+         *
+         * @return The instrumented type that is to be created.
+         */
         TypeDescription getInstrumentedType();
 
+        /**
+         * Returns a list of all methods that should be instrumented.
+         *
+         * @return A list of all methods that should be instrumented.
+         */
+        MethodList getInstrumentedMethods();
+
+        /**
+         * Returns the loaded type initializer of the instrumented type.
+         *
+         * @return The loaded type initializer of the instrumented type.
+         */
         LoadedTypeInitializer getLoadedTypeInitializer();
 
+        /**
+         * The type initializer of the instrumented type.
+         *
+         * @return The type initializer of the instrumented type.
+         */
         InstrumentedType.TypeInitializer getTypeInitializer();
-
-        MethodList getInstrumentedMethods();
     }
 
+    /**
+     * A default implementation of a method registry.
+     */
     class Default implements MethodRegistry {
 
+        /**
+         * The list of currently registered entries in their application order.
+         */
         private final List<Entry> entries;
 
+        /**
+         * Creates a new default method registry without entries.
+         */
         public Default() {
             entries = Collections.emptyList();
         }
 
+        /**
+         * Creates a new default method registry.
+         *
+         * @param entries The currently registered entries.
+         */
         private Default(List<Entry> entries) {
             this.entries = entries;
         }
@@ -267,14 +438,33 @@ public interface MethodRegistry {
                     '}';
         }
 
+        /**
+         * An entry of a default method registry.
+         */
         protected static class Entry implements LatentMethodMatcher {
 
+            /**
+             * The latent method matcher that this entry represents.
+             */
             private final LatentMethodMatcher methodMatcher;
 
+            /**
+             * The handler to apply to all matched entries.
+             */
             private final Handler handler;
 
+            /**
+             * A method attribute appender factory to apply to all entries.
+             */
             private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+            /**
+             * Creates a new entry.
+             *
+             * @param methodMatcher            The latent method matcher that this entry represents.
+             * @param handler                  The handler to apply to all matched entries.
+             * @param attributeAppenderFactory A method attribute appender factory to apply to all entries.
+             */
             protected Entry(LatentMethodMatcher methodMatcher,
                             Handler handler,
                             MethodAttributeAppender.Factory attributeAppenderFactory) {
@@ -283,10 +473,20 @@ public interface MethodRegistry {
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
 
+            /**
+             * Returns the handler of this entry.
+             *
+             * @return The handler of this entry.
+             */
             protected Handler getHandler() {
                 return handler;
             }
 
+            /**
+             * Returns the attribute appender factory of this entry.
+             *
+             * @return The attribute appender factory of this entry.
+             */
             protected MethodAttributeAppender.Factory getAppenderFactory() {
                 return attributeAppenderFactory;
             }
@@ -318,22 +518,45 @@ public interface MethodRegistry {
             public String toString() {
                 return "MethodRegistry.Default.Entry{" +
                         "methodMatcher=" + methodMatcher +
-                        ", prepareable=" + handler +
+                        ", handler=" + handler +
                         ", attributeAppenderFactory=" + attributeAppenderFactory +
                         '}';
             }
         }
 
+        /**
+         * A prepared version of a default method registry.
+         */
         protected static class Prepared implements MethodRegistry.Prepared {
 
+            /**
+             * A map of all method descriptions mapped to their handling entires.
+             */
             private final Map<MethodDescription, Entry> instrumentations;
 
+            /**
+             * The loaded type initializer of the instrumented type.
+             */
             private final LoadedTypeInitializer loadedTypeInitializer;
 
+            /**
+             * The type intiailizer of the instrumented type.
+             */
             private final InstrumentedType.TypeInitializer typeInitializer;
 
+            /**
+             * The analyzed instrumented type.
+             */
             private final MethodLookupEngine.Finding finding;
 
+            /**
+             * Creates a prepared version of a default method registry.
+             *
+             * @param instrumentations      A map of all method descriptions mapped to their handling entires.
+             * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
+             * @param typeInitializer       The type intiailizer of the instrumented type.
+             * @param finding               The analyzed instrumented type.
+             */
             public Prepared(Map<MethodDescription, Entry> instrumentations,
                             LoadedTypeInitializer loadedTypeInitializer,
                             InstrumentedType.TypeInitializer typeInitializer,
@@ -417,16 +640,39 @@ public interface MethodRegistry {
             }
         }
 
+        /**
+         * A compiled version of a default method registry.
+         */
         protected static class Compiled implements MethodRegistry.Compiled {
 
+            /**
+             * The instrumented type.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * The loaded type initializer of the instrumented type.
+             */
             private final LoadedTypeInitializer loadedTypeInitializer;
 
+            /**
+             * The type initializer of the instrumented type.
+             */
             private final InstrumentedType.TypeInitializer typeInitializer;
 
+            /**
+             * A map of all method descriptions mapped to their handling entries.
+             */
             private final Map<MethodDescription, Entry> instrumentations;
 
+            /**
+             * Creates a new compiled version of a default method registry.
+             *
+             * @param instrumentedType      The instrumented type.
+             * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
+             * @param typeInitializer       The type initializer of the instrumented type.
+             * @param instrumentations      A map of all method descriptions mapped to their handling entries.
+             */
             public Compiled(TypeDescription instrumentedType,
                             LoadedTypeInitializer loadedTypeInitializer,
                             InstrumentedType.TypeInitializer typeInitializer,
