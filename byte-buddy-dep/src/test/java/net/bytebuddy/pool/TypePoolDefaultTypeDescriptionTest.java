@@ -1,7 +1,7 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.instrumentation.type.AbstractTypeDescriptionTest;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.type.AbstractTypeDescriptionTest;
+import net.bytebuddy.description.type.TypeDescription;
 import org.junit.After;
 import org.junit.Before;
 

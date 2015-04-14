@@ -1,11 +1,11 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.instrumentation.ModifierContributor;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.modifier.FieldManifestation;
-import net.bytebuddy.modifier.Ownership;
-import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.FieldManifestation;
+import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;

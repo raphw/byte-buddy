@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * A method matcher that is resolved by handing over the instrumented type before the matcher is applied to a method.

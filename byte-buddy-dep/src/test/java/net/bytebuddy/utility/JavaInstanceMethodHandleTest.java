@@ -1,8 +1,8 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;

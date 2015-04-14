@@ -1,12 +1,12 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.instrumentation.FixedValue;
-import net.bytebuddy.instrumentation.StubMethod;
-import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;

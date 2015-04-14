@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.ParameterList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

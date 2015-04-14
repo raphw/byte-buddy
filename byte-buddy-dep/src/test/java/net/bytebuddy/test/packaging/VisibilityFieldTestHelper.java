@@ -1,6 +1,6 @@
 package net.bytebuddy.test.packaging;
 
-import net.bytebuddy.instrumentation.field.AbstractFieldDescriptionTest;
+import net.bytebuddy.description.field.AbstractFieldDescriptionTest;
 
 public class VisibilityFieldTestHelper extends AbstractFieldDescriptionTest.PublicType {
     /* empty */

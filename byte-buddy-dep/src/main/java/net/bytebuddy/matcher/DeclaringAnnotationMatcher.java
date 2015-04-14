@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotationList;
 
 /**
  * An element matcher that matches the list of annotations that are provided by an annotated element.

@@ -1,0 +1,151 @@
+package net.bytebuddy.implementation.bind.annotation;
+
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+
+import java.lang.annotation.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Parameters that are annotated with this annotation will be assigned a collection (or an array) containing
+ * all arguments of the source method. Currently, this annotation supports the following collection types:
+ * <ul>
+ * <li>Array</li>
+ * </ul>
+ * <p>&nbsp;</p>
+ * By default, this annotation applies a
+ * {@link net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment#STRICT}
+ * assignment of the source method's parameters to the array. This implies that parameters that are not assignable to
+ * the annotated array's component type make the method with this parameter unbindable. To avoid this, you can
+ * use a {@link net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment#SLACK} assignment
+ * which simply skips non-assignable values instead.
+ *
+ * @see net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.RuntimeType
+ */
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.PARAMETER)
+public @interface AllArguments {
+
+    /**
+     * Defines the type of {@link net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment}
+     * type that is applied for filling the annotated array with values.
+     *
+     * @return The assignment handling to be applied for the annotated parameter.
+     */
+    Assignment value() default Assignment.STRICT;
+
+    /**
+     * A directive for how an {@link net.bytebuddy.implementation.bind.annotation.AllArguments}
+     * annotation on an array is to be interpreted.
+     */
+    enum Assignment {
+
+        /**
+         * A strict assignment attempts to include <b>all</b> parameter values of the source method. If only one of these
+         * parameters is not assignable to the component type of the annotated array, the method is considered as
+         * non-bindable.
+         */
+        STRICT(true),
+
+        /**
+         * Other than a {@link net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment#STRICT}
+         * assignment, a slack assignment simply ignores non-bindable parameters and does not include them in the target
+         * array. In the most extreme case where no source method parameter is assignable to the component type
+         * of the annotated array, the array that is assigned to the target parameter is empty.
+         */
+        SLACK(false);
+
+        /**
+         * Determines if this assignment is strict.
+         */
+        private final boolean strict;
+
+        /**
+         * Creates a new assignment type.
+         *
+         * @param strict {@code true} if this assignment is strict.
+         */
+        Assignment(boolean strict) {
+            this.strict = strict;
+        }
+
+        /**
+         * Returns {@code true} if this assignment is strict.
+         *
+         * @return {@code true} if this assignment is strict.
+         */
+        protected boolean isStrict() {
+            return strict;
+        }
+
+        @Override
+        public String toString() {
+            return "AllArguments.Assignment." + name();
+        }
+    }
+
+    /**
+     * A binder for handling the
+     * {@link net.bytebuddy.implementation.bind.annotation.AllArguments}
+     * annotation.
+     *
+     * @see TargetMethodAnnotationDrivenBinder
+     */
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<AllArguments> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Class<AllArguments> getHandledType() {
+            return AllArguments.class;
+        }
+
+        @Override
+        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<AllArguments> annotation,
+                                                               MethodDescription source,
+                                                               ParameterDescription target,
+                                                               Implementation.Target implementationTarget,
+                                                               Assigner assigner) {
+            if (!target.getTypeDescription().isArray()) {
+                throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
+            }
+            ArrayFactory arrayFactory = ArrayFactory.targeting(target.getTypeDescription().getComponentType());
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size());
+            int offset = source.isStatic() ? 0 : 1;
+            boolean dynamicallyTyped = RuntimeType.Verifier.check(target);
+            for (TypeDescription sourceParameter : source.getParameters().asTypeList()) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.forType(sourceParameter).loadOffset(offset),
+                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), dynamicallyTyped));
+                if (stackManipulation.isValid()) {
+                    stackManipulations.add(stackManipulation);
+                } else if (annotation.loadSilent().value().isStrict()) {
+                    return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+                }
+                offset += sourceParameter.getStackSize().getSize();
+            }
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(arrayFactory.withValues(stackManipulations));
+        }
+
+        @Override
+        public String toString() {
+            return "AllArguments.Binder." + name();
+        }
+    }
+}

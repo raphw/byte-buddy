@@ -2,14 +2,14 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
-import net.bytebuddy.instrumentation.LoadedTypeInitializer;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
 
 import java.util.ArrayList;
 import java.util.Collections;

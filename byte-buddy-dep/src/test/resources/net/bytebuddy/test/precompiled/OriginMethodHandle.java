@@ -1,6 +1,6 @@
 package net.bytebuddy.test.precompiled;
 
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Origin;
+import net.bytebuddy.implementation.bind.annotation.Origin;
 
 import java.lang.invoke.MethodHandle;
 

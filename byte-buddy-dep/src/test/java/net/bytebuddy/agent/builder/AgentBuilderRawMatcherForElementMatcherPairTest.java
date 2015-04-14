@@ -1,6 +1,6 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;

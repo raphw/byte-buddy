@@ -2,10 +2,10 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
-import net.bytebuddy.instrumentation.type.AbstractInstrumentedTypeTest;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.scaffold.AbstractInstrumentedTypeTest;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;

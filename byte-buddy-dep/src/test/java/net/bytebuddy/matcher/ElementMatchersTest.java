@@ -1,11 +1,10 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.ByteCodeElement;
-import net.bytebuddy.instrumentation.ModifierReviewable;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.ParameterDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.ModifierReviewable;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;

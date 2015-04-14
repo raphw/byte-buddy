@@ -6,10 +6,10 @@ import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.benchmark.specimen.ExampleClass;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.instrumentation.MethodDelegation;
-import net.bytebuddy.instrumentation.SuperMethodCall;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.RuntimeType;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
+import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.sf.cglib.proxy.*;
 import org.openjdk.jmh.annotations.*;
 
@@ -172,7 +172,7 @@ public class ClassByExtensionBenchmark {
     }
 
     /**
-     * Instead of using the {@link net.bytebuddy.instrumentation.SuperMethodCall} instrumentation, we are using
+     * Instead of using the {@link net.bytebuddy.implementation.SuperMethodCall} instrumentation, we are using
      * a delegate in order to emulate the interception approach of other instrumentation libraries. Otherwise,
      * this benchmark would be biased in favor of Byte Buddy.
      */

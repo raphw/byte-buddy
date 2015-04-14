@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.field.FieldList;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that checks if a type description declares fields of a given property.

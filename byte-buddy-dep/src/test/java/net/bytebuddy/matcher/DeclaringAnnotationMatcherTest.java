@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotationList;
 import org.junit.Test;
 import org.mockito.Mock;
 

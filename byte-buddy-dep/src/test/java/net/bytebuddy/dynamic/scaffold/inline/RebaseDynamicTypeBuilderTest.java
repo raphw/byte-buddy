@@ -1,24 +1,16 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.instrumentation.StubMethod;
-import net.bytebuddy.instrumentation.SuperMethodCall;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.MethodRule;
-import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;

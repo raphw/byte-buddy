@@ -1,14 +1,12 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.LoadedTypeInitializer;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 
@@ -74,10 +72,10 @@ public interface MethodRegistry {
         /**
          * Compiles this handler.
          *
-         * @param instrumentationTarget The instrumentation target to compile this handler for.
+         * @param implementationTarget The instrumentation target to compile this handler for.
          * @return A compiled handler.
          */
-        Handler.Compiled compile(Instrumentation.Target instrumentationTarget);
+        Handler.Compiled compile(Implementation.Target implementationTarget);
 
         /**
          * A compiled handler for implementing a method.
@@ -96,47 +94,47 @@ public interface MethodRegistry {
         /**
          * A handler for a method that is implemented as byte code.
          */
-        class ForInstrumentation implements Handler {
+        class ForImplementation implements Handler {
 
             /**
              * The instrumentation to apply.
              */
-            private final Instrumentation instrumentation;
+            private final Implementation implementation;
 
             /**
              * Creates a new handler for instrumenting a method with byte code.
              *
-             * @param instrumentation The instrumentation to apply.
+             * @param implementation The instrumentation to apply.
              */
-            public ForInstrumentation(Instrumentation instrumentation) {
-                this.instrumentation = instrumentation;
+            public ForImplementation(Implementation implementation) {
+                this.implementation = implementation;
             }
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentation.prepare(instrumentedType);
+                return implementation.prepare(instrumentedType);
             }
 
             @Override
-            public Compiled compile(Instrumentation.Target instrumentationTarget) {
-                return new Compiled(instrumentation.appender(instrumentationTarget));
+            public Compiled compile(Implementation.Target implementationTarget) {
+                return new Compiled(implementation.appender(implementationTarget));
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentation.equals(((ForInstrumentation) other).instrumentation);
+                        && implementation.equals(((ForImplementation) other).implementation);
             }
 
             @Override
             public int hashCode() {
-                return instrumentation.hashCode();
+                return implementation.hashCode();
             }
 
             @Override
             public String toString() {
-                return "MethodRegistry.Handler.ForInstrumentation{" +
-                        "instrumentation=" + instrumentation +
+                return "MethodRegistry.Handler.ForImplementation{" +
+                        "implementation=" + implementation +
                         '}';
             }
 
@@ -177,7 +175,7 @@ public interface MethodRegistry {
 
                 @Override
                 public String toString() {
-                    return "MethodRegistry.Handler.ForInstrumentation.Compiled{" +
+                    return "MethodRegistry.Handler.ForImplementation.Compiled{" +
                             "byteCodeAppender=" + byteCodeAppender +
                             '}';
                 }
@@ -200,7 +198,7 @@ public interface MethodRegistry {
             }
 
             @Override
-            public Compiled compile(Instrumentation.Target instrumentationTarget) {
+            public Compiled compile(Implementation.Target implementationTarget) {
                 return this;
             }
 
@@ -254,7 +252,7 @@ public interface MethodRegistry {
             }
 
             @Override
-            public Compiled compile(Instrumentation.Target instrumentationTarget) {
+            public Compiled compile(Implementation.Target implementationTarget) {
                 return this;
             }
 
@@ -319,10 +317,10 @@ public interface MethodRegistry {
         /**
          * Compiles this prepared method registry.
          *
-         * @param instrumentationTargetFactory A factory for creating an instrumentation target.
+         * @param implementationTargetFactory A factory for creating an instrumentation target.
          * @return A factory for creating an instrumentation target.
          */
-        Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory);
+        Compiled compile(Implementation.Target.Factory implementationTargetFactory);
     }
 
     /**
@@ -603,15 +601,15 @@ public interface MethodRegistry {
             }
 
             @Override
-            public MethodRegistry.Compiled compile(Instrumentation.Target.Factory instrumentationTargetFactory) {
+            public MethodRegistry.Compiled compile(Implementation.Target.Factory implementationTargetFactory) {
                 Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>(instrumentations.size());
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(instrumentations.size());
                 Map<MethodDescription, TypeWriter.MethodPool.Entry> entries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>(instrumentations.size());
-                Instrumentation.Target instrumentationTarget = instrumentationTargetFactory.make(finding, getInstrumentedMethods());
+                Implementation.Target implementationTarget = implementationTargetFactory.make(finding, getInstrumentedMethods());
                 for (Map.Entry<MethodDescription, Entry> entry : instrumentations.entrySet()) {
                     Handler.Compiled cachedEntry = compilationCache.get(entry.getValue().getHandler());
                     if (cachedEntry == null) {
-                        cachedEntry = entry.getValue().getHandler().compile(instrumentationTarget);
+                        cachedEntry = entry.getValue().getHandler().compile(implementationTarget);
                         compilationCache.put(entry.getValue().getHandler(), cachedEntry);
                     }
                     MethodAttributeAppender cachedAttributeAppender = attributeAppenderCache.get(entry.getValue().getAppenderFactory());

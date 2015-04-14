@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

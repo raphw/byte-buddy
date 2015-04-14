@@ -3,25 +3,21 @@ package net.bytebuddy.dynamic;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.FieldRegistry;
-import net.bytebuddy.dynamic.scaffold.MethodRegistry;
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.LoadedTypeInitializer;
-import net.bytebuddy.instrumentation.ModifierContributor;
-import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMethodMatcher;
@@ -45,9 +41,9 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
 /**
  * A dynamic type that is created at runtime, usually as the result of applying a
  * {@link net.bytebuddy.dynamic.DynamicType.Builder} or as the result of an
- * {@link net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType}.
+ * {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType}.
  * <p>&nbsp;</p>
- * Note that the {@link net.bytebuddy.instrumentation.type.TypeDescription}s will represent their
+ * Note that the {@link TypeDescription}s will represent their
  * unloaded forms and therefore differ from the loaded types, especially with regards to annotations.
  */
 public interface DynamicType {
@@ -264,7 +260,7 @@ public interface DynamicType {
         /**
          * Adds annotations to the currently constructed type.
          * <p>&nbsp;</p>
-         * Note: The annotations will not be visible to {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         * Note: The annotations will not be visible to {@link Implementation}s.
          *
          * @param annotation The annotations to be added to the currently constructed type.
          * @return A builder that will add the given annotation to the created type.
@@ -274,7 +270,7 @@ public interface DynamicType {
         /**
          * Adds annotations to the currently constructed type.
          * <p>&nbsp;</p>
-         * Note: The annotations will not be visible to {@link net.bytebuddy.instrumentation.Instrumentation}s.
+         * Note: The annotations will not be visible to {@link Implementation}s.
          *
          * @param annotation The annotations to be added to the currently constructed type.
          * @return A builder that will add the given annotation to the created type.
@@ -302,7 +298,7 @@ public interface DynamicType {
         Builder<T> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
 
         /**
-         * Defines the use of a specific factory for a {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}.
+         * Defines the use of a specific factory for a {@link MethodLookupEngine}.
          *
          * @param methodLookupEngineFactory The factory to be used.
          * @return A builder that applies the given method lookup engine factory.
@@ -667,10 +663,10 @@ public interface DynamicType {
             /**
              * Intercepts the currently selected method by a given instrumentation.
              *
-             * @param instrumentation An instrumentation to apply to the currently selected method.
+             * @param implementation An instrumentation to apply to the currently selected method.
              * @return A builder which will intercept the currently selected methods by the given instrumentation.
              */
-            MethodAnnotationTarget<S> intercept(Instrumentation instrumentation);
+            MethodAnnotationTarget<S> intercept(Implementation implementation);
 
             /**
              * Implements the currently selected methods as {@code abstract} methods.
@@ -690,8 +686,8 @@ public interface DynamicType {
 
             /**
              * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
-             * {@code enum} values should be handed as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription.EnumerationValue}
-             * instances, annotations as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription} instances and
+             * {@code enum} values should be handed as {@link AnnotationDescription.EnumerationValue}
+             * instances, annotations as {@link AnnotationDescription} instances and
              * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
              *
              * @param value A non-loaded value that the annotation property should set as a default.
@@ -761,7 +757,7 @@ public interface DynamicType {
              * Defines annotations to be added to the currently selected method.
              * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
-             * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             * {@link Implementation}s.
              *
              * @param annotation The annotations to add to the currently selected methods.
              * @return A builder where the given annotation will be added to the currently selected methods.
@@ -772,7 +768,7 @@ public interface DynamicType {
              * Defines annotations to be added to a parameter of the currently selected methods.
              * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
-             * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             * {@link Implementation}s.
              *
              * @param parameterIndex The index of the parameter to annotate.
              * @param annotation     The annotations to add to a parameter of the currently selected methods.
@@ -785,7 +781,7 @@ public interface DynamicType {
              * Defines annotations to be added to the currently selected method.
              * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
-             * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             * {@link Implementation}s.
              *
              * @param annotation The annotations to add to the currently selected methods.
              * @return A builder where the given annotation will be added to the currently selected methods.
@@ -796,7 +792,7 @@ public interface DynamicType {
              * Defines annotations to be added to a parameter of the currently selected methods.
              * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
-             * {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             * {@link Implementation}s.
              *
              * @param parameterIndex The index of the parameter to annotate.
              * @param annotation     The annotations to add to a parameter of the currently selected methods.
@@ -996,7 +992,7 @@ public interface DynamicType {
             /**
              * Defines annotations to be added to the currently selected field.
              * <p>&nbsp;</p>
-             * Note: The annotations will not be visible to {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             * Note: The annotations will not be visible to {@link Implementation}s.
              *
              * @param annotation The annotations to add to the currently selected field.
              * @return A builder where the given annotation will be added to the currently selected field.
@@ -1006,7 +1002,7 @@ public interface DynamicType {
             /**
              * Defines annotations to be added to the currently selected field.
              * <p>&nbsp;</p>
-             * Note: The annotations will not be visible to {@link net.bytebuddy.instrumentation.Instrumentation}s.
+             * Note: The annotations will not be visible to {@link Implementation}s.
              *
              * @param annotation The annotations to add to the currently selected field.
              * @return A builder where the given annotation will be added to the currently selected field.
@@ -2455,7 +2451,7 @@ public interface DynamicType {
 
             /**
              * A {@link net.bytebuddy.dynamic.DynamicType.Builder.MatchedMethodInterception} for which a method was recently
-             * identified or defined such that an {@link net.bytebuddy.instrumentation.Instrumentation} for these methods can
+             * identified or defined such that an {@link Implementation} for these methods can
              * now be defined.
              */
             protected class DefaultMatchedMethodInterception implements MatchedMethodInterception<S> {
@@ -2483,10 +2479,10 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
+                public MethodAnnotationTarget<S> intercept(Implementation implementation) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             methodMatcher,
-                            new MethodRegistry.Handler.ForInstrumentation(nonNull(instrumentation)),
+                            new MethodRegistry.Handler.ForImplementation(nonNull(implementation)),
                             defaultMethodAttributeAppenderFactory);
                 }
 
@@ -2586,8 +2582,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
-                    return materialize(methodToken).intercept(instrumentation);
+                public MethodAnnotationTarget<S> intercept(Implementation implementation) {
+                    return materialize(methodToken).intercept(implementation);
                 }
 
                 @Override
@@ -2807,8 +2803,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MethodAnnotationTarget<S> intercept(Instrumentation instrumentation) {
-                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).intercept(nonNull(instrumentation));
+                public MethodAnnotationTarget<S> intercept(Implementation implementation) {
+                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).intercept(nonNull(implementation));
                 }
 
                 @Override

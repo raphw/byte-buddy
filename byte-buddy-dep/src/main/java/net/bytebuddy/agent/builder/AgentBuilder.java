@@ -1,22 +1,23 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
-import net.bytebuddy.instrumentation.LoadedTypeInitializer;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.method.bytecode.stack.Removal;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.collection.ArrayFactory;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.ClassConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.Removal;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
+import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.StreamDrainer;
@@ -45,7 +46,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * An agent builder provides a convenience API for defining a
  * <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/instrument/package-summary.html">Java agent</a> using
  * Byte Buddy's
- * {@link net.bytebuddy.ByteBuddy#rebase(net.bytebuddy.instrumentation.type.TypeDescription, net.bytebuddy.dynamic.ClassFileLocator)}.
+ * {@link net.bytebuddy.ByteBuddy#rebase(TypeDescription, ClassFileLocator)}.
  * </p>
  * <p>
  * When defining several {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s, the agent builder always
@@ -140,16 +141,16 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * Disables the execution of any {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s that are registered
+     * Disables the execution of any {@link net.bytebuddy.implementation.LoadedTypeInitializer}s that are registered
      * with a {@link net.bytebuddy.dynamic.DynamicType}. This might cause the dynamic type to malfunction if the
-     * {@link net.bytebuddy.instrumentation.LoadedTypeInitializer} are not executed elsewhere before an instrumented
+     * {@link net.bytebuddy.implementation.LoadedTypeInitializer} are not executed elsewhere before an instrumented
      * type is put in use for the first time.
      * </p>
      * <p>
      * In order to execute a self initialization, Byte Buddy adds a call back into any dynamic type's type initializer.
      * This call back requires the injection of a call back dispatcher into the system class loader what might not
      * be a feasible solution on distributed applications where classes are shared among different JVMs where a
-     * different strategy for executing {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s might be
+     * different strategy for executing {@link net.bytebuddy.implementation.LoadedTypeInitializer}s might be
      * more appropriate.
      * </p>
      *
@@ -252,14 +253,14 @@ public interface AgentBuilder {
                         ProtectionDomain protectionDomain);
 
         /**
-         * A raw matcher implementation that checks a {@link net.bytebuddy.instrumentation.type.TypeDescription}
+         * A raw matcher implementation that checks a {@link TypeDescription}
          * and its {@link java.lang.ClassLoader} against two suitable matchers in order to determine if the matched
          * type should be instrumented.
          */
         class ForElementMatcherPair implements RawMatcher {
 
             /**
-             * The type matcher to apply to a {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+             * The type matcher to apply to a {@link TypeDescription}.
              */
             private final ElementMatcher<? super TypeDescription> typeMatcher;
 
@@ -270,12 +271,12 @@ public interface AgentBuilder {
 
             /**
              * Creates a new {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} that only matches the
-             * supplied {@link net.bytebuddy.instrumentation.type.TypeDescription} and its
+             * supplied {@link TypeDescription} and its
              * {@link java.lang.ClassLoader} against two matcher in order to decied if an instrumentation should
              * be conducted.
              *
              * @param typeMatcher        The type matcher to apply to a
-             *                           {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+             *                           {@link TypeDescription}.
              * @param classLoaderMatcher The class loader to apply to a {@link java.lang.ClassLoader}.
              */
             public ForElementMatcherPair(ElementMatcher<? super TypeDescription> typeMatcher,
@@ -753,7 +754,7 @@ public interface AgentBuilder {
 
         /**
          * {@code true} if generated types should not create a callback inside their type initializer in order
-         * to call their potential {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}.
+         * to call their potential {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
          */
         private final boolean disableSelfInitialization;
 
@@ -808,7 +809,7 @@ public interface AgentBuilder {
          *                                   to indicate that no prefix should be added but rather a random suffix.
          * @param disableSelfInitialization  {@code true} if generated types should not create a callback inside their
          *                                   type initializer in order to call their potential
-         *                                   {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}.
+         *                                   {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
          * @param retransformation           {@code true} if the generated
          *                                   {@link java.lang.instrument.ClassFileTransformer} should also apply
          *                                   for retransformations.
@@ -1009,7 +1010,7 @@ public interface AgentBuilder {
 
         /**
          * An initialization strategy which determines the handling of
-         * {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s.
+         * {@link net.bytebuddy.implementation.LoadedTypeInitializer}s.
          */
         public interface InitializationStrategy {
 
@@ -1075,7 +1076,7 @@ public interface AgentBuilder {
              * An initialization strategy that adds a code block to an instrumented type's type initializer which
              * then calls a specific class that is responsible for the explicit initialization.
              */
-            class SelfInjection implements InitializationStrategy, net.bytebuddy.instrumentation.Instrumentation, ByteCodeAppender {
+            class SelfInjection implements InitializationStrategy, Implementation, ByteCodeAppender {
 
                 /**
                  * An accessor for the initialization nexus that makes sure that the Nexus is loaded by the
@@ -1106,7 +1107,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public ByteCodeAppender appender(Target instrumentationTarget) {
+                public ByteCodeAppender appender(Target implementationTarget) {
                     return this;
                 }
 
@@ -1143,7 +1144,7 @@ public interface AgentBuilder {
                 /**
                  * <p>
                  * This nexus is a global dispatcher for initializing classes with
-                 * {@link net.bytebuddy.instrumentation.LoadedTypeInitializer}s. To do so, this class is to be loaded
+                 * {@link net.bytebuddy.implementation.LoadedTypeInitializer}s. To do so, this class is to be loaded
                  * by the system class loader in an explicit manner. Any instrumented class is then injected a code
                  * block into its static type initializer that makes a call to this very same nexus which had the
                  * loaded type initializer registered before hand.
@@ -1160,7 +1161,7 @@ public interface AgentBuilder {
 
                     /**
                      * A map of keys identifying a loaded type by its name and class loader mapping their
-                     * potential {@link net.bytebuddy.instrumentation.LoadedTypeInitializer} where the class
+                     * potential {@link net.bytebuddy.implementation.LoadedTypeInitializer} where the class
                      * loader of these initializers is however irrelevant.
                      */
                     private static final ConcurrentMap<Nexus, Object> TYPE_INITIALIZERS = new ConcurrentHashMap<Nexus, Object>();
@@ -1214,7 +1215,7 @@ public interface AgentBuilder {
                      * @param name            The name of the type for the loaded type initializer.
                      * @param classLoader     The class loader of the type for the loaded type initializer.
                      * @param typeInitializer The type initializer to register. The initializer must be an instance
-                     *                        of {@link net.bytebuddy.instrumentation.LoadedTypeInitializer} where
+                     *                        of {@link net.bytebuddy.implementation.LoadedTypeInitializer} where
                      *                        it does however not matter which class loader loaded this latter type.
                      */
                     @SuppressWarnings("unused")

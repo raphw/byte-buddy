@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that checks if a type description declares methods of a given property.

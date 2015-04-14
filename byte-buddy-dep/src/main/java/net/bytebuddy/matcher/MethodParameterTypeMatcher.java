@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.method.ParameterList;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeList;
 
 /**
  * An element matcher that matches a method's parameter types.

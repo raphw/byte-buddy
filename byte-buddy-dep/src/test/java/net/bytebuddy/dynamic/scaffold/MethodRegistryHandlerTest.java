@@ -1,9 +1,8 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -26,13 +25,13 @@ public class MethodRegistryHandlerTest {
     private InstrumentedType instrumentedType, preparedInstrumentedType;
 
     @Mock
-    private Instrumentation instrumentation;
+    private Implementation implementation;
 
     @Mock
     private Object annotationValue;
 
     @Mock
-    private Instrumentation.Target instrumentationTarget;
+    private Implementation.Target implementationTarget;
 
     @Mock
     private MethodAttributeAppender attributeAppender;
@@ -41,28 +40,28 @@ public class MethodRegistryHandlerTest {
     private ClassVisitor classVisitor;
 
     @Mock
-    private Instrumentation.Context instrumentationContext;
+    private Implementation.Context implementationContext;
 
     @Mock
     private MethodDescription methodDescription;
 
     @Before
     public void setUp() throws Exception {
-        when(instrumentation.prepare(instrumentedType)).thenReturn(preparedInstrumentedType);
+        when(implementation.prepare(instrumentedType)).thenReturn(preparedInstrumentedType);
     }
 
     @Test
     public void testHandlerForAbstractMethod() throws Exception {
         assertThat(MethodRegistry.Handler.ForAbstractMethod.INSTANCE.prepare(instrumentedType), is(instrumentedType));
-        TypeWriter.MethodPool.Entry entry = MethodRegistry.Handler.ForAbstractMethod.INSTANCE.compile(instrumentationTarget).assemble(attributeAppender);
+        TypeWriter.MethodPool.Entry entry = MethodRegistry.Handler.ForAbstractMethod.INSTANCE.compile(implementationTarget).assemble(attributeAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
     }
 
     @Test
-    public void testHandlerForInstrumentation() throws Exception {
-        MethodRegistry.Handler handler = new MethodRegistry.Handler.ForInstrumentation(instrumentation);
+    public void testHandlerForImplementation() throws Exception {
+        MethodRegistry.Handler handler = new MethodRegistry.Handler.ForImplementation(implementation);
         assertThat(handler.prepare(instrumentedType), is(preparedInstrumentedType));
-        TypeWriter.MethodPool.Entry entry = handler.compile(instrumentationTarget).assemble(attributeAppender);
+        TypeWriter.MethodPool.Entry entry = handler.compile(implementationTarget).assemble(attributeAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT));
     }
 
@@ -70,15 +69,15 @@ public class MethodRegistryHandlerTest {
     public void testHandlerForAnnotationValue() throws Exception {
         MethodRegistry.Handler handler = new MethodRegistry.Handler.ForAnnotationValue(annotationValue);
         assertThat(handler.prepare(instrumentedType), is(instrumentedType));
-        TypeWriter.MethodPool.Entry entry = handler.compile(instrumentationTarget).assemble(attributeAppender);
+        TypeWriter.MethodPool.Entry entry = handler.compile(implementationTarget).assemble(attributeAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodRegistry.Handler.ForAbstractMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForInstrumentation.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForInstrumentation.Compiled.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForImplementation.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForImplementation.Compiled.class).apply();
         ObjectPropertyAssertion.of(MethodRegistry.Handler.ForAnnotationValue.class).apply();
     }
 }

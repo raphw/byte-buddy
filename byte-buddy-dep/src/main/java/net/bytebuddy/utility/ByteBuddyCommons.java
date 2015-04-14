@@ -1,7 +1,7 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.instrumentation.ModifierContributor;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;

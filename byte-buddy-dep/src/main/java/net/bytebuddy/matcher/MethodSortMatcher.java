@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.description.method.MethodDescription;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 

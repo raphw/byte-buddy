@@ -1,7 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import org.junit.After;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,15 +34,16 @@ public class ClassVisitorWrapperChainTest {
         ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain();
         chain = chain.append(first).append(append).prepend(prepend);
         chain.wrap(classVisitor);
-    }
-
-    @After
-    public void tearDown() throws Exception {
         verify(prepend).wrap(classVisitor);
         verifyNoMoreInteractions(prepend);
         verify(first).wrap(classVisitor);
         verifyNoMoreInteractions(first);
         verify(append).wrap(classVisitor);
         verifyNoMoreInteractions(append);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ClassVisitorWrapper.Chain.class).apply();
     }
 }

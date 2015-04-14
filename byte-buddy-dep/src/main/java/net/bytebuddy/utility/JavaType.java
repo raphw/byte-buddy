@@ -1,7 +1,7 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;

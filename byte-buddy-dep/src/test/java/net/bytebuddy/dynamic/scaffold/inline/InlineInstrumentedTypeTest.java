@@ -2,9 +2,13 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
-import net.bytebuddy.instrumentation.field.FieldList;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.type.*;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.scaffold.AbstractInstrumentedTypeTest;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

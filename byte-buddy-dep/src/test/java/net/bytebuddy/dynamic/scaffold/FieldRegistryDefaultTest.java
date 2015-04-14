@@ -1,8 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;

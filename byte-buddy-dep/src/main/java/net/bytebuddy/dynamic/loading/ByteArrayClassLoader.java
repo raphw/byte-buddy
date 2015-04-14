@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

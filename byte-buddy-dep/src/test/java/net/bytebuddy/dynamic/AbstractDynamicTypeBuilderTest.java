@@ -1,14 +1,14 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.description.modifier.TypeManifestation;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.MethodCall;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
-import net.bytebuddy.modifier.Ownership;
-import net.bytebuddy.modifier.TypeManifestation;
-import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 
@@ -68,7 +68,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .throwing(Exception.class)
-                .intercept(new Instrumentation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -151,8 +151,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testApplicationOrder() throws Exception {
         assertThat(createPlain()
-                .method(named(TO_STRING)).intercept(new Instrumentation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
-                .method(named(TO_STRING)).intercept(new Instrumentation.Simple(new TextConstant(BAR), MethodReturn.REFERENCE))
+                .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(BAR), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()

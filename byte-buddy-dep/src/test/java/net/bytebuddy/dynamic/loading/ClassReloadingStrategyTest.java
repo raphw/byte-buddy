@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
-import net.bytebuddy.instrumentation.FixedValue;
+import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Rule;

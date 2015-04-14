@@ -1,11 +1,11 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
-import net.bytebuddy.instrumentation.SuperMethodCall;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -31,7 +31,7 @@ public interface ConstructorStrategy {
     /**
      * Returns a method registry that is capable of creating byte code for the constructors that were
      * provided by the
-     * {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(net.bytebuddy.instrumentation.type.TypeDescription)}
+     * {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(TypeDescription)}
      * method of this instance.
      *
      * @param methodRegistry                        The original method registry.
@@ -89,7 +89,7 @@ public interface ConstructorStrategy {
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
                 return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
-                        new MethodRegistry.Handler.ForInstrumentation(SuperMethodCall.INSTANCE),
+                        new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory);
             }
         },
@@ -113,7 +113,7 @@ public interface ConstructorStrategy {
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
                 return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
-                        new MethodRegistry.Handler.ForInstrumentation(SuperMethodCall.INSTANCE),
+                        new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory);
             }
         },
@@ -135,7 +135,7 @@ public interface ConstructorStrategy {
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
                 return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
-                        new MethodRegistry.Handler.ForInstrumentation(SuperMethodCall.INSTANCE),
+                        new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory);
             }
         };

@@ -1,6 +1,6 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.not;

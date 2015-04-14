@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.instrumentation.field.FieldDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;

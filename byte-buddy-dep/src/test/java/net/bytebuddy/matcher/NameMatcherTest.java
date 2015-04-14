@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.NamedElement;
+import net.bytebuddy.description.NamedElement;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

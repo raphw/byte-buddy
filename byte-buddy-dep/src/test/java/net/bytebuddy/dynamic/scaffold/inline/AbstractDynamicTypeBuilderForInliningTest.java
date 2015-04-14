@@ -1,13 +1,12 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.instrumentation.MethodCall;
-import net.bytebuddy.instrumentation.StubMethod;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.After;

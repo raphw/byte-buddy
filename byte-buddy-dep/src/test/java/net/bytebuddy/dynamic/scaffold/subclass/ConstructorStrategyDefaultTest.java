@@ -1,11 +1,10 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;

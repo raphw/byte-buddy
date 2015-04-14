@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -46,7 +47,7 @@ public class ByteArrayClassLoaderChildFirstTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {ByteArrayClassLoader.PersistenceHandler.LATENT, nullValue(InputStream.class)},
-//                {ByteArrayClassLoader.PersistenceHandler.MANIFEST, notNullValue(InputStream.class)}
+                {ByteArrayClassLoader.PersistenceHandler.MANIFEST, notNullValue(InputStream.class)}
         });
     }
 

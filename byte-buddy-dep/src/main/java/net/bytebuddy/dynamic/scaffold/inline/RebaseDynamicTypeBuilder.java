@@ -3,19 +3,15 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.FieldRegistry;
-import net.bytebuddy.dynamic.scaffold.MethodRegistry;
-import net.bytebuddy.dynamic.scaffold.TypeWriter;
-import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.ArrayList;
@@ -213,13 +209,13 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                         modifiers,
                         namingStrategy)),
                 methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
-                InlineInstrumentationMatcher.of(ignoredMethods, targetType));
+                InliningImplementationMatcher.of(ignoredMethods, targetType));
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Enabled.make(preparedMethodRegistry.getInstrumentedMethods(),
                 preparedMethodRegistry.getInstrumentedType(),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
-        MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new RebaseInstrumentationTarget.Factory(bridgeMethodResolverFactory,
+        MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new RebaseImplementationTarget.Factory(bridgeMethodResolverFactory,
                 methodRebaseResolver));
         return TypeWriter.Default.<T>forRebasing(compiledMethodRegistry,
                 fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),

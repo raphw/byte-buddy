@@ -1,11 +1,7 @@
 package net.bytebuddy;
 
-import net.bytebuddy.instrumentation.ModifierContributor;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.modifier.EnumerationState;
-import net.bytebuddy.modifier.SyntheticState;
-import net.bytebuddy.modifier.TypeManifestation;
-import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.description.modifier.*;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;

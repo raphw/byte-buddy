@@ -1,11 +1,11 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.instrumentation.FixedValue;
-import net.bytebuddy.instrumentation.MethodDelegation;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.SuperCall;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Rule;
 import org.junit.Test;

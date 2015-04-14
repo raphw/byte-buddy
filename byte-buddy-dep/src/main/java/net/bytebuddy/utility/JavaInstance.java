@@ -1,12 +1,12 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodHandleConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.MethodTypeConstant;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.constant.MethodHandleConstant;
+import net.bytebuddy.implementation.bytecode.constant.MethodTypeConstant;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;

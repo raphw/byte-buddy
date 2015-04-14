@@ -1,10 +1,10 @@
 package net.bytebuddy;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.modifier.EnumerationState;
-import net.bytebuddy.modifier.SyntheticState;
-import net.bytebuddy.modifier.TypeManifestation;
-import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.modifier.EnumerationState;
+import net.bytebuddy.description.modifier.SyntheticState;
+import net.bytebuddy.description.modifier.TypeManifestation;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;

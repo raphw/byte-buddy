@@ -1,7 +1,7 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.field.FieldList;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that matches the type of an annotation description.

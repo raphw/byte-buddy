@@ -2,15 +2,15 @@ package net.bytebuddy;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.ModifierContributor;
-import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -70,7 +70,7 @@ public class ByteBuddyTest {
     private AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
     @Mock
-    private Instrumentation instrumentation;
+    private Implementation implementation;
 
     @Before
     public void setUp() throws Exception {
@@ -81,7 +81,7 @@ public class ByteBuddyTest {
     @Test
     public void testDomainSpecificLanguage() throws Exception {
         assertProperties(new ByteBuddy()
-                .method(methodMatcher).intercept(instrumentation)
+                .method(methodMatcher).intercept(implementation)
                 .withAttribute(typeAttributeAppender)
                 .withBridgeMethodResolver(bridgeMethodResolverFactory)
                 .withClassFileVersion(classFileVersion)
@@ -111,7 +111,7 @@ public class ByteBuddyTest {
                 .withModifiers(modifierContributorForType)
                 .withNamingStrategy(namingStrategy)
                 .withNamingStrategy(auxiliaryTypeNamingStrategy)
-                .method(methodMatcher).intercept(instrumentation));
+                .method(methodMatcher).intercept(implementation));
     }
 
     @SuppressWarnings("unchecked")

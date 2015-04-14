@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.field.FieldList;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
 import org.mockito.Mock;
 

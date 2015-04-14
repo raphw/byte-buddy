@@ -1,9 +1,9 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.instrumentation.attribute.annotation.AbstractEnumerationValueTest;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.annotation.AbstractEnumerationValueTest;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import org.junit.After;
 import org.junit.Before;
 

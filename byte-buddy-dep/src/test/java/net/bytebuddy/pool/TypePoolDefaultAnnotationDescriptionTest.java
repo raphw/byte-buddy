@@ -1,7 +1,7 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.instrumentation.attribute.annotation.AbstractAnnotationDescriptionTest;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import org.junit.After;
 import org.junit.Before;
 

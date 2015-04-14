@@ -1,25 +1,27 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.ByteCodeElement;
-import net.bytebuddy.instrumentation.ModifierReviewable;
-import net.bytebuddy.instrumentation.NamedElement;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.ParameterDescription;
-import net.bytebuddy.instrumentation.method.ParameterList;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.ModifierReviewable;
+import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.isAnnotation;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
+import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
 
 /**
  * A utility class that contains a human-readable language for creating {@link net.bytebuddy.matcher.ElementMatcher}s.
@@ -48,7 +50,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given method as a {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     * Exactly matches a given method as a {@link MethodDescription}.
      *
      * @param method The method to match by its description
      * @param <T>    The type of the matched object.
@@ -59,7 +61,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given constructor as a {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     * Exactly matches a given constructor as a {@link MethodDescription}.
      *
      * @param constructor The constructor to match by its description
      * @param <T>         The type of the matched object.
@@ -70,7 +72,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given {@link net.bytebuddy.instrumentation.method.MethodDescription}.
+     * Exactly matches a given {@link MethodDescription}.
      *
      * @param methodDescription The method description to match.
      * @param <T>               The type of the matched object.
@@ -81,7 +83,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given type as a {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     * Exactly matches a given type as a {@link TypeDescription}.
      *
      * @param type The type to match by its description
      * @param <T>  The type of the matched object.
@@ -92,7 +94,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     * Exactly matches a given {@link TypeDescription}.
      *
      * @param typeDescription The type to match by its description
      * @param <T>             The type of the matched object.
@@ -103,7 +105,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given annotation as an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}.
+     * Exactly matches a given annotation as an {@link AnnotationDescription}.
      *
      * @param annotation The annotation to match by its description.
      * @param <T>        The type of the matched object.
@@ -114,7 +116,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}.
+     * Exactly matches a given {@link AnnotationDescription}.
      *
      * @param annotationDescription The annotation description to match.
      * @param <T>                   The type of the matched object.
@@ -184,7 +186,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Creates a matcher that matches any of the given types as {@link net.bytebuddy.instrumentation.type.TypeDescription}s
+     * Creates a matcher that matches any of the given types as {@link TypeDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
      *
      * @param value The input values to be compared against.
@@ -196,7 +198,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Creates a matcher that matches any of the given constructors as {@link net.bytebuddy.instrumentation.method.MethodDescription}s
+     * Creates a matcher that matches any of the given constructors as {@link MethodDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
      *
      * @param value The input values to be compared against.
@@ -208,7 +210,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Creates a matcher that matches any of the given methods as {@link net.bytebuddy.instrumentation.method.MethodDescription}s
+     * Creates a matcher that matches any of the given methods as {@link MethodDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
      *
      * @param value The input values to be compared against.
@@ -220,7 +222,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Creates a matcher that matches any of the given annotations as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}s
+     * Creates a matcher that matches any of the given annotations as {@link AnnotationDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
      *
      * @param value The input values to be compared against.
@@ -260,7 +262,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Creates a matcher that matches none of the given types as {@link net.bytebuddy.instrumentation.type.TypeDescription}s
+     * Creates a matcher that matches none of the given types as {@link TypeDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
      *
      * @param value The input values to be compared against.
@@ -272,7 +274,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Creates a matcher that matches none of the given constructors as {@link net.bytebuddy.instrumentation.method.MethodDescription}s
+     * Creates a matcher that matches none of the given constructors as {@link MethodDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
      *
      * @param value The input values to be compared against.
@@ -284,7 +286,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Creates a matcher that matches none of the given methods as {@link net.bytebuddy.instrumentation.method.MethodDescription}s
+     * Creates a matcher that matches none of the given methods as {@link MethodDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
      *
      * @param value The input values to be compared against.
@@ -296,7 +298,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Creates a matcher that matches none of the given annotations as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}s
+     * Creates a matcher that matches none of the given annotations as {@link AnnotationDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
      *
      * @param value The input values to be compared against.
@@ -308,7 +310,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its exact name.
+     * Matches a {@link NamedElement} for its exact name.
      *
      * @param name The expected name.
      * @param <T>  The type of the matched object.
@@ -319,7 +321,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name. The name's
+     * Matches a {@link NamedElement} for its name. The name's
      * capitalization is ignored.
      *
      * @param name The expected name.
@@ -331,7 +333,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name's prefix.
+     * Matches a {@link NamedElement} for its name's prefix.
      *
      * @param prefix The expected name's prefix.
      * @param <T>    The type of the matched object.
@@ -342,7 +344,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name's prefix. The name's
+     * Matches a {@link NamedElement} for its name's prefix. The name's
      * capitalization is ignored.
      *
      * @param prefix The expected name's prefix.
@@ -354,7 +356,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name's suffix.
+     * Matches a {@link NamedElement} for its name's suffix.
      *
      * @param suffix The expected name's suffix.
      * @param <T>    The type of the matched object.
@@ -365,7 +367,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for its name's suffix. The name's
+     * Matches a {@link NamedElement} for its name's suffix. The name's
      * capitalization is ignored.
      *
      * @param suffix The expected name's suffix.
@@ -377,7 +379,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for an infix of its name.
+     * Matches a {@link NamedElement} for an infix of its name.
      *
      * @param infix The expected infix of the name.
      * @param <T>   The type of the matched object.
@@ -388,7 +390,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} for an infix of its name. The name's
+     * Matches a {@link NamedElement} for an infix of its name. The name's
      * capitalization is ignored.
      *
      * @param infix The expected infix of the name.
@@ -400,7 +402,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.NamedElement} name against a regular expression.
+     * Matches a {@link NamedElement} name against a regular expression.
      *
      * @param regex The regular expression to match the name against.
      * @param <T>   The type of the matched object.
@@ -411,7 +413,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement}'s descriptor against a given value.
+     * Matches a {@link ByteCodeElement}'s descriptor against a given value.
      *
      * @param descriptor The expected descriptor.
      * @param <T>        The type of the matched object.
@@ -422,8 +424,8 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for being declared by a given
-     * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     * Matches a {@link ByteCodeElement} for being declared by a given
+     * {@link TypeDescription}.
      *
      * @param type The type that is expected to declare the matched byte code element.
      * @param <T>  The type of the matched object.
@@ -434,7 +436,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for being declared by a given
+     * Matches a {@link ByteCodeElement} for being declared by a given
      * {@link java.lang.Class}.
      *
      * @param type The type that is expected to declare the matched byte code element.
@@ -446,8 +448,8 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} for being declared by a
-     * {@link net.bytebuddy.instrumentation.type.TypeDescription} that is matched by the given matcher.
+     * Matches a {@link ByteCodeElement} for being declared by a
+     * {@link TypeDescription} that is matched by the given matcher.
      *
      * @param matcher A matcher for the declaring type of the matched byte code element as long as it
      *                is not {@code null}.
@@ -459,7 +461,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} that is visible to a given {@link java.lang.Class}.
+     * Matches a {@link ByteCodeElement} that is visible to a given {@link java.lang.Class}.
      *
      * @param type The type that a matched byte code element is expected to be visible to.
      * @param <T>  The type of the matched object.
@@ -470,8 +472,8 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ByteCodeElement} that is visible to a given
-     * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     * Matches a {@link ByteCodeElement} that is visible to a given
+     * {@link TypeDescription}.
      *
      * @param typeDescription The type that a matched byte code element is expected to be visible to.
      * @param <T>             The type of the matched object.
@@ -482,7 +484,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement} for declared annotations.
+     * Matches an {@link AnnotatedElement} for declared annotations.
      * This matcher does not match inherited annotations which only exist for classes. Use
      * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(Class)} for matching inherited annotations.
      *
@@ -495,9 +497,9 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement} for declared annotations.
+     * Matches an {@link AnnotatedElement} for declared annotations.
      * This matcher does not match inherited annotations which only exist for classes. Use
-     * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(net.bytebuddy.instrumentation.type.TypeDescription)}
+     * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(TypeDescription)}
      * for matching inherited annotations.
      *
      * @param typeDescription The annotation type to match against.
@@ -509,7 +511,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement} for declared annotations.
+     * Matches an {@link AnnotatedElement} for declared annotations.
      * This matcher does not match inherited annotations which only exist for classes. Use
      * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(net.bytebuddy.matcher.ElementMatcher)}
      * for matching inherited annotations.
@@ -524,7 +526,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches an {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotatedElement} to declare any annotation
+     * Matches an {@link AnnotatedElement} to declare any annotation
      * that matches the given matcher. Note that this matcher does not match inherited annotations that only exist
      * for types. Use {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(net.bytebuddy.matcher.ElementMatcher)}
      * for matching inherited annotations.
@@ -539,7 +541,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code public}.
+     * Matches a {@link ModifierReviewable} that is {@code public}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code public} modifier reviewable.
@@ -549,7 +551,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code protected}.
+     * Matches a {@link ModifierReviewable} that is {@code protected}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code protected} modifier reviewable.
@@ -559,7 +561,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is package-private.
+     * Matches a {@link ModifierReviewable} that is package-private.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a package-private modifier reviewable.
@@ -569,7 +571,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code private}.
+     * Matches a {@link ModifierReviewable} that is {@code private}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code private} modifier reviewable.
@@ -579,7 +581,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code final}.
+     * Matches a {@link ModifierReviewable} that is {@code final}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code final} modifier reviewable.
@@ -589,7 +591,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is {@code static}.
+     * Matches a {@link ModifierReviewable} that is {@code static}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code static} modifier reviewable.
@@ -599,7 +601,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.ModifierReviewable} that is synthetic.
+     * Matches a {@link ModifierReviewable} that is synthetic.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a synthetic modifier reviewable.
@@ -609,7 +611,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is {@code synchronized}.
+     * Matches a {@link MethodDescription} that is {@code synchronized}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code synchronized} method description.
@@ -619,7 +621,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is {@code native}.
+     * Matches a {@link MethodDescription} that is {@code native}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code native} method description.
@@ -629,7 +631,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is {@code strictfp}.
+     * Matches a {@link MethodDescription} that is {@code strictfp}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code strictfp} method description.
@@ -639,7 +641,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is a var-args.
+     * Matches a {@link MethodDescription} that is a var-args.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a var-args method description.
@@ -649,7 +651,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} that is a bridge.
+     * Matches a {@link MethodDescription} that is a bridge.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a bridge method.
@@ -659,7 +661,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches {@link net.bytebuddy.instrumentation.method.MethodDescription}s that returns a given
+     * Matches {@link MethodDescription}s that returns a given
      * {@link java.lang.Class}.
      *
      * @param type The type the matched method is expected to return.
@@ -671,8 +673,8 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches {@link net.bytebuddy.instrumentation.method.MethodDescription}s that returns a given
-     * {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     * Matches {@link MethodDescription}s that returns a given
+     * {@link TypeDescription}.
      *
      * @param typeDescription The type the matched method is expected to return.
      * @param <T>             The type of the matched object.
@@ -683,7 +685,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches {@link net.bytebuddy.instrumentation.method.MethodDescription}s that matches a matched method's
+     * Matches {@link MethodDescription}s that matches a matched method's
      * return type.
      *
      * @param matcher A matcher to apply onto a matched method's return type.
@@ -695,7 +697,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its exact parameter types.
+     * Matches a {@link MethodDescription} by its exact parameter types.
      *
      * @param type The parameter types of a method in their order.
      * @param <T>  The type of the matched object.
@@ -711,7 +713,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its exact parameter types.
+     * Matches a {@link MethodDescription} by its exact parameter types.
      *
      * @param typeDescription The parameter types of a method in their order.
      * @param <T>             The type of the matched object.
@@ -722,7 +724,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its exact parameter types.
+     * Matches a {@link MethodDescription} by its exact parameter types.
      *
      * @param typeDescriptions The parameter types of a method in their order.
      * @param <T>              The type of the matched object.
@@ -737,8 +739,8 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by applying an iterable collection
-     * of element matcher on any parameter's {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+     * Matches a {@link MethodDescription} by applying an iterable collection
+     * of element matcher on any parameter's {@link TypeDescription}.
      *
      * @param matchers The matcher that are applied onto the parameter types of the matched method description.
      * @param <T>      The type of the matched object.
@@ -750,7 +752,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by the number of its parameters.
+     * Matches a {@link MethodDescription} by the number of its parameters.
      *
      * @param length The expected length.
      * @param <T>    The type of the matched object.
@@ -761,7 +763,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by validating that at least one
+     * Matches a {@link MethodDescription} by validating that at least one
      * parameter fullfils a given constraint.
      *
      * @param matcher The constraint to check the parameters against.
@@ -773,7 +775,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by validating that its parameters
+     * Matches a {@link MethodDescription} by validating that its parameters
      * fulfill a given constraint.
      *
      * @param matcher The matcher to apply for validating the parameters.
@@ -785,7 +787,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its capability to throw a given
+     * Matches a {@link MethodDescription} by its capability to throw a given
      * checked exception. For specifying a non-checked exception, any method is matched.
      *
      * @param exceptionType The type of the exception that should be declared by the method to be matched.
@@ -797,7 +799,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its capability to throw a given
+     * Matches a {@link MethodDescription} by its capability to throw a given
      * checked exception. For specifying a non-checked exception, any method is matched.
      *
      * @param exceptionType The type of the exception that should be declared by the method to be matched.
@@ -818,7 +820,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link net.bytebuddy.instrumentation.method.MethodDescription} by its declared exceptions.
+     * Matches a {@link MethodDescription} by its declared exceptions.
      *
      * @param exceptionMatcher A matcher that is applied by to the declared exceptions.
      * @param <T>              The type of the matched object.

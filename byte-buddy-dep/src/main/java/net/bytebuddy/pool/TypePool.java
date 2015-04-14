@@ -1,18 +1,18 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.field.FieldList;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.ParameterDescription;
-import net.bytebuddy.instrumentation.method.ParameterList;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import net.bytebuddy.instrumentation.type.PackageDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.PropertyDispatcher;
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A type pool allows the retreival of {@link net.bytebuddy.instrumentation.type.TypeDescription} by its name.
+ * A type pool allows the retreival of {@link TypeDescription} by its name.
  */
 public interface TypePool {
 
@@ -57,7 +57,7 @@ public interface TypePool {
     interface Resolution {
 
         /**
-         * Determines if this resolution represents a {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+         * Determines if this resolution represents a {@link TypeDescription}.
          *
          * @return {@code true} if the queried type could be resolved.
          */
@@ -72,7 +72,7 @@ public interface TypePool {
         TypeDescription resolve();
 
         /**
-         * A simple resolution that represents a given {@link net.bytebuddy.instrumentation.type.TypeDescription}.
+         * A simple resolution that represents a given {@link TypeDescription}.
          */
         class Simple implements Resolution {
 
@@ -456,7 +456,7 @@ public interface TypePool {
 
     /**
      * A default implementation of a {@link net.bytebuddy.pool.TypePool} that models binary data in the
-     * Java byte code format into a {@link net.bytebuddy.instrumentation.type.TypeDescription}. The data lookup
+     * Java byte code format into a {@link TypeDescription}. The data lookup
      * is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}.
      */
     class Default extends AbstractBase {
@@ -1637,8 +1637,8 @@ public interface TypePool {
     }
 
     /**
-     * A type description that looks up any referenced {@link net.bytebuddy.instrumentation.ByteCodeElement}s or
-     * {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription}s by querying a type pool
+     * A type description that looks up any referenced {@link ByteCodeElement}s or
+     * {@link AnnotationDescription}s by querying a type pool
      * at lookup time.
      */
     class LazyTypeDescription extends TypeDescription.AbstractTypeDescription.OfSimpleType {
@@ -3990,7 +3990,7 @@ public interface TypePool {
         }
 
         /**
-         * An implementation of a {@link net.bytebuddy.instrumentation.type.PackageDescription} that only
+         * An implementation of a {@link PackageDescription} that only
          * loads its annotations on requirement.
          */
         private static class LazyPackageDescription extends PackageDescription.AbstractPackageDescription {

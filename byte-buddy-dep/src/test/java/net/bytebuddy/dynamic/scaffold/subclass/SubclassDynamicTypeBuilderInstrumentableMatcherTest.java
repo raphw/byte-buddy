@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -13,7 +13,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {

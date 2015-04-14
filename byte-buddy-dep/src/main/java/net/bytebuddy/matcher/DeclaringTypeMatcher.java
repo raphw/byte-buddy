@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.type.DeclaredInType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.type.DeclaredInType;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that matches the declaring type of another element, only if this element is actually declared

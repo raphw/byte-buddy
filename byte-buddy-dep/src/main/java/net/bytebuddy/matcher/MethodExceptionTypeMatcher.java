@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeList;
 
 /**
  * An element matcher that matches the exceptions that are declared by a method.

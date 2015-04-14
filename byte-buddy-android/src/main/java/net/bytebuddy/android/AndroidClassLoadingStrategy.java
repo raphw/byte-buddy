@@ -7,8 +7,8 @@ import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.cf.CfTranslator;
 import com.android.dx.dex.file.DexFile;
 import dalvik.system.DexClassLoader;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
 
 import java.io.*;

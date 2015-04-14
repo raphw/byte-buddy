@@ -2,27 +2,26 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.LoadedTypeInitializer;
-import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationAppender;
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.ParameterDescription;
-import net.bytebuddy.instrumentation.method.ParameterList;
-import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.RemappingClassAdapter;
@@ -97,7 +96,7 @@ public interface TypeWriter<T> {
 
             /**
              * A default implementation of a compiled field registry that simply returns a no-op
-             * {@link net.bytebuddy.instrumentation.attribute.FieldAttributeAppender.Factory}
+             * {@link net.bytebuddy.implementation.attribute.FieldAttributeAppender.Factory}
              * for any field.
              */
             enum NoOp implements Entry {
@@ -134,7 +133,7 @@ public interface TypeWriter<T> {
 
             /**
              * A simple entry that creates a specific
-             * {@link net.bytebuddy.instrumentation.attribute.FieldAttributeAppender.Factory}
+             * {@link net.bytebuddy.implementation.attribute.FieldAttributeAppender.Factory}
              * for any field.
              */
             class Simple implements Entry {
@@ -253,7 +252,7 @@ public interface TypeWriter<T> {
              * @param instrumentationContext The instrumentation context to which this entry should be applied.
              * @param methodDescription      The method description of the instrumented method.
              */
-            void apply(ClassVisitor classVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription);
+            void apply(ClassVisitor classVisitor, Implementation.Context instrumentationContext, MethodDescription methodDescription);
 
             /**
              * Applies the head of this entry. Applying an entry is only possible if a method is defined, i.e. the sort of this entry is not
@@ -272,7 +271,7 @@ public interface TypeWriter<T> {
              * @param instrumentationContext The instrumentation context to which this entry should be applied.
              * @param methodDescription      The method description of the instrumented method.
              */
-            void applyBody(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription);
+            void applyBody(MethodVisitor methodVisitor, Implementation.Context instrumentationContext, MethodDescription methodDescription);
 
             /**
              * The sort of an entry.
@@ -345,7 +344,7 @@ public interface TypeWriter<T> {
             abstract class AbstractDefiningEntry implements Entry {
 
                 @Override
-                public void apply(ClassVisitor classVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription) {
+                public void apply(ClassVisitor classVisitor, Implementation.Context instrumentationContext, MethodDescription methodDescription) {
                     MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getAdjustedModifiers(getSort().isImplemented()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
@@ -375,14 +374,14 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor,
-                                  Instrumentation.Context instrumentationContext,
+                                  Implementation.Context instrumentationContext,
                                   MethodDescription methodDescription) {
                     /* do nothing */
                 }
 
                 @Override
                 public void applyBody(MethodVisitor methodVisitor,
-                                      Instrumentation.Context instrumentationContext,
+                                      Implementation.Context instrumentationContext,
                                       MethodDescription methodDescription) {
                     throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
                 }
@@ -440,7 +439,7 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription) {
+                public void applyBody(MethodVisitor methodVisitor, Implementation.Context instrumentationContext, MethodDescription methodDescription) {
                     methodAttributeAppender.apply(methodVisitor, methodDescription);
                     methodVisitor.visitCode();
                     ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, instrumentationContext, methodDescription);
@@ -507,7 +506,7 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext, MethodDescription methodDescription) {
+                public void applyBody(MethodVisitor methodVisitor, Implementation.Context instrumentationContext, MethodDescription methodDescription) {
                     methodAttributeAppender.apply(methodVisitor, methodDescription);
                 }
 
@@ -577,7 +576,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void applyBody(MethodVisitor methodVisitor,
-                                      Instrumentation.Context instrumentationContext,
+                                      Implementation.Context instrumentationContext,
                                       MethodDescription methodDescription) {
                     methodAttributeAppender.apply(methodVisitor, methodDescription);
                 }
@@ -836,7 +835,7 @@ public interface TypeWriter<T> {
 
         @Override
         public DynamicType.Unloaded<S> make() {
-            Instrumentation.Context.ExtractableView instrumentationContext = new Instrumentation.Context.Default(instrumentedType,
+            Implementation.Context.ExtractableView instrumentationContext = new Implementation.Context.Default(instrumentedType,
                     auxiliaryTypeNamingStrategy,
                     typeInitializer,
                     classFileVersion);
@@ -886,7 +885,7 @@ public interface TypeWriter<T> {
          * @param instrumentationContext The instrumentation context to use.
          * @return A byte array that represents the instrumented type.
          */
-        protected abstract byte[] create(Instrumentation.Context.ExtractableView instrumentationContext);
+        protected abstract byte[] create(Implementation.Context.ExtractableView instrumentationContext);
 
         /**
          * A type writer that inlines the created type into an existing class file.
@@ -979,7 +978,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public byte[] create(Instrumentation.Context.ExtractableView instrumentationContext) {
+            public byte[] create(Implementation.Context.ExtractableView instrumentationContext) {
                 try {
                     ClassFileLocator.Resolution resolution = classFileLocator.locate(targetType.getName());
                     if (!resolution.isResolved()) {
@@ -998,7 +997,7 @@ public interface TypeWriter<T> {
              * @param binaryRepresentation   The binary representation of the class file.
              * @return The byte array representing the created class.
              */
-            private byte[] doCreate(Instrumentation.Context.ExtractableView instrumentationContext, byte[] binaryRepresentation) {
+            private byte[] doCreate(Implementation.Context.ExtractableView instrumentationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
                 ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL_FLAG);
                 classReader.accept(writeTo(classVisitorWrapper.wrap(classWriter), instrumentationContext), ASM_MANUAL_FLAG);
@@ -1012,7 +1011,7 @@ public interface TypeWriter<T> {
              * @param instrumentationContext The instrumentation context to use for implementing the class file.
              * @return A class visitor which is capable of applying the changes.
              */
-            private ClassVisitor writeTo(ClassVisitor classVisitor, Instrumentation.Context.ExtractableView instrumentationContext) {
+            private ClassVisitor writeTo(ClassVisitor classVisitor, Implementation.Context.ExtractableView instrumentationContext) {
                 String originalName = targetType.getInternalName();
                 String targetName = instrumentedType.getInternalName();
                 ClassVisitor targetClassVisitor = new RedefinitionClassVisitor(classVisitor, instrumentationContext);
@@ -1069,7 +1068,7 @@ public interface TypeWriter<T> {
                 /**
                  * The instrumentation context for this class creation.
                  */
-                private final Instrumentation.Context.ExtractableView instrumentationContext;
+                private final Implementation.Context.ExtractableView instrumentationContext;
 
                 /**
                  * A mutable map of all declared fields of the instrumented type by their names.
@@ -1086,7 +1085,7 @@ public interface TypeWriter<T> {
                  * Usually, this represents an invocation of the actual type initializer that is found in the class
                  * file which is relocated into a static method.
                  */
-                private Instrumentation.Context.ExtractableView.InjectedCode injectedCode;
+                private Implementation.Context.ExtractableView.InjectedCode injectedCode;
 
                 /**
                  * Creates a class visitor which is capable of redefining an existent class on the fly.
@@ -1094,7 +1093,7 @@ public interface TypeWriter<T> {
                  * @param classVisitor           The underlying class visitor to which writes are delegated.
                  * @param instrumentationContext The instrumentation context to use for implementing the class file.
                  */
-                protected RedefinitionClassVisitor(ClassVisitor classVisitor, Instrumentation.Context.ExtractableView instrumentationContext) {
+                protected RedefinitionClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView instrumentationContext) {
                     super(ASM_API_VERSION, classVisitor);
                     this.instrumentationContext = instrumentationContext;
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
@@ -1106,7 +1105,7 @@ public interface TypeWriter<T> {
                     for (MethodDescription methodDescription : instrumentedMethods) {
                         declarableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
                     }
-                    injectedCode = Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE;
+                    injectedCode = Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE;
                 }
 
                 @Override
@@ -1362,7 +1361,7 @@ public interface TypeWriter<T> {
                  * A code injection for the type initializer that invokes a method representing the original type initializer
                  * which is copied to a static method.
                  */
-                protected class TypeInitializerInjection implements Instrumentation.Context.ExtractableView.InjectedCode {
+                protected class TypeInitializerInjection implements Implementation.Context.ExtractableView.InjectedCode {
 
                     /**
                      * The modifiers for the method that consumes the original type initializer.
@@ -1469,7 +1468,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public byte[] create(Instrumentation.Context.ExtractableView instrumentationContext) {
+            public byte[] create(Implementation.Context.ExtractableView instrumentationContext) {
                 ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
                 ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
                 classVisitor.visit(classFileVersion.getVersionNumber(),
@@ -1487,7 +1486,7 @@ public interface TypeWriter<T> {
                 for (MethodDescription methodDescription : instrumentedMethods) {
                     methodPool.target(methodDescription).apply(classVisitor, instrumentationContext, methodDescription);
                 }
-                instrumentationContext.drain(classVisitor, methodPool, Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE);
+                instrumentationContext.drain(classVisitor, methodPool, Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE);
                 classVisitor.visitEnd();
                 return classWriter.toByteArray();
             }

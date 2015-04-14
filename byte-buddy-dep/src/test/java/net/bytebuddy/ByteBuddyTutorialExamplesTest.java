@@ -2,28 +2,28 @@ package net.bytebuddy;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
-import net.bytebuddy.instrumentation.*;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.ParameterDescription;
-import net.bytebuddy.instrumentation.method.bytecode.ByteCodeAppender;
-import net.bytebuddy.instrumentation.method.bytecode.bind.MethodDelegationBinder;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.*;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.assign.Assigner;
-import net.bytebuddy.instrumentation.method.bytecode.stack.assign.primitive.PrimitiveTypeAwareAssigner;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.IntegerConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.TextConstant;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodInvocation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
-import net.bytebuddy.instrumentation.type.InstrumentedType;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.implementation.*;
+import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bind.annotation.*;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
@@ -37,6 +37,7 @@ import org.objectweb.asm.Opcodes;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
@@ -163,7 +164,7 @@ public class ByteBuddyTutorialExamplesTest {
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
                 return builder.method(named("toString")).intercept(FixedValue.value("transformed"));
             }
-        }).installOn(mock(java.lang.instrument.Instrumentation.class));
+        }).installOn(mock(Instrumentation.class));
     }
 
     @Test
@@ -374,10 +375,10 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
-    public void testCustomInstrumentationMethodImplementation() throws Exception {
+    public void testCustomImplementationMethodImplementation() throws Exception {
         assertThat(new ByteBuddy()
                 .subclass(SumExample.class)
-                .method(named("calculate")).intercept(SumInstrumentation.INSTANCE)
+                .method(named("calculate")).intercept(SumImplementation.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -386,7 +387,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
-    public void testCustomInstrumentationAssigner() throws Exception {
+    public void testCustomImplementationAssigner() throws Exception {
         assertThat(new ByteBuddy()
                 .subclass(Object.class)
                 .method(named("toString"))
@@ -400,7 +401,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
-    public void testCustomInstrumentationDelegationAnnotation() throws Exception {
+    public void testCustomImplementationDelegationAnnotation() throws Exception {
         assertThat(new ByteBuddy()
                 .subclass(Object.class)
                 .method(named("toString"))
@@ -423,7 +424,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Instrumentation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(Opcodes.IADD);
             return new Size(-1, 0);
         }
@@ -435,7 +436,7 @@ public class ByteBuddyTutorialExamplesTest {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Instrumentation.Context instrumentationContext,
+                          Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
             if (!instrumentedMethod.getReturnType().represents(int.class)) {
                 throw new IllegalArgumentException(instrumentedMethod + " must return int");
@@ -445,12 +446,12 @@ public class ByteBuddyTutorialExamplesTest {
                     IntegerConstant.forValue(50),
                     IntegerSum.INSTANCE,
                     MethodReturn.INTEGER
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
             return new Size(operandStackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
     }
 
-    public enum SumInstrumentation implements Instrumentation {
+    public enum SumImplementation implements Implementation {
         INSTANCE;
 
         @Override
@@ -459,7 +460,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
 
         @Override
-        public ByteCodeAppender appender(Target instrumentationTarget) {
+        public ByteCodeAppender appender(Target implementationTarget) {
             return SumMethod.INSTANCE;
         }
     }
@@ -495,7 +496,7 @@ public class ByteBuddyTutorialExamplesTest {
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<StringValue> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
-                                                               Instrumentation.Target instrumentationTarget,
+                                                               Implementation.Target implementationTarget,
                                                                Assigner assigner) {
             if (!target.getTypeDescription().represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");

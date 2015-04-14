@@ -1,9 +1,9 @@
 package net.bytebuddy.benchmark;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.instrumentation.MethodDelegation;
-import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.openjdk.jmh.infra.Blackhole;

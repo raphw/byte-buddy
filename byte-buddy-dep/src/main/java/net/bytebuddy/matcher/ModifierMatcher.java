@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.ModifierReviewable;
+import net.bytebuddy.description.ModifierReviewable;
 import org.objectweb.asm.Opcodes;
 
 /**

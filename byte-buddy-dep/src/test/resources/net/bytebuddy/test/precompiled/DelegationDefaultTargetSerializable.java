@@ -1,6 +1,6 @@
 package net.bytebuddy.test.precompiled;
 
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Default;
+import net.bytebuddy.implementation.bind.annotation.Default;
 
 import java.io.Serializable;
 

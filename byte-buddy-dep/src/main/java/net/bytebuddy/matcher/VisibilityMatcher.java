@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.ByteCodeElement;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that validates that a given byte code element is visible to a given type.

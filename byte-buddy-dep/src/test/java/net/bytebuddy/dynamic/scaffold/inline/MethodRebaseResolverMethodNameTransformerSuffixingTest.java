@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -10,7 +10,6 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
-import static org.hamcrest.CoreMatchers.theInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 

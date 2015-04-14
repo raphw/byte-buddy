@@ -1,6 +1,6 @@
 package net.bytebuddy.test.precompiled;
 
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.DefaultCall;
+import net.bytebuddy.implementation.bind.annotation.DefaultCall;
 
 import java.util.concurrent.Callable;
 

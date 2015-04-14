@@ -1,14 +1,14 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodList;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
-import net.bytebuddy.instrumentation.type.auxiliary.TrivialType;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.auxiliary.TrivialType;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;

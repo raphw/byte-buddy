@@ -1,7 +1,7 @@
 package net.bytebuddy.test.precompiled;
 
-import net.bytebuddy.instrumentation.MethodDelegationMorphTest;
-import net.bytebuddy.instrumentation.method.bytecode.bind.annotation.Morph;
+import net.bytebuddy.implementation.MethodDelegationMorphTest;
+import net.bytebuddy.implementation.bind.annotation.Morph;
 
 public class MorphDefaultDelegationTargetImplicit {
 

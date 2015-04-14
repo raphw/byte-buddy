@@ -1,13 +1,13 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.ParameterList;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import net.bytebuddy.instrumentation.method.bytecode.stack.constant.NullConstant;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;

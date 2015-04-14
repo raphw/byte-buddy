@@ -1,11 +1,11 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
-import net.bytebuddy.instrumentation.LoadedTypeInitializer;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -83,16 +83,16 @@ public class AgentBuilderDefaultTest {
     @Mock
     private AgentBuilder.Listener listener;
 
-    private List<ClassFileTransformer> instrumentations;
+    private List<ClassFileTransformer> classFileTransformers;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        instrumentations = new LinkedList<ClassFileTransformer>();
+        classFileTransformers = new LinkedList<ClassFileTransformer>();
         doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                return instrumentations.add((ClassFileTransformer) invocation.getArguments()[0]);
+                return classFileTransformers.add((ClassFileTransformer) invocation.getArguments()[0]);
             }
         }).when(instrumentation).addTransformer(any(ClassFileTransformer.class), anyBoolean());
         when(byteBuddy.rebase(any(TypeDescription.class), any(ClassFileLocator.class), any(MethodRebaseResolver.MethodNameTransformer.class)))
@@ -119,8 +119,8 @@ public class AgentBuilderDefaultTest {
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        assertThat(instrumentations.size(), is(1));
-        assertThat(instrumentations.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
+        assertThat(classFileTransformers.size(), is(1));
+        assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
         verify(listener).onTransformation(typeDescription, unloaded);
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);
@@ -140,8 +140,8 @@ public class AgentBuilderDefaultTest {
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        assertThat(instrumentations.size(), is(1));
-        assertThat(instrumentations.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
+        assertThat(classFileTransformers.size(), is(1));
+        assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
         verify(listener).onTransformation(typeDescription, unloaded);
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);
@@ -161,8 +161,8 @@ public class AgentBuilderDefaultTest {
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        assertThat(instrumentations.size(), is(1));
-        assertThat(instrumentations.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
+        assertThat(classFileTransformers.size(), is(1));
+        assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
         verify(listener).onError(FOO, exception);
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);
@@ -181,8 +181,8 @@ public class AgentBuilderDefaultTest {
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        assertThat(instrumentations.size(), is(1));
-        assertThat(instrumentations.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
+        assertThat(classFileTransformers.size(), is(1));
+        assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
         verify(listener).onIgnored(FOO);
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);

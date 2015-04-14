@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that matches its argument for being another type's subtype.

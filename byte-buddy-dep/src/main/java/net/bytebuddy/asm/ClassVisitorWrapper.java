@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * A class visitor wrapper is used in order to register an intermediate ASM {@link org.objectweb.asm.ClassVisitor} which
  * is applied to the main type created by a {@link net.bytebuddy.dynamic.DynamicType.Builder} but not
- * to any {@link net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType}s, if any.
+ * to any {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType}s, if any.
  */
 public interface ClassVisitorWrapper {
 

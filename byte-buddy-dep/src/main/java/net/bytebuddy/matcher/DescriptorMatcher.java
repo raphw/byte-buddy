@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.instrumentation.ByteCodeElement;
+import net.bytebuddy.description.ByteCodeElement;
 
 /**
  * An element matcher that matches a Java descriptor.

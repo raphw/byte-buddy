@@ -1,31 +1,31 @@
 package net.bytebuddy;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.modifier.TypeManifestation;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
+import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.dynamic.scaffold.inline.RebaseDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.RedefinitionDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.ModifierContributor;
-import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.MethodAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.TypeAttributeAppender;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
-import net.bytebuddy.instrumentation.attribute.annotation.AnnotationList;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.MethodLookupEngine;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
-import net.bytebuddy.instrumentation.type.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
-import net.bytebuddy.modifier.TypeManifestation;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
@@ -962,8 +962,8 @@ public class ByteBuddy {
     }
 
     /**
-     * Defines a new {@link net.bytebuddy.instrumentation.method.MethodLookupEngine.Factory} to be used for creating
-     * {@link net.bytebuddy.instrumentation.method.MethodLookupEngine}s for type creations based on this configuration.
+     * Defines a new {@link MethodLookupEngine.Factory} to be used for creating
+     * {@link MethodLookupEngine}s for type creations based on this configuration.
      * The default lookup engine queries any class or interface type that is represented by the created type. These
      * queries might however be costly such that this factory can be configured to save lookup time, for example
      * by providing additional caching or by providing precomputed results.
@@ -1251,11 +1251,11 @@ public class ByteBuddy {
         /**
          * Intercepts the given method with the given instrumentation.
          *
-         * @param instrumentation The instrumentation to apply to the selected methods.
+         * @param implementation The instrumentation to apply to the selected methods.
          * @return A method annotation target for this instance with the given instrumentation applied to the
          * current selection.
          */
-        MethodAnnotationTarget intercept(Instrumentation instrumentation);
+        MethodAnnotationTarget intercept(Implementation implementation);
 
         /**
          * Defines the currently selected methods as {@code abstract}.
@@ -1276,8 +1276,8 @@ public class ByteBuddy {
 
         /**
          * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
-         * {@code enum} values should be handed as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription.EnumerationValue}
-         * instances, annotations as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription} instances and
+         * {@code enum} values should be handed as {@link AnnotationDescription.EnumerationValue}
+         * instances, annotations as {@link AnnotationDescription} instances and
          * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
          *
          * @param value A non-loaded value that the annotation property should set as a default.
@@ -1527,7 +1527,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public MethodAnnotationTarget intercept(Instrumentation instrumentation) {
+        public MethodAnnotationTarget intercept(Implementation implementation) {
             return new MethodAnnotationTarget(classFileVersion,
                     namingStrategy,
                     auxiliaryTypeNamingStrategy,
@@ -1542,7 +1542,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    new MethodRegistry.Handler.ForInstrumentation(nonNull(instrumentation)),
+                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation)),
                     MethodAttributeAppender.NoOp.INSTANCE);
         }
 
@@ -1685,8 +1685,8 @@ public class ByteBuddy {
         }
 
         @Override
-        public MethodAnnotationTarget intercept(Instrumentation instrumentation) {
-            return new MatchedMethodInterception(methodMatcher).intercept(instrumentation);
+        public MethodAnnotationTarget intercept(Implementation implementation) {
+            return new MatchedMethodInterception(methodMatcher).intercept(implementation);
         }
 
         @Override

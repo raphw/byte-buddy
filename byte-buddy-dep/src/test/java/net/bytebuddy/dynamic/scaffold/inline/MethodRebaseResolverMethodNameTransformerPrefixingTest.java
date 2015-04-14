@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;

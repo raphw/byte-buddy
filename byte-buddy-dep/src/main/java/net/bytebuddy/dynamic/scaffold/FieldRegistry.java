@@ -1,8 +1,8 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.instrumentation.attribute.FieldAttributeAppender;
-import net.bytebuddy.instrumentation.field.FieldDescription;
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * A field registry represents an extendable collection of fields which are identified by their names that are mapped
- * to a given {@link net.bytebuddy.instrumentation.attribute.FieldAttributeAppender}. Fields
+ * to a given {@link net.bytebuddy.implementation.attribute.FieldAttributeAppender}. Fields
  * can be uniquely identified by their name for a given type since fields are never inherited.
  * <p>&nbsp;</p>
  * This registry is the counterpart of a {@link net.bytebuddy.dynamic.scaffold.MethodRegistry}.

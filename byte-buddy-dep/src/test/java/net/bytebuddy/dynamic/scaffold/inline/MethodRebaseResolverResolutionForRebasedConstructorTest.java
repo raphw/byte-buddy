@@ -1,12 +1,12 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import net.bytebuddy.instrumentation.Instrumentation;
-import net.bytebuddy.instrumentation.method.MethodDescription;
-import net.bytebuddy.instrumentation.method.ParameterList;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackManipulation;
-import net.bytebuddy.instrumentation.method.bytecode.stack.StackSize;
-import net.bytebuddy.instrumentation.type.TypeDescription;
-import net.bytebuddy.instrumentation.type.TypeList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -44,7 +44,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     private MethodVisitor methodVisitor;
 
     @Mock
-    private Instrumentation.Context instrumentationContext;
+    private Implementation.Context implementationContext;
 
     @Before
     public void setUp() throws Exception {
@@ -71,12 +71,12 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
         assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Arrays.asList(parameterType, placeholderType))));
-        StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, instrumentationContext);
+        StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(instrumentationContext);
+        verifyZeroInteractions(implementationContext);
     }
 
     @Test

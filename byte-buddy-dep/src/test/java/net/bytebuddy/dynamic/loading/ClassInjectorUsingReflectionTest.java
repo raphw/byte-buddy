@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.instrumentation.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -21,10 +21,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class ClassInjectorUsingReflectionTest {
-
-    private static final String FOO = "foo";
-
-    private static final byte[] BYTE_ARRAY = new byte[42];
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
