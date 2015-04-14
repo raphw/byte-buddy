@@ -163,18 +163,18 @@ public class ByteBuddy {
      * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
      *                                              by any dynamically created type.
      * @param ignoredMethods                        The methods to always be ignored.
-     * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any instrumentation
+     * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any implementation
      *                                              process.
-     * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any instrumentation
+     * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any implementation
      *                                              process.
      * @param methodRegistry                        The currently valid method registry.
-     * @param modifiers                             The modifiers to define for any instrumentation process.
-     * @param typeAttributeAppender                 The type attribute appender to apply to any instrumentation process.
+     * @param modifiers                             The modifiers to define for any implementation process.
+     * @param typeAttributeAppender                 The type attribute appender to apply to any implementation process.
      * @param methodLookupEngineFactory             The method lookup engine factory to apply to this configuration.
      * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any field
      *                                              definition.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
-     *                                              method definition or instrumentation.
+     *                                              method definition or implementation.
      */
     protected ByteBuddy(ClassFileVersion classFileVersion,
                         NamingStrategy.Unbound namingStrategy,
@@ -296,10 +296,10 @@ public class ByteBuddy {
 
     /**
      * Returns the default field attribute appender factory which is applied to any field that is defined
-     * for instrumentations that are applied by this configuration.
+     * for implementations that are applied by this configuration.
      *
      * @return The default field attribute appender factory which is applied to any field that is defined
-     * for instrumentations that are applied by this configuration.
+     * for implementations that are applied by this configuration.
      */
     public FieldAttributeAppender.Factory getDefaultFieldAttributeAppenderFactory() {
         return defaultFieldAttributeAppenderFactory;
@@ -307,10 +307,10 @@ public class ByteBuddy {
 
     /**
      * Returns the default method attribute appender factory which is applied to any method that is defined
-     * or intercepted for instrumentations that are applied by this configuration.
+     * or intercepted for implementations that are applied by this configuration.
      *
      * @return The default method attribute appender factory which is applied to any method that is defined
-     * or intercepted for instrumentations that are applied by this configuration.
+     * or intercepted for implementations that are applied by this configuration.
      */
     public MethodAttributeAppender.Factory getDefaultMethodAttributeAppenderFactory() {
         return defaultMethodAttributeAppenderFactory;
@@ -916,7 +916,7 @@ public class ByteBuddy {
      * invocation is resolved by invoking the actual super method instead of the bridge method which would in turn
      * resolve the actual method virtually.
      *
-     * @param bridgeMethodResolverFactory The bridge method resolver factory to be applied to any instrumentation
+     * @param bridgeMethodResolverFactory The bridge method resolver factory to be applied to any implementation
      *                                    process.
      * @return A new configuration that represents this configuration with the given bridge method resolver factory
      * to be applied on any configuration.
@@ -1249,10 +1249,10 @@ public class ByteBuddy {
     public interface MethodInterceptable {
 
         /**
-         * Intercepts the given method with the given instrumentation.
+         * Intercepts the given method with the given implementations.
          *
-         * @param implementation The instrumentation to apply to the selected methods.
-         * @return A method annotation target for this instance with the given instrumentation applied to the
+         * @param implementation The implementation to apply to the selected methods.
+         * @return A method annotation target for this instance with the given implementation applied to the
          * current selection.
          */
         MethodAnnotationTarget intercept(Implementation implementation);
@@ -1316,18 +1316,18 @@ public class ByteBuddy {
          * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
          *                                              by any dynamically created type.
          * @param ignoredMethods                        The methods to always be ignored.
-         * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any instrumentation
+         * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any implementation
          *                                              process.
-         * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any instrumentation
+         * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any implementation
          *                                              process.
          * @param methodRegistry                        The currently valid method registry.
-         * @param modifiers                             The modifiers to define for any instrumentation process.
-         * @param typeAttributeAppender                 The type attribute appender to apply to any instrumentation process.
+         * @param modifiers                             The modifiers to define for any implementation process.
+         * @param typeAttributeAppender                 The type attribute appender to apply to any implementation process.
          * @param methodLookupEngineFactory             The method lookup engine factory to apply to this configuration.
          * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any field
          *                                              definition.
          * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
-         *                                              method definition or instrumentation.
+         *                                              method definition or implementation.
          * @param methodMatcher                         The method matcher representing the current method selection.
          * @param handler                               The handler for the entry that is to be registered.
          * @param attributeAppenderFactory              The method attribute appender factory that was defined for the current method selection.
@@ -1508,120 +1508,6 @@ public class ByteBuddy {
     }
 
     /**
-     * A matched method interception for a non-optional method definition.
-     */
-    public class MatchedMethodInterception implements MethodInterceptable {
-
-        /**
-         * A method matcher that represents the current method selection.
-         */
-        protected final LatentMethodMatcher methodMatcher;
-
-        /**
-         * Creates a new matched method interception.
-         *
-         * @param methodMatcher The method matcher representing the current method selection.
-         */
-        protected MatchedMethodInterception(LatentMethodMatcher methodMatcher) {
-            this.methodMatcher = methodMatcher;
-        }
-
-        @Override
-        public MethodAnnotationTarget intercept(Implementation implementation) {
-            return new MethodAnnotationTarget(classFileVersion,
-                    namingStrategy,
-                    auxiliaryTypeNamingStrategy,
-                    interfaceTypes,
-                    ignoredMethods,
-                    bridgeMethodResolverFactory,
-                    classVisitorWrapperChain,
-                    methodRegistry,
-                    modifiers,
-                    typeAttributeAppender,
-                    methodLookupEngineFactory,
-                    defaultFieldAttributeAppenderFactory,
-                    defaultMethodAttributeAppenderFactory,
-                    methodMatcher,
-                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation)),
-                    MethodAttributeAppender.NoOp.INSTANCE);
-        }
-
-        @Override
-        public MethodAnnotationTarget withoutCode() {
-            return new MethodAnnotationTarget(classFileVersion,
-                    namingStrategy,
-                    auxiliaryTypeNamingStrategy,
-                    interfaceTypes,
-                    ignoredMethods,
-                    bridgeMethodResolverFactory,
-                    classVisitorWrapperChain,
-                    methodRegistry,
-                    modifiers,
-                    typeAttributeAppender,
-                    methodLookupEngineFactory,
-                    defaultFieldAttributeAppenderFactory,
-                    defaultMethodAttributeAppenderFactory,
-                    methodMatcher,
-                    MethodRegistry.Handler.ForAbstractMethod.INSTANCE,
-                    MethodAttributeAppender.NoOp.INSTANCE);
-        }
-
-        @Override
-        public MethodAnnotationTarget withDefaultValue(Object value, Class<?> type) {
-            return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
-        }
-
-        @Override
-        public MethodAnnotationTarget withDefaultValue(Object value) {
-            return new MethodAnnotationTarget(classFileVersion,
-                    namingStrategy,
-                    auxiliaryTypeNamingStrategy,
-                    interfaceTypes,
-                    ignoredMethods,
-                    bridgeMethodResolverFactory,
-                    classVisitorWrapperChain,
-                    methodRegistry,
-                    modifiers,
-                    typeAttributeAppender,
-                    methodLookupEngineFactory,
-                    defaultFieldAttributeAppenderFactory,
-                    defaultMethodAttributeAppenderFactory,
-                    methodMatcher,
-                    MethodRegistry.Handler.ForAnnotationValue.of(value),
-                    MethodAttributeAppender.NoOp.INSTANCE);
-        }
-
-        /**
-         * Returns the outer class instance of this instance.
-         *
-         * @return The outer class instance.
-         */
-        private ByteBuddy getByteBuddy() {
-            return ByteBuddy.this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && ByteBuddy.this.equals(((MatchedMethodInterception) other).getByteBuddy())
-                    && methodMatcher.equals(((MatchedMethodInterception) other).methodMatcher);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * methodMatcher.hashCode() + ByteBuddy.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "ByteBuddy.MatchedMethodInterception{" +
-                    "methodMatcher=" + methodMatcher +
-                    "byteBuddy=" + ByteBuddy.this.toString() +
-                    '}';
-        }
-    }
-
-    /**
      * An optional method interception that allows to intercept a method selection only if this is needed.
      */
     public static class OptionalMethodInterception extends ByteBuddy implements MethodInterceptable {
@@ -1640,18 +1526,18 @@ public class ByteBuddy {
          * @param interfaceTypes                        The currently defined collection of interfaces to be implemented
          *                                              by any dynamically created type.
          * @param ignoredMethods                        The methods to always be ignored.
-         * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any instrumentation
+         * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any implementation
          *                                              process.
-         * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any instrumentation
+         * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any implementation
          *                                              process.
          * @param methodRegistry                        The currently valid method registry.
-         * @param modifiers                             The modifiers to define for any instrumentation process.
-         * @param typeAttributeAppender                 The type attribute appender to apply to any instrumentation process.
+         * @param modifiers                             The modifiers to define for any implementation process.
+         * @param typeAttributeAppender                 The type attribute appender to apply to any implementation process.
          * @param methodLookupEngineFactory             The method lookup engine factory to apply to this configuration.
          * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any field
          *                                              definition.
          * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
-         *                                              method definition or instrumentation.
+         *                                              method definition or implementation.
          * @param methodMatcher                         The method matcher representing the current method selection.
          */
         protected OptionalMethodInterception(ClassFileVersion classFileVersion,
@@ -1752,18 +1638,18 @@ public class ByteBuddy {
          *                                              implemented by any dynamically created type.
          * @param ignoredMethods                        The methods to always be ignored.
          * @param bridgeMethodResolverFactory           The bridge method resolver factory to be applied to any
-         *                                              instrumentation process.
+         *                                              implementation process.
          * @param classVisitorWrapperChain              The class visitor wrapper chain to be applied to any
-         *                                              instrumentation process.
+         *                                              implementation process.
          * @param methodRegistry                        The currently valid method registry.
-         * @param modifiers                             The modifiers to define for any instrumentation process.
-         * @param typeAttributeAppender                 The type attribute appender to apply to any instrumentation
+         * @param modifiers                             The modifiers to define for any implementation process.
+         * @param typeAttributeAppender                 The type attribute appender to apply to any implementation
          *                                              process.
          * @param methodLookupEngineFactory             The method lookup engine factory to apply to this configuration.
          * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any
          *                                              field definition.
          * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
-         *                                              method definition or instrumentation.
+         *                                              method definition or implementation.
          */
         protected Proxy(ClassFileVersion classFileVersion,
                         NamingStrategy.Unbound namingStrategy,
@@ -2048,5 +1934,119 @@ public class ByteBuddy {
          * @return The materialized Byte Buddy configuration.
          */
         protected abstract ByteBuddy materialize();
+    }
+
+    /**
+     * A matched method interception for a non-optional method definition.
+     */
+    public class MatchedMethodInterception implements MethodInterceptable {
+
+        /**
+         * A method matcher that represents the current method selection.
+         */
+        protected final LatentMethodMatcher methodMatcher;
+
+        /**
+         * Creates a new matched method interception.
+         *
+         * @param methodMatcher The method matcher representing the current method selection.
+         */
+        protected MatchedMethodInterception(LatentMethodMatcher methodMatcher) {
+            this.methodMatcher = methodMatcher;
+        }
+
+        @Override
+        public MethodAnnotationTarget intercept(Implementation implementation) {
+            return new MethodAnnotationTarget(classFileVersion,
+                    namingStrategy,
+                    auxiliaryTypeNamingStrategy,
+                    interfaceTypes,
+                    ignoredMethods,
+                    bridgeMethodResolverFactory,
+                    classVisitorWrapperChain,
+                    methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
+                    methodLookupEngineFactory,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory,
+                    methodMatcher,
+                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation)),
+                    MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        @Override
+        public MethodAnnotationTarget withoutCode() {
+            return new MethodAnnotationTarget(classFileVersion,
+                    namingStrategy,
+                    auxiliaryTypeNamingStrategy,
+                    interfaceTypes,
+                    ignoredMethods,
+                    bridgeMethodResolverFactory,
+                    classVisitorWrapperChain,
+                    methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
+                    methodLookupEngineFactory,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory,
+                    methodMatcher,
+                    MethodRegistry.Handler.ForAbstractMethod.INSTANCE,
+                    MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        @Override
+        public MethodAnnotationTarget withDefaultValue(Object value, Class<?> type) {
+            return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
+        }
+
+        @Override
+        public MethodAnnotationTarget withDefaultValue(Object value) {
+            return new MethodAnnotationTarget(classFileVersion,
+                    namingStrategy,
+                    auxiliaryTypeNamingStrategy,
+                    interfaceTypes,
+                    ignoredMethods,
+                    bridgeMethodResolverFactory,
+                    classVisitorWrapperChain,
+                    methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
+                    methodLookupEngineFactory,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory,
+                    methodMatcher,
+                    MethodRegistry.Handler.ForAnnotationValue.of(value),
+                    MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        /**
+         * Returns the outer class instance of this instance.
+         *
+         * @return The outer class instance.
+         */
+        private ByteBuddy getByteBuddy() {
+            return ByteBuddy.this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && ByteBuddy.this.equals(((MatchedMethodInterception) other).getByteBuddy())
+                    && methodMatcher.equals(((MatchedMethodInterception) other).methodMatcher);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * methodMatcher.hashCode() + ByteBuddy.this.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ByteBuddy.MatchedMethodInterception{" +
+                    "methodMatcher=" + methodMatcher +
+                    "byteBuddy=" + ByteBuddy.this.toString() +
+                    '}';
+        }
     }
 }

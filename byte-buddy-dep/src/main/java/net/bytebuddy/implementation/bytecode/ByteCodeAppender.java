@@ -22,9 +22,9 @@ public interface ByteCodeAppender {
     /**
      * Applies this byte code appender to a type creation process.
      *
-     * @param methodVisitor          The method visitor to which the byte code appender writes its code to.
-     * @param implementationContext The instrumentation context of the current type creation process.
-     * @param instrumentedMethod     The method that is the target of the instrumentation.
+     * @param methodVisitor         The method visitor to which the byte code appender writes its code to.
+     * @param implementationContext The implementation context of the current type creation process.
+     * @param instrumentedMethod    The method that is the target of the instrumentation.
      * @return The required size for the applied byte code to run.
      */
     Size apply(MethodVisitor methodVisitor,

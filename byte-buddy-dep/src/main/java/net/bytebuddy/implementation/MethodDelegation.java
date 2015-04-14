@@ -28,7 +28,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
- * This instrumentation delegates an method call to another method which can either be {@code static} by providing
+ * This implementation delegates an method call to another method which can either be {@code static} by providing
  * a reference to a {@link java.lang.Class} or an instance method when another object is provided. The potential
  * targets of the method delegation can further be filtered by applying a filter. The method delegation can be
  * customized by invoking the {@code MethodDelegation}'s several builder methods.
@@ -141,7 +141,7 @@ public class MethodDelegation implements Implementation {
     private static final String NO_METHODS_ERROR_MESSAGE = "The target type does not define any methods for delegation";
 
     /**
-     * The instrumentation delegate for this method delegation.
+     * The implementation delegate for this method delegation.
      */
     private final ImplementationDelegate implementationDelegate;
 
@@ -182,13 +182,13 @@ public class MethodDelegation implements Implementation {
      * Creates a new method delegation.
      *
      * @param implementationDelegate The instrumentation delegate to use by this method delegator.
-     * @param parameterBinders        The parameter binders to use by this method delegator.
-     * @param defaultsProvider        The defaults provider to use by this method delegator.
-     * @param terminationHandler      The termination handler to apply.
-     * @param ambiguityResolver       The ambiguity resolver to use by this method delegator.
-     * @param assigner                The assigner to be supplied by this method delegator.
-     * @param targetMethodCandidates  A list of methods that should be considered as possible binding targets by
-     *                                this method delegator.
+     * @param parameterBinders       The parameter binders to use by this method delegator.
+     * @param defaultsProvider       The defaults provider to use by this method delegator.
+     * @param terminationHandler     The termination handler to apply.
+     * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
+     * @param assigner               The assigner to be supplied by this method delegator.
+     * @param targetMethodCandidates A list of methods that should be considered as possible binding targets by
+     *                               this method delegator.
      */
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
@@ -207,20 +207,20 @@ public class MethodDelegation implements Implementation {
     }
 
     /**
-     * Creates an instrumentation where only {@code static} methods of the given type are considered as binding targets.
+     * Creates an implementation where only {@code static} methods of the given type are considered as binding targets.
      *
      * @param type The type containing the {@code static} methods for binding.
-     * @return A method delegation instrumentation to the given {@code static} methods.
+     * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Class<?> type) {
         return to(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
     /**
-     * Creates an instrumentation where only {@code static} methods of the given type are considered as binding targets.
+     * Creates an implementation where only {@code static} methods of the given type are considered as binding targets.
      *
      * @param typeDescription The type containing the {@code static} methods for binding.
-     * @return A method delegation instrumentation to the given {@code static} methods.
+     * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(TypeDescription typeDescription) {
         if (nonNull(typeDescription).isInterface()) {
@@ -240,7 +240,7 @@ public class MethodDelegation implements Implementation {
     }
 
     /**
-     * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
+     * Creates an implementation where only instance methods of the given object are considered as binding targets.
      * This method will never bind to constructors but will consider methods that are defined in super types. Note
      * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
      * selection by explicitly selecting methods with calling the
@@ -253,7 +253,7 @@ public class MethodDelegation implements Implementation {
      * @param delegate A delegate instance which will be injected by a
      *                 {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                 then delegated to this instance.
-     * @return A method delegation instrumentation to the given instance methods.
+     * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate) {
         return to(nonNull(delegate), defaultMethodLookupEngine());
@@ -267,7 +267,7 @@ public class MethodDelegation implements Implementation {
      *                           {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method
      *                           calls are then delegated to this instance.
      * @param methodLookupEngine The method lookup engine to use.
-     * @return A method delegation instrumentation to the given instance methods.
+     * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(new ImplementationDelegate.ForStaticField(nonNull(delegate)),
@@ -282,7 +282,7 @@ public class MethodDelegation implements Implementation {
     }
 
     /**
-     * Creates an instrumentation where only instance methods of the given object are considered as binding targets.
+     * Creates an implementation where only instance methods of the given object are considered as binding targets.
      * This method will never bind to constructors but will consider methods that are defined in super types. Note
      * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
      * selection by explicitly selecting methods with calling the
@@ -296,7 +296,7 @@ public class MethodDelegation implements Implementation {
      *                  {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                  then delegated to this instance.
      * @param fieldName The name of the field for storing the delegate instance.
-     * @return A method delegation instrumentation to the given {@code static} methods.
+     * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, String fieldName) {
         return to(delegate, fieldName, defaultMethodLookupEngine());
@@ -310,7 +310,7 @@ public class MethodDelegation implements Implementation {
      *                           method calls are delegated to.
      * @param fieldName          The name of the field for storing the delegate instance.
      * @param methodLookupEngine The method lookup engine to use.
-     * @return A method delegation instrumentation to the given {@code static} methods.
+     * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, String fieldName, MethodLookupEngine methodLookupEngine) {
         return new MethodDelegation(
@@ -326,7 +326,7 @@ public class MethodDelegation implements Implementation {
     }
 
     /**
-     * Creates an instrumentation where method calls are delegated to an instance that is manually stored in a field
+     * Creates an implementation where method calls are delegated to an instance that is manually stored in a field
      * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
      * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
      * method calls within the constructor of the instrumented class which will instead result in a
@@ -350,7 +350,7 @@ public class MethodDelegation implements Implementation {
     }
 
     /**
-     * Creates an instrumentation where method calls are delegated to an instance that is manually stored in a field
+     * Creates an implementation where method calls are delegated to an instance that is manually stored in a field
      * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
      * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
      * method calls within the constructor of the instrumented class which will instead result in a
@@ -409,22 +409,22 @@ public class MethodDelegation implements Implementation {
     }
 
     /**
-     * Creates an instrumentation where method calls are delegated to constructor calls on the given type. As a result,
+     * Creates an implementation where method calls are delegated to constructor calls on the given type. As a result,
      * the return values of all instrumented methods must be assignable to
      *
      * @param type The type that should be constructed by the instrumented methods.
-     * @return An instrumentation that creates instances of the given type as its result.
+     * @return An implementation that creates instances of the given type as its result.
      */
     public static MethodDelegation toConstructor(Class<?> type) {
         return toConstructor(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
     /**
-     * Creates an instrumentation where method calls are delegated to constructor calls on the given type. As a result,
+     * Creates an implementation where method calls are delegated to constructor calls on the given type. As a result,
      * the return values of all instrumented methods must be assignable to
      *
      * @param typeDescription The type that should be constructed by the instrumented methods.
-     * @return An instrumentation that creates instances of the given type as its result.
+     * @return An implementation that creates instances of the given type as its result.
      */
     public static MethodDelegation toConstructor(TypeDescription typeDescription) {
         return new MethodDelegation(new ImplementationDelegate.ForConstruction(nonNull(typeDescription)),
@@ -497,7 +497,7 @@ public class MethodDelegation implements Implementation {
      * Defines an parameter binder to be appended to the already defined parameter binders.
      *
      * @param parameterBinder The parameter binder to append to the already defined parameter binders.
-     * @return A method delegation instrumentation that makes use of the given parameter binder.
+     * @return A method delegation implementation that makes use of the given parameter binder.
      */
     public MethodDelegation appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
         return new MethodDelegation(implementationDelegate,
@@ -513,7 +513,7 @@ public class MethodDelegation implements Implementation {
      * Defines a number of parameter binders to be appended to be used by this method delegation.
      *
      * @param parameterBinder The parameter binders to use by this parameter binders.
-     * @return A method delegation instrumentation that makes use of the given parameter binders.
+     * @return A method delegation implementation that makes use of the given parameter binders.
      */
     public MethodDelegation defineParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
         return new MethodDelegation(implementationDelegate,
@@ -545,7 +545,7 @@ public class MethodDelegation implements Implementation {
      * Defines an ambiguity resolver to be appended to the already defined ambiguity resolver for resolving binding conflicts.
      *
      * @param ambiguityResolver The ambiguity resolver to append to the already defined ambiguity resolvers.
-     * @return A method delegation instrumentation that makes use of the given ambiguity resolver.
+     * @return A method delegation implementation that makes use of the given ambiguity resolver.
      */
     public MethodDelegation appendAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
         return defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver.Chain
@@ -556,7 +556,7 @@ public class MethodDelegation implements Implementation {
      * Defines an ambiguity resolver to be used for resolving binding conflicts.
      *
      * @param ambiguityResolver The ambiguity resolver to use exclusively.
-     * @return A method delegation instrumentation that makes use of the given ambiguity resolver.
+     * @return A method delegation implementation that makes use of the given ambiguity resolver.
      */
     public MethodDelegation defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver... ambiguityResolver) {
         return new MethodDelegation(implementationDelegate,
@@ -572,7 +572,7 @@ public class MethodDelegation implements Implementation {
      * Applies an assigner to the method delegation that is used for assigning method return and parameter types.
      *
      * @param assigner The assigner to apply.
-     * @return A method delegation instrumentation that makes use of the given designer.
+     * @return A method delegation implementation that makes use of the given designer.
      */
     public MethodDelegation withAssigner(Assigner assigner) {
         return new MethodDelegation(implementationDelegate,
@@ -602,13 +602,13 @@ public class MethodDelegation implements Implementation {
 
     /**
      * Appends another {@link Implementation} to a method delegation. The return
-     * value of the delegation target is dropped such that the given {@code instrumentation} becomes responsible for
+     * value of the delegation target is dropped such that the given {@code implementation} becomes responsible for
      * returning from the method instead. However, if an exception is thrown from the interception method, this
-     * exception is not catched and the chained instrumentation is never applied. Note that this changes the binding
+     * exception is not catched and the chained implementation is never applied. Note that this changes the binding
      * semantics as the target method's return value is not longer considered what might change the binding target.
      *
-     * @param implementation The instrumentation to apply after the delegation.
-     * @return An instrumentation that represents this chained instrumentation application.
+     * @param implementation The implementation to apply after the delegation.
+     * @return An implementation that represents this chained implementation application.
      */
     public Implementation andThen(Implementation implementation) {
         return new Compound(new MethodDelegation(implementationDelegate,
@@ -684,7 +684,7 @@ public class MethodDelegation implements Implementation {
     }
 
     /**
-     * An instrumentation delegate is responsible for executing the actual method delegation.
+     * An implementation delegate is responsible for executing the actual method delegation.
      */
     protected interface ImplementationDelegate {
 
@@ -697,7 +697,7 @@ public class MethodDelegation implements Implementation {
         InstrumentedType prepare(InstrumentedType instrumentedType);
 
         /**
-         * Returns the stack manipulation responsible for preparing the instance representing the instrumentation.
+         * Returns the stack manipulation responsible for preparing the instance representing the implementation.
          *
          * @param instrumentedType A description of the instrumented type to which the instrumentation is applied.
          * @return A stack manipulation representing the preparation.
@@ -713,7 +713,7 @@ public class MethodDelegation implements Implementation {
         MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType);
 
         /**
-         * An instrumentation applied to a static method.
+         * An implementation applied to a static method.
          */
         enum ForStaticMethod implements ImplementationDelegate {
 
@@ -744,7 +744,7 @@ public class MethodDelegation implements Implementation {
         }
 
         /**
-         * An instrumentation applied on a static field.
+         * An implementation applied on a static field.
          */
         class ForStaticField implements ImplementationDelegate {
 
@@ -764,7 +764,7 @@ public class MethodDelegation implements Implementation {
             private final Object delegate;
 
             /**
-             * Creates a new instrumentation to an instance that is stored in a {@code static} field.
+             * Creates a new implementation for delegating to an instance that is stored in a {@code static} field.
              * The field name will be created randomly.
              *
              * @param delegate The actual delegation target.
@@ -774,7 +774,7 @@ public class MethodDelegation implements Implementation {
             }
 
             /**
-             * Creates a new instrumentation to an instance that is stored in a {@code static} field.
+             * Creates a new implementation for delegating to an instance that is stored in a {@code static} field.
              *
              * @param delegate  The actual delegation target.
              * @param fieldName The name of the field for storing the delegate instance.
@@ -825,7 +825,7 @@ public class MethodDelegation implements Implementation {
         }
 
         /**
-         * An instrumentation applied on an instance field.
+         * An implementation applied on an instance field.
          */
         class ForInstanceField implements ImplementationDelegate {
 
@@ -840,9 +840,9 @@ public class MethodDelegation implements Implementation {
             private final TypeDescription fieldType;
 
             /**
-             * Creates a new instance field instrumentation delegate.
+             * Creates a new instance field implementation delegate.
              *
-             * @param fieldType A description of the type that is the target of the instrumentation and thus also the
+             * @param fieldType A description of the type that is the target of the implementation and thus also the
              *                  field type.
              * @param fieldName The name of the field.
              */
@@ -890,7 +890,7 @@ public class MethodDelegation implements Implementation {
         }
 
         /**
-         * An instrumentation that creates new instances of a given type.
+         * An implementation that creates new instances of a given type.
          */
         class ForConstruction implements ImplementationDelegate {
 
@@ -900,7 +900,7 @@ public class MethodDelegation implements Implementation {
             private final TypeDescription typeDescription;
 
             /**
-             * Creates a new constructor instrumentation.
+             * Creates a new constructor implementation.
              *
              * @param typeDescription The type to be constructed.
              */
@@ -957,7 +957,7 @@ public class MethodDelegation implements Implementation {
         private final StackManipulation preparingStackAssignment;
 
         /**
-         * The instrumentation target of this instrumentation.
+         * The implementation target of this implementation.
          */
         private final Target implementationTarget;
 
@@ -976,7 +976,7 @@ public class MethodDelegation implements Implementation {
          *
          * @param preparingStackAssignment The stack manipulation that is responsible for loading a potential target
          *                                 instance onto the stack on which the target method is invoked.
-         * @param implementationTarget    The instrumentation target of this instrumentation.
+         * @param implementationTarget     The implementation target of this implementation.
          * @param targetMethods            The method candidates to consider for delegating the invocation to.
          * @param processor                The method delegation binder processor which is responsible for implementing
          *                                 the method delegation.

@@ -26,6 +26,16 @@ public class FixedValueTest extends AbstractImplementationTest {
 
     private Bar bar;
 
+    private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
+        return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
+    }
+
+    private static Object makeMethodHandle() throws Exception {
+        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
+        return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findVirtual", Class.class, String.class, JavaType.METHOD_TYPE.load())
+                .invoke(lookup, Qux.class, BAR, makeMethodType(Object.class));
+    }
+
     @Before
     public void setUp() throws Exception {
         bar = new Bar();
@@ -54,10 +64,6 @@ public class FixedValueTest extends AbstractImplementationTest {
         assertThat(qux.newInstance().bar(), is(makeMethodType(void.class, Object.class)));
     }
 
-    private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
-        return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
-    }
-
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodHandleConstantPool() throws Exception {
@@ -72,12 +78,6 @@ public class FixedValueTest extends AbstractImplementationTest {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(makeMethodHandle())).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(JavaInstance.MethodHandle.of(qux.newInstance().bar()), is(JavaInstance.MethodHandle.of(makeMethodHandle())));
-    }
-
-    private static Object makeMethodHandle() throws Exception {
-        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
-        return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findVirtual", Class.class, String.class, JavaType.METHOD_TYPE.load())
-                .invoke(lookup, Qux.class, BAR, makeMethodType(Object.class));
     }
 
     @Test

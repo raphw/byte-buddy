@@ -20,8 +20,8 @@ public interface StackManipulation {
     /**
      * Applies the stack manipulation that is described by this instance.
      *
-     * @param methodVisitor          The method visitor used to write the method implementation to.
-     * @param implementationContext The context of the current instrumentation.
+     * @param methodVisitor         The method visitor used to write the method implementation to.
+     * @param implementationContext The context of the current implementation.
      * @return The changes to the size of the operand stack that are implied by this stack manipulation.
      */
     Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext);

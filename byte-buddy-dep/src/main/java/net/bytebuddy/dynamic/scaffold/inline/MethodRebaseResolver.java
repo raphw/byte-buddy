@@ -50,6 +50,33 @@ public interface MethodRebaseResolver {
     List<DynamicType> getAuxiliaryTypes();
 
     /**
+     * A method rebase resolver that preserves any method in its original form.
+     */
+    enum Disabled implements MethodRebaseResolver {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Resolution resolve(MethodDescription methodDescription) {
+            return new Resolution.Preserved(methodDescription);
+        }
+
+        @Override
+        public List<DynamicType> getAuxiliaryTypes() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodRebaseResolver.Disabled." + name();
+        }
+
+    }
+
+    /**
      * A method name transformer provides a unique mapping of a method's name to an alternative name.
      *
      * @see MethodRebaseResolver
@@ -377,33 +404,6 @@ public interface MethodRebaseResolver {
     }
 
     /**
-     * A method rebase resolver that preserves any method in its original form.
-     */
-    enum Disabled implements MethodRebaseResolver {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public Resolution resolve(MethodDescription methodDescription) {
-            return new Resolution.Preserved(methodDescription);
-        }
-
-        @Override
-        public List<DynamicType> getAuxiliaryTypes() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodRebaseResolver.Disabled." + name();
-        }
-
-    }
-
-    /**
      * An abstract base implementation for a method rebase resolver.
      */
     abstract class AbstractBase implements MethodRebaseResolver {
@@ -455,17 +455,6 @@ public interface MethodRebaseResolver {
     class MethodsOnly extends AbstractBase {
 
         /**
-         * Creates a new method rebase resolver that is only capable of rebasing methods but not constructors.
-         *
-         * @param instrumentedMethods   The instrumented methods that should be rebased.
-         * @param methodNameTransformer The method name transformer to use for rebasing method names.
-         * @return A suitable method rebase resolver.
-         */
-        protected static MethodRebaseResolver of(MethodList instrumentedMethods, MethodNameTransformer methodNameTransformer) {
-            return new MethodsOnly(new HashSet<MethodDescription>(instrumentedMethods), methodNameTransformer);
-        }
-
-        /**
          * The method name transformer to use for rebasing method names.
          */
         private final MethodNameTransformer methodNameTransformer;
@@ -479,6 +468,17 @@ public interface MethodRebaseResolver {
         protected MethodsOnly(Set<? extends MethodDescription> instrumentedMethods, MethodNameTransformer methodNameTransformer) {
             super(instrumentedMethods);
             this.methodNameTransformer = methodNameTransformer;
+        }
+
+        /**
+         * Creates a new method rebase resolver that is only capable of rebasing methods but not constructors.
+         *
+         * @param instrumentedMethods   The instrumented methods that should be rebased.
+         * @param methodNameTransformer The method name transformer to use for rebasing method names.
+         * @return A suitable method rebase resolver.
+         */
+        protected static MethodRebaseResolver of(MethodList instrumentedMethods, MethodNameTransformer methodNameTransformer) {
+            return new MethodsOnly(new HashSet<MethodDescription>(instrumentedMethods), methodNameTransformer);
         }
 
         @Override
@@ -523,6 +523,31 @@ public interface MethodRebaseResolver {
     class Enabled extends AbstractBase {
 
         /**
+         * The placeholder type to use for rebasing constructors.
+         */
+        private final DynamicType placeholderType;
+
+        /**
+         * The method name transformer to use.
+         */
+        private final MethodNameTransformer methodNameTransformer;
+
+        /**
+         * Creates a new enabled method rebase resolver.
+         *
+         * @param instrumentedMethods   A set of methods that are to be rebased.
+         * @param placeholderType       The placeholder type to use for rebasing constructors.
+         * @param methodNameTransformer The method name transformer to use.
+         */
+        protected Enabled(Set<? extends MethodDescription> instrumentedMethods,
+                          DynamicType placeholderType,
+                          MethodNameTransformer methodNameTransformer) {
+            super(instrumentedMethods);
+            this.placeholderType = placeholderType;
+            this.methodNameTransformer = methodNameTransformer;
+        }
+
+        /**
          * Creates a method rebase resolver which is only capable of rebasing constructors if the instrumented methods suggest this.
          *
          * @param instrumentedMethods         The instrumented methods to consider for rebasement.
@@ -554,31 +579,6 @@ public interface MethodRebaseResolver {
          */
         protected static MethodRebaseResolver of(MethodList instrumentedMethods, DynamicType placeholderType, MethodNameTransformer methodNameTransformer) {
             return new Enabled(new HashSet<MethodDescription>(instrumentedMethods), placeholderType, methodNameTransformer);
-        }
-
-        /**
-         * The placeholder type to use for rebasing constructors.
-         */
-        private final DynamicType placeholderType;
-
-        /**
-         * The method name transformer to use.
-         */
-        private final MethodNameTransformer methodNameTransformer;
-
-        /**
-         * Creates a new enabled method rebase resolver.
-         *
-         * @param instrumentedMethods   A set of methods that are to be rebased.
-         * @param placeholderType       The placeholder type to use for rebasing constructors.
-         * @param methodNameTransformer The method name transformer to use.
-         */
-        protected Enabled(Set<? extends MethodDescription> instrumentedMethods,
-                          DynamicType placeholderType,
-                          MethodNameTransformer methodNameTransformer) {
-            super(instrumentedMethods);
-            this.placeholderType = placeholderType;
-            this.methodNameTransformer = methodNameTransformer;
         }
 
         @Override

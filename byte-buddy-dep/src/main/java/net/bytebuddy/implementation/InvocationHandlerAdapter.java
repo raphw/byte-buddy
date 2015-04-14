@@ -61,7 +61,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @param fieldName    The name of the field.
      * @param cacheMethods Determines if the {@link java.lang.reflect.Method} instances that are handed to the
      *                     intercepted methods are cached in {@code static} fields.
-     * @param assigner     The assigner to apply when defining this instrumentation.
+     * @param assigner     The assigner to apply when defining this implementation.
      */
     protected InvocationHandlerAdapter(String fieldName, boolean cacheMethods, Assigner assigner) {
         this.fieldName = fieldName;
@@ -79,36 +79,36 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     }
 
     /**
-     * Creates an instrumentation for any instance of an {@link java.lang.reflect.InvocationHandler} that delegates
+     * Creates an implementation for any instance of an {@link java.lang.reflect.InvocationHandler} that delegates
      * all method interceptions to the given instance which will be stored in a {@code static} field.
      *
      * @param invocationHandler The invocation handler to which all method calls are delegated.
-     * @return An instrumentation that delegates all method interceptions to the given invocation handler.
+     * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler) {
         return of(invocationHandler, String.format("%s$%d", PREFIX, Math.abs(invocationHandler.hashCode())));
     }
 
     /**
-     * Creates an instrumentation for any instance of an {@link java.lang.reflect.InvocationHandler} that delegates
+     * Creates an implementation for any instance of an {@link java.lang.reflect.InvocationHandler} that delegates
      * all method interceptions to the given instance which will be stored in a {@code static} field.
      *
      * @param invocationHandler The invocation handler to which all method calls are delegated.
      * @param fieldName         The name of the field.
-     * @return An instrumentation that delegates all method interceptions to the given invocation handler.
+     * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler, String fieldName) {
         return new ForStaticDelegation(isValidIdentifier(fieldName), false, defaultAssigner(), nonNull(invocationHandler));
     }
 
     /**
-     * Creates an instrumentation for any {@link java.lang.reflect.InvocationHandler} that delegates
+     * Creates an implementation for any {@link java.lang.reflect.InvocationHandler} that delegates
      * all method interceptions to a {@code public} instance field with the given name. This field has to be
      * set before any invocations are intercepted. Otherwise, a {@link java.lang.NullPointerException} will be
      * thrown.
      *
      * @param fieldName The name of the field.
-     * @return An instrumentation that delegates all method interceptions to an instance field of the given name.
+     * @return An implementation that delegates all method interceptions to an instance field of the given name.
      */
     public static InvocationHandlerAdapter toInstanceField(String fieldName) {
         return new ForInstanceDelegation(isValidIdentifier(fieldName), false, defaultAssigner());
@@ -153,11 +153,11 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     /**
      * Applies an instrumentation that delegates to a invocation handler.
      *
-     * @param methodVisitor          The method visitor for writing the byte code to.
-     * @param implementationContext The instrumentation context for the current instrumentation.
-     * @param instrumentedMethod     The method that is instrumented.
-     * @param instrumentedType       The type that is instrumented.
-     * @param preparingManipulation  A stack manipulation that applies any preparation to the operand stack.
+     * @param methodVisitor         The method visitor for writing the byte code to.
+     * @param implementationContext The implementation context for the current instrumentation.
+     * @param instrumentedMethod    The method that is instrumented.
+     * @param instrumentedType      The type that is instrumented.
+     * @param preparingManipulation A stack manipulation that applies any preparation to the operand stack.
      * @return The size of the applied assignment.
      */
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
@@ -209,7 +209,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         /**
          * Configures an assigner to use with this invocation handler adapter.
          *
-         * @param assigner The assigner to apply when defining this instrumentation.
+         * @param assigner The assigner to apply when defining this implementation.
          * @return This instrumentation with the given {@code assigner} configured.
          */
         Implementation withAssigner(Assigner assigner);
@@ -233,7 +233,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
          * @param fieldName         The name of the field.
          * @param cacheMethods      Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                          intercepted methods are cached in {@code static} fields.
-         * @param assigner          The assigner to apply when defining this instrumentation.
+         * @param assigner          The assigner to apply when defining this implementation.
          * @param invocationHandler The invocation handler to which all method calls are delegated.
          */
         protected ForStaticDelegation(String fieldName,
@@ -361,7 +361,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
          * @param fieldName    The name of the field.
          * @param cacheMethods Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                     intercepted methods are cached in {@code static} fields.
-         * @param assigner     The assigner to apply when defining this instrumentation.
+         * @param assigner     The assigner to apply when defining this implementation.
          */
         protected ForInstanceDelegation(String fieldName, boolean cacheMethods, Assigner assigner) {
             super(fieldName, cacheMethods, assigner);

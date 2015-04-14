@@ -172,7 +172,7 @@ public class ClassByExtensionBenchmark {
     }
 
     /**
-     * Instead of using the {@link net.bytebuddy.implementation.SuperMethodCall} instrumentation, we are using
+     * Instead of using the {@link net.bytebuddy.implementation.SuperMethodCall} implementation, we are using
      * a delegate in order to emulate the interception approach of other instrumentation libraries. Otherwise,
      * this benchmark would be biased in favor of Byte Buddy.
      */

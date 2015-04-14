@@ -157,10 +157,10 @@ public @interface Super {
         /**
          * Creates a stack manipulation which loads a {@code super}-call proxy onto the stack.
          *
-         * @param parameterType         The type of the parameter that was annotated with
-         *                              {@link net.bytebuddy.implementation.bind.annotation.Super}
-         * @param implementationTarget The instrumentation target for the currently created type.
-         * @param annotation            The annotation that caused this method call.
+         * @param parameterType        The type of the parameter that was annotated with
+         *                             {@link net.bytebuddy.implementation.bind.annotation.Super}
+         * @param implementationTarget The implementation target for the currently created type.
+         * @param annotation           The annotation that caused this method call.
          * @return A stack manipulation representing this instance's instantiation strategy.
          */
         protected abstract StackManipulation proxyFor(TypeDescription parameterType,

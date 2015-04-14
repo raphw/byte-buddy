@@ -147,12 +147,12 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * Creates a parameter binding for the given target parameter.
          *
-         * @param annotation            The annotation that was cause for the delegation to this argument binder.
-         * @param source                The intercepted source method.
-         * @param target                Tge target parameter that is subject to be bound to
-         *                              intercepting the {@code source} method.
-         * @param implementationTarget The target of the current instrumentation that is subject to this binding.
-         * @param assigner              An assigner that can be used for applying the binding.
+         * @param annotation           The annotation that was cause for the delegation to this argument binder.
+         * @param source               The intercepted source method.
+         * @param target               Tge target parameter that is subject to be bound to
+         *                             intercepting the {@code source} method.
+         * @param implementationTarget The target of the current implementation that is subject to this binding.
+         * @param assigner             An assigner that can be used for applying the binding.
          * @return A parameter binding for the requested target method parameter.
          */
         ParameterBinding<?> bind(AnnotationDescription.Loadable<T> annotation,
@@ -174,9 +174,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * Creates an iterator from which a value is pulled each time no processable annotation is found on a
          * method parameter.
          *
-         * @param implementationTarget The target of the current instrumentation.
-         * @param source                The source method that is bound to the {@code target} method.
-         * @param target                Tge target method that is subject to be bound by the {@code source} method.
+         * @param implementationTarget The target of the current implementation.
+         * @param source               The source method that is bound to the {@code target} method.
+         * @param target               Tge target method that is subject to be bound by the {@code source} method.
          * @return An iterator that supplies default annotations for
          */
         Iterator<AnnotationDescription> makeIterator(Implementation.Target implementationTarget,
@@ -414,10 +414,10 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             /**
              * Handles a parameter binding.
              *
-             * @param source                The intercepted source method.
-             * @param target                The target parameter that is subject to binding.
-             * @param implementationTarget The target of the current instrumentation.
-             * @param assigner              An assigner that can be used for applying the binding.
+             * @param source               The intercepted source method.
+             * @param target               The target parameter that is subject to binding.
+             * @param implementationTarget The target of the current implementation.
+             * @param assigner             An assigner that can be used for applying the binding.
              * @return A parameter binding that reflects the given arguments.
              */
             ParameterBinding<?> bind(MethodDescription source,

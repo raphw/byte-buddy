@@ -24,6 +24,18 @@ public class InliningImplementationMatcher implements LatentMethodMatcher {
     private final ElementMatcher<? super MethodDescription> predefinedMethodSignatures;
 
     /**
+     * Creates a new inline instrumentation matcher.
+     *
+     * @param ignoredMethods             A method matcher that matches any ignored method.
+     * @param predefinedMethodSignatures A method matcher that matches any predefined method.
+     */
+    protected InliningImplementationMatcher(ElementMatcher<? super MethodDescription> ignoredMethods,
+                                            ElementMatcher<? super MethodDescription> predefinedMethodSignatures) {
+        this.ignoredMethods = ignoredMethods;
+        this.predefinedMethodSignatures = predefinedMethodSignatures;
+    }
+
+    /**
      * Creates a matcher where only overridable or declared methods are matched unless those are ignored. Methods that
      * are declared by the target type are only matched if they are not ignored. Declared methods that are not found on the
      * target type are always matched.
@@ -43,18 +55,6 @@ public class InliningImplementationMatcher implements LatentMethodMatcher {
             predefinedMethodSignatures = predefinedMethodSignatures.or(signature);
         }
         return new InliningImplementationMatcher(ignoredMethods, predefinedMethodSignatures);
-    }
-
-    /**
-     * Creates a new inline instrumentation matcher.
-     *
-     * @param ignoredMethods             A method matcher that matches any ignored method.
-     * @param predefinedMethodSignatures A method matcher that matches any predefined method.
-     */
-    protected InliningImplementationMatcher(ElementMatcher<? super MethodDescription> ignoredMethods,
-                                            ElementMatcher<? super MethodDescription> predefinedMethodSignatures) {
-        this.ignoredMethods = ignoredMethods;
-        this.predefinedMethodSignatures = predefinedMethodSignatures;
     }
 
     @Override

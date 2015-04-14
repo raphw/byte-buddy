@@ -81,6 +81,27 @@ public interface JavaInstance {
         }
 
         /**
+         * The return type of this method type.
+         */
+        private final TypeDescription returnType;
+
+        /**
+         * The parameter types of this method type.
+         */
+        private final List<? extends TypeDescription> parameterTypes;
+
+        /**
+         * Creates a method type for the given types.
+         *
+         * @param returnType     The return type of the method type.
+         * @param parameterTypes The parameter types of the method type.
+         */
+        protected MethodType(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
+            this.returnType = returnType;
+            this.parameterTypes = parameterTypes;
+        }
+
+        /**
          * Returns a method type representation of a loaded {@code MethodType} object.
          *
          * @param methodType A method type object to represent as a {@link JavaInstance}.
@@ -216,27 +237,6 @@ public interface JavaInstance {
         }
 
         /**
-         * The return type of this method type.
-         */
-        private final TypeDescription returnType;
-
-        /**
-         * The parameter types of this method type.
-         */
-        private final List<? extends TypeDescription> parameterTypes;
-
-        /**
-         * Creates a method type for the given types.
-         *
-         * @param returnType     The return type of the method type.
-         * @param parameterTypes The parameter types of the method type.
-         */
-        protected MethodType(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
-            this.returnType = returnType;
-            this.parameterTypes = parameterTypes;
-        }
-
-        /**
          * Returns the return type of this method type.
          *
          * @return The return type of this method type.
@@ -304,159 +304,6 @@ public interface JavaInstance {
      * this representation order.
      */
     class MethodHandle implements JavaInstance {
-
-        /**
-         * A representation of a method handle's type.
-         */
-        public enum HandleType {
-
-            /**
-             * A handle representing an invokevirtual invocation.
-             */
-            INVOKE_VIRTUAL(Opcodes.H_INVOKEVIRTUAL),
-
-            /**
-             * A handle representing an invokestatic invocation.
-             */
-            INVOKE_STATIC(Opcodes.H_INVOKESTATIC),
-
-            /**
-             * A handle representing an invokespecial invocation for a non-constructor.
-             */
-            INVOKE_SPECIAL(Opcodes.H_INVOKESPECIAL),
-
-            /**
-             * A handle representing an invokeinterface invocation.
-             */
-            INVOKE_INTERFACE(Opcodes.H_INVOKEINTERFACE),
-
-            /**
-             * A handle representing an invokespecial invocation for a constructor.
-             */
-            INVOKE_SPECIAL_CONSTRUCTOR(Opcodes.H_NEWINVOKESPECIAL),
-
-            /**
-             * A handle representing a write of a non-static field invocation.
-             */
-            PUT_FIELD(Opcodes.H_PUTFIELD),
-
-            /**
-             * A handle representing a read of a non-static field invocation.
-             */
-            GET_FIELD(Opcodes.H_GETFIELD),
-
-            /**
-             * A handle representing a write of a static field invocation.
-             */
-            PUT_STATIC_FIELD(Opcodes.H_PUTSTATIC),
-
-            /**
-             * A handle representing a read of a static field invocation.
-             */
-            GET_STATIC_FIELD(Opcodes.H_GETSTATIC);
-
-            /**
-             * The represented identifier.
-             */
-            private final int identifier;
-
-            /**
-             * Creates a new handle type.
-             *
-             * @param identifier The represented identifier.
-             */
-            HandleType(int identifier) {
-                this.identifier = identifier;
-            }
-
-            /**
-             * Returns the represented identifier.
-             *
-             * @return The represented identifier.
-             */
-            public int getIdentifier() {
-                return identifier;
-            }
-
-            /**
-             * Extracts a handle type for invoking the given method.
-             *
-             * @param methodDescription The method for which a handle type should be found.
-             * @return The handle type for the given method.
-             */
-            protected static HandleType of(MethodDescription methodDescription) {
-                if (methodDescription.isStatic()) {
-                    return INVOKE_STATIC;
-                } else if (methodDescription.isPrivate()) {
-                    return INVOKE_SPECIAL;
-                } else if (methodDescription.isConstructor()) {
-                    return INVOKE_SPECIAL_CONSTRUCTOR;
-                } else if (methodDescription.getDeclaringType().isInterface()) {
-                    return INVOKE_INTERFACE;
-                } else {
-                    return INVOKE_VIRTUAL;
-                }
-            }
-
-            /**
-             * Extracts a handle type for the given identifier.
-             *
-             * @param identifier The identifier to extract a handle type for.
-             * @return The representing handle type.
-             */
-            protected static HandleType of(int identifier) {
-                for (HandleType handleType : HandleType.values()) {
-                    if (handleType.getIdentifier() == identifier) {
-                        return handleType;
-                    }
-                }
-                throw new IllegalArgumentException("Unknown handle type: " + identifier);
-            }
-
-            /**
-             * Extracts a handle type for invoking the given method via invokespecial.
-             *
-             * @param methodDescription The method for which a handle type should be found.
-             * @return The handle type for the given method.
-             */
-            protected static HandleType ofSpecial(MethodDescription methodDescription) {
-                if (methodDescription.isStatic() || methodDescription.isAbstract()) {
-                    throw new IllegalArgumentException("Cannot invoke " + methodDescription + " via invokespecial");
-                }
-                return methodDescription.isConstructor()
-                        ? INVOKE_SPECIAL_CONSTRUCTOR
-                        : INVOKE_SPECIAL;
-            }
-
-            /**
-             * Extracts a handle type for a getter of the given field.
-             *
-             * @param fieldDescription The field for which to create a getter handle.
-             * @return The corresponding handle type.
-             */
-            protected static HandleType ofGetter(FieldDescription fieldDescription) {
-                return fieldDescription.isStatic()
-                        ? GET_STATIC_FIELD
-                        : GET_FIELD;
-            }
-
-            /**
-             * Extracts a handle type for a setter of the given field.
-             *
-             * @param fieldDescription The field for which to create a setter handle.
-             * @return The corresponding handle type.
-             */
-            protected static HandleType ofSetter(FieldDescription fieldDescription) {
-                return fieldDescription.isStatic()
-                        ? PUT_STATIC_FIELD
-                        : PUT_FIELD;
-            }
-
-            @Override
-            public String toString() {
-                return "JavaInstance.MethodHandle.HandleType." + name();
-            }
-        }
 
         /**
          * The Java method to reveal the execution context of a {@code MethodHandle} as {@code MethodHandleInfo}.
@@ -562,6 +409,52 @@ public interface JavaInstance {
             GET_METHOD_TYPE = getMethodType;
             RETURN_TYPE = returnType;
             PARAMETER_ARRAY = parameterArray;
+        }
+
+        /**
+         * The handle type that is represented by this instance.
+         */
+        private final HandleType handleType;
+
+        /**
+         * The owner type that is represented by this instance.
+         */
+        private final TypeDescription ownerType;
+
+        /**
+         * The name that is represented by this instance.
+         */
+        private final String name;
+
+        /**
+         * The return type that is represented by this instance.
+         */
+        private final TypeDescription returnType;
+
+        /**
+         * The parameter types that is represented by this instance.
+         */
+        private final List<? extends TypeDescription> parameterTypes;
+
+        /**
+         * Creates a method handle representation.
+         *
+         * @param handleType     The handle type that is represented by this instance.
+         * @param ownerType      The owner type that is represented by this instance.
+         * @param name           The name that is represented by this instance.
+         * @param returnType     The return type that is represented by this instance.
+         * @param parameterTypes The parameter types that is represented by this instance.
+         */
+        protected MethodHandle(HandleType handleType,
+                               TypeDescription ownerType,
+                               String name,
+                               TypeDescription returnType,
+                               List<? extends TypeDescription> parameterTypes) {
+            this.handleType = handleType;
+            this.ownerType = ownerType;
+            this.name = name;
+            this.returnType = returnType;
+            this.parameterTypes = parameterTypes;
         }
 
         /**
@@ -711,52 +604,6 @@ public interface JavaInstance {
                     Collections.singletonList(fieldDescription.getFieldType()));
         }
 
-        /**
-         * The handle type that is represented by this instance.
-         */
-        private final HandleType handleType;
-
-        /**
-         * The owner type that is represented by this instance.
-         */
-        private final TypeDescription ownerType;
-
-        /**
-         * The name that is represented by this instance.
-         */
-        private final String name;
-
-        /**
-         * The return type that is represented by this instance.
-         */
-        private final TypeDescription returnType;
-
-        /**
-         * The parameter types that is represented by this instance.
-         */
-        private final List<? extends TypeDescription> parameterTypes;
-
-        /**
-         * Creates a method handle representation.
-         *
-         * @param handleType     The handle type that is represented by this instance.
-         * @param ownerType      The owner type that is represented by this instance.
-         * @param name           The name that is represented by this instance.
-         * @param returnType     The return type that is represented by this instance.
-         * @param parameterTypes The parameter types that is represented by this instance.
-         */
-        protected MethodHandle(HandleType handleType,
-                               TypeDescription ownerType,
-                               String name,
-                               TypeDescription returnType,
-                               List<? extends TypeDescription> parameterTypes) {
-            this.handleType = handleType;
-            this.ownerType = ownerType;
-            this.name = name;
-            this.returnType = returnType;
-            this.parameterTypes = parameterTypes;
-        }
-
         @Override
         public Object asConstantPoolValue() {
             StringBuilder stringBuilder = new StringBuilder("(");
@@ -853,6 +700,159 @@ public interface JavaInstance {
                     ", returnType=" + returnType +
                     ", parameterTypes=" + parameterTypes +
                     '}';
+        }
+
+        /**
+         * A representation of a method handle's type.
+         */
+        public enum HandleType {
+
+            /**
+             * A handle representing an invokevirtual invocation.
+             */
+            INVOKE_VIRTUAL(Opcodes.H_INVOKEVIRTUAL),
+
+            /**
+             * A handle representing an invokestatic invocation.
+             */
+            INVOKE_STATIC(Opcodes.H_INVOKESTATIC),
+
+            /**
+             * A handle representing an invokespecial invocation for a non-constructor.
+             */
+            INVOKE_SPECIAL(Opcodes.H_INVOKESPECIAL),
+
+            /**
+             * A handle representing an invokeinterface invocation.
+             */
+            INVOKE_INTERFACE(Opcodes.H_INVOKEINTERFACE),
+
+            /**
+             * A handle representing an invokespecial invocation for a constructor.
+             */
+            INVOKE_SPECIAL_CONSTRUCTOR(Opcodes.H_NEWINVOKESPECIAL),
+
+            /**
+             * A handle representing a write of a non-static field invocation.
+             */
+            PUT_FIELD(Opcodes.H_PUTFIELD),
+
+            /**
+             * A handle representing a read of a non-static field invocation.
+             */
+            GET_FIELD(Opcodes.H_GETFIELD),
+
+            /**
+             * A handle representing a write of a static field invocation.
+             */
+            PUT_STATIC_FIELD(Opcodes.H_PUTSTATIC),
+
+            /**
+             * A handle representing a read of a static field invocation.
+             */
+            GET_STATIC_FIELD(Opcodes.H_GETSTATIC);
+
+            /**
+             * The represented identifier.
+             */
+            private final int identifier;
+
+            /**
+             * Creates a new handle type.
+             *
+             * @param identifier The represented identifier.
+             */
+            HandleType(int identifier) {
+                this.identifier = identifier;
+            }
+
+            /**
+             * Extracts a handle type for invoking the given method.
+             *
+             * @param methodDescription The method for which a handle type should be found.
+             * @return The handle type for the given method.
+             */
+            protected static HandleType of(MethodDescription methodDescription) {
+                if (methodDescription.isStatic()) {
+                    return INVOKE_STATIC;
+                } else if (methodDescription.isPrivate()) {
+                    return INVOKE_SPECIAL;
+                } else if (methodDescription.isConstructor()) {
+                    return INVOKE_SPECIAL_CONSTRUCTOR;
+                } else if (methodDescription.getDeclaringType().isInterface()) {
+                    return INVOKE_INTERFACE;
+                } else {
+                    return INVOKE_VIRTUAL;
+                }
+            }
+
+            /**
+             * Extracts a handle type for the given identifier.
+             *
+             * @param identifier The identifier to extract a handle type for.
+             * @return The representing handle type.
+             */
+            protected static HandleType of(int identifier) {
+                for (HandleType handleType : HandleType.values()) {
+                    if (handleType.getIdentifier() == identifier) {
+                        return handleType;
+                    }
+                }
+                throw new IllegalArgumentException("Unknown handle type: " + identifier);
+            }
+
+            /**
+             * Extracts a handle type for invoking the given method via invokespecial.
+             *
+             * @param methodDescription The method for which a handle type should be found.
+             * @return The handle type for the given method.
+             */
+            protected static HandleType ofSpecial(MethodDescription methodDescription) {
+                if (methodDescription.isStatic() || methodDescription.isAbstract()) {
+                    throw new IllegalArgumentException("Cannot invoke " + methodDescription + " via invokespecial");
+                }
+                return methodDescription.isConstructor()
+                        ? INVOKE_SPECIAL_CONSTRUCTOR
+                        : INVOKE_SPECIAL;
+            }
+
+            /**
+             * Extracts a handle type for a getter of the given field.
+             *
+             * @param fieldDescription The field for which to create a getter handle.
+             * @return The corresponding handle type.
+             */
+            protected static HandleType ofGetter(FieldDescription fieldDescription) {
+                return fieldDescription.isStatic()
+                        ? GET_STATIC_FIELD
+                        : GET_FIELD;
+            }
+
+            /**
+             * Extracts a handle type for a setter of the given field.
+             *
+             * @param fieldDescription The field for which to create a setter handle.
+             * @return The corresponding handle type.
+             */
+            protected static HandleType ofSetter(FieldDescription fieldDescription) {
+                return fieldDescription.isStatic()
+                        ? PUT_STATIC_FIELD
+                        : PUT_FIELD;
+            }
+
+            /**
+             * Returns the represented identifier.
+             *
+             * @return The represented identifier.
+             */
+            public int getIdentifier() {
+                return identifier;
+            }
+
+            @Override
+            public String toString() {
+                return "JavaInstance.MethodHandle.HandleType." + name();
+            }
         }
     }
 }

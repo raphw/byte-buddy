@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.bytecode;
 
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 

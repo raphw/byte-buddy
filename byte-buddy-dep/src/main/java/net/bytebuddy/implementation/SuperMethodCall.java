@@ -12,13 +12,13 @@ import org.objectweb.asm.MethodVisitor;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
- * This instrumentation will create a new method which simply calls its super method. If no such method is defined,
+ * This implementation will create a new method which simply calls its super method. If no such method is defined,
  * an exception will be thrown. Constructors are considered to have a super method if the direct super class defines
  * a constructor with an identical signature. Default methods are invoked as such if they are non-ambiguous. Static
  * methods can have a (pseudo) super method if a type that defines such a method is rebased. Rebased types can also
- * shadow constructors or methods of an actual super class. Besides implementing constructors, this instrumentation
+ * shadow constructors or methods of an actual super class. Besides implementing constructors, this implementation
  * is useful when a method of a super type is not supposed to be altered but should be equipped with additional
- * annotations. Furthermore, this instrumentation allows to hard code a super method call to be performed after
+ * annotations. Furthermore, this implementation allows to hard code a super method call to be performed after
  * performing another {@link Implementation}.
  */
 public enum SuperMethodCall implements Implementation {
@@ -39,11 +39,11 @@ public enum SuperMethodCall implements Implementation {
     }
 
     /**
-     * Appends another instrumentation to a super method call.
+     * Appends another implementation to a super method call.
      *
-     * @param implementation The instrumentation to append.
-     * @return An instrumentation that first invokes the instrumented method's super method and then applies
-     * the given instrumentation.
+     * @param implementation The implementation to append.
+     * @return An implementation that first invokes the instrumented method's super method and then applies
+     * the given implementation.
      */
     public Implementation andThen(Implementation implementation) {
         return new Compound(WithoutReturn.INSTANCE, nonNull(implementation));
@@ -86,7 +86,7 @@ public enum SuperMethodCall implements Implementation {
     protected static class Appender implements ByteCodeAppender {
 
         /**
-         * The target of the current instrumentation.
+         * The target of the current implementation.
          */
         private final Target implementationTarget;
 
@@ -98,8 +98,8 @@ public enum SuperMethodCall implements Implementation {
         /**
          * Creates a new appender.
          *
-         * @param implementationTarget The instrumentation target of the current type creation.
-         * @param terminationHandler    The termination handler to apply after invoking the super method.
+         * @param implementationTarget The implementation target of the current type creation.
+         * @param terminationHandler   The termination handler to apply after invoking the super method.
          */
         protected Appender(Target implementationTarget, TerminationHandler terminationHandler) {
             this.implementationTarget = implementationTarget;

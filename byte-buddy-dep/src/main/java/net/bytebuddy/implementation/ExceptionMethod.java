@@ -3,11 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.Duplication;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.Throw;
-import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
@@ -17,7 +13,7 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
- * This instrumentation causes a {@link java.lang.Throwable} to be thrown when the instrumented method is invoked.
+ * This implementation causes a {@link java.lang.Throwable} to be thrown when the instrumented method is invoked.
  * Be aware that the Java Virtual machine does not care about exception declarations and will throw any
  * {@link java.lang.Throwable} from any method even if the method does not declared a checked exception.
  */
@@ -34,7 +30,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     private final ConstructionDelegate constructionDelegate;
 
     /**
-     * Creates a new instance of an instrumentation for throwing throwables.
+     * Creates a new instance of an implementation for throwing throwables.
      *
      * @param throwableType        The type of the exception to be thrown.
      * @param constructionDelegate A delegate that is responsible for calling the isThrowable's constructor.
@@ -46,12 +42,12 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     /**
-     * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
+     * Creates an implementation that creates a new instance of the given isThrowable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
      * @param exceptionType The type of the isThrowable.
-     * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
+     * @return An implementation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
     public static Implementation throwing(Class<? extends Throwable> exceptionType) {
@@ -59,12 +55,12 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     /**
-     * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
+     * Creates an implementation that creates a new instance of the given isThrowable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
      * @param exceptionType The type of the isThrowable.
-     * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
+     * @return An implementation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
     public static Implementation throwing(TypeDescription exceptionType) {
@@ -75,13 +71,13 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     /**
-     * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
+     * Creates an implementation that creates a new instance of the given isThrowable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a constructor that
      * takes a single {@link java.lang.String} as its argument.
      *
      * @param exceptionType The type of the isThrowable.
      * @param message       The string that is handed to the constructor. Usually an exception message.
-     * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
+     * @return An implementation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
     public static Implementation throwing(Class<? extends Throwable> exceptionType, String message) {
@@ -89,13 +85,13 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     /**
-     * Creates an instrumentation that creates a new instance of the given isThrowable type on each method invocation
+     * Creates an implementation that creates a new instance of the given isThrowable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a constructor that
      * takes a single {@link java.lang.String} as its argument.
      *
      * @param exceptionType The type of the isThrowable.
      * @param message       The string that is handed to the constructor. Usually an exception message.
-     * @return An instrumentation that will throw an instance of the isThrowable on each method invocation of the
+     * @return An implementation that will throw an instance of the isThrowable on each method invocation of the
      * instrumented methods.
      */
     public static Implementation throwing(TypeDescription exceptionType, String message) {

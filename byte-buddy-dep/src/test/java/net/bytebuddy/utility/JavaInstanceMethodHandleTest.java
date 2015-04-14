@@ -195,19 +195,19 @@ public class JavaInstanceMethodHandleTest {
 
     public static class Foo {
 
-        public Void bar;
-
         public static Void qux;
+
+        public Void bar;
 
         public Foo(Void value) {
             /* empty*/
         }
 
-        public void bar(Void value) {
+        public static void qux(Void value) {
             /* empty */
         }
 
-        public static void qux(Void value) {
+        public void bar(Void value) {
             /* empty */
         }
     }

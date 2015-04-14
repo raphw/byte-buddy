@@ -63,6 +63,16 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
 
     private ClassLoader classLoader;
 
+    private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
+        return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
+    }
+
+    private static Object makeMethodHandle() throws Exception {
+        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
+        return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findVirtual", Class.class, String.class, JavaType.METHOD_TYPE.load())
+                .invoke(lookup, Simple.class, FOO, makeMethodType(String.class));
+    }
+
     @Before
     public void setUp() throws Exception {
         classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
@@ -422,16 +432,6 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.TerminationHandler.ForMethodReturn.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.TerminationHandler.ForChainedInvocation.class).apply();
-    }
-
-    private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
-        return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
-    }
-
-    private static Object makeMethodHandle() throws Exception {
-        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
-        return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findVirtual", Class.class, String.class, JavaType.METHOD_TYPE.load())
-                .invoke(lookup, Simple.class, FOO, makeMethodType(String.class));
     }
 
     public static class Simple {

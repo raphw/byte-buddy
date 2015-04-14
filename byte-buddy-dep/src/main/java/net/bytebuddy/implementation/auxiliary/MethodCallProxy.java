@@ -228,7 +228,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * An instrumentation for implementing a constructor of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}.
+     * An implementation for a constructor of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}.
      */
     protected enum ConstructorCall implements Implementation {
 
@@ -328,7 +328,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * An instrumentation for implementing a method of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}.
+     * An implementation for a method of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}.
      */
     protected static class MethodCall implements Implementation {
 

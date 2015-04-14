@@ -248,9 +248,9 @@ public interface TypeWriter<T> {
             /**
              * Applies this method entry. This method can always be called and might be a no-op.
              *
-             * @param classVisitor           The class visitor to which this entry should be applied.
-             * @param implementationContext The instrumentation context to which this entry should be applied.
-             * @param methodDescription      The method description of the instrumented method.
+             * @param classVisitor          The class visitor to which this entry should be applied.
+             * @param implementationContext The implementation context to which this entry should be applied.
+             * @param methodDescription     The method description of the instrumented method.
              */
             void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, MethodDescription methodDescription);
 
@@ -267,9 +267,9 @@ public interface TypeWriter<T> {
              * Applies the body of this entry. Applying the body of an entry is only possible if a method is implemented, i.e. the sort of this
              * entry is {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry.Sort#IMPLEMENT}.
              *
-             * @param methodVisitor          The method visitor to which this entry should be applied.
-             * @param implementationContext The instrumentation context to which this entry should be applied.
-             * @param methodDescription      The method description of the instrumented method.
+             * @param methodVisitor         The method visitor to which this entry should be applied.
+             * @param implementationContext The implementation context to which this entry should be applied.
+             * @param methodDescription     The method description of the instrumented method.
              */
             void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription methodDescription);
 
@@ -339,30 +339,6 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A base implementation of an abstract entry that defines a method.
-             */
-            abstract class AbstractDefiningEntry implements Entry {
-
-                @Override
-                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, MethodDescription methodDescription) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getAdjustedModifiers(getSort().isImplemented()),
-                            methodDescription.getInternalName(),
-                            methodDescription.getDescriptor(),
-                            methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
-                    ParameterList parameterList = methodDescription.getParameters();
-                    if (parameterList.hasExplicitMetaData()) {
-                        for (ParameterDescription parameterDescription : parameterList) {
-                            methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
-                        }
-                    }
-                    applyHead(methodVisitor, methodDescription);
-                    applyBody(methodVisitor, implementationContext, methodDescription);
-                    methodVisitor.visitEnd();
-                }
-            }
-
-            /**
              * A canonical implementation of a skipped method.
              */
             enum ForSkippedMethod implements Entry {
@@ -404,6 +380,30 @@ public interface TypeWriter<T> {
                 @Override
                 public String toString() {
                     return "TypeWriter.MethodPool.Entry.Skip." + name();
+                }
+            }
+
+            /**
+             * A base implementation of an abstract entry that defines a method.
+             */
+            abstract class AbstractDefiningEntry implements Entry {
+
+                @Override
+                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, MethodDescription methodDescription) {
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getAdjustedModifiers(getSort().isImplemented()),
+                            methodDescription.getInternalName(),
+                            methodDescription.getDescriptor(),
+                            methodDescription.getGenericSignature(),
+                            methodDescription.getExceptionTypes().toInternalNames());
+                    ParameterList parameterList = methodDescription.getParameters();
+                    if (parameterList.hasExplicitMetaData()) {
+                        for (ParameterDescription parameterDescription : parameterList) {
+                            methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
+                        }
+                    }
+                    applyHead(methodVisitor, methodDescription);
+                    applyBody(methodVisitor, implementationContext, methodDescription);
+                    methodVisitor.visitEnd();
                 }
             }
 
@@ -489,6 +489,7 @@ public interface TypeWriter<T> {
 
                 /**
                  * Creates a new entry for a method that is defines but does not append byte code, i.e. is native or abstract.
+                 *
                  * @param methodAttributeAppender The method attribute appender to apply.
                  */
                 public ForAbstractMethod(MethodAttributeAppender methodAttributeAppender) {
@@ -551,7 +552,8 @@ public interface TypeWriter<T> {
 
                 /**
                  * Creates a new entry for defining a method with a default annotation value.
-                 * @param annotationValue The annotation value to define.
+                 *
+                 * @param annotationValue         The annotation value to define.
                  * @param methodAttributeAppender The method attribute appender to apply.
                  */
                 public ForAnnotationDefaultValue(Object annotationValue, MethodAttributeAppender methodAttributeAppender) {
@@ -686,6 +688,45 @@ public interface TypeWriter<T> {
         protected final MethodList instrumentedMethods;
 
         /**
+         * Creates a new default type writer.
+         *
+         * @param instrumentedType            The instrumented type that is to be written.
+         * @param loadedTypeInitializer       The loaded type initializer of the instrumented type.
+         * @param typeInitializer             The type initializer of the instrumented type.
+         * @param explicitAuxiliaryTypes      A list of explicit auxiliary types that are to be added to the created dynamic type.
+         * @param classFileVersion            The class file version of the written type.
+         * @param auxiliaryTypeNamingStrategy A naming strategy that is used for naming auxiliary types.
+         * @param classVisitorWrapper         A class visitor wrapper to apply during instrumentation.
+         * @param attributeAppender           The type attribute appender to apply.
+         * @param fieldPool                   The field pool to be used for instrumenting fields.
+         * @param methodPool                  The method pool to be used for instrumenting methods.
+         * @param instrumentedMethods         A list of all instrumented methods.
+         */
+        protected Default(TypeDescription instrumentedType,
+                          LoadedTypeInitializer loadedTypeInitializer,
+                          InstrumentedType.TypeInitializer typeInitializer,
+                          List<DynamicType> explicitAuxiliaryTypes,
+                          ClassFileVersion classFileVersion,
+                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                          ClassVisitorWrapper classVisitorWrapper,
+                          TypeAttributeAppender attributeAppender,
+                          FieldPool fieldPool,
+                          MethodPool methodPool,
+                          MethodList instrumentedMethods) {
+            this.instrumentedType = instrumentedType;
+            this.loadedTypeInitializer = loadedTypeInitializer;
+            this.typeInitializer = typeInitializer;
+            this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
+            this.classFileVersion = classFileVersion;
+            this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
+            this.classVisitorWrapper = classVisitorWrapper;
+            this.attributeAppender = attributeAppender;
+            this.fieldPool = fieldPool;
+            this.methodPool = methodPool;
+            this.instrumentedMethods = instrumentedMethods;
+        }
+
+        /**
          * Creates a type writer for creating a new type.
          *
          * @param methodRegistry              The method registry to use for creating the type.
@@ -794,45 +835,6 @@ public interface TypeWriter<T> {
                     MethodRebaseResolver.Disabled.INSTANCE);
         }
 
-        /**
-         * Creates a new default type writer.
-         *
-         * @param instrumentedType            The instrumented type that is to be written.
-         * @param loadedTypeInitializer       The loaded type initializer of the instrumented type.
-         * @param typeInitializer             The type initializer of the instrumented type.
-         * @param explicitAuxiliaryTypes      A list of explicit auxiliary types that are to be added to the created dynamic type.
-         * @param classFileVersion            The class file version of the written type.
-         * @param auxiliaryTypeNamingStrategy A naming strategy that is used for naming auxiliary types.
-         * @param classVisitorWrapper         A class visitor wrapper to apply during instrumentation.
-         * @param attributeAppender           The type attribute appender to apply.
-         * @param fieldPool                   The field pool to be used for instrumenting fields.
-         * @param methodPool                  The method pool to be used for instrumenting methods.
-         * @param instrumentedMethods         A list of all instrumented methods.
-         */
-        protected Default(TypeDescription instrumentedType,
-                          LoadedTypeInitializer loadedTypeInitializer,
-                          InstrumentedType.TypeInitializer typeInitializer,
-                          List<DynamicType> explicitAuxiliaryTypes,
-                          ClassFileVersion classFileVersion,
-                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                          ClassVisitorWrapper classVisitorWrapper,
-                          TypeAttributeAppender attributeAppender,
-                          FieldPool fieldPool,
-                          MethodPool methodPool,
-                          MethodList instrumentedMethods) {
-            this.instrumentedType = instrumentedType;
-            this.loadedTypeInitializer = loadedTypeInitializer;
-            this.typeInitializer = typeInitializer;
-            this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
-            this.classFileVersion = classFileVersion;
-            this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
-            this.classVisitorWrapper = classVisitorWrapper;
-            this.attributeAppender = attributeAppender;
-            this.fieldPool = fieldPool;
-            this.methodPool = methodPool;
-            this.instrumentedMethods = instrumentedMethods;
-        }
-
         @Override
         public DynamicType.Unloaded<S> make() {
             Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
@@ -882,7 +884,7 @@ public interface TypeWriter<T> {
         /**
          * Creates the instrumented type.
          *
-         * @param implementationContext The instrumentation context to use.
+         * @param implementationContext The implementation context to use.
          * @return A byte array that represents the instrumented type.
          */
         protected abstract byte[] create(Implementation.Context.ExtractableView implementationContext);
@@ -993,8 +995,8 @@ public interface TypeWriter<T> {
             /**
              * Performs the actual creation of a class file.
              *
-             * @param implementationContext The instrumentation context to use for implementing the class file.
-             * @param binaryRepresentation   The binary representation of the class file.
+             * @param implementationContext The implementation context to use for implementing the class file.
+             * @param binaryRepresentation  The binary representation of the class file.
              * @return The byte array representing the created class.
              */
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
@@ -1007,8 +1009,8 @@ public interface TypeWriter<T> {
             /**
              * Creates a class visitor which weaves all changes and additions on the fly.
              *
-             * @param classVisitor           The class visitor to which this entry is to be written to.
-             * @param implementationContext The instrumentation context to use for implementing the class file.
+             * @param classVisitor          The class visitor to which this entry is to be written to.
+             * @param implementationContext The implementation context to use for implementing the class file.
              * @return A class visitor which is capable of applying the changes.
              */
             private ClassVisitor writeTo(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
@@ -1066,7 +1068,7 @@ public interface TypeWriter<T> {
             protected class RedefinitionClassVisitor extends ClassVisitor {
 
                 /**
-                 * The instrumentation context for this class creation.
+                 * The implementation context for this class creation.
                  */
                 private final Implementation.Context.ExtractableView implementationContext;
 
@@ -1090,8 +1092,8 @@ public interface TypeWriter<T> {
                 /**
                  * Creates a class visitor which is capable of redefining an existent class on the fly.
                  *
-                 * @param classVisitor           The underlying class visitor to which writes are delegated.
-                 * @param implementationContext The instrumentation context to use for implementing the class file.
+                 * @param classVisitor          The underlying class visitor to which writes are delegated.
+                 * @param implementationContext The implementation context to use for implementing the class file.
                  */
                 protected RedefinitionClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
                     super(ASM_API_VERSION, classVisitor);

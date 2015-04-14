@@ -21,9 +21,9 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
 
     @Override
     protected Implementation.SpecialMethodInvocation make(String name,
-                                                           TypeDescription returnType,
-                                                           List<TypeDescription> parameterTypes,
-                                                           TypeDescription targetType) {
+                                                          TypeDescription returnType,
+                                                          List<TypeDescription> parameterTypes,
+                                                          TypeDescription targetType) {
         return new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(name,
                 mock(TypeDescription.class),
                 returnType,

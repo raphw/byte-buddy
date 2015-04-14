@@ -331,24 +331,6 @@ public interface AnnotationAppender {
             this.target = target;
         }
 
-        @Override
-        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility) {
-            if (!annotationVisibility.isSuppressed()) {
-                doAppend(annotation, annotationVisibility.isVisible());
-            }
-            return this;
-        }
-
-        /**
-         * Tries to append a given annotation by reflectively reading an annotation.
-         *
-         * @param annotation The annotation to be written.
-         * @param visible    {@code true} if this annotation should be treated as visible at runtime.
-         */
-        private void doAppend(AnnotationDescription annotation, boolean visible) {
-            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation);
-        }
-
         /**
          * Handles the writing of a single annotation to an annotation visitor.
          *
@@ -388,6 +370,24 @@ public interface AnnotationAppender {
             } else {
                 annotationVisitor.visit(name, value);
             }
+        }
+
+        @Override
+        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility) {
+            if (!annotationVisibility.isSuppressed()) {
+                doAppend(annotation, annotationVisibility.isVisible());
+            }
+            return this;
+        }
+
+        /**
+         * Tries to append a given annotation by reflectively reading an annotation.
+         *
+         * @param annotation The annotation to be written.
+         * @param visible    {@code true} if this annotation should be treated as visible at runtime.
+         */
+        private void doAppend(AnnotationDescription annotation, boolean visible) {
+            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation);
         }
 
         @Override

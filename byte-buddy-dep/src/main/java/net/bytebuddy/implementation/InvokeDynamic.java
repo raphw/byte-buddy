@@ -35,7 +35,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
- * An instrumentation that applies a
+ * An implementation that applies a
  * <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html">dynamic method invocation</a>.
  */
 public class InvokeDynamic implements Implementation {
@@ -71,7 +71,7 @@ public class InvokeDynamic implements Implementation {
     protected final boolean dynamicallyTyped;
 
     /**
-     * Creates a new invoke dynamic instrumentation.
+     * Creates a new invoke dynamic implementation.
      *
      * @param bootstrapMethod    The bootstrap method.
      * @param handleArguments    The arguments that are provided to the bootstrap method.
@@ -95,9 +95,9 @@ public class InvokeDynamic implements Implementation {
     }
 
     /**
-     * Returns the default assigner to be used by this instrumentation.
+     * Returns the default assigner to be used by this implementation.
      *
-     * @return The default assigner to be used by this instrumentation.
+     * @return The default assigner to be used by this implementation.
      */
     private static Assigner defaultAssigner() {
         return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
@@ -125,7 +125,7 @@ public class InvokeDynamic implements Implementation {
      *                 {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
      *                 {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
      *                 instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
-     * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
+     * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Method method, Object... argument) {
@@ -144,7 +144,7 @@ public class InvokeDynamic implements Implementation {
      *                    it is also possible to supply unloaded types as {@link TypeDescription},
      *                    {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
      *                    {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
-     * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
+     * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Constructor<?> constructor, Object... argument) {
@@ -163,7 +163,7 @@ public class InvokeDynamic implements Implementation {
      *                        it is also possible to supply unloaded types as {@link TypeDescription},
      *                        {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
      *                        {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
-     * @return An instrumentation where a {@code this} reference, if available, and all arguments of the
+     * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(MethodDescription bootstrapMethod, Object... argument) {
@@ -203,7 +203,7 @@ public class InvokeDynamic implements Implementation {
      * as its next parameters.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withBooleanValue(boolean... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -223,7 +223,7 @@ public class InvokeDynamic implements Implementation {
      * as its next parameters.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withByteValue(byte... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -243,7 +243,7 @@ public class InvokeDynamic implements Implementation {
      * as its next parameters.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withShortValue(short... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -263,7 +263,7 @@ public class InvokeDynamic implements Implementation {
      * as its next parameters.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withCharacterValue(char... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -283,7 +283,7 @@ public class InvokeDynamic implements Implementation {
      * as its next parameters.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withIntegerValue(int... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -303,7 +303,7 @@ public class InvokeDynamic implements Implementation {
      * as its next parameters.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withLongValue(long... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -323,7 +323,7 @@ public class InvokeDynamic implements Implementation {
      * as its next parameters.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withFloatValue(float... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -343,7 +343,7 @@ public class InvokeDynamic implements Implementation {
      * as its next parameters.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withDoubleValue(double... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -367,7 +367,7 @@ public class InvokeDynamic implements Implementation {
      * </p>
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withValue(Object... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -389,7 +389,7 @@ public class InvokeDynamic implements Implementation {
      * </p>
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public WithImplicitFieldType withReference(Object value) {
         return new WithImplicitFieldType(bootstrapMethod,
@@ -407,7 +407,7 @@ public class InvokeDynamic implements Implementation {
      * bootstrapped method is guaranteed to be of the same object identity.
      *
      * @param value The arguments to pass to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withReference(Object... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
@@ -428,7 +428,7 @@ public class InvokeDynamic implements Implementation {
      * class loader must be able to see the provided type.
      *
      * @param typeDescription The class to provide to the bound method as an argument.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified type.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified type.
      */
     public InvokeDynamic withType(TypeDescription... typeDescription) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(typeDescription.length);
@@ -468,7 +468,7 @@ public class InvokeDynamic implements Implementation {
      * Passes {@code null} values of the given types to the bootstrapped method.
      *
      * @param type The type that the {@code null} values should represent.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withNullValue(Class<?>... type) {
         return withNullValue(new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
@@ -478,7 +478,7 @@ public class InvokeDynamic implements Implementation {
      * Passes {@code null} values of the given types to the bootstrapped method.
      *
      * @param typeDescription The type that the {@code null} values should represent.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withNullValue(TypeDescription... typeDescription) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(typeDescription.length);
@@ -500,7 +500,7 @@ public class InvokeDynamic implements Implementation {
      * Passes parameters of the instrumented method to the bootstrapped method.
      *
      * @param index The indices of the parameters that should be passed to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withArgument(int... index) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(index.length);
@@ -522,7 +522,7 @@ public class InvokeDynamic implements Implementation {
      * Passes a parameter of the instrumented method to the bootstrapped method.
      *
      * @param index The index of the parameter that should be passed to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified argument
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified argument
      * with its implicit type.
      */
     public WithImplicitArgumentType withArgument(int index) {
@@ -543,7 +543,7 @@ public class InvokeDynamic implements Implementation {
      * the given types.
      *
      * @param type The types as which the {@code this} reference of the intercepted method should be masked.
-     * @return This instrumentation where {@code this} references are passed as the next arguments.
+     * @return This implementation where {@code this} references are passed as the next arguments.
      */
     public InvokeDynamic withThis(Class<?>... type) {
         return withThis(new TypeList.ForLoadedType(type).toArray(new TypeDescription[type.length]));
@@ -554,7 +554,7 @@ public class InvokeDynamic implements Implementation {
      * the given types.
      *
      * @param typeDescription The types as which the {@code this} reference of the intercepted method should be masked.
-     * @return This instrumentation where {@code this} references are passed as the next arguments.
+     * @return This implementation where {@code this} references are passed as the next arguments.
      */
     public InvokeDynamic withThis(TypeDescription... typeDescription) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(typeDescription.length);
@@ -572,7 +572,7 @@ public class InvokeDynamic implements Implementation {
     /**
      * Adds all method arguments to the the bootstrapped method.
      *
-     * @return This invoke dynamic instrumentation with all parameters of the instrumented method added.
+     * @return This invoke dynamic implementation with all parameters of the instrumented method added.
      */
     public InvokeDynamic withMethodArguments() {
         return new InvokeDynamic(bootstrapMethod,
@@ -586,7 +586,7 @@ public class InvokeDynamic implements Implementation {
     /**
      * Adds a potential {@code this} reference and all method arguments to the the bootstrapped method.
      *
-     * @return This invoke dynamic instrumentation with a potential {@code this} reference and all
+     * @return This invoke dynamic implementation with a potential {@code this} reference and all
      * parameters of the instrumented method added.
      */
     public InvokeDynamic withImplicitAndMethodArguments() {
@@ -604,7 +604,7 @@ public class InvokeDynamic implements Implementation {
      *
      * @param fieldName The name of the field.
      * @param fieldType The type of the field.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the value of the defined
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the value of the defined
      * field.
      */
     public InvokeDynamic withInstanceField(String fieldName, Class<?> fieldType) {
@@ -617,7 +617,7 @@ public class InvokeDynamic implements Implementation {
      *
      * @param fieldName The name of the field.
      * @param fieldType The type of the field.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the value of the defined
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the value of the defined
      * field.
      */
     public InvokeDynamic withInstanceField(String fieldName, TypeDescription fieldType) {
@@ -634,7 +634,7 @@ public class InvokeDynamic implements Implementation {
      * exist for the instrumented type.
      *
      * @param fieldName The names of the fields to be passed to the bootstrapped method.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified arguments.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withField(String... fieldName) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(fieldName.length);
@@ -650,7 +650,7 @@ public class InvokeDynamic implements Implementation {
     }
 
     /**
-     * Instructs this instrumentation to use the provided assigner and decides if the assigner should apply
+     * Instructs this implementation to use the provided assigner and decides if the assigner should apply
      * dynamic typing.
      *
      * @param assigner         The assigner to use.
@@ -667,11 +667,11 @@ public class InvokeDynamic implements Implementation {
     }
 
     /**
-     * Applies this invoke dynamic instrumentation and removes the return value of the bootstrapped method from
-     * the operand stack before applying the provided instrumentation.
+     * Applies this invoke dynamic implementation and removes the return value of the bootstrapped method from
+     * the operand stack before applying the provided implementation.
      *
-     * @param implementation The instrumentation to apply after executing the dynamic method invocation.
-     * @return An instrumentation that first applies this instrumentation and then the provided one.
+     * @param implementation The implementation to apply after executing the dynamic method invocation.
+     * @return An implementation that first applies this implementation and then the provided one.
      */
     public Implementation andThen(Implementation implementation) {
         return new Implementation.Compound(new InvokeDynamic(bootstrapMethod,
@@ -3056,7 +3056,7 @@ public class InvokeDynamic implements Implementation {
     }
 
     /**
-     * Representation of an {@link net.bytebuddy.implementation.InvokeDynamic} instrumentation where the bootstrapped
+     * Representation of an {@link net.bytebuddy.implementation.InvokeDynamic} implementation where the bootstrapped
      * method is passed a {@code this} reference, if available, and any arguments of the instrumented method.
      */
     public static class WithImplicitArguments extends AbstractDelegator {
@@ -3088,7 +3088,7 @@ public class InvokeDynamic implements Implementation {
         /**
          * Returns an instance of this instrumentation where the bootstrapped method is not passed any arguments.
          *
-         * @return This instrumentation where the bootstrapped method is not passed any arguments.
+         * @return This implementation where the bootstrapped method is not passed any arguments.
          */
         public InvokeDynamic withoutArguments() {
             return new InvokeDynamic(bootstrapMethod,
@@ -3128,7 +3128,7 @@ public class InvokeDynamic implements Implementation {
     }
 
     /**
-     * Representation of an {@link net.bytebuddy.implementation.InvokeDynamic} instrumentation where the bootstrapped
+     * Representation of an {@link net.bytebuddy.implementation.InvokeDynamic} implementation where the bootstrapped
      * method is passed a {@code this} reference, if available, and any arguments of the instrumented method and
      * where the invocation target is implicit.
      */
@@ -3163,7 +3163,7 @@ public class InvokeDynamic implements Implementation {
          * is he assigned to the intercepted method's return type.
          *
          * @param returnType The return type to request from the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * @return This implementation where the bootstrap method is requested to bind a method with the given
          * return type.
          */
         public InvokeDynamic.WithImplicitArguments invoke(Class<?> returnType) {
@@ -3175,7 +3175,7 @@ public class InvokeDynamic implements Implementation {
          * is he assigned to the intercepted method's return type.
          *
          * @param returnType The return type to request from the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * @return This implementation where the bootstrap method is requested to bind a method with the given
          * return type.
          */
         public InvokeDynamic.WithImplicitArguments invoke(TypeDescription returnType) {
@@ -3191,7 +3191,7 @@ public class InvokeDynamic implements Implementation {
          * Requests the bootstrap method is passed the given method name.
          *
          * @param methodName The method name to pass to the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is passed the given method name.
+         * @return This implementation where the bootstrap method is passed the given method name.
          */
         public InvokeDynamic.WithImplicitArguments invoke(String methodName) {
             return new WithImplicitArguments(bootstrapMethod,
@@ -3209,7 +3209,7 @@ public class InvokeDynamic implements Implementation {
          *
          * @param methodName The method name to pass to the bootstrapping method.
          * @param returnType The return type to request from the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * @return This implementation where the bootstrap method is requested to bind a method with the given
          * return type while being passed the given method name.
          */
         public InvokeDynamic.WithImplicitArguments invoke(String methodName, Class<?> returnType) {
@@ -3223,7 +3223,7 @@ public class InvokeDynamic implements Implementation {
          *
          * @param methodName The method name to pass to the bootstrapping method.
          * @param returnType The return type to request from the bootstrapping method.
-         * @return This instrumentation where the bootstrap method is requested to bind a method with the given
+         * @return This implementation where the bootstrap method is requested to bind a method with the given
          * return type while being passed the given method name.
          */
         public InvokeDynamic.WithImplicitArguments invoke(String methodName, TypeDescription returnType) {
@@ -3365,7 +3365,7 @@ public class InvokeDynamic implements Implementation {
     }
 
     /**
-     * An invoke dynamic instrumentation where the last argument is an implicitly typed method argument.
+     * An invoke dynamic implementation where the last argument is an implicitly typed method argument.
      */
     public static class WithImplicitArgumentType extends AbstractDelegator {
 
@@ -3484,7 +3484,7 @@ public class InvokeDynamic implements Implementation {
         private final TypeDescription instrumentedType;
 
         /**
-         * Creates a new byte code appender for an invoke dynamic instrumentation.
+         * Creates a new byte code appender for an invoke dynamic implementation.
          *
          * @param instrumentedType The instrumented type of the current instrumentation.
          */

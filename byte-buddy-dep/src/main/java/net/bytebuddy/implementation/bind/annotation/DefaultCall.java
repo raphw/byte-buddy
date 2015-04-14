@@ -122,13 +122,13 @@ public @interface DefaultCall {
             /**
              * Locates the correct default method to a given source method.
              *
-             * @param implementationTarget The current instrumentation target.
-             * @param source                The source method for which a default method should be looked up.
+             * @param implementationTarget The current implementation target.
+             * @param source               The source method for which a default method should be looked up.
              * @return A special method invocation of the default method or an illegal special method invocation,
              * if no suitable invocation could be located.
              */
             Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                            MethodDescription source);
+                                                           MethodDescription source);
 
             /**
              * An implicit default method locator that only permits the invocation of a default method if the source
@@ -143,7 +143,7 @@ public @interface DefaultCall {
 
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                                       MethodDescription source) {
+                                                                      MethodDescription source) {
                     String uniqueSignature = source.getUniqueSignature();
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
                     for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces()) {
@@ -187,7 +187,7 @@ public @interface DefaultCall {
 
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                                       MethodDescription source) {
+                                                                      MethodDescription source) {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }

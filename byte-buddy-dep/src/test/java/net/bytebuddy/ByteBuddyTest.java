@@ -1,15 +1,15 @@
 package net.bytebuddy;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
+import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;

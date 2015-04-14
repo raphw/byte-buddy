@@ -260,7 +260,7 @@ public @interface FieldProxy {
         }
 
         /**
-         * Represents an instrumentation for implementing a proxy type constructor when a static field is accessed.
+         * Represents an implementation for implementing a proxy type constructor when a static field is accessed.
          */
         protected enum StaticFieldConstructor implements Implementation {
 
@@ -351,7 +351,7 @@ public @interface FieldProxy {
             protected abstract TypeDescription proxyType(MethodDescription getterMethod, MethodDescription setterMethod);
 
             /**
-             * Returns an instrumentation that implements the sort of accessor implementation that is represented by
+             * Returns an implementation that implements the sort of accessor implementation that is represented by
              * this instance.
              *
              * @param fieldDescription      The field to be accessed.
@@ -369,7 +369,7 @@ public @interface FieldProxy {
             }
 
             /**
-             * Instrumentation for a getter method.
+             * Implementation for a getter method.
              */
             protected static class Getter implements Implementation {
 
@@ -389,7 +389,7 @@ public @interface FieldProxy {
                 private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
 
                 /**
-                 * Creates a new getter instrumentation.
+                 * Creates a new getter implementation.
                  *
                  * @param accessedField         The field that is being accessed.
                  * @param assigner              The assigner to use.
@@ -453,7 +453,7 @@ public @interface FieldProxy {
                     /**
                      * Creates a new appender for a setter method.
                      *
-                     * @param implementationTarget The instrumentation target of the current instrumentation.
+                     * @param implementationTarget The implementation target of the current instrumentation.
                      */
                     protected Appender(Target implementationTarget) {
                         typeDescription = implementationTarget.getTypeDescription();
@@ -510,7 +510,7 @@ public @interface FieldProxy {
             }
 
             /**
-             * Instrumentation for a setter method.
+             * Implementation for a setter method.
              */
             protected static class Setter implements Implementation {
 
@@ -530,7 +530,7 @@ public @interface FieldProxy {
                 private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
 
                 /**
-                 * Creates a new setter instrumentation.
+                 * Creates a new setter implementation.
                  *
                  * @param accessedField         The field that is being accessed.
                  * @param assigner              The assigner to use.
@@ -594,7 +594,7 @@ public @interface FieldProxy {
                     /**
                      * Creates a new appender for a setter method.
                      *
-                     * @param implementationTarget The instrumentation target of the current instrumentation.
+                     * @param implementationTarget The implementation target of the current instrumentation.
                      */
                     protected Appender(Target implementationTarget) {
                         typeDescription = implementationTarget.getTypeDescription();
@@ -654,7 +654,7 @@ public @interface FieldProxy {
         }
 
         /**
-         * Represents an instrumentation for implementing a proxy type constructor when a non-static field is accessed.
+         * Represents an implementation for implementing a proxy type constructor when a non-static field is accessed.
          */
         protected static class InstanceFieldConstructor implements Implementation {
 
@@ -664,7 +664,7 @@ public @interface FieldProxy {
             private final TypeDescription instrumentedType;
 
             /**
-             * Creates a new instrumentation for implementing a field accessor proxy's constructor when accessing
+             * Creates a new implementation for implementing a field accessor proxy's constructor when accessing
              * a non-static field.
              *
              * @param instrumentedType The instrumented type from which a field is to be accessed.
@@ -717,7 +717,7 @@ public @interface FieldProxy {
                 /**
                  * Creates a new appender.
                  *
-                 * @param implementationTarget The instrumentation target of the current instrumentation.
+                 * @param implementationTarget The implementation target of the current implementation.
                  */
                 protected Appender(Target implementationTarget) {
                     fieldDescription = implementationTarget.getTypeDescription()

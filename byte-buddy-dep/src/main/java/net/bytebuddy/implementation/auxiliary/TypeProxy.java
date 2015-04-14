@@ -10,11 +10,7 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.Duplication;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.Throw;
-import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -54,7 +50,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
     private final TypeDescription proxiedType;
 
     /**
-     * The instrumentation target of the proxied type.
+     * The implementation target of the proxied type.
      */
     private final Implementation.Target implementationTarget;
 
@@ -76,11 +72,11 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
     /**
      * Creates a new type proxy.
      *
-     * @param proxiedType           The type this proxy should implement which can either be a non-final class or an interface.
-     * @param implementationTarget The instrumentation target this type proxy is created for.
-     * @param invocationFactory     The invocation factory for creating special method invocations.
-     * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
-     * @param serializableProxy     Determines if the proxy should be serializable.
+     * @param proxiedType          The type this proxy should implement which can either be a non-final class or an interface.
+     * @param implementationTarget The implementation target this type proxy is created for.
+     * @param invocationFactory    The invocation factory for creating special method invocations.
+     * @param ignoreFinalizer      {@code true} if any finalizer methods should be ignored for proxying.
+     * @param serializableProxy    Determines if the proxy should be serializable.
      */
     public TypeProxy(TypeDescription proxiedType,
                      Implementation.Target implementationTarget,
@@ -370,15 +366,15 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         /**
          * Creates a special method invocation to implement for a given method.
          *
-         * @param implementationTarget The instrumentation target the type proxy is created for.
-         * @param proxiedType           The type for the type proxy to subclass or implement.
-         * @param instrumentedMethod    The instrumented method that is to be invoked.
+         * @param implementationTarget The implementation target the type proxy is created for.
+         * @param proxiedType          The type for the type proxy to subclass or implement.
+         * @param instrumentedMethod   The instrumented method that is to be invoked.
          * @return A special method invocation of the given method or an illegal invocation if the proxy should
          * throw an {@link java.lang.AbstractMethodError} when the instrumented method is invoked.
          */
         Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
-                                                       TypeDescription proxiedType,
-                                                       MethodDescription instrumentedMethod);
+                                                      TypeDescription proxiedType,
+                                                      MethodDescription instrumentedMethod);
 
         /**
          * Default implementations of the
@@ -392,8 +388,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
             SUPER_METHOD {
                 @Override
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
-                                                                      TypeDescription proxiedType,
-                                                                      MethodDescription instrumentedMethod) {
+                                                                     TypeDescription proxiedType,
+                                                                     MethodDescription instrumentedMethod) {
                     return implementationTarget.invokeSuper(instrumentedMethod,
                             Implementation.Target.MethodLookup.Default.MOST_SPECIFIC);
                 }
@@ -405,8 +401,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
             DEFAULT_METHOD {
                 @Override
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
-                                                                      TypeDescription proxiedType,
-                                                                      MethodDescription instrumentedMethod) {
+                                                                     TypeDescription proxiedType,
+                                                                     MethodDescription instrumentedMethod) {
                     return implementationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
                 }
             };
@@ -431,7 +427,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         private final TypeDescription proxiedType;
 
         /**
-         * The instrumentation target this type proxy is created for.
+         * The implementation target this type proxy is created for.
          */
         private final Implementation.Target implementationTarget;
 
@@ -454,7 +450,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
          * Creates a new stack operation for creating a type proxy by calling one of its constructors.
          *
          * @param proxiedType           The type for the type proxy to subclass or implement.
-         * @param implementationTarget The instrumentation target this type proxy is created for.
+         * @param implementationTarget  The implementation target this type proxy is created for.
          * @param constructorParameters The parameter types of the constructor that should be called.
          * @param ignoreFinalizer       {@code true} if any finalizers should be ignored for the delegation.
          * @param serializableProxy     Determines if the proxy should be serializable.
@@ -550,7 +546,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         private final TypeDescription proxiedType;
 
         /**
-         * The instrumentation target of the proxied type.
+         * The implementation target of the proxied type.
          */
         private final Implementation.Target implementationTarget;
 
@@ -567,10 +563,10 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         /**
          * Creates a new stack operation for reflectively creating a type proxy for the given arguments.
          *
-         * @param proxiedType           The type for the type proxy to subclass or implement.
-         * @param implementationTarget The instrumentation target this type proxy is created for.
-         * @param ignoreFinalizer       {@code true} if any finalizer methods should be ignored for proxying.
-         * @param serializableProxy     Determines if the proxy should be serializable.
+         * @param proxiedType          The type for the type proxy to subclass or implement.
+         * @param implementationTarget The implementation target this type proxy is created for.
+         * @param ignoreFinalizer      {@code true} if any finalizer methods should be ignored for proxying.
+         * @param serializableProxy    Determines if the proxy should be serializable.
          */
         public ForSuperMethodByReflectionFactory(TypeDescription proxiedType,
                                                  Implementation.Target implementationTarget,
@@ -648,7 +644,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         private final TypeDescription proxiedType;
 
         /**
-         * The instrumentation target for the original instrumentation.
+         * The implementation target for the original instrumentation.
          */
         private final Implementation.Target implementationTarget;
 
@@ -660,9 +656,9 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         /**
          * Creates a new proxy creation for a default interface type proxy.
          *
-         * @param proxiedType           The proxied interface type.
-         * @param implementationTarget The instrumentation target for the original instrumentation.
-         * @param serializableProxy     {@code true} if the proxy should be {@link java.io.Serializable}.
+         * @param proxiedType          The proxied interface type.
+         * @param implementationTarget The implementation target for the original implementation.
+         * @param serializableProxy    {@code true} if the proxy should be {@link java.io.Serializable}.
          */
         public ForDefaultMethod(TypeDescription proxiedType,
                                 Implementation.Target implementationTarget,
@@ -725,7 +721,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
     }
 
     /**
-     * An instrumentation for implementing a method call of a {@link net.bytebuddy.implementation.auxiliary.TypeProxy}.
+     * An implementation for a method call of a {@link net.bytebuddy.implementation.auxiliary.TypeProxy}.
      */
     protected class MethodCall implements Implementation {
 
@@ -735,7 +731,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         private final MethodAccessorFactory methodAccessorFactory;
 
         /**
-         * Creates a new method call instrumentation.
+         * Creates a new method call implementation.
          *
          * @param methodAccessorFactory The method accessor factory to query for the super method invocation.
          */

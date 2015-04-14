@@ -241,13 +241,13 @@ public @interface Morph {
             /**
              * Locates the correct default method to a given source method.
              *
-             * @param implementationTarget The current instrumentation target.
-             * @param source                The source method for which a default method should be looked up.
+             * @param implementationTarget The current implementation target.
+             * @param source               The source method for which a default method should be looked up.
              * @return A special method invocation of the default method or an illegal special method invocation,
              * if no suitable invocation could be located.
              */
             Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                            MethodDescription source);
+                                                           MethodDescription source);
 
             /**
              * An implicit default method locator that only permits the invocation of a default method if the source
@@ -262,7 +262,7 @@ public @interface Morph {
 
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                                       MethodDescription source) {
+                                                                      MethodDescription source) {
                     String uniqueSignature = source.getUniqueSignature();
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
                     for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces()) {
@@ -306,7 +306,7 @@ public @interface Morph {
 
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                                       MethodDescription source) {
+                                                                      MethodDescription source) {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
@@ -525,7 +525,7 @@ public @interface Morph {
                 private final TypeDescription instrumentedType;
 
                 /**
-                 * Creates a new instance field constructor instrumentation.
+                 * Creates a new instance field constructor implementation.
                  *
                  * @param instrumentedType The instrumented type.
                  */
@@ -576,7 +576,7 @@ public @interface Morph {
                     /**
                      * Creates a new appender.
                      *
-                     * @param implementationTarget The current instrumentation target.
+                     * @param implementationTarget The current implementation target.
                      */
                     protected Appender(Target implementationTarget) {
                         fieldDescription = implementationTarget.getTypeDescription()
@@ -635,7 +635,7 @@ public @interface Morph {
                 private final Assigner assigner;
 
                 /**
-                 * Creates a new method call instrumentation for a proxy method.
+                 * Creates a new method call implementation for a proxy method.
                  *
                  * @param accessorMethod The accessor method to invoke from the proxy's method.
                  * @param assigner       The assigner to be used.
@@ -688,7 +688,7 @@ public @interface Morph {
                     /**
                      * Creates a new appender.
                      *
-                     * @param implementationTarget The current instrumentation target.
+                     * @param implementationTarget The current implementation target.
                      */
                     protected Appender(Target implementationTarget) {
                         typeDescription = implementationTarget.getTypeDescription();

@@ -49,6 +49,16 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     private ClassLoader classLoader;
 
+    private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
+        return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
+    }
+
+    private static Object makeMethodHandle() throws Exception {
+        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
+        return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findStatic", Class.class, String.class, JavaType.METHOD_TYPE.load())
+                .invoke(lookup, Foo.class, BAR, makeMethodType(String.class, Object.class, Object.class));
+    }
+
     @Before
     public void setUp() throws Exception {
         when(nonAssigner.assign(Mockito.any(TypeDescription.class), Mockito.any(TypeDescription.class), Mockito.anyBoolean()))
@@ -610,19 +620,10 @@ public class MethodCallTest extends AbstractImplementationTest {
         }
     }
 
-    private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
-        return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
-    }
-
     public static class Foo {
+
         public static String bar(Object arg0, Object arg1) {
             return "" + arg0 + arg1;
         }
-    }
-
-    private static Object makeMethodHandle() throws Exception {
-        Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
-        return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findStatic", Class.class, String.class, JavaType.METHOD_TYPE.load())
-                .invoke(lookup, Foo.class, BAR, makeMethodType(String.class, Object.class, Object.class));
     }
 }

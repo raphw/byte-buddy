@@ -6,11 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.Duplication;
-import net.bytebuddy.implementation.bytecode.Removal;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
@@ -33,9 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * This {@link Implementation} allows the invocation of a specified method while
@@ -80,7 +74,7 @@ public class MethodCall implements Implementation {
     protected final boolean dynamicallyTyped;
 
     /**
-     * Creates a new method call instrumentation.
+     * Creates a new method call implementation.
      *
      * @param methodLocator      The method locator to use.
      * @param targetHandler      The target handler to use.
@@ -128,10 +122,10 @@ public class MethodCall implements Implementation {
 
     /**
      * Invokes the given method. Without further specification, the method is invoked without any arguments on
-     * the instance of the instrument class or statically, if the given method is {@code static}.
+     * the instance of the instrumented class or statically, if the given method is {@code static}.
      *
      * @param method The method to invoke.
-     * @return A method call instrumentation that invokes the given method without providing any arguments.
+     * @return A method call implementation that invokes the given method without providing any arguments.
      */
     public static WithoutSpecifiedTarget invoke(Method method) {
         return invoke(new MethodDescription.ForLoadedMethod(nonNull(method)));
@@ -141,7 +135,7 @@ public class MethodCall implements Implementation {
      * Invokes the given constructor on the instance of the instrumented type.
      *
      * @param constructor The constructor to invoke.
-     * @return A method call instrumentation that invokes the given constructor without providing any arguments.
+     * @return A method call implementation that invokes the given constructor without providing any arguments.
      */
     public static WithoutSpecifiedTarget invoke(Constructor<?> constructor) {
         return invoke(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
@@ -153,7 +147,7 @@ public class MethodCall implements Implementation {
      * methods. Finally, {@code static} methods are invoked statically.
      *
      * @param methodDescription The method to invoke.
-     * @return A method call instrumentation that invokes the given method without providing any arguments.
+     * @return A method call implementation that invokes the given method without providing any arguments.
      */
     public static WithoutSpecifiedTarget invoke(MethodDescription methodDescription) {
         return invoke(new MethodLocator.ForExplicitMethod(nonNull(methodDescription)));
@@ -164,7 +158,7 @@ public class MethodCall implements Implementation {
      *
      * @param methodLocator The method locator to apply for locating the method to invoke given the instrumented
      *                      method.
-     * @return A method call instrumentation that uses the provided method locator for resolving the method
+     * @return A method call implementation that uses the provided method locator for resolving the method
      * to be invoked.
      */
     public static WithoutSpecifiedTarget invoke(MethodLocator methodLocator) {
@@ -210,7 +204,7 @@ public class MethodCall implements Implementation {
     }
 
     /**
-     * Defines a number of arguments to be handed to the method that is being invoked by this instrumentation. Any
+     * Defines a number of arguments to be handed to the method that is being invoked by this implementation. Any
      * wrapper type instances for primitive values, instances of {@link java.lang.String} or {@code null} are loaded
      * directly onto the operand stack. This might corrupt referential identity for these values. Any other values
      * are stored within a {@code static} field that is added to the instrumented type.
@@ -275,7 +269,7 @@ public class MethodCall implements Implementation {
     }
 
     /**
-     * Defines a number of arguments to be handed to the method that is being invoked by this instrumentation. Any
+     * Defines a number of arguments to be handed to the method that is being invoked by this implementation. Any
      * value is stored within a field in order to preserve referential identity. As an exception, the {@code null}
      * value is not stored within a field.
      *
@@ -341,7 +335,7 @@ public class MethodCall implements Implementation {
 
     /**
      * Defines a method call which fetches a value from an instance field. The value of the field needs to be
-     * defined manually and is initialized with {@code null}. The field itself is defined by this instrumentation.
+     * defined manually and is initialized with {@code null}. The field itself is defined by this implementation.
      *
      * @param type The type of the field.
      * @param name The name of the field.
@@ -353,7 +347,7 @@ public class MethodCall implements Implementation {
 
     /**
      * Defines a method call which fetches a value from an instance field. The value of the field needs to be
-     * defined manually and is initialized with {@code null}. The field itself is defined by this instrumentation.
+     * defined manually and is initialized with {@code null}. The field itself is defined by this implementation.
      *
      * @param typeDescription The type of the field.
      * @param name            The name of the field.
@@ -371,7 +365,7 @@ public class MethodCall implements Implementation {
 
     /**
      * Defines a method call which fetches a value from an existing field. The field is not defines by this
-     * instrumentation.
+     * implementation.
      *
      * @param fieldName The name of the field.
      * @return A method call which assigns the next parameter to the value of the given field.
@@ -414,12 +408,12 @@ public class MethodCall implements Implementation {
     }
 
     /**
-     * Applies another instrumentation after invoking this method call. A return value that is the result of this
+     * Applies another implementation after invoking this method call. A return value that is the result of this
      * method call is dropped.
      *
-     * @param implementation The instrumentation that is to be applied after applying this
-     *                        method call instrumentation.
-     * @return An instrumentation that first applies this method call and the given instrumentation right after.
+     * @param implementation The implementation that is to be applied after applying this
+     *                       method call instrumentation.
+     * @return An implementation that first applies this method call and the given implementation right after.
      */
     public Implementation andThen(Implementation implementation) {
         return new Implementation.Compound(new MethodCall(methodLocator,
@@ -1860,8 +1854,8 @@ public class MethodCall implements Implementation {
         /**
          * Invokes the method.
          *
-         * @param methodDescription     The method to be invoked.
-         * @param implementationTarget The instrumentation target of the instrumented instance.
+         * @param methodDescription    The method to be invoked.
+         * @param implementationTarget The implementation target of the instrumented instance.
          * @return A stack manipulation that represents the method invocation.
          */
         StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget);
@@ -2099,7 +2093,7 @@ public class MethodCall implements Implementation {
 
         /**
          * Invokes the given method by a super method invocation on the instance of the instrumented type.
-         * Note that the super method is resolved depending on the type of instrumentation when this method is called.
+         * Note that the super method is resolved depending on the type of implementation when this method is called.
          * In case that a subclass is created, the super type is invoked. If a type is rebased, the rebased method
          * is invoked if such a method exists.
          *
@@ -2150,14 +2144,14 @@ public class MethodCall implements Implementation {
     protected class Appender implements ByteCodeAppender {
 
         /**
-         * The instrumentation target of the current instrumentation.
+         * The implementation target of the current implementation.
          */
         private final Target implementationTarget;
 
         /**
          * Creates a new appender.
          *
-         * @param implementationTarget The instrumentation target of the current instrumentation.
+         * @param implementationTarget The implementation target of the current implementation.
          */
         protected Appender(Target implementationTarget) {
             this.implementationTarget = implementationTarget;

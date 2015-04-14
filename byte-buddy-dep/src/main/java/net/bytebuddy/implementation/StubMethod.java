@@ -9,7 +9,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import org.objectweb.asm.MethodVisitor;
 
 /**
- * This instrumentation creates a method stub which does nothing but returning the default value of the return
+ * This implementation creates a method stub which does nothing but returning the default value of the return
  * type of the method. These default values are:
  * <ol>
  * <li>The value {@code 0} for all numeric type.</li>

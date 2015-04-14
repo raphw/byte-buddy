@@ -18,7 +18,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 /**
  * This {@link Implementation} invokes a default method for the methods it instruments.
  * A default method is potentially ambiguous if a method of identical signature is defined in several interfaces.
- * For this reason, this instrumentation allows for the specification of <i>prioritized interfaces</i> whose default
+ * For this reason, this implementation allows for the specification of <i>prioritized interfaces</i> whose default
  * methods, if a method of equivalent signature is defined for a specific interface. All prioritized interfaces are
  * searched for default methods in the order of their specification. If no prioritized interface defines a default method
  * of equivalent signature to the given instrumented method, any non-prioritized interface is searched for a suitable
@@ -30,7 +30,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * the most specific method in its defining type's type hierarchy, i.e. the method must not be overridden by another
  * interface or class type. Additionally, the method must be invokable from an interface type which is directly
  * implemented by the instrumented type. The Java runtime only requires the second condition to be fulfilled which
- * is why this instrumentation only checks the later condition, as well.
+ * is why this implementation only checks the later condition, as well.
  */
 public class DefaultMethodCall implements Implementation {
 
@@ -40,7 +40,7 @@ public class DefaultMethodCall implements Implementation {
     private final List<TypeDescription> prioritizedInterfaces;
 
     /**
-     * Creates a new {@link net.bytebuddy.implementation.DefaultMethodCall} instrumentation for a given list of
+     * Creates a new {@link net.bytebuddy.implementation.DefaultMethodCall} implementation for a given list of
      * prioritized interfaces.
      *
      * @param prioritizedInterfaces A list of prioritized interfaces in the order in which a method should be attempted to
@@ -54,14 +54,14 @@ public class DefaultMethodCall implements Implementation {
     }
 
     /**
-     * Creates a {@link net.bytebuddy.implementation.DefaultMethodCall} instrumentation which searches the given list
+     * Creates a {@link net.bytebuddy.implementation.DefaultMethodCall} implementation which searches the given list
      * of interface types for a suitable default method in their order. If no such prioritized interface is suitable,
      * because it is either not defined on the instrumented type or because it does not define a suitable default method,
      * any remaining interface is searched for a suitable default method. If no or more than one method defines a
      * suitable default method, an exception is thrown.
      *
      * @param prioritizedInterface A list of prioritized default method interfaces in their prioritization order.
-     * @return An instrumentation which calls an instrumented method's compatible default method that considers the given
+     * @return An implementation which calls an instrumented method's compatible default method that considers the given
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(Class<?>... prioritizedInterface) {
@@ -69,14 +69,14 @@ public class DefaultMethodCall implements Implementation {
     }
 
     /**
-     * Creates a {@link net.bytebuddy.implementation.DefaultMethodCall} instrumentation which searches the given list
+     * Creates a {@link net.bytebuddy.implementation.DefaultMethodCall} implementation which searches the given list
      * of interface types for a suitable default method in their order. If no such prioritized interface is suitable,
      * because it is either not defined on the instrumented type or because it does not define a suitable default method,
      * any remaining interface is searched for a suitable default method. If no or more than one method defines a
      * suitable default method, an exception is thrown.
      *
      * @param prioritizedInterface A list of prioritized default method interfaces in their prioritization order.
-     * @return An instrumentation which calls an instrumented method's compatible default method that considers the given
+     * @return An implementation which calls an instrumented method's compatible default method that considers the given
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(TypeDescription... prioritizedInterface) {
@@ -146,7 +146,7 @@ public class DefaultMethodCall implements Implementation {
     protected static class Appender implements ByteCodeAppender {
 
         /**
-         * The instrumentation target of this appender.
+         * The implementation target of this appender.
          */
         private final Target implementationTarget;
 
@@ -163,7 +163,7 @@ public class DefaultMethodCall implements Implementation {
         /**
          * Creates a new appender for implementing a {@link net.bytebuddy.implementation.DefaultMethodCall}.
          *
-         * @param implementationTarget The instrumentation target of this appender.
+         * @param implementationTarget  The implementation target of this appender.
          * @param prioritizedInterfaces The relevant prioritized interfaces to be considered by this appender.
          */
         protected Appender(Target implementationTarget, List<TypeDescription> prioritizedInterfaces) {

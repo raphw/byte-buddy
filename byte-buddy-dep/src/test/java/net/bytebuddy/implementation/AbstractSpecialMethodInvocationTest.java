@@ -40,9 +40,9 @@ public abstract class AbstractSpecialMethodInvocationTest {
     }
 
     protected abstract Implementation.SpecialMethodInvocation make(String name,
-                                                                    TypeDescription returnType,
-                                                                    List<TypeDescription> parameterTypes,
-                                                                    TypeDescription targetType);
+                                                                   TypeDescription returnType,
+                                                                   List<TypeDescription> parameterTypes,
+                                                                   TypeDescription targetType);
 
     @Test
     public void testEquals() throws Exception {

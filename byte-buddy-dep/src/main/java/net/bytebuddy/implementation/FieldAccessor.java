@@ -107,13 +107,13 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Applies a field getter instrumentation.
+     * Applies a field getter implementation.
      *
-     * @param methodVisitor          The method visitor to write any instructions to.
-     * @param implementationContext The instrumentation context of the current instrumentation.
-     * @param fieldDescription       The description of the field to read.
-     * @param methodDescription      The method that is target of the instrumentation.
-     * @return The required size of the operand stack and local variable array for this instrumentation.
+     * @param methodVisitor         The method visitor to write any instructions to.
+     * @param implementationContext The implementation context of the current implementation.
+     * @param fieldDescription      The description of the field to read.
+     * @param methodDescription     The method that is target of the implementation.
+     * @return The required size of the operand stack and local variable array for this implementation.
      */
     protected ByteCodeAppender.Size applyGetter(MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
@@ -137,13 +137,13 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Applies a field setter instrumentation.
+     * Applies a field setter implementation.
      *
-     * @param methodVisitor          The method visitor to write any instructions to.
-     * @param implementationContext The instrumentation context of the current instrumentation.
-     * @param fieldDescription       The description of the field to write to.
-     * @param methodDescription      The method that is target of the instrumentation.
-     * @return The required size of the operand stack and local variable array for this instrumentation.
+     * @param methodVisitor         The method visitor to write any instructions to.
+     * @param implementationContext The implementation context of the current implementation.
+     * @param fieldDescription      The description of the field to write to.
+     * @param methodDescription     The method that is target of the instrumentation.
+     * @return The required size of the operand stack and local variable array for this implementation.
      */
     protected ByteCodeAppender.Size applySetter(MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
@@ -173,11 +173,11 @@ public abstract class FieldAccessor implements Implementation {
     /**
      * A generic implementation of the application of a {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
      *
-     * @param methodVisitor          The method visitor to write any instructions to.
-     * @param implementationContext The instrumentation context of the current instrumentation.
-     * @param fieldDescription       The description of the field to access.
-     * @param methodDescription      The method that is target of the instrumentation.
-     * @param fieldAccess            The manipulation that represents the field access.
+     * @param methodVisitor         The method visitor to write any instructions to.
+     * @param implementationContext The implementation context of the current implementation.
+     * @param fieldDescription      The description of the field to access.
+     * @param methodDescription     The method that is target of the implementation.
+     * @param fieldAccess           The manipulation that represents the field access.
      * @return A suitable {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
      */
     private ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
@@ -202,8 +202,8 @@ public abstract class FieldAccessor implements Implementation {
     /**
      * Locates a field's name.
      *
-     * @param targetMethod The method that is target of the instrumentation.
-     * @return The name of the field to be located for this instrumentation.
+     * @param targetMethod The method that is target of the implementation.
+     * @return The name of the field to be located for this implementation.
      */
     protected abstract String getFieldName(MethodDescription targetMethod);
 
@@ -578,7 +578,7 @@ public abstract class FieldAccessor implements Implementation {
         private final FieldNameExtractor fieldNameExtractor;
 
         /**
-         * Creates a new field accessor instrumentation.
+         * Creates a new field accessor implementation.
          *
          * @param assigner           The assigner to use.
          * @param dynamicallyTyped   {@code true} if a field value's runtime type should be considered.
@@ -594,7 +594,7 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         /**
-         * Creates a new field accessor instrumentation.
+         * Creates a new field accessor implementation.
          *
          * @param assigner            The assigner to use.
          * @param dynamicallyTyped    {@code true} if a field value's runtime type should be considered.
@@ -693,7 +693,7 @@ public abstract class FieldAccessor implements Implementation {
         private final FieldLocator.Factory fieldLocatorFactory;
 
         /**
-         * Creates a field accessor instrumentation for a field of a given name.
+         * Creates a field accessor implementation for a field of a given name.
          *
          * @param assigner         The assigner to use.
          * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
@@ -709,7 +709,7 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         /**
-         * reates a field accessor instrumentation for a field of a given name.
+         * reates a field accessor implementation for a field of a given name.
          *
          * @param fieldName           The name of the field.
          * @param preparationHandler  The preparation handler for potentially defining a field.
@@ -944,7 +944,7 @@ public abstract class FieldAccessor implements Implementation {
         private final FieldLocator fieldLocator;
 
         /**
-         * Creates a new byte code appender for a field accessor instrumentation.
+         * Creates a new byte code appender for a field accessor implementation.
          *
          * @param fieldLocator The field locator for this byte code appender.
          */

@@ -25,27 +25,27 @@ import org.objectweb.asm.Opcodes;
 import java.util.*;
 
 /**
- * An instrumentation is responsible for implementing (or not implementing) methods of a dynamically created type. An
- * instrumentation is applied in two stages:
+ * An implementation is responsible for implementing methods of a dynamically created type as byte code. An
+ * implementation is applied in two stages:
  * <ol>
- * <li>The instrumentation is able to prepare an instrumented type by adding fields and/or helper methods that are
+ * <li>The implementation is able to prepare an instrumented type by adding fields and/or helper methods that are
  * required for the methods implemented by this instrumentation. Furthermore,
- * {@link LoadedTypeInitializer}s can be registered for an instrumented
+ * {@link LoadedTypeInitializer}s  and byte code for the type initializer can be registered for the instrumented
  * type.</li>
- * <li>An instrumentation is required to supply a byte code appender that is responsible for providing the byte code
- * to the instrumented methods that were delegated to this instrumentation. This byte code appender will also
+ * <li>Any implementation is required to supply a byte code appender that is responsible for providing the byte code
+ * to the instrumented methods that were delegated to this instrumentation. This byte code appender is also
  * be responsible for providing implementations for the methods added in step <i>1</i>.</li>
  * </ol>
  * <p>&nbsp;</p>
- * An instrumentation implementation should provide meaningful implementations {@link java.lang.Object#equals(Object)}
+ * An implementation should provide meaningful implementations of both {@link java.lang.Object#equals(Object)}
  * and {@link Object#hashCode()} if it wants to avoid to be used twice within the creation of a dynamic type. For two
- * equal instrumentation implementations only one will be applied on the creation of a dynamic type.
+ * equal implementations only one will be applied on the creation of a dynamic type.
  */
 public interface Implementation {
 
     /**
-     * During the preparation phase of an instrumentation, implementations are eligible to adding fields or methods
-     * to the currently instrumented type. All methods that are added by this instrumentation are required to be
+     * During the preparation phase of an implementation, implementations are eligible to adding fields or methods
+     * to the currently instrumented type. All methods that are added by this implementation are required to be
      * implemented by the {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender} that is emitted
      * on the call to
      * {@link Implementation#appender(Implementation.Target)}
@@ -59,9 +59,9 @@ public interface Implementation {
     /**
      * Creates a byte code appender that determines the implementation of the instrumented type's methods.
      *
-     * @param implementationTarget The target of the current instrumentation.
-     * @return A byte code appender for implementing methods delegated to this instrumentation. This byte code appender
-     * is also responsible for handling methods that were added by this instrumentation on the call to
+     * @param implementationTarget The target of the current implementation.
+     * @return A byte code appender for implementing methods delegated to this implementation. This byte code appender
+     * is also responsible for handling methods that were added by this implementation on the call to
      * {@link Implementation#prepare(InstrumentedType)}.
      */
     ByteCodeAppender appender(Target implementationTarget);
@@ -230,8 +230,8 @@ public interface Implementation {
     }
 
     /**
-     * The target of an instrumentation. Instrumentation targets must be immutable and can be queried without altering
-     * the instrumentation result. An instrumentation target provides information on the type that is to be created
+     * The target of an implementation. Implementation targets must be immutable and can be queried without altering
+     * the implementation result. An implementation target provides information on the type that is to be created
      * where it is the implementation's responsibility to cache expensive computations, especially such computations
      * that require reflective look-up.
      */
@@ -245,12 +245,12 @@ public interface Implementation {
         TypeDescription getTypeDescription();
 
         /**
-         * Identifies the origin type of an instrumentation. The origin type describes the type that is subject to
+         * Identifies the origin type of an implementation. The origin type describes the type that is subject to
          * any form of enhancement. If a subclass of a given type is generated, the base type of this subclass
          * describes the origin type. If a given type is redefined or rebased, the origin type is described by the
          * instrumented type itself.
          *
-         * @return The origin type of this instrumentation.
+         * @return The origin type of this implementation.
          */
         TypeDescription getOriginType();
 
@@ -336,11 +336,11 @@ public interface Implementation {
         interface Factory {
 
             /**
-             * Creates a new instrumentation target.
+             * Creates a new implementation target.
              *
              * @param finding             The analyzed instrumented type.
              * @param instrumentedMethods A list of all methods that are to be instrumented.
-             * @return A suitable instrumentation target.
+             * @return A suitable implementation target.
              */
             Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods);
         }
@@ -371,7 +371,7 @@ public interface Implementation {
             protected final BridgeMethodResolver bridgeMethodResolver;
 
             /**
-             * Creates a new instrumentation target.
+             * Creates a new implementation target.
              *
              * @param finding                     A finding of a {@link MethodLookupEngine}
              *                                    for the instrumented type.
@@ -403,7 +403,7 @@ public interface Implementation {
 
             @Override
             public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription,
-                                                                       MethodLookup methodLookup) {
+                                                                      MethodLookup methodLookup) {
                 return invokeSuper(methodLookup.resolve(methodDescription, invokableMethods, bridgeMethodResolver));
             }
 
@@ -417,7 +417,7 @@ public interface Implementation {
 
             @Override
             public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType,
-                                                                         String uniqueMethodSignature) {
+                                                                        String uniqueMethodSignature) {
                 Map<String, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
                 if (defaultMethods != null) {
                     MethodDescription defaultMethod = defaultMethods.get(uniqueMethodSignature);
@@ -449,18 +449,18 @@ public interface Implementation {
     }
 
     /**
-     * The context for an instrumentation application. An instrumentation context represents a mutable data structure
-     * and all queries are irrevocable. Calling methods on an instrumentation context should be considered equally
-     * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an instrumentation context and a
+     * The context for an implementation application. An implementation context represents a mutable data structure
+     * where any registration is irrevocable. Calling methods on an implementation context should be considered equally
+     * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an implementation context and a
      * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type.
      */
     interface Context {
 
         /**
-         * Registers an auxiliary type as required for the current instrumentation. Registering a type will cause the
-         * creation of this type even if this type is not effectively used for the current instrumentation.
+         * Registers an auxiliary type as required for the current implementation. Registering a type will cause the
+         * creation of this type even if this type is not effectively used for the current implementation.
          *
-         * @param auxiliaryType The auxiliary type that is required for the current instrumentation.
+         * @param auxiliaryType The auxiliary type that is required for the current implementation.
          * @return A description of the registered auxiliary type.
          */
         TypeDescription register(AuxiliaryType auxiliaryType);
@@ -510,7 +510,7 @@ public interface Implementation {
             void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode);
 
             /**
-             * When draining an instrumentation context, a type initializer might be written to the created class
+             * When draining an implementation context, a type initializer might be written to the created class
              * file. If any code must be explicitly invoked from within the type initializer, this can be achieved
              * by providing a code injection by this instance. The injected code is added after the class is set up but
              * before any user code is run from within the type initializer.
@@ -567,11 +567,6 @@ public interface Implementation {
         class Default implements Implementation.Context.ExtractableView, AuxiliaryType.MethodAccessorFactory {
 
             /**
-             * Indicates that a field should be defined without a default value.
-             */
-            private static final Object NO_DEFAULT_VALUE = null;
-
-            /**
              * The name suffix to be appended to an accessor method.
              */
             public static final String ACCESSOR_METHOD_SUFFIX = "accessor";
@@ -580,6 +575,11 @@ public interface Implementation {
              * The name prefix to be prepended to a field storing a cached value.
              */
             public static final String FIELD_CACHE_PREFIX = "cachedValue";
+
+            /**
+             * Indicates that a field should be defined without a default value.
+             */
+            private static final Object NO_DEFAULT_VALUE = null;
 
             /**
              * The instrumented type that this instance represents.
@@ -644,7 +644,7 @@ public interface Implementation {
             private boolean canRegisterFieldCache;
 
             /**
-             * Creates a new instrumentation context.
+             * Creates a new implementation context.
              *
              * @param instrumentedType            The description of the type that is currently subject of creation.
              * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
@@ -1026,7 +1026,7 @@ public interface Implementation {
                 private final FieldDescription fieldDescription;
 
                 /**
-                 * Creates a new field getter instrumentation.
+                 * Creates a new field getter implementation.
                  *
                  * @param fieldDescription The field to read.
                  */
@@ -1116,9 +1116,9 @@ public interface Implementation {
     }
 
     /**
-     * A compound instrumentation that allows to combine several instrumentations.
+     * A compound implementation that allows to combine several implementations.
      * <p>&nbsp;</p>
-     * Note that the combination of two instrumentations might break the contract for implementing
+     * Note that the combination of two implementation might break the contract for implementing
      * {@link java.lang.Object#equals(Object)} and {@link Object#hashCode()} as described for
      * {@link Implementation}.
      *
@@ -1127,14 +1127,14 @@ public interface Implementation {
     class Compound implements Implementation {
 
         /**
-         * All instrumentations that are represented by this compound instrumentation.
+         * All implementation that are represented by this compound implementation.
          */
         private final Implementation[] implementation;
 
         /**
-         * Creates a new immutable compound instrumentation.
+         * Creates a new immutable compound implementation.
          *
-         * @param implementation The instrumentations to combine in their order.
+         * @param implementation The implementations to combine in their order.
          */
         public Compound(Implementation... implementation) {
             this.implementation = implementation;
@@ -1176,7 +1176,7 @@ public interface Implementation {
     }
 
     /**
-     * A simple implementation of an instrumentation that does not register any members with the instrumented type.
+     * A simple implementation that does not register any members with the instrumented type.
      */
     class Simple implements Implementation {
 
@@ -1186,7 +1186,7 @@ public interface Implementation {
         private final ByteCodeAppender byteCodeAppender;
 
         /**
-         * Creates a new simple instrumentation for the given byte code appenders.
+         * Creates a new simple implementation for the given byte code appenders.
          *
          * @param byteCodeAppender The byte code appenders to apply in their order of application.
          */

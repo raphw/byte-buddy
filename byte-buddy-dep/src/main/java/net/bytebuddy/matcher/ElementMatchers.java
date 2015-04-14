@@ -19,9 +19,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.isAnnotation;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * A utility class that contains a human-readable language for creating {@link net.bytebuddy.matcher.ElementMatcher}s.

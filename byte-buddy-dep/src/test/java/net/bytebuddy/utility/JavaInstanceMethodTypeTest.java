@@ -16,10 +16,10 @@ import static org.junit.Assert.assertThat;
 
 public class JavaInstanceMethodTypeTest {
 
+    private static final String BAR = "bar", QUX = "qux";
+
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
-
-    private static final String BAR = "bar", QUX = "qux";
 
     @Test
     @SuppressWarnings("unchecked")
@@ -109,19 +109,19 @@ public class JavaInstanceMethodTypeTest {
 
     public static class Foo {
 
-        Void bar;
-
         static Void qux;
+
+        Void bar;
 
         Foo(Void value) {
             /* empty*/
         }
 
-        void bar(Void value) {
+        static void qux(Void value) {
             /* empty */
         }
 
-        static void qux(Void value) {
+        void bar(Void value) {
             /* empty */
         }
     }

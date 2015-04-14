@@ -12,6 +12,7 @@ import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.*;
 
+import static net.bytebuddy.description.method.MethodDescription.Latent.typeInitializerOf;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -50,7 +51,7 @@ public interface MethodRegistry {
      * @param instrumentedType   The instrumented type that should be created.
      * @param methodLookupEngine A method lookup engine to analyze the fully prepared type.
      * @param methodFilter       A filter that only matches methods that should be instrumented.
-     * @return A preprated version of this method registry.
+     * @return A prepared version of this method registry.
      */
     Prepared prepare(InstrumentedType instrumentedType,
                      MethodLookupEngine methodLookupEngine,
@@ -72,10 +73,41 @@ public interface MethodRegistry {
         /**
          * Compiles this handler.
          *
-         * @param implementationTarget The instrumentation target to compile this handler for.
+         * @param implementationTarget The implementation target to compile this handler for.
          * @return A compiled handler.
          */
         Handler.Compiled compile(Implementation.Target implementationTarget);
+
+        /**
+         * A handler for defining an abstract or native method.
+         */
+        enum ForAbstractMethod implements Handler, Compiled {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public Compiled compile(Implementation.Target implementationTarget) {
+                return this;
+            }
+
+            @Override
+            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
+                return new TypeWriter.MethodPool.Entry.ForAbstractMethod(attributeAppender);
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Handler.ForAbstractMethod." + name();
+            }
+        }
 
         /**
          * A compiled handler for implementing a method.
@@ -183,37 +215,6 @@ public interface MethodRegistry {
         }
 
         /**
-         * A handler for defining an abstract or native method.
-         */
-        enum ForAbstractMethod implements Handler, Compiled {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public Compiled compile(Implementation.Target implementationTarget) {
-                return this;
-            }
-
-            @Override
-            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
-                return new TypeWriter.MethodPool.Entry.ForAbstractMethod(attributeAppender);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.Handler.ForAbstractMethod." + name();
-            }
-        }
-
-        /**
          * A handler for defining a default annotation value for a method.
          */
         class ForAnnotationValue implements Handler, Compiled {
@@ -222,6 +223,15 @@ public interface MethodRegistry {
              * The annotation value to set as a default value.
              */
             private final Object annotationValue;
+
+            /**
+             * Creates a handler for defining a default annotation value for a method.
+             *
+             * @param annotationValue The annotation value to set as a default value.
+             */
+            protected ForAnnotationValue(Object annotationValue) {
+                this.annotationValue = annotationValue;
+            }
 
             /**
              * Represents the given value as an annotation default value handler after validating its suitability.
@@ -235,15 +245,6 @@ public interface MethodRegistry {
                     throw new IllegalArgumentException("Not an annotation value type: " + typeDescription);
                 }
                 return new ForAnnotationValue(annotationValue);
-            }
-
-            /**
-             * Creates a handler for defining a default annotation value for a method.
-             *
-             * @param annotationValue The annotation value to set as a default value.
-             */
-            protected ForAnnotationValue(Object annotationValue) {
-                this.annotationValue = annotationValue;
             }
 
             @Override
@@ -317,8 +318,8 @@ public interface MethodRegistry {
         /**
          * Compiles this prepared method registry.
          *
-         * @param implementationTargetFactory A factory for creating an instrumentation target.
-         * @return A factory for creating an instrumentation target.
+         * @param implementationTargetFactory A factory for creating an implementation target.
+         * @return A factory for creating an implementation target.
          */
         Compiled compile(Implementation.Target.Factory implementationTargetFactory);
     }
@@ -416,8 +417,7 @@ public interface MethodRegistry {
             }
             MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
             ElementMatcher<? super MethodDescription> instrumented = not(anyOf(instrumentations.keySet())).and(methodFilter.resolve(instrumentedType));
-            List<MethodDescription> methodDescriptions = join(MethodDescription.Latent.typeInitializerOf(instrumentedType),
-                    finding.getInvokableMethods().filter(instrumented));
+            List<MethodDescription> methodDescriptions = join(typeInitializerOf(instrumentedType), finding.getInvokableMethods().filter(instrumented));
             for (MethodDescription methodDescription : methodDescriptions) {
                 for (Entry entry : entries) {
                     if (entry.resolve(instrumentedType).matches(methodDescription)) {
@@ -565,7 +565,7 @@ public interface MethodRegistry {
             /**
              * Creates a prepared version of a default method registry.
              *
-             * @param implementations      A map of all method descriptions mapped to their handling entires.
+             * @param implementations       A map of all method descriptions mapped to their handling entires.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type intiailizer of the instrumented type.
              * @param finding               The analyzed instrumented type.
@@ -684,7 +684,7 @@ public interface MethodRegistry {
              * @param instrumentedType      The instrumented type.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type initializer of the instrumented type.
-             * @param implementations      A map of all method descriptions mapped to their handling entries.
+             * @param implementations       A map of all method descriptions mapped to their handling entries.
              */
             public Compiled(TypeDescription instrumentedType,
                             LoadedTypeInitializer loadedTypeInitializer,

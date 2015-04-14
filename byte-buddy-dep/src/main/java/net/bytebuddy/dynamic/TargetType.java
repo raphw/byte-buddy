@@ -18,6 +18,13 @@ public final class TargetType {
     public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
 
     /**
+     * As the {@link net.bytebuddy.dynamic.TargetType} is only to be used as a marker, its constructor is made inaccessible.
+     */
+    private TargetType() {
+        throw new UnsupportedOperationException("This is a place holder type that should not be instantiated");
+    }
+
+    /**
      * Resolves the given type description with the actual target type if the {@code typeDescription} resembles the
      * {@link TargetType} placeholder.
      *
@@ -45,12 +52,5 @@ public final class TargetType {
             typeDescriptions.add(resolve(typeDescription, actualTargetType));
         }
         return new TypeList.Explicit(typeDescriptions);
-    }
-
-    /**
-     * As the {@link net.bytebuddy.dynamic.TargetType} is only to be used as a marker, its constructor is made inaccessible.
-     */
-    private TargetType() {
-        throw new UnsupportedOperationException("This is a place holder type that should not be instantiated");
     }
 }

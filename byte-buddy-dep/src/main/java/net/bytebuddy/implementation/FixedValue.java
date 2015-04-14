@@ -22,8 +22,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
- * This instrumentation returns a fixed value for a method. Other than the
- * {@link net.bytebuddy.implementation.StubMethod} instrumentation, this implementation allows
+ * This implementation returns a fixed value for a method. Other than the
+ * {@link net.bytebuddy.implementation.StubMethod} implementation, this implementation allows
  * to determine a specific value which must be assignable to the returning value of any instrumented method. Otherwise,
  * an exception will be thrown.
  */
@@ -40,7 +40,7 @@ public abstract class FixedValue implements Implementation {
     protected final boolean dynamicallyTyped;
 
     /**
-     * Creates a new fixed value instrumentation.
+     * Creates a new fixed value implementation.
      *
      * @param assigner         The assigner to use for assigning the fixed value to the return type of the instrumented value.
      * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for assigning
@@ -52,17 +52,17 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * Creates a fixed value instrumentation that returns {@code null} as a fixed value. This value is inlined into
+     * Creates a fixed value implementation that returns {@code null} as a fixed value. This value is inlined into
      * the method and does not create a field.
      *
-     * @return An instrumentation that represents the {@code null} value.
+     * @return An implementation that represents the {@code null} value.
      */
     public static Implementation nullValue() {
         return value((Object) null);
     }
 
     /**
-     * Creates a fixed value instrumentation that returns a fixed value. If the value can be inlined into the created
+     * Creates a fixed value implementation that returns a fixed value. If the value can be inlined into the created
      * class, i.e. can be added to the constant pool of a class, no explicit type initialization will be required for
      * the created dynamic class. Otherwise, a static field will be created in the dynamic type which will be initialized
      * with the given value. The following Java types can be inlined:
@@ -83,8 +83,8 @@ public abstract class FixedValue implements Implementation {
      * <p>&nbsp;</p>
      * Note that method handles or (method) types require to be visible to a class's class loader.
      *
-     * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
-     * @return An instrumentation for the given {@code fixedValue}.
+     * @param fixedValue The fixed value to be returned by methods that are instrumented by this implementation.
+     * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable value(Object fixedValue) {
         if (fixedValue == null) {
@@ -161,15 +161,15 @@ public abstract class FixedValue implements Implementation {
 
     /**
      * Other than {@link net.bytebuddy.implementation.FixedValue#value(Object)}, this function
-     * will create a fixed value instrumentation that will always defined a field in the instrumented class. As a result,
+     * will create a fixed value implementation that will always defined a field in the instrumented class. As a result,
      * object identity will be preserved between the given {@code fixedValue} and the value that is returned by
      * instrumented methods.
      * <p>&nbsp;</p>
      * As an exception, the {@code null} value is always presented by a constant value and is never stored in a static
      * field.
      *
-     * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
-     * @return An instrumentation for the given {@code fixedValue}.
+     * @param fixedValue The fixed value to be returned by methods that are instrumented by this implementation.
+     * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable reference(Object fixedValue) {
         if (fixedValue == null) {
@@ -183,15 +183,15 @@ public abstract class FixedValue implements Implementation {
 
     /**
      * Other than {@link net.bytebuddy.implementation.FixedValue#value(Object)}, this function
-     * will create a fixed value instrumentation that will always defined a field in the instrumented class. As a result,
+     * will create a fixed value implementation that will always defined a field in the instrumented class. As a result,
      * object identity will be preserved between the given {@code fixedValue} and the value that is returned by
      * instrumented methods. The field name can be explicitly determined.
      * <p>&nbsp;</p>
-     * As an exception, the {@code null} value cannot be used for this instrumentation but will cause an exception.
+     * As an exception, the {@code null} value cannot be used for this implementation but will cause an exception.
      *
-     * @param fixedValue The fixed value to be returned by methods that are instrumented by this instrumentation.
+     * @param fixedValue The fixed value to be returned by methods that are instrumented by this implementation.
      * @param fieldName  The name of the field for storing the fixed value.
-     * @return An instrumentation for the given {@code fixedValue}.
+     * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable reference(Object fixedValue, String fieldName) {
         if (fixedValue == null) {
@@ -204,7 +204,7 @@ public abstract class FixedValue implements Implementation {
      * Returns the given type in form of a loaded type. The value is loaded from the written class's constant pool.
      *
      * @param fixedValue The type to return from the method.
-     * @return An instrumentation for the given {@code fixedValue}.
+     * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable value(TypeDescription fixedValue) {
         return new ForPoolValue(ClassConstant.of(fixedValue),
@@ -217,7 +217,7 @@ public abstract class FixedValue implements Implementation {
      * Returns the loaded version of the given {@link JavaInstance}. The value is loaded from the written class's constant pool.
      *
      * @param fixedValue The type to return from the method.
-     * @return An instrumentation for the given {@code fixedValue}.
+     * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable value(JavaInstance fixedValue) {
         return new ForPoolValue(fixedValue.asStackManipulation(),
@@ -248,7 +248,7 @@ public abstract class FixedValue implements Implementation {
      * Blueprint method that for applying the actual instrumentation.
      *
      * @param methodVisitor           The method visitor to which the instrumentation is applied to.
-     * @param implementationContext  The instrumentation context for the given instrumentation.
+     * @param implementationContext   The implementation context for the given implementation.
      * @param instrumentedMethod      The instrumented method that is target of the instrumentation.
      * @param fixedValueType          A description of the type of the fixed value that is loaded by the
      *                                {@code valueLoadingInstruction}.
@@ -293,19 +293,19 @@ public abstract class FixedValue implements Implementation {
     public interface AssignerConfigurable extends Implementation {
 
         /**
-         * Defines an explicit assigner to this fixed value instrumentation.
+         * Defines an explicit assigner to this fixed value implementation.
          *
          * @param assigner         The assigner to use for assigning the fixed value to the return type of the
          *                         instrumented value.
          * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
          *                         assigning the return type.
-         * @return A fixed value instrumentation that makes use of the given assigner.
+         * @return A fixed value implementation that makes use of the given assigner.
          */
         Implementation withAssigner(Assigner assigner, boolean dynamicallyTyped);
     }
 
     /**
-     * A fixed value instrumentation that represents its fixed value as a value that is written to the instrumented
+     * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
      * class's constant pool.
      */
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
@@ -321,7 +321,7 @@ public abstract class FixedValue implements Implementation {
         private final TypeDescription loadedType;
 
         /**
-         * Creates a new constant pool fixed value instrumentation.
+         * Creates a new constant pool fixed value implementation.
          *
          * @param valueLoadInstruction The instruction that is responsible for loading the constant pool value onto the
          *                             operand stack.
@@ -388,7 +388,7 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * A fixed value instrumentation that represents its fixed value as a static field of the instrumented class.
+     * A fixed value implementation that represents its fixed value as a static field of the instrumented class.
      */
     protected static class ForStaticField extends FixedValue implements AssignerConfigurable {
 
@@ -413,7 +413,7 @@ public abstract class FixedValue implements Implementation {
         private final TypeDescription fieldType;
 
         /**
-         * Creates a new static field fixed value instrumentation with a random name for the field containing the fixed
+         * Creates a new static field fixed value implementation with a random name for the field containing the fixed
          * value.
          *
          * @param fixedValue       The fixed value to be returned.
@@ -427,7 +427,7 @@ public abstract class FixedValue implements Implementation {
         }
 
         /**
-         * Creates a new static field fixed value instrumentation.
+         * Creates a new static field fixed value implementation.
          *
          * @param fieldName        The name of the field for storing the fixed value.
          * @param fixedValue       The fixed value to be returned.

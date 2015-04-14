@@ -97,6 +97,11 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertThat(getModifiers.invoke(methodParameter[2]), is((Object) 0));
     }
 
+    public @interface Baz {
+
+        String foo();
+    }
+
     public static class Qux {
 
         public static final String foo;
@@ -110,10 +115,5 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         public static void invoke() {
             bar = BAR;
         }
-    }
-
-    public @interface Baz {
-
-        String foo();
     }
 }

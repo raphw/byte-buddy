@@ -15,7 +15,7 @@ import java.util.Map;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 
 /**
- * An instrumentation target for creating a subclass of a given type.
+ * An implementation target for creating a subclass of a given type.
  */
 public class SubclassImplementationTarget extends Implementation.Target.AbstractBase {
 
@@ -31,7 +31,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     protected final OriginTypeIdentifier originTypeIdentifier;
 
     /**
-     * Creates a new subclass instrumentation target.
+     * Creates a new subclass implementation target.
      *
      * @param finding                     The lookup of the instrumented type this instance should represent.
      * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
@@ -91,7 +91,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     /**
-     * Responsible for identifying the origin type that an instrumentation target represents when
+     * Responsible for identifying the origin type that an implementation target represents when
      * {@link Implementation.Target#getOriginType()} is invoked.
      */
     public enum OriginTypeIdentifier {
@@ -136,7 +136,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     public static class Factory implements Implementation.Target.Factory {
 
         /**
-         * A factory for creating a bridge method resolver to be handed to the created subclass instrumentation target.
+         * A factory for creating a bridge method resolver to be handed to the created subclass implementation target.
          */
         private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
 
@@ -146,10 +146,10 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         private final OriginTypeIdentifier originTypeIdentifier;
 
         /**
-         * Creates a new factory for a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassimplementationTarget}.
+         * Creates a new factory for a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget}.
          *
          * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver to be handed to the
-         *                                    created subclass instrumentation target.
+         *                                    created subclass implementation target.
          * @param originTypeIdentifier        The origin type identifier to use.
          */
         public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,

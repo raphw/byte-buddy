@@ -67,7 +67,7 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(OriginString.class));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), instanceOf(String.class));
-        assertThat(instance.foo(),is((Object) Foo.class.getDeclaredMethod(FOO).toString()));
+        assertThat(instance.foo(), is((Object) Foo.class.getDeclaredMethod(FOO).toString()));
     }
 
     @Test

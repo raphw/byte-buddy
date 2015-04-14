@@ -215,6 +215,16 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         }).apply();
     }
 
+    public enum SimpleEnum {
+        FIRST,
+        SECOND
+    }
+
+    public interface SimpleInterface {
+
+        void bar(Void arg);
+    }
+
     public static class DefaultConstructor {
 
         public DefaultConstructor() {
@@ -224,15 +234,5 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         public DefaultConstructor(Void arg) {
             /* empty */
         }
-    }
-
-    public interface SimpleInterface {
-
-        void bar(Void arg);
-    }
-
-    public enum SimpleEnum {
-        FIRST,
-        SECOND
     }
 }

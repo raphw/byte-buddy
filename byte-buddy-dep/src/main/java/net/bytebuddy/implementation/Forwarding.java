@@ -16,7 +16,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
- * This instrumentation forwards method invocations to another instance. For this, the intercepted method must be
+ * This implementation forwards method invocations to another instance. For this, the intercepted method must be
  * defined on a super type of the given delegation target. Static methods cannot be forwarded as they are not
  * invoked on an instance.
  */
@@ -43,7 +43,7 @@ public class Forwarding implements Implementation {
     protected final PreparationHandler preparationHandler;
 
     /**
-     * Creates a new forwarding instrumentation.
+     * Creates a new forwarding implementation.
      *
      * @param fieldName          The name of the field.
      * @param fieldType          The type of the field.
@@ -60,7 +60,7 @@ public class Forwarding implements Implementation {
      * of the instrumented class. The field name is generated from the instance's hash code.
      *
      * @param delegate The delegate to which all intercepted methods should be forwarded.
-     * @return A corresponding instrumentation.
+     * @return A corresponding implementation.
      */
     public static Implementation to(Object delegate) {
         return to(delegate, String.format("%s$%d", FIELD_PREFIX, delegate.hashCode()));
@@ -72,7 +72,7 @@ public class Forwarding implements Implementation {
      *
      * @param delegate  The delegate to which all intercepted methods should be forwarded.
      * @param fieldName The name of the field in which the delegate should be stored.
-     * @return A corresponding instrumentation.
+     * @return A corresponding implementation.
      */
     public static Implementation to(Object delegate, String fieldName) {
         return new Forwarding(isValidIdentifier(fieldName),
@@ -86,7 +86,7 @@ public class Forwarding implements Implementation {
      *
      * @param fieldName The name of the field in which the delegate should be stored.
      * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
-     * @return A corresponding instrumentation.
+     * @return A corresponding implementation.
      */
     public static Implementation toStaticField(String fieldName, Class<?> fieldType) {
         return toStaticField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
@@ -98,7 +98,7 @@ public class Forwarding implements Implementation {
      *
      * @param fieldName The name of the field in which the delegate should be stored.
      * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
-     * @return A corresponding instrumentation.
+     * @return A corresponding implementation.
      */
     public static Implementation toStaticField(String fieldName, TypeDescription fieldType) {
         return new Forwarding(isValidIdentifier(fieldName),
@@ -112,7 +112,7 @@ public class Forwarding implements Implementation {
      *
      * @param fieldName The name of the field in which the delegate should be stored.
      * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
-     * @return A corresponding instrumentation.
+     * @return A corresponding implementation.
      */
     public static Implementation toInstanceField(String fieldName, Class<?> fieldType) {
         return toInstanceField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
@@ -124,7 +124,7 @@ public class Forwarding implements Implementation {
      *
      * @param fieldName The name of the field in which the delegate should be stored.
      * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
-     * @return A corresponding instrumentation.
+     * @return A corresponding implementation.
      */
     public static Implementation toInstanceField(String fieldName, TypeDescription fieldType) {
         return new Forwarding(isValidIdentifier(fieldName),
@@ -181,7 +181,7 @@ public class Forwarding implements Implementation {
     }
 
     /**
-     * A handler for preparing a {@link net.bytebuddy.implementation.Forwarding} instrumentation.
+     * A handler for preparing a {@link net.bytebuddy.implementation.Forwarding} implementation.
      */
     protected interface PreparationHandler {
 

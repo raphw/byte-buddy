@@ -379,7 +379,7 @@ public @interface Pipe {
             }
 
             /**
-             * The instrumentation to implement a
+             * The implementation to implement a
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
              * constructor.
              */
@@ -482,7 +482,7 @@ public @interface Pipe {
             }
 
             /**
-             * The instrumentation to implement a
+             * The implementation to implement a
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
              * forwarding method.
              */
@@ -499,7 +499,7 @@ public @interface Pipe {
                 private final Assigner assigner;
 
                 /**
-                 * Creates a new method call instrumentation.
+                 * Creates a new method call implementation.
                  *
                  * @param redirectedMethod The method that is invoked by the implemented method.
                  * @param assigner         The assigner to be used for invoking the forwarded method.

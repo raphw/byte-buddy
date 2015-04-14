@@ -13,7 +13,7 @@ import java.util.*;
  * A method delegation binder is responsible for creating a method binding for a <i>source method</i> to a
  * <i>target method</i>. Such a binding allows to implement the source method by calling the target method.
  * <p>&nbsp;</p>
- * Usually, an instrumentation will attempt to bind a specific source method to a set of target method candidates
+ * Usually, an implementation will attempt to bind a specific source method to a set of target method candidates
  * where all legal bindings are considered for binding. To chose a specific candidate, an
  * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}
  * will be consulted for selecting a <i>best</i> binding.
@@ -23,10 +23,10 @@ public interface MethodDelegationBinder {
     /**
      * Attempts a binding of a source method to a given target method.
      *
-     * @param implementationTarget The target of the current instrumentation onto which this binding
-     *                              is to be applied.
-     * @param source                The method that is to be bound to the {@code target} method.
-     * @param target                The method that is to be invoked as a delegate.
+     * @param implementationTarget The target of the current implementation onto which this binding
+     *                             is to be applied.
+     * @param source               The method that is to be bound to the {@code target} method.
+     * @param target               The method that is to be invoked as a delegate.
      * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method.
      */
     MethodBinding bind(Implementation.Target implementationTarget,
@@ -861,9 +861,9 @@ public interface MethodDelegationBinder {
         }
 
         /**
-         * @param implementationTarget The instrumentation target for binding the {@code source} method to.
-         * @param source                The source method that is to be bound.
-         * @param targets               All possible targets for the delegation binding that are to be considered.
+         * @param implementationTarget The implementation target for binding the {@code source} method to.
+         * @param source               The source method that is to be bound.
+         * @param targets              All possible targets for the delegation binding that are to be considered.
          * @return The best binding that was identified. If no such binding can be identified, an exception is thrown.
          */
         public MethodBinding process(Implementation.Target implementationTarget,
@@ -879,9 +879,9 @@ public interface MethodDelegationBinder {
         /**
          * Creates a list of method bindings for any legal target method.
          *
-         * @param implementationTarget The instrumentation target for binding the {@code source} method to.
-         * @param source                The method that is to be bound to any {@code targets} method.
-         * @param targets               All possible targets for the delegation binding that are to be considered.
+         * @param implementationTarget The implementation target for binding the {@code source} method to.
+         * @param source               The method that is to be bound to any {@code targets} method.
+         * @param targets              All possible targets for the delegation binding that are to be considered.
          * @return A list of valid method bindings representing a subset of the given target methods.
          */
         private List<MethodBinding> bind(Implementation.Target implementationTarget,

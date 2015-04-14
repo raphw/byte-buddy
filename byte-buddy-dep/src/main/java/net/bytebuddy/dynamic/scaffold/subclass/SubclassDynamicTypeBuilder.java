@@ -18,9 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.isOverridable;
-import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Creates a dynamic type on basis of loaded types where the dynamic type extends a given type.

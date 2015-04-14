@@ -12,7 +12,7 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.List;
 
 /**
- * An instrumentation target for redefining a given type while preserving the original methods within the
+ * An implementation target for redefining a given type while preserving the original methods within the
  * instrumented type.
  * <p>&nbsp;</p>
  * Super method calls are merely emulated by this {@link Implementation.Target} in order
@@ -29,7 +29,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     protected final MethodRebaseResolver methodRebaseResolver;
 
     /**
-     * Creates a rebase instrumentation target.
+     * Creates a rebase implementation target.
      *
      * @param finding                     The lookup of the instrumented type this instance should represent.
      * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
@@ -208,7 +208,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         private final MethodRebaseResolver methodRebaseResolver;
 
         /**
-         * Creates a new factory for a rebase instrumentation target.
+         * Creates a new factory for a rebase implementation target.
          *
          * @param bridgeMethodResolverFactory The bridge method resolver factory to use.
          * @param methodRebaseResolver        The method rebase resolver to use.
