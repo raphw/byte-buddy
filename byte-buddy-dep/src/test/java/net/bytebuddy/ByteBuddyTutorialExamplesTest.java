@@ -433,8 +433,6 @@ public class ByteBuddyTutorialExamplesTest {
 
         INSTANCE;
 
-        // TODO: Update tutorial!
-
         @Override
         public Size apply(MethodVisitor methodVisitor,
                           Instrumentation.Context instrumentationContext,

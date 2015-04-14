@@ -41,8 +41,6 @@ import java.lang.reflect.Method;
 @Target(ElementType.PARAMETER)
 public @interface Origin {
 
-    // TODO: Update tutorial
-
     /**
      * Determines if the value that is assigned by this annotation is cached. For values that can be stored in the constant pool,
      * this value is ignored as such values are cached implicitly. As a result, this value currently only affects caching of
