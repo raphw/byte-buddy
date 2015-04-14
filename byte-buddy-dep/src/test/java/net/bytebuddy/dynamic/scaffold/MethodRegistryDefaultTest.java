@@ -23,6 +23,7 @@ import java.util.Collections;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class MethodRegistryDefaultTest {
@@ -38,6 +39,9 @@ public class MethodRegistryDefaultTest {
 
     @Mock
     private MethodRegistry.Handler.Compiled firstCompiledHandler, secondCompiledHandler;
+
+    @Mock
+    private TypeWriter.MethodPool.Entry firstEntry, secondEntry;
 
     @Mock
     private MethodAttributeAppender.Factory firstFactory, secondFactory;
@@ -97,6 +101,8 @@ public class MethodRegistryDefaultTest {
         when(secondFactory.make(typeDescription)).thenReturn(secondAppender);
         when(instrumentationTargetFactory.make(finding, new MethodList.Explicit(Collections.singletonList(instrumentedMethod))))
                 .thenReturn(instrumentationTarget);
+        when(firstCompiledHandler.assemble(firstAppender)).thenReturn(firstEntry);
+        when(secondCompiledHandler.assemble(secondAppender)).thenReturn(secondEntry);
     }
 
     @Test
@@ -170,9 +176,12 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory)
                 .append(firstMatcher, firstHandler, firstFactory)
-                .append(secondMatcher, secondHandler, secondFactory)
-                .append(secondMatcher, firstHandler, secondFactory)
                 .append(secondMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, firstHandler, secondFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .append(firstMatcher, secondHandler, secondFactory)
+                .append(firstMatcher, firstHandler, secondFactory)
+                .append(firstMatcher, secondHandler, firstFactory)
                 .prepare(firstType, methodLookupEngine, methodFilter);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
@@ -183,7 +192,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    public void testCompiled() throws Exception {
+    public void testCompiledAppendingMatchesFirstAppended() throws Exception {
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
         when(secondFilter.matches(instrumentedMethod)).thenReturn(true);
@@ -199,6 +208,75 @@ public class MethodRegistryDefaultTest {
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
         verify(secondHandler).prepare(secondType);
+        verify(firstFactory).make(typeDescription);
+        verifyZeroInteractions(secondFactory);
+        assertThat(methodRegistry.target(instrumentedMethod), is(firstEntry));
+    }
+
+    @Test
+    public void testCompiledPrependingMatchesLastPrepended() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepend(firstMatcher, firstHandler, firstFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter)
+                .compile(instrumentationTargetFactory);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
+        verify(firstFactory).make(typeDescription);
+        verifyZeroInteractions(secondFactory);
+        assertThat(methodRegistry.target(instrumentedMethod), is(firstEntry));
+    }
+
+    @Test
+    public void testCompiledAppendingMatchesSecondAppendedIfFirstDoesNotMatch() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(false);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter)
+                .compile(instrumentationTargetFactory);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
+        verifyZeroInteractions(firstFactory);
+        verify(secondFactory).make(typeDescription);
+        assertThat(methodRegistry.target(instrumentedMethod), is(secondEntry));
+    }
+
+    @Test
+    public void testSkipEntryIfNotMatched() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(false);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(false);
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepare(firstType, methodLookupEngine, methodFilter)
+                .compile(instrumentationTargetFactory);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
+        verifyZeroInteractions(firstFactory);
+        verifyZeroInteractions(secondFactory);
+        assertThat(methodRegistry.target(instrumentedMethod), is((TypeWriter.MethodPool.Entry) TypeWriter.MethodPool.Entry.ForSkippedMethod.INSTANCE));
     }
 
     @Test
