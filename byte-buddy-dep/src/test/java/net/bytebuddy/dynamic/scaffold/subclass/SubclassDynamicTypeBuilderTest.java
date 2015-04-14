@@ -4,7 +4,6 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.scaffold.inline.RedefinitionDynamicTypeBuilder;
 import net.bytebuddy.instrumentation.FixedValue;
 import net.bytebuddy.instrumentation.StubMethod;
 import net.bytebuddy.modifier.Visibility;

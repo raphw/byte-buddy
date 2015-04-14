@@ -17,16 +17,32 @@ public final class TargetType {
      */
     public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
 
-    public static TypeDescription resolve(TypeDescription typeDescription, TypeDescription instrumentedType) {
+    /**
+     * Resolves the given type description with the actual target type if the {@code typeDescription} resembles the
+     * {@link TargetType} placeholder.
+     *
+     * @param typeDescription  The type description to resolve.
+     * @param actualTargetType The actual type for which {@link TargetType} was a placeholder.
+     * @return The resolved type description.
+     */
+    public static TypeDescription resolve(TypeDescription typeDescription, TypeDescription actualTargetType) {
         return typeDescription.represents(TargetType.class)
-                ? instrumentedType
+                ? actualTargetType
                 : typeDescription;
     }
 
-    public static TypeList resolve(List<? extends TypeDescription> typeList, TypeDescription instrumentedType) {
+    /**
+     * Resolves any type description in the given listwith the actual target type if the {@code typeDescription} resembles the
+     * {@link TargetType} placeholder.
+     *
+     * @param typeList         The list to resolve.
+     * @param actualTargetType The actual type for which {@link TargetType} was a placeholder.
+     * @return The resolved list of type descriptions.
+     */
+    public static TypeList resolve(List<? extends TypeDescription> typeList, TypeDescription actualTargetType) {
         List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(typeList.size());
         for (TypeDescription typeDescription : typeList) {
-            typeDescriptions.add(resolve(typeDescription, instrumentedType));
+            typeDescriptions.add(resolve(typeDescription, actualTargetType));
         }
         return new TypeList.Explicit(typeDescriptions);
     }

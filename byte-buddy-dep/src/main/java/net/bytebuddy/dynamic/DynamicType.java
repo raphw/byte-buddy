@@ -170,7 +170,8 @@ public interface DynamicType {
     File toJar(File file, Manifest manifest) throws IOException;
 
     /**
-     * A builder for defining a dynamic type. Implementations of such builders are usually immutable.
+     * A builder for defining a dynamic type. Implementations of such builders are fully immutable and return
+     * modified instances.
      *
      * @param <T> The most specific known loaded type that is implemented by the created dynamic type, usually the
      *            type itself, an interface or the direct super class.
@@ -217,6 +218,12 @@ public interface DynamicType {
          */
         Builder<T> name(NamingStrategy namingStrategy);
 
+        /**
+         * Defines a naming strategy for naming auxiliary types.
+         *
+         * @param namingStrategy The naming strategy to use.
+         * @return This builder where the auxiliary naming strategy was set to be used.
+         */
         Builder<T> name(AuxiliaryType.NamingStrategy namingStrategy);
 
         /**
@@ -672,8 +679,24 @@ public interface DynamicType {
              */
             MethodAnnotationTarget<S> withoutCode();
 
+            /**
+             * Defines a default annotation value to set for any matched method.
+             *
+             * @param value The value that the annotation property should set as a default.
+             * @param type  The type of the annotation property.
+             * @return A builder which defines the given default value for all matched methods.
+             */
             MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type);
 
+            /**
+             * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
+             * {@code enum} values should be handed as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription.EnumerationValue}
+             * instances, annotations as {@link net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription} instances and
+             * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
+             *
+             * @param value A non-loaded value that the annotation property should set as a default.
+             * @return A builder which defines the given default value for all matched methods.
+             */
             MethodAnnotationTarget<S> withDefaultValue(Object value);
         }
 
@@ -2447,8 +2470,14 @@ public interface DynamicType {
                  */
                 private final List<MethodToken> methodTokens;
 
-                private DefaultMatchedMethodInterception(LatentMethodMatcher methodMatcher,
-                                                         List<MethodToken> methodTokens) {
+                /**
+                 * Creates a new instance of a default matched method interception.
+                 *
+                 * @param methodMatcher The latent method matcher that identifies this interception.
+                 * @param methodTokens  A list of all method tokens that were previously defined.
+                 */
+                protected DefaultMatchedMethodInterception(LatentMethodMatcher methodMatcher,
+                                                           List<MethodToken> methodTokens) {
                     this.methodMatcher = methodMatcher;
                     this.methodTokens = methodTokens;
                 }
@@ -2471,18 +2500,14 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
-                    TypeDescription typeDescription = new TypeDescription.ForLoadedType(nonNull(type));
-                    if (!typeDescription.isAnnotationValue()) {
-                        throw new IllegalArgumentException("Not an annotation value: " + type);
-                    }
-                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(value, typeDescription));
+                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             methodMatcher,
-                            new MethodRegistry.Handler.ForAnnotationValue(value),
+                            MethodRegistry.Handler.ForAnnotationValue.of(value),
                             MethodAttributeAppender.NoOp.INSTANCE);
                 }
 
@@ -2628,13 +2653,19 @@ public interface DynamicType {
              */
             protected class DefaultMethodAnnotationTarget extends AbstractDelegatingBuilder<S> implements MethodAnnotationTarget<S> {
 
-                private final LatentMethodMatcher methodMatcher;
-
                 /**
                  * A list of all method tokens that were previously defined.
                  */
                 private final List<MethodToken> methodTokens;
 
+                /**
+                 * A matcher that allows to identify the methods to be intercepted.
+                 */
+                private final LatentMethodMatcher methodMatcher;
+
+                /**
+                 * The handler to apply to any matched method.
+                 */
                 private final MethodRegistry.Handler handler;
 
                 /**
@@ -2642,10 +2673,18 @@ public interface DynamicType {
                  */
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
-                private DefaultMethodAnnotationTarget(List<MethodToken> methodTokens,
-                                                      LatentMethodMatcher methodMatcher,
-                                                      MethodRegistry.Handler handler,
-                                                      MethodAttributeAppender.Factory attributeAppenderFactory) {
+                /**
+                 * Creates a new default method annotation target.
+                 *
+                 * @param methodTokens             A list of all method tokens that were previously defined.
+                 * @param methodMatcher            A matcher that allows to identify the methods to be intercepted.
+                 * @param handler                  The handler to apply to any matched method.
+                 * @param attributeAppenderFactory The method attribute appender factory to be applied to the matched methods.
+                 */
+                protected DefaultMethodAnnotationTarget(List<MethodToken> methodTokens,
+                                                        LatentMethodMatcher methodMatcher,
+                                                        MethodRegistry.Handler handler,
+                                                        MethodAttributeAppender.Factory attributeAppenderFactory) {
                     this.methodMatcher = methodMatcher;
                     this.methodTokens = methodTokens;
                     this.handler = handler;

@@ -42,6 +42,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      *
      * @param classFileVersion                      The class file version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param auxiliaryTypeNamingStrategy           The naming strategy to apply to auxiliary types.
      * @param superType                             The super class that the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -100,6 +101,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      *
      * @param classFileVersion                      The class file version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
+     * @param auxiliaryTypeNamingStrategy           The naming strategy to apply to auxiliary types.
      * @param superType                             The super class that the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.

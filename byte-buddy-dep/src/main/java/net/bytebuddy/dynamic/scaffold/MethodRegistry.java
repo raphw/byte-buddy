@@ -227,11 +227,25 @@ public interface MethodRegistry {
             private final Object annotationValue;
 
             /**
+             * Represents the given value as an annotation default value handler after validating its suitability.
+             *
+             * @param annotationValue The annotation value to represent.
+             * @return A handler for setting the given value as a default value for instrumented methods.
+             */
+            public static Handler of(Object annotationValue) {
+                TypeDescription typeDescription = new TypeDescription.ForLoadedType(annotationValue.getClass());
+                if (!typeDescription.isAnnotationValue() && !typeDescription.isPrimitiveWrapper()) {
+                    throw new IllegalArgumentException("Not an annotation value type: " + typeDescription);
+                }
+                return new ForAnnotationValue(annotationValue);
+            }
+
+            /**
              * Creates a handler for defining a default annotation value for a method.
              *
              * @param annotationValue The annotation value to set as a default value.
              */
-            public ForAnnotationValue(Object annotationValue) {
+            protected ForAnnotationValue(Object annotationValue) {
                 this.annotationValue = annotationValue;
             }
 

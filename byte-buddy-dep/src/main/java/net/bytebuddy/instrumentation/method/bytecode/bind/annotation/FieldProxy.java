@@ -48,6 +48,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 @Target(ElementType.PARAMETER)
 public @interface FieldProxy {
 
+    // TODO: Update tutorial
+
     /**
      * A placeholder name to indicate that a field name should be inferred by the name of the intercepted
      * method by the Java bean naming conventions.

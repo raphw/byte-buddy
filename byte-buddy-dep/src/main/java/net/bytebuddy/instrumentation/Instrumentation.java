@@ -335,6 +335,13 @@ public interface Instrumentation {
          */
         interface Factory {
 
+            /**
+             * Creates a new instrumentation target.
+             *
+             * @param finding             The analyzed instrumented type.
+             * @param instrumentedMethods A list of all methods that are to be instrumented.
+             * @return A suitable instrumentation target.
+             */
             Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods);
         }
 

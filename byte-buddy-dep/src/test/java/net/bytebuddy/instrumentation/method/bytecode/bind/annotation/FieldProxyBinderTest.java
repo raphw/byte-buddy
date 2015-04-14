@@ -22,8 +22,6 @@ import static org.mockito.Mockito.*;
 
 public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProxy> {
 
-    // TODO: Update tutorial
-
     private static final String FOO = "foo";
 
     @Mock

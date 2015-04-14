@@ -276,7 +276,7 @@ public interface TypeDescription extends ByteCodeElement {
     boolean isPrimitiveWrapper();
 
     /**
-     * Checks if instances of this type can be defined as values of an annotation.
+     * Checks if instances of this type can be defined as unloaded value of an annotation.
      *
      * @return {@code true} if instances of this type can be defined as values of an annotation.
      */
@@ -429,8 +429,8 @@ public interface TypeDescription extends ByteCodeElement {
         public boolean isAnnotationValue() {
             return isPrimitive()
                     || represents(String.class)
-                    || isEnum()
-                    || isAnnotation()
+                    || isAssignableTo(AnnotationDescription.EnumerationValue.class)
+                    || isAssignableTo(AnnotationDescription.class)
                     || isAssignableTo(TypeDescription.class)
                     || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationValue());
         }

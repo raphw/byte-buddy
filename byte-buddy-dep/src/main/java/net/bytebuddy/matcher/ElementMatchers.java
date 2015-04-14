@@ -259,14 +259,6 @@ public final class ElementMatchers {
         return matcher;
     }
 
-    public static <T> ElementMatcher.Junction<T> matchesAny(Iterable<? extends ElementMatcher<? super T>> matchers) {
-        ElementMatcher.Junction<T> matcher = none();
-        for (ElementMatcher<? super T> aMatcher : matchers) {
-            matcher = matcher.or(aMatcher);
-        }
-        return matcher;
-    }
-
     /**
      * Creates a matcher that matches none of the given types as {@link net.bytebuddy.instrumentation.type.TypeDescription}s
      * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.

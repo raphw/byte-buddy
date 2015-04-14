@@ -524,12 +524,12 @@ public interface TypeWriter<T> {
         /**
          * A flag for ASM not to automatically compute any information such as operand stack sizes and stack map frames.
          */
-        protected int ASM_MANUAL_FLAG = 0;
+        protected static final int ASM_MANUAL_FLAG = 0;
 
         /**
          * The ASM API version to use.
          */
-        protected int ASM_API_VERSION = Opcodes.ASM5;
+        protected static final int ASM_API_VERSION = Opcodes.ASM5;
 
         /**
          * The instrumented type that is to be written.
