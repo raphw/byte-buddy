@@ -384,8 +384,8 @@ class HardcodedFrameworkImpl implements Framework {
 <p>
     In general, Byte Buddy does not want to be opinionated about this trade-off between the costs of class creation and
     the costs of using the generated code. If the runtime of class creation is in particular important to you, you
-    should however always consider to implement a specialized method <code>Instrumentation</code>. This topic is covered
-    in detail in a later section of this tutorial. For most users, Byte Buddy's general purpose instrumentations should
+    should however always consider to implement a specialized method <code>Implementation</code>. This topic is covered
+    in detail in a later section of this tutorial. For most users, Byte Buddy's general purpose implementations should
     however suffice since generated code is usually only created once during an application's bootstrap. And neither
     forget that the above measures are scaled in nanoseconds. Only while you were reading this paragraph, a code
     generator could have created hundreds of thousands of classes. In this context, note that Java classes are not
@@ -906,9 +906,10 @@ class ToStringAgent {
     class's implementation. In order to load classes into the bootstrap class loader, Byte Buddy can create jar files
     and add these files to the bootstrap class loader's load path. To make this possible, it is however required to
     save these classes to disk. A folder for these classes can be specified using the
-    <code>enableBootstrapInjection</code> command which also takes an instance of the instrumentation interface in
-    order to append the classes. Note that all user classes that are used by the instrumented class are also required
-    to be put on the bootstrap search path which is possible using the <code>Instrumentation</code> interface.
+    <code>enableBootstrapInjection</code> command which also takes an instance of the <code>Instrumentation</code>
+    interface in order to append the classes. Note that all user classes that are used by the instrumented class are
+    also required to be put on the bootstrap search path which is possible using the <code>Instrumentation</code>
+    interface.
 </p>
 
 <h4>Loading classes in Android applications</h4>
@@ -1000,10 +1001,10 @@ named("toString").and(returns(String.class)).and(takesArguments(0))
 <p>
     After selecting the <code>toString</code> method, the second instruction <code>intercept</code> determines
     the implementation that should override all methods of the given selection. In order to know how to implement a
-    method, this instruction requires a single argument of type <code>Instrumentation</code>. In the above example,
-    we are making use of the <code>FixedValue</code> instrumentation which ships with Byte Buddy. As suggested by
-    this class's name, the instrumentation implements a method to always return a given value. We will have a more
-    detailed look at the <code>FixedValue</code> instrumentation a little later in this section. Right now, let us
+    method, this instruction requires a single argument of type <code>Implementation</code>. In the above example,
+    we are making use of the <code>FixedValue</code> implementation which ships with Byte Buddy. As suggested by
+    this class's name, the implementation implements a method to always return a given value. We will have a more
+    detailed look at the <code>FixedValue</code> implementation a little later in this section. Right now, let us
     rather look a little closer at the method selection.
 </p>
 
@@ -1077,8 +1078,8 @@ Foo dynamicFoo = new ByteBuddy()
     In some scenarios, you might want to define a new method that does not override a method of a super type or an
     interface. This is also possible using Byte Buddy. For this purpose, you can call <code>defineMethod</code> where
     you are able to define a signature. After defining a method, you are ask to provide an
-    <code>Instrumentation</code> just as with a method that was identified by a method matcher. Note that method
-    matchers that are registered after a method's definition might supersede this instrumentation by the stacking
+    <code>Implementation</code> just as with a method that was identified by a method matcher. Note that method
+    matchers that are registered after a method's definition might supersede this implementation by the stacking
     principle that we discussed before.
 </p>
 
@@ -1090,16 +1091,16 @@ Foo dynamicFoo = new ByteBuddy()
 
 <p>
     With this knowledge on how methods are selected, we are ready to learn about how we can implement these methods.
-    For this purpose, we now look at predefined <code>Instrumentation</code> implementations that ship with Byte Buddy.
-    Defining custom instrumentations is discussed in the its own section and is only intended for users that require
+    For this purpose, we now look at predefined <code>Implementation</code> implementations that ship with Byte Buddy.
+    Defining custom implementation is discussed in the its own section and is only intended for users that require
     very custom method implementations.
 </p>
 
 <h4>A closer look at fixed values</h4>
 
 <p>
-    We have already seen the <code>FixedValue</code> instrumentation in action. As the name suggests, methods
-    that are instrumented by <code>FixedValue</code> simply return a provided object. A class is able to remember
+    We have already seen the <code>FixedValue</code> implementation in action. As the name suggests, methods
+    that are implemented by <code>FixedValue</code> simply return a provided object. A class is able to remember
     such an object in two different manners:
 </p>
 
@@ -1121,7 +1122,7 @@ Foo dynamicFoo = new ByteBuddy()
         Byte Buddy automatically triggers its type initializer such that the class is ready for use. Therefore,
         you do not normally need to worry about type initializers. However, if you want to load dynamic classes to
         be loaded outside of Byte Buddy, it is important that you run their type initializers manually after these
-        classes are loaded. Otherwise, a <code>FixedValue</code> instrumentation would for example return
+        classes are loaded. Otherwise, a <code>FixedValue</code> implementation would for example return
         <code>null</code> instead of the required value because the static field was never assigned this value.
         Many dynamic types might however not require explicit initialization. A class's type initializer can
         therefore be queried for its liveliness by calling its <code>isAlive</code> method. If you need to trigger
@@ -1153,7 +1154,7 @@ new ByteBuddy()
 </pre>
 
 <p>
-    It would be difficult to prevent this invalid instrumentation by the compiler within Java's type system. Instead,
+    It would be difficult to prevent this invalid implementation by the compiler within Java's type system. Instead,
     Byte Buddy will throw an <code>IllegalArgumentException</code> when the type is created and the illegal assignment
     of an integer to a method that returns a <code>String</code> becomes effective. Byte Buddy tries its best to assure
     that all its created types are legal Java types and <i>fail fast</i> by throwing an exception during the creation
@@ -1169,14 +1170,14 @@ new ByteBuddy()
     Instead of using the predefined assigner, you can always implement your own <code>Assigner</code> which is capable
     of type transformations that are not implicit in the Java programming language. We will look into such custom
     implementations in the last section of this tutorial. For now, we settle for mentioning that you can define such
-    custom assigners by calling <code>withAssigner</code> on any <code>FixedValue</code> instrumentation.
+    custom assigners by calling <code>withAssigner</code> on any <code>FixedValue</code> implementation.
 </p>
 
 <h4>Delegating a method call</h4>
 
 <p>
     In many scenarios, returning a fixed value from a method is of course insufficient. For more flexibility, Byte
-    Buddy provides the <code>MethodDelegation</code> instrumentation which offers maximal freedom in reacting to method
+    Buddy provides the <code>MethodDelegation</code> implementation which offers maximal freedom in reacting to method
     calls. A method delegation defines a method of the dynamically created type to forward any call to another
     method which may live outside of the dynamic type. This way, a dynamic class's logic can be represented using
     plain Java while only the binding to another method is achieved by code generation. Before discussing the details,
@@ -1207,7 +1208,7 @@ String helloWorld = new ByteBuddy()
 <p>
     In the example, we are delegating invocations of the <code>Source#hello(String)</code> method to the
     <code>Target</code> type such that the method returns <code>Hello World!</code> instead of <code>null</code>.
-    For this purpose, the <code>MethodDelegation</code> instrumentation identifies any invokable method of the
+    For this purpose, the <code>MethodDelegation</code> implementation identifies any invokable method of the
     <code>Target</code> type and identifies a <i>best match</i> among those methods. In the above example, this is
     trivial since the <code>Target</code> type only defines a single static method where the method's parameters,
     return type and name are conveniently identical to those of <code>Source#name(String)</code>.
@@ -1244,7 +1245,7 @@ class Target {
     With the information so far, you might consider the method binding algorithm to be of a rather rigid nature.
     However, we have not yet told the full story. So far we only observed another example of the convention over
     configuration principle which is open for change if the defaults do not fit the actual requirements. In reality,
-    the <code>MethodDelegation</code> instrumentation works with annotations where a parameter's annotation decides
+    the <code>MethodDelegation</code> implementation works with annotations where a parameter's annotation decides
     what value should be assigned to it. However, if no annotation is found, Byte Buddy treats a parameter as if
     it was annotated with a default annotation which is <code>@Annotation(n)</code>. When observing such an
     <code>@Argument(n)</code> annotation, Byte Buddy assigns the <code>n + 1</code>-th argument of the source method
@@ -1286,7 +1287,7 @@ void foo(Object o1, @Argument(0) Object o2, Object o3)
     </span></li>
     <li><span>
         The <code>@This</code> annotation induces the assignment of the dynamic type's instance on which the
-        instrumented method is currently invoked. If the annotated parameter is not assignable to an instance of
+        intercepted method is currently invoked. If the annotated parameter is not assignable to an instance of
         the dynamic type, the current method is not considered as a candidate for being bound to the source method.
         Note that calling any methods on this instance will result in calling a potentially instrumented method
         implementation. For calling overriden implementations, you need to use the <code>@Super</code> annotation
@@ -1298,10 +1299,8 @@ void foo(Object o1, @Argument(0) Object o2, Object o3)
         <code>Class</code>, <code>MethodHandle</code>, <code>MethodType</code> or <code>String</code>. Depending on
         the parameter's type, it is assigned a <code>Method</code> reference to the original method that is now
         instrumented or a reference to the dynamically created <code>Class</code>. If the annotated parameter is a
-        <code>String</code>, the parameter is assigned a unique identifier for the instrumented method which consists
-        of the method's name, a concatenation of the method's parameters'
-        <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">descriptors</a> enclosed in braces and
-        the method's return type's descriptor. In general, we recommend the use of these <code>String</code> values as
+        <code>String</code>, the parameter is assigned the value that the <code>Method></code>'s <code>toString</code>
+        method would have returned. In general, we recommend the use of these <code>String</code> values as
         method identifiers wherever possible and discourage the use of <code>Method</code> objects as their lookup
         introduces a significant runtime overhead. To avoid this overhead, the <code>@Origin</code> annotation also
         offers a property for caching such instances for reuse. Note that the <code>MethodHandle</code> and
@@ -1568,7 +1567,7 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
 </p>
 
 <p>
-    So far, we have seen a great deal of the <code>MethodDelegation</code> instrumentation. But before we proceed,
+    So far, we have seen a great deal of the <code>MethodDelegation</code> implementation. But before we proceed,
     we want to take a more detailed look on how Byte Buddy selects a target method. We already described how Byte
     Buddy resolves a <i>most specific</i> method by comparing parameter types but there is more to it. After Byte Buddy
     identified candidate methods that qualified for a binding to a given source method, it delegates the resolution
@@ -1742,7 +1741,7 @@ class Qux extends Foo&lt;Integer&gt; {
         Using this annotation is meant for voiding an interceptor's parameter.
     </span></li>
     <li><span>
-        <code>@Field</code>: Using this annotation, Byte Buddy injects an accessor for a given field. The accessed
+        <code>@FieldProxy</code>: Using this annotation, Byte Buddy injects an accessor for a given field. The accessed
         field can either be specified explicitly by its name or it is derived from a getter or setter methods name,
         in case that the intercepted method represents such a method. Before this annotation can be used, it needs
         to be installed and registered explicitly, similarly to the <code>@Pipe</code> annotation.
@@ -1762,7 +1761,7 @@ class Qux extends Foo&lt;Integer&gt; {
 <h4>Calling a super method</h4>
 
 <p>
-    As the name suggests, the <code>SuperMethodCall</code> instrumentation can be used to invoke a method's super
+    As the name suggests, the <code>SuperMethodCall</code> implementation can be used to invoke a method's super
     implementation. At first glance, the sole invocation of a super implementation does not seem very useful
     since this will not change an implementation but only replicate existent logic. However, by overriding a method,
     you are able to change the annotations of a method and its parameters, something we will look into in the next
@@ -1804,12 +1803,12 @@ new ByteBuddy()
 <p>
     Within the Java class file format, constructors do not generally differ from methods such that Byte Buddy allows
     them to be treated just as such. However, constructors are required to contain a hard-coded invocation of another
-    constructor to be accepted by the Java runtime. For this reason, any other predefined instrumentation than
+    constructor to be accepted by the Java runtime. For this reason, most predefined implementations besides
     <code>SuperMethodCall</code> will fail to create a valid Java class when applied to a constructor.
 </p>
 
 <p>
-    However, by using custom instrumentations, you are able to define your own constructors by either implementing a
+    However, by using custom implementations, you are able to define your own constructors by either implementing a
     custom <code>ConstructorStrategy</code> or by defining an individual constructor within Byte Buddy's domain specific
     language using the <code>defineConstructor</code> method. Furthermore, we are planing to add new features to Byte
     Buddy for defining more complex constructors out of the box.
@@ -1833,7 +1832,7 @@ new ByteBuddy()
     In Java, a default method invocation is expressed by a similar syntax to the invocation of a super method. As an
     only disparity, a default method invocation names the interface that defines the method. This is necessary because
     a default method invocation can be ambiguous if two interfaces define a method with identical signature.
-    Accordingly, Byte Buddy's <code>DefaultMethodCall</code> instrumentation takes a list of <i>prioritized</i>
+    Accordingly, Byte Buddy's <code>DefaultMethodCall</code> implementation takes a list of <i>prioritized</i>
     interfaces. When intercepting a method, the <code>DefaultMethodCall</code> invokes a default method on the
     first-mentioned interface. As an example, assume that we wanted to implement the two following interfaces:
 </p>
@@ -1872,7 +1871,7 @@ new ByteBuddy(ClassFileVersion.JAVA_V8)
     implemented by the most-specific class in a type's hierarchy. Other than the Java programming language, it does not
     require this interface to be the most specific interface that is implemented by any super class. Finally, if you do
     not expect a ambiguous default method definitions, you can always use
-    <code>DefaultMethodCall.unambiguousOnly()</code> for receiving an instrumentation which throws an exception on the
+    <code>DefaultMethodCall.unambiguousOnly()</code> for receiving an implementation which throws an exception on the
     discovery of an ambiguous default method invocation. This same behavior is displayed by a prioritizing
     <code>DefaultMethodCall</code> where a default method call is ambiguous between non-prioritized interfaces and no
     prioritized interface was found to define a method with a compatible signature.
@@ -1881,9 +1880,9 @@ new ByteBuddy(ClassFileVersion.JAVA_V8)
 <h4>Calling a specific method</h4>
 
 <p>
-    In some cases, the above instrumentations are not sufficient to implement more custom behavior. For example, one
-    might want to implement a custom class with explicit behavior. For example, we might want to implement the
-    following Java class with a constructor that does not have a super constructor with identical arguments:
+    In some cases, the above <code>Implementation</code>s are not sufficient to implement more custom behavior. For
+    example, one might want to implement a custom class with explicit behavior. For example, we might want to implement
+    the following Java class with a constructor that does not have a super constructor with identical arguments:
 </p>
 
 <pre class="prettyprint">
@@ -1895,7 +1894,7 @@ public class SampleClass {
 </pre>
 
 <p>
-    The previous <code>SuperMethodCall</code> instrumentation could not be used to implement this class as the
+    The previous <code>SuperMethodCall</code> implementation could not be used to implement this class as the
     <code>Object</code> class does not define a constructor that takes an <code>int</code> as its parameter. Instead,
     we can invoke the <code>Object</code> super constructor explicitly:
 </p>
@@ -1915,9 +1914,9 @@ new ByteBuddy()
 </p>
 
 <p>
-    The <code>MethodCall</code> instrumentation can also be used when passing arguments. These arguments are either
+    The <code>MethodCall</code> implementation can also be used when passing arguments. These arguments are either
     passed explicitly as a value, as a value for an instance field that needs to be set manually or as a given
-    parameter value. Also, the instrumentation allows to invoke methods on other instances than the one being
+    parameter value. Also, the implementation allows to invoke methods on other instances than the one being
     instrumented. Furthermore, it allows for the construction of new instances to be returned from an
     intercepted method. The documentation of the <code>MethodCall</code> class provides detailed information on these
     features.
@@ -1927,7 +1926,7 @@ new ByteBuddy()
 
 <p>
     Using the <code>FieldAccessor</code>, it is possible to implement a method to read or to write a field value. In
-    order to be compatible to this instrumentation, a method must either:
+    order to be compatible to this implementation, a method must either:
 </p>
 
 <ul class="colored-list padded">
@@ -1946,7 +1945,7 @@ new ByteBuddy()
 </ul>
 
 <p>
-    Creating such an instrumentation is trivial: Simply call <code>FieldAccessor.ofBeanProperty()</code>. However,
+    Creating such an implementation is trivial: Simply call <code>FieldAccessor.ofBeanProperty()</code>. However,
     if you do not want to derive a field's name from a method's name, you can still specify the field name explicitly
     by using <code>FieldAccessor.ofField(String)</code>. Using this method, the only argument defines the field's name
     that should be accessed. If required, this even allows you to define a new field if such a field does not yet
@@ -1988,7 +1987,7 @@ interface InstanceCreator {
 
 <p>
     We already learned how to intercept methods of a class by using a <code>MethodDelegation</code>. Using the latter
-    instrumentation, we can define a delegation to an instance field and name this field <code>interceptor</code>.
+    implementation, we can define a delegation to an instance field and name this field <code>interceptor</code>.
     Additionally, we are implementing the <code>InterceptionAccessor</code> interface and intercept all methods
     of the interface to implement accessors of this field. By defining a bean property accessor, we achieve a getter
     for <code>getInterceptor</code> and a setter for <code>setInterceptor</code>:
@@ -2048,7 +2047,7 @@ UserType userType = (UserType) factory.makeInstance();
 <h4>Miscellaneous</h4>
 
 <p>
-    Additionally to the <code>Instrumentation</code>s we discussed so far, Byte Buddy includes several other
+    Additionally to the <code>Implementation</code>s we discussed so far, Byte Buddy includes several other
     implementations:
 </p>
 
@@ -2065,7 +2064,7 @@ UserType userType = (UserType) factory.makeInstance();
         exception.
     </span></li>
     <li><span>
-        The <code>Forwarding</code> instrumentation allows to simply forward a method call to another instance
+        The <code>Forwarding</code> implementations allows to simply forward a method call to another instance
         of the same type as the declaring type of an intercepted method. The same result can be achieved using a
         <code>MethodDelegation</code>. However, by <code>Forwarding</code> a simpler delegation model is applied
         which can cover use cases where no target method discovery is required.
@@ -2076,17 +2075,9 @@ UserType userType = (UserType) factory.makeInstance();
         that ship with the Java Class Library.
     </span></li>
     <li><span>
-        The <code>InvokeDynamic</code> instrumentation allows to bind a method dynamically at runtime using
+        The <code>InvokeDynamic</code> implementation allows to bind a method dynamically at runtime using
         <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html">a bootstrap methods</a>
         which are accessible from Java 7 on.
-    </span></li>
-    <li><span>
-        Finally, <code>Instrumentation.ForAbstractMethod</code> allows to define an abstract method. Defining abstract
-        methods is however supported directly by Byte Buddy's domain specific language. Simply call the
-        <code>withoutCode</code> method after your method selection. When defining abstract methods, remember to
-        also define your dynamic class to be abstract by setting the corresponding modifier during the
-        definition of a class. The latter is also supported by Byte Buddy's domain specific language by calling
-        <code>modifier</code> when describing a class.
     </span></li>
 </ul>
 
@@ -2181,7 +2172,7 @@ new ByteBuddy()
 
 <div class="row" id="customization">
 
-<h2>Custom instrumentation</h2>
+<h2>Custom method implementations</h2>
 
 <p>
     In the previous sections, we described Byte Buddy's standard API. None of the features described so far
@@ -2313,7 +2304,7 @@ enum IntegerSum implements StackManipulation {
 
   @Override
   public Size apply(MethodVisitor methodVisitor,
-                    Instrumentation.Context instrumentationContext) {
+                    Implementation.Context implementationContext) {
     methodVisitor.visitInsn(Opcodes.IADD);
     return new Size(-1, 0);
   }
@@ -2346,13 +2337,8 @@ enum SumMethod implements ByteCodeAppender {
   INSTANCE; // singleton
 
   @Override
-  public boolean appendsCode() {
-    return true;
-  }
-
-  @Override
   public Size apply(MethodVisitor methodVisitor,
-                    Instrumentation.Context instrumentationContext,
+                    Implementation.Context implementationContext,
                     MethodDescription instrumentedMethod) {
     if (!instrumentedMethod.getReturnType().represents(int.class)) {
       throw new IllegalArgumentException(instrumentedMethod + " must return int");
@@ -2362,7 +2348,7 @@ enum SumMethod implements ByteCodeAppender {
       IntegerConstant.forValue(50),
       IntegerSum.INSTANCE,
       MethodReturn.INTEGER
-    ).apply(methodVisitor, instrumentationContext);
+    ).apply(methodVisitor, implementationContext);
     return new Size(operandStackSize.getMaximalSize(),
                     instrumentedMethod.getStackSize());
   }
@@ -2370,10 +2356,7 @@ enum SumMethod implements ByteCodeAppender {
 </pre>
 
 <p>
-    Again, the custom <code>ByteCodeAppender</code> is implemented as a singleton enumeration. Because abstract
-    methods are defined without an implementation, a byte code appender might not require to append any code. As
-    obvious from the above <code>apply</code> method, this is however not true for our <code>SumMethod</code>
-    implementation.
+    Again, the custom <code>ByteCodeAppender</code> is implemented as a singleton enumeration.
 </p>
 
 <p>
@@ -2390,12 +2373,12 @@ enum SumMethod implements ByteCodeAppender {
 </p>
 
 <p>
-    With this implementation of our summation method, we are now ready to provide a custom <code>Instrumentation</code>
+    With this implementation of our summation method, we are now ready to provide a custom <code>Implementation</code>
     for this method which we can provide to Byte Buddy's domain specific language:
 </p>
 
 <pre class="prettyprint">
-enum SumInstrumentation implements Instrumentation {
+enum SumImplementation implements Implementation {
 
   INSTANCE; // singleton
 
@@ -2405,37 +2388,37 @@ enum SumInstrumentation implements Instrumentation {
   }
 
   @Override
-  public ByteCodeAppender appender(Target instrumentationTarget) {
+  public ByteCodeAppender appender(Target implementationTarget) {
     return SumMethod.INSTANCE;
   }
 }
 </pre>
 
 <p>
-    Any <code>Instrumentation</code> is queried in two stages. First, an instrumentation gets the chance to
+    Any <code>Implementation</code> is queried in two stages. First, an implementation gets the chance to
     alter the created class by adding additional fields or methods in the <code>prepare</code> method. Furthermore,
-    the preparation allows an instrumentation to register a <code>TypeInitializer</code> which we learned about in
+    the preparation allows an implementation to register a <code>TypeInitializer</code> which we learned about in
     a previous section. If no such preparations are required, it suffices to return the unaltered
-    <code>InstrumentedType</code> which is provided as the argument. Note that an <code>Instrumentation</code> should
+    <code>InstrumentedType</code> which is provided as the argument. Note that an <code>Implementation</code> should
     not normally return an individual instance of an instrumented type but should call the instrumented type's appender
-    methods which are all prefixed by <code>with</code>. After any <code>Instrumentation</code> for a particular class
+    methods which are all prefixed by <code>with</code>. After any <code>Implementation</code> for a particular class
     creation is prepared, the <code>appender</code> method is invoked for retrieving a <code>ByteCodeAppender</code>.
-    This appender is then queried for any method that was selected for interception by the given instrumentation and
-    also for any method that was registered during the instrumentation's invocation of the <code>prepare</code> method.
+    This appender is then queried for any method that was selected for interception by the given implementation and
+    also for any method that was registered during the implementation's invocation of the <code>prepare</code> method.
 </p>
 
 <p>
-    Note that Byte Buddy only invokes each <code>Instrumentation</code>'s <code>prepare</code> and <code>appender</code>
+    Note that Byte Buddy only invokes each <code>Implementation</code>'s <code>prepare</code> and <code>appender</code>
     methods a single time during the creation process of any class. This is guaranteed no matter how many times an
-    instrumentation is registered for use in a class's creation. This way, an <code>Instrumentation</code> can avoid to
-    verify if a field or method is already defined. In the process, Byte Buddy compares <code>Instrumentation</code>s
+    implementation is registered for use in a class's creation. This way, an <code>Implementation</code> can avoid to
+    verify if a field or method is already defined. In the process, Byte Buddy compares <code>Implementation</code>s
     instances by their <code>hashCode</code> and <code>equals</code> methods. In general, any class that is used by
     Byte Buddy should provide meaningful implementations of these methods. The fact that enumerations come with such
     implementations per definition is another good reason for their use.
 </p>
 
 <p>
-    With all this, let us see the <code>SumInstrumentation</code> in action:
+    With all this, let us see the <code>SumImplementation</code> in action:
 </p>
 
 <pre class="prettyprint">
@@ -2446,15 +2429,15 @@ abstract class SumExample {
 new ByteBuddy()
   .subclass(SumExample.class)
     .method(named("calculate"))
-    .intercept(SumInstrumentation.INSTANCE)
+    .intercept(SumImplementation.INSTANCE)
   .make()
 </pre>
 
 <p>
     Congratulations! You just extended Byte Buddy to implement a custom method that computes and returns the sum of
     <code>10</code> and <code>50</code>. Of course, this example implementation is not of much practical use. However,
-    more complex instrumentations can be implemented easily on top of this infrastructure. After all, if you feel that
-    you created something handy, please consider to <a href="/develop">contribute your instrumentation</a>. We are
+    more complex implementations can be implemented easily on top of this infrastructure. After all, if you feel that
+    you created something handy, please consider to <a href="/develop">contribute your implementation</a>. We are
     looking forward to hearing from you!
 </p>
 
@@ -2471,7 +2454,7 @@ new ByteBuddy()
     that code generation should only be used as the glue between a type hierarchy that is unknown at compile time and
     custom code that needs to be injected into these types. The actual code that is generated should therefore remain
     as confined as possible. Wherever possible, conditional statements should rather be implemented and compiled in a
-    JVM language of your choice and then be bound to a given method by using a minimalistic instrumentation. A nice
+    JVM language of your choice and then be bound to a given method by using a minimalistic implementation. A nice
     side effect of this approach is that Byte Buddy's users can work with normal Java code and use their accustomed
     tools like debuggers or IDE code navigators. None of this would be possible with generated code which does not have
     a source code representation. However, if you really need to create byte code with jump instructions, make sure to
@@ -2481,7 +2464,7 @@ new ByteBuddy()
 <h4>Creating a custom assigner</h4>
 
 <p>
-    In a previous section, we discussed that Byte Buddy's built in <code>Instrumentation</code>s rely on an
+    In a previous section, we discussed that Byte Buddy's built in <code>Implementation</code>s rely on an
     <code>Assigner</code> in order to assign values to variables. In this process, an <code>Assigner</code> is able to
     apply a transformation of one value to another by emitting an appropriate <code>StackManipulation</code>. Doing so,
     Byte Buddy's built-in assigners provide for example auto-boxing of primitive values and their wrapper types.
@@ -2526,7 +2509,7 @@ enum ToStringAssigner implements Assigner {
     the <code>Object</code> type's <code>toString</code> method by its name. We then use Byte Buddy's
     <code>MethodInvocation</code> to create a <code>StackManipulation</code> that calls this method virtually on the
     source type. Finally, we can integrate this custom <code>Assigner</code> with for example Byte Buddy's
-    <code>FixedValue</code> instrumentation as follows:
+    <code>FixedValue</code> implementation as follows:
 </p>
 
 <pre class="prettyprint">
@@ -2547,7 +2530,7 @@ new ByteBuddy()
     primitive value to its inner assigner. Other built-in assigners are the <code>VoidAwareAssigner</code> and the
     <code>ReferenceTypeAwareAssigner</code>. Always remember to implement meaningful <code>hashCode</code> and
     <code>equals</code> methods for your custom assigners since those methods are normally called from their
-    counterparts in the <code>Instrumentation</code> that is making use of a given assigner. Again, by implementing
+    counterparts in the <code>Implementation</code> that is making use of a given assigner. Again, by implementing
     an assigner as a singleton enumeration, we avoid doing this manually.
 </p>
 
@@ -2555,7 +2538,7 @@ new ByteBuddy()
 
 <p>
     We already mentioned in a previous section that it is possible to extend the <code>MethodDelegation</code>
-    instrumentation to process user-defined annotations. For this purpose, we need to provide a custom
+    implementation to process user-defined annotations. For this purpose, we need to provide a custom
     <code>ParameterBinder</code> which knows how to handle a given annotation. As an example, we want to define
     an annotation with the purpose to simply inject a fixed string into the annotated parameter. First, we define such
     a <code>StringValue</code> annotation:
@@ -2597,7 +2580,7 @@ enum StringValueBinder
   public MethodDelegationBinder.ParameterBinding&lt;?&gt; bind(AnnotationDescription.Loaded&lt;StringValue&gt; annotation,
                                                          MethodDescription source,
                                                          ParameterDescription target,
-                                                         Instrumentation.Target instrumentationTarget,
+                                                         Implementation.Target implementationTarget,
                                                          Assigner assigner) {
     if (!target.getTypeDescription().represents(String.class)) {
       throw new IllegalStateException(target + " makes illegal use of @StringValue");
@@ -2624,7 +2607,7 @@ enum StringValueBinder
 
 <p>
     This already is all the information that is required for using a custom annotation with a
-    <code>MethodDelegation</code> instrumentation. After receiving a <code>ParameterBinding</code>, it makes sure that
+    <code>MethodDelegation</code> implementation. After receiving a <code>ParameterBinding</code>, it makes sure that
     its value is bound to the correct parameter or it will discard the current pair of a <code>source</code> and
     <code>target</code> method as unbindable. Furthermore, it will allow <code>AmbiguityResolver</code>s to look up
     unique bindings. Finally, let us put this custom annotation in action:

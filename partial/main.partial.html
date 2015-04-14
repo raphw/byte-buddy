@@ -112,7 +112,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <p>
             For implementing the <code>toString</code> method, the <code>FixedValue</code> class defines a constant
             return value for the overridden method. Defining a constant value is only one example of many method
-            interceptors that ship with Byte Buddy. By implementing the <code>Instrumentation</code> interface, a
+            interceptors that ship with Byte Buddy. By implementing the <code>Implementation</code> interface, a
             method could however even be defined by custom byte code.
         </p>
 
@@ -194,7 +194,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             manipulations, Byte Buddy is intentionally exposing the ASM API to its users. Of course, the direct
             use of ASM remains fully optional and most users will most likely never require it. This choice was
             made such that a user of Byte Buddy is not restrained to its higher-level functionality but can
-            implement custom instrumentations without a fuzz when it is necessary.
+            implement custom implementations without a fuzz when it is necessary.
         </p>
 
         <p>
