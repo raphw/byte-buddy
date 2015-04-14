@@ -567,10 +567,12 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                    AnnotationAppender.Default.apply(methodVisitor.visitAnnotationDefault(),
+                    AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotationDefault();
+                    AnnotationAppender.Default.apply(annotationVisitor,
                             methodDescription.getReturnType(),
                             AnnotationAppender.NO_NAME,
                             annotationValue);
+                    annotationVisitor.visitEnd();
                 }
 
                 @Override
