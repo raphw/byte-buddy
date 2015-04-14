@@ -83,7 +83,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.getDeclaredMethods().length, is(3));
         Class<?> executable = Class.forName("java.lang.reflect.Executable");
         Method getParameters = executable.getDeclaredMethod("getParameters");
         Class<?> parameter = Class.forName("java.lang.reflect.Parameter");
@@ -101,7 +100,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     public static class Qux {
 
-        public static String foo;
+        public static final String foo;
 
         public static String bar;
 
