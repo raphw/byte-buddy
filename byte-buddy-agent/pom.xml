@@ -48,7 +48,13 @@
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
                             <Can-Retransform-Classes>true</Can-Retransform-Classes>
                             <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
+<<<<<<< HEAD
                             <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+=======
+                            <Bundle-SymbolicName>
+                                ${project.groupId}.${project.artifactId}
+                            </Bundle-SymbolicName>
+>>>>>>> 2c64ecde1db710d37f5b44e286497fe461692684
                             <Bundle-Name>${project.name}</Bundle-Name>
                             <Bundle-Description>${project.description}</Bundle-Description>
                             <Bundle-Version>${project.version}</Bundle-Version>
