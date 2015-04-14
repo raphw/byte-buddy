@@ -7,9 +7,8 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.MethodCall;
 import net.bytebuddy.instrumentation.StubMethod;
-import net.bytebuddy.instrumentation.SuperMethodCall;
+import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
@@ -32,34 +31,23 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest {
+public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForInliningTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.ParameterNames";
-
-    @Rule
-    public MethodRule javaVersionRule = new JavaVersionRule();
-
-    private TypePool typePool;
-
-    @Before
-    public void setUp() throws Exception {
-        typePool = TypePool.Default.ofClassPath();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        typePool.clear();
+    @Override
+    protected DynamicType.Builder<?> create(Class<?> type) {
+        return new ByteBuddy().redefine(type);
     }
 
     @Override
-    protected DynamicType.Builder<?> create() {
+    protected DynamicType.Builder<?> createPlain() {
         return new ByteBuddy().redefine(Foo.class);
     }
 
-    public static class Foo {
-        /* empty */
+    @Override
+    protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+        return new ByteBuddy().redefine(typeDescription, classFileLocator);
     }
 
     @Test
@@ -89,15 +77,6 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         assertThat(field.get(type.getDeclaredConstructor(String.class).newInstance(FOO)), nullValue(Object.class));
     }
 
-    public static class Bar {
-
-        public final String bar;
-
-        public Bar(String bar) {
-            this.bar = bar;
-        }
-    }
-
     @Test
     public void testMethodRebase() throws Exception {
         DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
@@ -115,15 +94,22 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
     }
 
     @Test
-    public void testDefineDefaultValue() throws Exception {
-        Class<?> dynamicType = new ByteBuddy()
-                .rebase(Baz.class)
-                .method(named(FOO)).withDefaultValue(FOO)
-                .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(dynamicType.getDeclaredMethods().length, is(1));
-        assertThat(dynamicType.getDeclaredMethod(FOO).getDefaultValue(), is((Object) FOO));
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(RedefinitionDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(new Object());
+            }
+        }).apply();
+    }
+
+    public static class Bar {
+
+        public final String bar;
+
+        public Bar(String bar) {
+            this.bar = bar;
+        }
     }
 
     public static class Qux {
@@ -145,45 +131,5 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
                 foo = FOO;
             }
         }
-    }
-
-    public @interface Baz {
-
-        String foo();
-    }
-
-    @Test
-    @JavaVersionRule.Enforce(8)
-    public void testParameterMetaDataRetention() throws Exception {
-        Class<?> dynamicType = new ByteBuddy()
-                .redefine(typePool.describe(PARAMETER_NAME_CLASS).resolve(), ClassFileLocator.ForClassLoader.ofClassPath())
-                .method(named(FOO)).intercept(StubMethod.INSTANCE)
-                .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(dynamicType.getDeclaredMethods().length, is(2));
-        Class<?> executable = Class.forName("java.lang.reflect.Executable");
-        Method getParameters = executable.getDeclaredMethod("getParameters");
-        Class<?> parameter = Class.forName("java.lang.reflect.Parameter");
-        Method getName = parameter.getDeclaredMethod("getName");
-        Method getModifiers = parameter.getDeclaredMethod("getModifiers");
-        Method first = dynamicType.getDeclaredMethod("foo", String.class, long.class, int.class);
-        Object[] methodParameter = (Object[]) getParameters.invoke(first);
-        assertThat(getName.invoke(methodParameter[0]), is((Object) "first"));
-        assertThat(getName.invoke(methodParameter[1]), is((Object) "second"));
-        assertThat(getName.invoke(methodParameter[2]), is((Object) "third"));
-        assertThat(getModifiers.invoke(methodParameter[0]), is((Object) Opcodes.ACC_FINAL));
-        assertThat(getModifiers.invoke(methodParameter[1]), is((Object) 0));
-        assertThat(getModifiers.invoke(methodParameter[2]), is((Object) 0));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RedefinitionDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(new Object());
-            }
-        }).apply();
     }
 }

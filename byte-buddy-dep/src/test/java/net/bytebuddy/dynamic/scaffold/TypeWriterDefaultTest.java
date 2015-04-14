@@ -22,58 +22,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-public class TypeWriterDefaultTest { // TODO: Redo
-//
-//    private static final byte[] MAIN = new byte[42], FIRST = new byte[42 * 2];
-//
-//    @Rule
-//    public TestRule mockitoRule = new MockitoRule(this);
-//
-//    @Mock
-//    private TypeDescription instrumentedType, otherAuxiliaryDescription;
-//
-//    @Mock
-//    private LoadedTypeInitializer loadedTypeInitializer;
-//
-//    @Mock
-//    private InstrumentedType.TypeInitializer typeInitializer;
-//
-//    @Mock
-//    private ClassFileVersion classFileVersion;
-//
-//    @Mock
-//    private TypeWriter.Engine engine, otherEngine;
-//
-//    @Mock
-//    private DynamicType firstAuxiliary, secondAuxiliary;
-//
-//    private List<DynamicType> explicitAuxiliaryTypes;
-//
-//    @Before
-//    public void setUp() throws Exception {
-//        explicitAuxiliaryTypes = Collections.singletonList(firstAuxiliary);
-//        when(engine.create(any(Instrumentation.Context.ExtractableView.class))).thenReturn(MAIN);
-//        when(firstAuxiliary.getTypeDescription()).thenReturn(otherAuxiliaryDescription);
-//        when(firstAuxiliary.getBytes()).thenReturn(FIRST);
-//    }
-//
-//    @Test
-//    public void testDynamicTypeCreation() throws Exception {
-//        DynamicType dynamicType = new TypeWriter.Default<Object>(instrumentedType,
-//                loadedTypeInitializer,
-//                typeInitializer,
-//                explicitAuxiliaryTypes,
-//                classFileVersion,
-//                engine).make();
-//        assertThat(dynamicType.getBytes(), is(MAIN));
-//        assertThat(dynamicType.getTypeDescription(), is(instrumentedType));
-//        assertThat(dynamicType.getLoadedTypeInitializers().get(instrumentedType), is(loadedTypeInitializer));
-//        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(1));
-//        assertThat(dynamicType.getRawAuxiliaryTypes().get(otherAuxiliaryDescription), is(FIRST));
-//    }
-//
-//    @Test
-//    public void testObjectProperties() throws Exception {
-//        ObjectPropertyAssertion.of(TypeWriter.Default.class).apply();
-//    }
+public class TypeWriterDefaultTest {
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
+    }
 }

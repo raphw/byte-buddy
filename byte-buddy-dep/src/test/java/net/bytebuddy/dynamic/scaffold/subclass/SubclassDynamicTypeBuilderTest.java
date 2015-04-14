@@ -53,7 +53,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Override
-    protected DynamicType.Builder<?> create() {
+    protected DynamicType.Builder<?> createPlain() {
         return new ByteBuddy().subclass(Object.class);
     }
 
@@ -205,6 +205,16 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(getModifiers.invoke(methodParameter[2]), Is.is((Object) 0));
     }
 
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(SubclassDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(new Object());
+            }
+        }).apply();
+    }
+
     public static class DefaultConstructor {
 
         public DefaultConstructor() {
@@ -224,15 +234,5 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     public enum SimpleEnum {
         FIRST,
         SECOND
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(SubclassDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(new Object());
-            }
-        }).apply();
     }
 }

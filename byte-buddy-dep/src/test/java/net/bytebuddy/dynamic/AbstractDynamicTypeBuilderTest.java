@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.instrumentation.Instrumentation;
 import net.bytebuddy.instrumentation.MethodCall;
@@ -8,6 +9,7 @@ import net.bytebuddy.instrumentation.method.bytecode.stack.member.MethodReturn;
 import net.bytebuddy.modifier.Ownership;
 import net.bytebuddy.modifier.TypeManifestation;
 import net.bytebuddy.modifier.Visibility;
+import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -18,12 +20,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+
 
 public abstract class AbstractDynamicTypeBuilderTest {
 
@@ -57,11 +61,11 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     private static final String STRING_FIELD = "stringField";
 
-    protected abstract DynamicType.Builder<?> create();
+    protected abstract DynamicType.Builder<?> createPlain();
 
     @Test
     public void testMethodDefinition() throws Exception {
-        Class<?> type = create()
+        Class<?> type = createPlain()
                 .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .throwing(Exception.class)
                 .intercept(new Instrumentation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
@@ -77,7 +81,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testAbstractMethodDefinition() throws Exception {
-        Class<?> type = create()
+        Class<?> type = createPlain()
                 .modifiers(Visibility.PUBLIC, TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .throwing(Exception.class)
@@ -93,7 +97,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testConstructorDefinition() throws Exception {
-        Class<?> type = create()
+        Class<?> type = createPlain()
                 .defineConstructor(Collections.<Class<?>>singletonList(Void.class), Visibility.PUBLIC)
                 .throwing(Exception.class)
                 .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
@@ -108,7 +112,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testFieldDefinition() throws Exception {
-        Class<?> type = create()
+        Class<?> type = createPlain()
                 .defineField(FOO, Void.class, Visibility.PUBLIC)
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
@@ -120,7 +124,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testFieldDefaultValueDefinition() throws Exception {
-        Class<?> type = create()
+        Class<?> type = createPlain()
                 .defineField(BOOLEAN_FIELD, boolean.class, Visibility.PUBLIC, Ownership.STATIC).value(BOOLEAN_VALUE)
                 .defineField(BYTE_FIELD, byte.class, Visibility.PUBLIC, Ownership.STATIC).value(INTEGER_VALUE)
                 .defineField(SHORT_FIELD, short.class, Visibility.PUBLIC, Ownership.STATIC).value(INTEGER_VALUE)
@@ -146,7 +150,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testApplicationOrder() throws Exception {
-        assertThat(create()
+        assertThat(createPlain()
                 .method(named(TO_STRING)).intercept(new Instrumentation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .method(named(TO_STRING)).intercept(new Instrumentation.Simple(new TextConstant(BAR), MethodReturn.REFERENCE))
                 .make()
@@ -154,5 +158,34 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .getLoaded()
                 .newInstance()
                 .toString(), is(BAR));
+    }
+
+    @Test
+    public void testTypeInitializer() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                Collections.singletonMap(Bar.class.getName(), ClassFileExtraction.extract(Bar.class)),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT);
+        Class<?> type = createPlain()
+                .invokable(isTypeInitializer()).intercept(MethodCall.invoke(Bar.class.getDeclaredMethod("invoke")))
+                .make()
+                .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.newInstance(), notNullValue(Object.class));
+        Class<?> foo = classLoader.loadClass(Bar.class.getName());
+        assertThat(foo.getDeclaredField(FOO).get(null), is((Object) FOO));
+    }
+
+    public static class Foo {
+        /* empty */
+    }
+
+    public static class Bar {
+
+        public static String foo;
+
+        public static void invoke() {
+            foo = FOO;
+        }
     }
 }

@@ -4,6 +4,7 @@ import net.bytebuddy.instrumentation.ByteCodeElement;
 import net.bytebuddy.instrumentation.ModifierReviewable;
 import net.bytebuddy.instrumentation.attribute.annotation.AnnotationDescription;
 import net.bytebuddy.instrumentation.method.MethodDescription;
+import net.bytebuddy.instrumentation.method.ParameterDescription;
 import net.bytebuddy.instrumentation.type.TypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
@@ -36,6 +37,8 @@ public class ElementMatchersTest {
     private static final String FOO = "foo", BAR = "bar";
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+
+    private static final String PARAMETER_NAMES = "net.bytebuddy.test.precompiled.ParameterNames";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -469,6 +472,15 @@ public class ElementMatchersTest {
                 TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
         assertThat(ElementMatchers.takesArguments(3).matches(new MethodDescription.ForLoadedMethod(
                 TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testHasParameter() throws Exception {
+        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(classLoader.loadClass(PARAMETER_NAMES)
+                .getDeclaredMethod(FOO, String.class, long.class, int.class));
+        assertThat(ElementMatchers.hasParameter(ElementMatchers.named(FOO)).matches(methodDescription), is(false));
+        assertThat(ElementMatchers.hasParameter(ElementMatchers.named("first")).matches(methodDescription), is(true));
     }
 
     @Test

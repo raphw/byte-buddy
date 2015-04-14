@@ -138,6 +138,6 @@ public class MethodConstantTest {
         ObjectPropertyAssertion.of(MethodConstant.ForMethod.class).apply();
         ObjectPropertyAssertion.of(MethodConstant.ForConstructor.class).apply();
         ObjectPropertyAssertion.of(MethodConstant.Cached.class).apply();
-        ObjectPropertyAssertion.of(MethodConstant.CanCache.Illegal.class).apply();
+        ObjectPropertyAssertion.of(MethodConstant.CanCacheIllegal.class).apply();
     }
 }

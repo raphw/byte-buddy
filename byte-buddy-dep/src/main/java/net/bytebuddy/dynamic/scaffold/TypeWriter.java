@@ -672,6 +672,40 @@ public interface TypeWriter<T> {
                     join(explicitAuxiliaryTypes, instrumentationContext.getRegisteredAuxiliaryTypes()));
         }
 
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            Default<?> aDefault = (Default<?>) other;
+            return instrumentedType.equals(aDefault.instrumentedType)
+                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer)
+                    && typeInitializer.equals(aDefault.typeInitializer)
+                    && explicitAuxiliaryTypes.equals(aDefault.explicitAuxiliaryTypes)
+                    && classFileVersion.equals(aDefault.classFileVersion)
+                    && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
+                    && classVisitorWrapper.equals(aDefault.classVisitorWrapper)
+                    && attributeAppender.equals(aDefault.attributeAppender)
+                    && fieldPool.equals(aDefault.fieldPool)
+                    && methodPool.equals(aDefault.methodPool)
+                    && invokeableMethods.equals(aDefault.invokeableMethods);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = instrumentedType.hashCode();
+            result = 31 * result + loadedTypeInitializer.hashCode();
+            result = 31 * result + typeInitializer.hashCode();
+            result = 31 * result + explicitAuxiliaryTypes.hashCode();
+            result = 31 * result + classFileVersion.hashCode();
+            result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
+            result = 31 * result + classVisitorWrapper.hashCode();
+            result = 31 * result + attributeAppender.hashCode();
+            result = 31 * result + fieldPool.hashCode();
+            result = 31 * result + methodPool.hashCode();
+            result = 31 * result + invokeableMethods.hashCode();
+            return result;
+        }
+
         protected abstract byte[] create(Instrumentation.Context.ExtractableView instrumentationContext);
 
         public static class ForInlining<U> extends Default<U> {
@@ -761,6 +795,46 @@ public interface TypeWriter<T> {
                 return originalName.equals(targetName)
                         ? targetClassVisitor
                         : new RemappingClassAdapter(targetClassVisitor, new SimpleRemapper(originalName, targetName));
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                if (!super.equals(other)) return false;
+                ForInlining<?> that = (ForInlining<?>) other;
+                return classFileLocator.equals(that.classFileLocator)
+                        && targetType.equals(that.targetType)
+                        && methodRebaseResolver.equals(that.methodRebaseResolver);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = super.hashCode();
+                result = 31 * result + classFileLocator.hashCode();
+                result = 31 * result + targetType.hashCode();
+                result = 31 * result + methodRebaseResolver.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Default.ForInlining{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
+                        ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
+                        ", classFileVersion=" + classFileVersion +
+                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                        ", classVisitorWrapper=" + classVisitorWrapper +
+                        ", attributeAppender=" + attributeAppender +
+                        ", fieldPool=" + fieldPool +
+                        ", methodPool=" + methodPool +
+                        ", invokeableMethods=" + invokeableMethods +
+                        ", classFileLocator=" + classFileLocator +
+                        ", targetType=" + targetType +
+                        ", methodRebaseResolver=" + methodRebaseResolver +
+                        '}';
             }
 
             /**
@@ -904,6 +978,17 @@ public interface TypeWriter<T> {
                     super.visitEnd();
                 }
 
+                @Override
+                public String toString() {
+                    return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor{" +
+                            "typeWriter=" + TypeWriter.Default.ForInlining.this +
+                            ", instrumentationContext=" + instrumentationContext +
+                            ", declaredFields=" + declaredFields +
+                            ", declarableMethods=" + declarableMethods +
+                            ", injectedCode=" + injectedCode +
+                            '}';
+                }
+
                 /**
                  * A method visitor that preserves the code of a method in the class file by copying it into a rebased
                  * method while copying all attributes and annotations to the actual method.
@@ -961,6 +1046,17 @@ public interface TypeWriter<T> {
                     public void visitMaxs(int maxStack, int maxLocals) {
                         super.visitMaxs(maxStack, Math.max(maxLocals, resolution.getResolvedMethod().getStackSize()));
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.CodePreservingMethodVisitor{" +
+                                "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
+                                ", actualMethodVisitor=" + actualMethodVisitor +
+                                ", entry=" + entry +
+                                ", methodDescription=" + methodDescription +
+                                ", resolution=" + resolution +
+                                '}';
+                    }
                 }
 
                 /**
@@ -1009,8 +1105,9 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{" +
-                                "actualMethodVisitor=" + actualMethodVisitor +
+                        return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{" +
+                                "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
+                                ", actualMethodVisitor=" + actualMethodVisitor +
                                 ", entry=" + entry +
                                 ", methodDescription=" + methodDescription +
                                 '}';
@@ -1072,8 +1169,9 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.Engine.ForRedefinition.RedefinitionClassVisitor.TypeInitializerInjection{" +
-                                "injectorProxyMethod=" + injectorProxyMethod +
+                        return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.TypeInitializerInjection{" +
+                                "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
+                                ", injectorProxyMethod=" + injectorProxyMethod +
                                 '}';
                     }
                 }
@@ -1128,6 +1226,23 @@ public interface TypeWriter<T> {
                 instrumentationContext.drain(classVisitor, methodPool, Instrumentation.Context.ExtractableView.InjectedCode.None.INSTANCE);
                 classVisitor.visitEnd();
                 return classWriter.toByteArray();
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Default.ForCreation{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
+                        ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
+                        ", classFileVersion=" + classFileVersion +
+                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                        ", classVisitorWrapper=" + classVisitorWrapper +
+                        ", attributeAppender=" + attributeAppender +
+                        ", fieldPool=" + fieldPool +
+                        ", methodPool=" + methodPool +
+                        ", invokeableMethods=" + invokeableMethods +
+                        "}";
             }
         }
     }

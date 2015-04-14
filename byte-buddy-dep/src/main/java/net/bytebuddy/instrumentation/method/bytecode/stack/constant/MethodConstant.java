@@ -136,7 +136,7 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * Represents a method constant that cannot be represented by Java's reflection API.
      */
-    private enum CanCacheIllegal implements CanCache {
+    protected enum CanCacheIllegal implements CanCache {
 
         /**
          * The singleton instance.

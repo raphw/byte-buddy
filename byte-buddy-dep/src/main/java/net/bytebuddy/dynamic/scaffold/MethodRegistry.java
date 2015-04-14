@@ -14,8 +14,7 @@ import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.anyOf;
-import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
@@ -419,7 +418,9 @@ public interface MethodRegistry {
             }
             MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
             ElementMatcher<? super MethodDescription> instrumented = not(anyOf(instrumentations.keySet())).and(methodFilter.resolve(instrumentedType));
-            for (MethodDescription methodDescription : finding.getInvokableMethods().filter(instrumented)) {
+            List<MethodDescription> methodDescriptions = join(MethodDescription.Latent.typeInitializerOf(instrumentedType),
+                    finding.getInvokableMethods().filter(instrumented));
+            for (MethodDescription methodDescription : methodDescriptions) {
                 for (Entry entry : entries) {
                     if (entry.resolve(instrumentedType).matches(methodDescription)) {
                         instrumentations.put(methodDescription, entry);
@@ -598,7 +599,7 @@ public interface MethodRegistry {
 
             @Override
             public MethodList getInstrumentedMethods() {
-                return new MethodList.Explicit(new ArrayList<MethodDescription>(instrumentations.keySet()));
+                return new MethodList.Explicit(new ArrayList<MethodDescription>(instrumentations.keySet())).filter(not(isTypeInitializer()));
             }
 
             @Override
@@ -714,7 +715,7 @@ public interface MethodRegistry {
 
             @Override
             public MethodList getInstrumentedMethods() {
-                return new MethodList.Explicit(new ArrayList<MethodDescription>(instrumentations.keySet()));
+                return new MethodList.Explicit(new ArrayList<MethodDescription>(instrumentations.keySet())).filter(not(isTypeInitializer()));
             }
 
             @Override
