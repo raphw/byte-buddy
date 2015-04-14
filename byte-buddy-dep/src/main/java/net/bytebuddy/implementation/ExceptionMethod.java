@@ -117,12 +117,12 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
 
     @Override
     public Size apply(MethodVisitor methodVisitor,
-                      Context instrumentationContext,
+                      Context implementationContext,
                       MethodDescription instrumentedMethod) {
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 constructionDelegate.make(),
                 Throw.INSTANCE
-        ).apply(methodVisitor, instrumentationContext);
+        ).apply(methodVisitor, implementationContext);
         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
 

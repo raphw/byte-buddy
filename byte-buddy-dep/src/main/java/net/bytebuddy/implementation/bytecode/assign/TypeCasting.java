@@ -36,7 +36,7 @@ public class TypeCasting implements StackManipulation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, targetTypeInternalName);
         return StackSize.ZERO.toIncreasingSize();
     }

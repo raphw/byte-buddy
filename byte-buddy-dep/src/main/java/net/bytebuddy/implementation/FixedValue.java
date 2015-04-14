@@ -248,7 +248,7 @@ public abstract class FixedValue implements Implementation {
      * Blueprint method that for applying the actual instrumentation.
      *
      * @param methodVisitor           The method visitor to which the instrumentation is applied to.
-     * @param instrumentationContext  The instrumentation context for the given instrumentation.
+     * @param implementationContext  The instrumentation context for the given instrumentation.
      * @param instrumentedMethod      The instrumented method that is target of the instrumentation.
      * @param fixedValueType          A description of the type of the fixed value that is loaded by the
      *                                {@code valueLoadingInstruction}.
@@ -257,7 +257,7 @@ public abstract class FixedValue implements Implementation {
      * @return A representation of the stack and variable array sized that are required for this instrumentation.
      */
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
-                                          Context instrumentationContext,
+                                          Context implementationContext,
                                           MethodDescription instrumentedMethod,
                                           TypeDescription fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
@@ -270,7 +270,7 @@ public abstract class FixedValue implements Implementation {
                 valueLoadingInstruction,
                 assignment,
                 MethodReturn.returning(instrumentedMethod.getReturnType())
-        ).apply(methodVisitor, instrumentationContext);
+        ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
 
@@ -356,8 +356,8 @@ public abstract class FixedValue implements Implementation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-            return apply(methodVisitor, instrumentationContext, instrumentedMethod, loadedType, valueLoadInstruction);
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+            return apply(methodVisitor, implementationContext, instrumentedMethod, loadedType, valueLoadInstruction);
         }
 
         @Override
@@ -504,8 +504,8 @@ public abstract class FixedValue implements Implementation {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
-                return ForStaticField.this.apply(methodVisitor, instrumentationContext, instrumentedMethod, fieldType, fieldGetAccess);
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                return ForStaticField.this.apply(methodVisitor, implementationContext, instrumentedMethod, fieldType, fieldGetAccess);
             }
 
             @Override

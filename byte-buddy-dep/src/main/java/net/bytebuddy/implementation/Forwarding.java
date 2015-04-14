@@ -325,7 +325,7 @@ public class Forwarding implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Context instrumentationContext,
+                          Context implementationContext,
                           MethodDescription instrumentedMethod) {
             if (!instrumentedMethod.isInvokableOn(fieldType)) {
                 throw new IllegalArgumentException("Cannot forward " + instrumentedMethod + " to " + fieldType);
@@ -337,7 +337,7 @@ public class Forwarding implements Implementation {
                     MethodVariableAccess.loadArguments(instrumentedMethod),
                     MethodInvocation.invoke(instrumentedMethod).virtual(fieldType),
                     MethodReturn.returning(instrumentedMethod.getReturnType())
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 

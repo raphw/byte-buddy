@@ -1112,7 +1112,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     throw new IllegalStateException("Initialization strategy illegally applied to " + instrumentedMethod);
                 }
 

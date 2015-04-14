@@ -213,7 +213,7 @@ public class ArrayFactory implements CollectionFactory {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitIntInsn(Opcodes.NEWARRAY, creationOpcode);
                 return ARRAY_CREATION_SIZE_CHANGE;
             }
@@ -254,7 +254,7 @@ public class ArrayFactory implements CollectionFactory {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, internalTypeName);
                 return ARRAY_CREATION_SIZE_CHANGE;
             }
@@ -314,16 +314,16 @@ public class ArrayFactory implements CollectionFactory {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            Size size = IntegerConstant.forValue(stackManipulations.size()).apply(methodVisitor, instrumentationContext);
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            Size size = IntegerConstant.forValue(stackManipulations.size()).apply(methodVisitor, implementationContext);
             // The array's construction does not alter the stack's size.
-            size = size.aggregate(arrayCreator.apply(methodVisitor, instrumentationContext));
+            size = size.aggregate(arrayCreator.apply(methodVisitor, implementationContext));
             int index = 0;
             for (StackManipulation stackManipulation : stackManipulations) {
                 methodVisitor.visitInsn(Opcodes.DUP);
                 size = size.aggregate(StackSize.SINGLE.toIncreasingSize());
-                size = size.aggregate(IntegerConstant.forValue(index++).apply(methodVisitor, instrumentationContext));
-                size = size.aggregate(stackManipulation.apply(methodVisitor, instrumentationContext));
+                size = size.aggregate(IntegerConstant.forValue(index++).apply(methodVisitor, implementationContext));
+                size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
                 methodVisitor.visitInsn(arrayCreator.getStorageOpcode());
                 size = size.aggregate(sizeDecrease);
             }

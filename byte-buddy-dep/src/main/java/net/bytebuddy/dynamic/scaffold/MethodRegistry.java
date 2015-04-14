@@ -545,7 +545,7 @@ public interface MethodRegistry {
             /**
              * A map of all method descriptions mapped to their handling entires.
              */
-            private final Map<MethodDescription, Entry> instrumentations;
+            private final Map<MethodDescription, Entry> implementations;
 
             /**
              * The loaded type initializer of the instrumented type.
@@ -565,16 +565,16 @@ public interface MethodRegistry {
             /**
              * Creates a prepared version of a default method registry.
              *
-             * @param instrumentations      A map of all method descriptions mapped to their handling entires.
+             * @param implementations      A map of all method descriptions mapped to their handling entires.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type intiailizer of the instrumented type.
              * @param finding               The analyzed instrumented type.
              */
-            public Prepared(Map<MethodDescription, Entry> instrumentations,
+            public Prepared(Map<MethodDescription, Entry> implementations,
                             LoadedTypeInitializer loadedTypeInitializer,
                             InstrumentedType.TypeInitializer typeInitializer,
                             MethodLookupEngine.Finding finding) {
-                this.instrumentations = instrumentations;
+                this.implementations = implementations;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
                 this.finding = finding;
@@ -597,16 +597,16 @@ public interface MethodRegistry {
 
             @Override
             public MethodList getInstrumentedMethods() {
-                return new MethodList.Explicit(new ArrayList<MethodDescription>(instrumentations.keySet())).filter(not(isTypeInitializer()));
+                return new MethodList.Explicit(new ArrayList<MethodDescription>(implementations.keySet())).filter(not(isTypeInitializer()));
             }
 
             @Override
             public MethodRegistry.Compiled compile(Implementation.Target.Factory implementationTargetFactory) {
-                Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>(instrumentations.size());
-                Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(instrumentations.size());
-                Map<MethodDescription, TypeWriter.MethodPool.Entry> entries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>(instrumentations.size());
+                Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>(implementations.size());
+                Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(implementations.size());
+                Map<MethodDescription, TypeWriter.MethodPool.Entry> entries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>(implementations.size());
                 Implementation.Target implementationTarget = implementationTargetFactory.make(finding, getInstrumentedMethods());
-                for (Map.Entry<MethodDescription, Entry> entry : instrumentations.entrySet()) {
+                for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) {
                     Handler.Compiled cachedEntry = compilationCache.get(entry.getValue().getHandler());
                     if (cachedEntry == null) {
                         cachedEntry = entry.getValue().getHandler().compile(implementationTarget);
@@ -627,7 +627,7 @@ public interface MethodRegistry {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
                 Prepared prepared = (Prepared) other;
-                return instrumentations.equals(prepared.instrumentations)
+                return implementations.equals(prepared.implementations)
                         && loadedTypeInitializer.equals(prepared.loadedTypeInitializer)
                         && typeInitializer.equals(prepared.typeInitializer)
                         && finding.equals(prepared.finding);
@@ -635,7 +635,7 @@ public interface MethodRegistry {
 
             @Override
             public int hashCode() {
-                int result = instrumentations.hashCode();
+                int result = implementations.hashCode();
                 result = 31 * result + loadedTypeInitializer.hashCode();
                 result = 31 * result + typeInitializer.hashCode();
                 result = 31 * result + finding.hashCode();
@@ -645,7 +645,7 @@ public interface MethodRegistry {
             @Override
             public String toString() {
                 return "MethodRegistry.Default.Prepared{" +
-                        "instrumentations=" + instrumentations +
+                        "implementations=" + implementations +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +
                         ", finding=" + finding +
@@ -676,7 +676,7 @@ public interface MethodRegistry {
             /**
              * A map of all method descriptions mapped to their handling entries.
              */
-            private final Map<MethodDescription, Entry> instrumentations;
+            private final Map<MethodDescription, Entry> implementations;
 
             /**
              * Creates a new compiled version of a default method registry.
@@ -684,16 +684,16 @@ public interface MethodRegistry {
              * @param instrumentedType      The instrumented type.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type initializer of the instrumented type.
-             * @param instrumentations      A map of all method descriptions mapped to their handling entries.
+             * @param implementations      A map of all method descriptions mapped to their handling entries.
              */
             public Compiled(TypeDescription instrumentedType,
                             LoadedTypeInitializer loadedTypeInitializer,
                             InstrumentedType.TypeInitializer typeInitializer,
-                            Map<MethodDescription, Entry> instrumentations) {
+                            Map<MethodDescription, Entry> implementations) {
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
-                this.instrumentations = instrumentations;
+                this.implementations = implementations;
             }
 
             @Override
@@ -713,12 +713,12 @@ public interface MethodRegistry {
 
             @Override
             public MethodList getInstrumentedMethods() {
-                return new MethodList.Explicit(new ArrayList<MethodDescription>(instrumentations.keySet())).filter(not(isTypeInitializer()));
+                return new MethodList.Explicit(new ArrayList<MethodDescription>(implementations.keySet())).filter(not(isTypeInitializer()));
             }
 
             @Override
             public Entry target(MethodDescription methodDescription) {
-                Entry entry = instrumentations.get(methodDescription);
+                Entry entry = implementations.get(methodDescription);
                 return entry == null
                         ? Entry.ForSkippedMethod.INSTANCE
                         : entry;
@@ -732,7 +732,7 @@ public interface MethodRegistry {
                 return instrumentedType.equals(compiled.instrumentedType)
                         && loadedTypeInitializer.equals(compiled.loadedTypeInitializer)
                         && typeInitializer.equals(compiled.typeInitializer)
-                        && instrumentations.equals(compiled.instrumentations);
+                        && implementations.equals(compiled.implementations);
             }
 
             @Override
@@ -740,7 +740,7 @@ public interface MethodRegistry {
                 int result = instrumentedType.hashCode();
                 result = 31 * result + loadedTypeInitializer.hashCode();
                 result = 31 * result + typeInitializer.hashCode();
-                result = 31 * result + instrumentations.hashCode();
+                result = 31 * result + implementations.hashCode();
                 return result;
             }
 
@@ -750,7 +750,7 @@ public interface MethodRegistry {
                         "instrumentedType=" + instrumentedType +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +
-                        ", instrumentations=" + instrumentations +
+                        ", implementations=" + implementations +
                         '}';
             }
         }

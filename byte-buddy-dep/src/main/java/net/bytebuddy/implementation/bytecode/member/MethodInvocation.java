@@ -123,8 +123,8 @@ public enum MethodInvocation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return Illegal.INSTANCE.apply(methodVisitor, implementationContext);
         }
 
         @Override
@@ -213,7 +213,7 @@ public enum MethodInvocation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitMethodInsn(invocationOpcode,
                     typeDescription.getInternalName(),
                     methodDescription.getInternalName(),
@@ -350,7 +350,7 @@ public enum MethodInvocation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             StringBuilder stringBuilder = new StringBuilder("(");
             for (TypeDescription parameterType : parameterTypes) {
                 stringBuilder.append(parameterType.getDescriptor());

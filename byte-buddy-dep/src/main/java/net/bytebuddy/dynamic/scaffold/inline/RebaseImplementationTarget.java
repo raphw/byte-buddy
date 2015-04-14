@@ -158,8 +158,8 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            return stackManipulation.apply(methodVisitor, instrumentationContext);
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return stackManipulation.apply(methodVisitor, implementationContext);
         }
 
         @Override

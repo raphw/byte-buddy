@@ -461,7 +461,7 @@ public @interface FieldProxy {
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor,
-                                      Context instrumentationContext,
+                                      Context implementationContext,
                                       MethodDescription instrumentedMethod) {
                         MethodDescription getterMethod = methodAccessorFactory.registerGetterFor(accessedField);
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
@@ -474,7 +474,7 @@ public @interface FieldProxy {
                                 MethodInvocation.invoke(getterMethod),
                                 assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                                 MethodReturn.returning(instrumentedMethod.getReturnType())
-                        ).apply(methodVisitor, instrumentationContext);
+                        ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
 
@@ -602,7 +602,7 @@ public @interface FieldProxy {
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor,
-                                      Context instrumentationContext,
+                                      Context implementationContext,
                                       MethodDescription instrumentedMethod) {
                         TypeDescription parameterType = instrumentedMethod.getParameters().get(0).getTypeDescription();
                         MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(accessedField);
@@ -617,7 +617,7 @@ public @interface FieldProxy {
                                 assigner.assign(parameterType, setterMethod.getParameters().get(0).getTypeDescription(), true),
                                 MethodInvocation.invoke(setterMethod),
                                 MethodReturn.VOID
-                        ).apply(methodVisitor, instrumentationContext);
+                        ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
 
@@ -728,7 +728,7 @@ public @interface FieldProxy {
 
                 @Override
                 public Size apply(MethodVisitor methodVisitor,
-                                  Context instrumentationContext,
+                                  Context implementationContext,
                                   MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.REFERENCE.loadOffset(0),
@@ -736,7 +736,7 @@ public @interface FieldProxy {
                             MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             FieldAccess.forField(fieldDescription).putter(),
                             MethodReturn.VOID
-                    ).apply(methodVisitor, instrumentationContext);
+                    ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
 
@@ -1210,8 +1210,8 @@ public @interface FieldProxy {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-                TypeDescription auxiliaryType = instrumentationContext.register(this);
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                TypeDescription auxiliaryType = implementationContext.register(this);
                 return new Compound(
                         TypeCreation.forType(auxiliaryType),
                         Duplication.SINGLE,
@@ -1219,7 +1219,7 @@ public @interface FieldProxy {
                                 ? LegalTrivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
-                ).apply(methodVisitor, instrumentationContext);
+                ).apply(methodVisitor, implementationContext);
             }
 
             /**

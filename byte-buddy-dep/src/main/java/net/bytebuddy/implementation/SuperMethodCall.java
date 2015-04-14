@@ -108,7 +108,7 @@ public enum SuperMethodCall implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Implementation.Context instrumentationContext,
+                          Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
             StackManipulation superMethodCall = instrumentedMethod.isDefaultMethod()
                     && implementationTarget.getTypeDescription().getInterfaces().contains(instrumentedMethod.getDeclaringType())
@@ -121,7 +121,7 @@ public enum SuperMethodCall implements Implementation {
                     MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                     superMethodCall,
                     terminationHandler.of(instrumentedMethod)
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 

@@ -3494,7 +3494,7 @@ public class InvokeDynamic implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Context instrumentationContext,
+                          Context implementationContext,
                           MethodDescription instrumentedMethod) {
             InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod)
                     .resolve(instrumentedType, assigner, dynamicallyTyped);
@@ -3506,7 +3506,7 @@ public class InvokeDynamic implements Implementation {
                                     target.getParameterTypes(),
                                     handleArguments),
                     terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, dynamicallyTyped)
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 

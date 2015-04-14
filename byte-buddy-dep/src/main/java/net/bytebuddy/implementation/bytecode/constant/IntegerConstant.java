@@ -119,7 +119,7 @@ public enum IntegerConstant implements StackManipulation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitInsn(opcode);
         return SIZE;
     }
@@ -155,7 +155,7 @@ public enum IntegerConstant implements StackManipulation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
             return SIZE;
         }
@@ -203,7 +203,7 @@ public enum IntegerConstant implements StackManipulation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
             return SIZE;
         }
@@ -250,7 +250,7 @@ public enum IntegerConstant implements StackManipulation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
         }

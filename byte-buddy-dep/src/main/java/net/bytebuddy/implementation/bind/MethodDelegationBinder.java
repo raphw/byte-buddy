@@ -151,7 +151,7 @@ public interface MethodDelegationBinder {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 throw new IllegalStateException("An illegal parameter binding must not be applied");
             }
 
@@ -198,8 +198,8 @@ public interface MethodDelegationBinder {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-                return delegate.apply(methodVisitor, instrumentationContext);
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                return delegate.apply(methodVisitor, implementationContext);
             }
 
             @Override
@@ -276,8 +276,8 @@ public interface MethodDelegationBinder {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-                return delegate.apply(methodVisitor, instrumentationContext);
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                return delegate.apply(methodVisitor, implementationContext);
             }
 
             @Override
@@ -363,7 +363,7 @@ public interface MethodDelegationBinder {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 throw new IllegalStateException("Cannot delegate to an unbound method");
             }
 
@@ -545,13 +545,13 @@ public interface MethodDelegationBinder {
                 }
 
                 @Override
-                public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+                public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     Size size = new Size(0, 0);
                     for (StackManipulation stackManipulation : parameterStackManipulations) {
-                        size = size.aggregate(stackManipulation.apply(methodVisitor, instrumentationContext));
+                        size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
                     }
-                    size = size.aggregate(methodInvocation.apply(methodVisitor, instrumentationContext));
-                    return size.aggregate(terminatingStackManipulation.apply(methodVisitor, instrumentationContext));
+                    size = size.aggregate(methodInvocation.apply(methodVisitor, implementationContext));
+                    return size.aggregate(terminatingStackManipulation.apply(methodVisitor, implementationContext));
                 }
 
                 @Override

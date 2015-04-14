@@ -335,14 +335,14 @@ public @interface Pipe {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-                TypeDescription forwardingType = instrumentationContext.register(this);
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                TypeDescription forwardingType = implementationContext.register(this);
                 return new Compound(
                         TypeCreation.forType(forwardingType),
                         Duplication.SINGLE,
                         MethodVariableAccess.loadArguments(sourceMethod),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())
-                ).apply(methodVisitor, instrumentationContext);
+                ).apply(methodVisitor, implementationContext);
             }
 
             @Override
@@ -440,7 +440,7 @@ public @interface Pipe {
                     }
 
                     @Override
-                    public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                    public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                         StackManipulation thisReference = MethodVariableAccess.forType(instrumentedMethod.getDeclaringType()).loadOffset(0);
                         FieldList fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
@@ -459,7 +459,7 @@ public @interface Pipe {
                                 MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodReturn.VOID
-                        ).apply(methodVisitor, instrumentationContext);
+                        ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
 
@@ -561,7 +561,7 @@ public @interface Pipe {
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor,
-                                      Context instrumentationContext,
+                                      Context implementationContext,
                                       MethodDescription instrumentedMethod) {
                         StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadOffset(0);
                         FieldList fieldList = instrumentedType.getDeclaredFields();
@@ -577,7 +577,7 @@ public @interface Pipe {
                                 MethodInvocation.invoke(redirectedMethod),
                                 assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                                 MethodReturn.REFERENCE
-                        ).apply(methodVisitor, instrumentationContext);
+                        ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
 

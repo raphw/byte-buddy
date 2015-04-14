@@ -280,7 +280,7 @@ public enum PrimitiveWideningDelegate {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(conversionOpcode);
             return size;
         }

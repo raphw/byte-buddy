@@ -185,8 +185,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            return implementation.apply(methodVisitor, instrumentationContext);
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return implementation.apply(methodVisitor, implementationContext);
         }
 
         @Override
@@ -309,7 +309,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                         REFLECTION_FACTORY_INTERNAL_NAME,
                         GET_REFLECTION_FACTORY_METHOD_NAME,
@@ -477,8 +477,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            TypeDescription proxyType = implementationContext
                     .register(new TypeProxy(proxiedType,
                             implementationTarget,
                             InvocationFactory.Default.SUPER_METHOD,
@@ -499,7 +499,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                     MethodVariableAccess.forType(implementationTarget.getTypeDescription()).loadOffset(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
         }
 
         @Override
@@ -588,8 +588,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            TypeDescription proxyType = implementationContext
                     .register(new TypeProxy(proxiedType,
                             implementationTarget,
                             InvocationFactory.Default.SUPER_METHOD,
@@ -602,7 +602,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                     MethodVariableAccess.forType(implementationTarget.getTypeDescription()).loadOffset(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((named(INSTANCE_FIELD))).getOnly()).putter()
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
         }
 
         @Override
@@ -678,8 +678,8 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            TypeDescription proxyType = instrumentationContext
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            TypeDescription proxyType = implementationContext
                     .register(new TypeProxy(proxiedType,
                             implementationTarget,
                             InvocationFactory.Default.DEFAULT_METHOD,
@@ -693,7 +693,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                     MethodVariableAccess.forType(implementationTarget.getTypeDescription()).loadOffset(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((named(INSTANCE_FIELD))).getOnly()).putter()
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
         }
 
         @Override
@@ -806,11 +806,11 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
 
             @Override
             public Size apply(MethodVisitor methodVisitor,
-                              Context instrumentationContext,
+                              Context implementationContext,
                               MethodDescription instrumentedMethod) {
                 StackManipulation.Size stackSize = implement(instrumentedMethod,
                         invocationFactory.invoke(implementationTarget, proxiedType, instrumentedMethod))
-                        .apply(methodVisitor, instrumentationContext);
+                        .apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
 
@@ -891,7 +891,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                 }
 
                 @Override
-                public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+                public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     MethodDescription proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
                     return new StackManipulation.Compound(
                             MethodVariableAccess.REFERENCE.loadOffset(0),
@@ -899,7 +899,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                             MethodVariableAccess.forBridgeMethodInvocation(instrumentedMethod, proxyMethod),
                             MethodInvocation.invoke(proxyMethod),
                             MethodReturn.returning(instrumentedMethod.getReturnType())
-                    ).apply(methodVisitor, instrumentationContext);
+                    ).apply(methodVisitor, implementationContext);
                 }
 
                 /**

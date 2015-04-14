@@ -21,10 +21,10 @@ public interface StackManipulation {
      * Applies the stack manipulation that is described by this instance.
      *
      * @param methodVisitor          The method visitor used to write the method implementation to.
-     * @param instrumentationContext The context of the current instrumentation.
+     * @param implementationContext The context of the current instrumentation.
      * @return The changes to the size of the operand stack that are implied by this stack manipulation.
      */
-    Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext);
+    Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext);
 
     /**
      * Canonical representation of an illegal stack manipulation.
@@ -42,7 +42,7 @@ public interface StackManipulation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             throw new IllegalStateException("An illegal stack manipulation must not be applied");
         }
 
@@ -68,7 +68,7 @@ public interface StackManipulation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return StackSize.ZERO.toIncreasingSize();
         }
 
@@ -198,10 +198,10 @@ public interface StackManipulation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             Size size = new Size(0, 0);
             for (StackManipulation stackManipulation : this.stackManipulation) {
-                size = size.aggregate(stackManipulation.apply(methodVisitor, instrumentationContext));
+                size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
             }
             return size;
         }

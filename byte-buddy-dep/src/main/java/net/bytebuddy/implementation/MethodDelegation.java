@@ -993,12 +993,12 @@ public class MethodDelegation implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Context instrumentationContext,
+                          Context implementationContext,
                           MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     preparingStackAssignment,
                     processor.process(implementationTarget, instrumentedMethod, targetMethods)
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 

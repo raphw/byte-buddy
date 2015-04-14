@@ -13,13 +13,13 @@ Added several bug fixes for existing features. Beyond that the following feature
    exception was thrown if only a non-existent or abstract super method was found.
  - Added features for the interaction with Java 8 default methods. Refactored method lookup to extract invokable
    default methods.
- - Refactored the invocation of super methods to be created by an `Instrumentation.Target`. For a future release,
+ - Refactored the invocation of super methods to be created by an `Implementation.Target`. For a future release,
    this hopefully allows for class redefinitions using today's API for creating subclasses.
  - Upgraded to ASM 5.0.3.
 
 ### 20. June 2014: Version 0.2.1
 
-Added proper support for defining class initializers. Added support for field caching from method instrumentations,
+Added proper support for defining class initializers. Added support for field caching from method implementations,
 mainly for allowing the reuse of `Method` instances for the `@Origin` annotation and the `InvocationHandlerAdapter`.
 
 ### 15. September 2014: Version 0.3
@@ -37,11 +37,11 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 
 ### 18. November 2014: Version 0.4
 
-- Extended `Instrumentation.Context` to support field accessors.
+- Extended `Implementation.Context` to support field accessors.
 - Added the `TypePool` abstraction and added a default implementation.
 - Refactored annotations to have an intermediate form as `AnnotationDescription` which does not need to 
   represent loaded values.
-- Refactored several built-in `Instrumentation`, among others, all implementations now support `TypeDescription` 
+- Refactored several built-in `Implementation`, among others, all implementations now support `TypeDescription` 
   in addition to loaded `Class` as their arguments
 - Added several annotations that apply to the `MethodDelegation`.
 
@@ -55,14 +55,14 @@ mainly for allowing the reuse of `Method` instances for the `@Origin` annotation
 
 - Added the `DeclaringTypeResolver` as a component in the default chain which selects the most specific method out
   of two. This is mainly meant to avoid the accidental matching of the methods that are declared by the `Object` type.
-- Added `TypeInitializer`s in order to allow `Instrumentation`s to define type initializer blocks.
+- Added `TypeInitializer`s in order to allow `Implementation`s to define type initializer blocks.
 - Replaced the `MethodMatcher` API with the `ElementMatcher` API which allows for a more sophisticated matching DSL.
 - Added a `ClassLoadingStrategy` for Android in its own module.
 - Introduced an `AgentBuilder` API and implementation.
 
 ### 5. December 2014: Version 0.5.1
 
-Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more convenient 
+Added the `andThen` method to the `SuperMethodCall` implementation in order to allow for a more convenient 
 constructor interception where a hard-coded super method call is required by the Java verifier.
 
 ### 18. January 2015: Version 0.5.2
@@ -72,18 +72,18 @@ constructor interception where a hard-coded super method call is required by the
 
 ### 24. February 2015: Version 0.5.3
 
-- Changed the `SuperMethodCall` instrumentation to fall back to a default method call if required. A different
-  behavior was found to surprise users and would introduce subtle bugs in user code as the super method instrumentation
+- Changed the `SuperMethodCall` implementation to fall back to a default method call if required. A different
+  behavior was found to surprise users and would introduce subtle bugs in user code as the super method implementation
   would always work with subclassing due to Java super method call semantics.
-- Added a `MethodCall` instrumentation that allows hard-coding a method call.
-- Added an `InvokeDynamic` instrumentation that allows runtime dispatching by bootstrap methods.
+- Added a `MethodCall` implementation that allows hard-coding a method call.
+- Added an `InvokeDynamic` implementation that allows runtime dispatching by bootstrap methods.
 - Fixed the default `TypePool` to retain generic signatures in order to avoid that agents delete such signatures.
 - Fixed a bug in all of the the default `ConstructorStrategy` that effectively prevented intercepting of constructors.
 
 ### 15. March 2015: Version 0.5.4
 
-- Fixed missing retention of method annotations of instrumented types.
-- Allowed dynamic lookup of methods for the `MethodCall` instrumentation.
+- Fixed missing retention of method annotations of implementation types.
+- Allowed dynamic lookup of methods for the `MethodCall` implementation.
 
 ### 20. March 2015: Version 0.5.5
 

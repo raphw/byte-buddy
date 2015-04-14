@@ -35,7 +35,7 @@ public class TextConstant implements StackManipulation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitLdcInsn(text);
         return SIZE;
     }

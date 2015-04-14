@@ -286,7 +286,7 @@ public class MethodCallProxy implements AuxiliaryType {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadOffset(0);
                 FieldList fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
@@ -305,7 +305,7 @@ public class MethodCallProxy implements AuxiliaryType {
                         MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
                         new StackManipulation.Compound(fieldLoading),
                         MethodReturn.VOID
-                ).apply(methodVisitor, instrumentationContext);
+                ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
 
@@ -404,7 +404,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
             @Override
             public Size apply(MethodVisitor methodVisitor,
-                              Context instrumentationContext,
+                              Context implementationContext,
                               MethodDescription instrumentedMethod) {
                 StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadOffset(0);
                 FieldList fieldList = instrumentedType.getDeclaredFields();
@@ -418,7 +418,7 @@ public class MethodCallProxy implements AuxiliaryType {
                         MethodInvocation.invoke(accessorMethod),
                         assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
                         MethodReturn.returning(instrumentedMethod.getReturnType())
-                ).apply(methodVisitor, instrumentationContext);
+                ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
 
@@ -492,15 +492,15 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            TypeDescription auxiliaryType = instrumentationContext
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            TypeDescription auxiliaryType = implementationContext
                     .register(new MethodCallProxy(specialMethodInvocation, serializable));
             return new Compound(
                     TypeCreation.forType(auxiliaryType),
                     Duplication.SINGLE,
                     MethodVariableAccess.loadThisReferenceAndArguments(specialMethodInvocation.getMethodDescription()),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
         }
 
         @Override

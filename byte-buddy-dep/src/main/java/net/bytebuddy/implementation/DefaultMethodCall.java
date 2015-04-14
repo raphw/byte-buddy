@@ -174,7 +174,7 @@ public class DefaultMethodCall implements Implementation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             StackManipulation defaultMethodInvocation = locateDefault(instrumentedMethod);
             if (!defaultMethodInvocation.isValid()) {
                 throw new IllegalStateException("Cannot invoke default method on " + instrumentedMethod);
@@ -183,7 +183,7 @@ public class DefaultMethodCall implements Implementation {
                     MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                     defaultMethodInvocation,
                     MethodReturn.returning(instrumentedMethod.getReturnType())
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 

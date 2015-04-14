@@ -15,7 +15,7 @@ public enum Removal implements StackManipulation {
      */
     ZERO(StackSize.ZERO, Opcodes.NOP) {
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return new Size(0, 0);
         }
     },
@@ -76,7 +76,7 @@ public enum Removal implements StackManipulation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitInsn(opcode);
         return size;
     }

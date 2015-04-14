@@ -171,7 +171,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 wrapperType.getInternalName(),
                 unboxingMethodName,

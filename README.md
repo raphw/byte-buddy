@@ -68,7 +68,7 @@ class and which can be easily composed. The creation of custom matchers is howev
 
 For implementing the `toString` method, the `FixedValue` class defines a constant return value for the overridden
 method. Defining a constant value is only one example of many method interceptors that ship with Byte Buddy. By
-implementing the `Instrumentation` interface, a method could however even be defined by custom byte code.
+implementing the `Implementation` interface, a method could however even be defined by custom byte code.
 
 Finally, the described Java class is created and then loaded into the Java virtual machine. For this purpose, a target
 class loader is required as well as a class loading strategy where we choose a wrapper strategy. The latter creates a
@@ -84,10 +84,10 @@ In reality, a user of such a library wants to perform more complex manipulations
 logic to a compiled Java program. Using Byte Buddy, doing so is however not much harder and the following example
 gives a taste of how method calls can be intercepted.
 
-Byte Buddy describes method implementations by instances of the `Instrumentation` interface such as `FixedValue` which 
+Byte Buddy describes method implementations by instances of the `Implementation` interface such as `FixedValue` which 
 we used in the above example. By implementing this interface, a user of Byte Buddy can go to the length of defining 
 custom byte code for a method. Normally, it is however easier to use Byte Buddy's `MethodDelegation` which allows
-to implement an intercepted method in plain Java. Using this instrumentation is straight forward as it operates on any
+to implement an intercepted method in plain Java. Using this implementation is straight forward as it operates on any
 POJO. For example, we can implement the `Comparator` interface by defining the following class which mimics the
 signature of the `Comparator:compare` method we want to implement later:
 
@@ -166,7 +166,7 @@ Byte Buddy is written on top of [ASM](http://asm.ow2.org/), a mature and well-te
 compiled Java classes. In order to allow for advanced type manipulations, Byte Buddy is intentionally exposing the
 ASM API to its users. Of course, the direct use of ASM remains fully optional and most users will most likely never
 require it. This choice was made such that a user of Byte Buddy is not restrained to its higher-level functionality
-but can implement custom instrumentations without a fuzz when it is necessary.
+but can implement custom implementations without a fuzz when it is necessary.
 
 However, this imposes one possible problem when relying onto Byte Buddy as a project dependency and making use of the
 exposed ASM API. The authors of ASM require their users to

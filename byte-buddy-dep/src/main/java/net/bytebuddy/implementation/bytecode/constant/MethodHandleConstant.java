@@ -129,7 +129,7 @@ public class MethodHandleConstant implements StackManipulation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitLdcInsn(handle);
         return SIZE;
     }

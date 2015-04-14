@@ -43,7 +43,7 @@ public class TypeCreation implements StackManipulation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitTypeInsn(Opcodes.NEW, typeDescription.getInternalName());
         return new Size(1, 1);
     }

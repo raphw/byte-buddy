@@ -156,7 +156,7 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 throw new IllegalStateException("Cannot apply non-defined type initializer");
             }
 
@@ -207,8 +207,8 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-                return stackManipulation.apply(methodVisitor, instrumentationContext);
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                return stackManipulation.apply(methodVisitor, implementationContext);
             }
 
             @Override

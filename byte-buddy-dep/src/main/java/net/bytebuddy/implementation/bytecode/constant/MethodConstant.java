@@ -77,11 +77,11 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         Size argumentSize = prepare(methodVisitor)
                 .aggregate(ArrayFactory.targeting(TypeDescription.CLASS)
                         .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList()))
-                        .apply(methodVisitor, instrumentationContext));
+                        .apply(methodVisitor, implementationContext));
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 CLASS_TYPE_INTERNAL_NAME,
                 getMethodName(),
@@ -154,8 +154,8 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            return Illegal.INSTANCE.apply(methodVisitor, instrumentationContext);
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return Illegal.INSTANCE.apply(methodVisitor, implementationContext);
         }
 
         @Override
@@ -310,9 +310,9 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
-            return FieldAccess.forField(instrumentationContext.cache(methodConstant, METHOD_TYPE)).getter()
-                    .apply(methodVisitor, instrumentationContext);
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return FieldAccess.forField(implementationContext.cache(methodConstant, METHOD_TYPE)).getter()
+                    .apply(methodVisitor, implementationContext);
         }
 
         @Override

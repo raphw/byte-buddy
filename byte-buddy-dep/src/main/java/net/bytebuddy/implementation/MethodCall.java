@@ -2165,7 +2165,7 @@ public class MethodCall implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Context instrumentationContext,
+                          Context implementationContext,
                           MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
             TypeList methodParameters = invokedMethod.getParameters().asTypeList();
@@ -2186,7 +2186,7 @@ public class MethodCall implements Implementation {
                     new StackManipulation.Compound(argumentInstruction),
                     methodInvoker.invoke(invokedMethod, implementationTarget),
                     terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, dynamicallyTyped)
-            ).apply(methodVisitor, instrumentationContext);
+            ).apply(methodVisitor, implementationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 

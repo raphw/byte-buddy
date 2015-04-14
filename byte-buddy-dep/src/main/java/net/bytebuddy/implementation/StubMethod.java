@@ -38,12 +38,12 @@ public enum StubMethod implements Implementation, ByteCodeAppender {
 
     @Override
     public Size apply(MethodVisitor methodVisitor,
-                      Context instrumentationContext,
+                      Context implementationContext,
                       MethodDescription instrumentedMethod) {
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 DefaultValue.of(instrumentedMethod.getReturnType()),
                 MethodReturn.returning(instrumentedMethod.getReturnType())
-        ).apply(methodVisitor, instrumentationContext);
+        ).apply(methodVisitor, implementationContext);
         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
 

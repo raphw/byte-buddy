@@ -282,7 +282,7 @@ public enum MethodVariableAccess {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             switch (variableIndex) {
                 case 0:
                     methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset);

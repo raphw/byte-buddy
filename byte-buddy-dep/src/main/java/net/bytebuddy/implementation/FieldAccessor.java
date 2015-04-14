@@ -110,13 +110,13 @@ public abstract class FieldAccessor implements Implementation {
      * Applies a field getter instrumentation.
      *
      * @param methodVisitor          The method visitor to write any instructions to.
-     * @param instrumentationContext The instrumentation context of the current instrumentation.
+     * @param implementationContext The instrumentation context of the current instrumentation.
      * @param fieldDescription       The description of the field to read.
      * @param methodDescription      The method that is target of the instrumentation.
      * @return The required size of the operand stack and local variable array for this instrumentation.
      */
     protected ByteCodeAppender.Size applyGetter(MethodVisitor methodVisitor,
-                                                Implementation.Context instrumentationContext,
+                                                Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
         StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(),
@@ -126,7 +126,7 @@ public abstract class FieldAccessor implements Implementation {
             throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
         }
         return apply(methodVisitor,
-                instrumentationContext,
+                implementationContext,
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
@@ -140,13 +140,13 @@ public abstract class FieldAccessor implements Implementation {
      * Applies a field setter instrumentation.
      *
      * @param methodVisitor          The method visitor to write any instructions to.
-     * @param instrumentationContext The instrumentation context of the current instrumentation.
+     * @param implementationContext The instrumentation context of the current instrumentation.
      * @param fieldDescription       The description of the field to write to.
      * @param methodDescription      The method that is target of the instrumentation.
      * @return The required size of the operand stack and local variable array for this instrumentation.
      */
     protected ByteCodeAppender.Size applySetter(MethodVisitor methodVisitor,
-                                                Implementation.Context instrumentationContext,
+                                                Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
         StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getTypeDescription(),
@@ -158,7 +158,7 @@ public abstract class FieldAccessor implements Implementation {
             throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription);
         }
         return apply(methodVisitor,
-                instrumentationContext,
+                implementationContext,
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
@@ -174,14 +174,14 @@ public abstract class FieldAccessor implements Implementation {
      * A generic implementation of the application of a {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
      *
      * @param methodVisitor          The method visitor to write any instructions to.
-     * @param instrumentationContext The instrumentation context of the current instrumentation.
+     * @param implementationContext The instrumentation context of the current instrumentation.
      * @param fieldDescription       The description of the field to access.
      * @param methodDescription      The method that is target of the instrumentation.
      * @param fieldAccess            The manipulation that represents the field access.
      * @return A suitable {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
      */
     private ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
-                                        Implementation.Context instrumentationContext,
+                                        Implementation.Context implementationContext,
                                         FieldDescription fieldDescription,
                                         MethodDescription methodDescription,
                                         StackManipulation fieldAccess) {
@@ -195,7 +195,7 @@ public abstract class FieldAccessor implements Implementation {
                         : MethodVariableAccess.REFERENCE.loadOffset(0),
                 fieldAccess,
                 MethodReturn.returning(methodDescription.getReturnType())
-        ).apply(methodVisitor, instrumentationContext);
+        ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), methodDescription.getStackSize());
     }
 
@@ -954,23 +954,23 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Implementation.Context instrumentationContext,
+                          Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
             if (isConstructor().matches(instrumentedMethod)) {
                 throw new IllegalArgumentException("Constructors cannot define beans: " + instrumentedMethod);
             }
             if (takesArguments(0).and(not(returns(void.class))).matches(instrumentedMethod)) {
                 return applyGetter(methodVisitor,
-                        instrumentationContext,
+                        implementationContext,
                         fieldLocator.locate(getFieldName(instrumentedMethod)),
                         instrumentedMethod);
             } else if (takesArguments(1).and(returns(void.class)).matches(instrumentedMethod)) {
                 return applySetter(methodVisitor,
-                        instrumentationContext,
+                        implementationContext,
                         fieldLocator.locate(getFieldName(instrumentedMethod)),
                         instrumentedMethod);
             } else {
-                throw new IllegalArgumentException("Method " + instrumentationContext + " is no bean property");
+                throw new IllegalArgumentException("Method " + implementationContext + " is no bean property");
             }
         }
 

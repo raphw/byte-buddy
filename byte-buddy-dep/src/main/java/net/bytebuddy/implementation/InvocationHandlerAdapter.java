@@ -154,14 +154,14 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * Applies an instrumentation that delegates to a invocation handler.
      *
      * @param methodVisitor          The method visitor for writing the byte code to.
-     * @param instrumentationContext The instrumentation context for the current instrumentation.
+     * @param implementationContext The instrumentation context for the current instrumentation.
      * @param instrumentedMethod     The method that is instrumented.
      * @param instrumentedType       The type that is instrumented.
      * @param preparingManipulation  A stack manipulation that applies any preparation to the operand stack.
      * @return The size of the applied assignment.
      */
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
-                                          Context instrumentationContext,
+                                          Context implementationContext,
                                           MethodDescription instrumentedMethod,
                                           TypeDescription instrumentedType,
                                           StackManipulation preparingManipulation) {
@@ -178,7 +178,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 MethodInvocation.invoke(invocationHandlerType.getDeclaredMethods().getOnly()),
                 assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType(), true),
                 MethodReturn.returning(instrumentedMethod.getReturnType())
-        ).apply(methodVisitor, instrumentationContext);
+        ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
 
@@ -308,10 +308,10 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
             @Override
             public Size apply(MethodVisitor methodVisitor,
-                              Context instrumentationContext,
+                              Context implementationContext,
                               MethodDescription instrumentedMethod) {
                 return ForStaticDelegation.this.apply(methodVisitor,
-                        instrumentationContext,
+                        implementationContext,
                         instrumentedMethod,
                         instrumentedType,
                         StackManipulation.LegalTrivial.INSTANCE);
@@ -417,9 +417,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return ForInstanceDelegation.this.apply(methodVisitor,
-                        instrumentationContext,
+                        implementationContext,
                         instrumentedMethod,
                         instrumentedType,
                         MethodVariableAccess.forType(instrumentedType).loadOffset(0));

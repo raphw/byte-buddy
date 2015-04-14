@@ -142,7 +142,7 @@ public enum ArrayAccess {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(loadOpcode);
             return stackSize.toIncreasingSize().aggregate(new Size(-2, 0));
         }
@@ -184,7 +184,7 @@ public enum ArrayAccess {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context instrumentationContext) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(storeOpcode);
             return stackSize.toDecreasingSize().aggregate(new Size(-2, 0));
         }

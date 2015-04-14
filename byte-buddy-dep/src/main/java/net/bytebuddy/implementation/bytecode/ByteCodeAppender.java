@@ -23,12 +23,12 @@ public interface ByteCodeAppender {
      * Applies this byte code appender to a type creation process.
      *
      * @param methodVisitor          The method visitor to which the byte code appender writes its code to.
-     * @param instrumentationContext The instrumentation context of the current type creation process.
+     * @param implementationContext The instrumentation context of the current type creation process.
      * @param instrumentedMethod     The method that is the target of the instrumentation.
      * @return The required size for the applied byte code to run.
      */
     Size apply(MethodVisitor methodVisitor,
-               Implementation.Context instrumentationContext,
+               Implementation.Context implementationContext,
                MethodDescription instrumentedMethod);
 
     /**
@@ -123,11 +123,11 @@ public interface ByteCodeAppender {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Implementation.Context instrumentationContext,
+                          Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
             Size size = new Size(0, instrumentedMethod.getStackSize());
             for (ByteCodeAppender byteCodeAppender : this.byteCodeAppender) {
-                size = size.merge(byteCodeAppender.apply(methodVisitor, instrumentationContext, instrumentedMethod));
+                size = size.merge(byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod));
             }
             return size;
         }
@@ -172,9 +172,9 @@ public interface ByteCodeAppender {
 
         @Override
         public Size apply(MethodVisitor methodVisitor,
-                          Implementation.Context instrumentationContext,
+                          Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
-            return new Size(stackManipulation.apply(methodVisitor, instrumentationContext).getMaximalSize(),
+            return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(),
                     instrumentedMethod.getStackSize());
         }
 

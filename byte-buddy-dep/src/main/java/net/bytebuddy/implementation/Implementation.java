@@ -105,7 +105,7 @@ public interface Implementation {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext) {
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 throw new IllegalStateException("Cannot implement an undefined method");
             }
 
@@ -194,8 +194,8 @@ public interface Implementation {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor, Context instrumentationContext) {
-                return stackManipulation.apply(methodVisitor, instrumentationContext);
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                return stackManipulation.apply(methodVisitor, implementationContext);
             }
 
             @Override
@@ -912,8 +912,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public Size apply(MethodVisitor methodVisitor, Context instrumentationContext) {
-                    return fieldValue.apply(methodVisitor, instrumentationContext);
+                public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                    return fieldValue.apply(methodVisitor, implementationContext);
                 }
 
                 @Override
@@ -953,9 +953,9 @@ public interface Implementation {
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription methodDescription) {
+                public void applyBody(MethodVisitor methodVisitor, Context implementationContext, MethodDescription methodDescription) {
                     methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, instrumentationContext, methodDescription);
+                    Size size = apply(methodVisitor, implementationContext, methodDescription);
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                 }
 
@@ -988,13 +988,13 @@ public interface Implementation {
 
                 @Override
                 public Size apply(MethodVisitor methodVisitor,
-                                  Implementation.Context instrumentationContext,
+                                  Implementation.Context implementationContext,
                                   MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             accessorMethodInvocation,
                             MethodReturn.returning(instrumentedMethod.getReturnType())
-                    ).apply(methodVisitor, instrumentationContext);
+                    ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
 
@@ -1035,14 +1035,14 @@ public interface Implementation {
                 }
 
                 @Override
-                public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             fieldDescription.isStatic()
                                     ? StackManipulation.LegalTrivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter(),
                             MethodReturn.returning(fieldDescription.getFieldType())
-                    ).apply(methodVisitor, instrumentationContext);
+                    ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
 
@@ -1085,12 +1085,12 @@ public interface Implementation {
                 }
 
                 @Override
-                public Size apply(MethodVisitor methodVisitor, Context instrumentationContext, MethodDescription instrumentedMethod) {
+                public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             FieldAccess.forField(fieldDescription).putter(),
                             MethodReturn.VOID
-                    ).apply(methodVisitor, instrumentationContext);
+                    ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
 
