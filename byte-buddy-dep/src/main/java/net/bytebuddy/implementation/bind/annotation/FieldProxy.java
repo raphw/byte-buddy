@@ -357,7 +357,7 @@ public @interface FieldProxy {
              * @param fieldDescription      The field to be accessed.
              * @param assigner              The assigner to use.
              * @param methodAccessorFactory The accessed type's method accessor factory.
-             * @return A suitable instrumentation.
+             * @return A suitable implementation.
              */
             protected abstract Implementation access(FieldDescription fieldDescription,
                                                      Assigner assigner,

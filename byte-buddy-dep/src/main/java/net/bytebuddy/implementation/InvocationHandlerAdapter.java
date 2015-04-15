@@ -151,10 +151,10 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     public abstract AssignerConfigurable withMethodCache();
 
     /**
-     * Applies an instrumentation that delegates to a invocation handler.
+     * Applies an implementation that delegates to a invocation handler.
      *
      * @param methodVisitor         The method visitor for writing the byte code to.
-     * @param implementationContext The implementation context for the current instrumentation.
+     * @param implementationContext The implementation context for the current implementation.
      * @param instrumentedMethod    The method that is instrumented.
      * @param instrumentedType      The type that is instrumented.
      * @param preparingManipulation A stack manipulation that applies any preparation to the operand stack.

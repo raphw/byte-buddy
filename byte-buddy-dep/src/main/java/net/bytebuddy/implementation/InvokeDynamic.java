@@ -449,7 +449,7 @@ public class InvokeDynamic implements Implementation {
      * be able to create the provided Java instance.
      *
      * @param javaInstance The Java instance to provide to the bound method as an argument.
-     * @return This invoke dynamic instrumentation where the bootstrapped method is passed the specified Java instance.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified Java instance.
      */
     public InvokeDynamic withInstance(JavaInstance... javaInstance) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(javaInstance.length);
@@ -3474,19 +3474,19 @@ public class InvokeDynamic implements Implementation {
     }
 
     /**
-     * The byte code appender to be used by the {@link net.bytebuddy.implementation.InvokeDynamic} instrumentation.
+     * The byte code appender to be used by the {@link net.bytebuddy.implementation.InvokeDynamic} implementation.
      */
     protected class Appender implements ByteCodeAppender {
 
         /**
-         * The instrumented type of the current instrumentation.
+         * The instrumented type of the current implementation.
          */
         private final TypeDescription instrumentedType;
 
         /**
          * Creates a new byte code appender for an invoke dynamic implementation.
          *
-         * @param instrumentedType The instrumented type of the current instrumentation.
+         * @param instrumentedType The instrumented type of the current implementation.
          */
         public Appender(TypeDescription instrumentedType) {
             this.instrumentedType = instrumentedType;

@@ -24,7 +24,7 @@ public class InliningImplementationMatcher implements LatentMethodMatcher {
     private final ElementMatcher<? super MethodDescription> predefinedMethodSignatures;
 
     /**
-     * Creates a new inline instrumentation matcher.
+     * Creates a new inline implementation matcher.
      *
      * @param ignoredMethods             A method matcher that matches any ignored method.
      * @param predefinedMethodSignatures A method matcher that matches any predefined method.

@@ -343,7 +343,7 @@ public class MethodCallProxy implements AuxiliaryType {
         private final Assigner assigner;
 
         /**
-         * Creates a new method call instrumentation.
+         * Creates a new method call implementation.
          *
          * @param accessorMethod The method that is accessed by the implemented method.
          * @param assigner       The assigner to be used for invoking the accessor method.

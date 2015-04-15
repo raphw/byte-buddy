@@ -181,7 +181,7 @@ public class MethodDelegation implements Implementation {
     /**
      * Creates a new method delegation.
      *
-     * @param implementationDelegate The instrumentation delegate to use by this method delegator.
+     * @param implementationDelegate The implementation delegate to use by this method delegator.
      * @param parameterBinders       The parameter binders to use by this method delegator.
      * @param defaultsProvider       The defaults provider to use by this method delegator.
      * @param terminationHandler     The termination handler to apply.
@@ -529,7 +529,7 @@ public class MethodDelegation implements Implementation {
      * A provider for annotation instances on values that are not explicitly annotated.
      *
      * @param defaultsProvider The defaults provider to use.
-     * @return A method delegation instrumentation that makes use of the given defaults provider.
+     * @return A method delegation implementation that makes use of the given defaults provider.
      */
     public MethodDelegation withDefaultsProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider) {
         return new MethodDelegation(implementationDelegate,
@@ -699,7 +699,7 @@ public class MethodDelegation implements Implementation {
         /**
          * Returns the stack manipulation responsible for preparing the instance representing the implementation.
          *
-         * @param instrumentedType A description of the instrumented type to which the instrumentation is applied.
+         * @param instrumentedType A description of the instrumented type to which the implementation is applied.
          * @return A stack manipulation representing the preparation.
          */
         StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType);
@@ -707,7 +707,7 @@ public class MethodDelegation implements Implementation {
         /**
          * Returns the method invoker responsible for invoking the delegation method.
          *
-         * @param instrumentedType The instrumented type to which the instrumentation is applied.
+         * @param instrumentedType The instrumented type to which the implementation is applied.
          * @return A method invoker responsible for invoking the delegation method.
          */
         MethodDelegationBinder.MethodInvoker getMethodInvoker(TypeDescription instrumentedType);

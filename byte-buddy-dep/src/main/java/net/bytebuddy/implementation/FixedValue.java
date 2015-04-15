@@ -245,16 +245,16 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * Blueprint method that for applying the actual instrumentation.
+     * Blueprint method that for applying the actual implementation.
      *
-     * @param methodVisitor           The method visitor to which the instrumentation is applied to.
+     * @param methodVisitor           The method visitor to which the implementation is applied to.
      * @param implementationContext   The implementation context for the given implementation.
-     * @param instrumentedMethod      The instrumented method that is target of the instrumentation.
+     * @param instrumentedMethod      The instrumented method that is target of the implementation.
      * @param fixedValueType          A description of the type of the fixed value that is loaded by the
      *                                {@code valueLoadingInstruction}.
      * @param valueLoadingInstruction A stack manipulation that represents the loading of the fixed value onto the
      *                                operand stack.
-     * @return A representation of the stack and variable array sized that are required for this instrumentation.
+     * @return A representation of the stack and variable array sized that are required for this implementation.
      */
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
                                           Context implementationContext,
@@ -287,7 +287,7 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * Represents a fixed value instrumentation that is using a default assigner for attempting to assign
+     * Represents a fixed value implementation that is using a default assigner for attempting to assign
      * the fixed value to the return type of the instrumented method.
      */
     public interface AssignerConfigurable extends Implementation {

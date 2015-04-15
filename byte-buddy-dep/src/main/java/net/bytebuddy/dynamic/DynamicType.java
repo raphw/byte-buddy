@@ -619,27 +619,27 @@ public interface DynamicType {
         MatchedMethodInterception<T> method(ElementMatcher<? super MethodDescription> methodMatcher);
 
         /**
-         * Selects a set of constructors of this type for instrumentation.
+         * Selects a set of constructors of this type for implementation.
          *
-         * @param methodMatcher A matcher describing the constructors to be intercepted by this instrumentation.
+         * @param methodMatcher A matcher describing the constructors to be intercepted by this implementation.
          * @return An interception delegate for constructors matching the given method matcher.
          */
         MatchedMethodInterception<T> constructor(ElementMatcher<? super MethodDescription> methodMatcher);
 
         /**
-         * Selects a set of byte code level methods, i.e. methods, construcors and the type initializer of
-         * this type for instrumentation.
+         * Selects a set of byte code level methods, i.e. methods, constructors and the type initializer of
+         * this type for implementation.
          *
-         * @param methodMatcher A matcher describing the byte code methods to be intercepted by this instrumentation.
+         * @param methodMatcher A matcher describing the byte code methods to be intercepted by this implementation.
          * @return An interception delegate for byte code methods matching the given method matcher.
          */
         MatchedMethodInterception<T> invokable(ElementMatcher<? super MethodDescription> methodMatcher);
 
         /**
          * Selects a set of byte code level methods, i.e. methods, construcors and the type initializer of
-         * this type for instrumentation.
+         * this type for implementation.
          *
-         * @param methodMatcher A latent matcher describing the byte code methods to be intercepted by this instrumentation.
+         * @param methodMatcher A latent matcher describing the byte code methods to be intercepted by this implementation.
          * @return An interception delegate for byte code methods matching the given method matcher.
          */
         MatchedMethodInterception<T> invokable(LatentMethodMatcher methodMatcher);
@@ -652,7 +652,7 @@ public interface DynamicType {
         Unloaded<T> make();
 
         /**
-         * Defines an instrumentation for a method that was added to this instrumentation or a to method selection
+         * Defines an implementation for a method that was added to this instrumentation or a to method selection
          * of existing methods.
          *
          * @param <S> The most specific known loaded type that is implemented by the created dynamic type, usually the
@@ -661,10 +661,10 @@ public interface DynamicType {
         interface MatchedMethodInterception<S> {
 
             /**
-             * Intercepts the currently selected method by a given instrumentation.
+             * Intercepts the currently selected method by a given implementation.
              *
-             * @param implementation An instrumentation to apply to the currently selected method.
-             * @return A builder which will intercept the currently selected methods by the given instrumentation.
+             * @param implementation An implementation to apply to the currently selected method.
+             * @return A builder which will intercept the currently selected methods by the given implementation.
              */
             MethodAnnotationTarget<S> intercept(Implementation implementation);
 
@@ -697,7 +697,7 @@ public interface DynamicType {
         }
 
         /**
-         * Defines an instrumentation for a method that was added to this instrumentation and allows to include
+         * Defines an implementation for a method that was added to this instrumentation and allows to include
          * exception declarations for the newly defined method.
          *
          * @param <S> The most specific known loaded type that is implemented by the created dynamic type, usually the
@@ -1655,7 +1655,7 @@ public interface DynamicType {
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
              * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
-             * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
+             * @param ignoredMethods                        A matcher for determining methods that are to be ignored for implementation.
              * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
              * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
              * @param fieldRegistry                         The field registry to apply to the dynamic type creation.

@@ -103,9 +103,9 @@ public class MethodCall implements Implementation {
     }
 
     /**
-     * Returns the default assigner to be used by this instrumentation.
+     * Returns the default assigner to be used by this implementation.
      *
-     * @return The default assigner to be used by this instrumentation.
+     * @return The default assigner to be used by this implementation.
      */
     private static Assigner defaultAssigner() {
         return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
@@ -411,8 +411,7 @@ public class MethodCall implements Implementation {
      * Applies another implementation after invoking this method call. A return value that is the result of this
      * method call is dropped.
      *
-     * @param implementation The implementation that is to be applied after applying this
-     *                       method call instrumentation.
+     * @param implementation The implementation that is to be applied after applying this method call implementation.
      * @return An implementation that first applies this method call and the given implementation right after.
      */
     public Implementation andThen(Implementation implementation) {

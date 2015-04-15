@@ -42,8 +42,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * the Java virtual machine. Each instance of {@code ByteBuddy} is immutable where any of the factory methods returns
  * a new instance that represents the altered configuration.
  * <p>&nbsp;</p>
- * Note that any configuration defines to ignore the instrumentation of any synthetic methods or the default finalizer
- * method {@link Object#finalize()}. This behavior can be altered by
+ * Note that any configuration defines not to implement any synthetic methods or the default finalizer method
+ * {@link Object#finalize()}. This behavior can be altered by
  * {@link net.bytebuddy.ByteBuddy#withIgnoredMethods(net.bytebuddy.matcher.ElementMatcher)}.
  */
 public class ByteBuddy {
@@ -115,13 +115,13 @@ public class ByteBuddy {
 
     /**
      * The default field attribute appender factory which is applied to any field that is defined
-     * for instrumentations that are applied by this configuration.
+     * for implementations that are applied by this configuration.
      */
     protected final FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory;
 
     /**
      * The default method attribute appender factory which is applied to any method that is defined
-     * or intercepted for instrumentations that are applied by this configuration.
+     * or intercepted for implementations that are applied by this configuration.
      */
     protected final MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory;
 

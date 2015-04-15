@@ -562,7 +562,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Implementation of a field accessor instrumentation where a field is identified by a method's name following
+     * Implementation of a field accessor implementation where a field is identified by a method's name following
      * the Java specification for bean properties.
      */
     protected static class ForUnnamedField extends FieldAccessor implements OwnerTypeLocatable {
@@ -673,7 +673,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * Implementation of a field accessor instrumentation where the field name is given explicitly.
+     * Implementation of a field accessor implementation where the field name is given explicitly.
      */
     protected static class ForNamedField extends FieldAccessor implements FieldDefinable {
 
@@ -820,7 +820,7 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         /**
-         * A preparation handler is responsible for defining a field value on an instrumentation, if necessary.
+         * A preparation handler is responsible for defining a field value on an implementation, if necessary.
          */
         protected interface PreparationHandler {
 
@@ -934,7 +934,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * An byte code appender for an field accessor instrumentation.
+     * An byte code appender for an field accessor implementation.
      */
     protected class Appender implements ByteCodeAppender {
 

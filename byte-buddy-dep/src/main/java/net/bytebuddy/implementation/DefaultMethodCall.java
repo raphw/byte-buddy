@@ -84,12 +84,12 @@ public class DefaultMethodCall implements Implementation {
     }
 
     /**
-     * Creates a {@link net.bytebuddy.implementation.DefaultMethodCall} instrumentation without prioritizing any
+     * Creates a {@link net.bytebuddy.implementation.DefaultMethodCall} implementation without prioritizing any
      * interface. Instead, any interface that is defined for a given type is searched for a suitable default method. If
      * exactly one interface defines a suitable default method, this method is invoked from the instrumented method.
      * Otherwise, an exception is thrown.
      *
-     * @return An instrumentation which calls an instrumented method's compatible default method if such a method
+     * @return An implementation which calls an instrumented method's compatible default method if such a method
      * is unambiguous.
      */
     public static Implementation unambiguousOnly() {

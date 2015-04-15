@@ -29,11 +29,11 @@ import java.util.*;
  * implementation is applied in two stages:
  * <ol>
  * <li>The implementation is able to prepare an instrumented type by adding fields and/or helper methods that are
- * required for the methods implemented by this instrumentation. Furthermore,
+ * required for the methods implemented by this implementation. Furthermore,
  * {@link LoadedTypeInitializer}s  and byte code for the type initializer can be registered for the instrumented
  * type.</li>
  * <li>Any implementation is required to supply a byte code appender that is responsible for providing the byte code
- * to the instrumented methods that were delegated to this instrumentation. This byte code appender is also
+ * to the instrumented methods that were delegated to this implementation. This byte code appender is also
  * be responsible for providing implementations for the methods added in step <i>1</i>.</li>
  * </ol>
  * <p>&nbsp;</p>
