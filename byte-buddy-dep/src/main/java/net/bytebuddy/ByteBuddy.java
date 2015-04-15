@@ -451,8 +451,9 @@ public class ByteBuddy {
      *
      * @return A builder for a new annotation type.
      */
-    public DynamicType.Builder<?> makeAnnotation() {
-        return new SubclassDynamicTypeBuilder<Object>(classFileVersion,
+    @SuppressWarnings("unchecked")
+    public DynamicType.Builder<? extends Annotation> makeAnnotation() {
+        return (DynamicType.Builder<? extends Annotation>) (Object) new SubclassDynamicTypeBuilder<Object>(classFileVersion,
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 TypeDescription.OBJECT,
@@ -1904,7 +1905,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public DynamicType.Builder<?> makeAnnotation() {
+        public DynamicType.Builder<? extends Annotation> makeAnnotation() {
             return materialize().makeAnnotation();
         }
 
