@@ -1637,9 +1637,8 @@ public interface TypePool {
     }
 
     /**
-     * A type description that looks up any referenced {@link ByteCodeElement}s or
-     * {@link AnnotationDescription}s by querying a type pool
-     * at lookup time.
+     * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
+     * {@link AnnotationDescription} by querying a type pool at lookup time.
      */
     class LazyTypeDescription extends TypeDescription.AbstractTypeDescription.OfSimpleType {
 

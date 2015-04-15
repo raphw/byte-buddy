@@ -131,7 +131,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     /**
-     * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassimplementationTarget}.
+     * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget}.
      */
     public static class Factory implements Implementation.Target.Factory {
 
