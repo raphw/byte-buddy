@@ -13,6 +13,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import org.objectweb.asm.MethodVisitor;
@@ -68,11 +69,11 @@ public interface InstrumentedType extends TypeDescription {
      * Creates a new instrumented type that executes the given initializer in the instrumented type's
      * type initializer.
      *
-     * @param stackManipulation The stack manipulation to execute.
+     * @param byteCodeAppender The byte code to add to the type initializer.
      * @return A new instrumented type that is equal to this instrumented type but with the given stack manipulation
      * attached to its type initializer.
      */
-    InstrumentedType withInitializer(StackManipulation stackManipulation);
+    InstrumentedType withInitializer(ByteCodeAppender byteCodeAppender);
 
     /**
      * Returns the {@link net.bytebuddy.implementation.LoadedTypeInitializer}s that were registered
@@ -101,7 +102,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * A type initializer is responsible for defining a type's static initialization block.
      */
-    interface TypeInitializer extends StackManipulation {
+    interface TypeInitializer extends ByteCodeAppender {
 
         /**
          * Indicates if this type initializer is defined.
@@ -113,17 +114,12 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * Expands this type initializer with a stack manipulation.
          *
-         * @param stackManipulation The stack manipulation to apply within the type initializer.
+         * @param byteCodeAppender The byte code appender to apply within the type initializer.
          * @return A defined type initializer.
          */
-        TypeInitializer expandWith(StackManipulation stackManipulation);
+        TypeInitializer expandWith(ByteCodeAppender byteCodeAppender);
 
-        /**
-         * Completes this type initializer with a return statement for a {@code void} method.
-         *
-         * @return A compound stack manipulation that terminates this stack manipulation.
-         */
-        StackManipulation terminate();
+        ByteCodeAppender terminate();
 
         /**
          * Canonical implementation of a non-defined type initializer.
@@ -141,23 +137,18 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public TypeInitializer expandWith(StackManipulation stackManipulation) {
-                return new Simple(stackManipulation);
+            public TypeInitializer expandWith(ByteCodeAppender byteCodeAppender) {
+                return new TypeInitializer.Simple(byteCodeAppender);
             }
 
             @Override
-            public StackManipulation terminate() {
+            public ByteCodeAppender terminate() {
                 throw new IllegalStateException("Cannot terminate non-defined type initializer");
             }
 
             @Override
-            public boolean isValid() {
-                return false;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                throw new IllegalStateException("Cannot apply non-defined type initializer");
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                throw new IllegalStateException("Cannot apply a non-defined type initializer");
             }
 
             @Override
@@ -175,15 +166,15 @@ public interface InstrumentedType extends TypeDescription {
             /**
              * The stack manipulation to apply within the type initializer.
              */
-            private final StackManipulation stackManipulation;
+            private final ByteCodeAppender byteCodeAppender;
 
             /**
              * Creates a new simple type initializer.
              *
-             * @param stackManipulation The stack manipulation to apply within the type initializer.
+             * @param byteCodeAppender The byte code appender manipulation to apply within the type initializer.
              */
-            public Simple(StackManipulation stackManipulation) {
-                this.stackManipulation = stackManipulation;
+            public Simple(ByteCodeAppender byteCodeAppender) {
+                this.byteCodeAppender = byteCodeAppender;
             }
 
             @Override
@@ -192,40 +183,35 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public TypeInitializer expandWith(StackManipulation stackManipulation) {
-                return new Simple(new StackManipulation.Compound(this.stackManipulation, stackManipulation));
+            public TypeInitializer expandWith(ByteCodeAppender byteCodeAppender) {
+                return new TypeInitializer.Simple(new ByteCodeAppender.Compound(this.byteCodeAppender, byteCodeAppender));
             }
 
             @Override
-            public StackManipulation terminate() {
-                return new StackManipulation.Compound(this.stackManipulation, MethodReturn.VOID);
+            public ByteCodeAppender terminate() {
+                return new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(MethodReturn.VOID));
             }
 
             @Override
-            public boolean isValid() {
-                return stackManipulation.isValid();
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                return stackManipulation.apply(methodVisitor, implementationContext);
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                return byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod);
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && stackManipulation.equals(((Simple) other).stackManipulation);
+                        && byteCodeAppender.equals(((TypeInitializer.Simple) other).byteCodeAppender);
             }
 
             @Override
             public int hashCode() {
-                return stackManipulation.hashCode();
+                return byteCodeAppender.hashCode();
             }
 
             @Override
             public String toString() {
                 return "InstrumentedType.TypeInitializer.Simple{" +
-                        "stackManipulation=" + stackManipulation +
+                        "byteCodeAppender=" + byteCodeAppender +
                         '}';
             }
         }
@@ -304,6 +290,7 @@ public interface InstrumentedType extends TypeDescription {
          * instrumented type if this is not the case.
          */
         private TypeDescription withSubstitutedSelfReference(String typeName, TypeDescription typeDescription) {
+            // TODO: Self-arrays!
             return typeDescription.getName().equals(typeName) ? this : typeDescription;
         }
 

@@ -49,7 +49,7 @@ public abstract class AbstractArrayFactoryTest {
 
     protected void testCreationUsing(Class<?> componentType, int storageOpcode) throws Exception {
         defineComponentType(componentType);
-        CollectionFactory arrayFactory = ArrayFactory.targeting(componentTypeDescription);
+        CollectionFactory arrayFactory = ArrayFactory.forType(componentTypeDescription);
         StackManipulation arrayStackManipulation = arrayFactory.withValues(Collections.singletonList(stackManipulation));
         assertThat(arrayStackManipulation.isValid(), is(true));
         verify(stackManipulation, atLeast(1)).isValid();

@@ -2,6 +2,7 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -17,13 +18,11 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.objectweb.asm.*;
-import org.objectweb.asm.Type;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.annotation.AnnotationTypeMismatchException;
-import java.lang.annotation.IncompleteAnnotationException;
-import java.lang.reflect.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -31,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * A type pool allows the retreival of {@link TypeDescription} by its name.
+ * A type pool allows the retrieval of {@link TypeDescription} by its name.
  */
 public interface TypePool {
 
@@ -452,6 +451,464 @@ public interface TypePool {
                         '}';
             }
         }
+
+        /**
+         * Represents a nested annotation value.
+         */
+        protected static class RawAnnotationValue implements AnnotationDescription.AnnotationValue<AnnotationDescription, Annotation> {
+
+            /**
+             * The type pool to use for looking up types.
+             */
+            private final TypePool typePool;
+
+            /**
+             * The annotation token that represents the nested invocation.
+             */
+            private final LazyTypeDescription.AnnotationToken annotationToken;
+
+            /**
+             * Creates a new annotation value for a nested annotation.
+             *
+             * @param typePool        The type pool to use for looking up types.
+             * @param annotationToken The token that represents the annotation.
+             */
+            public RawAnnotationValue(TypePool typePool, LazyTypeDescription.AnnotationToken annotationToken) {
+                this.typePool = typePool;
+                this.annotationToken = annotationToken;
+            }
+
+            @Override
+            public AnnotationDescription resolve() {
+                return annotationToken.toAnnotationDescription(typePool);
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public Loaded<Annotation> load(ClassLoader classLoader) throws ClassNotFoundException {
+                Class<?> type = classLoader.loadClass(annotationToken.getDescriptor()
+                        .substring(1, annotationToken.getDescriptor().length() - 1)
+                        .replace('/', '.'));
+                if (type.isAnnotation()) {
+                    return new ForAnnotation.Loaded<Annotation>((Annotation) Proxy.newProxyInstance(classLoader,
+                            new Class<?>[]{type},
+                            AnnotationDescription.AnnotationInvocationHandler.of(classLoader,
+                                    (Class<? extends Annotation>) type,
+                                    annotationToken.getValues())));
+                } else {
+                    return new ForAnnotation.IncompatibleRuntimeType(type);
+                }
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && annotationToken.equals(((RawAnnotationValue) other).annotationToken);
+            }
+
+            @Override
+            public int hashCode() {
+                return annotationToken.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.AbstractBase.RawAnnotationValue{" +
+                        "annotationToken=" + annotationToken +
+                        '}';
+            }
+        }
+
+        /**
+         * Represents an enumeration value of an annotation.
+         */
+        protected static class RawEnumerationValue implements AnnotationDescription.AnnotationValue<EnumerationDescription, Enum<?>> {
+
+            /**
+             * The type pool to use for looking up types.
+             */
+            private final TypePool typePool;
+
+            /**
+             * The descriptor of the enumeration type.
+             */
+            private final String descriptor;
+
+            /**
+             * The name of the enumeration.
+             */
+            private final String value;
+
+            /**
+             * Creates a new enumeration value representation.
+             *
+             * @param typePool   The type pool to use for looking up types.
+             * @param descriptor The descriptor of the enumeration type.
+             * @param value      The name of the enumeration.
+             */
+            public RawEnumerationValue(TypePool typePool, String descriptor, String value) {
+                this.typePool = typePool;
+                this.descriptor = descriptor;
+                this.value = value;
+            }
+
+            @Override
+            public EnumerationDescription resolve() {
+                return new LazyEnumerationDescription();
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public Loaded<Enum<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
+                Class<?> type = classLoader.loadClass(descriptor.substring(1, descriptor.length() - 1).replace('/', '.'));
+                try {
+                    return type.isEnum()
+                            ? new ForEnumeration.Loaded(Enum.valueOf((Class) type, value))
+                            : new ForEnumeration.IncompatibleRuntimeType(type);
+                } catch (IllegalArgumentException ignored) {
+                    return new ForEnumeration.UnknownRuntimeEnumeration((Class) type, value);
+                }
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && descriptor.equals(((RawEnumerationValue) other).descriptor)
+                        && value.equals(((RawEnumerationValue) other).value);
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * descriptor.hashCode() + value.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.LazyTypeDescription.AnnotationValue.ForEnumeration{" +
+                        "descriptor='" + descriptor + '\'' +
+                        ", value='" + value + '\'' +
+                        '}';
+            }
+
+            /**
+             * An enumeration description where any type references are only resolved on demand.
+             */
+            protected class LazyEnumerationDescription extends EnumerationDescription.AbstractEnumerationDescription {
+
+                @Override
+                public String getValue() {
+                    return value;
+                }
+
+                @Override
+                public TypeDescription getEnumerationType() {
+                    return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.')).resolve();
+                }
+
+                @Override
+                public <T extends Enum<T>> T load(Class<T> type) {
+                    return Enum.valueOf(type, value);
+                }
+            }
+        }
+
+        /**
+         * Represents a type value of an annotation.
+         */
+        protected static class RawTypeValue implements AnnotationDescription.AnnotationValue<TypeDescription, Class<?>> {
+
+            /**
+             * A convenience reference indicating that a loaded type should not be initialized.
+             */
+            private static final boolean NO_INITIALIZATION = false;
+
+            /**
+             * The type pool to use for looking up types.
+             */
+            private final TypePool typePool;
+
+            /**
+             * The binary name of the type.
+             */
+            private final String name;
+
+            /**
+             * Represents a type value of an annotation.
+             *
+             * @param typePool The type pool to use for looking up types.
+             * @param type     A type representation of the type that is referenced by the annotation..
+             */
+            public RawTypeValue(TypePool typePool, Type type) {
+                this.typePool = typePool;
+                name = type.getSort() == Type.ARRAY
+                        ? type.getInternalName().replace('/', '.')
+                        : type.getClassName();
+            }
+
+            @Override
+            public TypeDescription resolve() {
+                return typePool.describe(name).resolve();
+            }
+
+            @Override
+            public AnnotationDescription.AnnotationValue.Loaded<Class<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
+                return new Loaded(Class.forName(name, NO_INITIALIZATION, classLoader));
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && name.equals(((RawTypeValue) other).name);
+            }
+
+            @Override
+            public int hashCode() {
+                return name.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.LazyTypeDescription.AnnotationValue.ForType{" +
+                        "name='" + name + '\'' +
+                        '}';
+            }
+
+            /**
+             * Represents a loaded annotation property that represents a type.
+             */
+            protected class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Class<?>> {
+
+                /**
+                 * The type that is represented by an annotation property.
+                 */
+                private final Class<?> type;
+
+                /**
+                 * Creates a new representation for an annotation property referencing a type.
+                 *
+                 * @param type The type that is represented by an annotation property.
+                 */
+                public Loaded(Class<?> type) {
+                    this.type = type;
+                }
+
+                @Override
+                public State getState() {
+                    return State.RESOLVED;
+                }
+
+                @Override
+                public Class<?> resolve() {
+                    return type;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (!(other instanceof AnnotationDescription.AnnotationValue.Loaded<?>)) return false;
+                    AnnotationDescription.AnnotationValue.Loaded<?> loadedOther = (AnnotationDescription.AnnotationValue.Loaded<?>) other;
+                    return loadedOther.getState().isResolved() && type.equals(loadedOther.resolve());
+                }
+
+                @Override
+                public int hashCode() {
+                    return type.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return type.toString();
+                }
+            }
+        }
+
+        /**
+         * Represents an array that is referenced by an annotation which does not contain primitive values or
+         * {@link java.lang.String} values.
+         */
+        protected static class RawComplexArray implements AnnotationDescription.AnnotationValue<Object[], Object[]> {
+
+            /**
+             * The type pool to use for looking up types.
+             */
+            private final TypePool typePool;
+
+            /**
+             * A reference to the component type.
+             */
+            private final ComponentTypeReference componentTypeReference;
+
+            /**
+             * A list of all values of this array value in their order.
+             */
+            private List<AnnotationDescription.AnnotationValue<?, ?>> value;
+
+            /**
+             * Creates a new array value representation of a complex array.
+             *
+             * @param typePool               The type pool to use for looking up types.
+             * @param componentTypeReference A lazy reference to the component type of this array.
+             * @param value                  A list of all values of this annotation.
+             */
+            public RawComplexArray(TypePool typePool,
+                                   ComponentTypeReference componentTypeReference,
+                                   List<AnnotationDescription.AnnotationValue<?, ?>> value) {
+                this.typePool = typePool;
+                this.value = value;
+                this.componentTypeReference = componentTypeReference;
+            }
+
+            @Override
+            public Object[] resolve() {
+                TypeDescription componentTypeDescription = typePool.describe(componentTypeReference.lookup()).resolve();
+                Class<?> componentType;
+                if (componentTypeDescription.represents(Class.class)) {
+                    componentType = TypeDescription.class;
+                } else if (componentTypeDescription.isAssignableTo(Enum.class)) {
+                    componentType = EnumerationDescription.class;
+                } else if (componentTypeDescription.isAssignableTo(Annotation.class)) {
+                    componentType = AnnotationDescription.class;
+                } else if (componentTypeDescription.represents(String.class)) {
+                    componentType = String.class;
+                } else {
+                    throw new IllegalStateException("Unexpected complex array component type " + componentTypeDescription);
+                }
+                Object[] array = (Object[]) Array.newInstance(componentType, value.size());
+                int index = 0;
+                for (AnnotationDescription.AnnotationValue<?, ?> annotationValue : value) {
+                    Array.set(array, index++, annotationValue.resolve());
+                }
+                return array;
+            }
+
+            @Override
+            public AnnotationDescription.AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) throws ClassNotFoundException {
+                List<AnnotationDescription.AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationDescription.AnnotationValue.Loaded<?>>(value.size());
+                for (AnnotationDescription.AnnotationValue<?, ?> value : this.value) {
+                    loadedValues.add(value.load(classLoader));
+                }
+                return new Loaded(classLoader.loadClass(componentTypeReference.lookup()), loadedValues);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && componentTypeReference.equals(((RawComplexArray) other).componentTypeReference)
+                        && value.equals(((RawComplexArray) other).value);
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * value.hashCode() + componentTypeReference.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.LazyTypeDescription.AnnotationValue.ForComplexArray{" +
+                        "value=" + value +
+                        ", componentTypeReference=" + componentTypeReference +
+                        '}';
+            }
+
+            /**
+             * A lazy representation of the component type of an array.
+             */
+            public interface ComponentTypeReference {
+
+                /**
+                 * Lazily returns the binary name of the array component type of an annotation value.
+                 *
+                 * @return The binary name of the component type.
+                 */
+                String lookup();
+            }
+
+            /**
+             * Represents a loaded annotation property representing a complex array.
+             */
+            protected class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Object[]> {
+
+                /**
+                 * The array's loaded component type.
+                 */
+                private final Class<?> componentType;
+
+                /**
+                 * A list of loaded values of the represented complex array.
+                 */
+                private final List<AnnotationDescription.AnnotationValue.Loaded<?>> values;
+
+                /**
+                 * Creates a new representation of an annotation property representing an array of
+                 * non-trivial values.
+                 *
+                 * @param componentType The array's loaded component type.
+                 * @param values        A list of loaded values of the represented complex array.
+                 */
+                public Loaded(Class<?> componentType, List<AnnotationDescription.AnnotationValue.Loaded<?>> values) {
+                    this.componentType = componentType;
+                    this.values = values;
+                }
+
+                @Override
+                public State getState() {
+                    for (AnnotationDescription.AnnotationValue.Loaded<?> value : values) {
+                        if (!value.getState().isResolved()) {
+                            return State.NON_RESOLVED;
+                        }
+                    }
+                    return State.RESOLVED;
+                }
+
+                @Override
+                public Object[] resolve() {
+                    Object[] array = (Object[]) Array.newInstance(componentType, values.size());
+                    int index = 0;
+                    for (AnnotationDescription.AnnotationValue.Loaded<?> annotationValue : values) {
+                        Array.set(array, index++, annotationValue.resolve());
+                    }
+                    return array;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (!(other instanceof AnnotationDescription.AnnotationValue.Loaded<?>)) return false;
+                    AnnotationDescription.AnnotationValue.Loaded<?> loadedOther = (AnnotationDescription.AnnotationValue.Loaded<?>) other;
+                    if (!loadedOther.getState().isResolved()) return false;
+                    Object otherValue = loadedOther.resolve();
+                    if (!(otherValue instanceof Object[])) return false;
+                    Object[] otherArrayValue = (Object[]) otherValue;
+                    if (values.size() != otherArrayValue.length) return false;
+                    Iterator<AnnotationDescription.AnnotationValue.Loaded<?>> iterator = values.iterator();
+                    for (Object value : otherArrayValue) {
+                        AnnotationDescription.AnnotationValue.Loaded<?> self = iterator.next();
+                        if (!self.getState().isResolved() || !self.resolve().equals(value)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = 1;
+                    for (AnnotationDescription.AnnotationValue.Loaded<?> value : values) {
+                        result = 31 * result + value.hashCode();
+                    }
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    StringBuilder stringBuilder = new StringBuilder("[");
+                    for (AnnotationDescription.AnnotationValue.Loaded<?> value : values) {
+                        stringBuilder.append(value.toString());
+                    }
+                    return stringBuilder.append("]").toString();
+                }
+            }
+        }
     }
 
     /**
@@ -558,7 +1015,7 @@ public interface TypePool {
              * @param name            The name of the annotation value.
              * @param annotationValue The value of the annotation.
              */
-            void register(String name, LazyTypeDescription.AnnotationValue<?, ?> annotationValue);
+            void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue);
 
             /**
              * Called once all annotation values are visited.
@@ -578,7 +1035,7 @@ public interface TypePool {
              *             query for resolving an array's component type.
              * @return A component type reference to an annotation value's component type.
              */
-            LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference bind(String name);
+            RawComplexArray.ComponentTypeReference bind(String name);
 
             /**
              * A component type locator which cannot legally resolve an array's component type.
@@ -591,7 +1048,7 @@ public interface TypePool {
                 INSTANCE;
 
                 @Override
-                public LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference bind(String name) {
+                public RawComplexArray.ComponentTypeReference bind(String name) {
                     throw new IllegalStateException("Unexpected lookup of component type for " + name);
                 }
 
@@ -629,7 +1086,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference bind(String name) {
+                public RawComplexArray.ComponentTypeReference bind(String name) {
                     return new Bound(name);
                 }
 
@@ -659,7 +1116,7 @@ public interface TypePool {
                  * A bound representation of a
                  * {@link net.bytebuddy.pool.TypePool.Default.ComponentTypeLocator.ForAnnotationProperty}.
                  */
-                protected class Bound implements LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference {
+                protected class Bound implements RawComplexArray.ComponentTypeReference {
 
                     /**
                      * The name of the annotation property.
@@ -720,7 +1177,7 @@ public interface TypePool {
             /**
              * A component type locator that locates an array type by a method's return value from its method descriptor.
              */
-            class ForArrayType implements ComponentTypeLocator, LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference {
+            class ForArrayType implements ComponentTypeLocator, RawComplexArray.ComponentTypeReference {
 
                 /**
                  * The resolved component type's binary name.
@@ -738,7 +1195,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference bind(String name) {
+                public RawComplexArray.ComponentTypeReference bind(String name) {
                     return this;
                 }
 
@@ -795,7 +1252,7 @@ public interface TypePool {
             }
 
             /**
-             * Registeres a new parameter.
+             * Registers a new parameter.
              *
              * @param offset The offset of the registered entry on the local variable array of the method.
              * @param name   The name of the parameter.
@@ -1016,7 +1473,7 @@ public interface TypePool {
                 /**
                  * The values that were collected so far.
                  */
-                private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
+                private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
                 /**
                  * Creates a new on type collector.
@@ -1025,11 +1482,11 @@ public interface TypePool {
                  */
                 protected OnTypeCollector(String descriptor) {
                     this.descriptor = descriptor;
-                    values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
+                    values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
                 }
 
                 @Override
-                public void register(String name, LazyTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                     values.put(name, annotationValue);
                 }
 
@@ -1079,20 +1536,20 @@ public interface TypePool {
 
                 @Override
                 public void visit(String name, Object value) {
-                    LazyTypeDescription.AnnotationValue<?, ?> annotationValue;
+                    AnnotationDescription.AnnotationValue<?, ?> annotationValue;
                     if (value instanceof Type) {
-                        annotationValue = new LazyTypeDescription.AnnotationValue.ForType((Type) value);
+                        annotationValue = new RawTypeValue(Default.this, (Type) value);
                     } else if (value.getClass().isArray()) {
-                        annotationValue = new LazyTypeDescription.AnnotationValue.Trivial<Object>(value);
+                        annotationValue = new AnnotationDescription.AnnotationValue.Trivial<Object>(value);
                     } else {
-                        annotationValue = new LazyTypeDescription.AnnotationValue.Trivial<Object>(value);
+                        annotationValue = new AnnotationDescription.AnnotationValue.Trivial<Object>(value);
                     }
                     annotationRegistrant.register(name, annotationValue);
                 }
 
                 @Override
                 public void visitEnum(String name, String descriptor, String value) {
-                    annotationRegistrant.register(name, new LazyTypeDescription.AnnotationValue.ForEnumeration(descriptor, value));
+                    annotationRegistrant.register(name, new RawEnumerationValue(Default.this, descriptor, value));
                 }
 
                 @Override
@@ -1134,12 +1591,12 @@ public interface TypePool {
                     /**
                      * A lazy reference to resolve the component type of the collected array.
                      */
-                    private final LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference componentTypeReference;
+                    private final RawComplexArray.ComponentTypeReference componentTypeReference;
 
                     /**
                      * A list of all annotation values that are found on this array.
                      */
-                    private final List<LazyTypeDescription.AnnotationValue<?, ?>> values;
+                    private final List<AnnotationDescription.AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new annotation registrant for an array lookup.
@@ -1148,20 +1605,20 @@ public interface TypePool {
                      * @param componentTypeReference A lazy reference to resolve the component type of the collected array.
                      */
                     protected ArrayLookup(String name,
-                                          LazyTypeDescription.AnnotationValue.ForComplexArray.ComponentTypeReference componentTypeReference) {
+                                          RawComplexArray.ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
-                        values = new LinkedList<LazyTypeDescription.AnnotationValue<?, ?>>();
+                        values = new LinkedList<AnnotationDescription.AnnotationValue<?, ?>>();
                     }
 
                     @Override
-                    public void register(String ignored, LazyTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    public void register(String ignored, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                         values.add(annotationValue);
                     }
 
                     @Override
                     public void onComplete() {
-                        annotationRegistrant.register(name, new LazyTypeDescription.AnnotationValue.ForComplexArray(componentTypeReference, values));
+                        annotationRegistrant.register(name, new RawComplexArray(Default.this, componentTypeReference, values));
                     }
 
                     @Override
@@ -1193,7 +1650,7 @@ public interface TypePool {
                     /**
                      * A mapping of annotation property values to their values.
                      */
-                    private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
+                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new annotation registrant for a recursive annotation lookup.
@@ -1206,18 +1663,17 @@ public interface TypePool {
                     protected AnnotationLookup(String name, String descriptor) {
                         this.name = name;
                         this.descriptor = descriptor;
-                        values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
+                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
                     }
 
                     @Override
-                    public void register(String name, LazyTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                         values.put(name, annotationValue);
                     }
 
                     @Override
                     public void onComplete() {
-                        annotationRegistrant.register(name, new LazyTypeDescription.AnnotationValue
-                                .ForAnnotation(new LazyTypeDescription.AnnotationToken(descriptor, values)));
+                        annotationRegistrant.register(name, new RawAnnotationValue(Default.this, new LazyTypeDescription.AnnotationToken(descriptor, values)));
                     }
 
                     @Override
@@ -1327,7 +1783,7 @@ public interface TypePool {
                     /**
                      * A mapping of annotation property names to their values.
                      */
-                    private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
+                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new annotation field registrant.
@@ -1336,11 +1792,11 @@ public interface TypePool {
                      */
                     protected OnFieldCollector(String descriptor) {
                         this.descriptor = descriptor;
-                        values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
+                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
                     }
 
                     @Override
-                    public void register(String name, LazyTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                         values.put(name, annotationValue);
                     }
 
@@ -1423,7 +1879,7 @@ public interface TypePool {
                 /**
                  * The default value of the found method or {@code null} if no such value exists.
                  */
-                private LazyTypeDescription.AnnotationValue<?, ?> defaultValue;
+                private AnnotationDescription.AnnotationValue<?, ?> defaultValue;
 
                 /**
                  * Creates a method extractor.
@@ -1493,7 +1949,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public void register(String ignored, LazyTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                public void register(String ignored, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                     defaultValue = annotationValue;
                 }
 
@@ -1548,7 +2004,7 @@ public interface TypePool {
                     /**
                      * A mapping of annotation properties to their values.
                      */
-                    private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
+                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new method annotation registrant.
@@ -1557,11 +2013,11 @@ public interface TypePool {
                      */
                     protected OnMethodCollector(String descriptor) {
                         this.descriptor = descriptor;
-                        values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
+                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
                     }
 
                     @Override
-                    public void register(String name, LazyTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                         values.put(name, annotationValue);
                     }
 
@@ -1598,7 +2054,7 @@ public interface TypePool {
                     /**
                      * A mapping of annotation properties to their values.
                      */
-                    private final Map<String, LazyTypeDescription.AnnotationValue<?, ?>> values;
+                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new method parameter annotation registrant.
@@ -1609,11 +2065,11 @@ public interface TypePool {
                     protected OnMethodParameterCollector(String descriptor, int index) {
                         this.descriptor = descriptor;
                         this.index = index;
-                        values = new HashMap<String, LazyTypeDescription.AnnotationValue<?, ?>>();
+                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
                     }
 
                     @Override
-                    public void register(String name, LazyTypeDescription.AnnotationValue<?, ?> annotationValue) {
+                    public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                         values.put(name, annotationValue);
                     }
 
@@ -2079,1241 +2535,6 @@ public interface TypePool {
         }
 
         /**
-         * A value of a {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.LazyAnnotationDescription} which
-         * is not yet loaded by a class loader.
-         *
-         * @param <T> The type of the unloaded value of this annotation.
-         * @param <S> The type of the loaded value of this annotation.
-         */
-        protected interface AnnotationValue<T, S> {
-
-            /**
-             * Resolves the unloaded value of this annotation.
-             *
-             * @param typePool The type pool to be used for looking up linked types.
-             * @return The unloaded value of this annotation.
-             */
-            T resolve(TypePool typePool);
-
-            /**
-             * Returns the loaded value of this annotation.
-             *
-             * @param classLoader The class loader for loading this value.
-             * @return The loaded value of this annotation.
-             * @throws ClassNotFoundException If a type that represents a loaded value cannot be found.
-             */
-            Loaded<S> load(ClassLoader classLoader) throws ClassNotFoundException;
-
-            /**
-             * A loaded variant of a {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.AnnotationValue}. While
-             * implementations of this value are required to be processed successfully by a
-             * {@link java.lang.ClassLoader} they might still be unresolved. Typical errors on loading an annotation
-             * value are:
-             * <ul>
-             * <li>{@link java.lang.annotation.IncompleteAnnotationException}: An annotation does not define a value
-             * even though no default value for a property is provided.</li>
-             * <li>{@link java.lang.EnumConstantNotPresentException}: An annotation defines an unknown value for
-             * a known enumeration.</li>
-             * <li>{@link java.lang.annotation.AnnotationTypeMismatchException}: An annotation property is not
-             * of the expected type.</li>
-             * </ul>
-             * Implementations of this interface must implement methods for {@link Object#hashCode()} and
-             * {@link Object#toString()} that resemble those used for the annotation values of an actual
-             * {@link java.lang.annotation.Annotation} implementation. Also, instances must implement
-             * {@link java.lang.Object#equals(Object)} to return {@code true} for other instances of
-             * this interface that represent the same annotation value.
-             *
-             * @param <U> The type of the loaded value of this annotation.
-             */
-            interface Loaded<U> {
-
-                /**
-                 * Returns the state of the represented loaded annotation value.
-                 *
-                 * @return The state represented by this instance.
-                 */
-                State getState();
-
-                /**
-                 * Resolves the value to the actual value of an annotation. Calling this method might throw a runtime
-                 * exception if this value is either not defined or not resolved.
-                 *
-                 * @return The actual annotation value represented by this instance.
-                 */
-                U resolve();
-
-                /**
-                 * Represents the state of a
-                 * {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.AnnotationValue.Loaded} annotation property.
-                 */
-                enum State {
-
-                    /**
-                     * A non-defined annotation value describes an annotation property which is missing such that
-                     * an {@link java.lang.annotation.IncompleteAnnotationException} would be thrown.
-                     */
-                    NON_DEFINED,
-
-                    /**
-                     * A non-resolved annotation value describes an annotation property which does not represent a
-                     * valid value but an exceptional state.
-                     */
-                    NON_RESOLVED,
-
-                    /**
-                     * A resolved annotation value describes an annotation property with an actual value.
-                     */
-                    RESOLVED;
-
-                    /**
-                     * Returns {@code true} if the related annotation value is defined, i.e. either represents
-                     * an actual value or an exceptional state.
-                     *
-                     * @return {@code true} if the related annotation value is defined.
-                     */
-                    public boolean isDefined() {
-                        return this != NON_DEFINED;
-                    }
-
-                    /**
-                     * Returns {@code true} if the related annotation value is resolved, i.e. represents an actual
-                     * value.
-                     *
-                     * @return {@code true} if the related annotation value is resolved.
-                     */
-                    public boolean isResolved() {
-                        return this == RESOLVED;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.LazyTypeDescription.AnnotationValue.Loaded.State." + name();
-                    }
-                }
-            }
-
-            /**
-             * Represents a primitive value, a {@link java.lang.String} or an array of the latter types.
-             *
-             * @param <U> The type where primitive values are represented by their boxed type.
-             */
-            class Trivial<U> implements AnnotationValue<U, U> {
-
-                /**
-                 * The represented value.
-                 */
-                private final U value;
-
-                /**
-                 * A property dispatcher for the given value.
-                 */
-                private final PropertyDispatcher propertyDispatcher;
-
-                /**
-                 * Creates a new representation of a trivial annotation value.
-                 *
-                 * @param value The value to represent.
-                 */
-                public Trivial(U value) {
-                    this.value = value;
-                    propertyDispatcher = PropertyDispatcher.of(value.getClass());
-                }
-
-                @Override
-                public U resolve(TypePool typePool) {
-                    return value;
-                }
-
-                @Override
-                public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
-                    return new Loaded<U>(value, propertyDispatcher);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && propertyDispatcher.equals(value, ((Trivial) other).value);
-                }
-
-                @Override
-                public int hashCode() {
-                    return propertyDispatcher.hashCode(value);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.AnnotationValue.Trivial{" +
-                            "value=" + value +
-                            ", propertyDispatcher=" + propertyDispatcher +
-                            '}';
-                }
-
-                /**
-                 * Represents a trivial loaded value.
-                 *
-                 * @param <V> The annotation properties type.
-                 */
-                protected static class Loaded<V> implements AnnotationValue.Loaded<V> {
-
-                    /**
-                     * The represented value.
-                     */
-                    private final V value;
-
-                    /**
-                     * The property dispatcher for computing this value's hash code, string and equals implementation.
-                     */
-                    private final PropertyDispatcher propertyDispatcher;
-
-                    /**
-                     * Creates a new trivial loaded annotation value representation.
-                     *
-                     * @param value              The represented value.
-                     * @param propertyDispatcher The property dispatcher for computing this value's hash
-                     *                           code, string and equals implementation.
-                     */
-                    protected Loaded(V value, PropertyDispatcher propertyDispatcher) {
-                        this.value = value;
-                        this.propertyDispatcher = propertyDispatcher;
-                    }
-
-                    @Override
-                    public State getState() {
-                        return State.RESOLVED;
-                    }
-
-                    @Override
-                    public V resolve() {
-                        return propertyDispatcher.conditionalClone(value);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return propertyDispatcher.hashCode(value);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                        AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                        return loadedOther.getState().isResolved() && propertyDispatcher.equals(value, loadedOther.resolve());
-                    }
-
-                    @Override
-                    public String toString() {
-                        return propertyDispatcher.toString(value);
-                    }
-                }
-            }
-
-            /**
-             * Represents a nested annotation value.
-             */
-            class ForAnnotation implements AnnotationValue<AnnotationDescription, Annotation> {
-
-                /**
-                 * The annotation token that represents the nested invocation.
-                 */
-                private final AnnotationToken annotationToken;
-
-                /**
-                 * Creates a new annotation value for a nested annotation.
-                 *
-                 * @param annotationToken The token that represents the annotation.
-                 */
-                public ForAnnotation(AnnotationToken annotationToken) {
-                    this.annotationToken = annotationToken;
-                }
-
-                @Override
-                public AnnotationDescription resolve(TypePool typePool) {
-                    return annotationToken.toAnnotationDescription(typePool);
-                }
-
-                @Override
-                @SuppressWarnings("unchecked")
-                public Loaded<Annotation> load(ClassLoader classLoader) throws ClassNotFoundException {
-                    Class<?> type = classLoader.loadClass(annotationToken.getDescriptor()
-                            .substring(1, annotationToken.getDescriptor().length() - 1)
-                            .replace('/', '.'));
-                    return type.isAnnotation()
-                            ? new LegalRuntimeType(classLoader, (Class<? extends Annotation>) type, annotationToken.getValues())
-                            : new IncompatibleRuntimeType(type);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && annotationToken.equals(((ForAnnotation) other).annotationToken);
-                }
-
-                @Override
-                public int hashCode() {
-                    return annotationToken.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.AnnotationValue.ForAnnotation{" +
-                            "annotationToken=" + annotationToken +
-                            '}';
-                }
-
-                /**
-                 * Represents an annotation which was loaded representing a runtime type which is itself an annotation.
-                 */
-                protected static class LegalRuntimeType implements Loaded<Annotation> {
-
-                    /**
-                     * The loaded annotation.
-                     */
-                    private final Annotation annotation;
-
-                    /**
-                     * Creates a representation for an annotation value.
-                     *
-                     * @param classLoader      The class loader for loading the annotation's implementing type and its values.
-                     * @param annotationType   The loaded annotation type.
-                     * @param annotationValues The values of the annotation.
-                     * @throws ClassNotFoundException If a linked class cannot be found.
-                     */
-                    public LegalRuntimeType(ClassLoader classLoader,
-                                            Class<? extends Annotation> annotationType,
-                                            Map<String, AnnotationValue<?, ?>> annotationValues) throws ClassNotFoundException {
-                        annotation = (Annotation) Proxy.newProxyInstance(classLoader,
-                                new Class<?>[]{annotationType},
-                                new AnnotationInvocationHandler(classLoader, annotationType, annotationValues));
-                    }
-
-                    @Override
-                    public State getState() {
-                        return State.RESOLVED;
-                    }
-
-                    @Override
-                    public Annotation resolve() {
-                        return annotation;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                        AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                        return loadedOther.getState().isResolved() && annotation.equals(loadedOther.resolve());
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return annotation.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return annotation.toString();
-                    }
-                }
-
-                /**
-                 * <p>
-                 * Represents an annotation value which was attempted to ba loaded by a type that does not represent
-                 * an annotation value.
-                 * </p>
-                 * <p>
-                 * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
-                 * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
-                 * such exceptional states are represented in the Open JDK's annotation implementations.
-                 * </p>
-                 */
-                protected static class IncompatibleRuntimeType implements Loaded<Annotation> {
-
-                    /**
-                     * The incompatible runtime type which is not an annotation type.
-                     */
-                    private final Class<?> incompatibleType;
-
-                    /**
-                     * Creates a new representation for an annotation with an incompatible runtime type.
-                     *
-                     * @param incompatibleType The incompatible runtime type which is not an annotation type.
-                     */
-                    public IncompatibleRuntimeType(Class<?> incompatibleType) {
-                        this.incompatibleType = incompatibleType;
-                    }
-
-                    @Override
-                    public State getState() {
-                        return State.NON_RESOLVED;
-                    }
-
-                    @Override
-                    public Annotation resolve() {
-                        throw new IncompatibleClassChangeError("Not an annotation type: " + incompatibleType.toString());
-                    }
-                }
-            }
-
-            /**
-             * Represents an enumeration value of an annotation.
-             */
-            class ForEnumeration implements AnnotationValue<AnnotationDescription.EnumerationValue, Enum<?>> {
-
-                /**
-                 * The descriptor of the enumeration type.
-                 */
-                private final String descriptor;
-
-                /**
-                 * The name of the enumeration.
-                 */
-                private final String value;
-
-                /**
-                 * Creates a new enumeration value representation.
-                 *
-                 * @param descriptor The descriptor of the enumeration type.
-                 * @param value      The name of the enumeration.
-                 */
-                public ForEnumeration(String descriptor, String value) {
-                    this.descriptor = descriptor;
-                    this.value = value;
-                }
-
-                @Override
-                public AnnotationDescription.EnumerationValue resolve(TypePool typePool) {
-                    return new LazyEnumerationValue(typePool);
-                }
-
-                @Override
-                @SuppressWarnings("unchecked")
-                public Loaded<Enum<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
-                    Class<?> enumType = classLoader.loadClass(descriptor
-                            .substring(1, descriptor.length() - 1).replace('/', '.'));
-                    try {
-                        return enumType.isEnum()
-                                ? new LegalRuntimeEnumeration(Enum.valueOf((Class) enumType, value))
-                                : new IncompatibleRuntimeType(enumType);
-                    } catch (IllegalArgumentException ignored) {
-                        return new UnknownRuntimeEnumeration((Class) enumType, value);
-                    }
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && descriptor.equals(((ForEnumeration) other).descriptor)
-                            && value.equals(((ForEnumeration) other).value);
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31 * descriptor.hashCode() + value.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.AnnotationValue.ForEnumeration{" +
-                            "descriptor='" + descriptor + '\'' +
-                            ", value='" + value + '\'' +
-                            '}';
-                }
-
-                /**
-                 * Represents an annotation's enumeration value which could be successfully resolved for a runtime
-                 * type.
-                 */
-                protected static class LegalRuntimeEnumeration implements Loaded<Enum<?>> {
-
-                    /**
-                     * The represented value.
-                     */
-                    private final Enum<?> value;
-
-                    /**
-                     * Creates a representation for an enumeration value.
-                     *
-                     * @param value The represented value.
-                     */
-                    public LegalRuntimeEnumeration(Enum<?> value) {
-                        this.value = value;
-                    }
-
-                    @Override
-                    public State getState() {
-                        return State.RESOLVED;
-                    }
-
-                    @Override
-                    public Enum<?> resolve() {
-                        return value;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof Loaded<?>)) return false;
-                        Loaded<?> loadedOther = (Loaded<?>) other;
-                        return loadedOther.getState().isResolved() && value.equals(loadedOther.resolve());
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return value.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return value.toString();
-                    }
-                }
-
-                /**
-                 * <p>
-                 * Represents an annotation's enumeration value for a constant that does not exist for the runtime
-                 * enumeration type.
-                 * </p>
-                 * <p>
-                 * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
-                 * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
-                 * such exceptional states are represented in the Open JDK's annotation implementations.
-                 * </p>
-                 */
-                protected static class UnknownRuntimeEnumeration implements Loaded<Enum<?>> {
-
-                    /**
-                     * The loaded enumeration type.
-                     */
-                    private final Class<? extends Enum<?>> enumType;
-
-                    /**
-                     * The value for which no enumeration constant exists at runtime.
-                     */
-                    private final String value;
-
-                    /**
-                     * Creates a new representation for an unknown enumeration constant of an annotation.
-                     *
-                     * @param enumType The loaded enumeration type.
-                     * @param value    The value for which no enumeration constant exists at runtime.
-                     */
-                    public UnknownRuntimeEnumeration(Class<? extends Enum<?>> enumType, String value) {
-                        this.enumType = enumType;
-                        this.value = value;
-                    }
-
-                    @Override
-                    public State getState() {
-                        return State.NON_RESOLVED;
-                    }
-
-                    @Override
-                    public Enum<?> resolve() {
-                        throw new EnumConstantNotPresentException(enumType, value);
-                    }
-                }
-
-                /**
-                 * <p>
-                 * Represents an annotation's enumeration value for a runtime type that is not an enumeration type.
-                 * </p>
-                 * <p>
-                 * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
-                 * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
-                 * such exceptional states are represented in the Open JDK's annotation implementations.
-                 * </p>
-                 */
-                protected static class IncompatibleRuntimeType implements Loaded<Enum<?>> {
-
-                    /**
-                     * The runtime type which is not an enumeration type.
-                     */
-                    private final Class<?> type;
-
-                    /**
-                     * Creates a new representation for an incompatible runtime type.
-                     *
-                     * @param type The runtime type which is not an enumeration type.
-                     */
-                    public IncompatibleRuntimeType(Class<?> type) {
-                        this.type = type;
-                    }
-
-                    @Override
-                    public State getState() {
-                        return State.NON_RESOLVED;
-                    }
-
-                    @Override
-                    public Enum<?> resolve() {
-                        throw new IncompatibleClassChangeError("Not an enumeration type: " + type.toString());
-                    }
-                }
-
-                /**
-                 * An enumeration description where any type references are only resolved on demand.
-                 */
-                protected class LazyEnumerationValue extends AnnotationDescription.EnumerationValue.AbstractEnumerationValue {
-
-                    /**
-                     * The type pool to query for resolving type references.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * Creates a new lazy enumeration value.
-                     *
-                     * @param typePool The type pool to query for resolving type references.
-                     */
-                    protected LazyEnumerationValue(TypePool typePool) {
-                        this.typePool = typePool;
-                    }
-
-                    @Override
-                    public String getValue() {
-                        return value;
-                    }
-
-                    @Override
-                    public TypeDescription getEnumerationType() {
-                        return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.')).resolve();
-                    }
-
-                    @Override
-                    public <T extends Enum<T>> T load(Class<T> type) {
-                        return Enum.valueOf(type, value);
-                    }
-                }
-            }
-
-            /**
-             * Represents a type value of an annotation.
-             */
-            class ForType implements AnnotationValue<TypeDescription, Class<?>> {
-
-                /**
-                 * A convenience reference indicating that a loaded type should not be initialized.
-                 */
-                private static final boolean NO_INITIALIZATION = false;
-
-                /**
-                 * The binary name of the type.
-                 */
-                private final String name;
-
-                /**
-                 * Represents a type value of an annotation.
-                 *
-                 * @param type A type representation of the type that is referenced by the annotation..
-                 */
-                public ForType(Type type) {
-                    name = type.getSort() == Type.ARRAY
-                            ? type.getInternalName().replace('/', '.')
-                            : type.getClassName();
-                }
-
-                @Override
-                public TypeDescription resolve(TypePool typePool) {
-                    return typePool.describe(name).resolve();
-                }
-
-                @Override
-                public AnnotationValue.Loaded<Class<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
-                    return new Loaded(Class.forName(name, NO_INITIALIZATION, classLoader));
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && name.equals(((ForType) other).name);
-                }
-
-                @Override
-                public int hashCode() {
-                    return name.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.AnnotationValue.ForType{" +
-                            "name='" + name + '\'' +
-                            '}';
-                }
-
-                /**
-                 * Represents a loaded annotation property that represents a type.
-                 */
-                protected static class Loaded implements AnnotationValue.Loaded<Class<?>> {
-
-                    /**
-                     * The type that is represented by an annotation property.
-                     */
-                    private final Class<?> type;
-
-                    /**
-                     * Creates a new representation for an annotation property referencing a type.
-                     *
-                     * @param type The type that is represented by an annotation property.
-                     */
-                    public Loaded(Class<?> type) {
-                        this.type = type;
-                    }
-
-                    @Override
-                    public State getState() {
-                        return State.RESOLVED;
-                    }
-
-                    @Override
-                    public Class<?> resolve() {
-                        return type;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                        AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                        return loadedOther.getState().isResolved() && type.equals(loadedOther.resolve());
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return type.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return type.toString();
-                    }
-                }
-            }
-
-            /**
-             * Represents an array that is referenced by an annotation which does not contain primitive values or
-             * {@link java.lang.String} values.
-             */
-            class ForComplexArray implements AnnotationValue<Object[], Object[]> {
-
-                /**
-                 * A reference to the component type.
-                 */
-                private final ComponentTypeReference componentTypeReference;
-
-                /**
-                 * A list of all values of this array value in their order.
-                 */
-                private List<AnnotationValue<?, ?>> value;
-
-                /**
-                 * Creates a new array value representation of a complex array.
-                 *
-                 * @param componentTypeReference A lazy reference to the component type of this array.
-                 * @param value                  A list of all values of this annotation.
-                 */
-                public ForComplexArray(ComponentTypeReference componentTypeReference,
-                                       List<AnnotationValue<?, ?>> value) {
-                    this.value = value;
-                    this.componentTypeReference = componentTypeReference;
-                }
-
-                @Override
-                public Object[] resolve(TypePool typePool) {
-                    TypeDescription componentTypeDescription = typePool
-                            .describe(componentTypeReference.lookup())
-                            .resolve();
-                    Class<?> componentType;
-                    if (componentTypeDescription.represents(Class.class)) {
-                        componentType = TypeDescription.class;
-                    } else if (componentTypeDescription.isAssignableTo(Enum.class)) {
-                        componentType = AnnotationDescription.EnumerationValue.class;
-                    } else if (componentTypeDescription.isAssignableTo(Annotation.class)) {
-                        componentType = AnnotationDescription.class;
-                    } else if (componentTypeDescription.represents(String.class)) {
-                        componentType = String.class;
-                    } else {
-                        throw new IllegalStateException("Unexpected complex array component type " + componentTypeDescription);
-                    }
-                    Object[] array = (Object[]) Array.newInstance(componentType, value.size());
-                    int index = 0;
-                    for (AnnotationValue<?, ?> annotationValue : value) {
-                        Array.set(array, index++, annotationValue.resolve(typePool));
-                    }
-                    return array;
-                }
-
-                @Override
-                public AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) throws ClassNotFoundException {
-                    List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(value.size());
-                    for (AnnotationValue<?, ?> value : this.value) {
-                        loadedValues.add(value.load(classLoader));
-                    }
-                    return new Loaded(classLoader.loadClass(componentTypeReference.lookup()), loadedValues);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && componentTypeReference.equals(((ForComplexArray) other).componentTypeReference)
-                            && value.equals(((ForComplexArray) other).value);
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31 * value.hashCode() + componentTypeReference.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.AnnotationValue.ForComplexArray{" +
-                            "value=" + value +
-                            ", componentTypeReference=" + componentTypeReference +
-                            '}';
-                }
-
-                /**
-                 * A lazy representation of the component type of an array.
-                 */
-                public interface ComponentTypeReference {
-
-                    /**
-                     * Lazily returns the binary name of the array component type of an annotation value.
-                     *
-                     * @return The binary name of the component type.
-                     */
-                    String lookup();
-                }
-
-                /**
-                 * Represents a loaded annotation property representing a complex array.
-                 */
-                protected static class Loaded implements AnnotationValue.Loaded<Object[]> {
-
-                    /**
-                     * The array's loaded component type.
-                     */
-                    private final Class<?> componentType;
-
-                    /**
-                     * A list of loaded values of the represented complex array.
-                     */
-                    private final List<AnnotationValue.Loaded<?>> values;
-
-                    /**
-                     * Creates a new representation of an annotation property representing an array of
-                     * non-trivial values.
-                     *
-                     * @param componentType The array's loaded component type.
-                     * @param values        A list of loaded values of the represented complex array.
-                     */
-                    public Loaded(Class<?> componentType, List<AnnotationValue.Loaded<?>> values) {
-                        this.componentType = componentType;
-                        this.values = values;
-                    }
-
-                    @Override
-                    public State getState() {
-                        for (AnnotationValue.Loaded<?> value : values) {
-                            if (!value.getState().isResolved()) {
-                                return State.NON_RESOLVED;
-                            }
-                        }
-                        return State.RESOLVED;
-                    }
-
-                    @Override
-                    public Object[] resolve() {
-                        Object[] array = (Object[]) Array.newInstance(componentType, values.size());
-                        int index = 0;
-                        for (AnnotationValue.Loaded<?> annotationValue : values) {
-                            Array.set(array, index++, annotationValue.resolve());
-                        }
-                        return array;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                        AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                        if (!loadedOther.getState().isResolved()) return false;
-                        Object otherValue = loadedOther.resolve();
-                        if (!(otherValue instanceof Object[])) return false;
-                        Object[] otherArrayValue = (Object[]) otherValue;
-                        if (values.size() != otherArrayValue.length) return false;
-                        Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
-                        for (Object value : otherArrayValue) {
-                            AnnotationValue.Loaded<?> self = iterator.next();
-                            if (!self.getState().isResolved() || !self.resolve().equals(value)) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = 1;
-                        for (AnnotationValue.Loaded<?> value : values) {
-                            result = 31 * result + value.hashCode();
-                        }
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        StringBuilder stringBuilder = new StringBuilder("[");
-                        for (AnnotationValue.Loaded<?> value : values) {
-                            stringBuilder.append(value.toString());
-                        }
-                        return stringBuilder.append("]").toString();
-                    }
-                }
-            }
-        }
-
-        /**
-         * An invocation handler to represent a loaded annotation of a
-         * {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.LazyAnnotationDescription}.
-         */
-        protected static class AnnotationInvocationHandler implements InvocationHandler {
-
-            /**
-             * The name of the {@link Object#hashCode()} method.
-             */
-            private static final String HASH_CODE = "hashCode";
-
-            /**
-             * The name of the {@link Object#equals(Object)} method.
-             */
-            private static final String EQUALS = "equals";
-
-            /**
-             * The name of the {@link Object#toString()} method.
-             */
-            private static final String TO_STRING = "toString";
-
-            /**
-             * The class loader to use.
-             */
-            private final ClassLoader classLoader;
-
-            /**
-             * The loaded annotation type.
-             */
-            private final Class<? extends Annotation> annotationType;
-
-            /**
-             * A sorted list of values of this annotation.
-             */
-            private final LinkedHashMap<Method, AnnotationValue.Loaded<?>> values;
-
-            /**
-             * Creates a new invocation handler.
-             *
-             * @param classLoader    The class loader for loading this value.
-             * @param annotationType The loaded annotation type.
-             * @param values         A sorted list of values of this annotation.
-             * @throws java.lang.ClassNotFoundException If an annotation value cannot be loaded.
-             */
-            public AnnotationInvocationHandler(ClassLoader classLoader,
-                                               Class<? extends Annotation> annotationType,
-                                               Map<String, AnnotationValue<?, ?>> values) throws ClassNotFoundException {
-                this.classLoader = classLoader;
-                this.annotationType = annotationType;
-                Method[] declaredMethod = annotationType.getDeclaredMethods();
-                this.values = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>(declaredMethod.length);
-                TypeDescription thisType = new ForLoadedType(getClass());
-                for (Method method : declaredMethod) {
-                    if (!new MethodDescription.ForLoadedMethod(method).isVisibleTo(thisType)) {
-                        method.setAccessible(true);
-                    }
-                    AnnotationValue<?, ?> annotationValue = values.get(method.getName());
-                    this.values.put(method, annotationValue == null
-                            ? DefaultValue.of(method)
-                            : annotationValue.load(classLoader));
-                }
-            }
-
-            /**
-             * Resolves any primitive type to its wrapper type.
-             *
-             * @param type The type to resolve.
-             * @return The resolved type.
-             */
-            private static Class<?> asWrapper(Class<?> type) {
-                if (type.isPrimitive()) {
-                    if (type == boolean.class) {
-                        return Boolean.class;
-                    } else if (type == byte.class) {
-                        return Byte.class;
-                    } else if (type == short.class) {
-                        return Short.class;
-                    } else if (type == char.class) {
-                        return Character.class;
-                    } else if (type == int.class) {
-                        return Integer.class;
-                    } else if (type == long.class) {
-                        return Long.class;
-                    } else if (type == float.class) {
-                        return Float.class;
-                    } else if (type == double.class) {
-                        return Double.class;
-                    }
-                }
-                return type;
-            }
-
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] arguments) {
-                if (method.getDeclaringClass() != annotationType) {
-                    if (method.getName().equals(HASH_CODE)) {
-                        return hashCodeRepresentation();
-                    } else if (method.getName().equals(EQUALS) && method.getParameterTypes().length == 1) {
-                        return equalsRepresentation(proxy, arguments[0]);
-                    } else if (method.getName().equals(TO_STRING)) {
-                        return toStringRepresentation();
-                    } else /* method.getName().equals("annotationType") */ {
-                        return annotationType;
-                    }
-                }
-                Object value = values.get(method).resolve();
-                if (!asWrapper(method.getReturnType()).isAssignableFrom(value.getClass())) {
-                    throw new AnnotationTypeMismatchException(method, value.getClass().toString());
-                }
-                return value;
-            }
-
-            /**
-             * Returns the string representation of the represented annotation.
-             *
-             * @return The string representation of the represented annotation.
-             */
-            protected String toStringRepresentation() {
-                StringBuilder toString = new StringBuilder();
-                toString.append('@');
-                toString.append(annotationType.getName());
-                toString.append('(');
-                boolean firstMember = true;
-                for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
-                    if (!entry.getValue().getState().isDefined()) {
-                        continue;
-                    }
-                    if (firstMember) {
-                        firstMember = false;
-                    } else {
-                        toString.append(", ");
-                    }
-                    toString.append(entry.getKey().getName());
-                    toString.append('=');
-                    toString.append(entry.getValue().toString());
-                }
-                toString.append(')');
-                return toString.toString();
-            }
-
-            /**
-             * Returns the hash code of the represented annotation.
-             *
-             * @return The hash code of the represented annotation.
-             */
-            private int hashCodeRepresentation() {
-                int hashCode = 0;
-                for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
-                    if (!entry.getValue().getState().isDefined()) {
-                        continue;
-                    }
-                    hashCode += (127 * entry.getKey().getName().hashCode()) ^ entry.getValue().hashCode();
-                }
-                return hashCode;
-            }
-
-            /**
-             * Checks if another instance is equal to this instance.
-             *
-             * @param self  The annotation proxy instance.
-             * @param other The instance to be examined for equality to the represented instance.
-             * @return {@code true} if the given instance is equal to the represented instance.
-             */
-            private boolean equalsRepresentation(Object self, Object other) {
-                if (self == other) {
-                    return true;
-                } else if (!annotationType.isInstance(other)) {
-                    return false;
-                } else if (Proxy.isProxyClass(other.getClass())) {
-                    InvocationHandler invocationHandler = Proxy.getInvocationHandler(other);
-                    if (invocationHandler instanceof AnnotationInvocationHandler) {
-                        return invocationHandler.equals(this);
-                    }
-                }
-                try {
-                    for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
-                        if (entry.getValue().getState().isResolved()) {
-                            try {
-                                if (!PropertyDispatcher.of(entry.getKey().getReturnType())
-                                        .equals(entry.getValue().resolve(), entry.getKey().invoke(other))) {
-                                    return false;
-                                }
-                            } catch (RuntimeException e) {
-                                return false; // Incomplete annotations are not equal to one another.
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                } catch (InvocationTargetException ignored) {
-                    return false;
-                } catch (IllegalAccessException e) {
-                    throw new AssertionError(e);
-                }
-                return true;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof AnnotationInvocationHandler)) return false;
-                AnnotationInvocationHandler that = (AnnotationInvocationHandler) other;
-                if (!annotationType.equals(that.annotationType)) {
-                    return false;
-                }
-                for (Map.Entry<Method, ?> entry : values.entrySet()) {
-                    Object value = that.values.get(entry.getKey());
-                    if (!PropertyDispatcher.of(value.getClass()).equals(value, entry.getValue())) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-
-            @Override
-            public int hashCode() {
-                int result = annotationType.hashCode();
-                result = 31 * result + values.hashCode();
-                for (Map.Entry<Method, ?> entry : values.entrySet()) {
-                    result = 31 * result + PropertyDispatcher.of(entry.getValue().getClass()).hashCode(entry.getValue());
-                }
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.LazyTypeDescription.AnnotationInvocationHandler{" +
-                        "annotationType=" + annotationType +
-                        ", classLoader=" + classLoader +
-                        ", values=" + values +
-                        '}';
-            }
-
-            /**
-             * Represents a default value for an annotation property that is not explicitly defined by
-             * an annotation.
-             */
-            protected static class DefaultValue implements AnnotationValue.Loaded<Object> {
-
-                /**
-                 * The represented default value.
-                 */
-                private final Object defaultValue;
-
-                /**
-                 * The property dispatcher for the type of the default value.
-                 */
-                private final PropertyDispatcher propertyDispatcher;
-
-                /**
-                 * Creates a new representation of an existant default value.
-                 *
-                 * @param defaultValue The represented, non-{@code null} default value.
-                 */
-                private DefaultValue(Object defaultValue) {
-                    this.defaultValue = defaultValue;
-                    propertyDispatcher = PropertyDispatcher.of(defaultValue.getClass());
-                }
-
-                /**
-                 * Creates a default value representation for a given method which might or might not provide such
-                 * a default value.
-                 *
-                 * @param method The method for which a default value is to be extracted.
-                 * @return An annotation value representation for the given method.
-                 */
-                @SuppressWarnings("unchecked")
-                protected static AnnotationValue.Loaded<?> of(Method method) {
-                    Object defaultValue = method.getDefaultValue();
-                    return defaultValue == null
-                            ? new Missing((Class<? extends Annotation>) method.getDeclaringClass(), method.getName())
-                            : new DefaultValue(defaultValue);
-                }
-
-                @Override
-                public State getState() {
-                    return State.RESOLVED;
-                }
-
-                @Override
-                public Object resolve() {
-                    return propertyDispatcher.conditionalClone(defaultValue);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                    AnnotationValue.Loaded<?> loaded = (AnnotationValue.Loaded<?>) other;
-                    return loaded.getState().isResolved() && propertyDispatcher.equals(defaultValue, loaded.resolve());
-                }
-
-                @Override
-                public int hashCode() {
-                    return propertyDispatcher.hashCode(defaultValue);
-                }
-
-                @Override
-                public String toString() {
-                    return propertyDispatcher.toString(defaultValue);
-                }
-            }
-
-            /**
-             * Represents a missing annotation property which is not represented by a default value.
-             */
-            private static class Missing implements AnnotationValue.Loaded<Void> {
-
-                /**
-                 * The annotation type.
-                 */
-                private final Class<? extends Annotation> annotationType;
-
-                /**
-                 * The name of the property without an annotation value.
-                 */
-                private final String property;
-
-                /**
-                 * Creates a new representation for a missing annotation property.
-                 *
-                 * @param annotationType The annotation type.
-                 * @param property       The name of the property without an annotation value.
-                 */
-                private Missing(Class<? extends Annotation> annotationType, String property) {
-                    this.annotationType = annotationType;
-                    this.property = property;
-                }
-
-                @Override
-                public State getState() {
-                    return State.NON_DEFINED;
-                }
-
-                @Override
-                public Void resolve() {
-                    throw new IncompleteAnnotationException(annotationType, property);
-                }
-            }
-        }
-
-        /**
          * A token for representing collected data on an annotation.
          */
         protected static class AnnotationToken {
@@ -3326,7 +2547,7 @@ public interface TypePool {
             /**
              * A map of annotation value names to their value representations.
              */
-            private final Map<String, AnnotationValue<?, ?>> values;
+            private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
             /**
              * Creates a new annotation token.
@@ -3334,7 +2555,7 @@ public interface TypePool {
              * @param descriptor The descriptor of the represented annotation.
              * @param values     A map of annotation value names to their value representations.
              */
-            protected AnnotationToken(String descriptor, Map<String, AnnotationValue<?, ?>> values) {
+            protected AnnotationToken(String descriptor, Map<String, AnnotationDescription.AnnotationValue<?, ?>> values) {
                 this.descriptor = descriptor;
                 this.values = values;
             }
@@ -3353,7 +2574,7 @@ public interface TypePool {
              *
              * @return A map of annotation value names to their value representations.
              */
-            public Map<String, AnnotationValue<?, ?>> getValues() {
+            public Map<String, AnnotationDescription.AnnotationValue<?, ?>> getValues() {
                 return values;
             }
 
@@ -3586,7 +2807,7 @@ public interface TypePool {
             /**
              * The default value of this method or {@code null} if there is no such value.
              */
-            private final AnnotationValue<?, ?> defaultValue;
+            private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
 
             /**
              * Creates a new method token.
@@ -3611,7 +2832,7 @@ public interface TypePool {
                                   List<AnnotationToken> annotationTokens,
                                   Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                   List<ParameterToken> parameterTokens,
-                                  AnnotationValue<?, ?> defaultValue) {
+                                  AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
                 this.modifiers = modifiers;
                 this.name = name;
                 this.descriptor = descriptor;
@@ -3701,12 +2922,12 @@ public interface TypePool {
              *
              * @return The default value of the represented method or {@code null} if no such values exists.
              */
-            protected AnnotationValue<?, ?> getDefaultValue() {
+            protected AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
                 return defaultValue;
             }
 
             /**
-             * Trnasforms this method token to a method description that is attached to a lazy type description.
+             * Transforms this method token to a method description that is attached to a lazy type description.
              *
              * @param lazyTypeDescription The lazy type description to attach this method description to.
              * @return A method description representing this field token.
@@ -3907,7 +3128,7 @@ public interface TypePool {
                 AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());
                 Object value = annotationValue == null
                         ? getAnnotationType().getDeclaredMethods().filter(is(methodDescription)).getOnly().getDefaultValue()
-                        : annotationValue.resolve(typePool);
+                        : annotationValue.resolve();
                 if (value == null) {
                     throw new IllegalStateException(methodDescription + " is not defined on annotation");
                 }
@@ -3929,8 +3150,7 @@ public interface TypePool {
              *
              * @param <S> The annotation type.
              */
-            private static class Loadable<S extends Annotation> extends LazyAnnotationDescription
-                    implements AnnotationDescription.Loadable<S> {
+            private static class Loadable<S extends Annotation> extends LazyAnnotationDescription implements AnnotationDescription.Loadable<S> {
 
                 /**
                  * The loaded annotation type.
@@ -3964,8 +3184,9 @@ public interface TypePool {
                 @Override
                 @SuppressWarnings("unchecked")
                 public S load(ClassLoader classLoader) throws ClassNotFoundException {
-                    return (S) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType},
-                            new AnnotationInvocationHandler(annotationType.getClassLoader(), annotationType, values));
+                    return (S) Proxy.newProxyInstance(classLoader,
+                            new Class<?>[]{annotationType},
+                            AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, values));
                 }
 
                 @Override
@@ -4070,7 +3291,7 @@ public interface TypePool {
             private final List<AnnotationDescription> declaredAnnotations;
 
             /**
-             * Creaes a lazy field description.
+             * Creates a lazy field description.
              *
              * @param modifiers        The modifiers of the represented field.
              * @param name             The name of the field.
@@ -4168,7 +3389,7 @@ public interface TypePool {
             private final List<AnnotationDescription> declaredAnnotations;
 
             /**
-             * A nested list of annotation descriptions that are declard by the parameters of this
+             * A nested list of annotation descriptions that are declared by the parameters of this
              * method in their oder.
              */
             private final List<List<AnnotationDescription>> declaredParameterAnnotations;
@@ -4186,7 +3407,7 @@ public interface TypePool {
             /**
              * The default value of this method or {@code null} if no such value exists.
              */
-            private final AnnotationValue<?, ?> defaultValue;
+            private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
 
             /**
              * Creates a new lazy method description.
@@ -4216,7 +3437,7 @@ public interface TypePool {
                                           List<AnnotationToken> annotationTokens,
                                           Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                           List<MethodToken.ParameterToken> parameterTokens,
-                                          AnnotationValue<?, ?> defaultValue) {
+                                          AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
                 this.modifiers = modifiers;
                 this.internalName = internalName;
                 Type returnType = Type.getReturnType(methodDescriptor);
@@ -4294,7 +3515,7 @@ public interface TypePool {
             public Object getDefaultValue() {
                 return defaultValue == null
                         ? null
-                        : defaultValue.resolve(typePool);
+                        : defaultValue.resolve();
             }
 
             @Override

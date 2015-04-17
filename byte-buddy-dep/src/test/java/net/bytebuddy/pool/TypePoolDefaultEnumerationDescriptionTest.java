@@ -1,13 +1,14 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.description.annotation.AbstractEnumerationValueTest;
+import net.bytebuddy.description.annotation.AbstractEnumerationDescriptionTest;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.After;
 import org.junit.Before;
 
-public class TypePoolDefaultEnumerationValueTest extends AbstractEnumerationValueTest {
+public class TypePoolDefaultEnumerationDescriptionTest extends AbstractEnumerationDescriptionTest {
 
     private TypePool typePool;
 
@@ -23,13 +24,13 @@ public class TypePoolDefaultEnumerationValueTest extends AbstractEnumerationValu
     }
 
     @Override
-    protected AnnotationDescription.EnumerationValue describe(Enum<?> enumeration,
+    protected EnumerationDescription describe(Enum<?> enumeration,
                                                               Class<?> carrierType,
                                                               MethodDescription annotationMethod) {
         TypeDescription typeDescription = typePool.describe(carrierType.getName()).resolve();
         for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
             if (annotationDescription.getAnnotationType().equals(annotationDescription.getAnnotationType())) {
-                return annotationDescription.getValue(annotationMethod, AnnotationDescription.EnumerationValue.class);
+                return annotationDescription.getValue(annotationMethod, EnumerationDescription.class);
             }
         }
         throw new AssertionError();

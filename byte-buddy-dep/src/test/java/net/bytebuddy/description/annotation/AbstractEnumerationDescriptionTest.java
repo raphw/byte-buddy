@@ -1,5 +1,6 @@
 package net.bytebuddy.description.annotation;
 
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Before;
@@ -12,11 +13,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public abstract class AbstractEnumerationValueTest {
+public abstract class AbstractEnumerationDescriptionTest {
 
     private Method annotationMethod;
 
-    private AnnotationDescription.EnumerationValue describe(Enum<?> enumeration) {
+    private EnumerationDescription describe(Enum<?> enumeration) {
         if (enumeration == Sample.FIRST) {
             return describe(enumeration, FirstCarrier.class, new MethodDescription.ForLoadedMethod(annotationMethod));
         } else {
@@ -24,9 +25,9 @@ public abstract class AbstractEnumerationValueTest {
         }
     }
 
-    protected abstract AnnotationDescription.EnumerationValue describe(Enum<?> enumeration,
-                                                                       Class<?> carrierType,
-                                                                       MethodDescription annotationMethod);
+    protected abstract EnumerationDescription describe(Enum<?> enumeration,
+                                                       Class<?> carrierType,
+                                                       MethodDescription annotationMethod);
 
     @Before
     public void setUp() throws Exception {
@@ -67,21 +68,21 @@ public abstract class AbstractEnumerationValueTest {
 
     @Test
     public void assertEquals() throws Exception {
-        AnnotationDescription.EnumerationValue identical = describe(Sample.FIRST);
+        EnumerationDescription identical = describe(Sample.FIRST);
         assertThat(identical, equalTo(identical));
-        AnnotationDescription.EnumerationValue equalFirst = mock(AnnotationDescription.EnumerationValue.class);
+        EnumerationDescription equalFirst = mock(EnumerationDescription.class);
         when(equalFirst.getValue()).thenReturn(Sample.FIRST.name());
         when(equalFirst.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
         assertThat(describe(Sample.FIRST), equalTo(equalFirst));
-        AnnotationDescription.EnumerationValue equalSecond = mock(AnnotationDescription.EnumerationValue.class);
+        EnumerationDescription equalSecond = mock(EnumerationDescription.class);
         when(equalSecond.getValue()).thenReturn(Sample.SECOND.name());
         when(equalSecond.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
         assertThat(describe(Sample.SECOND), equalTo(equalSecond));
-        AnnotationDescription.EnumerationValue equalFirstTypeOnly = mock(AnnotationDescription.EnumerationValue.class);
+        EnumerationDescription equalFirstTypeOnly = mock(EnumerationDescription.class);
         when(equalFirstTypeOnly.getValue()).thenReturn(Sample.SECOND.name());
         when(equalFirstTypeOnly.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
         assertThat(describe(Sample.FIRST), not(equalTo(equalFirstTypeOnly)));
-        AnnotationDescription.EnumerationValue equalFirstNameOnly = mock(AnnotationDescription.EnumerationValue.class);
+        EnumerationDescription equalFirstNameOnly = mock(EnumerationDescription.class);
         when(equalFirstNameOnly.getValue()).thenReturn(Sample.FIRST.name());
         when(equalFirstNameOnly.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Other.class));
         assertThat(describe(Sample.FIRST), not(equalTo(equalFirstNameOnly)));

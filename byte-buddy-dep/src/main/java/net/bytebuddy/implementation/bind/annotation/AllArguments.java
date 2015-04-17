@@ -125,7 +125,7 @@ public @interface AllArguments {
             if (!target.getTypeDescription().isArray()) {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
-            ArrayFactory arrayFactory = ArrayFactory.targeting(target.getTypeDescription().getComponentType());
+            ArrayFactory arrayFactory = ArrayFactory.forType(target.getTypeDescription().getComponentType());
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size());
             int offset = source.isStatic() ? 0 : 1;
             boolean dynamicallyTyped = RuntimeType.Verifier.check(target);

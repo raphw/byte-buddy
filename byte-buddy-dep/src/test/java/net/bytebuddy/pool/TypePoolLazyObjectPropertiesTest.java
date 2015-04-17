@@ -23,28 +23,6 @@ public class TypePoolLazyObjectPropertiesTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationToken.class).apply();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.Trivial.class).apply();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForAnnotation.class).apply();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForEnumeration.class).apply();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForComplexArray.class).apply();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.ForType.class)
-                .refine(new ObjectPropertyAssertion.Refinement<Type>() {
-                    @Override
-                    public void apply(Type mock) {
-                        when(mock.getClassName()).thenReturn("" + System.identityHashCode(mock));
-                    }
-                }).apply();
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.class).apply();
-    }
-
-    @Test
-    public void testInvocationHandlerObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationInvocationHandler.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return Object.class;
-            }
-        }).applyMutable();
     }
 
     @Test

@@ -9,6 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 
 import java.util.ArrayList;
@@ -168,7 +169,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public InstrumentedType withInitializer(StackManipulation stackManipulation) {
+    public InstrumentedType withInitializer(ByteCodeAppender byteCodeAppender) {
         return new SubclassInstrumentedType(classFileVersion,
                 superClass,
                 interfaces,
@@ -177,7 +178,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 fieldDescriptions,
                 methodDescriptions,
                 loadedTypeInitializer,
-                typeInitializer.expandWith(stackManipulation));
+                typeInitializer.expandWith(byteCodeAppender));
     }
 
     @Override

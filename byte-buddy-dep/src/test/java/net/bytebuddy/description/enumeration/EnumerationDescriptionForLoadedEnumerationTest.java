@@ -1,0 +1,15 @@
+package net.bytebuddy.description.enumeration;
+
+import net.bytebuddy.description.annotation.AbstractEnumerationDescriptionTest;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+
+public class EnumerationDescriptionForLoadedEnumerationTest extends AbstractEnumerationDescriptionTest {
+
+    @Override
+    protected EnumerationDescription describe(Enum<?> enumeration,
+                                                              Class<?> carrierType,
+                                                              MethodDescription annotationMethod) {
+        return new EnumerationDescription.ForLoadedEnumeration(enumeration);
+    }
+}

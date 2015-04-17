@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -12,12 +13,10 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -46,6 +45,8 @@ public interface TypeDescription extends ByteCodeElement {
      */
     TypeDescription VOID = new ForLoadedType(void.class);
 
+    TypeDescription ENUM = new ForLoadedType(Enum.class);
+
     /**
      * Checks if {@code object} is an instance of the type represented by this instance.
      *
@@ -53,6 +54,8 @@ public interface TypeDescription extends ByteCodeElement {
      * @return {@code true} if the object is an instance of the type described by this instance.
      */
     boolean isInstance(Object object);
+
+    boolean isInstanceOrWrapped(Object object);
 
     /**
      * Checks if this type is assignable from the type described by this instance, for example for
@@ -282,6 +285,8 @@ public interface TypeDescription extends ByteCodeElement {
      */
     boolean isAnnotationValue();
 
+    boolean isDescribingAnnotationValue();
+
     /**
      * An abstract base implementation of a type description.
      */
@@ -304,6 +309,19 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public boolean isInstance(Object object) {
             return isAssignableFrom(object.getClass());
+        }
+
+        @Override
+        public boolean isInstanceOrWrapped(Object object) {
+            return isInstance(object)
+                    || (represents(boolean.class) && object.getClass() == Boolean.class)
+                    || (represents(byte.class) && object.getClass() == Byte.class)
+                    || (represents(short.class) && object.getClass() == Short.class)
+                    || (represents(char.class) && object.getClass() == Character.class)
+                    || (represents(int.class) && object.getClass() == Integer.class)
+                    || (represents(long.class) && object.getClass() == Long.class)
+                    || (represents(float.class) && object.getClass() == Float.class)
+                    || (represents(double.class) && object.getClass() == Double.class);
         }
 
         @Override
@@ -429,10 +447,20 @@ public interface TypeDescription extends ByteCodeElement {
         public boolean isAnnotationValue() {
             return isPrimitive()
                     || represents(String.class)
-                    || isAssignableTo(AnnotationDescription.EnumerationValue.class)
-                    || isAssignableTo(AnnotationDescription.class)
-                    || isAssignableTo(TypeDescription.class)
+                    || (isAssignableTo(Enum.class) && !represents(Enum.class))
+                    || (isAssignableTo(Annotation.class) && !represents(Annotation.class))
+                    || represents(Class.class)
                     || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationValue());
+        }
+
+        @Override
+        public boolean isDescribingAnnotationValue() {
+            return isPrimitive()
+                    || represents(String.class)
+                    || isAssignableTo(TypeDescription.class)
+                    || isAssignableTo(AnnotationDescription.class)
+                    || isAssignableTo(EnumerationDescription.class)
+                    || (isArray() && !getComponentType().isArray() && getComponentType().isDescribingAnnotationValue());
         }
 
         @Override
@@ -787,7 +815,9 @@ public interface TypeDescription extends ByteCodeElement {
                 componentType = componentType.getComponentType();
                 arity++;
             }
-            return arity == 0 ? componentType : new ArrayProjection(componentType, arity);
+            return arity == 0
+                    ? componentType
+                    : new ArrayProjection(componentType, arity);
         }
 
         /**

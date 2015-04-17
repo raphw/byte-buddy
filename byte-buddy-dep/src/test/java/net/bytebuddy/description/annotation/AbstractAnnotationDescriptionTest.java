@@ -1,5 +1,6 @@
 package net.bytebuddy.description.annotation;
 
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -288,8 +289,8 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertValue(second, "classValue", new TypeDescription.ForLoadedType(CLASS), CLASS);
         assertValue(first, "arrayClassValue", new TypeDescription.ForLoadedType(ARRAY_CLASS), ARRAY_CLASS);
         assertValue(second, "arrayClassValue", new TypeDescription.ForLoadedType(ARRAY_CLASS), ARRAY_CLASS);
-        assertValue(first, "enumValue", new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(ENUMERATION), ENUMERATION);
-        assertValue(second, "enumValue", new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(ENUMERATION), ENUMERATION);
+        assertValue(first, "enumValue", new EnumerationDescription.ForLoadedEnumeration(ENUMERATION), ENUMERATION);
+        assertValue(second, "enumValue", new EnumerationDescription.ForLoadedEnumeration(ENUMERATION), ENUMERATION);
         assertValue(first, "annotationValue", AnnotationDescription.ForLoadedAnnotation.of(ANNOTATION), ANNOTATION);
         assertValue(second, "annotationValue", AnnotationDescription.ForLoadedAnnotation.of(ANNOTATION), ANNOTATION);
         assertValue(first, "booleanArrayValue", BOOLEAN_ARRAY, BOOLEAN_ARRAY);
@@ -312,8 +313,8 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertValue(second, "stringArrayValue", STRING_ARRAY, STRING_ARRAY);
         assertValue(first, "classArrayValue", new TypeDescription[]{new TypeDescription.ForLoadedType(CLASS)}, CLASS_ARRAY);
         assertValue(second, "classArrayValue", new TypeDescription[]{new TypeDescription.ForLoadedType(CLASS)}, CLASS_ARRAY);
-        assertValue(first, "enumArrayValue", new AnnotationDescription.EnumerationValue[]{new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(ENUMERATION)}, ENUMERATION_ARRAY);
-        assertValue(second, "enumArrayValue", new AnnotationDescription.EnumerationValue[]{new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(ENUMERATION)}, ENUMERATION_ARRAY);
+        assertValue(first, "enumArrayValue", new EnumerationDescription[]{new EnumerationDescription.ForLoadedEnumeration(ENUMERATION)}, ENUMERATION_ARRAY);
+        assertValue(second, "enumArrayValue", new EnumerationDescription[]{new EnumerationDescription.ForLoadedEnumeration(ENUMERATION)}, ENUMERATION_ARRAY);
         assertValue(first, "annotationArrayValue", new AnnotationDescription[]{AnnotationDescription.ForLoadedAnnotation.of(ANNOTATION)}, ANNOTATION_ARRAY);
         assertValue(second, "annotationArrayValue", new AnnotationDescription[]{AnnotationDescription.ForLoadedAnnotation.of(ANNOTATION)}, ANNOTATION_ARRAY);
     }
@@ -342,8 +343,8 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertValue(defaultSecond, "classValue", new TypeDescription.ForLoadedType(OTHER_CLASS), OTHER_CLASS);
         assertValue(defaultFirst, "arrayClassValue", new TypeDescription.ForLoadedType(ARRAY_CLASS), ARRAY_CLASS);
         assertValue(defaultSecond, "arrayClassValue", new TypeDescription.ForLoadedType(OTHER_ARRAY_CLASS), OTHER_ARRAY_CLASS);
-        assertValue(defaultFirst, "enumValue", new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(ENUMERATION), ENUMERATION);
-        assertValue(defaultSecond, "enumValue", new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(OTHER_ENUMERATION), OTHER_ENUMERATION);
+        assertValue(defaultFirst, "enumValue", new EnumerationDescription.ForLoadedEnumeration(ENUMERATION), ENUMERATION);
+        assertValue(defaultSecond, "enumValue", new EnumerationDescription.ForLoadedEnumeration(OTHER_ENUMERATION), OTHER_ENUMERATION);
         assertValue(defaultFirst, "annotationValue", AnnotationDescription.ForLoadedAnnotation.of(ANNOTATION), ANNOTATION);
         assertValue(defaultSecond, "annotationValue", AnnotationDescription.ForLoadedAnnotation.of(OTHER_ANNOTATION), OTHER_ANNOTATION);
         assertValue(defaultFirst, "booleanArrayValue", BOOLEAN_ARRAY, BOOLEAN_ARRAY);
@@ -366,8 +367,8 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertValue(defaultSecond, "stringArrayValue", OTHER_STRING_ARRAY, OTHER_STRING_ARRAY);
         assertValue(defaultFirst, "classArrayValue", new TypeDescription[]{new TypeDescription.ForLoadedType(CLASS)}, CLASS_ARRAY);
         assertValue(defaultSecond, "classArrayValue", new TypeDescription[]{new TypeDescription.ForLoadedType(OTHER_CLASS)}, OTHER_CLASS_ARRAY);
-        assertValue(defaultFirst, "enumArrayValue", new AnnotationDescription.EnumerationValue[]{new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(ENUMERATION)}, ENUMERATION_ARRAY);
-        assertValue(defaultSecond, "enumArrayValue", new AnnotationDescription.EnumerationValue[]{new AnnotationDescription.EnumerationValue.ForLoadedEnumeration(OTHER_ENUMERATION)}, OTHER_ENUMERATION_ARRAY);
+        assertValue(defaultFirst, "enumArrayValue", new EnumerationDescription[]{new EnumerationDescription.ForLoadedEnumeration(ENUMERATION)}, ENUMERATION_ARRAY);
+        assertValue(defaultSecond, "enumArrayValue", new EnumerationDescription[]{new EnumerationDescription.ForLoadedEnumeration(OTHER_ENUMERATION)}, OTHER_ENUMERATION_ARRAY);
         assertValue(defaultFirst, "annotationArrayValue", new AnnotationDescription[]{AnnotationDescription.ForLoadedAnnotation.of(ANNOTATION)}, ANNOTATION_ARRAY);
         assertValue(defaultSecond, "annotationArrayValue", new AnnotationDescription[]{AnnotationDescription.ForLoadedAnnotation.of(OTHER_ANNOTATION)}, OTHER_ANNOTATION_ARRAY);
     }

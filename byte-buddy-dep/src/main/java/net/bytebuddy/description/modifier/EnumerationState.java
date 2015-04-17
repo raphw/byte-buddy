@@ -5,7 +5,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * Determines if a type describes an enumeration. Note that enumerations must never also be interfaces.
  */
-public enum EnumerationState implements ModifierContributor.ForType {
+public enum EnumerationState implements ModifierContributor.ForType, ModifierContributor.ForField {
 
     /**
      * Modifier for marking a type as an enumeration.

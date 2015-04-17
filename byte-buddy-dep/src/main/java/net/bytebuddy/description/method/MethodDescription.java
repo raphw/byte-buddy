@@ -3,6 +3,7 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.utility.JavaInstance;
@@ -10,6 +11,7 @@ import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -154,7 +156,7 @@ public interface MethodDescription extends ByteCodeElement {
      * <li>{@link java.lang.annotation.Annotation} values are represented as
      * {@link AnnotationDescription}s</li>
      * <li>{@link java.lang.Enum} values are represented as
-     * {@link AnnotationDescription.EnumerationValue}s.</li>
+     * {@link net.bytebuddy.description.annotation.AnnotationDescription.EnumerationDescription}s.</li>
      * <li>Arrays of the latter types are represented as arrays of the named wrapper types.</li>
      * </ul>
      *
@@ -198,6 +200,10 @@ public interface MethodDescription extends ByteCodeElement {
      * @return {@code true} if the method is a bootstrap method that accepts the given arguments.
      */
     boolean isBootstrap(List<?> arguments);
+
+    boolean isDefaultValue();
+
+    boolean isDefaultValue(Object value);
 
     /**
      * An abstract base implementation of a method description.
@@ -411,6 +417,35 @@ public interface MethodDescription extends ByteCodeElement {
                 }
                 return true;
             }
+        }
+
+        @Override
+        public boolean isDefaultValue() {
+            return !isConstructor()
+                    && !isStatic()
+                    && getReturnType().isAnnotationValue()
+                    && getParameters().isEmpty();
+        }
+
+        @Override
+        public boolean isDefaultValue(Object value) {
+            if (!isDefaultValue()) {
+                return false;
+            }
+            TypeDescription returnType = getReturnType();
+            return (returnType.represents(boolean.class) && value instanceof Boolean)
+                    || (returnType.represents(boolean.class) && value instanceof Boolean)
+                    || (returnType.represents(byte.class) && value instanceof Byte)
+                    || (returnType.represents(char.class) && value instanceof Character)
+                    || (returnType.represents(short.class) && value instanceof Short)
+                    || (returnType.represents(int.class) && value instanceof Integer)
+                    || (returnType.represents(long.class) && value instanceof Long)
+                    || (returnType.represents(float.class) && value instanceof Float)
+                    || (returnType.represents(long.class) && value instanceof Long)
+                    || (returnType.represents(String.class) && value instanceof String)
+                    || (returnType.isAssignableTo(Enum.class) && value instanceof EnumerationDescription)
+                    || (returnType.isAssignableTo(Annotation.class) && value instanceof AnnotationDescription)
+                    || (returnType.represents(Class.class) && value instanceof TypeDescription);
         }
 
         @Override

@@ -29,7 +29,7 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
         } else if (targetType.isAssignableFrom(sourceType)) {
             return StackManipulation.LegalTrivial.INSTANCE;
         } else if (dynamicallyTyped) {
-            return new TypeCasting(targetType);
+            return TypeCasting.to(targetType);
         } else {
             return StackManipulation.Illegal.INSTANCE;
         }

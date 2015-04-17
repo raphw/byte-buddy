@@ -3,6 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -327,6 +328,16 @@ public class MethodCall implements Implementation {
         return new MethodCall(methodLocator,
                 targetHandler,
                 join(argumentLoaders, ArgumentLoader.ForThisReference.INSTANCE),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    public MethodCall withOwnType() {
+        return new MethodCall(methodLocator,
+                targetHandler,
+                join(argumentLoaders, ArgumentLoader.ForOwnType.INSTANCE),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -884,6 +895,36 @@ public class MethodCall implements Implementation {
             }
         }
 
+        enum ForOwnType implements ArgumentLoader {
+
+            INSTANCE;
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription interceptedMethod,
+                                             TypeDescription targetType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        ClassConstant.of(instrumentedType),
+                        assigner.assign(TypeDescription.CLASS, targetType, dynamicallyTyped));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign Class value to " + targetType);
+                }
+                return stackManipulation;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForOwnType." + name();
+            }
+        }
+
         /**
          * Loads a parameter of the instrumented method onto the operand stack.
          */
@@ -912,13 +953,12 @@ public class MethodCall implements Implementation {
                 if (index >= interceptedMethod.getParameters().size()) {
                     throw new IllegalStateException(interceptedMethod + " does not have a parameter with index " + index);
                 }
-                TypeDescription originType = interceptedMethod.getParameters().get(index).getTypeDescription();
+                ParameterDescription parameterDescription = interceptedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(originType).loadOffset(interceptedMethod.getParameters().get(index).getOffset()),
-                        assigner.assign(originType, targetType, dynamicallyTyped));
+                        MethodVariableAccess.forType(parameterDescription.getTypeDescription()).loadOffset(parameterDescription.getOffset()),
+                        assigner.assign(parameterDescription.getTypeDescription(), targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + originType + " to " + targetType
-                            + " for " + interceptedMethod);
+                    throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + targetType + " for " + interceptedMethod);
                 }
                 return stackManipulation;
             }
@@ -2169,7 +2209,7 @@ public class MethodCall implements Implementation {
             StackManipulation[] argumentInstruction = new StackManipulation[argumentLoaders.size()];
             for (ArgumentLoader argumentLoader : argumentLoaders) {
                 argumentInstruction[index] = argumentLoader.resolve(implementationTarget.getTypeDescription(),
-                        invokedMethod,
+                        instrumentedMethod,
                         methodParameters.get(index++),
                         assigner,
                         dynamicallyTyped);

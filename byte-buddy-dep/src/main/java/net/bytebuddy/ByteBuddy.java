@@ -3,32 +3,45 @@ package net.bytebuddy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.modifier.ModifierContributor;
-import net.bytebuddy.description.modifier.TypeManifestation;
+import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.FieldRegistry;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
-import net.bytebuddy.dynamic.scaffold.MethodRegistry;
+import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.dynamic.scaffold.inline.RebaseDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.RedefinitionDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.Duplication;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
+import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
+import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -469,6 +482,46 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
+    }
+
+    @SuppressWarnings("unchecked")
+    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(String... value) {
+        if (value.length == 0) {
+            throw new IllegalArgumentException("Require at least one enumeration constant");
+        }
+        return new SubclassDynamicTypeBuilder<Enum<?>>(classFileVersion,
+                nonNull(namingStrategy.subclass(TypeDescription.ENUM)),
+                auxiliaryTypeNamingStrategy,
+                TypeDescription.ENUM,
+                interfaceTypes,
+                Visibility.PUBLIC.getMask() | TypeManifestation.FINAL.getMask() | EnumerationState.ENUMERATION.getMask(),
+                typeAttributeAppender,
+                ignoredMethods,
+                bridgeMethodResolverFactory,
+                classVisitorWrapperChain,
+                new FieldRegistry.Default(),
+                methodRegistry,
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineConstructor(Arrays.<Class<?>>asList(String.class, int.class), Visibility.PRIVATE)
+                .intercept(MethodCall.invoke(TypeDescription.ENUM.getDeclaredMethods()
+                        .filter(isConstructor().and(takesArguments(String.class, int.class))).getOnly())
+                        .withArgument(0, 1))
+                .defineMethod(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME,
+                        TargetType.class,
+                        Collections.<Class<?>>singletonList(String.class),
+                        Visibility.PUBLIC, Ownership.STATIC)
+                .intercept(MethodCall.invoke(TypeDescription.ENUM.getDeclaredMethods()
+                        .filter(named(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME).and(takesArguments(Class.class, String.class))).getOnly())
+                        .withOwnType().withArgument(0)
+                        .withAssigner(ReferenceTypeAwareAssigner.INSTANCE, true))
+                .defineMethod(EnumerationImplementation.ENUM_VALUES_METHOD_NAME,
+                        TargetType[].class,
+                        Collections.<Class<?>>emptyList(),
+                        Visibility.PUBLIC, Ownership.STATIC)
+                .intercept(new EnumerationImplementation(nonNull(value)));
     }
 
     /**
@@ -1277,7 +1330,7 @@ public class ByteBuddy {
 
         /**
          * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
-         * {@code enum} values should be handed as {@link AnnotationDescription.EnumerationValue}
+         * {@code enum} values should be handed as {@link net.bytebuddy.description.enumeration.EnumerationDescription}
          * instances, annotations as {@link AnnotationDescription} instances and
          * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
          *
@@ -2048,6 +2101,101 @@ public class ByteBuddy {
                     "methodMatcher=" + methodMatcher +
                     "byteBuddy=" + ByteBuddy.this.toString() +
                     '}';
+        }
+    }
+
+    protected static class EnumerationImplementation implements Implementation {
+
+        private static final int ENUM_FIELD_MODIFIERS = Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC;
+
+        private static final String ENUM_VALUES = "$VALUES";
+
+        protected static final String CLONE_METHOD_NAME = "clone";
+
+        protected static final String ENUM_VALUE_OF_METHOD_NAME = "valueOf";
+
+        protected static final String ENUM_VALUES_METHOD_NAME = "values";
+
+        private final String[] value;
+
+        protected EnumerationImplementation(String[] value) {
+            this.value = value;
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            for (String aValue : value) {
+                instrumentedType = instrumentedType.withField(aValue, instrumentedType, ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM);
+            }
+            return instrumentedType
+                    .withField(ENUM_VALUES, TypeDescription.ArrayProjection.of(instrumentedType, 1), ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC)
+                    .withInitializer(new InitializationAppender());
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new ValuesMethodAppender(implementationTarget.getTypeDescription());
+        }
+
+        protected static class ValuesMethodAppender implements ByteCodeAppender {
+
+            private final TypeDescription instrumentedType;
+
+            public ValuesMethodAppender(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
+                MethodDescription cloneArrayMethod = new MethodDescription.Latent(CLONE_METHOD_NAME,
+                        valuesField.getFieldType(),
+                        TypeDescription.OBJECT,
+                        Collections.<TypeDescription>emptyList(),
+                        Opcodes.ACC_PUBLIC,
+                        Collections.<TypeDescription>emptyList());
+                return new Size(new StackManipulation.Compound(
+                        FieldAccess.forField(valuesField).getter(),
+                        MethodInvocation.invoke(cloneArrayMethod),
+                        TypeCasting.to(valuesField.getFieldType()),
+                        MethodReturn.REFERENCE
+                ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+        }
+
+        protected class InitializationAppender implements ByteCodeAppender {
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                TypeDescription instrumentedType = instrumentedMethod.getDeclaringType();
+                MethodDescription enumConstructor = instrumentedType.getDeclaredMethods()
+                        .filter(isConstructor().and(takesArguments(String.class, int.class)))
+                        .getOnly();
+                int ordinal = 0;
+                StackManipulation stackManipulation = StackManipulation.LegalTrivial.INSTANCE;
+                List<FieldDescription> enumerationFields = new ArrayList<FieldDescription>(value.length);
+                for (String aValue : value) {
+                    FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(aValue)).getOnly();
+                    stackManipulation = new StackManipulation.Compound(stackManipulation,
+                            TypeCreation.forType(instrumentedType),
+                            Duplication.SINGLE,
+                            new TextConstant(aValue),
+                            IntegerConstant.forValue(ordinal++),
+                            MethodInvocation.invoke(enumConstructor),
+                            FieldAccess.forField(fieldDescription).putter());
+                    enumerationFields.add(fieldDescription);
+                }
+                List<StackManipulation> fieldGetters = new ArrayList<StackManipulation>(value.length);
+                for (FieldDescription fieldDescription : enumerationFields) {
+                    fieldGetters.add(FieldAccess.forField(fieldDescription).getter());
+                }
+                stackManipulation = new StackManipulation.Compound(
+                        stackManipulation,
+                        ArrayFactory.forType(instrumentedType).withValues(fieldGetters),
+                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly()).putter()
+                );
+                return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+            }
         }
     }
 }

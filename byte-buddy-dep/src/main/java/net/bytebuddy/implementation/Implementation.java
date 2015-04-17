@@ -517,13 +517,7 @@ public interface Implementation {
              */
             interface InjectedCode {
 
-                /**
-                 * Returns the injected code. This method must only be called if there is actual code injected as
-                 * signaled by {@link Implementation.Context.ExtractableView.InjectedCode#isDefined()}.
-                 *
-                 * @return A stack manipulation that represents the injected code.
-                 */
-                StackManipulation getStackManipulation();
+                ByteCodeAppender getByteCodeAppender();
 
                 /**
                  * Checks if there is actually code defined to be injected.
@@ -543,7 +537,7 @@ public interface Implementation {
                     INSTANCE;
 
                     @Override
-                    public StackManipulation getStackManipulation() {
+                    public ByteCodeAppender getByteCodeAppender() {
                         throw new IllegalStateException();
                     }
 
@@ -823,18 +817,17 @@ public interface Implementation {
                             entry.getValue().getDescriptor(),
                             entry.getValue().getGenericSignature(),
                             NO_DEFAULT_VALUE).visitEnd();
-                    typeInitializer = typeInitializer.expandWith(entry.getKey().storeIn(entry.getValue()));
+                    typeInitializer = typeInitializer.expandWith(new ByteCodeAppender.Simple(entry.getKey().storeIn(entry.getValue())));
                 }
                 if (injectedCode.isDefined()) {
-                    typeInitializer = typeInitializer.expandWith(injectedCode.getStackManipulation());
+                    typeInitializer = typeInitializer.expandWith(injectedCode.getByteCodeAppender());
                 }
                 MethodDescription typeInitializerMethod = MethodDescription.Latent.typeInitializerOf(instrumentedType);
                 TypeWriter.MethodPool.Entry initializerEntry = methodPool.target(typeInitializerMethod);
                 if (initializerEntry.getSort().isImplemented() && typeInitializer.isDefined()) {
-                    initializerEntry = initializerEntry.prepend(new ByteCodeAppender.Simple(typeInitializer));
+                    initializerEntry = initializerEntry.prepend(typeInitializer);
                 } else if (typeInitializer.isDefined()) {
-                    initializerEntry = new TypeWriter.MethodPool.Entry.ForImplementation(new ByteCodeAppender
-                            .Simple(typeInitializer.terminate()), MethodAttributeAppender.NoOp.INSTANCE);
+                    initializerEntry = new TypeWriter.MethodPool.Entry.ForImplementation(typeInitializer.terminate(), MethodAttributeAppender.NoOp.INSTANCE);
                 }
                 initializerEntry.apply(classVisitor, this, typeInitializerMethod);
                 for (Map.Entry<MethodDescription, TypeWriter.MethodPool.Entry> entry : accessorMethodEntries.entrySet()) {

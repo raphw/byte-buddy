@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -215,7 +216,7 @@ public @interface Super {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
-                        .getValue(STRATEGY, AnnotationDescription.EnumerationValue.class).load(Instantiation.class)
+                        .getValue(STRATEGY, EnumerationDescription.class).load(Instantiation.class)
                         .proxyFor(target.getTypeDescription(), implementationTarget, annotation));
             }
         }

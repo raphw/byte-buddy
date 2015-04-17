@@ -80,7 +80,10 @@ public class ImplementationContextDefaultTest {
     private TypeDescription firstFieldType, secondFieldType;
 
     @Mock
-    private StackManipulation firstFieldValue, secondFieldValue, injectedCodeAppender, terminationAppender;
+    private StackManipulation firstFieldValue, secondFieldValue;
+
+    @Mock
+    private ByteCodeAppender injectedCodeAppender, terminationAppender;
 
     @Mock
     private Implementation.SpecialMethodInvocation firstSpecialInvocation, secondSpecialInvocation;
@@ -125,11 +128,11 @@ public class ImplementationContextDefaultTest {
         when(firstFieldType.getDescriptor()).thenReturn(BAR);
         when(secondFieldType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondFieldType.getDescriptor()).thenReturn(QUX);
-        when(injectedCode.getStackManipulation()).thenReturn(injectedCodeAppender);
-        when(injectedCodeAppender.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
-                .thenReturn(new StackManipulation.Size(0, 0));
-        when(terminationAppender.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
-                .thenReturn(new StackManipulation.Size(0, 0));
+        when(injectedCode.getByteCodeAppender()).thenReturn(injectedCodeAppender);
+        when(injectedCodeAppender.apply(any(MethodVisitor.class), any(Implementation.Context.class), any(MethodDescription.class)))
+                .thenReturn(new ByteCodeAppender.Size(0, 0));
+        when(terminationAppender.apply(any(MethodVisitor.class), any(Implementation.Context.class), any(MethodDescription.class)))
+                .thenReturn(new ByteCodeAppender.Size(0, 0));
         when(firstSpecialInvocation.getMethodDescription()).thenReturn(firstSpecialMethod);
         when(firstSpecialInvocation.getTypeDescription()).thenReturn(firstSpecialType);
         when(firstSpecialMethod.getReturnType()).thenReturn(firstSpecialReturnType);
@@ -266,12 +269,12 @@ public class ImplementationContextDefaultTest {
         verify(typeInitializer).expandWith(injectedCodeAppender);
         verifyNoMoreInteractions(typeInitializer);
         verify(injectedCode, atLeast(1)).isDefined();
-        verify(injectedCode).getStackManipulation();
+        verify(injectedCode).getByteCodeAppender();
         verifyNoMoreInteractions(injectedCode);
         verify(otherTypeInitializer, atLeast(1)).isDefined();
         verify(otherTypeInitializer).terminate();
         verifyNoMoreInteractions(otherTypeInitializer);
-        verify(terminationAppender).apply(methodVisitor, implementationContext);
+        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 
@@ -292,7 +295,7 @@ public class ImplementationContextDefaultTest {
         verifyNoMoreInteractions(typeInitializer);
         verify(injectedCode, atLeast(1)).isDefined();
         verifyNoMoreInteractions(injectedCode);
-        verify(terminationAppender).apply(methodVisitor, implementationContext);
+        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 
@@ -304,10 +307,10 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT);
         when(typeInitializer.isDefined()).thenReturn(true);
-        when(entry.prepend(new ByteCodeAppender.Simple(typeInitializer))).thenReturn(otherEntry);
+        when(entry.prepend(typeInitializer)).thenReturn(otherEntry);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(entry).getSort();
-        verify(entry).prepend(new ByteCodeAppender.Simple(typeInitializer));
+        verify(entry).prepend(typeInitializer);
         verifyNoMoreInteractions(entry);
         verify(otherEntry).apply(classVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verify(typeInitializer, atLeast(1)).isDefined();
@@ -327,8 +330,8 @@ public class ImplementationContextDefaultTest {
         FieldDescription secondField = implementationContext.cache(secondFieldValue, secondFieldType);
         assertThat(implementationContext.cache(secondFieldValue, secondFieldType), is(secondField));
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
-        when(typeInitializer.expandWith(any(StackManipulation.class))).thenReturn(otherTypeInitializer);
-        when(otherTypeInitializer.expandWith(any(StackManipulation.class))).thenReturn(thirdTypeInitializer);
+        when(typeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(otherTypeInitializer);
+        when(otherTypeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(thirdTypeInitializer);
         when(thirdTypeInitializer.terminate()).thenReturn(terminationAppender);
         when(thirdTypeInitializer.isDefined()).thenReturn(true);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
@@ -342,11 +345,11 @@ public class ImplementationContextDefaultTest {
                 eq(QUX),
                 Mockito.isNull(String.class),
                 Mockito.isNull(Object.class));
-        verify(typeInitializer).expandWith(any(StackManipulation.class));
-        verify(otherTypeInitializer).expandWith(any(StackManipulation.class));
+        verify(typeInitializer).expandWith(any(ByteCodeAppender.class));
+        verify(otherTypeInitializer).expandWith(any(ByteCodeAppender.class));
         verify(thirdTypeInitializer).terminate();
         verify(thirdTypeInitializer).isDefined();
-        verify(terminationAppender).apply(methodVisitor, implementationContext);
+        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 

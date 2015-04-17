@@ -15,7 +15,7 @@ public class ImplementationContextExtractableViewInjectedCodeNoneTest {
 
     @Test(expected = IllegalStateException.class)
     public void testApplicationThrowsException() throws Exception {
-        Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE.getStackManipulation();
+        Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE.getByteCodeAppender();
     }
 
     @Test

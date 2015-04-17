@@ -33,8 +33,13 @@ public final class TargetType {
      * @return The resolved type description.
      */
     public static TypeDescription resolve(TypeDescription typeDescription, TypeDescription actualTargetType) {
+        int arity = 0;
+        while (typeDescription.isArray()) {
+            typeDescription = typeDescription.getComponentType();
+            arity++;
+        }
         return typeDescription.represents(TargetType.class)
-                ? actualTargetType
+                ? TypeDescription.ArrayProjection.of(actualTargetType, arity)
                 : typeDescription;
     }
 

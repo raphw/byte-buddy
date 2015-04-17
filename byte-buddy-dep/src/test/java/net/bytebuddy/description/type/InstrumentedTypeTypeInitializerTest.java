@@ -1,7 +1,9 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -22,7 +24,7 @@ public class InstrumentedTypeTypeInitializerTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private StackManipulation stackManipulation;
+    private ByteCodeAppender byteCodeAppender;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -30,21 +32,23 @@ public class InstrumentedTypeTypeInitializerTest {
     @Mock
     private Implementation.Context implementationContext;
 
+    @Mock
+    private MethodDescription methodDescription;
+
     @Test
     public void testNoneExpansion() throws Exception {
-        assertThat(InstrumentedType.TypeInitializer.None.INSTANCE.expandWith(stackManipulation),
-                is((InstrumentedType.TypeInitializer) new InstrumentedType.TypeInitializer.Simple(stackManipulation)));
+        assertThat(InstrumentedType.TypeInitializer.None.INSTANCE.expandWith(byteCodeAppender),
+                is((InstrumentedType.TypeInitializer) new InstrumentedType.TypeInitializer.Simple(byteCodeAppender)));
     }
 
     @Test
     public void testNoneDefined() throws Exception {
         assertThat(InstrumentedType.TypeInitializer.None.INSTANCE.isDefined(), is(false));
-        assertThat(InstrumentedType.TypeInitializer.None.INSTANCE.isValid(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNoneThrowsExceptionOnApplication() throws Exception {
-        InstrumentedType.TypeInitializer.None.INSTANCE.apply(methodVisitor, implementationContext);
+        InstrumentedType.TypeInitializer.None.INSTANCE.apply(methodVisitor, implementationContext, methodDescription);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -54,35 +58,29 @@ public class InstrumentedTypeTypeInitializerTest {
 
     @Test
     public void testSimpleExpansion() throws Exception {
-        assertThat(new InstrumentedType.TypeInitializer.Simple(stackManipulation).expandWith(stackManipulation),
+        assertThat(new InstrumentedType.TypeInitializer.Simple(byteCodeAppender).expandWith(byteCodeAppender),
                 is((InstrumentedType.TypeInitializer) new InstrumentedType.TypeInitializer
-                        .Simple(new StackManipulation.Compound(stackManipulation, stackManipulation))));
+                        .Simple(new ByteCodeAppender.Compound(byteCodeAppender, byteCodeAppender))));
     }
 
     @Test
     public void testSimpleApplication() throws Exception {
-        when(stackManipulation.isValid()).thenReturn(true);
-        InstrumentedType.TypeInitializer typeInitializer = new InstrumentedType.TypeInitializer.Simple(stackManipulation);
+        InstrumentedType.TypeInitializer typeInitializer = new InstrumentedType.TypeInitializer.Simple(byteCodeAppender);
         assertThat(typeInitializer.isDefined(), is(true));
-        assertThat(typeInitializer.isValid(), is(true));
-        verify(stackManipulation).isValid();
-        typeInitializer.apply(methodVisitor, implementationContext);
-        verify(stackManipulation).apply(methodVisitor, implementationContext);
-        verifyZeroInteractions(stackManipulation);
+        typeInitializer.apply(methodVisitor, implementationContext, methodDescription);
+        verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
+        verifyZeroInteractions(byteCodeAppender);
         verifyZeroInteractions(implementationContext);
     }
 
     @Test
     public void testSimpleApplicationAfterTermination() throws Exception {
-        when(stackManipulation.isValid()).thenReturn(true);
-        when(stackManipulation.apply(methodVisitor, implementationContext)).thenReturn(new StackManipulation.Size(0, 0));
-        StackManipulation terminated = new InstrumentedType.TypeInitializer.Simple(stackManipulation).terminate();
-        assertThat(terminated.isValid(), is(true));
-        verify(stackManipulation).isValid();
-        terminated.apply(methodVisitor, implementationContext);
-        verify(stackManipulation).apply(methodVisitor, implementationContext);
+        when(byteCodeAppender.apply(methodVisitor, implementationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
+        ByteCodeAppender terminated = new InstrumentedType.TypeInitializer.Simple(byteCodeAppender).terminate();
+        terminated.apply(methodVisitor, implementationContext, methodDescription);
+        verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
-        verifyNoMoreInteractions(stackManipulation);
+        verifyNoMoreInteractions(byteCodeAppender);
         verifyZeroInteractions(implementationContext);
     }
 

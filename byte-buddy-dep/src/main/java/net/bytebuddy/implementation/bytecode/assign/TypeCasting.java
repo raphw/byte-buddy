@@ -13,21 +13,17 @@ import org.objectweb.asm.Opcodes;
  */
 public class TypeCasting implements StackManipulation {
 
-    /**
-     * The internal name of the target type of the casting.
-     */
-    private final String targetTypeInternalName;
-
-    /**
-     * Creates a new type casting.
-     *
-     * @param targetType The type to which the uppermost stack value should be casted.
-     */
-    public TypeCasting(TypeDescription targetType) {
-        if (targetType.isPrimitive()) {
-            throw new IllegalArgumentException("Cannot cast to primitive type " + targetType);
+    public static StackManipulation to(TypeDescription typeDescription) {
+        if (typeDescription.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot cast to primitive type " + typeDescription);
         }
-        this.targetTypeInternalName = targetType.getInternalName();
+        return new TypeCasting(typeDescription);
+    }
+
+    private final TypeDescription typeDescription;
+
+    protected TypeCasting(TypeDescription typeDescription) {
+        this.typeDescription = typeDescription;
     }
 
     @Override
@@ -37,23 +33,23 @@ public class TypeCasting implements StackManipulation {
 
     @Override
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, targetTypeInternalName);
+        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, typeDescription.getInternalName());
         return StackSize.ZERO.toIncreasingSize();
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && targetTypeInternalName.equals(((TypeCasting) other).targetTypeInternalName);
+                && typeDescription.equals(((TypeCasting) other).typeDescription);
     }
 
     @Override
     public int hashCode() {
-        return targetTypeInternalName.hashCode();
+        return typeDescription.hashCode();
     }
 
     @Override
     public String toString() {
-        return "TypeCasting{targetTypeInternalName='" + targetTypeInternalName + '\'' + '}';
+        return "TypeCasting{typeDescription='" + typeDescription + '\'' + '}';
     }
 }

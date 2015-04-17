@@ -20,7 +20,6 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.*;
@@ -568,6 +567,9 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                    if (!methodDescription.isDefaultValue(annotationValue)) {
+                        throw new IllegalStateException("Cannot set " + annotationValue + " as default for " + methodDescription);
+                    }
                     AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotationDefault();
                     AnnotationAppender.Default.apply(annotationVisitor,
                             methodDescription.getReturnType(),
@@ -1394,8 +1396,8 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public StackManipulation getStackManipulation() {
-                        return MethodInvocation.invoke(injectorProxyMethod);
+                    public ByteCodeAppender getByteCodeAppender() {
+                        return new ByteCodeAppender.Simple(MethodInvocation.invoke(injectorProxyMethod));
                     }
 
                     @Override

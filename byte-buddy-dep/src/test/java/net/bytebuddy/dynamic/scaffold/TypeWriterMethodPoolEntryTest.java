@@ -165,6 +165,7 @@ public class TypeWriterMethodPoolEntryTest {
     @Test
     public void testDefaultValueMethod() throws Exception {
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.STRING);
+        when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
         entry.apply(classVisitor, implementationContext, methodDescription);
@@ -186,6 +187,7 @@ public class TypeWriterMethodPoolEntryTest {
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.STRING);
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
+        when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender);
         entry.applyHead(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotationDefault();
@@ -214,6 +216,7 @@ public class TypeWriterMethodPoolEntryTest {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.STRING);
+        when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
         entry.apply(classVisitor, implementationContext, methodDescription);
@@ -234,6 +237,13 @@ public class TypeWriterMethodPoolEntryTest {
     @Test(expected = IllegalStateException.class)
     public void testDefaultValueMethodPrepended() throws Exception {
         new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender).prepend(otherAppender);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoDefaultValue() throws Exception {
+        when(methodDescription.isDefaultValue(FOO)).thenReturn(false);
+        new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender)
+                .apply(classVisitor, implementationContext, methodDescription);
     }
 
     @Test

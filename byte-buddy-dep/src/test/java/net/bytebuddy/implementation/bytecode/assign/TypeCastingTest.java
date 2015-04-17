@@ -48,7 +48,7 @@ public class TypeCastingTest {
     @Test(expected = IllegalArgumentException.class)
     public void testPrimitiveCastingThrowsException() throws Exception {
         when(typeDescription.isPrimitive()).thenReturn(true);
-        new TypeCasting(typeDescription);
+        TypeCasting.to(typeDescription);
     }
 
     @Test

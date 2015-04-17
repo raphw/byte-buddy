@@ -174,7 +174,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod).cached()
                         : MethodConstant.forMethod(instrumentedMethod),
-                ArrayFactory.targeting(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
+                ArrayFactory.forType(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(invocationHandlerType.getDeclaredMethods().getOnly()),
                 assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType(), true),
                 MethodReturn.returning(instrumentedMethod.getReturnType())

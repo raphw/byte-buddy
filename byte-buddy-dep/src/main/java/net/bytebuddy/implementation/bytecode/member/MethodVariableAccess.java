@@ -247,7 +247,7 @@ public enum MethodVariableAccess {
                 TypeDescription targetParameterType = typeIterator.next();
                 return targetParameterType.equals(parameterType)
                         ? variableAccess
-                        : new StackManipulation.Compound(variableAccess, new TypeCasting(targetParameterType));
+                        : new StackManipulation.Compound(variableAccess, TypeCasting.to(targetParameterType));
             }
 
             @Override

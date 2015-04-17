@@ -7,6 +7,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
@@ -16,6 +17,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.ASMifier;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -106,6 +108,11 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.isAnnotation(), is(false));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonExtendableIsIllegal() throws Exception {
+        new ByteBuddy().subclass(String.class);
+    }
+
     @Test
     public void testInterfaceDefinition() throws Exception {
         Class<? extends SimpleInterface> type = new ByteBuddy()
@@ -126,7 +133,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testAnnotationDefinition() throws Exception {
-        Class<?> type = new ByteBuddy()
+        Class<? extends Annotation> type = new ByteBuddy()
                 .makeAnnotation()
                 .defineMethod(FOO, int.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .withoutCode()
@@ -146,6 +153,35 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertNotEquals(Annotation.class, type);
         assertThat(type.isInterface(), is(true));
         assertThat(type.isAnnotation(), is(true));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testEnumerationDefinition() throws Exception {
+        Class<? extends Enum<?>> type = new ByteBuddy()
+                .makeEnumeration(FOO, BAR)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethods().length, is(2));
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredFields().length, is(3));
+        assertThat(Enum.class.isAssignableFrom(type), is(true));
+        assertNotEquals(Enum.class, type);
+        assertThat(type.isInterface(), is(false));
+        assertThat(type.isAnnotation(), is(false));
+        assertThat(type.isEnum(), is(true));
+        Enum foo = Enum.valueOf((Class) type, FOO);
+        assertThat(foo.name(), is(FOO));
+        assertThat(foo.ordinal(), is(0));
+        Enum bar = Enum.valueOf((Class) type, BAR);
+        assertThat(bar.name(), is(BAR));
+        assertThat(bar.ordinal(), is(1));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEnumWithoutValuesIsIllegal() throws Exception {
+        new ByteBuddy().makeEnumeration();
     }
 
     @Test

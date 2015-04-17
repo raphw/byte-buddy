@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -167,27 +168,29 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithTypeInitializerSingle() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        StackManipulation stackManipulation = mock(StackManipulation.class);
-        instrumentedType = instrumentedType.withInitializer(stackManipulation);
+        ByteCodeAppender byteCodeAppender = mock(ByteCodeAppender.class);
+        instrumentedType = instrumentedType.withInitializer(byteCodeAppender);
         InstrumentedType.TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
         assertThat(typeInitializer.isDefined(), is(true));
-        typeInitializer.apply(methodVisitor, implementationContext);
-        verify(stackManipulation).apply(methodVisitor, implementationContext);
+        MethodDescription methodDescription = mock(MethodDescription.class);
+        typeInitializer.apply(methodVisitor, implementationContext, methodDescription);
+        verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
     }
 
     @Test
     public void testWithTypeInitializerDouble() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        StackManipulation first = mock(StackManipulation.class), second = mock(StackManipulation.class);
-        when(first.apply(methodVisitor, implementationContext)).thenReturn(new StackManipulation.Size(0, 0));
-        when(second.apply(methodVisitor, implementationContext)).thenReturn(new StackManipulation.Size(0, 0));
+        ByteCodeAppender first = mock(ByteCodeAppender.class), second = mock(ByteCodeAppender.class);
+        MethodDescription methodDescription = mock(MethodDescription.class);
+        when(first.apply(methodVisitor, implementationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
+        when(second.apply(methodVisitor, implementationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
         instrumentedType = instrumentedType.withInitializer(first).withInitializer(second);
         InstrumentedType.TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
         assertThat(typeInitializer.isDefined(), is(true));
-        typeInitializer.apply(methodVisitor, implementationContext);
-        verify(first).apply(methodVisitor, implementationContext);
-        verify(second).apply(methodVisitor, implementationContext);
+        typeInitializer.apply(methodVisitor, implementationContext, methodDescription);
+        verify(first).apply(methodVisitor, implementationContext, methodDescription);
+        verify(second).apply(methodVisitor, implementationContext, methodDescription);
     }
 
     @Test

@@ -1337,23 +1337,23 @@ public interface AgentBuilder {
                          * calling the system class loader's nexus in order to apply a self-initialization.
                          *
                          * @param instrumentedType The instrumented type for which the code block is to be injected.
-                         * @return A stack manipulation that implements the self-initialization.
+                         * @return A byte code appender that implements the self-initialization.
                          */
-                        public StackManipulation initializerFor(TypeDescription instrumentedType) {
-                            return new StackManipulation.Compound(
+                        public ByteCodeAppender initializerFor(TypeDescription instrumentedType) {
+                            return new ByteCodeAppender.Simple(new StackManipulation.Compound(
                                     MethodInvocation.invoke(systemClassLoader),
                                     new TextConstant(Nexus.class.getName()),
                                     MethodInvocation.invoke(loadClass),
                                     new TextConstant("initialize"),
-                                    ArrayFactory.targeting(TypeDescription.CLASS)
+                                    ArrayFactory.forType(TypeDescription.CLASS)
                                             .withValues(Collections.singletonList(ClassConstant.of(TypeDescription.CLASS))),
                                     MethodInvocation.invoke(getDeclaredMethod),
                                     NullConstant.INSTANCE,
-                                    ArrayFactory.targeting(TypeDescription.OBJECT)
+                                    ArrayFactory.forType(TypeDescription.OBJECT)
                                             .withValues(Collections.singletonList(ClassConstant.of(instrumentedType))),
                                     MethodInvocation.invoke(invokeMethod),
                                     Removal.SINGLE
-                            );
+                            ));
                         }
 
                         @Override

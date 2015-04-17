@@ -686,7 +686,7 @@ public interface DynamicType {
 
             /**
              * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
-             * {@code enum} values should be handed as {@link AnnotationDescription.EnumerationValue}
+             * {@code enum} values should be handed as {@link net.bytebuddy.description.annotation.AnnotationDescription.EnumerationDescription}
              * instances, annotations as {@link AnnotationDescription} instances and
              * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
              *

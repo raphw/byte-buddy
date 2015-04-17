@@ -36,7 +36,7 @@ public class ArrayFactory implements CollectionFactory {
      * Creates a new array factory with a given
      * {@link net.bytebuddy.implementation.bytecode.collection.ArrayFactory.ArrayCreator}
      * without inferring the type from the component type. Normally,
-     * {@link net.bytebuddy.implementation.bytecode.collection.ArrayFactory#targeting(TypeDescription)}
+     * {@link net.bytebuddy.implementation.bytecode.collection.ArrayFactory#forType(TypeDescription)}
      * should be used.
      *
      * @param componentType The component type of the array factory.
@@ -55,7 +55,7 @@ public class ArrayFactory implements CollectionFactory {
      * @param componentType The component type of the array that is to be build.
      * @return A new array factory for the given type.
      */
-    public static ArrayFactory targeting(TypeDescription componentType) {
+    public static ArrayFactory forType(TypeDescription componentType) {
         return new ArrayFactory(componentType, makeArrayCreatorFor(componentType));
     }
 

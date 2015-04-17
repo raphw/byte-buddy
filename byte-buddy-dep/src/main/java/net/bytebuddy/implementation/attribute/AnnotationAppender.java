@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.*;
@@ -356,7 +357,7 @@ public interface AnnotationAppender {
             if (valueType.isAnnotation()) {
                 handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value);
             } else if (valueType.isEnum()) {
-                annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((AnnotationDescription.EnumerationValue) value).getValue());
+                annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((EnumerationDescription) value).getValue());
             } else if (valueType.isAssignableFrom(Class.class)) {
                 annotationVisitor.visit(name, Type.getType(((TypeDescription) value).getDescriptor()));
             } else if (valueType.isArray()) {

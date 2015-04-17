@@ -1,5 +1,7 @@
-package net.bytebuddy.pool;
+package net.bytebuddy.description.annotation;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -19,7 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class TypePoolLazyAnnotationInvocationHandlerTest {
+public class AnnotationDescriptionAnnotationInvocationHandler {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -27,109 +29,109 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypePool.LazyTypeDescription.AnnotationValue<?, ?> annotationValue, otherAnnotationValue, freeAnnotationValue;
+    private AnnotationDescription.AnnotationValue<?, ?> annotationValue, otherAnnotationValue, freeAnnotationValue;
 
     @Mock
-    private TypePool.LazyTypeDescription.AnnotationValue.Loaded<?> loadedAnnotationValue, otherLoadedAnnotationValue;
+    private AnnotationDescription.AnnotationValue.Loaded<?> loadedAnnotationValue, otherLoadedAnnotationValue;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(annotationValue.load(getClass().getClassLoader()))
-                .thenReturn((TypePool.LazyTypeDescription.AnnotationValue.Loaded) loadedAnnotationValue);
+                .thenReturn((AnnotationDescription.AnnotationValue.Loaded) loadedAnnotationValue);
         when(otherAnnotationValue.load(getClass().getClassLoader()))
-                .thenReturn((TypePool.LazyTypeDescription.AnnotationValue.Loaded) otherLoadedAnnotationValue);
+                .thenReturn((AnnotationDescription.AnnotationValue.Loaded) otherLoadedAnnotationValue);
     }
 
     @Test(expected = ClassNotFoundException.class)
-    public void testClassNotFoundExceptionIsTransparent() throws Exception {
+    public void testClassNotFoundExceptionIsTransparent() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenThrow(new ClassNotFoundException());
-        new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
     @Test(expected = AnnotationTypeMismatchException.class)
     @SuppressWarnings("unchecked")
-    public void testAnnotationTypeMismatchException() throws Exception {
+    public void testAnnotationTypeMismatchException() throws Throwable {
         when(loadedAnnotationValue.resolve()).thenReturn(new Object());
-        new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
     @Test(expected = IncompleteAnnotationException.class)
     @SuppressWarnings("unchecked")
-    public void testIncompleteAnnotationException() throws Exception {
-        when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((TypePool.LazyTypeDescription.AnnotationValue.Loaded)
-                TypePool.LazyTypeDescription.AnnotationInvocationHandler.DefaultValue.of(Object.class.getMethod("toString")));
-        new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+    public void testIncompleteAnnotationException() throws Throwable {
+        when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
+                AnnotationDescription.AnnotationInvocationHandler.DefaultValue.of(Object.class.getMethod("toString")));
+        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
     @Test(expected = EnumConstantNotPresentException.class)
     @SuppressWarnings("unchecked")
-    public void testEnumConstantNotPresentException() throws Exception {
-        when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((TypePool.LazyTypeDescription.AnnotationValue.Loaded)
-                new TypePool.LazyTypeDescription.AnnotationValue.ForEnumeration.UnknownRuntimeEnumeration(Bar.class, FOO));
-        new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+    public void testEnumConstantNotPresentException() throws Throwable {
+        when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
+                new AnnotationDescription.AnnotationValue.ForEnumeration.UnknownRuntimeEnumeration(Bar.class, FOO));
+        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
     @Test(expected = IncompatibleClassChangeError.class)
     @SuppressWarnings("unchecked")
-    public void testEnumTypeIncompatible() throws Exception {
-        when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((TypePool.LazyTypeDescription.AnnotationValue.Loaded)
-                new TypePool.LazyTypeDescription.AnnotationValue.ForEnumeration.IncompatibleRuntimeType(Foo.class));
-        new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+    public void testEnumTypeIncompatible() throws Throwable {
+        when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
+                new AnnotationDescription.AnnotationValue.ForEnumeration.IncompatibleRuntimeType(Foo.class));
+        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
     @Test(expected = IncompatibleClassChangeError.class)
     @SuppressWarnings("unchecked")
-    public void testAnnotationTypeIncompatible() throws Exception {
-        when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((TypePool.LazyTypeDescription.AnnotationValue.Loaded)
-                new TypePool.LazyTypeDescription.AnnotationValue.ForAnnotation.IncompatibleRuntimeType(Foo.class));
-        new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+    public void testAnnotationTypeIncompatible() throws Throwable {
+        when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
+                new AnnotationDescription.AnnotationValue.ForEnumeration.IncompatibleRuntimeType(Foo.class));
+        Object foo = AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
     @Test(expected = RuntimeException.class)
-    public void testOtherExceptionIsTransparent() throws Exception {
+    public void testOtherExceptionIsTransparent() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenThrow(new RuntimeException());
-        new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
     @Test
     public void testEqualsToDirectIsTrue() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new ExplicitFoo(FOO)}),
                 is((Object) true));
     }
 
     @Test
     public void testEqualsToUnresolvedIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.NON_RESOLVED);
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.NON_RESOLVED);
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new ExplicitFoo(FOO)}),
                 is((Object) false));
         verify(loadedAnnotationValue, never()).resolve();
@@ -137,10 +139,10 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToUndefinedIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.NON_DEFINED);
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.NON_DEFINED);
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new ExplicitFoo(FOO)}),
                 is((Object) false));
         verify(loadedAnnotationValue, never()).resolve();
@@ -148,11 +150,11 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToIndirectIsTrue() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class),
                                 new Object[]{Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{Foo.class}, new ExplicitFoo(FOO))}),
                 is((Object) true));
@@ -161,14 +163,14 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToOtherHandlerIsTrue() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        InvocationHandler invocationHandler = new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        InvocationHandler invocationHandler = AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue));
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue));
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class),
                                 new Object[]{Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{Foo.class}, invocationHandler)}),
                 is((Object) true));
@@ -177,11 +179,11 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToDirectIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new ExplicitFoo(BAR)}),
                 is((Object) false));
         verify(loadedAnnotationValue).resolve();
@@ -189,11 +191,11 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToIndirectIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class),
                                 new Object[]{Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{Foo.class}, new ExplicitFoo(BAR))}),
                 is((Object) false));
@@ -202,16 +204,16 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToOtherHandlerIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        when(otherLoadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(otherLoadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(otherLoadedAnnotationValue.resolve()).thenReturn(BAR);
-        InvocationHandler invocationHandler = new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        InvocationHandler invocationHandler = AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, otherAnnotationValue));
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, otherAnnotationValue));
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class),
                                 new Object[]{Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{Foo.class}, invocationHandler)}),
                 is((Object) false));
@@ -221,11 +223,11 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToObjectIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new Other()}),
                 is((Object) false));
         verify(loadedAnnotationValue, never()).resolve();
@@ -233,11 +235,11 @@ public class TypePoolLazyAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToInvocationExceptionIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(TypePool.LazyTypeDescription.AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(new TypePool.LazyTypeDescription.AnnotationInvocationHandler(getClass().getClassLoader(),
+        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, TypePool.LazyTypeDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new FooWithException()}),
                 is((Object) false));
         verify(loadedAnnotationValue).resolve();
