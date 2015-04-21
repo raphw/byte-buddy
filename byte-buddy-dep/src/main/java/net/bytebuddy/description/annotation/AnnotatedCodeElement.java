@@ -3,7 +3,7 @@ package net.bytebuddy.description.annotation;
 /**
  * Describes an element that declares annotations.
  */
-public interface AnnotatedElement {
+public interface AnnotatedCodeElement {
 
     /**
      * Returns a list of annotations that are declared by this instance.

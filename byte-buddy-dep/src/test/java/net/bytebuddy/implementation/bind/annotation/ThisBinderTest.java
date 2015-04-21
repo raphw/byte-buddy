@@ -87,6 +87,21 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     }
 
     @Test
+    public void testOptionalBinding() throws Exception {
+        when(stackManipulation.isValid()).thenReturn(true);
+        when(annotation.optional()).thenReturn(true);
+        when(source.isStatic()).thenReturn(true);
+        when(target.getTypeDescription()).thenReturn(parameterType);
+        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(true));
+        verify(annotation).optional();
+        verify(source, atLeast(1)).isStatic();
+        verifyZeroInteractions(assigner);
+    }
+
+    @Test
     public void testStaticMethodIllegal() throws Exception {
         when(target.getTypeDescription()).thenReturn(parameterType);
         when(source.isStatic()).thenReturn(true);

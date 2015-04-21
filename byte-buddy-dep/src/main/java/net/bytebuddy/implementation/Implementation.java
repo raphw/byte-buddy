@@ -517,6 +517,11 @@ public interface Implementation {
              */
             interface InjectedCode {
 
+                /**
+                 * Returns a byte code appender for appending the injected code.
+                 *
+                 * @return A byte code appender for appending the injected code.
+                 */
                 ByteCodeAppender getByteCodeAppender();
 
                 /**
@@ -827,7 +832,7 @@ public interface Implementation {
                 if (initializerEntry.getSort().isImplemented() && typeInitializer.isDefined()) {
                     initializerEntry = initializerEntry.prepend(typeInitializer);
                 } else if (typeInitializer.isDefined()) {
-                    initializerEntry = new TypeWriter.MethodPool.Entry.ForImplementation(typeInitializer.terminate(), MethodAttributeAppender.NoOp.INSTANCE);
+                    initializerEntry = new TypeWriter.MethodPool.Entry.ForImplementation(typeInitializer.withReturn(), MethodAttributeAppender.NoOp.INSTANCE);
                 }
                 initializerEntry.apply(classVisitor, this, typeInitializerMethod);
                 for (Map.Entry<MethodDescription, TypeWriter.MethodPool.Entry> entry : accessorMethodEntries.entrySet()) {

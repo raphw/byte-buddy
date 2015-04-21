@@ -7,6 +7,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 
 import java.lang.annotation.*;
@@ -24,6 +25,13 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface This {
+
+    /**
+     * Determines if the annotated parameter should be bound to {@code null} when intercepting a {@code static} method.
+     *
+     * @return {@code true} if the annotated parameter should be bound to {@code null} as a fallback.
+     */
+    boolean optional() default false;
 
     /**
      * A binder for handling the
@@ -61,15 +69,15 @@ public @interface This {
             } else if (target.getTypeDescription().isArray()) {
                 throw new IllegalStateException(String.format("The %d. argument virtual %s is an array type " +
                         "and can never be bound to an instance", target.getIndex(), target));
-            } else if (source.isStatic()) {
+            } else if (source.isStatic() && !annotation.loadSilent().optional()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            StackManipulation thisAssignment = assigner.assign(implementationTarget.getTypeDescription(),
-                    target.getTypeDescription(),
-                    RuntimeType.Verifier.check(target));
-            return thisAssignment.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new StackManipulation
-                    .Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX), thisAssignment))
+            StackManipulation assignment = source.isStatic()
+                    ? NullConstant.INSTANCE
+                    : new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX),
+                    assigner.assign(implementationTarget.getTypeDescription(), target.getTypeDescription(), RuntimeType.Verifier.check(target)));
+            return assignment.isValid()
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(assignment)
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 

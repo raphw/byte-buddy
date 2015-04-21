@@ -13,6 +13,12 @@ import org.objectweb.asm.Opcodes;
  */
 public class TypeCasting implements StackManipulation {
 
+    /**
+     * Creates a casting to the given, non-primitive type.
+     *
+     * @param typeDescription The type to which a value should be casted.
+     * @return A stack manipulation that represents the casting.
+     */
     public static StackManipulation to(TypeDescription typeDescription) {
         if (typeDescription.isPrimitive()) {
             throw new IllegalArgumentException("Cannot cast to primitive type " + typeDescription);
@@ -20,8 +26,16 @@ public class TypeCasting implements StackManipulation {
         return new TypeCasting(typeDescription);
     }
 
+    /**
+     * The type description to which a value should be casted.
+     */
     private final TypeDescription typeDescription;
 
+    /**
+     * Creates a new type casting.
+     *
+     * @param typeDescription The type description to which a value should be casted.
+     */
     protected TypeCasting(TypeDescription typeDescription) {
         this.typeDescription = typeDescription;
     }

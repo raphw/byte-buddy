@@ -1,13 +1,13 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 
 /**
  * A package description represents a Java package.
  */
-public interface PackageDescription extends NamedElement, AnnotatedElement {
+public interface PackageDescription extends NamedElement, AnnotatedCodeElement {
 
     /**
      * Checks if this package description represents a sealed package.

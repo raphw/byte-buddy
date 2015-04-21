@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
@@ -24,7 +24,7 @@ public class RuntimeTypeVerifierTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private AnnotatedElement annotatedElement;
+    private AnnotatedCodeElement annotatedCodeElement;
 
     @Mock
     private RuntimeType runtimeType;
@@ -36,18 +36,18 @@ public class RuntimeTypeVerifierTest {
 
     @Test
     public void testCheckElementValid() throws Exception {
-        when(annotatedElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
-        assertThat(RuntimeType.Verifier.check(annotatedElement), is(true));
-        verify(annotatedElement).getDeclaredAnnotations();
-        verifyNoMoreInteractions(annotatedElement);
+        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
+        assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(true));
+        verify(annotatedCodeElement).getDeclaredAnnotations();
+        verifyNoMoreInteractions(annotatedCodeElement);
     }
 
     @Test
     public void testCheckElementInvalid() throws Exception {
-        when(annotatedElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation());
-        assertThat(RuntimeType.Verifier.check(annotatedElement), is(false));
-        verify(annotatedElement).getDeclaredAnnotations();
-        verifyNoMoreInteractions(annotatedElement);
+        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation());
+        assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(false));
+        verify(annotatedCodeElement).getDeclaredAnnotations();
+        verifyNoMoreInteractions(annotatedCodeElement);
     }
 
     @Test(expected = UnsupportedOperationException.class)

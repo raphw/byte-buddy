@@ -2,7 +2,7 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -17,7 +17,7 @@ import java.lang.reflect.Modifier;
 /**
  * Description of the parameter of a Java method or constructor.
  */
-public interface ParameterDescription extends AnnotatedElement, NamedElement, ModifierReviewable {
+public interface ParameterDescription extends AnnotatedCodeElement, NamedElement, ModifierReviewable {
 
     /**
      * The prefix for names of an unnamed parameter.

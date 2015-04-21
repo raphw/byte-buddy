@@ -5,6 +5,10 @@ import net.bytebuddy.description.type.TypeDescription;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Describes an enumeration value. Note that the {@link java.lang.Object#toString} method always returns the
+ * value as if the method was not overridden, i.e. the name of the enumeration constant.
+ */
 public interface EnumerationDescription {
 
     /**
@@ -106,12 +110,27 @@ public interface EnumerationDescription {
         }
     }
 
+    /**
+     * A latent description of an enumeration value.
+     */
     class Latent extends AbstractEnumerationDescription {
 
+        /**
+         * The type of the enumeration.
+         */
         private final TypeDescription enumerationType;
 
+        /**
+         * The value of the enumeration.
+         */
         private final String value;
 
+        /**
+         * Creates a latent description of an enumeration value.
+         *
+         * @param enumerationType The enumeration type.
+         * @param value           The value of the enumeration.
+         */
         public Latent(TypeDescription enumerationType, String value) {
             this.enumerationType = enumerationType;
             this.value = value;
@@ -135,5 +154,4 @@ public interface EnumerationDescription {
             return Enum.valueOf(type, value);
         }
     }
-
 }

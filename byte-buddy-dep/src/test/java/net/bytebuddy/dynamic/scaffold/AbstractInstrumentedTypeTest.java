@@ -22,6 +22,7 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.*;
@@ -53,6 +54,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(fieldDescription.getFieldType(), is(fieldType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
+        assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
     }
 
     @Test
@@ -62,9 +64,24 @@ public abstract class AbstractInstrumentedTypeTest {
         instrumentedType = instrumentedType.withField(BAR, instrumentedType, Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getFieldType(), is((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getFieldType(), sameInstance((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
+        assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+    }
+
+    @Test
+    public void testWithFieldOfInstrumentedTypeAsArray() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        instrumentedType = instrumentedType.withField(BAR, TypeDescription.ArrayProjection.of(instrumentedType, 1), Opcodes.ACC_PUBLIC);
+        assertThat(instrumentedType.getDeclaredFields().size(), is(1));
+        FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
+        assertThat(fieldDescription.getFieldType().isArray(), is(true));
+        assertThat(fieldDescription.getFieldType().getComponentType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertThat(fieldDescription.getName(), is(BAR));
+        assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -101,6 +118,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(methodDescription.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
+        assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
     }
 
     @Test
@@ -114,12 +132,35 @@ public abstract class AbstractInstrumentedTypeTest {
                 Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
-        assertThat(methodDescription.getReturnType(), is((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getReturnType(), sameInstance((TypeDescription) instrumentedType));
         assertThat(methodDescription.getParameters().size(), is(1));
-        assertThat(methodDescription.getParameters().asTypeList(), is(Collections.singletonList((TypeDescription) instrumentedType)));
+        assertThat(methodDescription.getParameters().asTypeList().get(0), sameInstance((TypeDescription) instrumentedType));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
+        assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+    }
+
+    @Test
+    public void testWithMethodOfInstrumentedTypeAsArray() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredFields().size(), is(0));
+        instrumentedType = instrumentedType.withMethod(BAR,
+                TypeDescription.ArrayProjection.of(instrumentedType, 1),
+                Collections.singletonList(TypeDescription.ArrayProjection.of(instrumentedType, 1)),
+                Collections.<TypeDescription>emptyList(),
+                Opcodes.ACC_PUBLIC);
+        assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
+        MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
+        assertThat(methodDescription.getReturnType().isArray(), is(true));
+        assertThat(methodDescription.getReturnType().getComponentType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getParameters().size(), is(1));
+        assertThat(methodDescription.getParameters().asTypeList().get(0).isArray(), is(true));
+        assertThat(methodDescription.getParameters().asTypeList().get(0).getComponentType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getExceptionTypes().size(), is(0));
+        assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertThat(methodDescription.getName(), is(BAR));
+        assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
     }
 
     @Test(expected = IllegalArgumentException.class)

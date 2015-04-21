@@ -1,4 +1,4 @@
-package net.bytebuddy.description.annotation;
+package net.bytebuddy.description.enumeration;
 
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;

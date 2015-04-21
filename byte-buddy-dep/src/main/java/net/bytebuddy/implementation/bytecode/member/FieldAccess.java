@@ -1,11 +1,15 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * An access representation to a given field.
@@ -50,6 +54,19 @@ public enum FieldAccess {
         this.putterOpcode = putterOpcode;
         this.getterOpcode = getterOpcode;
         this.targetSizeChange = targetSizeChange.getSize();
+    }
+
+    /**
+     * Creates an accessor to read an enumeration value.
+     *
+     * @param enumerationDescription The description of the enumeration.
+     * @return A stack manipulation for reading the enumeration.
+     */
+    public static StackManipulation forEnumeration(EnumerationDescription enumerationDescription) {
+        FieldList fieldList = enumerationDescription.getEnumerationType().getDeclaredFields().filter(named(enumerationDescription.getValue()));
+        return fieldList.size() != 1 || !fieldList.getOnly().isStatic() || !fieldList.getOnly().isPublic()
+                ? StackManipulation.Illegal.INSTANCE
+                : STATIC.new AccessDispatcher(fieldList.getOnly()).getter();
     }
 
     /**

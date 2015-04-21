@@ -15,6 +15,8 @@ import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
+
 /**
  * Parameters that are annotated with this annotation will be assigned a collection (or an array) containing
  * all arguments of the source method. Currently, this annotation supports the following collection types:
@@ -46,6 +48,15 @@ public @interface AllArguments {
      * @return The assignment handling to be applied for the annotated parameter.
      */
     Assignment value() default Assignment.STRICT;
+
+    /**
+     * Determines if the array should contain the instance that defines the intercepted value when intercepting
+     * a non-static method.
+     *
+     * @return {@code true} if the instance on which the intercepted method should be invoked should be
+     * included in the array containing the arguments.
+     */
+    boolean includeSelf() default false;
 
     /**
      * A directive for how an {@link net.bytebuddy.implementation.bind.annotation.AllArguments}
@@ -126,10 +137,13 @@ public @interface AllArguments {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
             ArrayFactory arrayFactory = ArrayFactory.forType(target.getTypeDescription().getComponentType());
-            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size());
-            int offset = source.isStatic() ? 0 : 1;
+            boolean includeThis = !source.isStatic() && annotation.loadSilent().includeSelf();
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
+            int offset = source.isStatic() || includeThis ? 0 : 1;
             boolean dynamicallyTyped = RuntimeType.Verifier.check(target);
-            for (TypeDescription sourceParameter : source.getParameters().asTypeList()) {
+            for (TypeDescription sourceParameter : includeThis
+                    ? join(implementationTarget.getTypeDescription(), source.getParameters().asTypeList())
+                    : source.getParameters().asTypeList()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.forType(sourceParameter).loadOffset(offset),
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), dynamicallyTyped));

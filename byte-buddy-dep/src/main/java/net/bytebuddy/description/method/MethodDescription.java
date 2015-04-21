@@ -201,8 +201,19 @@ public interface MethodDescription extends ByteCodeElement {
      */
     boolean isBootstrap(List<?> arguments);
 
+    /**
+     * Checks if this method is capable of defining a default annotation value.
+     *
+     * @return {@code true} if it is possible to define a default annotation value for this method.
+     */
     boolean isDefaultValue();
 
+    /**
+     * Checks if the given value can describe a default annotation value for this method.
+     *
+     * @param value The value that describes the default annotation value for this method.
+     * @return {@code true} if the given value can describe a default annotation value for this method.
+     */
     boolean isDefaultValue(Object value);
 
     /**
@@ -421,9 +432,10 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean isDefaultValue() {
-            return !isConstructor()
+            return getDeclaringType().isAnnotation()
+                    && !isConstructor()
                     && !isStatic()
-                    && getReturnType().isAnnotationValue()
+                    && getReturnType().isAnnotationReturnType()
                     && getParameters().isEmpty();
         }
 
@@ -707,7 +719,7 @@ public interface MethodDescription extends ByteCodeElement {
             Object value = method.getDefaultValue();
             return value == null
                     ? null
-                    : AnnotationDescription.ForLoadedAnnotation.wrap(value, new TypeDescription.ForLoadedType(method.getReturnType()));
+                    : AnnotationDescription.ForLoadedAnnotation.describe(value, new TypeDescription.ForLoadedType(method.getReturnType()));
         }
     }
 

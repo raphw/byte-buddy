@@ -10,7 +10,6 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 
 import java.util.ArrayList;
 import java.util.HashSet;

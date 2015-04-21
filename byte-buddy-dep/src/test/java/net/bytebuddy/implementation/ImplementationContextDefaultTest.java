@@ -263,7 +263,7 @@ public class ImplementationContextDefaultTest {
         when(injectedCode.isDefined()).thenReturn(true);
         when(otherTypeInitializer.isDefined()).thenReturn(true);
         when(typeInitializer.expandWith(injectedCodeAppender)).thenReturn(otherTypeInitializer);
-        when(otherTypeInitializer.terminate()).thenReturn(terminationAppender);
+        when(otherTypeInitializer.withReturn()).thenReturn(terminationAppender);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(entry).getSort();
         verify(typeInitializer).expandWith(injectedCodeAppender);
@@ -272,7 +272,7 @@ public class ImplementationContextDefaultTest {
         verify(injectedCode).getByteCodeAppender();
         verifyNoMoreInteractions(injectedCode);
         verify(otherTypeInitializer, atLeast(1)).isDefined();
-        verify(otherTypeInitializer).terminate();
+        verify(otherTypeInitializer).withReturn();
         verifyNoMoreInteractions(otherTypeInitializer);
         verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
@@ -286,12 +286,12 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
         when(typeInitializer.isDefined()).thenReturn(true);
-        when(typeInitializer.terminate()).thenReturn(terminationAppender);
+        when(typeInitializer.withReturn()).thenReturn(terminationAppender);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(entry).getSort();
         verifyNoMoreInteractions(entry);
         verify(typeInitializer, atLeast(1)).isDefined();
-        verify(typeInitializer).terminate();
+        verify(typeInitializer).withReturn();
         verifyNoMoreInteractions(typeInitializer);
         verify(injectedCode, atLeast(1)).isDefined();
         verifyNoMoreInteractions(injectedCode);
@@ -332,7 +332,7 @@ public class ImplementationContextDefaultTest {
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
         when(typeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(otherTypeInitializer);
         when(otherTypeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(thirdTypeInitializer);
-        when(thirdTypeInitializer.terminate()).thenReturn(terminationAppender);
+        when(thirdTypeInitializer.withReturn()).thenReturn(terminationAppender);
         when(thirdTypeInitializer.isDefined()).thenReturn(true);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitField(eq(Implementation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
@@ -347,7 +347,7 @@ public class ImplementationContextDefaultTest {
                 Mockito.isNull(Object.class));
         verify(typeInitializer).expandWith(any(ByteCodeAppender.class));
         verify(otherTypeInitializer).expandWith(any(ByteCodeAppender.class));
-        verify(thirdTypeInitializer).terminate();
+        verify(thirdTypeInitializer).withReturn();
         verify(thirdTypeInitializer).isDefined();
         verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);

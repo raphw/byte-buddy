@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -249,6 +250,27 @@ public class MethodCall implements Implementation {
     }
 
     /**
+     * Defines the given enumeration values to be provided as arguments to the invoked method where the values
+     * are read from the enumeration class on demand.
+     *
+     * @param enumerationDescription The enumeration descriptions to provide as arguments.
+     * @return A method call that hands the provided arguments to the invoked method.
+     */
+    public MethodCall with(EnumerationDescription... enumerationDescription) {
+        List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(enumerationDescription.length);
+        for (EnumerationDescription anEnumerationDescription : enumerationDescription) {
+            argumentLoaders.add(new ArgumentLoader.ForEnumerationValue(nonNull(anEnumerationDescription)));
+        }
+        return new MethodCall(methodLocator,
+                targetHandler,
+                join(this.argumentLoaders, argumentLoaders),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    /**
      * Defines the given Java instances to be provided as arguments to the invoked method where the given
      * instances are stored in the generated class's constant pool.
      *
@@ -334,6 +356,12 @@ public class MethodCall implements Implementation {
                 dynamicallyTyped);
     }
 
+    /**
+     * Assigns the {@link java.lang.Class} value of the instrumented type.
+     *
+     * @return This method call where the next parameter is a assigned a reference to the {@link java.lang.Class}
+     * value of the instrumented type.
+     */
     public MethodCall withOwnType() {
         return new MethodCall(methodLocator,
                 targetHandler,
@@ -895,8 +923,14 @@ public class MethodCall implements Implementation {
             }
         }
 
+        /**
+         * Loads the instrumented type onto the operand stack.
+         */
         enum ForOwnType implements ArgumentLoader {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -1055,6 +1089,8 @@ public class MethodCall implements Implementation {
                     return new ForJavaInstance(JavaInstance.MethodHandle.of(value));
                 } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
                     return new ForJavaInstance(JavaInstance.MethodType.of(value));
+                } else if (value instanceof Enum<?>) {
+                    return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                 } else {
                     return new ForStaticField(value);
                 }
@@ -1796,7 +1832,7 @@ public class MethodCall implements Implementation {
                         ClassConstant.of(typeDescription),
                         assigner.assign(TypeDescription.CLASS, targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign Class value to " + targetType);
+                    throw new IllegalStateException("Cannot assign class value to " + targetType);
                 }
                 return stackManipulation;
             }
@@ -1821,6 +1857,64 @@ public class MethodCall implements Implementation {
             public String toString() {
                 return "MethodCall.ArgumentLoader.ForClassConstant{" +
                         "typeDescription=" + typeDescription +
+                        '}';
+            }
+        }
+
+        /**
+         * An argument loader that loads an enumeration constant.
+         */
+        class ForEnumerationValue implements ArgumentLoader {
+
+            /**
+             * The enumeration to describe.
+             */
+            private final EnumerationDescription enumerationDescription;
+
+            /**
+             * Creates a new argument loader for an enumeration constant.
+             *
+             * @param enumerationDescription The enumeration to describe.
+             */
+            public ForEnumerationValue(EnumerationDescription enumerationDescription) {
+                this.enumerationDescription = enumerationDescription;
+            }
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription interceptedMethod,
+                                             TypeDescription targetType,
+                                             Assigner assigner,
+                                             boolean dynamicallyTyped) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        FieldAccess.forEnumeration(enumerationDescription),
+                        assigner.assign(enumerationDescription.getEnumerationType(), targetType, dynamicallyTyped));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + enumerationDescription.getEnumerationType() + " value to " + targetType);
+                }
+                return stackManipulation;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && enumerationDescription.equals(((ForEnumerationValue) other).enumerationDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return enumerationDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForEnumerationValue{" +
+                        "enumerationDescription=" + enumerationDescription +
                         '}';
             }
         }

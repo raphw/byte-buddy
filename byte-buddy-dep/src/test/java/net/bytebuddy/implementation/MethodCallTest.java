@@ -303,6 +303,21 @@ public class MethodCallTest extends AbstractImplementationTest {
     }
 
     @Test
+    public void testWithOwnType() throws Exception {
+        DynamicType.Loaded<MethodCallWithOwnType> loaded = implement(MethodCallWithOwnType.class,
+                MethodCall.invokeSuper().withOwnType());
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, Class.class), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallWithOwnType instance = loaded.getLoaded().newInstance();
+        assertNotEquals(MethodCallWithThis.class, instance.getClass());
+        assertThat(instance, instanceOf(MethodCallWithOwnType.class));
+        assertEquals(loaded.getLoaded(), instance.foo(null));
+    }
+
+    @Test
     public void testImplementationAppendingMethod() throws Exception {
         DynamicType.Loaded<MethodCallAppending> loaded = implement(MethodCallAppending.class,
                 MethodCall.invokeSuper().andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)));
@@ -501,6 +516,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForConstructingInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForNullConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForThisReference.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForOwnType.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForBooleanConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForByteConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForCharacterConstant.class).apply();
@@ -515,6 +531,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForShortConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForTextConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForClassConstant.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForEnumerationValue.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForJavaInstance.class).apply();
     }
 
@@ -594,6 +611,13 @@ public class MethodCallTest extends AbstractImplementationTest {
     public static class MethodCallWithThis {
 
         public MethodCallWithThis foo(MethodCallWithThis value) {
+            return value;
+        }
+    }
+
+    public static class MethodCallWithOwnType {
+
+        public Class<?> foo(Class<?> value) {
             return value;
         }
     }

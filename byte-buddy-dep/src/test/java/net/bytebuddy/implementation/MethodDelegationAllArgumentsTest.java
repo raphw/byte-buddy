@@ -32,6 +32,13 @@ public class MethodDelegationAllArgumentsTest extends AbstractImplementationTest
         assertThat(instance.foo(FOOBAR, BAZ), is((Object) (QUX + BAZ)));
     }
 
+    @Test
+    public void testIncludeSelf() throws Exception {
+        DynamicType.Loaded<Qux> loaded = implement(Qux.class, MethodDelegation.to(IncludeSelf.class));
+        Qux instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(QUX, BAZ), is((Object) instance));
+    }
+
     public static class Foo {
 
         public Object foo(int i1, Integer i2) {
@@ -56,6 +63,7 @@ public class MethodDelegationAllArgumentsTest extends AbstractImplementationTest
     public static class BazStrict {
 
         public static String qux(@AllArguments String[] args) {
+            assertThat(args.length, is(2));
             return QUX + args[0] + args[1];
         }
     }
@@ -63,7 +71,18 @@ public class MethodDelegationAllArgumentsTest extends AbstractImplementationTest
     public static class BazSlack {
 
         public static String qux(@AllArguments(AllArguments.Assignment.SLACK) String[] args) {
+            assertThat(args.length, is(1));
             return QUX + args[0];
+        }
+    }
+
+    public static class IncludeSelf {
+
+        public static Object intercept(@AllArguments(includeSelf = true) Object[] args) {
+            assertThat(args.length, is(3));
+            assertThat(args[1], is((Object) QUX));
+            assertThat(args[2], is((Object) BAZ));
+            return args[0];
         }
     }
 }

@@ -144,7 +144,9 @@ public class ByteBuddyTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ByteBuddy.class).apply();
-        ObjectPropertyAssertion.of(ByteBuddy.MatchedMethodInterception.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddy.EnumerationImplementation.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddy.EnumerationImplementation.ValuesMethodAppender.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddy.EnumerationImplementation.InitializationAppender.class).apply();
         ObjectPropertyAssertion.of(ByteBuddy.MethodAnnotationTarget.class).apply();
         ObjectPropertyAssertion.of(ByteBuddy.OptionalMethodInterception.class).apply();
     }

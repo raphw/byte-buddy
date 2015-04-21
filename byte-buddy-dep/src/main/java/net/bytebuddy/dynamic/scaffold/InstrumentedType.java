@@ -14,7 +14,6 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import org.objectweb.asm.MethodVisitor;
 
@@ -57,8 +56,7 @@ public interface InstrumentedType extends TypeDescription {
                                 int modifiers);
 
     /**
-     * Creates a new instrumented type that includes the given
-     * {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
+     * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
      *
      * @param loadedTypeInitializer The type initializer to include.
      * @return A new instrumented type that is equal to this instrumented type but with the additional type initializer.
@@ -112,14 +110,21 @@ public interface InstrumentedType extends TypeDescription {
         boolean isDefined();
 
         /**
-         * Expands this type initializer with a stack manipulation.
+         * Expands this type initializer with another byte code appender. For this to be possible, this type initializer must
+         * be defined.
          *
          * @param byteCodeAppender The byte code appender to apply within the type initializer.
          * @return A defined type initializer.
          */
         TypeInitializer expandWith(ByteCodeAppender byteCodeAppender);
 
-        ByteCodeAppender terminate();
+        /**
+         * Returns this type initializer with an ending return statement. For this to be possible, this type initializer must
+         * be defined.
+         *
+         * @return This type initializer with an ending return statement.
+         */
+        ByteCodeAppender withReturn();
 
         /**
          * Canonical implementation of a non-defined type initializer.
@@ -142,8 +147,8 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public ByteCodeAppender terminate() {
-                throw new IllegalStateException("Cannot terminate non-defined type initializer");
+            public ByteCodeAppender withReturn() {
+                throw new IllegalStateException("Cannot append return to non-defined type initializer");
             }
 
             @Override
@@ -158,8 +163,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         /**
-         * A simple, defined type initializer that executes a given
-         * {@link StackManipulation}.
+         * A simple, defined type initializer that executes a given {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
          */
         class Simple implements TypeInitializer {
 
@@ -188,7 +192,7 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public ByteCodeAppender terminate() {
+            public ByteCodeAppender withReturn() {
                 return new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(MethodReturn.VOID));
             }
 
@@ -290,8 +294,15 @@ public interface InstrumentedType extends TypeDescription {
          * instrumented type if this is not the case.
          */
         private TypeDescription withSubstitutedSelfReference(String typeName, TypeDescription typeDescription) {
-            // TODO: Self-arrays!
-            return typeDescription.getName().equals(typeName) ? this : typeDescription;
+            int arity = 0;
+            TypeDescription componentType = typeDescription;
+            while (componentType.isArray()) {
+                arity++;
+                componentType = componentType.getComponentType();
+            }
+            return componentType.getName().equals(typeName)
+                    ? ArrayProjection.of(this, arity)
+                    : typeDescription;
         }
 
         @Override

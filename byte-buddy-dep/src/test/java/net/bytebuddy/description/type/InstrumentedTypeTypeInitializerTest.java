@@ -4,7 +4,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -53,7 +52,7 @@ public class InstrumentedTypeTypeInitializerTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNoneThrowsExceptionOnTermination() throws Exception {
-        InstrumentedType.TypeInitializer.None.INSTANCE.terminate();
+        InstrumentedType.TypeInitializer.None.INSTANCE.withReturn();
     }
 
     @Test
@@ -76,7 +75,7 @@ public class InstrumentedTypeTypeInitializerTest {
     @Test
     public void testSimpleApplicationAfterTermination() throws Exception {
         when(byteCodeAppender.apply(methodVisitor, implementationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
-        ByteCodeAppender terminated = new InstrumentedType.TypeInitializer.Simple(byteCodeAppender).terminate();
+        ByteCodeAppender terminated = new InstrumentedType.TypeInitializer.Simple(byteCodeAppender).withReturn();
         terminated.apply(methodVisitor, implementationContext, methodDescription);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verify(methodVisitor).visitInsn(Opcodes.RETURN);

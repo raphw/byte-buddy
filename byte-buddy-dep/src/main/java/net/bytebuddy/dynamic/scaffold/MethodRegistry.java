@@ -241,7 +241,7 @@ public interface MethodRegistry {
              */
             public static Handler of(Object annotationValue) {
                 TypeDescription typeDescription = new TypeDescription.ForLoadedType(annotationValue.getClass());
-                if (!typeDescription.isDescribingAnnotationValue() && !typeDescription.isPrimitiveWrapper()) {
+                if (!typeDescription.isAnnotationValue() && !typeDescription.isPrimitiveWrapper()) {
                     throw new IllegalArgumentException("Does not describe an annotation value: " + annotationValue);
                 }
                 return new ForAnnotationValue(annotationValue);

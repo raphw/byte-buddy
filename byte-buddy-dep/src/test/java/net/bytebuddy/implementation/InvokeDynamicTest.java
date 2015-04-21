@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -57,6 +58,10 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     private static final String ARGUMENTS_FIELD_NAME = "arguments";
 
     private static final String BOOTSTRAP = "bootstrap";
+
+    public static final String INSTANCE = "INSTANCE";
+
+    public static final String SAMPLE_ENUM = ARGUMENT_BOOTSTRAP + "$SampleEnum";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -198,13 +203,14 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                         .withFloatValue(FLOAT)
                         .withDoubleValue(DOUBLE)
                         .withType(new TypeDescription.ForLoadedType(CLASS))
+                        .withEnumeration(new EnumerationDescription.ForLoadedEnumeration(makeEnum()))
                         .withInstance(JavaInstance.MethodType.of(makeMethodType(CLASS)), JavaInstance.MethodHandle.of(makeMethodHandle()))
-                        .withValue(FOO, CLASS, makeMethodType(CLASS), makeMethodHandle(), value),
+                        .withValue(FOO, CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
-                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + CLASS + makeMethodType(CLASS)
-                        + makeMethodHandle() + FOO + CLASS + makeMethodType(CLASS) + makeMethodHandle() + value));
+                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + CLASS + makeEnum() + makeMethodType(CLASS)
+                        + makeMethodHandle() + FOO + CLASS + makeEnum() + makeMethodType(CLASS) + makeMethodHandle() + value));
     }
 
     @Test
@@ -216,12 +222,14 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAR, String.class)
-                        .withValue(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle(), value),
+                        .withValue(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO,
+                                CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value),
                 classLoader,
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
-                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeMethodType(CLASS) + makeMethodHandle() + value));
+                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeEnum()
+                        + makeMethodType(CLASS) + makeMethodHandle() + value));
     }
 
     @Test
@@ -233,14 +241,15 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAR, String.class)
-                        .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS))
+                        .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeEnum(), makeMethodType(CLASS))
                         .withReference(makeMethodHandle()).as(JavaType.METHOD_HANDLE.load()) // avoid direct method handle
                         .withReference(value),
                 classLoader,
                 isDeclaredBy(Simple.class));
-        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(13));
+        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(14));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
-                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeMethodType(CLASS) + makeMethodHandle() + value));
+                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeEnum()
+                        + makeMethodType(CLASS) + makeMethodHandle() + value));
     }
 
     @Test
@@ -394,6 +403,12 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         assertThat(dynamicType.getLoaded().newInstance().foo(FOO), is(FOO));
     }
 
+    @SuppressWarnings("unchecked")
+    private Enum<?> makeEnum() throws Exception {
+        Class type = classLoader.loadClass(SAMPLE_ENUM);
+        return Enum.valueOf(type, INSTANCE);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(InvokeDynamic.class).apply();
@@ -408,18 +423,19 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.NameProvider.ForInterceptedMethod.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForInterceptedMethod.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForExplicitType.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForBooleanValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForByteValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForShortValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForCharacterValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForIntegerValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForLongValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForFloatValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleValue.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForBooleanConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForByteConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForShortConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForCharacterConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForIntegerConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForLongConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForFloatConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassConstant.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForEnumerationValue.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForExistingField.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstanceField.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassValue.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForThisInstance.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaInstance.class).apply();

@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -15,7 +15,7 @@ public class DeclaringAnnotationMatcherTest extends AbstractElementMatcherTest<D
     private ElementMatcher<? super AnnotationList> annotationMatcher;
 
     @Mock
-    private AnnotatedElement annotatedElement;
+    private AnnotatedCodeElement annotatedCodeElement;
 
     @Mock
     private AnnotationList annotationList;
@@ -27,23 +27,23 @@ public class DeclaringAnnotationMatcherTest extends AbstractElementMatcherTest<D
 
     @Test
     public void testMatch() throws Exception {
-        when(annotatedElement.getDeclaredAnnotations()).thenReturn(annotationList);
+        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(annotationList);
         when(annotationMatcher.matches(annotationList)).thenReturn(true);
-        assertThat(new DeclaringAnnotationMatcher<AnnotatedElement>(annotationMatcher).matches(annotatedElement), is(true));
+        assertThat(new DeclaringAnnotationMatcher<AnnotatedCodeElement>(annotationMatcher).matches(annotatedCodeElement), is(true));
         verify(annotationMatcher).matches(annotationList);
         verifyNoMoreInteractions(annotationMatcher);
-        verify(annotatedElement).getDeclaredAnnotations();
-        verifyNoMoreInteractions(annotatedElement);
+        verify(annotatedCodeElement).getDeclaredAnnotations();
+        verifyNoMoreInteractions(annotatedCodeElement);
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        when(annotatedElement.getDeclaredAnnotations()).thenReturn(annotationList);
+        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(annotationList);
         when(annotationMatcher.matches(annotationList)).thenReturn(false);
-        assertThat(new DeclaringAnnotationMatcher<AnnotatedElement>(annotationMatcher).matches(annotatedElement), is(false));
+        assertThat(new DeclaringAnnotationMatcher<AnnotatedCodeElement>(annotationMatcher).matches(annotatedCodeElement), is(false));
         verify(annotationMatcher).matches(annotationList);
         verifyNoMoreInteractions(annotationMatcher);
-        verify(annotatedElement).getDeclaredAnnotations();
-        verifyNoMoreInteractions(annotatedElement);
+        verify(annotatedCodeElement).getDeclaredAnnotations();
+        verifyNoMoreInteractions(annotatedCodeElement);
     }
 }

@@ -30,6 +30,8 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
 
     private static final String STRING_VALUE = "foo";
 
+    private static final Bar ENUM_VALUE = Bar.INSTANCE;
+
     private static final Class<?> CLASS_VALUE = Object.class;
 
     private static final boolean BOOLEAN_VALUE = true;
@@ -84,6 +86,7 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
                 {NULL_CONSTANT, false, false},
                 {STRING_VALUE, true, false},
                 {CLASS_VALUE, true, false},
+                {ENUM_VALUE, true, false},
                 {REFERENCE_VALUE, true, true}
         });
     }
@@ -132,5 +135,9 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
         public Object foo(Object value) {
             return value;
         }
+    }
+
+    public enum Bar {
+        INSTANCE;
     }
 }

@@ -70,6 +70,12 @@ public interface AnnotationDescription {
      */
     <T extends Annotation> Loadable<T> prepare(Class<T> annotationType);
 
+    /**
+     * A description of an annotation's value.
+     *
+     * @param <T> The type of the annotation's value when it is not loaded.
+     * @param <S> The type of the annotation's value when it is loaded.
+     */
     interface AnnotationValue<T, S> {
 
         /**
@@ -290,15 +296,36 @@ public interface AnnotationDescription {
             }
         }
 
+        /**
+         * A description of an {@link java.lang.annotation.Annotation} as a value of another annotation.
+         *
+         * @param <U> The type of the annotation.
+         */
         class ForAnnotation<U extends Annotation> implements AnnotationValue<AnnotationDescription, U> {
 
+            /**
+             * Creates an annotation value instance for describing the given annotation type and values.
+             *
+             * @param annotationType   The annotation type.
+             * @param annotationValues The values of the annotation.
+             * @param <V>              The type of the annotation.
+             * @return An annotation value representing the given annotation.
+             */
             public static <V extends Annotation> AnnotationValue<AnnotationDescription, V> of(TypeDescription annotationType,
                                                                                               Map<String, AnnotationValue<?, ?>> annotationValues) {
                 return new ForAnnotation<V>(new AnnotationDescription.Latent(annotationType, annotationValues));
             }
 
+            /**
+             * The annotation description that this value represents.
+             */
             private final AnnotationDescription annotationDescription;
 
+            /**
+             * Creates a new annotation value for a given annotation description.
+             *
+             * @param annotationDescription The annotation description that this value represents.
+             */
             public ForAnnotation(AnnotationDescription annotationDescription) {
                 this.annotationDescription = annotationDescription;
             }
@@ -335,10 +362,23 @@ public interface AnnotationDescription {
                         '}';
             }
 
+            /**
+             * A loaded version of the described annotation.
+             *
+             * @param <V> The annotation type.
+             */
             public static class Loaded<V extends Annotation> implements AnnotationValue.Loaded<V> {
 
+                /**
+                 * The loaded version of the represented annotation.
+                 */
                 private final V annotation;
 
+                /**
+                 * Creates a representation of a loaded annotation.
+                 *
+                 * @param annotation The represented annotation.
+                 */
                 public Loaded(V annotation) {
                     this.annotation = annotation;
                 }
@@ -413,14 +453,34 @@ public interface AnnotationDescription {
             }
         }
 
+        /**
+         * A description of an {@link java.lang.Enum} as a value of an annotation.
+         *
+         * @param <U> The type of the enumeration.
+         */
         class ForEnumeration<U extends Enum<U>> implements AnnotationValue<EnumerationDescription, U> {
 
+            /**
+             * Creates a new annotation value for the given enumeration description.
+             *
+             * @param value The value to represent.
+             * @param <V>   The type of the represented enumeration.
+             * @return An annotation value that describes the given enumeration.
+             */
             public static <V extends Enum<V>> AnnotationValue<EnumerationDescription, V> of(EnumerationDescription value) {
                 return new ForEnumeration<V>(value);
             }
 
+            /**
+             * The enumeration that is represented.
+             */
             private final EnumerationDescription enumerationDescription;
 
+            /**
+             * Creates a new description of an annotation value for a given enumeration.
+             *
+             * @param enumerationDescription The enumeration that is to be represented.
+             */
             public ForEnumeration(EnumerationDescription enumerationDescription) {
                 this.enumerationDescription = enumerationDescription;
             }
@@ -457,10 +517,23 @@ public interface AnnotationDescription {
                         '}';
             }
 
+            /**
+             * A loaded representation of an enumeration value.
+             *
+             * @param <V> The type of the represented enumeration.
+             */
             public static class Loaded<V extends Enum<V>> implements AnnotationValue.Loaded<V> {
 
+                /**
+                 * The represented enumeration.
+                 */
                 private final V enumeration;
 
+                /**
+                 * Creates a loaded version of an enumeration description.
+                 *
+                 * @param enumeration The represented enumeration.
+                 */
                 public Loaded(V enumeration) {
                     this.enumeration = enumeration;
                 }
@@ -581,14 +654,39 @@ public interface AnnotationDescription {
             }
         }
 
+        /**
+         * A description of a {@link java.lang.Class} as a value of an annotation.
+         *
+         * @param <U> The type of the {@link java.lang.Class} that is described.
+         */
         class ForType<U extends Class<U>> implements AnnotationValue<TypeDescription, U> {
 
+            /**
+             * Indicates to a class loading process that class initializers are not required to be executed when loading a type.
+             */
+            private static final boolean NO_INITIALIZATION = false;
+
+            /**
+             * Creates an annotation value for representing the given type.
+             *
+             * @param typeDescription The type to represent.
+             * @param <V>             The represented type.
+             * @return An annotation value that represents the given type.
+             */
             public static <V extends Class<V>> AnnotationValue<TypeDescription, V> of(TypeDescription typeDescription) {
                 return new ForType<V>(typeDescription);
             }
 
+            /**
+             * A description of the represented type.
+             */
             private final TypeDescription typeDescription;
 
+            /**
+             * Creates a new annotation value that represents a type.
+             *
+             * @param typeDescription The represented type.
+             */
             public ForType(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
             }
@@ -601,7 +699,7 @@ public interface AnnotationDescription {
             @Override
             @SuppressWarnings("unchecked")
             public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
-                return new Loaded<U>((U) classLoader.loadClass(typeDescription.getName()));
+                return new Loaded<U>((U) Class.forName(typeDescription.getName(), NO_INITIALIZATION, classLoader));
             }
 
             @Override
@@ -624,10 +722,23 @@ public interface AnnotationDescription {
                         '}';
             }
 
+            /**
+             * A loaded annotation value for a given type.
+             *
+             * @param <U> The represented type.
+             */
             protected static class Loaded<U extends Class<U>> implements AnnotationValue.Loaded<U> {
 
+                /**
+                 * The represented type.
+                 */
                 private final U type;
 
+                /**
+                 * Creates a new loaded annotation value for a given type.
+                 *
+                 * @param type The represented type.
+                 */
                 public Loaded(U type) {
                     this.type = type;
                 }
@@ -662,26 +773,55 @@ public interface AnnotationDescription {
             }
         }
 
+        /**
+         * Describes a complex array that is the value of an annotation. Complex arrays are arrays that might trigger the loading
+         * of user-defined types, i.e. {@link java.lang.Class}, {@link java.lang.annotation.Annotation} and {@link java.lang.Enum}
+         * instances.
+         *
+         * @param <U> The component type of the annotation's value when it is not loaded.
+         * @param <V> The component type of the annotation's value when it is loaded.
+         */
         class ForComplexArray<U, V> implements AnnotationValue<U[], V[]> {
 
+            /**
+             * The component type for arrays containing unloaded versions of the annotation array's values.
+             */
+            private final Class<?> unloadedComponentType;
+
+            /**
+             * A description of the component type when it is loaded.
+             */
             private final TypeDescription componentType;
 
+            /**
+             * A list of values of the array elements.
+             */
             private final List<? extends AnnotationValue<?, ?>> annotationValues;
 
-            protected ForComplexArray(TypeDescription componentType, List<? extends AnnotationValue<?, ?>> annotationValues) {
+            /**
+             * Creates a new complex array.
+             *
+             * @param unloadedComponentType The component type for arrays containing unloaded versions of the annotation array's values.
+             * @param componentType         A description of the component type when it is loaded.
+             * @param annotationValues      A list of values of the array elements.
+             */
+            protected ForComplexArray(Class<?> unloadedComponentType,
+                                      TypeDescription componentType,
+                                      List<? extends AnnotationValue<?, ?>> annotationValues) {
+                this.unloadedComponentType = unloadedComponentType;
                 this.componentType = componentType;
                 this.annotationValues = annotationValues;
             }
 
             @Override
-            @SuppressWarnings("unchecked")
             public U[] resolve() {
-                Object[] value = new Object[annotationValues.size()];
+                @SuppressWarnings("unchecked")
+                U[] value = (U[]) Array.newInstance(unloadedComponentType, annotationValues.size());
                 int index = 0;
                 for (AnnotationValue<?, ?> annotationValue : annotationValues) {
-                    value[index++] = annotationValue.resolve();
+                    Array.set(value, index++, annotationValue.resolve());
                 }
-                return (U[]) value;
+                return value;
             }
 
             @Override
@@ -691,7 +831,7 @@ public interface AnnotationDescription {
                 for (AnnotationValue<?, ?> value : annotationValues) {
                     loadedValues.add(value.load(classLoader));
                 }
-                return new Loaded(classLoader.loadClass(componentType.getName()), loadedValues);
+                return new Loaded<V>((Class<V>) classLoader.loadClass(componentType.getName()), loadedValues);
             }
 
             @Override
@@ -699,21 +839,36 @@ public interface AnnotationDescription {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
                 ForComplexArray that = (ForComplexArray) other;
-                return annotationValues.equals(that.annotationValues);
+                return annotationValues.equals(that.annotationValues)
+                        && componentType.equals(that.componentType)
+                        && unloadedComponentType.equals(that.unloadedComponentType);
             }
 
             @Override
             public int hashCode() {
-                return annotationValues.hashCode();
+                int result = unloadedComponentType.hashCode();
+                result = 31 * result + componentType.hashCode();
+                result = 31 * result + annotationValues.hashCode();
+                return result;
             }
 
             @Override
             public String toString() {
-                return "AnnotationDescription.AnnotationValue.ForComplexArray{" +
-                        "annotationValues=" + annotationValues +
+                return "AnnotationDescription.AnnotationValue.ForComplexArra{" +
+                        "unloadedComponentType=" + unloadedComponentType +
+                        ", componentType=" + componentType +
+                        ", annotationValues=" + annotationValues +
                         '}';
             }
 
+            /**
+             * Creates a new complex array of enumeration descriptions.
+             *
+             * @param enumerationType        A description of the type of the enumeration.
+             * @param enumerationDescription An array of enumeration descriptions.
+             * @param <W>                    The type of the enumeration.
+             * @return A description of the array of enumeration values.
+             */
             public static <W extends Enum<W>> AnnotationValue<EnumerationDescription[], W[]> of(TypeDescription enumerationType,
                                                                                                 EnumerationDescription[] enumerationDescription) {
                 List<AnnotationValue<EnumerationDescription, W>> values = new ArrayList<AnnotationValue<EnumerationDescription, W>>(enumerationDescription.length);
@@ -723,9 +878,17 @@ public interface AnnotationDescription {
                     }
                     values.add(ForEnumeration.<W>of(value));
                 }
-                return new ForComplexArray<EnumerationDescription, W>(enumerationType, values);
+                return new ForComplexArray<EnumerationDescription, W>(EnumerationDescription.class, enumerationType, values);
             }
 
+            /**
+             * Creates a new complex array of annotation descriptions.
+             *
+             * @param annotationType        A description of the type of the annotation.
+             * @param annotationDescription An array of annotation descriptions.
+             * @param <W>                   The type of the annotation.
+             * @return A description of the array of enumeration values.
+             */
             public static <W extends Annotation> AnnotationValue<AnnotationDescription[], W[]> of(TypeDescription annotationType,
                                                                                                   AnnotationDescription[] annotationDescription) {
                 List<AnnotationValue<AnnotationDescription, W>> values = new ArrayList<AnnotationValue<AnnotationDescription, W>>(annotationDescription.length);
@@ -735,24 +898,48 @@ public interface AnnotationDescription {
                     }
                     values.add(new ForAnnotation<W>(value));
                 }
-                return new ForComplexArray<AnnotationDescription, W>(annotationType, values);
+                return new ForComplexArray<AnnotationDescription, W>(AnnotationDescription.class, annotationType, values);
             }
 
-            public static <W extends Class<W>> AnnotationValue<TypeDescription[], W[]> of(TypeDescription[] typeDescription) {
-                List<AnnotationValue<TypeDescription, W>> values = new ArrayList<AnnotationValue<TypeDescription, W>>(typeDescription.length);
+            /**
+             * Creates a new complex array of annotation descriptions.
+             *
+             * @param typeDescription A description of the types contained in the array.
+             * @return A description of the array of enumeration values.
+             */
+            @SuppressWarnings("unchecked")
+            public static AnnotationValue<TypeDescription[], Class<?>[]> of(TypeDescription[] typeDescription) {
+                List<AnnotationValue<TypeDescription, Class<?>>> values = new ArrayList<AnnotationValue<TypeDescription, Class<?>>>(typeDescription.length);
                 for (TypeDescription value : typeDescription) {
-                    values.add(new ForType<W>(value));
+                    values.add((AnnotationValue) ForType.of(value));
                 }
-                return new ForComplexArray<TypeDescription, W>(TypeDescription.CLASS, values);
+                return new ForComplexArray<TypeDescription, Class<?>>(TypeDescription.class, TypeDescription.CLASS, values);
             }
 
+            /**
+             * Represents a loaded complex array.
+             *
+             * @param <W> The component type of the loaded array.
+             */
             protected static class Loaded<W> implements AnnotationValue.Loaded<W[]> {
 
-                private final Class<?> componentType;
+                /**
+                 * The loaded component type of the array.
+                 */
+                private final Class<W> componentType;
 
+                /**
+                 * A list of loaded values that the represented array contains.
+                 */
                 private final List<AnnotationValue.Loaded<?>> values;
 
-                public Loaded(Class<?> componentType, List<AnnotationValue.Loaded<?>> values) {
+                /**
+                 * Creates a new loaded value representing a complex array.
+                 *
+                 * @param componentType The loaded component type of the array.
+                 * @param values        A list of loaded values that the represented array contains.
+                 */
+                protected Loaded(Class<W> componentType, List<AnnotationValue.Loaded<?>> values) {
                     this.componentType = componentType;
                     this.values = values;
                 }
@@ -768,14 +955,14 @@ public interface AnnotationDescription {
                 }
 
                 @Override
-                @SuppressWarnings("unchecked")
                 public W[] resolve() {
-                    Object[] array = (Object[]) Array.newInstance(componentType, values.size());
+                    @SuppressWarnings("unchecked")
+                    W[] array = (W[]) Array.newInstance(componentType, values.size());
                     int index = 0;
                     for (AnnotationValue.Loaded<?> annotationValue : values) {
                         Array.set(array, index++, annotationValue.resolve());
                     }
-                    return (W[]) array;
+                    return array;
                 }
 
                 @Override
@@ -819,6 +1006,11 @@ public interface AnnotationDescription {
         }
     }
 
+    /**
+     * An {@link java.lang.reflect.InvocationHandler} for implementing annotations.
+     *
+     * @param <T> The type of the handled annotation.
+     */
     class AnnotationInvocationHandler<T extends Annotation> implements InvocationHandler {
 
         /**
@@ -851,17 +1043,21 @@ public interface AnnotationDescription {
          */
         private final LinkedHashMap<Method, AnnotationValue.Loaded<?>> values;
 
+        /**
+         * @param classLoader    The class loader that should be used for loading the annotation's values.
+         * @param annotationType The annotation's type.
+         * @param values         The values that the annotation contains.
+         * @param <S>            The type of the handled annotation.
+         * @return An appropriate invocation handler.
+         * @throws ClassNotFoundException If the class of an instance that is contained by this annotation could not be found.
+         */
         public static <S extends Annotation> InvocationHandler of(ClassLoader classLoader,
                                                                   Class<S> annotationType,
                                                                   Map<String, AnnotationDescription.AnnotationValue<?, ?>> values)
                 throws ClassNotFoundException {
             Method[] declaredMethod = annotationType.getDeclaredMethods();
             LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>(declaredMethod.length);
-            TypeDescription thisType = new TypeDescription.ForLoadedType(AnnotationInvocationHandler.class);
             for (Method method : declaredMethod) {
-                if (!new MethodDescription.ForLoadedMethod(method).isVisibleTo(thisType)) {
-                    method.setAccessible(true);
-                }
                 AnnotationDescription.AnnotationValue<?, ?> annotationValue = values.get(method.getName());
                 loadedValues.put(method, annotationValue == null
                         ? DefaultValue.of(method)
@@ -1348,7 +1544,7 @@ public interface AnnotationDescription {
          * @return The wrapped representation as specified by
          * {@link AnnotationDescription}.
          */
-        public static Object wrap(Object value, TypeDescription typeDescription) {
+        public static Object describe(Object value, TypeDescription typeDescription) {
             // Because enums can implement annotation interfaces, the enum property needs to be checked first.
             if (typeDescription.represents(Class.class)) {
                 value = new TypeDescription.ForLoadedType((Class<?>) value);
@@ -1395,7 +1591,7 @@ public interface AnnotationDescription {
                         method.setAccessible(true);
                     }
                 }
-                return wrap(method.invoke(annotation), methodDescription.getReturnType());
+                return describe(method.invoke(annotation), methodDescription.getReturnType());
             } catch (Exception e) {
                 throw new IllegalStateException("Cannot access annotation property " + methodDescription, e);
             }
@@ -1416,12 +1612,27 @@ public interface AnnotationDescription {
         }
     }
 
+    /**
+     * A latent description of an annotation value that is defined explicitly.
+     */
     class Latent extends AbstractAnnotationDescription {
 
+        /**
+         * The type of the annotation.
+         */
         private final TypeDescription annotationType;
 
+        /**
+         * The values of the annotation mapped by their property name.
+         */
         private final Map<String, AnnotationValue<?, ?>> annotationValues;
 
+        /**
+         * Creates a new latent annotation description.
+         *
+         * @param annotationType   The type of the annotation.
+         * @param annotationValues The values of the annotation mapped by their property name.
+         */
         protected Latent(TypeDescription annotationType, Map<String, AnnotationValue<?, ?>> annotationValues) {
             this.annotationType = annotationType;
             this.annotationValues = annotationValues;
@@ -1437,7 +1648,7 @@ public interface AnnotationDescription {
             if (defaultValue != null) {
                 return defaultValue;
             }
-            throw new IllegalStateException("No value defined for: " + methodDescription);
+            throw new IllegalArgumentException("No value defined for: " + methodDescription);
         }
 
         @Override
@@ -1453,10 +1664,23 @@ public interface AnnotationDescription {
             return new Loadable<T>(annotationType);
         }
 
+        /**
+         * A loadable annotation description of a latent annotation description.
+         *
+         * @param <S> The annotation type.
+         */
         protected class Loadable<S extends Annotation> extends AbstractAnnotationDescription.ForPrepared<S> {
 
+            /**
+             * The annotation type.
+             */
             private final Class<S> annotationType;
 
+            /**
+             * Creates a loadable version of a latent annotation description.
+             *
+             * @param annotationType The annotation type.
+             */
             protected Loadable(Class<S> annotationType) {
                 this.annotationType = annotationType;
             }
@@ -1491,33 +1715,67 @@ public interface AnnotationDescription {
         }
     }
 
+    /**
+     * A builder for pragmatically creating {@link net.bytebuddy.description.annotation.AnnotationDescription}.
+     */
     class Builder {
 
+        /**
+         * Creates a builder for creating an annotation of the given type.
+         *
+         * @param annotationType The annotation type.
+         * @return A builder for creating an annotation of the given type.
+         */
         public static Builder forType(Class<? extends Annotation> annotationType) {
             return forType(new TypeDescription.ForLoadedType(nonNull(annotationType)));
         }
 
-        public static Builder forType(TypeDescription typeDescription) {
-            if (!typeDescription.isAnnotation()) {
-                throw new IllegalArgumentException("Not an annotation type: " + typeDescription);
+        /**
+         * Creates a builder for creating an annotation of the given type.
+         *
+         * @param annotationType A description of the annotation type.
+         * @return A builder for creating an annotation of the given type.
+         */
+        public static Builder forType(TypeDescription annotationType) {
+            if (!annotationType.isAnnotation()) {
+                throw new IllegalArgumentException("Not an annotation type: " + annotationType);
             }
-            return new Builder(typeDescription, Collections.<String, AnnotationValue<?, ?>>emptyMap());
+            return new Builder(annotationType, Collections.<String, AnnotationValue<?, ?>>emptyMap());
         }
 
+        /**
+         * The annotation type.
+         */
         protected final TypeDescription annotationType;
 
+        /**
+         * A mapping of annotation properties to their annotation values.
+         */
         private final Map<String, AnnotationValue<?, ?>> annotationValues;
 
+        /**
+         * Creates a builder for an annotation description.
+         *
+         * @param annotationType   The annotation type.
+         * @param annotationValues A mapping of annotation properties to their annotation values.
+         */
         protected Builder(TypeDescription annotationType, Map<String, AnnotationValue<?, ?>> annotationValues) {
             this.annotationType = annotationType;
             this.annotationValues = annotationValues;
         }
 
+        /**
+         * Returns a builder with the additional, given property.
+         *
+         * @param property The name of the property to define.
+         * @param value    An explicit description of the annotation value.
+         * @return A builder with the additional, given property.
+         */
         public Builder define(String property, AnnotationValue<?, ?> value) {
             MethodList methodDescriptions = annotationType.getDeclaredMethods().filter(named(nonNull(property)));
             if (methodDescriptions.isEmpty()) {
                 throw new IllegalArgumentException(annotationType + " does not define a property named " + property);
-            } else if (!methodDescriptions.getOnly().getReturnType().isInstanceOrWrapped(value.resolve())) {
+            } else if (!methodDescriptions.getOnly().getReturnType().isAnnotationValue(value.resolve())) {
                 throw new IllegalArgumentException(value + " cannot be assigned to " + property);
             }
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>(this.annotationValues.size() + 1);
@@ -1528,46 +1786,113 @@ public interface AnnotationDescription {
             return new Builder(annotationType, annotationValues);
         }
 
+        /**
+         * Returns a builder with the additional enumeration property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The enumeration value to define.
+         * @return A builder with the additional enumeration property.
+         */
         public Builder define(String property, Enum<?> value) {
             return define(property, new EnumerationDescription.ForLoadedEnumeration(nonNull(value)));
         }
 
+        /**
+         * Returns a builder with the additional enumeration property.
+         *
+         * @param property        The name of the property to define.
+         * @param enumerationType The type of the enumeration.
+         * @param value           The enumeration value to define.
+         * @return A builder with the additional enumeration property.
+         */
         public Builder define(String property, TypeDescription enumerationType, String value) {
             return define(property, new EnumerationDescription.Latent(nonNull(enumerationType), nonNull(value)));
         }
 
+        /**
+         * Returns a builder with the additional enumeration property.
+         *
+         * @param property The name of the property to define.
+         * @param value    A description of the enumeration value to define.
+         * @return A builder with the additional enumeration property.
+         */
         @SuppressWarnings("unchecked")
         public Builder define(String property, EnumerationDescription value) {
             return define(property, AnnotationValue.ForEnumeration.<Enum>of(nonNull(value)));
         }
 
+        /**
+         * Returns a builder with the additional annotation property.
+         *
+         * @param property   The name of the property to define.
+         * @param annotation The annotation value to define.
+         * @return A builder with the additional annotation property.
+         */
         public Builder define(String property, Annotation annotation) {
             return define(property, new ForLoadedAnnotation<Annotation>(nonNull(annotation)));
         }
 
+        /**
+         * Returns a builder with the additional annotation property.
+         *
+         * @param property              The name of the property to define.
+         * @param annotationDescription A description of the annotation value to define.
+         * @return A builder with the additional annotation property.
+         */
         public Builder define(String property, AnnotationDescription annotationDescription) {
             return define(property, new AnnotationValue.ForAnnotation<Annotation>(nonNull(annotationDescription)));
         }
 
+        /**
+         * Returns a builder with the additional class property.
+         *
+         * @param property The name of the property to define.
+         * @param type     The class value to define.
+         * @return A builder with the additional class property.
+         */
         public Builder define(String property, Class<?> type) {
             return define(property, new TypeDescription.ForLoadedType(nonNull(type)));
         }
 
+        /**
+         * Returns a builder with the additional class property.
+         *
+         * @param property        The name of the property to define.
+         * @param typeDescription A description of the type to define as a property value.
+         * @return A builder with the additional class property.
+         */
         @SuppressWarnings("unchecked")
         public Builder define(String property, TypeDescription typeDescription) {
             return define(property, AnnotationValue.ForType.<Class>of(typeDescription));
         }
 
-        public <T extends Enum<?>> Builder define(String property, Class<T> enumerationType, T... value) {
+        /**
+         * Returns a builder with the additional enumeration array property.
+         *
+         * @param property        The name of the property to define.
+         * @param enumerationType The type of the enumeration, i.e. the component type of the enumeration array.
+         * @param value           The enumeration values to be contained by the array.
+         * @param <T>             The enumeration type.
+         * @return A builder with the additional class property.
+         */
+        public <T extends Enum<?>> Builder defineEnumerationArray(String property, Class<T> enumerationType, T... value) {
             EnumerationDescription[] enumerationDescription = new EnumerationDescription[value.length];
             int index = 0;
             for (T aValue : value) {
                 enumerationDescription[index++] = new EnumerationDescription.ForLoadedEnumeration(nonNull(aValue));
             }
-            return define(property, new TypeDescription.ForLoadedType(nonNull(enumerationType)), enumerationDescription);
+            return defineEnumerationArray(property, new TypeDescription.ForLoadedType(nonNull(enumerationType)), enumerationDescription);
         }
 
-        public Builder define(String property, TypeDescription enumerationType, String... value) {
+        /**
+         * Returns a builder with the additional enumeration array property.
+         *
+         * @param property        The name of the property to define.
+         * @param enumerationType The type of the enumerations, i.e. is the component type of the enumeration array.
+         * @param value           The enumeration values to be contained by the array.
+         * @return A builder with the additional enumeration property.
+         */
+        public Builder defineEnumerationArray(String property, TypeDescription enumerationType, String... value) {
             if (!enumerationType.isEnum()) {
                 throw new IllegalArgumentException("Not an enumeration type: " + enumerationType);
             }
@@ -1575,107 +1900,304 @@ public interface AnnotationDescription {
             for (int i = 0; i < value.length; i++) {
                 enumerationDescription[i] = new EnumerationDescription.Latent(nonNull(enumerationType), nonNull(value[i]));
             }
-            return define(property, enumerationType, enumerationDescription);
+            return defineEnumerationArray(property, enumerationType, enumerationDescription);
         }
 
+        /**
+         * Returns a builder with the additional enumeration array property.
+         *
+         * @param property        The name of the property to define.
+         * @param enumerationType The type of the enumerations, i.e. the component type of the enumeration array.
+         * @param value           Descriptions of the enumerations to be contained by the array.
+         * @return A builder with the additional enumeration property.
+         */
         @SuppressWarnings("unchecked")
-        public Builder define(String property, TypeDescription enumerationType, EnumerationDescription... value) {
+        public Builder defineEnumerationArray(String property, TypeDescription enumerationType, EnumerationDescription... value) {
             return define(property, AnnotationValue.ForComplexArray.<Enum>of(enumerationType, nonNull(value)));
         }
 
-        public <T extends Annotation> Builder define(String property, Class<T> annotationType, T... annotation) {
-            return define(property,
+        /**
+         * Returns a builder with the additional annotation array property.
+         *
+         * @param property       The name of the property to define.
+         * @param annotationType The type of the annotations, i.e. the component type of the enumeration array.
+         * @param annotation     The annotation values to be contained by the array.
+         * @param <T>            The annotation type.
+         * @return A builder with the additional annotation property.
+         */
+        public <T extends Annotation> Builder defineAnnotationArray(String property, Class<T> annotationType, T... annotation) {
+            return defineAnnotationArray(property,
                     new TypeDescription.ForLoadedType(nonNull(annotationType)),
                     new AnnotationList.ForLoadedAnnotation(nonNull(annotation)).toArray(new AnnotationDescription[annotation.length]));
         }
 
-        public Builder define(String property, TypeDescription annotationType, AnnotationDescription... annotationDescription) {
+        /**
+         * Returns a builder with the additional annotation array property.
+         *
+         * @param property              The name of the property to define.
+         * @param annotationType        The type of the annotations, i.e. the component type of the enumeration array.
+         * @param annotationDescription Descriptions of the annotation values to be contained by the array.
+         * @return A builder with the additional annotation property.
+         */
+        public Builder defineAnnotationArray(String property, TypeDescription annotationType, AnnotationDescription... annotationDescription) {
             return define(property, AnnotationValue.ForComplexArray.of(annotationType, nonNull(annotationDescription)));
         }
 
-        public Builder define(String property, Class<?>... type) {
-            return define(property, new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
+        /**
+         * Returns a builder with the additional type array property.
+         *
+         * @param property The name of the property to define.
+         * @param type     The types that should be contained by the array.
+         * @return A builder with the additional type array property.
+         */
+        public Builder defineTypeArray(String property, Class<?>... type) {
+            return defineTypeArray(property, new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
         }
 
+        /**
+         * Returns a builder with the additional type array property.
+         *
+         * @param property        The name of the property to define.
+         * @param typeDescription Descriptions of the types that should be contained by the array.
+         * @return A builder with the additional type array property.
+         */
         @SuppressWarnings("unchecked")
-        public Builder define(String property, TypeDescription... typeDescription) {
+        public Builder defineTypeArray(String property, TypeDescription... typeDescription) {
             return define(property, AnnotationValue.ForComplexArray.<Class>of(typeDescription));
         }
 
+        /**
+         * Returns a builder with the additional {@code boolean} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code boolean} value to define for the property.
+         * @return A builder with the additional {@code boolean} property.
+         */
         public Builder define(String property, boolean value) {
             return define(property, new AnnotationValue.Trivial<Boolean>(value));
         }
 
+        /**
+         * Returns a builder with the additional {@code byte} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code byte} value to define for the property.
+         * @return A builder with the additional {@code byte} property.
+         */
         public Builder define(String property, byte value) {
             return define(property, new AnnotationValue.Trivial<Byte>(value));
         }
 
+        /**
+         * Returns a builder with the additional {@code char} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code char} value to define for the property.
+         * @return A builder with the additional {@code char} property.
+         */
         public Builder define(String property, char value) {
             return define(property, new AnnotationValue.Trivial<Character>(value));
         }
 
+        /**
+         * Returns a builder with the additional {@code short} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code short} value to define for the property.
+         * @return A builder with the additional {@code short} property.
+         */
         public Builder define(String property, short value) {
             return define(property, new AnnotationValue.Trivial<Short>(value));
         }
 
+        /**
+         * Returns a builder with the additional {@code int} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code int} value to define for the property.
+         * @return A builder with the additional {@code int} property.
+         */
         public Builder define(String property, int value) {
             return define(property, new AnnotationValue.Trivial<Integer>(value));
         }
 
+        /**
+         * Returns a builder with the additional {@code long} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code long} value to define for the property.
+         * @return A builder with the additional {@code long} property.
+         */
         public Builder define(String property, long value) {
             return define(property, new AnnotationValue.Trivial<Long>(value));
         }
 
+        /**
+         * Returns a builder with the additional {@code float} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code float} value to define for the property.
+         * @return A builder with the additional {@code float} property.
+         */
         public Builder define(String property, float value) {
             return define(property, new AnnotationValue.Trivial<Float>(value));
         }
 
+        /**
+         * Returns a builder with the additional {@code double} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code double} value to define for the property.
+         * @return A builder with the additional {@code double} property.
+         */
         public Builder define(String property, double value) {
             return define(property, new AnnotationValue.Trivial<Double>(value));
         }
 
+        /**
+         * Returns a builder with the additional {@link java.lang.String} property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@link java.lang.String} value to define for the property.
+         * @return A builder with the additional {@link java.lang.String} property.
+         */
         public Builder define(String property, String value) {
             return define(property, new AnnotationValue.Trivial<String>(value));
         }
 
-        public Builder define(String property, boolean... value) {
+        /**
+         * Returns a builder with the additional {@code boolean} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code boolean} values to define for the property.
+         * @return A builder with the additional {@code boolean} array property.
+         */
+        public Builder defineArray(String property, boolean... value) {
             return define(property, new AnnotationValue.Trivial<boolean[]>(value));
         }
 
-        public Builder define(String property, byte... value) {
+        /**
+         * Returns a builder with the additional {@code byte} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code byte} values to define for the property.
+         * @return A builder with the additional {@code byte} array property.
+         */
+        public Builder defineArray(String property, byte... value) {
             return define(property, new AnnotationValue.Trivial<byte[]>(value));
         }
 
-        public Builder define(String property, char... value) {
+        /**
+         * Returns a builder with the additional {@code char} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code char} values to define for the property.
+         * @return A builder with the additional {@code char} array property.
+         */
+        public Builder defineArray(String property, char... value) {
             return define(property, new AnnotationValue.Trivial<char[]>(value));
         }
 
-        public Builder define(String property, short... value) {
+        /**
+         * Returns a builder with the additional {@code short} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code short} values to define for the property.
+         * @return A builder with the additional {@code short} array property.
+         */
+        public Builder defineArray(String property, short... value) {
             return define(property, new AnnotationValue.Trivial<short[]>(value));
         }
 
-        public Builder define(String property, int... value) {
+        /**
+         * Returns a builder with the additional {@code int} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code int} values to define for the property.
+         * @return A builder with the additional {@code int} array property.
+         */
+        public Builder defineArray(String property, int... value) {
             return define(property, new AnnotationValue.Trivial<int[]>(value));
         }
 
-        public Builder define(String property, long... value) {
+        /**
+         * Returns a builder with the additional {@code long} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code long} values to define for the property.
+         * @return A builder with the additional {@code long} array property.
+         */
+        public Builder defineArray(String property, long... value) {
             return define(property, new AnnotationValue.Trivial<long[]>(value));
         }
 
-        public Builder define(String property, float... value) {
+        /**
+         * Returns a builder with the additional {@code float} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code float} values to define for the property.
+         * @return A builder with the additional {@code float} array property.
+         */
+        public Builder defineArray(String property, float... value) {
             return define(property, new AnnotationValue.Trivial<float[]>(value));
         }
 
-        public Builder define(String property, double... value) {
+        /**
+         * Returns a builder with the additional {@code double} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@code double} values to define for the property.
+         * @return A builder with the additional {@code double} array property.
+         */
+        public Builder defineArray(String property, double... value) {
             return define(property, new AnnotationValue.Trivial<double[]>(value));
         }
 
-        public Builder define(String property, String... value) {
+        /**
+         * Returns a builder with the additional {@link java.lang.String} array property.
+         *
+         * @param property The name of the property to define.
+         * @param value    The {@link java.lang.String} array value to define for the property.
+         * @return A builder with the additional {@link java.lang.String} array property.
+         */
+        public Builder defineArray(String property, String... value) {
             return define(property, new AnnotationValue.Trivial<String[]>(value));
         }
 
+        /**
+         * Creates an annotation description for the values that were defined for this builder.
+         *
+         * @return An appropriate annotation description.
+         */
         public AnnotationDescription make() {
+            for (MethodDescription methodDescription : annotationType.getDeclaredMethods()) {
+                if (annotationValues.get(methodDescription.getName()) == null && methodDescription.getDefaultValue() == null) {
+                    throw new IllegalStateException("No value or default value defined for " + methodDescription.getName());
+                }
+            }
             return new Latent(annotationType, annotationValues);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && annotationType.equals(((Builder) other).annotationType)
+                    && annotationValues.equals(((Builder) other).annotationValues);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = annotationType.hashCode();
+            result = 31 * result + annotationValues.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "AnnotationDescription.Builder{" +
+                    "annotationType=" + annotationType +
+                    ", annotationValues=" + annotationValues +
+                    '}';
         }
     }
 }

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -208,7 +209,7 @@ public class InvokeDynamic implements Implementation {
     public InvokeDynamic withBooleanValue(boolean... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (boolean aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForBooleanValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForBooleanConstant(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -228,7 +229,7 @@ public class InvokeDynamic implements Implementation {
     public InvokeDynamic withByteValue(byte... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (byte aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForByteValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForByteConstant(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -248,7 +249,7 @@ public class InvokeDynamic implements Implementation {
     public InvokeDynamic withShortValue(short... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (short aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForShortValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForShortConstant(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -268,7 +269,7 @@ public class InvokeDynamic implements Implementation {
     public InvokeDynamic withCharacterValue(char... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (char aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForCharacterValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForCharacterConstant(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -288,7 +289,7 @@ public class InvokeDynamic implements Implementation {
     public InvokeDynamic withIntegerValue(int... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (int aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForIntegerValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForIntegerConstant(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -308,7 +309,7 @@ public class InvokeDynamic implements Implementation {
     public InvokeDynamic withLongValue(long... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (long aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForLongValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForLongConstant(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -328,7 +329,7 @@ public class InvokeDynamic implements Implementation {
     public InvokeDynamic withFloatValue(float... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (float aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForFloatValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForFloatConstant(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -348,7 +349,7 @@ public class InvokeDynamic implements Implementation {
     public InvokeDynamic withDoubleValue(double... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (double aValue : value) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForDoubleValue(aValue));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForDoubleConstant(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -423,17 +424,38 @@ public class InvokeDynamic implements Implementation {
     }
 
     /**
-     * Hands the provided type to the dynamically bound method. The type is stored in the generated class's
+     * Hands the provided types to the dynamically bound method. The type is stored in the generated class's
      * constant pool and is loaded at invocation time. For this to be possible, the created class's
      * class loader must be able to see the provided type.
      *
-     * @param typeDescription The class to provide to the bound method as an argument.
+     * @param typeDescription The classes to provide to the bound method as an argument.
      * @return This invoke dynamic implementation where the bootstrapped method is passed the specified type.
      */
     public InvokeDynamic withType(TypeDescription... typeDescription) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(typeDescription.length);
         for (TypeDescription aTypeDescription : typeDescription) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForClassValue(nonNull(aTypeDescription)));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForClassConstant(nonNull(aTypeDescription)));
+        }
+        return new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                invocationProvider.appendArguments(argumentProviders),
+                terminationHandler,
+                assigner,
+                dynamicallyTyped);
+    }
+
+    /**
+     * Hands the provided enumerations to the dynamically bound method. The enumeration values are read from
+     * the enumeration class on demand. For this to be possible, the created class's class loader must be
+     * able to see the enumeration type.
+     *
+     * @param enumerationDescription The enumeration values to provide to the bound method as an argument.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified enumerations.
+     */
+    public InvokeDynamic withEnumeration(EnumerationDescription... enumerationDescription) {
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(enumerationDescription.length);
+        for (EnumerationDescription anEnumerationDescription : enumerationDescription) {
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForEnumerationValue(nonNull(anEnumerationDescription)));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -1232,9 +1254,11 @@ public class InvokeDynamic implements Implementation {
                     } else if (value instanceof Double) {
                         return DOUBLE.make(value);
                     } else if (value instanceof String) {
-                        return new ForStringValue((String) value);
-                    } else if (value instanceof Class) {
-                        return new ForClassValue(new TypeDescription.ForLoadedType((Class<?>) value));
+                        return new ForStringConstant((String) value);
+                    } else if (value instanceof Class<?>) {
+                        return new ForClassConstant(new TypeDescription.ForLoadedType((Class<?>) value));
+                    } else if (value instanceof Enum<?>) {
+                        return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                     } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
                         return new ForJavaInstance(JavaInstance.MethodHandle.of(value));
                     } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
@@ -1839,7 +1863,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@code boolean} value.
              */
-            class ForBooleanValue implements ArgumentProvider {
+            class ForBooleanConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@code boolean} value.
@@ -1851,7 +1875,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@code boolean} value.
                  */
-                public ForBooleanValue(boolean value) {
+                public ForBooleanConstant(boolean value) {
                     this.value = value;
                 }
 
@@ -1871,7 +1895,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForBooleanValue) other).value;
+                            && value == ((ForBooleanConstant) other).value;
                 }
 
                 @Override
@@ -1881,7 +1905,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForBooleanValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForBooleanConstant{" +
                             "value=" + value +
                             '}';
                 }
@@ -1890,7 +1914,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@code byte} value.
              */
-            class ForByteValue implements ArgumentProvider {
+            class ForByteConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@code byte} value.
@@ -1902,7 +1926,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@code byte} value.
                  */
-                public ForByteValue(byte value) {
+                public ForByteConstant(byte value) {
                     this.value = value;
                 }
 
@@ -1922,7 +1946,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForByteValue) other).value;
+                            && value == ((ForByteConstant) other).value;
                 }
 
                 @Override
@@ -1932,7 +1956,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForByteValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForByteConstant{" +
                             "value=" + value +
                             '}';
                 }
@@ -1941,7 +1965,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@code short} value.
              */
-            class ForShortValue implements ArgumentProvider {
+            class ForShortConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@code short} value.
@@ -1953,7 +1977,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@code short} value.
                  */
-                public ForShortValue(short value) {
+                public ForShortConstant(short value) {
                     this.value = value;
                 }
 
@@ -1973,7 +1997,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForShortValue) other).value;
+                            && value == ((ForShortConstant) other).value;
                 }
 
                 @Override
@@ -1983,7 +2007,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForShortValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForShortConstant{" +
                             "value=" + value +
                             '}';
                 }
@@ -1992,7 +2016,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@code char} value.
              */
-            class ForCharacterValue implements ArgumentProvider {
+            class ForCharacterConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@code char} value.
@@ -2004,7 +2028,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@code char} value.
                  */
-                public ForCharacterValue(char value) {
+                public ForCharacterConstant(char value) {
                     this.value = value;
                 }
 
@@ -2024,7 +2048,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForCharacterValue) other).value;
+                            && value == ((ForCharacterConstant) other).value;
                 }
 
                 @Override
@@ -2034,7 +2058,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForCharacterValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForCharacterConstant{" +
                             "value=" + value +
                             '}';
                 }
@@ -2043,7 +2067,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@code int} value.
              */
-            class ForIntegerValue implements ArgumentProvider {
+            class ForIntegerConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@code int} value.
@@ -2055,7 +2079,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@code int} value.
                  */
-                public ForIntegerValue(int value) {
+                public ForIntegerConstant(int value) {
                     this.value = value;
                 }
 
@@ -2075,7 +2099,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForIntegerValue) other).value;
+                            && value == ((ForIntegerConstant) other).value;
                 }
 
                 @Override
@@ -2085,7 +2109,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForIntegerValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForIntegerConstant{" +
                             "value=" + value +
                             '}';
                 }
@@ -2094,7 +2118,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@code long} value.
              */
-            class ForLongValue implements ArgumentProvider {
+            class ForLongConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@code long} value.
@@ -2106,7 +2130,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@code long} value.
                  */
-                public ForLongValue(long value) {
+                public ForLongConstant(long value) {
                     this.value = value;
                 }
 
@@ -2126,7 +2150,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForLongValue) other).value;
+                            && value == ((ForLongConstant) other).value;
                 }
 
                 @Override
@@ -2136,7 +2160,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForLongValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForLongConstant{" +
                             "value=" + value +
                             '}';
                 }
@@ -2145,7 +2169,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@code float} value.
              */
-            class ForFloatValue implements ArgumentProvider {
+            class ForFloatConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@code float} value.
@@ -2157,7 +2181,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@code float} value.
                  */
-                public ForFloatValue(float value) {
+                public ForFloatConstant(float value) {
                     this.value = value;
                 }
 
@@ -2177,7 +2201,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && Float.compare(((ForFloatValue) other).value, value) == 0;
+                            && Float.compare(((ForFloatConstant) other).value, value) == 0;
                 }
 
                 @Override
@@ -2187,7 +2211,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForFloatValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForFloatConstant{" +
                             "value=" + value +
                             '}';
                 }
@@ -2196,7 +2220,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@code double} value.
              */
-            class ForDoubleValue implements ArgumentProvider {
+            class ForDoubleConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@code double} value.
@@ -2208,7 +2232,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@code double} value.
                  */
-                public ForDoubleValue(double value) {
+                public ForDoubleConstant(double value) {
                     this.value = value;
                 }
 
@@ -2228,7 +2252,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && Double.compare(((ForDoubleValue) other).value, value) == 0;
+                            && Double.compare(((ForDoubleConstant) other).value, value) == 0;
                 }
 
                 @Override
@@ -2239,7 +2263,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleConstant{" +
                             "value=" + value +
                             '}';
                 }
@@ -2248,7 +2272,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@link java.lang.String} value.
              */
-            class ForStringValue implements ArgumentProvider {
+            class ForStringConstant implements ArgumentProvider {
 
                 /**
                  * The represented {@link java.lang.String} value.
@@ -2260,7 +2284,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param value The represented {@link java.lang.String} value.
                  */
-                public ForStringValue(String value) {
+                public ForStringConstant(String value) {
                     this.value = value;
                 }
 
@@ -2280,7 +2304,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && value.equals(((ForStringValue) other).value);
+                            && value.equals(((ForStringConstant) other).value);
                 }
 
                 @Override
@@ -2290,7 +2314,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringConstant{" +
                             "value='" + value + '\'' +
                             '}';
                 }
@@ -2299,7 +2323,7 @@ public class InvokeDynamic implements Implementation {
             /**
              * An argument provider for a {@link java.lang.Class} constant.
              */
-            class ForClassValue implements ArgumentProvider {
+            class ForClassConstant implements ArgumentProvider {
 
                 /**
                  * The type that is represented by this constant.
@@ -2311,7 +2335,7 @@ public class InvokeDynamic implements Implementation {
                  *
                  * @param typeDescription The type to represent.
                  */
-                public ForClassValue(TypeDescription typeDescription) {
+                public ForClassConstant(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
                 }
 
@@ -2331,7 +2355,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((ForClassValue) other).typeDescription);
+                            && typeDescription.equals(((ForClassConstant) other).typeDescription);
                 }
 
                 @Override
@@ -2341,8 +2365,59 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassValue{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassConstant{" +
                             "typeDescription=" + typeDescription +
+                            '}';
+                }
+            }
+
+            /**
+             * An argument provider for an {@link java.lang.Enum} constant.
+             */
+            class ForEnumerationValue implements ArgumentProvider {
+
+                /**
+                 * A description of the enumeration to represent.
+                 */
+                private final EnumerationDescription enumerationDescription;
+
+                /**
+                 * Creates a new argument provider for an enumeration value.
+                 *
+                 * @param enumerationDescription A description of the enumeration to represent.
+                 */
+                public ForEnumerationValue(EnumerationDescription enumerationDescription) {
+                    this.enumerationDescription = enumerationDescription;
+                }
+
+                @Override
+                public Resolved resolve(TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        Assigner assigner,
+                                        boolean dynamicallyTyped) {
+                    return new Resolved.Simple(FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType());
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && enumerationDescription.equals(((ForEnumerationValue) other).enumerationDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return enumerationDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForEnumerationValue{" +
+                            "enumerationDescription=" + enumerationDescription +
                             '}';
                 }
             }

@@ -16,7 +16,10 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -45,17 +48,27 @@ public interface TypeDescription extends ByteCodeElement {
      */
     TypeDescription VOID = new ForLoadedType(void.class);
 
+    /**
+     * A representation of the {@link java.lang.Enum} type.
+     */
     TypeDescription ENUM = new ForLoadedType(Enum.class);
 
     /**
-     * Checks if {@code object} is an instance of the type represented by this instance.
+     * Checks if {@code value} is an instance of the type represented by this instance.
      *
-     * @param object The object of interest.
+     * @param value The object of interest.
      * @return {@code true} if the object is an instance of the type described by this instance.
      */
-    boolean isInstance(Object object);
+    boolean isInstance(Object value);
 
-    boolean isInstanceOrWrapped(Object object);
+    /**
+     * Checks if {@code value} is an instance of the type represented by this instance or a wrapper instance of the
+     * corresponding primitive value.
+     *
+     * @param value The object of interest.
+     * @return {@code true} if the object is an instance or wrapper of the type described by this instance.
+     */
+    boolean isInstanceOrWrapper(Object value);
 
     /**
      * Checks if this type is assignable from the type described by this instance, for example for
@@ -279,13 +292,26 @@ public interface TypeDescription extends ByteCodeElement {
     boolean isPrimitiveWrapper();
 
     /**
-     * Checks if instances of this type can be defined as unloaded value of an annotation.
+     * Checks if instances of this type can be returned from an annotation method.
      *
-     * @return {@code true} if instances of this type can be defined as values of an annotation.
+     * @return {@code true} if instances of this type can be returned from an annotation method.
+     */
+    boolean isAnnotationReturnType();
+
+    /**
+     * Checks if instances of this type can be used for describing an annotation value.
+     *
+     * @return {@code true} if instances of this type can be used for describing an annotation value.
      */
     boolean isAnnotationValue();
 
-    boolean isDescribingAnnotationValue();
+    /**
+     * Checks if instances of this type can be used for describing the given annotation value.
+     *
+     * @param value The value that is supposed to describe the annotation value for this instance.
+     * @return {@code true} if instances of this type can be used for describing the given annotation value..
+     */
+    boolean isAnnotationValue(Object value);
 
     /**
      * An abstract base implementation of a type description.
@@ -307,21 +333,66 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public boolean isInstance(Object object) {
-            return isAssignableFrom(object.getClass());
+        public boolean isInstance(Object value) {
+            return isAssignableFrom(value.getClass());
         }
 
         @Override
-        public boolean isInstanceOrWrapped(Object object) {
-            return isInstance(object)
-                    || (represents(boolean.class) && object.getClass() == Boolean.class)
-                    || (represents(byte.class) && object.getClass() == Byte.class)
-                    || (represents(short.class) && object.getClass() == Short.class)
-                    || (represents(char.class) && object.getClass() == Character.class)
-                    || (represents(int.class) && object.getClass() == Integer.class)
-                    || (represents(long.class) && object.getClass() == Long.class)
-                    || (represents(float.class) && object.getClass() == Float.class)
-                    || (represents(double.class) && object.getClass() == Double.class);
+        public boolean isInstanceOrWrapper(Object value) {
+            return isInstance(value)
+                    || (represents(boolean.class) && value instanceof Boolean)
+                    || (represents(byte.class) && value instanceof Byte)
+                    || (represents(short.class) && value instanceof Short)
+                    || (represents(char.class) && value instanceof Character)
+                    || (represents(int.class) && value instanceof Integer)
+                    || (represents(long.class) && value instanceof Long)
+                    || (represents(float.class) && value instanceof Float)
+                    || (represents(double.class) && value instanceof Double);
+
+        }
+
+        @Override
+        public boolean isAnnotationValue(Object value) {
+            if ((represents(Class.class) && value instanceof TypeDescription)
+                    || (value instanceof AnnotationDescription && ((AnnotationDescription) value).getAnnotationType().equals(this))
+                    || (value instanceof EnumerationDescription && ((EnumerationDescription) value).getEnumerationType().equals(this))
+                    || (represents(String.class) && value instanceof String)
+                    || (represents(boolean.class) && value instanceof Boolean)
+                    || (represents(byte.class) && value instanceof Byte)
+                    || (represents(short.class) && value instanceof Short)
+                    || (represents(char.class) && value instanceof Character)
+                    || (represents(int.class) && value instanceof Integer)
+                    || (represents(long.class) && value instanceof Long)
+                    || (represents(float.class) && value instanceof Float)
+                    || (represents(double.class) && value instanceof Double)
+                    || (represents(String[].class) && value instanceof String[])
+                    || (represents(boolean[].class) && value instanceof boolean[])
+                    || (represents(byte[].class) && value instanceof byte[])
+                    || (represents(short[].class) && value instanceof short[])
+                    || (represents(char[].class) && value instanceof char[])
+                    || (represents(int[].class) && value instanceof int[])
+                    || (represents(long[].class) && value instanceof long[])
+                    || (represents(float[].class) && value instanceof float[])
+                    || (represents(double[].class) && value instanceof double[])
+                    || (represents(Class[].class) && value instanceof TypeDescription[])) {
+                return true;
+            } else if (isAssignableTo(Annotation[].class) && value instanceof AnnotationDescription[]) {
+                for (AnnotationDescription annotationDescription : (AnnotationDescription[]) value) {
+                    if (!annotationDescription.getAnnotationType().equals(getComponentType())) {
+                        return false;
+                    }
+                }
+                return true;
+            } else if (isAssignableTo(Enum[].class) && value instanceof EnumerationDescription[]) {
+                for (EnumerationDescription enumerationDescription : (EnumerationDescription[]) value) {
+                    if (!enumerationDescription.getEnumerationType().equals(getComponentType())) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return false;
+            }
         }
 
         @Override
@@ -444,23 +515,23 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public boolean isAnnotationValue() {
+        public boolean isAnnotationReturnType() {
             return isPrimitive()
                     || represents(String.class)
                     || (isAssignableTo(Enum.class) && !represents(Enum.class))
                     || (isAssignableTo(Annotation.class) && !represents(Annotation.class))
                     || represents(Class.class)
-                    || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationValue());
+                    || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationReturnType());
         }
 
         @Override
-        public boolean isDescribingAnnotationValue() {
+        public boolean isAnnotationValue() {
             return isPrimitive()
                     || represents(String.class)
                     || isAssignableTo(TypeDescription.class)
                     || isAssignableTo(AnnotationDescription.class)
                     || isAssignableTo(EnumerationDescription.class)
-                    || (isArray() && !getComponentType().isArray() && getComponentType().isDescribingAnnotationValue());
+                    || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationValue());
         }
 
         @Override
@@ -541,8 +612,8 @@ public interface TypeDescription extends ByteCodeElement {
             }
 
             @Override
-            public boolean isInstance(Object object) {
-                return isAssignableFrom(object.getClass());
+            public boolean isInstance(Object value) {
+                return isAssignableFrom(value.getClass());
             }
 
             @Override
@@ -604,8 +675,8 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public boolean isInstance(Object object) {
-            return type.isInstance(object);
+        public boolean isInstance(Object value) {
+            return type.isInstance(value);
         }
 
         @Override

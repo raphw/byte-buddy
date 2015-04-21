@@ -484,6 +484,12 @@ public class ByteBuddy {
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
+    /**
+     * Creates a new enumeration type.
+     *
+     * @param value The enumeration values to define.
+     * @return A builder for a new enumeration type with the given values.
+     */
     @SuppressWarnings("unchecked")
     public DynamicType.Builder<? extends Enum<?>> makeEnumeration(String... value) {
         if (value.length == 0) {
@@ -2051,7 +2057,7 @@ public class ByteBuddy {
 
         @Override
         public MethodAnnotationTarget withDefaultValue(Object value, Class<?> type) {
-            return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
+            return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.describe(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
         }
 
         @Override
@@ -2104,20 +2110,46 @@ public class ByteBuddy {
         }
     }
 
+    /**
+     * An implementation fo the {@code values} method of an enumeration type.
+     */
     protected static class EnumerationImplementation implements Implementation {
 
+        /**
+         * The field modifiers to use for any field that is added to an enumeration.
+         */
         private static final int ENUM_FIELD_MODIFIERS = Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC;
 
+        /**
+         * The name of the field containing an array of all enumeration values.
+         */
         private static final String ENUM_VALUES = "$VALUES";
 
+        /**
+         * The name of the {@link java.lang.Object#clone()} method.
+         */
         protected static final String CLONE_METHOD_NAME = "clone";
 
+        /**
+         * The name of the {@code valueOf} method that is defined for any enumeration.
+         */
         protected static final String ENUM_VALUE_OF_METHOD_NAME = "valueOf";
 
+        /**
+         * The name of the {@code values} method that is defined for any enumeration.
+         */
         protected static final String ENUM_VALUES_METHOD_NAME = "values";
 
+        /**
+         * The names of the enumerations to define for the enumeration.
+         */
         private final String[] value;
 
+        /**
+         * Creates a new implementation of an enumeration type.
+         *
+         * @param value The values of the enumeration.
+         */
         protected EnumerationImplementation(String[] value) {
             this.value = value;
         }
@@ -2129,7 +2161,7 @@ public class ByteBuddy {
             }
             return instrumentedType
                     .withField(ENUM_VALUES, TypeDescription.ArrayProjection.of(instrumentedType, 1), ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC)
-                    .withInitializer(new InitializationAppender());
+                    .withInitializer(new InitializationAppender(value));
         }
 
         @Override
@@ -2137,11 +2169,40 @@ public class ByteBuddy {
             return new ValuesMethodAppender(implementationTarget.getTypeDescription());
         }
 
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(value, ((EnumerationImplementation) other).value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(value);
+        }
+
+        @Override
+        public String toString() {
+            return "ByteBuddy.EnumerationImplementation{" +
+                    "value=" + Arrays.toString(value) +
+                    '}';
+        }
+
+        /**
+         * A byte code appender for the {@code values} method of any enumeration type.
+         */
         protected static class ValuesMethodAppender implements ByteCodeAppender {
 
+            /**
+             * The instrumented enumeration type.
+             */
             private final TypeDescription instrumentedType;
 
-            public ValuesMethodAppender(TypeDescription instrumentedType) {
+            /**
+             * Creates a new appender for the {@code values} method.
+             *
+             * @param instrumentedType The instrumented enumeration type.
+             */
+            protected ValuesMethodAppender(TypeDescription instrumentedType) {
                 this.instrumentedType = instrumentedType;
             }
 
@@ -2161,9 +2222,44 @@ public class ByteBuddy {
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((ValuesMethodAppender) other).instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "ByteBuddy.EnumerationImplementation.ValuesMethodAppender{" +
+                        "instrumentedType=" + instrumentedType +
+                        '}';
+            }
         }
 
-        protected class InitializationAppender implements ByteCodeAppender {
+        /**
+         * A byte code appender for the type initializer of any enumeration type.
+         */
+        protected static class InitializationAppender implements ByteCodeAppender {
+
+            /**
+             * The values of the enumeration that is being created.
+             */
+            private final String[] value;
+
+            /**
+             * Creates an appender for an enumerations type initializer.
+             *
+             * @param value The values of the enumeration that is being created.
+             */
+            protected InitializationAppender(String[] value) {
+                this.value = value;
+            }
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
@@ -2195,6 +2291,24 @@ public class ByteBuddy {
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly()).putter()
                 );
                 return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && Arrays.equals(value, ((InitializationAppender) other).value);
+            }
+
+            @Override
+            public int hashCode() {
+                return Arrays.hashCode(value);
+            }
+
+            @Override
+            public String toString() {
+                return "ByteBuddy.EnumerationImplementation.InitializationAppender{" +
+                        "value=" + Arrays.toString(value) +
+                        '}';
             }
         }
     }

@@ -1,6 +1,6 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.description.annotation.AbstractEnumerationDescriptionTest;
+import net.bytebuddy.description.enumeration.AbstractEnumerationDescriptionTest;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;

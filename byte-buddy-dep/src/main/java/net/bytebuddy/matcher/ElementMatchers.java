@@ -3,7 +3,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
@@ -482,7 +482,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches an {@link AnnotatedElement} for declared annotations.
+     * Matches an {@link net.bytebuddy.description.annotation.AnnotatedCodeElement} for declared annotations.
      * This matcher does not match inherited annotations which only exist for classes. Use
      * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(Class)} for matching inherited annotations.
      *
@@ -490,12 +490,12 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that validates that an annotated element is annotated with an annotation of {@code type}.
      */
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(Class<? extends Annotation> type) {
+    public static <T extends AnnotatedCodeElement> ElementMatcher.Junction<T> isAnnotatedWith(Class<? extends Annotation> type) {
         return isAnnotatedWith(new TypeDescription.ForLoadedType(nonNull(type)));
     }
 
     /**
-     * Matches an {@link AnnotatedElement} for declared annotations.
+     * Matches an {@link net.bytebuddy.description.annotation.AnnotatedCodeElement} for declared annotations.
      * This matcher does not match inherited annotations which only exist for classes. Use
      * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(TypeDescription)}
      * for matching inherited annotations.
@@ -504,12 +504,12 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return A matcher that validates that an annotated element is annotated with an annotation of {@code typeDescription}.
      */
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(TypeDescription typeDescription) {
+    public static <T extends AnnotatedCodeElement> ElementMatcher.Junction<T> isAnnotatedWith(TypeDescription typeDescription) {
         return isAnnotatedWith(is(isAnnotation(typeDescription)));
     }
 
     /**
-     * Matches an {@link AnnotatedElement} for declared annotations.
+     * Matches an {@link net.bytebuddy.description.annotation.AnnotatedCodeElement} for declared annotations.
      * This matcher does not match inherited annotations which only exist for classes. Use
      * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(net.bytebuddy.matcher.ElementMatcher)}
      * for matching inherited annotations.
@@ -519,12 +519,12 @@ public final class ElementMatchers {
      * @return A matcher that validates that an annotated element is annotated with an annotation of a type
      * that matches the given {@code matcher}.
      */
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> isAnnotatedWith(ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends AnnotatedCodeElement> ElementMatcher.Junction<T> isAnnotatedWith(ElementMatcher<? super TypeDescription> matcher) {
         return declaresAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 
     /**
-     * Matches an {@link AnnotatedElement} to declare any annotation
+     * Matches an {@link net.bytebuddy.description.annotation.AnnotatedCodeElement} to declare any annotation
      * that matches the given matcher. Note that this matcher does not match inherited annotations that only exist
      * for types. Use {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(net.bytebuddy.matcher.ElementMatcher)}
      * for matching inherited annotations.
@@ -534,7 +534,7 @@ public final class ElementMatchers {
      * @return A matcher that validates that an annotated element is annotated with an annotation that matches
      * the given {@code matcher}.
      */
-    public static <T extends AnnotatedElement> ElementMatcher.Junction<T> declaresAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
+    public static <T extends AnnotatedCodeElement> ElementMatcher.Junction<T> declaresAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
         return new DeclaringAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(matcher)));
     }
 

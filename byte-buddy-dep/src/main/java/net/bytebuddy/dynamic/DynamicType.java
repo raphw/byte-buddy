@@ -2496,7 +2496,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
-                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.wrap(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
+                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.describe(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
                 }
 
                 @Override

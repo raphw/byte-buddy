@@ -107,6 +107,13 @@ constructor interception where a hard-coded super method call is required by the
 - Reimplemented `TypeWriter`, `MethodRegistry` and other supporting infrastructure to make  the code simpler.
 - Refactored testing that is related to the previous infrastructure.
 
+### 21. April 2015: Version 0.6.1
+
+- Added `AnnotationDescription.Builder` to allow easy definition of annotation values without loading any values.
+- Added possibility to define enumerations at runtime.
+- Added possibility to dynamically read enumerations for the `MethodCall` and `InvokeDynamic` implementations.
+- Further API clean-up.
+
 ### Current snapshot
 
-No changes.
+Currently, there are no changes.

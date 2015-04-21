@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.description.annotation.AnnotatedElement;
+import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 
 /**
@@ -8,7 +8,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
  *
  * @param <T> The actual matched type of this matcher.
  */
-public class DeclaringAnnotationMatcher<T extends AnnotatedElement> extends ElementMatcher.Junction.AbstractBase<T> {
+public class DeclaringAnnotationMatcher<T extends AnnotatedCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The matcher to be applied to the provided annotation list.
