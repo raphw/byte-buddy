@@ -20,9 +20,6 @@ import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
@@ -79,9 +76,7 @@ public class MethodCallProxy implements AuxiliaryType {
      */
     public MethodCallProxy(Implementation.SpecialMethodInvocation specialMethodInvocation,
                            boolean serializableProxy) {
-        this(specialMethodInvocation,
-                serializableProxy,
-                new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE)));
+        this(specialMethodInvocation, serializableProxy, Assigner.DEFAULT);
     }
 
     /**

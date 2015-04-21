@@ -37,8 +37,7 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodSingleStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
-        MethodList invokableMethods = new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED)
-                .process(target).getInvokableMethods();
+        MethodList invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
         MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(2));
         BridgeMethodResolver bridgeMethodResolver = BridgeMethodResolver.Simple.of(invokableMethods, conflictHandler);
@@ -50,8 +49,7 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodTwoStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Qux.class);
-        MethodList invokableMethods = new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED)
-                .process(target).getInvokableMethods();
+        MethodList invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
         MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(3));
         BridgeMethodResolver bridgeMethodResolver = BridgeMethodResolver.Simple.of(invokableMethods, conflictHandler);
@@ -64,8 +62,7 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodConflictResolver() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Baz.class);
-        MethodList invokableMethods = new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED)
-                .process(target).getInvokableMethods();
+        MethodList invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
         MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(3));
         when(conflictHandler.choose(any(MethodDescription.class), any(MethodList.class))).thenReturn(bridgeTarget);

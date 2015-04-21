@@ -6,9 +6,6 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
@@ -90,70 +87,70 @@ public abstract class FixedValue implements Implementation {
         if (fixedValue == null) {
             return new ForPoolValue(NullConstant.INSTANCE,
                     TypeDescription.OBJECT,
-                    defaultAssigner(),
-                    true);
+                    Assigner.DEFAULT,
+                    Assigner.DYNAMICALLY_TYPED);
         }
         Class<?> type = fixedValue.getClass();
         if (type == String.class) {
             return new ForPoolValue(new TextConstant((String) fixedValue),
                     TypeDescription.STRING,
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Class.class) {
             return new ForPoolValue(ClassConstant.of(new TypeDescription.ForLoadedType(type)),
                     TypeDescription.CLASS,
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Boolean.class) {
             return new ForPoolValue(IntegerConstant.forValue((Boolean) fixedValue),
                     new TypeDescription.ForLoadedType(boolean.class),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Byte.class) {
             return new ForPoolValue(IntegerConstant.forValue((Byte) fixedValue),
                     new TypeDescription.ForLoadedType(byte.class),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Short.class) {
             return new ForPoolValue(IntegerConstant.forValue((Short) fixedValue),
                     new TypeDescription.ForLoadedType(short.class),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Character.class) {
             return new ForPoolValue(IntegerConstant.forValue((Character) fixedValue),
                     new TypeDescription.ForLoadedType(char.class),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Integer.class) {
             return new ForPoolValue(IntegerConstant.forValue((Integer) fixedValue),
                     new TypeDescription.ForLoadedType(int.class),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Long.class) {
             return new ForPoolValue(LongConstant.forValue((Long) fixedValue),
                     new TypeDescription.ForLoadedType(long.class),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Float.class) {
             return new ForPoolValue(FloatConstant.forValue((Float) fixedValue),
                     new TypeDescription.ForLoadedType(float.class),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (type == Double.class) {
             return new ForPoolValue(DoubleConstant.forValue((Double) fixedValue),
                     new TypeDescription.ForLoadedType(double.class),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
             return new ForPoolValue(MethodHandleConstant.of(JavaInstance.MethodHandle.of(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
             return new ForPoolValue(MethodTypeConstant.of(JavaInstance.MethodType.of(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
-                    defaultAssigner(),
-                    defaultConsiderRuntimeType());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         } else {
             return reference(fixedValue);
         }
@@ -172,13 +169,9 @@ public abstract class FixedValue implements Implementation {
      * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable reference(Object fixedValue) {
-        if (fixedValue == null) {
-            return new ForPoolValue(NullConstant.INSTANCE,
-                    TypeDescription.OBJECT,
-                    defaultAssigner(),
-                    true);
-        }
-        return new ForStaticField(fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
+        return fixedValue == null
+                ? new ForPoolValue(NullConstant.INSTANCE, TypeDescription.OBJECT, Assigner.DEFAULT, Assigner.DYNAMICALLY_TYPED)
+                : new ForStaticField(fixedValue, Assigner.DEFAULT, Assigner.STATICALLY_TYPED);
     }
 
     /**
@@ -197,7 +190,7 @@ public abstract class FixedValue implements Implementation {
         if (fixedValue == null) {
             throw new IllegalArgumentException("The fixed value must not be null");
         }
-        return new ForStaticField(isValidIdentifier(fieldName), fixedValue, defaultAssigner(), defaultConsiderRuntimeType());
+        return new ForStaticField(isValidIdentifier(fieldName), fixedValue, Assigner.DEFAULT, Assigner.STATICALLY_TYPED);
     }
 
     /**
@@ -209,8 +202,8 @@ public abstract class FixedValue implements Implementation {
     public static AssignerConfigurable value(TypeDescription fixedValue) {
         return new ForPoolValue(ClassConstant.of(fixedValue),
                 TypeDescription.CLASS,
-                defaultAssigner(),
-                defaultConsiderRuntimeType());
+                Assigner.DEFAULT,
+                Assigner.STATICALLY_TYPED);
     }
 
     /**
@@ -222,26 +215,8 @@ public abstract class FixedValue implements Implementation {
     public static AssignerConfigurable value(JavaInstance fixedValue) {
         return new ForPoolValue(fixedValue.asStackManipulation(),
                 fixedValue.getInstanceType(),
-                defaultAssigner(),
-                defaultConsiderRuntimeType());
-    }
-
-    /**
-     * Returns the default assigner that is to be used if no other assigner was explicitly specified.
-     *
-     * @return The default assigner that is to be used if no other assigner was explicitly specified.
-     */
-    private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
-    }
-
-    /**
-     * Determines if the runtime type should be considered by the given assigner by default.
-     *
-     * @return {@code true} if the runtime type should be considered by the given assigner by default.
-     */
-    private static boolean defaultConsiderRuntimeType() {
-        return false;
+                Assigner.DEFAULT,
+                Assigner.STATICALLY_TYPED);
     }
 
     /**

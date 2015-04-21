@@ -12,9 +12,6 @@ import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -235,7 +232,7 @@ public class MethodDelegation implements Implementation {
                 defaultDefaultsProvider(),
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
-                defaultAssigner(),
+                Assigner.DEFAULT,
                 typeDescription.getDeclaredMethods().filter(isStatic().and(not(isPrivate()))));
     }
 
@@ -256,7 +253,7 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate) {
-        return to(nonNull(delegate), defaultMethodLookupEngine());
+        return to(nonNull(delegate), MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED);
     }
 
     /**
@@ -275,7 +272,7 @@ public class MethodDelegation implements Implementation {
                 defaultDefaultsProvider(),
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
-                defaultAssigner(),
+                Assigner.DEFAULT,
                 methodLookupEngine.process(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .getInvokableMethods()
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
@@ -299,7 +296,7 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, String fieldName) {
-        return to(delegate, fieldName, defaultMethodLookupEngine());
+        return to(delegate, fieldName, MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED);
     }
 
     /**
@@ -319,7 +316,7 @@ public class MethodDelegation implements Implementation {
                 defaultDefaultsProvider(),
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
-                defaultAssigner(),
+                Assigner.DEFAULT,
                 methodLookupEngine.process(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .getInvokableMethods()
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
@@ -370,7 +367,7 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName) {
-        return toInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName), defaultMethodLookupEngine());
+        return toInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName), MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED);
     }
 
     /**
@@ -402,7 +399,7 @@ public class MethodDelegation implements Implementation {
                 defaultDefaultsProvider(),
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
-                defaultAssigner(),
+                Assigner.DEFAULT,
                 methodLookupEngine.process(typeDescription)
                         .getInvokableMethods()
                         .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
@@ -432,7 +429,7 @@ public class MethodDelegation implements Implementation {
                 defaultDefaultsProvider(),
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
-                defaultAssigner(),
+                Assigner.DEFAULT,
                 typeDescription.getDeclaredMethods().filter(isConstructor()));
     }
 
@@ -473,24 +470,6 @@ public class MethodDelegation implements Implementation {
                 ArgumentTypeResolver.INSTANCE,
                 MethodNameEqualityResolver.INSTANCE,
                 ParameterLengthResolver.INSTANCE);
-    }
-
-    /**
-     * Returns the assigner that is to be used if no other is specified explicitly.
-     *
-     * @return The assigner that is to be used if no other is specified explicitly.
-     */
-    private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
-    }
-
-    /**
-     * Returns the method lookup engine that is to be used if no other is specified explicitly.
-     *
-     * @return The method lookup engine that is to be used if no other is specified explicitly.
-     */
-    private static MethodLookupEngine defaultMethodLookupEngine() {
-        return new MethodLookupEngine.Default(MethodLookupEngine.Default.DefaultMethodLookup.DISABLED);
     }
 
     /**

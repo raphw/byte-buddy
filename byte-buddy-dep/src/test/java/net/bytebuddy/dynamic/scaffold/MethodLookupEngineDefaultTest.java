@@ -392,14 +392,13 @@ public class MethodLookupEngineDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.class).apply();
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
             public void apply(TypeDescription mock) {
                 when(mock.getDeclaredMethods()).thenReturn(new MethodList.Empty());
             }
         }).applyMutable();
-        ObjectPropertyAssertion.of(MethodLookupEngine.Default.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodLookupEngine.Default.DefaultMethodLookup.class).apply();
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Enabled.class).applyMutable();
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Disabled.class).apply();
     }

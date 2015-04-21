@@ -27,8 +27,8 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
-import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
@@ -522,7 +522,7 @@ public class ByteBuddy {
                 .intercept(MethodCall.invoke(TypeDescription.ENUM.getDeclaredMethods()
                         .filter(named(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME).and(takesArguments(Class.class, String.class))).getOnly())
                         .withOwnType().withArgument(0)
-                        .withAssigner(ReferenceTypeAwareAssigner.INSTANCE, true))
+                        .withAssigner(Assigner.DEFAULT, Assigner.DYNAMICALLY_TYPED))
                 .defineMethod(EnumerationImplementation.ENUM_VALUES_METHOD_NAME,
                         TargetType[].class,
                         Collections.<Class<?>>emptyList(),
@@ -1800,6 +1800,11 @@ public class ByteBuddy {
         }
 
         @Override
+        public AuxiliaryType.NamingStrategy getAuxiliaryTypeNamingStrategy() {
+            return materialize().getAuxiliaryTypeNamingStrategy();
+        }
+
+        @Override
         public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
             return materialize().subclass(superType);
         }
@@ -1966,6 +1971,11 @@ public class ByteBuddy {
         @Override
         public DynamicType.Builder<? extends Annotation> makeAnnotation() {
             return materialize().makeAnnotation();
+        }
+
+        @Override
+        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(String... value) {
+            return materialize().makeEnumeration(value);
         }
 
         @Override

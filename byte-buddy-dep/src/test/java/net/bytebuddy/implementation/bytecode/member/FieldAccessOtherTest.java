@@ -46,6 +46,7 @@ public class FieldAccessOtherTest {
     public void testEnumerationDescription() throws Exception {
         when(fieldDescription.isPublic()).thenReturn(true);
         when(fieldDescription.isStatic()).thenReturn(true);
+        when(fieldDescription.isEnum()).thenReturn(true);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(true));
@@ -55,6 +56,7 @@ public class FieldAccessOtherTest {
     public void testEnumerationDescriptionWithIllegalName() throws Exception {
         when(fieldDescription.isPublic()).thenReturn(true);
         when(fieldDescription.isStatic()).thenReturn(true);
+        when(fieldDescription.isEnum()).thenReturn(true);
         when(fieldDescription.getSourceCodeName()).thenReturn(BAR);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(false));
@@ -64,6 +66,7 @@ public class FieldAccessOtherTest {
     public void testEnumerationDescriptionWithIllegalOwnership() throws Exception {
         when(fieldDescription.isPublic()).thenReturn(true);
         when(fieldDescription.isStatic()).thenReturn(false);
+        when(fieldDescription.isEnum()).thenReturn(true);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(false));
@@ -73,6 +76,17 @@ public class FieldAccessOtherTest {
     public void testEnumerationDescriptionWithIllegalVisibility() throws Exception {
         when(fieldDescription.isPublic()).thenReturn(false);
         when(fieldDescription.isStatic()).thenReturn(true);
+        when(fieldDescription.isEnum()).thenReturn(true);
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
+        assertThat(stackManipulation.isValid(), is(false));
+    }
+
+    @Test
+    public void testEnumerationDescriptionNonEnumeration() throws Exception {
+        when(fieldDescription.isPublic()).thenReturn(true);
+        when(fieldDescription.isStatic()).thenReturn(true);
+        when(fieldDescription.isEnum()).thenReturn(false);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(false));

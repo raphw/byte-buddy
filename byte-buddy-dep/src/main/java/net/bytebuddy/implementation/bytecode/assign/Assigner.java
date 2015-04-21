@@ -2,6 +2,9 @@ package net.bytebuddy.implementation.bytecode.assign;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
+import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
+import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 
 /**
  * An assigner is responsible for converting some type {@code A} to another type {@code B} if possible.
@@ -10,6 +13,21 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
  * types.
  */
 public interface Assigner {
+
+    /**
+     * A default assigner that can handle {@code void}, primitive types and references.
+     */
+    Assigner DEFAULT = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
+
+    /**
+     * Indicates to an {@link net.bytebuddy.implementation.bytecode.assign.Assigner} that a value should be typed statically.
+     */
+    boolean STATICALLY_TYPED = false;
+
+    /**
+     * Indicates to an {@link net.bytebuddy.implementation.bytecode.assign.Assigner} that a value should be casted at runtime.
+     */
+    boolean DYNAMICALLY_TYPED = true;
 
     /**
      * @param sourceType       The original type that is to be transformed into the {@code targetType}.

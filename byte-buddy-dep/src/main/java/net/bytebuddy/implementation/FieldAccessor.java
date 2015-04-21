@@ -10,8 +10,6 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -62,7 +60,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor for a field of a given name.
      */
     public static FieldDefinable ofField(String name) {
-        return new ForNamedField(defaultAssigner(), defaultConsiderRuntimeType(), isValidIdentifier(name));
+        return new ForNamedField(Assigner.DEFAULT, Assigner.STATICALLY_TYPED, isValidIdentifier(name));
     }
 
     /**
@@ -83,27 +81,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor using the given field name extractor.
      */
     public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
-        return new ForUnnamedField(defaultAssigner(),
-                defaultConsiderRuntimeType(),
-                nonNull(fieldNameExtractor));
-    }
-
-    /**
-     * Returns the default assigner that is to be used if no explicit assigner is specified.
-     *
-     * @return The default assigner that is to be used if no explicit assigner is specified.
-     */
-    private static Assigner defaultAssigner() {
-        return new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE);
-    }
-
-    /**
-     * Returns the default value for considering the runtime type when using an assigner.
-     *
-     * @return The default value for considering the runtime type when using an assigner.
-     */
-    private static boolean defaultConsiderRuntimeType() {
-        return false;
+        return new ForUnnamedField(Assigner.DEFAULT, Assigner.STATICALLY_TYPED, nonNull(fieldNameExtractor));
     }
 
     /**

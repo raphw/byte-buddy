@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class MethodLookupEngineOverridenClassMethodTest {
+public class MethodLookupEngineOverriddenClassMethodTest {
 
     private static final int MODIFIERS = 42;
 
@@ -36,7 +36,7 @@ public class MethodLookupEngineOverridenClassMethodTest {
 
     @Test
     public void testOverridingMethodDominates() throws Exception {
-        MethodDescription overriddenClassMethod = MethodLookupEngine.OverridenClassMethod.of(first, second);
+        MethodDescription overriddenClassMethod = MethodLookupEngine.OverriddenClassMethod.of(first, second);
         assertThat(overriddenClassMethod.getDeclaringType(), is(firstType));
         assertThat(overriddenClassMethod.getModifiers(), is(MODIFIERS));
     }
@@ -44,7 +44,7 @@ public class MethodLookupEngineOverridenClassMethodTest {
     @Test
     public void testOverridenMethodIsSpecializableCascades() throws Exception {
         when(second.isSpecializableFor(firstType)).thenReturn(true);
-        MethodDescription overriddenClassMethod = MethodLookupEngine.OverridenClassMethod.of(first, second);
+        MethodDescription overriddenClassMethod = MethodLookupEngine.OverriddenClassMethod.of(first, second);
         assertThat(overriddenClassMethod.isSpecializableFor(firstType), is(true));
         verify(first).isSpecializableFor(firstType);
         verify(second).isSpecializableFor(firstType);

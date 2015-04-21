@@ -10,9 +10,6 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -38,6 +35,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * providing explicit arguments to this method.
  */
 public class MethodCall implements Implementation {
+
+    /**
+     * Indicates that an assignment should only consider the static type of a variable.
+     */
+    private static final boolean DO_NOT_CONSIDER_RUNTIME_TYPE = false;
 
     /**
      * The method locator to use.
@@ -102,24 +104,6 @@ public class MethodCall implements Implementation {
         this.terminationHandler = terminationHandler;
         this.assigner = assigner;
         this.dynamicallyTyped = dynamicallyTyped;
-    }
-
-    /**
-     * Returns the default assigner to be used by this implementation.
-     *
-     * @return The default assigner to be used by this implementation.
-     */
-    private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
-    }
-
-    /**
-     * Returns the default value for using dynamically typed value assignments.
-     *
-     * @return The default value for using dynamically typed value assignments.
-     */
-    private static boolean defaultDynamicallyTyped() {
-        return false;
     }
 
     /**
@@ -192,8 +176,8 @@ public class MethodCall implements Implementation {
                 Collections.<ArgumentLoader>emptyList(),
                 MethodInvoker.ForStandardInvocation.INSTANCE,
                 TerminationHandler.ForMethodReturn.INSTANCE,
-                defaultAssigner(),
-                defaultDynamicallyTyped());
+                Assigner.DEFAULT,
+                DO_NOT_CONSIDER_RUNTIME_TYPE);
     }
 
     /**
@@ -703,7 +687,7 @@ public class MethodCall implements Implementation {
             private final String fieldName;
 
             /**
-             * Creares a new target handler for a static field.
+             * Creates a new target handler for a static field.
              *
              * @param target The target on which the method is to be invoked.
              */
@@ -1230,7 +1214,7 @@ public class MethodCall implements Implementation {
             private final String fieldName;
 
             /**
-             * Creates a new arugment loader for an existing field.
+             * Creates a new argument loader for an existing field.
              *
              * @param fieldName The name of the field.
              */
@@ -1979,7 +1963,7 @@ public class MethodCall implements Implementation {
     }
 
     /**
-     * A method invoker is responsible for creating a method invokation that is to be applied by a
+     * A method invoker is responsible for creating a method invocation that is to be applied by a
      * {@link net.bytebuddy.implementation.MethodCall}.
      */
     protected interface MethodInvoker {
@@ -2113,8 +2097,7 @@ public class MethodCall implements Implementation {
                         ? invokedMethod.getDeclaringType()
                         : invokedMethod.getReturnType(), interceptedMethod.getReturnType(), dynamicallyTyped);
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType()
-                            + " from " + interceptedMethod);
+                    throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + interceptedMethod);
                 }
                 return new StackManipulation.Compound(stackManipulation,
                         MethodReturn.returning(interceptedMethod.getReturnType()));
@@ -2174,8 +2157,8 @@ public class MethodCall implements Implementation {
                     Collections.<ArgumentLoader>emptyList(),
                     MethodInvoker.ForStandardInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
-                    defaultAssigner(),
-                    defaultDynamicallyTyped());
+                    Assigner.DEFAULT,
+                    Assigner.STATICALLY_TYPED);
         }
 
         /**

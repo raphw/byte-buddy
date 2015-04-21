@@ -24,7 +24,7 @@ public interface MethodLookupEngine {
 
     /**
      * Retrieves all methods that can be called on a given type. The resulting list of methods must not contain
-     * any duplicates when considering byte code signatures. Furthermore, if a method is overriden, a method must
+     * any duplicates when considering byte code signatures. Furthermore, if a method is overridden, a method must
      * be contained in its most specific version. In the process, class methods must shadow interface methods of
      * identical signature. As an only deviation from the JVM's {@link Class#getMethods()}, methods of identical
      * signature of incompatible interfaces must only be returned once. These methods should be represented by some
@@ -167,7 +167,7 @@ public interface MethodLookupEngine {
      * This method description represents a method that is defined in a non-interface type and overrides a method
      * in another class it directly or indirectly extends.
      */
-    class OverridenClassMethod extends MethodDescription.AbstractMethodDescription {
+    class OverriddenClassMethod extends MethodDescription.AbstractMethodDescription {
 
         /**
          * Describes the index of the most specific method in the method chain in order to improve
@@ -186,32 +186,32 @@ public interface MethodLookupEngine {
          * @param methodChain A list of overridden methods starting with the most specific method going down to the
          *                    least specific.
          */
-        protected OverridenClassMethod(List<MethodDescription> methodChain) {
+        protected OverriddenClassMethod(List<MethodDescription> methodChain) {
             this.methodChain = methodChain;
         }
 
         /**
-         * Creates a new method description of an overriding method to an overriden method. The overriding method is
-         * considered to be a {@link MethodLookupEngine.OverridenClassMethod}
+         * Creates a new method description of an overriding method to an overridden method. The overriding method is
+         * considered to be a {@link net.bytebuddy.dynamic.scaffold.MethodLookupEngine.OverriddenClassMethod}
          * itself and is resolved appropriately.
          *
          * @param overridingMethod The most specific method that is overriding another method.
          * @param overriddenMethod The method that is overridden by the {@code overridingMethod}.
          * @return A method description that represents the overriding method while considering how to properly
-         * specialize on invoking the overriden method.
+         * specialize on invoking the overridden method.
          */
         public static MethodDescription of(MethodDescription overridingMethod, MethodDescription overriddenMethod) {
             List<MethodDescription> methodChain;
-            if (overridingMethod instanceof OverridenClassMethod) {
-                OverridenClassMethod overridenClassMethod = (OverridenClassMethod) overridingMethod;
-                methodChain = new ArrayList<MethodDescription>(overridenClassMethod.methodChain.size() + 1);
-                methodChain.addAll(overridenClassMethod.methodChain);
+            if (overridingMethod instanceof OverriddenClassMethod) {
+                OverriddenClassMethod overriddenClassMethod = (OverriddenClassMethod) overridingMethod;
+                methodChain = new ArrayList<MethodDescription>(overriddenClassMethod.methodChain.size() + 1);
+                methodChain.addAll(overriddenClassMethod.methodChain);
             } else {
                 methodChain = new ArrayList<MethodDescription>(2);
                 methodChain.add(overridingMethod);
             }
             methodChain.add(overriddenMethod);
-            return new OverridenClassMethod(methodChain);
+            return new OverriddenClassMethod(methodChain);
         }
 
         @Override
@@ -339,7 +339,7 @@ public interface MethodLookupEngine {
          * similar properties to the latter classes resolution algorithm:
          * <ul>
          * <li>It is illegal to add a method of identical byte code signature after already adding this method for a
-         * sub interface where this method was overriden. It is however legal to add a method of a super interface
+         * sub interface where this method was overridden. It is however legal to add a method of a super interface
          * before adding a method of a sub interface.</li>
          * <li>The first argument is checked for being a
          * {@link MethodLookupEngine.ConflictingInterfaceMethod} and is resolved
@@ -459,21 +459,33 @@ public interface MethodLookupEngine {
      * However, conflicting interface methods are represented by
      * {@link MethodLookupEngine.ConflictingInterfaceMethod} instances.
      */
-    class Default implements MethodLookupEngine {
+    enum Default implements MethodLookupEngine {
 
         /**
-         * Determines if default method lookup is enabled.
+         * A default implementation of a method lookup engine that looks up Java 8 default methods.
          */
-        private final DefaultMethodLookup defaultMethodLookup;
+        DEFAULT_LOOKUP_ENABLED {
+            @Override
+            protected Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
+                                                                         Collection<TypeDescription> interfaces,
+                                                                         Collection<TypeDescription> defaultMethodRelevantInterfaces) {
+                interfaces.removeAll(defaultMethodRelevantInterfaces);
+                return Collections.unmodifiableMap(methodBucket.pushInterfacesAndExtractDefaultMethods(defaultMethodRelevantInterfaces));
+            }
+        },
 
         /**
-         * Creates a new default method lookup engine.
-         *
-         * @param defaultMethodLookup Determines if default method lookup is enabled.
+         * A default implementation of a method lookup engine that does not look up Java 8 default methods.
          */
-        public Default(DefaultMethodLookup defaultMethodLookup) {
-            this.defaultMethodLookup = defaultMethodLookup;
-        }
+        DEFAULT_LOOKUP_DISABLED {
+            @Override
+            protected Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
+                                                                         Collection<TypeDescription> interfaces,
+                                                                         Collection<TypeDescription> defaultMethodRelevantInterfaces) {
+                interfaces.addAll(defaultMethodRelevantInterfaces);
+                return Collections.emptyMap();
+            }
+        };
 
         @Override
         public Finding process(TypeDescription typeDescription) {
@@ -484,7 +496,7 @@ public interface MethodLookupEngine {
                 methodBucket.pushClass(typeDescription);
                 interfaces.addAll(typeDescription.getInterfaces());
             }
-            Map<TypeDescription, Set<MethodDescription>> defaultMethods = defaultMethodLookup.apply(methodBucket,
+            Map<TypeDescription, Set<MethodDescription>> defaultMethods = apply(methodBucket,
                     interfaces,
                     defaultMethodRelevantInterfaces);
             methodBucket.pushInterfaces(interfaces);
@@ -493,74 +505,23 @@ public interface MethodLookupEngine {
                     defaultMethods);
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && defaultMethodLookup == ((Default) other).defaultMethodLookup;
-        }
 
-        @Override
-        public int hashCode() {
-            return defaultMethodLookup.hashCode();
-        }
+        /**
+         * Applies default method extraction.
+         *
+         * @param methodBucket                    The method bucket that is used for performing a method extraction.
+         * @param interfaces                      The interfaces of the instrumented type.
+         * @param defaultMethodRelevantInterfaces The interfaces of the instrumented type that are relevant for
+         *                                        default method extraction.
+         * @return A map containing all extracted default methods.
+         */
+        protected abstract Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
+                                                                              Collection<TypeDescription> interfaces,
+                                                                              Collection<TypeDescription> defaultMethodRelevantInterfaces);
 
         @Override
         public String toString() {
-            return "MethodLookupEngine.Default{" +
-                    "defaultMethodLookup=" + defaultMethodLookup +
-                    '}';
-        }
-
-        /**
-         * Determines if default methods are extracted when analyzing a given type. This might not be relevant in
-         * some contexts and is normally fully irrelevant when writing types in class file formats that do not
-         * support default methods.
-         */
-        public enum DefaultMethodLookup {
-
-            /**
-             * Enables the extraction of default methods.
-             */
-            ENABLED {
-                @Override
-                public Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
-                                                                          Collection<TypeDescription> interfaces,
-                                                                          Collection<TypeDescription> defaultMethodRelevantInterfaces) {
-                    interfaces.removeAll(defaultMethodRelevantInterfaces);
-                    return Collections.unmodifiableMap(methodBucket.pushInterfacesAndExtractDefaultMethods(defaultMethodRelevantInterfaces));
-                }
-            },
-
-            /**
-             * Disables the extraction of default methods.
-             */
-            DISABLED {
-                @Override
-                public Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
-                                                                          Collection<TypeDescription> interfaces,
-                                                                          Collection<TypeDescription> defaultMethodRelevantInterfaces) {
-                    interfaces.addAll(defaultMethodRelevantInterfaces);
-                    return Collections.emptyMap();
-                }
-            };
-
-            /**
-             * Applies default method extraction.
-             *
-             * @param methodBucket                    The method bucket that is used for performing a method extraction.
-             * @param interfaces                      The interfaces of the instrumented type.
-             * @param defaultMethodRelevantInterfaces The interfaces of the instrumented type that are relevant for
-             *                                        default method extraction.
-             * @return A map containing all extracted default methods.
-             */
-            public abstract Map<TypeDescription, Set<MethodDescription>> apply(MethodBucket methodBucket,
-                                                                               Collection<TypeDescription> interfaces,
-                                                                               Collection<TypeDescription> defaultMethodRelevantInterfaces);
-
-            @Override
-            public String toString() {
-                return "MethodLookupEngine.Default.DefaultMethodLookup." + name();
-            }
+            return "MethodLookupEngine.Default." + name();
         }
 
         /**
@@ -576,9 +537,9 @@ public interface MethodLookupEngine {
 
             @Override
             public MethodLookupEngine make(boolean extractDefaultMethods) {
-                return new Default(extractDefaultMethods
-                        ? DefaultMethodLookup.ENABLED
-                        : DefaultMethodLookup.DISABLED);
+                return extractDefaultMethods
+                        ? Default.DEFAULT_LOOKUP_ENABLED
+                        : Default.DEFAULT_LOOKUP_DISABLED;
             }
 
             @Override
@@ -679,7 +640,7 @@ public interface MethodLookupEngine {
                         MethodDescription overridingMethod = classMethods.get(uniqueSignature);
                         classMethods.put(uniqueSignature, overridingMethod == null
                                 ? methodDescription
-                                : OverridenClassMethod.of(overridingMethod, methodDescription));
+                                : OverriddenClassMethod.of(overridingMethod, methodDescription));
                     }
                 }
             }

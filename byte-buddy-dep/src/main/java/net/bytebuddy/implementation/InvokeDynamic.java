@@ -12,9 +12,6 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -93,24 +90,6 @@ public class InvokeDynamic implements Implementation {
         this.terminationHandler = terminationHandler;
         this.assigner = assigner;
         this.dynamicallyTyped = dynamicallyTyped;
-    }
-
-    /**
-     * Returns the default assigner to be used by this implementation.
-     *
-     * @return The default assigner to be used by this implementation.
-     */
-    private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
-    }
-
-    /**
-     * Returns the default value for using dynamically typed value assignments.
-     *
-     * @return The default value for using dynamically typed value assignments.
-     */
-    private static boolean defaultDynamicallyTyped() {
-        return false;
     }
 
     /**
@@ -195,8 +174,8 @@ public class InvokeDynamic implements Implementation {
                 serializedArguments,
                 new InvocationProvider.Default(),
                 TerminationHandler.ForMethodReturn.INSTANCE,
-                defaultAssigner(),
-                defaultDynamicallyTyped());
+                Assigner.DEFAULT,
+                Assigner.STATICALLY_TYPED);
     }
 
     /**

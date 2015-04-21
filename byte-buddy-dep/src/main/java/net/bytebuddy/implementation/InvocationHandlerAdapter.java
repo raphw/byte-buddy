@@ -7,9 +7,6 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
-import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.MethodConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
@@ -32,6 +29,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * to also intercept method calls to non-interface methods.
  */
 public abstract class InvocationHandlerAdapter implements Implementation {
+
+    /**
+     * Indicates that a value should not be cached.
+     */
+    private static final boolean NO_CACHING = false;
 
     /**
      * The prefix for field that are created for storing the instrumented value.
@@ -70,15 +72,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     }
 
     /**
-     * Creates a default assigner to use.
-     *
-     * @return The default assigner.
-     */
-    private static Assigner defaultAssigner() {
-        return new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
-    }
-
-    /**
      * Creates an implementation for any instance of an {@link java.lang.reflect.InvocationHandler} that delegates
      * all method interceptions to the given instance which will be stored in a {@code static} field.
      *
@@ -98,7 +91,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler, String fieldName) {
-        return new ForStaticDelegation(isValidIdentifier(fieldName), false, defaultAssigner(), nonNull(invocationHandler));
+        return new ForStaticDelegation(isValidIdentifier(fieldName), NO_CACHING, Assigner.DEFAULT, nonNull(invocationHandler));
     }
 
     /**
@@ -111,7 +104,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to an instance field of the given name.
      */
     public static InvocationHandlerAdapter toInstanceField(String fieldName) {
-        return new ForInstanceDelegation(isValidIdentifier(fieldName), false, defaultAssigner());
+        return new ForInstanceDelegation(isValidIdentifier(fieldName), NO_CACHING, Assigner.DEFAULT);
     }
 
     /**
