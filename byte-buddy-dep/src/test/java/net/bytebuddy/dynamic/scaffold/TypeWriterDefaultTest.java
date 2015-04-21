@@ -84,7 +84,8 @@ public class TypeWriterDefaultTest {
     public void testStaticMethodOnInterfaceAssertion() throws Exception {
         new ByteBuddy()
                 .makeInterface()
-                .defineField(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
+                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
+                .withoutCode()
                 .make();
     }
 
@@ -93,7 +94,8 @@ public class TypeWriterDefaultTest {
     public void testStaticMethodOnAnnotationAssertionJava8() throws Exception {
         new ByteBuddy()
                 .makeInterface()
-                .defineField(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
+                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
+                .withoutCode()
                 .make();
     }
 
@@ -102,7 +104,8 @@ public class TypeWriterDefaultTest {
     public void testStaticMethodOnAnnotationAssertion() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineField(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
+                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
+                .withoutCode()
                 .make();
     }
 
