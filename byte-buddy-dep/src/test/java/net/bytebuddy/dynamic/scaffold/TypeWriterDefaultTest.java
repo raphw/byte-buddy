@@ -144,6 +144,24 @@ public class TypeWriterDefaultTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationPropertyWithVoidReturnAssertion() throws Exception {
+        new ByteBuddy()
+                .makeAnnotation()
+                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .withoutCode()
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationPropertyWithParametersAssertion() throws Exception {
+        new ByteBuddy()
+                .makeAnnotation()
+                .defineMethod(FOO, String.class, Collections.<Class<?>>singletonList(Void.class), Visibility.PUBLIC)
+                .withoutCode()
+                .make();
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();

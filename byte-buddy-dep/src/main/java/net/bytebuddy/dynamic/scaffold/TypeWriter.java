@@ -897,6 +897,16 @@ public interface TypeWriter<T> {
         protected static class ValidatingClassVisitor extends ClassVisitor {
 
             /**
+             * Indicates that a method has no method parameters.
+             */
+            private static final String NO_PARAMETERS = "()";
+
+            /**
+             * Indicates that a method returns void.
+             */
+            private static final String RETURNS_VOID = "V";
+
+            /**
              * The constraint to assert the members against. The constraint is first defined when the general class information is visited.
              */
             private Constraint constraint;
@@ -940,7 +950,8 @@ public interface TypeWriter<T> {
                 constraint.assertMethod(name,
                         (modifiers & Opcodes.ACC_ABSTRACT) != 0,
                         (modifiers & Opcodes.ACC_PUBLIC) != 0,
-                        (modifiers & Opcodes.ACC_STATIC) != 0);
+                        (modifiers & Opcodes.ACC_STATIC) != 0,
+                        !descriptor.startsWith(NO_PARAMETERS) || descriptor.endsWith(RETURNS_VOID));
                 return new ValidatingMethodVisitor(super.visitMethod(modifiers, name, descriptor, signature, exceptions), name);
             }
 
@@ -1103,12 +1114,13 @@ public interface TypeWriter<T> {
                 /**
                  * Asserts a method for being valid.
                  *
-                 * @param name       The name of the method.
-                 * @param isAbstract {@code true} if the method is abstract.
-                 * @param isPublic   {@code true} if this method is public.
-                 * @param isStatic   {@code true} if this method is static.
+                 * @param name                  The name of the method.
+                 * @param isAbstract            {@code true} if the method is abstract.
+                 * @param isPublic              {@code true} if this method is public.
+                 * @param isStatic              {@code true} if this method is static.
+                 * @param isDefaultIncompatible {@code true} if a method's signature cannot describe an annotation property method.
                  */
-                protected void assertMethod(String name, boolean isAbstract, boolean isPublic, boolean isStatic) {
+                protected void assertMethod(String name, boolean isAbstract, boolean isPublic, boolean isStatic, boolean isDefaultIncompatible) {
                     if (!isPublic && !allowsNonPublic) {
                         throw new IllegalStateException("Cannot define non-public method " + name + " for " + sortName);
                     } else if (isStatic && !allowsStaticMethods) {
@@ -1117,6 +1129,8 @@ public interface TypeWriter<T> {
                         throw new IllegalStateException("Cannot define abstract method " + name + " for " + sortName);
                     } else if (!isAbstract && !allowsNonAbstract) {
                         throw new IllegalStateException("Cannot define non-abstract method " + name + " + for " + sortName);
+                    } else if (!isStatic && isDefaultIncompatible && allowsDefaultValue) {
+                        throw new IllegalStateException("The signature of " + name + " is not compatible for a property of " + sortName);
                     }
                 }
 
