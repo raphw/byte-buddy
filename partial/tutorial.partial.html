@@ -2168,6 +2168,13 @@ new ByteBuddy()
         Note that such default appenders are not additive but replace their former values.
     </p>
 
+    <p>
+        Sometimes, it is desirable to not load an annotation type or the types of any of its properties when defining
+        a class. For this purpose, it is possible to use the <code>AnnotationDescription.Builder</code> which
+        offers a fluent interface for defining an annotation without triggering class loading but at the costs
+        of type safety. All annotation properties are however evaluated at runtime.
+    </p>
+
 </div>
 
 <div class="row" id="customization">
