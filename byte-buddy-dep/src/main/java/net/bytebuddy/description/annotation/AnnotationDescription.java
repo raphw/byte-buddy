@@ -1963,7 +1963,7 @@ public interface AnnotationDescription {
          */
         @SuppressWarnings("unchecked")
         public Builder defineTypeArray(String property, TypeDescription... typeDescription) {
-            return define(property, AnnotationValue.ForComplexArray.<Class>of(typeDescription));
+            return define(property, AnnotationValue.ForComplexArray.of(typeDescription));
         }
 
         /**
