@@ -156,7 +156,7 @@ public interface MethodDescription extends ByteCodeElement {
      * <li>{@link java.lang.annotation.Annotation} values are represented as
      * {@link AnnotationDescription}s</li>
      * <li>{@link java.lang.Enum} values are represented as
-     * {@link net.bytebuddy.description.annotation.AnnotationDescription.EnumerationDescription}s.</li>
+     * {@link net.bytebuddy.description.enumeration.EnumerationDescription}s.</li>
      * <li>Arrays of the latter types are represented as arrays of the named wrapper types.</li>
      * </ul>
      *
