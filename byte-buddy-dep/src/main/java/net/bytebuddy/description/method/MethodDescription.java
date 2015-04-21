@@ -432,8 +432,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean isDefaultValue() {
-            return getDeclaringType().isAnnotation()
-                    && !isConstructor()
+            return !isConstructor()
                     && !isStatic()
                     && getReturnType().isAnnotationReturnType()
                     && getParameters().isEmpty();

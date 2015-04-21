@@ -22,9 +22,9 @@ public class JavaVersionRule implements MethodRule {
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
-        return enforce == null || ClassFileVersion.forKnownJavaVersion(enforce.value()).compareTo(supportedVersion) <= 0
+        return enforce == null || enforce.type().matches(ClassFileVersion.forKnownJavaVersion(enforce.value()).compareTo(supportedVersion))
                 ? base
-                : new NoOpStatement(method.getAnnotation(Enforce.class).value());
+                : new NoOpStatement(enforce.value(), enforce.type());
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -32,19 +32,53 @@ public class JavaVersionRule implements MethodRule {
     public @interface Enforce {
 
         int value();
+
+        Type type() default Type.AT_LEAST;
     }
 
     private class NoOpStatement extends Statement {
 
         private final int requiredVersion;
 
-        public NoOpStatement(int requiredVersion) {
+        private final Type type;
+
+        public NoOpStatement(int requiredVersion, Type type) {
             this.requiredVersion = requiredVersion;
+            this.type = type;
         }
 
         @Override
         public void evaluate() throws Throwable {
-            Logger.getAnonymousLogger().warning("Ignored test case that requires a Java version " + requiredVersion);
+            Logger.getAnonymousLogger().warning("Ignored test case that requires a Java version " + type.toMessageString() + " " + requiredVersion);
+        }
+    }
+
+    public enum Type {
+
+        AT_LEAST("of at least") {
+            @Override
+            protected boolean matches(int comparison) {
+                return comparison <= 0;
+            }
+        },
+
+        LESS_THEN("less than") {
+            @Override
+            protected boolean matches(int comparison) {
+                return comparison > 0;
+            }
+        };
+
+        protected abstract boolean matches(int comparison);
+
+        private final String message;
+
+        Type(String message) {
+            this.message = message;
+        }
+
+        public String toMessageString() {
+            return message;
         }
     }
 }

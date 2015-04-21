@@ -12,10 +12,13 @@ import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class TrivialTypeTest {
 
     private static final String FOO = "foo";
+
+    private static final int BAR = 42;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -28,6 +31,7 @@ public class TrivialTypeTest {
 
     @Test
     public void testCreation() throws Exception {
+        when(classFileVersion.getVersionNumber()).thenReturn(BAR);
         DynamicType dynamicType = TrivialType.INSTANCE.make(FOO, classFileVersion, methodAccessorFactory);
         assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
         assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));

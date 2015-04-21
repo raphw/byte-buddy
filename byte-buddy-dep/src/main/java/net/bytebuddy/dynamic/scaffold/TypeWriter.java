@@ -892,6 +892,253 @@ public interface TypeWriter<T> {
         protected abstract byte[] create(Implementation.Context.ExtractableView implementationContext);
 
         /**
+         * A class validator that validates that a class only defines members that are appropriate for the sort of the generated class.
+         */
+        protected static class ValidatingClassVisitor extends ClassVisitor {
+
+            /**
+             * The constraint to assert the members against. The constraint is first defined when the general class information is visited.
+             */
+            private Constraint constraint;
+
+            /**
+             * Creates a validating class visitor.
+             *
+             * @param classVisitor The class visitor to which any calls are delegated to.
+             */
+            protected ValidatingClassVisitor(ClassVisitor classVisitor) {
+                super(ASM_API_VERSION, classVisitor);
+            }
+
+            @Override
+            public void visit(int version, int modifier, String name, String signature, String superName, String[] interfaces) {
+                ClassFileVersion classFileVersion = new ClassFileVersion(version);
+                if ((modifier & Opcodes.ACC_ANNOTATION) != 0) {
+                    constraint = classFileVersion.isSupportsDefaultMethods()
+                            ? Constraint.JAVA8_ANNOTATION
+                            : Constraint.ANNOTATION;
+                } else if ((modifier & Opcodes.ACC_INTERFACE) != 0) {
+                    constraint = classFileVersion.isSupportsDefaultMethods()
+                            ? Constraint.JAVA8_INTERFACE
+                            : Constraint.INTERFACE;
+                } else if ((modifier & Opcodes.ACC_ABSTRACT) != 0) {
+                    constraint = Constraint.ABSTRACT_CLASS;
+                } else {
+                    constraint = Constraint.MANIFEST_CLASS;
+                }
+                super.visit(version, modifier, name, signature, superName, interfaces);
+            }
+
+            @Override
+            public FieldVisitor visitField(int modifiers, String name, String desc, String signature, Object defaultValue) {
+                constraint.assertField(name, (modifiers & Opcodes.ACC_PUBLIC) != 0, (modifiers & Opcodes.ACC_STATIC) != 0);
+                return super.visitField(modifiers, name, desc, signature, defaultValue);
+            }
+
+            @Override
+            public MethodVisitor visitMethod(int modifiers, String name, String descriptor, String signature, String[] exceptions) {
+                constraint.assertMethod(name,
+                        (modifiers & Opcodes.ACC_ABSTRACT) != 0,
+                        (modifiers & Opcodes.ACC_PUBLIC) != 0,
+                        (modifiers & Opcodes.ACC_STATIC) != 0);
+                return new ValidatingMethodVisitor(super.visitMethod(modifiers, name, descriptor, signature, exceptions), name);
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Default.ValidatingClassVisitor{" +
+                        "constraint=" + constraint +
+                        "}";
+            }
+
+            /**
+             * A method validator for checking default values.
+             */
+            protected class ValidatingMethodVisitor extends MethodVisitor {
+
+                /**
+                 * The name of the method being visited.
+                 */
+                private final String name;
+
+                /**
+                 * Creates a validating method visitor.
+                 *
+                 * @param methodVisitor The method visitor to which any calls are delegated to.
+                 * @param name          The name of the method being visited.
+                 */
+                protected ValidatingMethodVisitor(MethodVisitor methodVisitor, String name) {
+                    super(ASM_API_VERSION, methodVisitor);
+                    this.name = name;
+                }
+
+                @Override
+                public AnnotationVisitor visitAnnotationDefault() {
+                    constraint.assertDefault(name);
+                    return super.visitAnnotationDefault();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor{" +
+                            "classVisitor=" + ValidatingClassVisitor.this +
+                            ", name='" + name + '\'' +
+                            '}';
+                }
+            }
+
+            /**
+             * A constraint for members that are legal for a given type.
+             */
+            protected enum Constraint {
+
+                /**
+                 * Constraints for a non-abstract class.
+                 */
+                MANIFEST_CLASS("non-abstract class", true, true, true, false, true, false),
+
+                /**
+                 * Constraints for an abstract class.
+                 */
+                ABSTRACT_CLASS("abstract class", true, true, true, true, true, false),
+
+                /**
+                 * Constrains for an interface type before Java 8.
+                 */
+                INTERFACE("interface", false, false, false, true, false, false),
+
+                /**
+                 * Constrains for an interface type since Java 8.
+                 */
+                JAVA8_INTERFACE("interface (Java 8+)", false, false, true, true, true, false),
+
+                /**
+                 * Constrains for an annotation type before Java 8.
+                 */
+                ANNOTATION("annotation", false, false, false, true, false, true),
+
+                /**
+                 * Constrains for an annotation type since Java 8.
+                 */
+                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, true, true, false, true);
+
+                /**
+                 * A name to represent the type being validated within an error message.
+                 */
+                private final String sortName;
+
+                /**
+                 * Determines if a sort allows non-public members.
+                 */
+                private final boolean allowsNonPublic;
+
+                /**
+                 * Determines if a sort allows non-static fields.
+                 */
+                private final boolean allowsNonStaticFields;
+
+                /**
+                 * Determines if a sort allows static methods.
+                 */
+                private final boolean allowsStaticMethods;
+
+                /**
+                 * Determines if a sort allows abstract methods.
+                 */
+                private final boolean allowsAbstract;
+
+                /**
+                 * Determines if a sort allows non-abstract methods.
+                 */
+                private final boolean allowsNonAbstract;
+
+                /**
+                 * Determines if a sort allows the definition of annotation default values.
+                 */
+                private final boolean allowsDefaultValue;
+
+
+                /**
+                 * Creates a new constraint.
+                 *
+                 * @param sortName              A name to represent the type being validated within an error message.
+                 * @param allowsNonPublic       Determines if a sort allows non-public members.
+                 * @param allowsNonStaticFields Determines if a sort allows non-static fields.
+                 * @param allowsStaticMethods   Determines if a sort allows static methods.
+                 * @param allowsAbstract        Determines if a sort allows abstract methods.
+                 * @param allowsNonAbstract     Determines if a sort allows non-abstract methods.
+                 * @param allowsDefaultValue    Determines if a sort allows the definition of annotation default values.
+                 */
+                Constraint(String sortName,
+                           boolean allowsNonPublic,
+                           boolean allowsNonStaticFields,
+                           boolean allowsStaticMethods,
+                           boolean allowsAbstract,
+                           boolean allowsNonAbstract,
+                           boolean allowsDefaultValue) {
+                    this.sortName = sortName;
+                    this.allowsNonPublic = allowsNonPublic;
+                    this.allowsNonStaticFields = allowsNonStaticFields;
+                    this.allowsStaticMethods = allowsStaticMethods;
+                    this.allowsAbstract = allowsAbstract;
+                    this.allowsNonAbstract = allowsNonAbstract;
+                    this.allowsDefaultValue = allowsDefaultValue;
+                }
+
+                /**
+                 * Asserts a field for being valid.
+                 *
+                 * @param name     The name of the field.
+                 * @param isPublic {@code true} if this field is public.
+                 * @param isStatic {@code true} if this field is static.
+                 */
+                protected void assertField(String name, boolean isPublic, boolean isStatic) {
+                    if (!isPublic && !allowsNonPublic) {
+                        throw new IllegalStateException("Cannot define non-public field " + name + " for " + sortName);
+                    } else if (!isStatic && !allowsNonStaticFields) {
+                        throw new IllegalStateException("Cannot define for non-static field " + name + " for " + sortName);
+                    }
+                }
+
+                /**
+                 * Asserts a method for being valid.
+                 *
+                 * @param name       The name of the method.
+                 * @param isAbstract {@code true} if the method is abstract.
+                 * @param isPublic   {@code true} if this method is public.
+                 * @param isStatic   {@code true} if this method is static.
+                 */
+                protected void assertMethod(String name, boolean isAbstract, boolean isPublic, boolean isStatic) {
+                    if (!isPublic && !allowsNonPublic) {
+                        throw new IllegalStateException("Cannot define non-public method " + name + " for " + sortName);
+                    } else if (isStatic && !allowsStaticMethods) {
+                        throw new IllegalStateException("Cannot define static method " + name + " for " + sortName);
+                    } else if (!isStatic && isAbstract && !allowsAbstract) {
+                        throw new IllegalStateException("Cannot define abstract method " + name + " for " + sortName);
+                    } else if (!isAbstract && !allowsNonAbstract) {
+                        throw new IllegalStateException("Cannot define non-abstract method " + name + " + for " + sortName);
+                    }
+                }
+
+                /**
+                 * Asserts if a default value is legal for a method.
+                 *
+                 * @param name The name of the method.
+                 */
+                protected void assertDefault(String name) {
+                    if (!allowsDefaultValue) {
+                        throw new IllegalStateException("Cannot define define default value on " + name + " for " + sortName);
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.Default.ValidatingClassVisitor.Constraint." + name();
+                }
+            }
+        }
+
+        /**
          * A type writer that inlines the created type into an existing class file.
          *
          * @param <U> The best known loaded type for the dynamically created type.
@@ -1004,7 +1251,7 @@ public interface TypeWriter<T> {
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
                 ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL_FLAG);
-                classReader.accept(writeTo(classVisitorWrapper.wrap(classWriter), implementationContext), ASM_MANUAL_FLAG);
+                classReader.accept(writeTo(classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter)), implementationContext), ASM_MANUAL_FLAG);
                 return classWriter.toByteArray();
             }
 
@@ -1474,7 +1721,7 @@ public interface TypeWriter<T> {
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
                 ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
-                ClassVisitor classVisitor = classVisitorWrapper.wrap(classWriter);
+                ClassVisitor classVisitor = classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter));
                 classVisitor.visit(classFileVersion.getVersionNumber(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),

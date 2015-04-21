@@ -925,12 +925,12 @@ public interface TypePool {
         /**
          * The ASM version that is applied when reading class files.
          */
-        private static final int ASM_VERSION = Opcodes.ASM5;
+        private static final int ASM_API_VERSION = Opcodes.ASM5;
 
         /**
          * A flag to indicate ASM that no automatic calculations are requested.
          */
-        private static final int ASM_MANUAL = 0;
+        private static final int ASM_MANUAL_FLAG = 0;
 
         /**
          * The locator to query for finding binary data of a type.
@@ -979,7 +979,7 @@ public interface TypePool {
         private TypeDescription parse(byte[] binaryRepresentation) {
             ClassReader classReader = new ClassReader(binaryRepresentation);
             TypeExtractor typeExtractor = new TypeExtractor();
-            classReader.accept(typeExtractor, ASM_MANUAL);
+            classReader.accept(typeExtractor, ASM_MANUAL_FLAG);
             return typeExtractor.toTypeDescription();
         }
 
@@ -1350,7 +1350,7 @@ public interface TypePool {
              * Creates a new type extractor.
              */
             protected TypeExtractor() {
-                super(ASM_VERSION);
+                super(ASM_API_VERSION);
                 annotationTokens = new LinkedList<LazyTypeDescription.AnnotationToken>();
                 fieldTokens = new LinkedList<LazyTypeDescription.FieldToken>();
                 methodTokens = new LinkedList<LazyTypeDescription.MethodToken>();
@@ -1528,7 +1528,7 @@ public interface TypePool {
                  */
                 protected AnnotationExtractor(AnnotationRegistrant annotationRegistrant,
                                               ComponentTypeLocator componentTypeLocator) {
-                    super(ASM_VERSION);
+                    super(ASM_API_VERSION);
                     this.annotationRegistrant = annotationRegistrant;
                     this.componentTypeLocator = componentTypeLocator;
                 }
@@ -1734,7 +1734,7 @@ public interface TypePool {
                                          String internalName,
                                          String descriptor,
                                          String genericSignature) {
-                    super(ASM_VERSION);
+                    super(ASM_API_VERSION);
                     this.modifiers = modifiers;
                     this.internalName = internalName;
                     this.descriptor = descriptor;
@@ -1895,7 +1895,7 @@ public interface TypePool {
                                           String descriptor,
                                           String genericSignature,
                                           String[] exceptionName) {
-                    super(ASM_VERSION);
+                    super(ASM_API_VERSION);
                     this.modifiers = modifiers;
                     this.internalName = internalName;
                     this.descriptor = descriptor;
