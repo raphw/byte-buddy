@@ -911,7 +911,7 @@ public interface AnnotationDescription {
             public static AnnotationValue<TypeDescription[], Class<?>[]> of(TypeDescription[] typeDescription) {
                 List<AnnotationValue<TypeDescription, Class<?>>> values = new ArrayList<AnnotationValue<TypeDescription, Class<?>>>(typeDescription.length);
                 for (TypeDescription value : typeDescription) {
-                    values.add((AnnotationValue) ForType.of(value));
+                    values.add((AnnotationValue) ForType.<Class>of(value));
                 }
                 return new ForComplexArray<TypeDescription, Class<?>>(TypeDescription.class, TypeDescription.CLASS, values);
             }
