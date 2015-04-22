@@ -5,6 +5,7 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -128,12 +129,12 @@ public class TypeWriterDefaultTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8)
+    @JavaVersionRule.Enforce(8)
     public void testStaticMethodOnAnnotationAssertionJava8() throws Exception {
         new ByteBuddy()
                 .makeInterface()
                 .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
-                .withoutCode()
+                .intercept(StubMethod.INSTANCE)
                 .make();
     }
 
@@ -143,16 +144,17 @@ public class TypeWriterDefaultTest {
         new ByteBuddy()
                 .makeAnnotation()
                 .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
-                .withoutCode()
+                .intercept(StubMethod.INSTANCE)
                 .make();
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8)
+    @JavaVersionRule.Enforce(8)
     public void testStaticMethodOnInterfaceAssertionJava8() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineField(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
+                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
+                .intercept(StubMethod.INSTANCE)
                 .make();
     }
 

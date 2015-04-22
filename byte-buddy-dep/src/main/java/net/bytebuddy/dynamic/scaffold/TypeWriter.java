@@ -1031,7 +1031,7 @@ public interface TypeWriter<T> {
                 /**
                  * Constrains for an annotation type since Java 8.
                  */
-                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, false, true);
+                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, true, true);
 
                 /**
                  * A name to represent the type being validated within an error message.
@@ -1141,7 +1141,7 @@ public interface TypeWriter<T> {
                     } else if (!isStatic && isAbstract && !allowsAbstract) {
                         throw new IllegalStateException("Cannot define abstract method " + name + " for " + sortName);
                     } else if (!isAbstract && !allowsNonAbstract) {
-                        throw new IllegalStateException("Cannot define non-abstract method " + name + " + for " + sortName);
+                        throw new IllegalStateException("Cannot define non-abstract method " + name + " for " + sortName);
                     } else if (!isStatic && isDefaultIncompatible && allowsDefaultValue) {
                         throw new IllegalStateException("The signature of " + name + " is not compatible for a property of " + sortName);
                     }
