@@ -1006,37 +1006,42 @@ public interface TypeWriter<T> {
                 /**
                  * Constraints for a non-abstract class.
                  */
-                MANIFEST_CLASS("non-abstract class", true, true, true, false, true, false),
+                MANIFEST_CLASS("non-abstract class", true, true, true, true, false, true, false),
 
                 /**
                  * Constraints for an abstract class.
                  */
-                ABSTRACT_CLASS("abstract class", true, true, true, true, true, false),
+                ABSTRACT_CLASS("abstract class", true, true, true, true, true, true, false),
 
                 /**
                  * Constrains for an interface type before Java 8.
                  */
-                INTERFACE("interface", false, false, false, true, false, false),
+                INTERFACE("interface (Java 7-)", false, false, false, false, true, false, false),
 
                 /**
                  * Constrains for an interface type since Java 8.
                  */
-                JAVA8_INTERFACE("interface (Java 8+)", false, false, true, true, true, false),
+                JAVA8_INTERFACE("interface (Java 8+)", false, false, false, true, true, true, false),
 
                 /**
                  * Constrains for an annotation type before Java 8.
                  */
-                ANNOTATION("annotation", false, false, false, true, false, true),
+                ANNOTATION("annotation (Java 7-)", false, false, false, false, true, false, true),
 
                 /**
                  * Constrains for an annotation type since Java 8.
                  */
-                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, true, true, false, true);
+                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, false, true);
 
                 /**
                  * A name to represent the type being validated within an error message.
                  */
                 private final String sortName;
+
+                /**
+                 * Determines if a sort allows constructors.
+                 */
+                private final boolean allowsConstructor;
 
                 /**
                  * Determines if a sort allows non-public members.
@@ -1068,11 +1073,11 @@ public interface TypeWriter<T> {
                  */
                 private final boolean allowsDefaultValue;
 
-
                 /**
                  * Creates a new constraint.
                  *
                  * @param sortName              A name to represent the type being validated within an error message.
+                 * @param allowsConstructor     Determines if a sort allows constructors.
                  * @param allowsNonPublic       Determines if a sort allows non-public members.
                  * @param allowsNonStaticFields Determines if a sort allows non-static fields.
                  * @param allowsStaticMethods   Determines if a sort allows static methods.
@@ -1081,6 +1086,7 @@ public interface TypeWriter<T> {
                  * @param allowsDefaultValue    Determines if a sort allows the definition of annotation default values.
                  */
                 Constraint(String sortName,
+                           boolean allowsConstructor,
                            boolean allowsNonPublic,
                            boolean allowsNonStaticFields,
                            boolean allowsStaticMethods,
@@ -1088,6 +1094,7 @@ public interface TypeWriter<T> {
                            boolean allowsNonAbstract,
                            boolean allowsDefaultValue) {
                     this.sortName = sortName;
+                    this.allowsConstructor = allowsConstructor;
                     this.allowsNonPublic = allowsNonPublic;
                     this.allowsNonStaticFields = allowsNonStaticFields;
                     this.allowsStaticMethods = allowsStaticMethods;
@@ -1121,7 +1128,13 @@ public interface TypeWriter<T> {
                  * @param isDefaultIncompatible {@code true} if a method's signature cannot describe an annotation property method.
                  */
                 protected void assertMethod(String name, boolean isAbstract, boolean isPublic, boolean isStatic, boolean isDefaultIncompatible) {
-                    if (!isPublic && !allowsNonPublic) {
+                    if (!allowsConstructor && name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
+                        throw new IllegalStateException("Cannot define constructor for " + sortName);
+                    } else if (isStatic && isAbstract) {
+                        throw new IllegalStateException("Cannot define static method " + name + " to be abstract");
+                    } else if (isAbstract && name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
+                        throw new IllegalStateException("Cannot define abstract constructor " + name);
+                    } else if (!isPublic && !allowsNonPublic) {
                         throw new IllegalStateException("Cannot define non-public method " + name + " for " + sortName);
                     } else if (isStatic && !allowsStaticMethods) {
                         throw new IllegalStateException("Cannot define static method " + name + " for " + sortName);

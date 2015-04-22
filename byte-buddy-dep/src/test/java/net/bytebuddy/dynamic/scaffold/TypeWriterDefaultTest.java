@@ -4,6 +4,8 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -19,6 +21,42 @@ public class TypeWriterDefaultTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Test(expected = IllegalStateException.class)
+    public void testConstructorOnInterfaceAssertion() throws Exception {
+        new ByteBuddy()
+                .makeInterface()
+                .defineConstructor(Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(SuperMethodCall.INSTANCE)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testConstructorOnAnnotationAssertion() throws Exception {
+        new ByteBuddy()
+                .makeAnnotation()
+                .defineConstructor(Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(SuperMethodCall.INSTANCE)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAbstractConstructorAssertion() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineConstructor(Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .withoutCode()
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStaticAbstractMethodAssertion() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList(), Ownership.STATIC)
+                .withoutCode()
+                .make();
+    }
 
     @Test(expected = IllegalStateException.class)
     public void testAbstractMethodOnNonAbstractClassAssertion() throws Exception {
@@ -171,5 +209,6 @@ public class TypeWriterDefaultTest {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyMutable();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyMutable();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.class).apply();
     }
 }
