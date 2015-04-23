@@ -118,7 +118,7 @@ constructor interception where a hard-coded super method call is required by the
 
 - Added additional class validation such that it becomes impossible to define members on classes that do not fit
   the class's structure, i.e. default methods on Java interfaces in version seven.
-- Added singletons for `Assigner`s.
+- Added default `Assigner` singleton.
 
 ### Current snapshot
 
