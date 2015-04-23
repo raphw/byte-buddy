@@ -220,9 +220,7 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(TypeDescription typeDescription) {
-        if (nonNull(typeDescription).isInterface()) {
-            throw new IllegalArgumentException("Cannot delegate to interface " + typeDescription);
-        } else if (typeDescription.isArray()) {
+        if (typeDescription.isArray()) {
             throw new IllegalArgumentException("Cannot delegate to array " + typeDescription);
         } else if (typeDescription.isPrimitive()) {
             throw new IllegalArgumentException("Cannot delegate to primitive " + typeDescription);
