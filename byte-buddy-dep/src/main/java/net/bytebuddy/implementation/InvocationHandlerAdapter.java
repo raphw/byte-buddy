@@ -121,7 +121,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         for (TypeDescription parameterType : parameterTypes) {
             instruction.add(new StackManipulation.Compound(
                     MethodVariableAccess.forType(parameterType).loadOffset(currentIndex),
-                    assigner.assign(parameterType, objectType, false)));
+                    assigner.assign(parameterType, objectType, Assigner.STATICALLY_TYPED)));
             currentIndex += parameterType.getStackSize().getSize();
         }
         return instruction;
@@ -169,7 +169,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         : MethodConstant.forMethod(instrumentedMethod),
                 ArrayFactory.forType(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(invocationHandlerType.getDeclaredMethods().getOnly()),
-                assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType(), true),
+                assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType(), Assigner.DYNAMICALLY_TYPED),
                 MethodReturn.returning(instrumentedMethod.getReturnType())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

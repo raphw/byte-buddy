@@ -472,7 +472,7 @@ public @interface FieldProxy {
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodInvocation.invoke(getterMethod),
-                                assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), true),
+                                assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.DYNAMICALLY_TYPED),
                                 MethodReturn.returning(instrumentedMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -614,7 +614,7 @@ public @interface FieldProxy {
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodVariableAccess.forType(parameterType).loadOffset(1),
-                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getTypeDescription(), true),
+                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getTypeDescription(), Assigner.DYNAMICALLY_TYPED),
                                 MethodInvocation.invoke(setterMethod),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext);
