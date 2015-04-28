@@ -44,7 +44,9 @@ mvn package
         current test coverage is at
         <a href="https://coveralls.io/r/raphw/byte-buddy?branch=master" class="social-link">
             <img src="http://img.shields.io/coveralls/raphw/byte-buddy/master.svg" alt="Byte Buddy code coverage"/>
-        </a>.
+        </a>. As a more modern alternative, Byte Buddy also supports running mutation tests by running
+        <code>org.pitest:pitest-maven:mutationCoverage</code> from Maven. Keep however in mind that running mutation
+        tests requires a significant amount of additional runtime compared to computing line coverage.
     </p>
 
     <p>
