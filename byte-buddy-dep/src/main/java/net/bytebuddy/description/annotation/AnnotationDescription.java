@@ -1572,7 +1572,18 @@ public interface AnnotationDescription {
 
         @Override
         public S load(ClassLoader classLoader) {
-            return annotation;
+            ClassLoader thisClassLoader = annotation.getClass().getClassLoader();
+            ClassLoader otherClassLoader = classLoader;
+            while (otherClassLoader != null) {
+                if (otherClassLoader == thisClassLoader) {
+                    break;
+                }
+                otherClassLoader = otherClassLoader.getParent();
+            }
+            if (otherClassLoader != thisClassLoader) {
+                throw new IllegalArgumentException(annotation + " is not loaded using " + classLoader);
+            }
+            return load();
         }
 
         @Override
@@ -1600,8 +1611,8 @@ public interface AnnotationDescription {
         @Override
         @SuppressWarnings("unchecked")
         public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
-            if (!annotation.annotationType().equals(annotationType)) {
-                throw new IllegalArgumentException("Annotation is not of type " + annotationType);
+            if (annotation.annotationType() != annotationType) {
+                throw new IllegalArgumentException(annotation + " type is not of identical to " + annotationType);
             }
             return (Loadable<T>) this;
         }

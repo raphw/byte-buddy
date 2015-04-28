@@ -44,6 +44,7 @@
 
     <build>
         <plugins>
+            <!-- Build Android application from Maven -->
             <plugin>
                 <groupId>com.jayway.maven.plugins.android.generation2</groupId>
                 <artifactId>android-maven-plugin</artifactId>
@@ -61,6 +62,16 @@
             </plugin>
             <plugin>
                 <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <!-- Mutation testing is not required for this example project -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>${version.plugin.pitest}</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>

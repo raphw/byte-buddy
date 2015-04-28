@@ -122,4 +122,5 @@ constructor interception where a hard-coded super method call is required by the
 
 ### Current snapshot
 
-Currently, there are no changes.
+- Made the `TypeDescription.ForLoadedType` class loader agnostic. Before, a class that was loaded by multiple class
+  loaders would have been considered inequal what is not true for the byte code level.

@@ -54,6 +54,20 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <!-- Mutation testing is not required for benchmarks -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>${version.plugin.pitest}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <profiles>
         <profile>
             <id>extras</id>

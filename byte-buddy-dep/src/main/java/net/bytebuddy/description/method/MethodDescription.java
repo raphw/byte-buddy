@@ -571,7 +571,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean represents(Constructor<?> constructor) {
-            return this.constructor.equals(constructor);
+            return this.constructor.equals(constructor) || equals(new ForLoadedConstructor(constructor));
         }
 
         @Override
@@ -666,7 +666,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean represents(Method method) {
-            return this.method.equals(method);
+            return this.method.equals(method) || equals(new ForLoadedMethod(method));
         }
 
         @Override

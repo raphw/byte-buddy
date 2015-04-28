@@ -35,18 +35,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <code.level>1.6</code.level>
-        <cobertura.exclude.benchmark.generated>
-            net/bytebuddy/benchmark/generated/**/*.class
-        </cobertura.exclude.benchmark.generated>
-        <cobertura.exclude.benchmark.jmh>
-            org/openjdk/jmh/infra/generated/**/*.class
-        </cobertura.exclude.benchmark.jmh>
-        <cobertura.exclude.benchmark.runner>
-            net/bytebuddy/benchmark/runner/**/*.class
-        </cobertura.exclude.benchmark.runner>
-        <cobertura.exclude.android.test>
-            net/bytebuddy/android/test/**/*.class
-        </cobertura.exclude.android.test>
+        <pitest.target>net.bytebuddy</pitest.target>
+        <cobertura.exclude.benchmark.generated>net/bytebuddy/benchmark/generated/**/*.class</cobertura.exclude.benchmark.generated>
+        <cobertura.exclude.benchmark.jmh>org/openjdk/jmh/infra/generated/**/*.class</cobertura.exclude.benchmark.jmh>
+        <cobertura.exclude.benchmark.runner>net/bytebuddy/benchmark/runner/**/*.class</cobertura.exclude.benchmark.runner>
+        <cobertura.exclude.android.test>net/bytebuddy/android/test/**/*.class</cobertura.exclude.android.test>
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
@@ -63,6 +56,7 @@
         <version.plugin.jxr>2.4</version.plugin.jxr>
         <version.plugin.release>2.5.1</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
+        <version.plugin.pitest>1.1.5</version.plugin.pitest>
         <version.plugin.cobertura>2.6</version.plugin.cobertura>
         <version.plugin.coveralls>3.0.1</version.plugin.coveralls>
         <version.plugin.checkstyle>2.14</version.plugin.checkstyle>
@@ -150,6 +144,21 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
+            <!-- Enable mutation testing -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>${version.plugin.pitest}</version>
+                <configuration>
+                    <verbose>true</verbose>
+                    <targetClasses>
+                        <param>${pitest.target}.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>${pitest.target}.*</param>
+                    </targetTests>
+                </configuration>
+            </plugin>
             <!-- Configure Cobertura support for evaluating test case coverage -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -212,6 +221,7 @@
         </pluginManagement>
     </build>
 
+    <!-- Define explicit version to overcome problem with generated reports -->
     <reporting>
         <plugins>
             <plugin>

@@ -3,7 +3,9 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.Opcodes;
@@ -16,6 +18,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -293,6 +296,20 @@ public abstract class AbstractTypeDescriptionTest {
         assertThat(describe(Object.class).isAssignableFrom(boolean[].class), is(true));
         assertThat(describe(boolean[].class).isAssignableTo(Object[].class), is(false));
         assertThat(describe(Object[].class).isAssignableFrom(boolean[].class), is(false));
+    }
+
+    @Test
+    public void testIsAssignableClassLoader() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                Collections.singletonMap(SampleClass.class.getName(), ClassFileExtraction.extract(SampleClass.class)),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT);
+        Class<?> otherSampleClass = classLoader.loadClass(SampleClass.class.getName());
+        assertThat(describe(SampleClass.class).isAssignableFrom(describe(otherSampleClass)), is(true));
+        assertThat(describe(SampleClass.class).isAssignableTo(describe(otherSampleClass)), is(true));
+        assertThat(describe(Object.class).isAssignableFrom(describe(otherSampleClass)), is(true));
+        assertThat(describe(otherSampleClass).isAssignableTo(describe(Object.class)), is(true));
+
     }
 
     @Test

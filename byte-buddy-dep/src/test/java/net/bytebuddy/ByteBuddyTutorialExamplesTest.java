@@ -9,6 +9,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -25,6 +26,7 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import net.bytebuddy.test.utility.ToolsJarRule;
@@ -39,6 +41,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -149,12 +153,13 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedTypePool() throws Exception {
         TypePool typePool = TypePool.Default.ofClassPath();
-        new ByteBuddy().redefine(typePool.describe(getClass().getName() + "$UnloadedBar").resolve(),
+        ClassLoader classLoader = new URLClassLoader(new URL[0], null); // Assure repeatability
+        new ByteBuddy().redefine(typePool.describe(UnloadedBar.class.getName()).resolve(),
                 ClassFileLocator.ForClassLoader.ofClassPath())
                 .defineField("qux", String.class)
                 .make()
-                .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION);
-        assertThat(UnloadedBar.class.getDeclaredField("qux"), notNullValue(java.lang.reflect.Field.class));
+                .load(classLoader, ClassLoadingStrategy.Default.INJECTION);
+        assertThat(classLoader.loadClass(UnloadedBar.class.getName()).getDeclaredField("qux"), notNullValue(java.lang.reflect.Field.class));
     }
 
     @Test

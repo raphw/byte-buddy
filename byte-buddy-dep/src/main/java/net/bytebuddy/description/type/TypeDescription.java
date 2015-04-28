@@ -674,14 +674,56 @@ public interface TypeDescription extends ByteCodeElement {
             this.type = type;
         }
 
+        /**
+         * Checks if two types are assignable to each other. This check makes use of the fact that two types are loaded and
+         * have a {@link ClassLoader} which allows to check a type's assignability in a more efficient manner. However, two
+         * {@link Class} instances are considered assignable by this method, even if their loaded versions are not assignable
+         * as of class loader conflicts.
+         *
+         * @param sourceType The type to which another type should be assigned to.
+         * @param targetType The type which is to be assigned to another type.
+         * @return {@code true} if the source type is assignable from the target type.
+         */
+        private static boolean isAssignable(Class<?> sourceType, Class<?> targetType) {
+            if (sourceType.isAssignableFrom(targetType)) {
+                return true;
+            } else if (sourceType.isPrimitive() || targetType.isPrimitive()) {
+                return false; // Implied by 'sourceType.isAssignableFrom(targetType)'
+            } else if (targetType.isArray()) {
+                // Checks for 'Object', 'Serializable' and 'Cloneable' are implied by 'sourceType.isAssignableFrom(targetType)'
+                return sourceType.isArray() && isAssignable(sourceType.getComponentType(), targetType.getComponentType());
+            } else if (sourceType.getClassLoader() != targetType.getClassLoader()) {
+                // (1) Both types are equal by their name which means that they represent the same class on the byte code level.
+                if (sourceType.getName().equals(targetType.getName())) {
+                    return true;
+                }
+                Class<?> targetTypeSuperType = targetType.getSuperclass();
+                if (targetTypeSuperType != null && isAssignable(sourceType, targetTypeSuperType)) {
+                    return true;
+                }
+                // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
+                if (sourceType.isInterface()) {
+                    for (Class<?> interfaceType : targetType.getInterfaces()) {
+                        if (isAssignable(sourceType, interfaceType)) {
+                            return true;
+                        }
+                    }
+                }
+                // (3) None of these criteria are true, i.e. the types are not assignable.
+                return false;
+            } else /* if (sourceType.getClassLoader() == targetType.getClassLoader() // implied by assignable check */ {
+                return false; // For equal class loader, the check is implied by 'sourceType.isAssignableFrom(targetType)'
+            }
+        }
+
         @Override
         public boolean isInstance(Object value) {
-            return type.isInstance(value);
+            return type.isInstance(value) || super.isInstance(value); // Consider class loaded by multiple class loaders.
         }
 
         @Override
         public boolean isAssignableFrom(Class<?> type) {
-            return this.type.isAssignableFrom(type);
+            return isAssignable(this.type, type);
         }
 
         @Override
@@ -691,7 +733,7 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public boolean isAssignableTo(Class<?> type) {
-            return type.isAssignableFrom(this.type);
+            return isAssignable(type, this.type);
         }
 
         @Override
@@ -701,7 +743,7 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public boolean represents(Class<?> type) {
-            return type == this.type;
+            return type == this.type || equals(new ForLoadedType(type));
         }
 
         @Override
@@ -716,7 +758,10 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public TypeDescription getComponentType() {
-            return type.getComponentType() == null ? null : new TypeDescription.ForLoadedType(type.getComponentType());
+            Class<?> componentType = type.getComponentType();
+            return componentType == null
+                    ? null
+                    : new TypeDescription.ForLoadedType(componentType);
         }
 
         @Override
@@ -731,12 +776,15 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public TypeDescription getSupertype() {
-            return type.getSuperclass() == null ? null : new TypeDescription.ForLoadedType(type.getSuperclass());
+            Class<?> superType = type.getSuperclass();
+            return superType == null
+                    ? null
+                    : new TypeDescription.ForLoadedType(superType);
         }
 
         @Override
         public TypeList getInterfaces() {
-            return type.isArray()
+            return isArray()
                     ? new TypeList.ForLoadedType(Cloneable.class, Serializable.class)
                     : new TypeList.ForLoadedType(type.getInterfaces());
         }
@@ -744,7 +792,9 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public TypeDescription getDeclaringType() {
             Class<?> declaringType = type.getDeclaringClass();
-            return declaringType == null ? null : new TypeDescription.ForLoadedType(declaringType);
+            return declaringType == null
+                    ? null
+                    : new TypeDescription.ForLoadedType(declaringType);
         }
 
         @Override
@@ -763,7 +813,9 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public TypeDescription getEnclosingType() {
             Class<?> enclosingType = type.getEnclosingClass();
-            return enclosingType == null ? null : new TypeDescription.ForLoadedType(enclosingType);
+            return enclosingType == null
+                    ? null
+                    : new TypeDescription.ForLoadedType(enclosingType);
         }
 
         @Override
@@ -929,7 +981,10 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public boolean isAssignableTo(TypeDescription typeDescription) {
-            return typeDescription.represents(Object.class) || isArrayAssignable(typeDescription, this);
+            return typeDescription.represents(Object.class)
+                    || typeDescription.represents(Serializable.class)
+                    || typeDescription.represents(Cloneable.class)
+                    || isArrayAssignable(typeDescription, this);
         }
 
         @Override
