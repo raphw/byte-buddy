@@ -7,6 +7,8 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,6 +41,17 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
     public void testInoperational() throws Exception {
         describe(PrivateAnnotation.Defect.INSTANCE, Carrier.class)
                 .getValue(new MethodDescription.ForLoadedMethod(PrivateAnnotation.class.getDeclaredMethod("value")));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLoadAnnotationWrongClassLoader() throws Exception {
+        describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class).prepare(PrivateAnnotation.class).load(null);
+    }
+
+    @Test
+    public void testLoadAnnotationSubClassLoader() throws Exception {
+        assertThat(describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class).prepare(PrivateAnnotation.class)
+                .load(new URLClassLoader(new URL[0], getClass().getClassLoader())), is(Carrier.class.getAnnotation(PrivateAnnotation.class)));
     }
 
     @Retention(RetentionPolicy.RUNTIME)
