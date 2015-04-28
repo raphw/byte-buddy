@@ -150,7 +150,6 @@
                 <artifactId>pitest-maven</artifactId>
                 <version>${version.plugin.pitest}</version>
                 <configuration>
-                    <verbose>true</verbose>
                     <targetClasses>
                         <param>${pitest.target}.*</param>
                     </targetClasses>
