@@ -22,6 +22,10 @@
       - gpg: Sign all artifacts using gpg. (activated on release)
       - checks: Applies style checks to the source files. (activated by default, activated on release)
       - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
+
+      Additionally, the following reports are configured:
+      - cobertura:cobertura - Computes line coverage for test suite
+      - org.pitest:pitest-maven:mutationCoverage - Runs mutation tests
     -->
 
     <modules>
