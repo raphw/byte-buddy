@@ -4,7 +4,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>0.7-SNAPSHOT</version>
+    <version>0.6.3</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -98,7 +98,7 @@
         <connection>scm:git:git@github.com:raphw/byte-buddy.git</connection>
         <developerConnection>scm:git:git@github.com:raphw/byte-buddy.git</developerConnection>
         <url>git@github.com:raphw/byte-buddy.git</url>
-        <tag>HEAD</tag>
+        <tag>byte-buddy-0.6.3</tag>
     </scm>
 
     <dependencyManagement>
