@@ -120,7 +120,11 @@ constructor interception where a hard-coded super method call is required by the
   the class's structure, i.e. default methods on Java interfaces in version seven.
 - Added default `Assigner` singleton.
 
-### Current snapshot
+### 29. April 2015: Version 0.6.3
 
 - Made the `TypeDescription.ForLoadedType` class loader agnostic. Before, a class that was loaded by multiple class
   loaders would have been considered inequal what is not true for the byte code level.
+
+### Current snapshot
+
+Currently, there are no changes.
