@@ -484,6 +484,16 @@ public class ByteBuddy {
     /**
      * Creates a new enumeration type.
      *
+     * @param value The enumeration values to define.
+     * @return A builder for a new enumeration type with the given values.
+     */
+    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(String... value) {
+        return makeEnumeration(Arrays.asList(value));
+    }
+
+    /**
+     * Creates a new enumeration type.
+     *
      * @param values The enumeration values to define.
      * @return A builder for a new enumeration type with the given values.
      */
@@ -1968,6 +1978,11 @@ public class ByteBuddy {
         @Override
         public DynamicType.Builder<? extends Annotation> makeAnnotation() {
             return materialize().makeAnnotation();
+        }
+
+        @Override
+        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(String... value) {
+            return materialize().makeEnumeration(value);
         }
 
         @Override
