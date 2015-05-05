@@ -41,10 +41,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
@@ -487,12 +484,12 @@ public class ByteBuddy {
     /**
      * Creates a new enumeration type.
      *
-     * @param value The enumeration values to define.
+     * @param values The enumeration values to define.
      * @return A builder for a new enumeration type with the given values.
      */
     @SuppressWarnings("unchecked")
-    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(String... value) {
-        if (value.length == 0) {
+    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(List<String> values) {
+        if (values.size() == 0) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
         return new SubclassDynamicTypeBuilder<Enum<?>>(classFileVersion,
@@ -527,7 +524,7 @@ public class ByteBuddy {
                         TargetType[].class,
                         Collections.<Class<?>>emptyList(),
                         Visibility.PUBLIC, Ownership.STATIC)
-                .intercept(new EnumerationImplementation(nonNull(value)));
+                .intercept(new EnumerationImplementation(nonNull(values)));
     }
 
     /**
@@ -1974,8 +1971,8 @@ public class ByteBuddy {
         }
 
         @Override
-        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(String... value) {
-            return materialize().makeEnumeration(value);
+        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(List<String> values) {
+            return materialize().makeEnumeration(values);
         }
 
         @Override
@@ -2153,25 +2150,25 @@ public class ByteBuddy {
         /**
          * The names of the enumerations to define for the enumeration.
          */
-        private final String[] value;
+        private final List<String> values;
 
         /**
          * Creates a new implementation of an enumeration type.
          *
-         * @param value The values of the enumeration.
+         * @param values The values of the enumeration.
          */
-        protected EnumerationImplementation(String[] value) {
-            this.value = value;
+        protected EnumerationImplementation(List<String> values) {
+            this.values = values;
         }
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            for (String aValue : value) {
-                instrumentedType = instrumentedType.withField(aValue, instrumentedType, ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM);
+            for (String value : values) {
+                instrumentedType = instrumentedType.withField(value, instrumentedType, ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM);
             }
             return instrumentedType
                     .withField(ENUM_VALUES, TypeDescription.ArrayProjection.of(instrumentedType, 1), ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC)
-                    .withInitializer(new InitializationAppender(value));
+                    .withInitializer(new InitializationAppender(values));
         }
 
         @Override
@@ -2182,18 +2179,18 @@ public class ByteBuddy {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(value, ((EnumerationImplementation) other).value);
+                    && values.equals(((EnumerationImplementation) other).values);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(value);
+            return values.hashCode();
         }
 
         @Override
         public String toString() {
             return "ByteBuddy.EnumerationImplementation{" +
-                    "value=" + Arrays.toString(value) +
+                    "values=" + values +
                     '}';
         }
 
@@ -2260,15 +2257,15 @@ public class ByteBuddy {
             /**
              * The values of the enumeration that is being created.
              */
-            private final String[] value;
+            private final List<String> values;
 
             /**
              * Creates an appender for an enumerations type initializer.
              *
-             * @param value The values of the enumeration that is being created.
+             * @param values The values of the enumeration that is being created.
              */
-            protected InitializationAppender(String[] value) {
-                this.value = value;
+            protected InitializationAppender(List<String> values) {
+                this.values = values;
             }
 
             @Override
@@ -2279,19 +2276,19 @@ public class ByteBuddy {
                         .getOnly();
                 int ordinal = 0;
                 StackManipulation stackManipulation = StackManipulation.LegalTrivial.INSTANCE;
-                List<FieldDescription> enumerationFields = new ArrayList<FieldDescription>(value.length);
-                for (String aValue : value) {
-                    FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(aValue)).getOnly();
+                List<FieldDescription> enumerationFields = new ArrayList<FieldDescription>(values.size());
+                for (String value : values) {
+                    FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(value)).getOnly();
                     stackManipulation = new StackManipulation.Compound(stackManipulation,
                             TypeCreation.forType(instrumentedType),
                             Duplication.SINGLE,
-                            new TextConstant(aValue),
+                            new TextConstant(value),
                             IntegerConstant.forValue(ordinal++),
                             MethodInvocation.invoke(enumConstructor),
                             FieldAccess.forField(fieldDescription).putter());
                     enumerationFields.add(fieldDescription);
                 }
-                List<StackManipulation> fieldGetters = new ArrayList<StackManipulation>(value.length);
+                List<StackManipulation> fieldGetters = new ArrayList<StackManipulation>(values.size());
                 for (FieldDescription fieldDescription : enumerationFields) {
                     fieldGetters.add(FieldAccess.forField(fieldDescription).getter());
                 }
@@ -2306,18 +2303,18 @@ public class ByteBuddy {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && Arrays.equals(value, ((InitializationAppender) other).value);
+                        && values.equals(((InitializationAppender) other).values);
             }
 
             @Override
             public int hashCode() {
-                return Arrays.hashCode(value);
+                return values.hashCode();
             }
 
             @Override
             public String toString() {
                 return "ByteBuddy.EnumerationImplementation.InitializationAppender{" +
-                        "value=" + Arrays.toString(value) +
+                        "values=" + values +
                         '}';
             }
         }

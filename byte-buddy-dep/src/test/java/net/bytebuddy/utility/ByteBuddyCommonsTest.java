@@ -19,9 +19,7 @@ import java.lang.annotation.Retention;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -296,6 +294,21 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsThrowableForNonThrowables() throws Exception {
         isThrowable(Arrays.asList(first, second));
+    }
+
+    @Test
+    public void testToListNonList() throws Exception {
+        List<String> list = toList(new HashSet<String>(Arrays.asList(FOO, BAR)));
+        assertThat(list.size(), is(2));
+        assertThat(list.contains(FOO), is(true));
+        assertThat(list.contains(BAR), is(true));
+    }
+
+    @Test
+    public void testToListList() throws Exception {
+        List<String> original = Arrays.asList(FOO, BAR);
+        List<String> list = toList(original);
+        assertThat(list, sameInstance(original));
     }
 
     @Test

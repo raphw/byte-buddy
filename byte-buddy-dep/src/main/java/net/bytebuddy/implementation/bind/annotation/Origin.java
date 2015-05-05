@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
  * <li>If the annotated parameter is of type {@link java.lang.String}, the parameter is assigned a string with
  * the value that would be returned by the {@link Method#toString()} method.
  * </li>
+ * <li>If the annotated parameter is a {@code int} type, it is assigned the intercepted method's modifiers.</li>
  * <li>If the annotated type is {@code java.lang.invoke.MethodHandle}, a handle of the intercepted method is injected.
  * A {@code java.lang.invoke.MethodHandle} is stored in a class's constant pool and does therefore not face the same
  * runtime performance limitations as a (non-cached) {@link java.lang.reflect.Method} reference. Method handles are
@@ -83,14 +84,16 @@ public @interface Origin {
                         : MethodConstant.forMethod(source));
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.toString()));
+            } else if (parameterType.represents(int.class)) {
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(IntegerConstant.forValue(source.getModifiers()));
             } else if (parameterType.equals(JavaType.METHOD_HANDLE.getTypeStub())) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodHandleConstant.of(source));
             } else if (parameterType.equals(JavaType.METHOD_TYPE.getTypeStub())) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodTypeConstant.of(source));
             } else {
                 throw new IllegalStateException("The " + target + " method's " + target.getIndex() +
-                        " parameter is annotated with a Origin annotation with an argument not representing a Class" +
-                        " Method, String, MethodType or MethodHandle type");
+                        " parameter is annotated with a Origin annotation with an argument not representing a Class," +
+                        " Method, String, int, MethodType or MethodHandle type");
             }
         }
 

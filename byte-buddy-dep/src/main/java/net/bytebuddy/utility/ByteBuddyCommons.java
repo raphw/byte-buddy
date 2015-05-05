@@ -425,4 +425,18 @@ public final class ByteBuddyCommons {
         }
         return types;
     }
+
+    /**
+     * Converts a collection to a list, either by casting or by explicit conversion.
+     *
+     * @param collection The collection to convert to a list.
+     * @param <T>        The element type of the collection.
+     * @return The list representing the elements of the collection.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> List<T> toList(Collection<T> collection) {
+        return collection instanceof List
+                ? (List<T>) collection
+                : new ArrayList<T>(collection);
+    }
 }
