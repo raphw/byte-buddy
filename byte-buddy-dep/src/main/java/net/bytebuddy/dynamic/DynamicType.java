@@ -183,20 +183,28 @@ public interface DynamicType {
         Builder<T> classFileVersion(ClassFileVersion classFileVersion);
 
         /**
-         * Adds an interface to be implemented the created type.
+         * Adds the given interfaces to be implemented by the created type.
          *
-         * @param interfaceType The interface to implement.
-         * @return A builder which will create a dynamic type that implements the given interface.
+         * @param interfaceType The interfaces to implement.
+         * @return A builder which will create a dynamic type that implements the given interfaces.
          */
         OptionalMatchedMethodInterception<T> implement(Class<?>... interfaceType);
 
         /**
-         * Adds an interface to be implemented the created type.
+         * Adds the given interfaces to be implemented by the created type.
          *
-         * @param interfaceType A description of the interface to implement.
-         * @return A builder which will create a dynamic type that implements the given interface.
+         * @param interfaceType A description of the interfaces to implement.
+         * @return A builder which will create a dynamic type that implements the given interfaces.
          */
         OptionalMatchedMethodInterception<T> implement(TypeDescription... interfaceType);
+
+        /**
+         * Adds the given interfaces to be implemented by the created type.
+         *
+         * @param interfaceTypes A description of the interfaces to implement.
+         * @return A builder which will create a dynamic type that implements the given interfaces.
+         */
+        OptionalMatchedMethodInterception<T> implement(Collection<? extends TypeDescription> interfaceTypes);
 
         /**
          * Names the currently created dynamic type by a fixed name.
@@ -276,6 +284,16 @@ public interface DynamicType {
          * @return A builder that will add the given annotation to the created type.
          */
         Builder<T> annotateType(AnnotationDescription... annotation);
+
+        /**
+         * Adds annotations to the currently constructed type.
+         * <p>&nbsp;</p>
+         * Note: The annotations will not be visible to {@link Implementation}s.
+         *
+         * @param annotations The annotations to be added to the currently constructed type.
+         * @return A builder that will add the given annotation to the created type.
+         */
+        Builder<T> annotateType(Collection<? extends AnnotationDescription> annotations);
 
         /**
          * Adds an additional ASM {@link org.objectweb.asm.ClassVisitor} to this builder which will be applied in
@@ -708,20 +726,29 @@ public interface DynamicType {
             /**
              * Defines a number of {@link java.lang.Throwable} types to be include in the exception declaration.
              *
-             * @param type The types that should be declared to be thrown by the selected method.
+             * @param exceptionType The types that should be declared to be thrown by the selected method.
              * @return A target for instrumenting the defined method where the method will declare the given exception
              * types.
              */
-            MatchedMethodInterception<S> throwing(Class<?>... type);
+            MatchedMethodInterception<S> throwing(Class<?>... exceptionType);
 
             /**
              * Defines a number of {@link java.lang.Throwable} types to be include in the exception declaration.
              *
-             * @param type Descriptions of the types that should be declared to be thrown by the selected method.
+             * @param exceptionType Descriptions of the types that should be declared to be thrown by the selected method.
              * @return A target for instrumenting the defined method where the method will declare the given exception
              * types.
              */
-            MatchedMethodInterception<S> throwing(TypeDescription... type);
+            MatchedMethodInterception<S> throwing(TypeDescription... exceptionType);
+
+            /**
+             * Defines a number of {@link java.lang.Throwable} types to be include in the exception declaration.
+             *
+             * @param exceptionTypes Descriptions of the types that should be declared to be thrown by the selected method.
+             * @return A target for instrumenting the defined method where the method will declare the given exception
+             * types.
+             */
+            MatchedMethodInterception<S> throwing(Collection<? extends TypeDescription> exceptionTypes);
         }
 
         /**
@@ -765,6 +792,28 @@ public interface DynamicType {
             MethodAnnotationTarget<S> annotateMethod(Annotation... annotation);
 
             /**
+             * Defines annotations to be added to the currently selected method.
+             * <p>&nbsp;</p>
+             * Note: The annotations will not be visible to
+             * {@link Implementation}s.
+             *
+             * @param annotation The annotations to add to the currently selected methods.
+             * @return A builder where the given annotation will be added to the currently selected methods.
+             */
+            MethodAnnotationTarget<S> annotateMethod(AnnotationDescription... annotation);
+
+            /**
+             * Defines annotations to be added to the currently selected method.
+             * <p>&nbsp;</p>
+             * Note: The annotations will not be visible to
+             * {@link Implementation}s.
+             *
+             * @param annotations The annotations to add to the currently selected methods.
+             * @return A builder where the given annotation will be added to the currently selected methods.
+             */
+            MethodAnnotationTarget<S> annotateMethod(Collection<? extends AnnotationDescription> annotations);
+
+            /**
              * Defines annotations to be added to a parameter of the currently selected methods.
              * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
@@ -778,17 +827,6 @@ public interface DynamicType {
             MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Annotation... annotation);
 
             /**
-             * Defines annotations to be added to the currently selected method.
-             * <p>&nbsp;</p>
-             * Note: The annotations will not be visible to
-             * {@link Implementation}s.
-             *
-             * @param annotation The annotations to add to the currently selected methods.
-             * @return A builder where the given annotation will be added to the currently selected methods.
-             */
-            MethodAnnotationTarget<S> annotateMethod(AnnotationDescription... annotation);
-
-            /**
              * Defines annotations to be added to a parameter of the currently selected methods.
              * <p>&nbsp;</p>
              * Note: The annotations will not be visible to
@@ -800,6 +838,19 @@ public interface DynamicType {
              * methods.
              */
             MethodAnnotationTarget<S> annotateParameter(int parameterIndex, AnnotationDescription... annotation);
+
+            /**
+             * Defines annotations to be added to a parameter of the currently selected methods.
+             * <p>&nbsp;</p>
+             * Note: The annotations will not be visible to
+             * {@link Implementation}s.
+             *
+             * @param parameterIndex The index of the parameter to annotate.
+             * @param annotations    The annotations to add to a parameter of the currently selected methods.
+             * @return A builder where the given annotation will be added to a parameter of the currently selected
+             * methods.
+             */
+            MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations);
         }
 
         /**
@@ -1008,6 +1059,16 @@ public interface DynamicType {
              * @return A builder where the given annotation will be added to the currently selected field.
              */
             FieldAnnotationTarget<S> annotateField(AnnotationDescription... annotation);
+
+            /**
+             * Defines annotations to be added to the currently selected field.
+             * <p>&nbsp;</p>
+             * Note: The annotations will not be visible to {@link Implementation}s.
+             *
+             * @param annotations The annotations to add to the currently selected field.
+             * @return A builder where the given annotation will be added to the currently selected field.
+             */
+            FieldAnnotationTarget<S> annotateField(Collection<? extends AnnotationDescription> annotations);
         }
 
         /**
@@ -1191,12 +1252,17 @@ public interface DynamicType {
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(Class<?>... interfaceType) {
-                TypeDescription[] typeDescription = new TypeDescription[interfaceType.length];
-                int index = 0;
-                for (Class<?> type : interfaceType) {
-                    typeDescription[index++] = new TypeDescription.ForLoadedType(type);
-                }
-                return implement(typeDescription);
+                return implement(new TypeList.ForLoadedType(nonNull(interfaceType)));
+            }
+
+            @Override
+            public OptionalMatchedMethodInterception<S> implement(TypeDescription... interfaceType) {
+                return implement(Arrays.asList(interfaceType));
+            }
+
+            @Override
+            public OptionalMatchedMethodInterception<S> implement(Collection<? extends TypeDescription> interfaceTypes) {
+                return new DefaultOptionalMatchedMethodInterception(new ArrayList<TypeDescription>(isInterface(interfaceTypes)));
             }
 
             @Override
@@ -1403,12 +1469,17 @@ public interface DynamicType {
 
             @Override
             public Builder<S> annotateType(Annotation... annotation) {
-                return attribute(new TypeAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+                return annotateType((new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
             }
 
             @Override
             public Builder<S> annotateType(AnnotationDescription... annotation) {
-                return attribute(new TypeAttributeAppender.ForAnnotation(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
+                return annotateType(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation))));
+            }
+
+            @Override
+            public Builder<S> annotateType(Collection<? extends AnnotationDescription> annotations) {
+                return attribute(new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations))));
             }
 
             @Override
@@ -1472,11 +1543,6 @@ public interface DynamicType {
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
                         methodTokens);
-            }
-
-            @Override
-            public OptionalMatchedMethodInterception<S> implement(TypeDescription... interfaceType) {
-                return new DefaultOptionalMatchedMethodInterception(isInterface(interfaceType));
             }
 
             @Override
@@ -2046,6 +2112,11 @@ public interface DynamicType {
                 }
 
                 @Override
+                public OptionalMatchedMethodInterception<U> implement(Collection<? extends TypeDescription> typeDescriptions) {
+                    return materialize().implement(typeDescriptions);
+                }
+
+                @Override
                 public Builder<U> name(String name) {
                     return materialize().name(name);
                 }
@@ -2088,6 +2159,11 @@ public interface DynamicType {
                 @Override
                 public Builder<U> annotateType(AnnotationDescription... annotation) {
                     return materialize().annotateType(annotation);
+                }
+
+                @Override
+                public Builder<U> annotateType(Collection<? extends AnnotationDescription> annotations) {
+                    return materialize().annotateType(annotations);
                 }
 
                 @Override
@@ -2398,12 +2474,17 @@ public interface DynamicType {
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(Annotation... annotation) {
-                    return attribute(new FieldAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+                    return annotateField((new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
                 }
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(AnnotationDescription... annotation) {
-                    return attribute(new FieldAttributeAppender.ForAnnotation(Arrays.asList(nonNull(annotation))));
+                    return annotateField(Arrays.asList(nonNull(annotation)));
+                }
+
+                @Override
+                public FieldAnnotationTarget<S> annotateField(Collection<? extends AnnotationDescription> annotations) {
+                    return attribute(new FieldAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations))));
                 }
 
                 @Override
@@ -2568,16 +2649,21 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MatchedMethodInterception<S> throwing(Class<?>... type) {
-                    return throwing(new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
+                public MatchedMethodInterception<S> throwing(Class<?>... exceptionType) {
+                    return throwing(new TypeList.ForLoadedType(nonNull(exceptionType)));
                 }
 
                 @Override
-                public MatchedMethodInterception<S> throwing(TypeDescription... type) {
+                public MatchedMethodInterception<S> throwing(TypeDescription... exceptionType) {
+                    return throwing(Arrays.asList(nonNull(exceptionType)));
+                }
+
+                @Override
+                public MatchedMethodInterception<S> throwing(Collection<? extends TypeDescription> exceptionTypes) {
                     return materialize(new MethodToken(methodToken.getInternalName(),
                             methodToken.getReturnType(),
                             methodToken.getParameterTypes(),
-                            uniqueTypes(isThrowable(Arrays.asList(nonNull(type)))),
+                            unique(isThrowable(new ArrayList<TypeDescription>(exceptionTypes))),
                             methodToken.getModifiers()));
                 }
 
@@ -2719,22 +2805,32 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(Annotation... annotation) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
-                }
-
-                @Override
-                public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Annotation... annotation) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+                    return annotateMethod((new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(AnnotationDescription... annotation) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
+                    return annotateMethod(Arrays.asList(nonNull(annotation)));
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
+                    return attribute(new MethodAttributeAppender.ForAnnotation((nonNull(new ArrayList<AnnotationDescription>(annotations)))));
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Annotation... annotation) {
+                    return annotateParameter(parameterIndex, new AnnotationList.ForLoadedAnnotation(nonNull(annotation)));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, AnnotationDescription... annotation) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
+                    return annotateParameter(parameterIndex, Arrays.asList(nonNull(annotation)));
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
+                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, nonNull(new ArrayList<AnnotationDescription>(annotations))));
                 }
 
                 @Override
@@ -2791,35 +2887,35 @@ public interface DynamicType {
                 /**
                  * A list of all interfaces to implement.
                  */
-                private TypeDescription[] interfaceType;
+                private List<TypeDescription> additionalInterfaceTypes;
 
                 /**
                  * Creates a new subclass optional matched method interception.
                  *
-                 * @param interfaceType An array of all interfaces to implement.
+                 * @param interfaceTypes An array of all interfaces to implement.
                  */
-                private DefaultOptionalMatchedMethodInterception(TypeDescription[] interfaceType) {
-                    this.interfaceType = interfaceType;
+                protected DefaultOptionalMatchedMethodInterception(List<TypeDescription> interfaceTypes) {
+                    additionalInterfaceTypes = interfaceTypes;
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Implementation implementation) {
-                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).intercept(nonNull(implementation));
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).intercept(nonNull(implementation));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
-                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).withoutCode();
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withoutCode();
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
-                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).withDefaultValue(value, type);
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withDefaultValue(value, type);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
-                    return materialize().method(isDeclaredBy(anyOf((Object[]) interfaceType))).withDefaultValue(value);
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withDefaultValue(value);
                 }
 
                 @Override
@@ -2828,7 +2924,7 @@ public interface DynamicType {
                             namingStrategy,
                             auxiliaryTypeNamingStrategy,
                             targetType,
-                            joinUnique(interfaceTypes, isInterface(Arrays.asList(interfaceType))),
+                            joinUnique(interfaceTypes, additionalInterfaceTypes),
                             modifiers,
                             attributeAppender,
                             ignoredMethods,
@@ -2855,25 +2951,23 @@ public interface DynamicType {
                 @Override
                 @SuppressWarnings("unchecked")
                 public boolean equals(Object other) {
-                    if (this == other)
-                        return true;
-                    if (other == null || getClass() != other.getClass())
-                        return false;
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
                     DefaultOptionalMatchedMethodInterception that = (DefaultOptionalMatchedMethodInterception) other;
-                    return Arrays.equals(interfaceType, that.interfaceType)
+                    return additionalInterfaceTypes.equals(that.additionalInterfaceTypes)
                             && AbstractBase.this.equals(that.getDynamicTypeBuilder());
                 }
 
                 @Override
                 public int hashCode() {
-                    return 31 * AbstractBase.this.hashCode() + Arrays.hashCode(interfaceType);
+                    return 31 * AbstractBase.this.hashCode() + additionalInterfaceTypes.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "DynamicType.Builder.AbstractBase.DefaultOptionalMatchedMethodInterception{" +
                             "base=" + AbstractBase.this +
-                            "interfaceType=" + Arrays.toString(interfaceType) +
+                            "additionalInterfaceTypes=" + additionalInterfaceTypes +
                             '}';
                 }
             }

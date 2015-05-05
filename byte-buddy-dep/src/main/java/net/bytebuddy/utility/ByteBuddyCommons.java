@@ -394,20 +394,20 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that there are no duplicates for a list of type descriptions.
+     * Validates that there are no duplicates of the given item.
      *
-     * @param typeDescriptions The list to validate.
-     * @param <T>              The exact type of the list to validate.
-     * @return The same list that was given as an argument.
+     * @param items The collection to validate for uniqueness.
+     * @param <T>   The exact type of the collection to validate.
+     * @return The same collection that was given as an argument.
      */
-    public static <T extends List<? extends TypeDescription>> T uniqueTypes(T typeDescriptions) {
-        Set<String> types = new HashSet<String>(typeDescriptions.size());
-        for (TypeDescription typeDescription : typeDescriptions) {
-            if (!types.add(typeDescription.getInternalName())) {
-                throw new IllegalArgumentException("Type was found more than once: " + typeDescription);
+    public static <T extends Collection<?>> T unique(T items) {
+        Set<Object> types = new HashSet<Object>(items.size());
+        for (Object item : items) {
+            if (!types.add(item)) {
+                throw new IllegalArgumentException("Non-unique item was found: " + item);
             }
         }
-        return typeDescriptions;
+        return items;
     }
 
     /**

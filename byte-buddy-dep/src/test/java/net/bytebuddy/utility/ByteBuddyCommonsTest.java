@@ -278,12 +278,12 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testUniqueForUniqueTypes() throws Exception {
-        assertThat(uniqueTypes(Arrays.asList(first, second)), is(Arrays.asList(first, second)));
+        assertThat(unique(Arrays.asList(first, second)), is(Arrays.asList(first, second)));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testUniqueForNonUniqueTypes() throws Exception {
-        uniqueTypes(Arrays.asList(first, second, first));
+        unique(Arrays.asList(first, second, first));
     }
 
     @Test

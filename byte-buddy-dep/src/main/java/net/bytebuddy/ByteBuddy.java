@@ -437,12 +437,12 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
-    public DynamicType.Builder<?> makeInterface(List<TypeDescription> typeDescriptions) {
+    public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDescription> typeDescriptions) {
         return new SubclassDynamicTypeBuilder<Object>(classFileVersion,
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 TypeDescription.OBJECT,
-                join(interfaceTypes, nonNull(typeDescriptions)),
+                join(interfaceTypes, toList(nonNull(typeDescriptions))),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.INTERFACE.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
@@ -498,8 +498,8 @@ public class ByteBuddy {
      * @return A builder for a new enumeration type with the given values.
      */
     @SuppressWarnings("unchecked")
-    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(List<String> values) {
-        if (values.size() == 0) {
+    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<String> values) {
+        if (unique(nonNull(values)).size() == 0) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
         return new SubclassDynamicTypeBuilder<Enum<?>>(classFileVersion,
@@ -534,7 +534,7 @@ public class ByteBuddy {
                         TargetType[].class,
                         Collections.<Class<?>>emptyList(),
                         Visibility.PUBLIC, Ownership.STATIC)
-                .intercept(new EnumerationImplementation(nonNull(values)));
+                .intercept(new EnumerationImplementation(new ArrayList<String>(values)));
     }
 
     /**
@@ -871,19 +871,7 @@ public class ByteBuddy {
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(Annotation... annotation) {
-        return new ByteBuddy(classFileVersion,
-                namingStrategy,
-                auxiliaryTypeNamingStrategy,
-                interfaceTypes,
-                ignoredMethods,
-                bridgeMethodResolverFactory,
-                classVisitorWrapperChain,
-                methodRegistry,
-                modifiers,
-                new TypeAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))),
-                methodLookupEngineFactory,
-                defaultFieldAttributeAppenderFactory,
-                defaultMethodAttributeAppenderFactory);
+        return withTypeAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation)));
     }
 
     /**
@@ -895,6 +883,18 @@ public class ByteBuddy {
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(AnnotationDescription... annotation) {
+        return withTypeAnnotation(Arrays.asList(annotation));
+    }
+
+    /**
+     * Defines a new type annotation for this configuration that replaces the currently defined type
+     * attribute appender.
+     *
+     * @param annotations The type annotations to define for this configuration.
+     * @return A new configuration that represents this configuration with the given annotations as its new
+     * type attribute appender.
+     */
+    public ByteBuddy withTypeAnnotation(Collection<? extends AnnotationDescription> annotations) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
@@ -904,40 +904,46 @@ public class ByteBuddy {
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
-                new TypeAttributeAppender.ForAnnotation(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))),
+                new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations))),
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
     }
 
     /**
-     * Defines all dynamic types that are created by this configuration to implement the given interface.
+     * Defines all dynamic types that are created by this configuration to implement the given interfaces.
      *
-     * @param type The interface type to implement.
-     * @return This configuration where any dynamic type that is created by the resulting configuration will
-     * implement the given interface.
+     * @param type The interface types to implement.
+     * @return The same configuration where any dynamic type that is created by the resulting configuration will
+     * implement the given interfaces.
      */
     public OptionalMethodInterception withImplementing(Class<?>... type) {
-        TypeDescription[] typeDescription = new TypeDescription[type.length];
-        int index = 0;
-        for (Class<?> aType : type) {
-            typeDescription[index++] = new TypeDescription.ForLoadedType(aType);
-        }
-        return withImplementing(typeDescription);
+        return withImplementing(new TypeList.ForLoadedType(nonNull(type)));
     }
 
     /**
-     * Defines all dynamic types that are created by this configuration to implement the given interface.
+     * Defines all dynamic types that are created by this configuration to implement the given interfaces.
      *
-     * @param type The interface type to implement.
+     * @param type The interface types to implement.
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
-     * implement the given interface.
+     * implement the given interfaces.
      */
     public OptionalMethodInterception withImplementing(TypeDescription... type) {
+        return withImplementing(Arrays.asList(nonNull(type)));
+    }
+
+    /**
+     * Defines all dynamic types that are created by this configuration to implement the given interfaces.
+     *
+     * @param types The interface types to implement.
+     * @return The same configuration where any dynamic type that is created by the resulting configuration will
+     * implement the given interfaces.
+     */
+    public OptionalMethodInterception withImplementing(Collection<? extends TypeDescription> types) {
         return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
-                joinUnique(interfaceTypes, isInterface(Arrays.asList(type))),
+                joinUnique(interfaceTypes, toList(isInterface(types))),
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
@@ -947,7 +953,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf((Object[]) type))));
+                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new ArrayList<TypeDescription>(types)))));
     }
 
     /**
@@ -1468,7 +1474,29 @@ public class ByteBuddy {
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(Annotation... annotation) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+            return annotateMethod(new AnnotationList.ForLoadedAnnotation(nonNull(annotation)));
+        }
+
+        /**
+         * Defines an method annotation for the currently selected methods.
+         *
+         * @param annotation The annotations to defined for the currently selected methods.
+         * @return A method annotation target that represents the current configuration with the additional
+         * annotations added to the currently selected methods.
+         */
+        public MethodAnnotationTarget annotateMethod(AnnotationDescription... annotation) {
+            return annotateMethod(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation))));
+        }
+
+        /**
+         * Defines an method annotation for the currently selected methods.
+         *
+         * @param annotations The annotations to defined for the currently selected methods.
+         * @return A method annotation target that represents the current configuration with the additional
+         * annotations added to the currently selected methods.
+         */
+        public MethodAnnotationTarget annotateMethod(Collection<? extends AnnotationDescription> annotations) {
+            return attribute(new MethodAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations))));
         }
 
         /**
@@ -1482,18 +1510,7 @@ public class ByteBuddy {
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, Annotation... annotation) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
-        }
-
-        /**
-         * Defines an method annotation for the currently selected methods.
-         *
-         * @param annotation The annotations to defined for the currently selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
-         * annotations added to the currently selected methods.
-         */
-        public MethodAnnotationTarget annotateMethod(AnnotationDescription... annotation) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
+            return annotateParameter(parameterIndex, new AnnotationList.ForLoadedAnnotation(nonNull(annotation)));
         }
 
         /**
@@ -1507,7 +1524,21 @@ public class ByteBuddy {
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, AnnotationDescription... annotation) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new AnnotationList.Explicit(Arrays.asList(nonNull(annotation)))));
+            return annotateParameter(parameterIndex, new AnnotationList.Explicit(Arrays.asList(nonNull(annotation))));
+        }
+
+        /**
+         * Defines an method annotation for a parameter of the currently selected methods.
+         *
+         * @param parameterIndex The index of the parameter for which the annotations should be applied
+         *                       with the first parameter index by {@code 0}.
+         * @param annotations    The annotations to defined for the currently selected methods' parameters
+         *                       ath the given index.
+         * @return A method annotation target that represents the current configuration with the additional
+         * annotations added to the currently selected methods' parameters at the given index.
+         */
+        public MethodAnnotationTarget annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
+            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new ArrayList<AnnotationDescription>(nonNull(annotations))));
         }
 
         @Override
@@ -1916,6 +1947,11 @@ public class ByteBuddy {
         }
 
         @Override
+        public ByteBuddy withTypeAnnotation(Collection<? extends AnnotationDescription> annotations) {
+            return materialize().withTypeAnnotation(annotations);
+        }
+
+        @Override
         public OptionalMethodInterception withImplementing(Class<?>... type) {
             return materialize().withImplementing(type);
         }
@@ -1923,6 +1959,11 @@ public class ByteBuddy {
         @Override
         public OptionalMethodInterception withImplementing(TypeDescription... type) {
             return materialize().withImplementing(type);
+        }
+
+        @Override
+        public OptionalMethodInterception withImplementing(Collection<? extends TypeDescription> types) {
+            return materialize().withImplementing(types);
         }
 
         @Override
@@ -1971,7 +2012,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public DynamicType.Builder<?> makeInterface(List<TypeDescription> typeDescriptions) {
+        public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDescription> typeDescriptions) {
             return materialize().makeInterface(typeDescriptions);
         }
 
@@ -1986,7 +2027,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(List<String> values) {
+        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<String> values) {
             return materialize().makeEnumeration(values);
         }
 
