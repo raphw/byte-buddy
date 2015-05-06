@@ -1296,9 +1296,9 @@ void foo(Object o1, @Argument(0) Object o2, Object o3)
     </span></li>
     <li><span>
         Parameters that are annotated with <code>@Origin</code> must be of used on any of the types <code>Method</code>,
-        <code>Class</code>, <code>MethodHandle</code>, <code>MethodType</code> or <code>String</code>. Depending on
-        the parameter's type, it is assigned a <code>Method</code> reference to the original method that is now
-        instrumented or a reference to the dynamically created <code>Class</code>. If the annotated parameter is a
+        <code>Class</code>, <code>MethodHandle</code>, <code>MethodType</code>, <code>String</code> or <code>int</code>.
+        Depending on the parameter's type, it is assigned a <code>Method</code> reference to the original method that is
+        now instrumented or a reference to the dynamically created <code>Class</code>. If the annotated parameter is a
         <code>String</code>, the parameter is assigned the value that the <code>Method></code>'s <code>toString</code>
         method would have returned. In general, we recommend the use of these <code>String</code> values as
         method identifiers wherever possible and discourage the use of <code>Method</code> objects as their lookup
@@ -1307,7 +1307,8 @@ void foo(Object o1, @Argument(0) Object o2, Object o3)
         <code>MethodType</code> are stored in a class's constant pool such that classes using these constants must
         at least be of Java version 7. Instead of using reflection for reflectively invoking an intercepted method on
         another object, we furthermore recommend the use of the <code>@Pipe</code> annotation which is discussed later
-        in this section.
+        in this section. When using the <code>@Origin</code> annotation on a parameter of type <code>int</code>,
+        it is assigned the modifier of the instrumented method.
     </span></li>
 </ul>
 
