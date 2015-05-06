@@ -96,20 +96,20 @@ public class InvokeDynamic implements Implementation {
      * Implements the instrumented method with a dynamic method invocation which is linked at runtime using the
      * specified bootstrap method.
      *
-     * @param method   The bootstrap method that is used to link the instrumented method.
-     * @param argument The arguments that are handed to the bootstrap method. Any argument must be saved in the
-     *                 constant pool, i.e. primitive types (represented as their wrapper types) with a size of
-     *                 at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
-     *                 as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
-     *                 it is also possible to supply unloaded types as {@link TypeDescription},
-     *                 {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
-     *                 {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
-     *                 instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
+     * @param method      The bootstrap method that is used to link the instrumented method.
+     * @param rawArgument The arguments that are handed to the bootstrap method. Any argument must be saved in the
+     *                    constant pool, i.e. primitive types (represented as their wrapper types) with a size of
+     *                    at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     *                    as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
+     *                    it is also possible to supply unloaded types as {@link TypeDescription},
+     *                    {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
+     *                    {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                    instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
-    public static WithImplicitTarget bootstrap(Method method, Object... argument) {
-        return bootstrap(new MethodDescription.ForLoadedMethod(nonNull(method)), argument);
+    public static WithImplicitTarget bootstrap(Method method, Object... rawArgument) {
+        return bootstrap(new MethodDescription.ForLoadedMethod(nonNull(method)), rawArgument);
     }
 
     /**
@@ -117,7 +117,7 @@ public class InvokeDynamic implements Implementation {
      * specified bootstrap constructor.
      *
      * @param constructor The bootstrap constructor that is used to link the instrumented method.
-     * @param argument    The arguments that are handed to the bootstrap method. Any argument must be saved in the
+     * @param rawArgument The arguments that are handed to the bootstrap method. Any argument must be saved in the
      *                    constant pool, i.e. primitive types (represented as their wrapper types) with a size of
      *                    at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                    as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
@@ -127,8 +127,8 @@ public class InvokeDynamic implements Implementation {
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
-    public static WithImplicitTarget bootstrap(Constructor<?> constructor, Object... argument) {
-        return bootstrap(new MethodDescription.ForLoadedConstructor(nonNull(constructor)), argument);
+    public static WithImplicitTarget bootstrap(Constructor<?> constructor, Object... rawArgument) {
+        return bootstrap(new MethodDescription.ForLoadedConstructor(nonNull(constructor)), rawArgument);
     }
 
     /**
@@ -136,7 +136,7 @@ public class InvokeDynamic implements Implementation {
      * specified bootstrap method or constructor.
      *
      * @param bootstrapMethod The bootstrap method or constructor that is used to link the instrumented method.
-     * @param argument        The arguments that are handed to the bootstrap method. Any argument must be saved in the
+     * @param rawArgument     The arguments that are handed to the bootstrap method. Any argument must be saved in the
      *                        constant pool, i.e. primitive types (represented as their wrapper types) with a size of
      *                        at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                        as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
@@ -146,22 +146,41 @@ public class InvokeDynamic implements Implementation {
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
-    public static WithImplicitTarget bootstrap(MethodDescription bootstrapMethod, Object... argument) {
-        List<Object> arguments = new ArrayList<Object>(argument.length);
-        for (Object anArgument : argument) {
-            if (anArgument instanceof Class) {
-                anArgument = new TypeDescription.ForLoadedType((Class<?>) anArgument);
-            } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(anArgument)) {
-                anArgument = JavaInstance.MethodHandle.of(anArgument);
-            } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(anArgument)) {
-                anArgument = JavaInstance.MethodType.of(anArgument);
+    public static WithImplicitTarget bootstrap(MethodDescription bootstrapMethod, Object... rawArgument) {
+        return bootstrap(bootstrapMethod, Arrays.asList(rawArgument));
+    }
+
+    /**
+     * Implements the instrumented method with a dynamic method invocation which is linked at runtime using the
+     * specified bootstrap method or constructor.
+     *
+     * @param bootstrapMethod The bootstrap method or constructor that is used to link the instrumented method.
+     * @param rawArguments    The arguments that are handed to the bootstrap method. Any argument must be saved in the
+     *                        constant pool, i.e. primitive types (represented as their wrapper types) with a size of
+     *                        at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     *                        as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
+     *                        it is also possible to supply unloaded types as {@link TypeDescription},
+     *                        {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
+     *                        {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     * @return An implementation where a {@code this} reference, if available, and all arguments of the
+     * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
+     */
+    public static WithImplicitTarget bootstrap(MethodDescription bootstrapMethod, List<?> rawArguments) {
+        List<Object> arguments = new ArrayList<Object>(rawArguments.size());
+        for (Object argument : rawArguments) {
+            if (argument instanceof Class) {
+                argument = new TypeDescription.ForLoadedType((Class<?>) argument);
+            } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
+                argument = JavaInstance.MethodHandle.of(argument);
+            } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
+                argument = JavaInstance.MethodType.of(argument);
             }
-            arguments.add(anArgument);
+            arguments.add(argument);
         }
         if (!bootstrapMethod.isBootstrap(arguments)) {
-            throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + Arrays.toString(argument));
+            throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
         }
-        List<Object> serializedArguments = new ArrayList<Object>(argument.length);
+        List<Object> serializedArguments = new ArrayList<Object>(arguments.size());
         for (Object anArgument : arguments) {
             if (anArgument instanceof TypeDescription) {
                 anArgument = Type.getType(((TypeDescription) anArgument).getDescriptor());

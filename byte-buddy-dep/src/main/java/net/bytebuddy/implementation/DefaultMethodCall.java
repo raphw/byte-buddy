@@ -65,7 +65,7 @@ public class DefaultMethodCall implements Implementation {
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(Class<?>... prioritizedInterface) {
-        return new DefaultMethodCall(new TypeList.ForLoadedType(nonNull(prioritizedInterface)));
+        return prioritize(new TypeList.ForLoadedType(nonNull(prioritizedInterface)));
     }
 
     /**
@@ -80,7 +80,22 @@ public class DefaultMethodCall implements Implementation {
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(TypeDescription... prioritizedInterface) {
-        return new DefaultMethodCall(new TypeList.Explicit(Arrays.asList(nonNull(prioritizedInterface))));
+        return prioritize(Arrays.asList(nonNull(prioritizedInterface)));
+    }
+
+    /**
+     * Creates a {@link net.bytebuddy.implementation.DefaultMethodCall} implementation which searches the given list
+     * of interface types for a suitable default method in their order. If no such prioritized interface is suitable,
+     * because it is either not defined on the instrumented type or because it does not define a suitable default method,
+     * any remaining interface is searched for a suitable default method. If no or more than one method defines a
+     * suitable default method, an exception is thrown.
+     *
+     * @param prioritizedInterfaces A collection of prioritized default method interfaces in their prioritization order.
+     * @return An implementation which calls an instrumented method's compatible default method that considers the given
+     * interfaces to be prioritized in their order.
+     */
+    public static Implementation prioritize(Collection<? extends TypeDescription> prioritizedInterfaces) {
+        return new DefaultMethodCall(new ArrayList<TypeDescription>(nonNull(prioritizedInterfaces)));
     }
 
     /**
@@ -93,7 +108,7 @@ public class DefaultMethodCall implements Implementation {
      * is unambiguous.
      */
     public static Implementation unambiguousOnly() {
-        return new DefaultMethodCall(new TypeList.Empty());
+        return new DefaultMethodCall(Collections.<TypeDescription>emptyList());
     }
 
     @Override
