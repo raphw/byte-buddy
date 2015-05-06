@@ -125,6 +125,11 @@ constructor interception where a hard-coded super method call is required by the
 - Made the `TypeDescription.ForLoadedType` class loader agnostic. Before, a class that was loaded by multiple class
   loaders would have been considered inequal what is not true for the byte code level.
 
+### 6. Mai 2015: Version 0.6.4
+
+- Extended public API to accept more general argument types when appropriate.
+- Extended `@Origin` annotation to allow for accepting modifiers.
+
 ### Current snapshot
 
 Currently, there are no changes.
