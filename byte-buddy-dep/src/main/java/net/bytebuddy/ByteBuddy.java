@@ -407,7 +407,7 @@ public class ByteBuddy {
     }
 
     /**
-     * Creates an interface that does not extend any interfaces.
+     * Creates a dynamic type builder for an interface that does not extend any interfaces.
      *
      * @return A builder for creating a new interface.
      */
