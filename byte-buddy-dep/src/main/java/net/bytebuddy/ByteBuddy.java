@@ -444,17 +444,6 @@ public class ByteBuddy {
     /**
      * Creates a dynamic type builder for an interface that extends a number of given interfaces.
      *
-     * @param typeDescription The interface types to extend.
-     * @return A dynamic type builder for this configuration that defines an interface that extends the specified
-     * interfaces.
-     */
-    public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
-        return makeInterface(new TypeList.Explicit(Arrays.asList(typeDescription)));
-    }
-
-    /**
-     * Creates a dynamic type builder for an interface that extends a number of given interfaces.
-     *
      * @param typeDescriptions The interface types to extend.
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
@@ -2069,11 +2058,6 @@ public class ByteBuddy {
         @Override
         public DynamicType.Builder<?> makeInterface(Iterable<? extends Class<?>> types) {
             return materialize().makeInterface(types);
-        }
-
-        @Override
-        public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
-            return materialize().makeInterface(typeDescription);
         }
 
         @Override
