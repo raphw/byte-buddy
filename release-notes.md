@@ -130,6 +130,10 @@ constructor interception where a hard-coded super method call is required by the
 - Extended public API to accept more general argument types when appropriate.
 - Extended `@Origin` annotation to allow for accepting modifiers.
 
+### 7. Mai 2015: Version 0.6.5
+
+Extended public API with convenience methods.
+
 ### Current snapshot
 
 Currently, there are no changes.
