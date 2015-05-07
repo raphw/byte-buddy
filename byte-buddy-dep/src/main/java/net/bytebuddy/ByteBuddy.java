@@ -453,7 +453,7 @@ public class ByteBuddy {
     /**
      * Creates a dynamic type builder for an interface that extends a number of given interfaces.
      *
-     * @param type The interface types to extend.
+     * @param typeDescription Descriptions of the interface types to extend.
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
