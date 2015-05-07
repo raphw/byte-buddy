@@ -407,6 +407,15 @@ public class ByteBuddy {
     }
 
     /**
+     * Creates an interface that does not extend any interfaces.
+     *
+     * @return A builder for creating a new interface.
+     */
+    public DynamicType.Builder<?> makeInterface() {
+        return makeInterface(Collections.<TypeDescription>emptyList());
+    }
+
+    /**
      * Creates a dynamic type builder for an interface that extends the given interface.
      *
      * @param type The interface to extend.
@@ -439,6 +448,17 @@ public class ByteBuddy {
      */
     public DynamicType.Builder<?> makeInterface(Iterable<? extends Class<?>> types) {
         return makeInterface(new TypeList.ForLoadedType(toList(types)));
+    }
+
+    /**
+     * Creates a dynamic type builder for an interface that extends a number of given interfaces.
+     *
+     * @param type The interface types to extend.
+     * @return A dynamic type builder for this configuration that defines an interface that extends the specified
+     * interfaces.
+     */
+    public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
+        return makeInterface(Arrays.asList(typeDescription));
     }
 
     /**
