@@ -34,7 +34,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         /**
          * The loaded types this type list represents.
          */
-        private final Class<?>[] type;
+        private final List<? extends Class<?>> types;
 
         /**
          * Creates a new type list for an array of loaded types.
@@ -42,7 +42,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          * @param type The types to be represented by this list.
          */
         public ForLoadedType(Class<?>... type) {
-            this.type = type;
+            this(Arrays.asList(type));
         }
 
         /**
@@ -50,33 +50,33 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          *
          * @param types The types to be represented by this list.
          */
-        public ForLoadedType(List<Class<?>> types) {
-            type = types.toArray(new Class<?>[types.size()]);
+        public ForLoadedType(List<? extends Class<?>> types) {
+            this.types = types;
         }
 
         @Override
         public TypeDescription get(int index) {
-            return new TypeDescription.ForLoadedType(type[index]);
+            return new TypeDescription.ForLoadedType(types.get(index));
         }
 
         @Override
         public int size() {
-            return type.length;
+            return types.size();
         }
 
         @Override
         public String[] toInternalNames() {
-            String[] internalNames = new String[type.length];
+            String[] internalNames = new String[types.size()];
             int i = 0;
-            for (Class<?> aType : type) {
-                internalNames[i++] = Type.getInternalName(aType);
+            for (Class<?> type : types) {
+                internalNames[i++] = Type.getInternalName(type);
             }
             return internalNames.length == 0 ? null : internalNames;
         }
 
         @Override
         public int getStackSize() {
-            return StackSize.sizeOf(Arrays.asList(type));
+            return StackSize.sizeOf(types);
         }
 
         @Override

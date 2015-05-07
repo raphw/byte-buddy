@@ -433,6 +433,28 @@ public class ByteBuddy {
     /**
      * Creates a dynamic type builder for an interface that extends a number of given interfaces.
      *
+     * @param types The interface types to extend.
+     * @return A dynamic type builder for this configuration that defines an interface that extends the specified
+     * interfaces.
+     */
+    public DynamicType.Builder<?> makeInterface(Iterable<? extends Class<?>> types) {
+        return makeInterface(new TypeList.ForLoadedType(toList(types)));
+    }
+
+    /**
+     * Creates a dynamic type builder for an interface that extends a number of given interfaces.
+     *
+     * @param typeDescription The interface types to extend.
+     * @return A dynamic type builder for this configuration that defines an interface that extends the specified
+     * interfaces.
+     */
+    public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
+        return makeInterface(new TypeList.Explicit(Arrays.asList(typeDescription)));
+    }
+
+    /**
+     * Creates a dynamic type builder for an interface that extends a number of given interfaces.
+     *
      * @param typeDescriptions The interface types to extend.
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
@@ -878,6 +900,18 @@ public class ByteBuddy {
      * Defines a new type annotation for this configuration that replaces the currently defined type
      * attribute appender.
      *
+     * @param annotations The type annotations to define for this configuration.
+     * @return A new configuration that represents this configuration with the given annotations as its new
+     * type attribute appender.
+     */
+    public ByteBuddy withTypeAnnotation(Iterable<? extends Annotation> annotations) {
+        return withTypeAnnotation(new AnnotationList.ForLoadedAnnotation(toList(annotations)));
+    }
+
+    /**
+     * Defines a new type annotation for this configuration that replaces the currently defined type
+     * attribute appender.
+     *
      * @param annotation The type annotations to define for this configuration.
      * @return A new configuration that represents this configuration with the given annotations as its new
      * type attribute appender.
@@ -919,6 +953,17 @@ public class ByteBuddy {
      */
     public OptionalMethodInterception withImplementing(Class<?>... type) {
         return withImplementing(new TypeList.ForLoadedType(nonNull(type)));
+    }
+
+    /**
+     * Defines all dynamic types that are created by this configuration to implement the given interfaces.
+     *
+     * @param types The interface types to implement.
+     * @return The same configuration where any dynamic type that is created by the resulting configuration will
+     * implement the given interfaces.
+     */
+    public OptionalMethodInterception withImplementing(Iterable<? extends Class<?>> types) {
+        return withImplementing(new TypeList.ForLoadedType(toList(types)));
     }
 
     /**
@@ -1947,6 +1992,11 @@ public class ByteBuddy {
         }
 
         @Override
+        public ByteBuddy withTypeAnnotation(Iterable<? extends Annotation> annotations) {
+            return materialize().withTypeAnnotation(annotations);
+        }
+
+        @Override
         public ByteBuddy withTypeAnnotation(Collection<? extends AnnotationDescription> annotations) {
             return materialize().withTypeAnnotation(annotations);
         }
@@ -1954,6 +2004,11 @@ public class ByteBuddy {
         @Override
         public OptionalMethodInterception withImplementing(Class<?>... type) {
             return materialize().withImplementing(type);
+        }
+
+        @Override
+        public OptionalMethodInterception withImplementing(Iterable<? extends Class<?>> types) {
+            return materialize().withImplementing(types);
         }
 
         @Override
@@ -2009,6 +2064,16 @@ public class ByteBuddy {
         @Override
         public DynamicType.Builder<?> makeInterface(Class<?>... type) {
             return materialize().makeInterface(type);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makeInterface(Iterable<? extends Class<?>> types) {
+            return materialize().makeInterface(types);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
+            return materialize().makeInterface(typeDescription);
         }
 
         @Override

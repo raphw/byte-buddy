@@ -3,6 +3,7 @@ package net.bytebuddy.description.field;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,7 +19,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         /**
          * The loaded fields this field list represents.
          */
-        private final Field[] field;
+        private final List<? extends Field> fields;
 
         /**
          * Creates a new immutable field list that represents an array of loaded field.
@@ -26,17 +27,26 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
          * @param field An array of fields to be represented by this field list.
          */
         public ForLoadedField(Field... field) {
-            this.field = field;
+            this(Arrays.asList(field));
+        }
+
+        /**
+         * Creates a new immutable field list that represents an array of loaded field.
+         *
+         * @param fields An array of fields to be represented by this field list.
+         */
+        public ForLoadedField(List<? extends Field> fields) {
+            this.fields = fields;
         }
 
         @Override
         public FieldDescription get(int index) {
-            return new FieldDescription.ForLoadedField(field[index]);
+            return new FieldDescription.ForLoadedField(fields.get(index));
         }
 
         @Override
         public int size() {
-            return field.length;
+            return fields.size();
         }
 
         @Override

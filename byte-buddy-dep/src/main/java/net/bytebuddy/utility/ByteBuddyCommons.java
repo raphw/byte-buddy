@@ -433,10 +433,28 @@ public final class ByteBuddyCommons {
      * @param <T>        The element type of the collection.
      * @return The list representing the elements of the collection.
      */
-    @SuppressWarnings("unchecked")
     public static <T> List<T> toList(Collection<T> collection) {
         return collection instanceof List
                 ? (List<T>) collection
                 : new ArrayList<T>(collection);
+    }
+
+    /**
+     * Converts an iterable to a list, either by casting or by explicit conversion.
+     *
+     * @param iterable The iterable to convert to a list.
+     * @param <T>      The element type of the collection.
+     * @return The list representing the elements of the iterable.
+     */
+    public static <T> List<T> toList(Iterable<T> iterable) {
+        if (iterable instanceof Collection) {
+            return toList((Collection<T>) iterable);
+        } else {
+            List<T> list = new LinkedList<T>();
+            for (T element : iterable) {
+                list.add(element);
+            }
+            return list;
+        }
     }
 }

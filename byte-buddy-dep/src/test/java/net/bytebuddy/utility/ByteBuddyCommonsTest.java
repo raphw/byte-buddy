@@ -312,6 +312,21 @@ public class ByteBuddyCommonsTest {
     }
 
     @Test
+    public void testToListIterable() throws Exception {
+        List<String> list = toList(new ArrayIterable(FOO, BAR));
+        assertThat(list.size(), is(2));
+        assertThat(list.contains(FOO), is(true));
+        assertThat(list.contains(BAR), is(true));
+    }
+
+    @Test
+    public void testToListIterableCollection() throws Exception {
+        List<String> original = Arrays.asList(FOO, BAR);
+        List<String> list = toList((Iterable<String>) original);
+        assertThat(list, sameInstance(original));
+    }
+
+    @Test
     public void testConstructorIsHidden() throws Exception {
         assertThat(ByteBuddyCommons.class.getDeclaredConstructors().length, is(1));
         Constructor<?> constructor = ByteBuddyCommons.class.getDeclaredConstructor();
@@ -322,6 +337,20 @@ public class ByteBuddyCommonsTest {
             fail();
         } catch (InvocationTargetException e) {
             assertEquals(UnsupportedOperationException.class, e.getCause().getClass());
+        }
+    }
+
+    private static class ArrayIterable implements Iterable<String> {
+
+        private final String[] values;
+
+        public ArrayIterable(String... values) {
+            this.values = values;
+        }
+
+        @Override
+        public Iterator<String> iterator() {
+            return Arrays.asList(values).iterator();
         }
     }
 }

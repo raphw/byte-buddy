@@ -5,10 +5,7 @@ import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Defines a list of annotation instances.
@@ -57,7 +54,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         /**
          * The represented annotations.
          */
-        private final Annotation[] annotation;
+        private final List<? extends Annotation> annotations;
 
         /**
          * Creates a new list of loaded annotations.
@@ -65,7 +62,16 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          * @param annotation The represented annotations.
          */
         public ForLoadedAnnotation(Annotation... annotation) {
-            this.annotation = annotation;
+            this(Arrays.asList(annotation));
+        }
+
+        /**
+         * Creates a new list of loaded annotations.
+         *
+         * @param annotations The represented annotations.
+         */
+        public ForLoadedAnnotation(List<? extends Annotation> annotations) {
+            this.annotations = annotations;
         }
 
         /**
@@ -84,18 +90,18 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
 
         @Override
         public AnnotationDescription get(int index) {
-            return AnnotationDescription.ForLoadedAnnotation.of(annotation[index]);
+            return AnnotationDescription.ForLoadedAnnotation.of(annotations.get(index));
         }
 
         @Override
         public int size() {
-            return annotation.length;
+            return annotations.size();
         }
 
         @Override
         public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
-            for (Annotation anAnnotation : annotation) {
-                if (anAnnotation.annotationType().equals(annotationType)) {
+            for (Annotation annotation : annotations) {
+                if (annotation.annotationType().equals(annotationType)) {
                     return true;
                 }
             }
@@ -104,8 +110,8 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
 
         @Override
         public boolean isAnnotationPresent(TypeDescription annotationType) {
-            for (Annotation anAnnotation : annotation) {
-                if (annotationType.represents(anAnnotation.getClass())) {
+            for (Annotation annotation : annotations) {
+                if (annotationType.represents(annotation.getClass())) {
                     return true;
                 }
             }
@@ -114,9 +120,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
 
         @Override
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
-            for (Annotation anAnnotation : annotation) {
-                if (anAnnotation.annotationType().equals(annotationType)) {
-                    return AnnotationDescription.ForLoadedAnnotation.of(annotationType.cast(anAnnotation));
+            for (Annotation annotation : annotations) {
+                if (annotation.annotationType().equals(annotationType)) {
+                    return AnnotationDescription.ForLoadedAnnotation.of(annotationType.cast(annotation));
                 }
             }
             return null;
@@ -125,13 +131,13 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         @Override
         public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
             List<Annotation> inherited = new LinkedList<Annotation>();
-            for (Annotation annotation : this.annotation) {
+            for (Annotation annotation : annotations) {
                 if (!ignoredTypes.contains(new TypeDescription.ForLoadedType(annotation.annotationType()))
                         && annotation.annotationType().isAnnotationPresent(Inherited.class)) {
                     inherited.add(annotation);
                 }
             }
-            return new ForLoadedAnnotation(inherited.toArray(new Annotation[inherited.size()]));
+            return new ForLoadedAnnotation(inherited);
         }
 
         @Override

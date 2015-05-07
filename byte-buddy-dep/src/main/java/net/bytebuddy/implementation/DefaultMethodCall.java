@@ -14,6 +14,7 @@ import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isInterface;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
+import static net.bytebuddy.utility.ByteBuddyCommons.toList;
 
 /**
  * This {@link Implementation} invokes a default method for the methods it instruments.
@@ -66,6 +67,21 @@ public class DefaultMethodCall implements Implementation {
      */
     public static Implementation prioritize(Class<?>... prioritizedInterface) {
         return prioritize(new TypeList.ForLoadedType(nonNull(prioritizedInterface)));
+    }
+
+    /**
+     * Creates a {@link net.bytebuddy.implementation.DefaultMethodCall} implementation which searches the given list
+     * of interface types for a suitable default method in their order. If no such prioritized interface is suitable,
+     * because it is either not defined on the instrumented type or because it does not define a suitable default method,
+     * any remaining interface is searched for a suitable default method. If no or more than one method defines a
+     * suitable default method, an exception is thrown.
+     *
+     * @param prioritizedInterface A list of prioritized default method interfaces in their prioritization order.
+     * @return An implementation which calls an instrumented method's compatible default method that considers the given
+     * interfaces to be prioritized in their order.
+     */
+    public static Implementation prioritize(Iterable<? extends Class<?>> prioritizedInterface) {
+        return prioritize(new TypeList.ForLoadedType(toList(prioritizedInterface)));
     }
 
     /**

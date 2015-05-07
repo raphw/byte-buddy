@@ -114,6 +114,26 @@ public class InvokeDynamic implements Implementation {
 
     /**
      * Implements the instrumented method with a dynamic method invocation which is linked at runtime using the
+     * specified bootstrap method.
+     *
+     * @param method       The bootstrap method that is used to link the instrumented method.
+     * @param rawArguments The arguments that are handed to the bootstrap method. Any argument must be saved in the
+     *                     constant pool, i.e. primitive types (represented as their wrapper types) with a size of
+     *                     at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     *                     as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
+     *                     it is also possible to supply unloaded types as {@link TypeDescription},
+     *                     {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
+     *                     {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                     instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
+     * @return An implementation where a {@code this} reference, if available, and all arguments of the
+     * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
+     */
+    public static WithImplicitTarget bootstrap(Method method, List<?> rawArguments) {
+        return bootstrap(new MethodDescription.ForLoadedMethod(nonNull(method)), rawArguments);
+    }
+
+    /**
+     * Implements the instrumented method with a dynamic method invocation which is linked at runtime using the
      * specified bootstrap constructor.
      *
      * @param constructor The bootstrap constructor that is used to link the instrumented method.
@@ -129,6 +149,25 @@ public class InvokeDynamic implements Implementation {
      */
     public static WithImplicitTarget bootstrap(Constructor<?> constructor, Object... rawArgument) {
         return bootstrap(new MethodDescription.ForLoadedConstructor(nonNull(constructor)), rawArgument);
+    }
+
+    /**
+     * Implements the instrumented method with a dynamic method invocation which is linked at runtime using the
+     * specified bootstrap constructor.
+     *
+     * @param constructor  The bootstrap constructor that is used to link the instrumented method.
+     * @param rawArguments The arguments that are handed to the bootstrap method. Any argument must be saved in the
+     *                     constant pool, i.e. primitive types (represented as their wrapper types) with a size of
+     *                     at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     *                     as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
+     *                     it is also possible to supply unloaded types as {@link TypeDescription},
+     *                     {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
+     *                     {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     * @return An implementation where a {@code this} reference, if available, and all arguments of the
+     * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
+     */
+    public static WithImplicitTarget bootstrap(Constructor<?> constructor, List<?> rawArguments) {
+        return bootstrap(new MethodDescription.ForLoadedConstructor(nonNull(constructor)), rawArguments);
     }
 
     /**

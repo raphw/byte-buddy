@@ -4,6 +4,7 @@ import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,12 +22,12 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         /**
          * The loaded methods that are represented by this method list.
          */
-        private final Method[] methods;
+        private final List<? extends Method> methods;
 
         /**
          * The loaded constructors that are represented by this method list.
          */
-        private final Constructor<?>[] constructors;
+        private final List<? extends Constructor<?>> constructors;
 
         /**
          * Creates a new list for a loaded type. Method descriptions are created on demand.
@@ -34,8 +35,18 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
          * @param type The type to be represented by this method list.
          */
         public ForLoadedType(Class<?> type) {
-            constructors = type.getDeclaredConstructors();
-            methods = type.getDeclaredMethods();
+            this(type.getDeclaredConstructors(), type.getDeclaredMethods());
+        }
+
+        /**
+         * Creates a method list that represents the given constructors and methods in their given order. The
+         * constructors are assigned the indices before the methods.
+         *
+         * @param constructor The constructors to be represented by the method list.
+         * @param method      The methods to be represented by the method list.
+         */
+        public ForLoadedType(Constructor<?>[] constructor, Method[] method) {
+            this(Arrays.asList(constructor), Arrays.asList(method));
         }
 
         /**
@@ -45,23 +56,22 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
          * @param constructors The constructors to be represented by the method list.
          * @param methods      The methods to be represented by the method list.
          */
-        public ForLoadedType(Constructor<?>[] constructors, Method[] methods) {
+        public ForLoadedType(List<? extends Constructor<?>> constructors, List<? extends Method> methods) {
             this.constructors = constructors;
             this.methods = methods;
         }
 
         @Override
         public MethodDescription get(int index) {
-            if (index < constructors.length) {
-                return new MethodDescription.ForLoadedConstructor(constructors[index]);
-            } else {
-                return new MethodDescription.ForLoadedMethod(methods[index - constructors.length]);
-            }
+            return index < constructors.size()
+                    ? new MethodDescription.ForLoadedConstructor(constructors.get(index))
+                    : new MethodDescription.ForLoadedMethod(methods.get(index - constructors.size()));
+
         }
 
         @Override
         public int size() {
-            return constructors.length + methods.length;
+            return constructors.size() + methods.size();
         }
 
         @Override
