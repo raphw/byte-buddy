@@ -1,11 +1,12 @@
 package net.bytebuddy.description.method;
 
-import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
@@ -23,7 +24,7 @@ import java.util.List;
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface MethodDescription extends ByteCodeElement {
+public interface MethodDescription extends TypeVariableSource {
 
     /**
      * The internal name of a Java constructor.
@@ -608,6 +609,11 @@ public interface MethodDescription extends ByteCodeElement {
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations());
         }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.ForLoadedType(constructor.getTypeParameters());
+        }
     }
 
     /**
@@ -719,6 +725,11 @@ public interface MethodDescription extends ByteCodeElement {
             return value == null
                     ? null
                     : AnnotationDescription.ForLoadedAnnotation.describe(value, new TypeDescription.ForLoadedType(method.getReturnType()));
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.ForLoadedType(method.getTypeParameters());
         }
     }
 
@@ -835,6 +846,11 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public Object getDefaultValue() {
             return null;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
         }
     }
 }
