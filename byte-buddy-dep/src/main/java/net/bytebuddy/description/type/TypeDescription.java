@@ -1,12 +1,14 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
@@ -26,7 +28,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
  */
-public interface TypeDescription extends ByteCodeElement {
+public interface TypeDescription extends GenericType, TypeVariableSource {
 
     /**
      * A representation of the {@link java.lang.Object} type.
@@ -136,6 +138,7 @@ public interface TypeDescription extends ByteCodeElement {
      *
      * @return The component type of this array or {@code null} if this type description does not represent an array.
      */
+    @Override
     TypeDescription getComponentType();
 
     /**
@@ -152,6 +155,8 @@ public interface TypeDescription extends ByteCodeElement {
      * {@link java.lang.Object} type.
      */
     TypeDescription getSupertype();
+
+    GenericType getSuperType();
 
     /**
      * Returns a list of interfaces that are implemented by this type.
@@ -333,6 +338,26 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
+        public Sort getSort() {
+            return Sort.RAW;
+        }
+
+        @Override
+        public TypeDescription asRawType() {
+            return this;
+        }
+
+        @Override
+        public GenericTypeList getUpperBounds() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public GenericTypeList getLowerBounds() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
         public boolean isInstance(Object value) {
             return isAssignableFrom(value.getClass());
         }
@@ -416,6 +441,11 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public String getGenericSignature() {
             return null; // Currently, generics signatures supported poorly.
+        }
+
+        @Override
+        public TypeVariableSource getVariableSource() {
+            return null;
         }
 
         @Override
@@ -532,6 +562,26 @@ public interface TypeDescription extends ByteCodeElement {
                     || isAssignableTo(AnnotationDescription.class)
                     || isAssignableTo(EnumerationDescription.class)
                     || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationValue());
+        }
+
+        @Override
+        public GenericTypeList getParameters() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public String getSymbol() {
+            return null;
+        }
+
+        @Override
+        public String getTypeName() {
+            return getName();
+        }
+
+        @Override
+        public GenericType getOwnerType() {
+            return null;
         }
 
         @Override
@@ -783,6 +833,11 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
+        public GenericType getSuperType() {
+            return new LazyProjection.OfSuperType(type);
+        }
+
+        @Override
         public TypeList getInterfaces() {
             return isArray()
                     ? new TypeList.ForLoadedType(Cloneable.class, Serializable.class)
@@ -879,6 +934,11 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public int getModifiers() {
             return type.getModifiers();
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.ForLoadedType(type.getTypeParameters());
         }
 
         @Override
@@ -1020,6 +1080,11 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
+        public GenericType getSuperType() {
+            return getSupertype();
+        }
+
+        @Override
         public TypeList getInterfaces() {
             return new TypeList.ForLoadedType(Cloneable.class, Serializable.class);
         }
@@ -1124,6 +1189,11 @@ public interface TypeDescription extends ByteCodeElement {
         public int getModifiers() {
             return ARRAY_MODIFIERS;
         }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
+        }
     }
 
     /**
@@ -1169,6 +1239,11 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public TypeDescription getSupertype() {
             return superType;
+        }
+
+        @Override
+        public GenericType getSuperType() {
+            return getSupertype();
         }
 
         @Override
@@ -1243,6 +1318,11 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public String getName() {
             return name;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
         }
     }
 }
