@@ -3,6 +3,7 @@ package net.bytebuddy.description.field;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericType;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -19,6 +20,8 @@ public interface FieldDescription extends ByteCodeElement {
      * @return A type description of this field.
      */
     TypeDescription getFieldType();
+
+    GenericType getFieldTypeGen();
 
     /**
      * An abstract base implementation of a field description.
@@ -103,6 +106,11 @@ public interface FieldDescription extends ByteCodeElement {
         }
 
         @Override
+        public GenericType getFieldTypeGen() {
+            return new GenericType.LazyProjection.OfFieldType(field);
+        }
+
+        @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations());
         }
@@ -174,6 +182,11 @@ public interface FieldDescription extends ByteCodeElement {
 
         @Override
         public TypeDescription getFieldType() {
+            return fieldType;
+        }
+
+        @Override
+        public GenericType getFieldTypeGen() {
             return fieldType;
         }
 

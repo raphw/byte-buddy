@@ -7,6 +7,8 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -193,8 +195,18 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
+    public GenericType getSuperTypeGen() {
+        return levelType.getSuperTypeGen();
+    }
+
+    @Override
     public TypeList getInterfaces() {
         return new TypeList.Explicit(interfaces);
+    }
+
+    @Override
+    public GenericTypeList getInterfacesGen() {
+        return new GenericTypeList.Explicit(interfaces);
     }
 
     @Override
@@ -205,6 +217,11 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     @Override
     public int getModifiers() {
         return modifiers;
+    }
+
+    @Override
+    public GenericTypeList getTypeVariables() {
+        return new GenericTypeList.Empty();
     }
 
     @Override

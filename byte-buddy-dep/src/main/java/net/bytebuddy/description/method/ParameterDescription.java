@@ -6,6 +6,7 @@ import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaMethod;
 
@@ -13,6 +14,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 
 /**
  * Description of the parameter of a Java method or constructor.
@@ -30,6 +32,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      * @return The parameter's type.
      */
     TypeDescription getTypeDescription();
+
+    GenericType getTypeGen();
 
     /**
      * Returns the method that declares this parameter.
@@ -231,6 +235,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
+        public GenericType getTypeGen() {
+            return new TypeDescription.LazyProjection.OfParameter(parameter);
+        }
+
+        @Override
         public MethodDescription getDeclaringMethod() {
             Object executable = GET_DECLARING_EXECUTABLE.invoke(parameter);
             if (executable instanceof Method) {
@@ -321,6 +330,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
+            public GenericType getTypeGen() {
+                return new TypeDescription.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType);
+            }
+
+            @Override
             public MethodDescription getDeclaringMethod() {
                 return new MethodDescription.ForLoadedMethod(method);
             }
@@ -390,6 +404,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             @Override
             public TypeDescription getTypeDescription() {
                 return new TypeDescription.ForLoadedType(parameterType);
+            }
+
+            @Override
+            public GenericType getTypeGen() {
+                return new TypeDescription.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType);
             }
 
             @Override
@@ -464,6 +483,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public TypeDescription getTypeDescription() {
+            return parameterType;
+        }
+
+        @Override
+        public GenericType getTypeGen() {
             return parameterType;
         }
 

@@ -12,6 +12,8 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -2211,10 +2213,20 @@ public interface TypePool {
         }
 
         @Override
+        public GenericType getSuperTypeGen() {
+            return getSupertype();
+        }
+
+        @Override
         public TypeList getInterfaces() {
             return interfaceInternalName == null
                     ? new TypeList.Empty()
                     : new LazyTypeList(interfaceInternalName);
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            return new GenericTypeList.Explicit(getInterfaces());
         }
 
         @Override
@@ -2290,6 +2302,11 @@ public interface TypePool {
         @Override
         public String getGenericSignature() {
             return genericSignature;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
         }
 
         /**
@@ -3322,6 +3339,11 @@ public interface TypePool {
             }
 
             @Override
+            public GenericType getFieldTypeGen() {
+                return getFieldType();
+            }
+
+            @Override
             public AnnotationList getDeclaredAnnotations() {
                 return new AnnotationList.Explicit(declaredAnnotations);
             }
@@ -3481,8 +3503,18 @@ public interface TypePool {
             }
 
             @Override
+            public GenericType getReturnTypeGen() {
+                return getReturnType();
+            }
+
+            @Override
             public TypeList getExceptionTypes() {
                 return exceptionTypes;
+            }
+
+            @Override
+            public GenericTypeList getExceptionTypesGen() {
+                return new GenericTypeList.Explicit(getExceptionTypes());
             }
 
             @Override
@@ -3508,6 +3540,11 @@ public interface TypePool {
             @Override
             public int getModifiers() {
                 return modifiers;
+            }
+
+            @Override
+            public GenericTypeList getTypeVariables() {
+                return new GenericTypeList.Empty();
             }
 
             @Override
