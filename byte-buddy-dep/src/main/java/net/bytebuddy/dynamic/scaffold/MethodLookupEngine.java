@@ -6,6 +6,8 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.Opcodes;
 
@@ -220,6 +222,11 @@ public interface MethodLookupEngine {
         }
 
         @Override
+        public GenericType getReturnTypeGen() {
+            return methodChain.get(MOST_SPECIFIC).getReturnTypeGen();
+        }
+
+        @Override
         public ParameterList getParameters() {
             return methodChain.get(MOST_SPECIFIC).getParameters();
         }
@@ -227,6 +234,11 @@ public interface MethodLookupEngine {
         @Override
         public TypeList getExceptionTypes() {
             return methodChain.get(MOST_SPECIFIC).getExceptionTypes();
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypesGen() {
+            return new GenericTypeList.Explicit(methodChain.get(MOST_SPECIFIC).getExceptionTypes());
         }
 
         @Override
@@ -267,6 +279,11 @@ public interface MethodLookupEngine {
         @Override
         public int getModifiers() {
             return methodChain.get(MOST_SPECIFIC).getModifiers();
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return methodChain.get(MOST_SPECIFIC).getTypeVariables();
         }
 
         @Override
@@ -378,6 +395,11 @@ public interface MethodLookupEngine {
         }
 
         @Override
+        public GenericType getReturnTypeGen() {
+            return methodDescriptions.get(ANY).getReturnTypeGen();
+        }
+
+        @Override
         public ParameterList getParameters() {
             return ParameterList.Explicit.latent(this, methodDescriptions.get(ANY).getParameters().asTypeList());
         }
@@ -385,6 +407,11 @@ public interface MethodLookupEngine {
         @Override
         public TypeList getExceptionTypes() {
             return new TypeList.Empty();
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypesGen() {
+            return new GenericTypeList.Empty();
         }
 
         @Override
@@ -430,6 +457,11 @@ public interface MethodLookupEngine {
         @Override
         public int getModifiers() {
             return CONFLICTING_INTERFACE_MODIFIER;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
         }
 
         @Override

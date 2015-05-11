@@ -11,6 +11,8 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -412,6 +414,11 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
+            public GenericType getFieldTypeGen() {
+                return fieldType;
+            }
+
+            @Override
             public AnnotationList getDeclaredAnnotations() {
                 return new AnnotationList.Explicit(declaredAnnotations);
             }
@@ -505,8 +512,18 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
+            public GenericType getReturnTypeGen() {
+                return returnType;
+            }
+
+            @Override
             public TypeList getExceptionTypes() {
                 return new TypeList.Explicit(exceptionTypes);
+            }
+
+            @Override
+            public GenericTypeList getExceptionTypesGen() {
+                return new GenericTypeList.Explicit(exceptionTypes);
             }
 
             @Override
@@ -532,6 +549,11 @@ public interface InstrumentedType extends TypeDescription {
             @Override
             public int getModifiers() {
                 return modifiers;
+            }
+
+            @Override
+            public GenericTypeList getTypeVariables() {
+                return new GenericTypeList.Empty();
             }
 
             @Override

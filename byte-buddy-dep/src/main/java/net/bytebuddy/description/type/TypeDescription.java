@@ -156,7 +156,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
      */
     TypeDescription getSupertype();
 
-    GenericType getSuperType();
+    GenericType getSuperTypeGen();
 
     /**
      * Returns a list of interfaces that are implemented by this type.
@@ -164,6 +164,8 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
      * @return A list of interfaces that are implemented by this type.
      */
     TypeList getInterfaces();
+
+    GenericTypeList getInterfacesGen();
 
     /**
      * Returns all interfaces that are implemented by this type, either directly or indirectly.
@@ -833,7 +835,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
         }
 
         @Override
-        public GenericType getSuperType() {
+        public GenericType getSuperTypeGen() {
             return new LazyProjection.OfSuperType(type);
         }
 
@@ -842,6 +844,13 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
             return isArray()
                     ? new TypeList.ForLoadedType(Cloneable.class, Serializable.class)
                     : new TypeList.ForLoadedType(type.getInterfaces());
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            return isArray()
+                    ? new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class)
+                    : new GenericTypeList.LazyProjection.OfInterfaces(type);
         }
 
         @Override
@@ -1080,13 +1089,18 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
         }
 
         @Override
-        public GenericType getSuperType() {
+        public GenericType getSuperTypeGen() {
             return getSupertype();
         }
 
         @Override
         public TypeList getInterfaces() {
             return new TypeList.ForLoadedType(Cloneable.class, Serializable.class);
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            return new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class);
         }
 
         @Override
@@ -1242,13 +1256,18 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
         }
 
         @Override
-        public GenericType getSuperType() {
+        public GenericType getSuperTypeGen() {
             return getSupertype();
         }
 
         @Override
         public TypeList getInterfaces() {
             return new TypeList.Explicit(interfaces);
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            return new GenericTypeList.Explicit(interfaces);
         }
 
         @Override

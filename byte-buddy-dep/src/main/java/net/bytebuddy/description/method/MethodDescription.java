@@ -5,6 +5,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericType;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.utility.JavaInstance;
@@ -48,6 +49,8 @@ public interface MethodDescription extends TypeVariableSource {
      */
     TypeDescription getReturnType();
 
+    GenericType getReturnTypeGen();
+
     /**
      * Returns a list of this method's parameters.
      *
@@ -61,6 +64,8 @@ public interface MethodDescription extends TypeVariableSource {
      * @return A description of the exception types of the method described by this instance.
      */
     TypeList getExceptionTypes();
+
+    GenericTypeList getExceptionTypesGen();
 
     /**
      * Returns this method modifier but adjusts its state of being abstract.
@@ -546,6 +551,11 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
+        public GenericType getReturnTypeGen() {
+            return TypeDescription.VOID;
+        }
+
+        @Override
         public ParameterList getParameters() {
             return ParameterList.ForLoadedExecutable.of(constructor);
         }
@@ -553,6 +563,11 @@ public interface MethodDescription extends TypeVariableSource {
         @Override
         public TypeList getExceptionTypes() {
             return new TypeList.ForLoadedType(constructor.getExceptionTypes());
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypesGen() {
+            return new GenericTypeList.LazyProjection.OfConstructorExceptionTypes(constructor);
         }
 
         @Override
@@ -646,6 +661,11 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
+        public GenericType getReturnTypeGen() {
+            return new GenericType.LazyProjection.OfReturnType(method);
+        }
+
+        @Override
         public ParameterList getParameters() {
             return ParameterList.ForLoadedExecutable.of(method);
         }
@@ -653,6 +673,11 @@ public interface MethodDescription extends TypeVariableSource {
         @Override
         public TypeList getExceptionTypes() {
             return new TypeList.ForLoadedType(method.getExceptionTypes());
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypesGen() {
+            return new GenericTypeList.LazyProjection.OfMethodExceptionTypes(method);
         }
 
         @Override
@@ -814,6 +839,11 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
+        public GenericType getReturnTypeGen() {
+            return returnType;
+        }
+
+        @Override
         public ParameterList getParameters() {
             return ParameterList.Explicit.latent(this, parameterTypes);
         }
@@ -821,6 +851,11 @@ public interface MethodDescription extends TypeVariableSource {
         @Override
         public TypeList getExceptionTypes() {
             return new TypeList.Explicit(exceptionTypes);
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypesGen() {
+            return new GenericTypeList.Explicit(exceptionTypes);
         }
 
         @Override

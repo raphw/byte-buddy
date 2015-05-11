@@ -2,6 +2,7 @@ package net.bytebuddy.description.type.generic;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.JavaMethod;
 
 import java.lang.reflect.*;
 
@@ -557,6 +558,132 @@ public interface GenericType {
             @Override
             public TypeDescription asRawType() {
                 return new TypeDescription.ForLoadedType(type.getSuperclass());
+            }
+        }
+
+        public static class OfReturnType extends LazyProjection {
+
+            private final Method method;
+
+            public OfReturnType(Method method) {
+                this.method = method;
+            }
+
+            @Override
+            protected GenericType resolve() {
+                return Sort.describe(method.getGenericReturnType());
+            }
+
+            @Override
+            public TypeDescription asRawType() {
+                return new TypeDescription.ForLoadedType(method.getReturnType());
+            }
+        }
+
+        public static class OfFieldType extends LazyProjection{
+
+            private final Field field;
+
+            public OfFieldType(Field field) {
+                this.field = field;
+            }
+
+            @Override
+            protected GenericType resolve() {
+                return Sort.describe(field.getGenericType());
+            }
+
+            @Override
+            public TypeDescription asRawType() {
+                return new TypeDescription.ForLoadedType(field.getType());
+            }
+        }
+
+        public static class OfParameter extends LazyProjection {
+
+            protected static final JavaMethod GET_TYPE;
+
+            protected static final JavaMethod GET_GENERIC_TYPE;
+
+            static {
+                JavaMethod getType, getGenericType;
+                try {
+                    Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
+                    getType = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getType"));
+                    getGenericType = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getParameterizedType"));
+                } catch (Exception ignored) {
+                    getType = JavaMethod.ForUnavailableMethod.INSTANCE;
+                    getGenericType = JavaMethod.ForUnavailableMethod.INSTANCE;
+                }
+                GET_TYPE = getType;
+                GET_GENERIC_TYPE = getGenericType;
+            }
+
+
+            private final Object parameter;
+
+            public OfParameter(Object parameter) {
+                this.parameter = parameter;
+            }
+
+            @Override
+            protected GenericType resolve() {
+                return Sort.describe((Type) GET_GENERIC_TYPE.invoke(parameter));
+            }
+
+            @Override
+            public TypeDescription asRawType() {
+                return new TypeDescription.ForLoadedType((Class<?>) GET_TYPE.invoke(parameter));
+            }
+        }
+
+        public static class OfLegacyVmConstructorParameter extends LazyProjection {
+
+            private final Constructor<?> constructor;
+
+            private final int index;
+
+            private final Class<?> rawType;
+
+            public OfLegacyVmConstructorParameter(Constructor<?> constructor, int index, Class<?> rawType) {
+                this.constructor = constructor;
+                this.index = index;
+                this.rawType = rawType;
+            }
+
+            @Override
+            protected GenericType resolve() {
+                return Sort.describe(constructor.getGenericParameterTypes()[index]);
+            }
+
+            @Override
+            public TypeDescription asRawType() {
+                return new TypeDescription.ForLoadedType(rawType);
+            }
+        }
+
+        public static class OfLegacyVmMethodParameter extends LazyProjection {
+
+            private final Method method;
+
+            private final int index;
+
+            private final Class<?> rawType;
+
+            public OfLegacyVmMethodParameter(Method method, int index, Class<?> rawType) {
+                this.method = method;
+                this.index = index;
+                this.rawType = rawType;
+            }
+
+            @Override
+            protected GenericType resolve() {
+                return Sort.describe(method.getGenericParameterTypes()[index]);
+            }
+
+            @Override
+            public TypeDescription asRawType() {
+                return new TypeDescription.ForLoadedType(rawType);
             }
         }
     }

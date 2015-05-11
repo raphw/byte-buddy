@@ -4,6 +4,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.FilterableList;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +15,7 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
 
     TypeList asRawTypes();
 
-    class Explicit extends FilterableList.AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
+    class Explicit extends AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
 
         private final List<? extends GenericType> genericTypes;
 
@@ -46,7 +48,7 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
         }
     }
 
-    class ForLoadedType extends FilterableList.AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
+    class ForLoadedType extends AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
 
         private final List<? extends Type> types;
 
@@ -88,6 +90,86 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
         @Override
         public TypeList asRawTypes() {
             return new TypeList.Empty();
+        }
+    }
+
+    abstract class LazyProjection extends AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
+
+        public static class OfInterfaces extends LazyProjection {
+
+            private final Class<?> type;
+
+            public OfInterfaces(Class<?> type) {
+                this.type = type;
+            }
+
+            @Override
+            public GenericType get(int index) {
+                return GenericType.Sort.describe(type.getGenericInterfaces()[index]);
+            }
+
+            @Override
+            public int size() {
+                return type.getInterfaces().length;
+            }
+
+            @Override
+            public TypeList asRawTypes() {
+                return new TypeList.ForLoadedType(type.getInterfaces());
+            }
+        }
+
+        @Override
+        protected GenericTypeList wrap(List<GenericType> values) {
+            return new Explicit(values);
+        }
+
+        public static class OfConstructorExceptionTypes extends LazyProjection {
+
+            private final Constructor<?> constructor;
+
+            public OfConstructorExceptionTypes(Constructor<?> constructor) {
+                this.constructor = constructor;
+            }
+
+            @Override
+            public GenericType get(int index) {
+                return GenericType.Sort.describe(constructor.getGenericExceptionTypes()[index]);
+            }
+
+            @Override
+            public int size() {
+                return constructor.getExceptionTypes().length;
+            }
+
+            @Override
+            public TypeList asRawTypes() {
+                return new TypeList.ForLoadedType(constructor.getExceptionTypes());
+            }
+        }
+
+        public static class OfMethodExceptionTypes extends LazyProjection {
+
+            private final Method method;
+
+            public OfMethodExceptionTypes(Method method) {
+                this.method = method;
+            }
+
+            @Override
+            public GenericType get(int index) {
+                return GenericType.Sort.describe(method.getGenericExceptionTypes()[index]);
+            }
+
+            @Override
+            public int size() {
+                return method.getExceptionTypes().length;
+            }
+
+            @Override
+            public TypeList asRawTypes() {
+                return new TypeList.ForLoadedType(method.getExceptionTypes());
+            }
         }
     }
 }
