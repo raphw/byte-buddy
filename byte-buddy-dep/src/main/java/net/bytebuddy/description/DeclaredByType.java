@@ -1,9 +1,11 @@
-package net.bytebuddy.description.type;
+package net.bytebuddy.description;
+
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * This interface represents all elements that can be declared within a type, i.e. other types and type members.
  */
-public interface DeclaredInType {
+public interface DeclaredByType {
 
     /**
      * Returns the declaring type of this instance.
