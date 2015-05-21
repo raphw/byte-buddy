@@ -7,7 +7,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 /**
  * A package description represents a Java package.
  */
-public interface PackageDescription extends NamedElement, AnnotatedCodeElement {
+public interface PackageDescription extends NamedElement.WithRuntimeName, AnnotatedCodeElement {
 
     /**
      * Checks if this package description represents a sealed package.

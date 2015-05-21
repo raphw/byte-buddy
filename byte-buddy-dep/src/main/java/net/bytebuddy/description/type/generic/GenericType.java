@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type.generic;
 
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaMethod;
@@ -8,7 +9,7 @@ import java.lang.reflect.*;
 import java.util.Collections;
 import java.util.List;
 
-public interface GenericType {
+public interface GenericType extends NamedElement {
 
     Sort getSort();
 
@@ -123,6 +124,11 @@ public interface GenericType {
         }
 
         @Override
+        public String getSourceCodeName() {
+            return toString();
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (!(other instanceof GenericType)) return false;
             GenericType genericType = (GenericType) other;
@@ -230,6 +236,11 @@ public interface GenericType {
 
         @Override
         public String getTypeName() {
+            return toString();
+        }
+
+        @Override
+        public String getSourceCodeName() {
             return toString();
         }
 
@@ -369,6 +380,11 @@ public interface GenericType {
         }
 
         @Override
+        public String getSourceCodeName() {
+            return toString();
+        }
+
+        @Override
         public int hashCode() {
             int result = 1;
             for (GenericType genericType : getLowerBounds()) {
@@ -456,10 +472,6 @@ public interface GenericType {
 
             private final GenericType ownerType;
 
-            public static GenericType of(TypeDescription rawType, List<? extends GenericType> parameters) {
-                return new Latent(rawType, parameters, rawType.getEnclosingType());
-            }
-
             public Latent(TypeDescription rawType, List<? extends GenericType> parameters, GenericType ownerType) {
                 this.rawType = rawType;
                 this.parameters = parameters;
@@ -521,6 +533,11 @@ public interface GenericType {
         @Override
         public String getTypeName() {
             return toString();
+        }
+
+        @Override
+        public String getSourceCodeName() {
+            return getSymbol();
         }
 
         @Override
@@ -653,6 +670,11 @@ public interface GenericType {
         @Override
         public String getSymbol() {
             return resolve().getSymbol();
+        }
+
+        @Override
+        public String getSourceCodeName() {
+            return resolve().getSourceCodeName();
         }
 
         @Override

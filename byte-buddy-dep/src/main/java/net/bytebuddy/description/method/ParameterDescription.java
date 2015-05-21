@@ -14,12 +14,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 
 /**
  * Description of the parameter of a Java method or constructor.
  */
-public interface ParameterDescription extends AnnotatedCodeElement, NamedElement, ModifierReviewable {
+public interface ParameterDescription extends AnnotatedCodeElement, NamedElement.WithRuntimeName, ModifierReviewable {
 
     /**
      * The prefix for names of an unnamed parameter.
