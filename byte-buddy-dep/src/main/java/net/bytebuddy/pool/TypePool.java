@@ -20,6 +20,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.objectweb.asm.*;
+import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -1292,6 +1293,437 @@ public interface TypePool {
             }
         }
 
+        protected interface GenericTypeRegistrant {
+
+            void register(Token token);
+
+            interface Token {
+
+                GenericType toGenericType(TypePool typePool);
+
+                enum ForPrimitiveType implements Token {
+
+                    BOOLEAN(boolean.class),
+                    BYTE(byte.class),
+                    SHORT(short.class),
+                    CHAR(char.class),
+                    INTEGER(int.class),
+                    LONG(long.class),
+                    FLOAT(float.class),
+                    DOUBLE(double.class),
+                    VOID(void.class);
+
+                    public static Token of(char descriptor) {
+                        switch (descriptor) {
+                            case 'V':
+                                return VOID;
+                            case 'Z':
+                                return BOOLEAN;
+                            case 'B':
+                                return BYTE;
+                            case 'S':
+                                return SHORT;
+                            case 'C':
+                                return CHAR;
+                            case 'I':
+                                return INTEGER;
+                            case 'J':
+                                return LONG;
+                            case 'F':
+                                return FLOAT;
+                            case 'D':
+                                return DOUBLE;
+                            default:
+                                throw new IllegalArgumentException("Not a valid descriptor: " + descriptor);
+                        }
+                    }
+
+                    private final TypeDescription typeDescription;
+
+                    ForPrimitiveType(Class<?> type) {
+                        typeDescription = new TypeDescription.ForLoadedType(type);
+                    }
+
+                    @Override
+                    public GenericType toGenericType(TypePool typePool) {
+                        return typeDescription;
+                    }
+                }
+
+                class ForRawType implements Token {
+
+                    private final String name;
+
+                    public ForRawType(String name) {
+                        this.name = name;
+                    }
+
+                    @Override
+                    public GenericType toGenericType(TypePool typePool) {
+                        return typePool.describe(name).resolve();
+                    }
+                }
+
+                class ForTypeVariable implements Token {
+
+                    private final String name;
+
+                    public ForTypeVariable(String name) {
+                        this.name = name;
+                    }
+
+                    @Override
+                    public GenericType toGenericType(TypePool typePool) {
+                        return null;
+                    }
+                }
+
+                class ForArray implements Token {
+
+                    private final Token componentTypeToken;
+
+                    public ForArray(Token componentTypeToken) {
+                        this.componentTypeToken = componentTypeToken;
+                    }
+
+                    @Override
+                    public GenericType toGenericType(TypePool typePool) {
+                        return GenericType.ForGenericArray.Latent.of(componentTypeToken.toGenericType(typePool), 1);
+                    }
+                }
+
+                class ForLowerBound implements Token {
+
+                    private final Token baseType;
+
+                    public ForLowerBound(Token baseType) {
+                        this.baseType = baseType;
+                    }
+
+                    @Override
+                    public GenericType toGenericType(TypePool typePool) {
+                        return GenericType.ForWildcardType.Latent.boundedBelow(baseType.toGenericType(typePool));
+                    }
+                }
+
+                class ForUpperBound implements Token {
+
+                    private final Token baseType;
+
+                    public ForUpperBound(Token baseType) {
+                        this.baseType = baseType;
+                    }
+
+                    @Override
+                    public GenericType toGenericType(TypePool typePool) {
+                        return GenericType.ForWildcardType.Latent.boundedAbove(baseType.toGenericType(typePool));
+                    }
+                }
+
+                class ForParameterizedType implements Token {
+
+                    private final String name;
+
+                    private final List<Token> parameters;
+
+                    public ForParameterizedType(String name, List<Token> parameters) {
+                        this.name = name;
+                        this.parameters = parameters;
+                    }
+
+                    @Override
+                    public GenericType toGenericType(TypePool typePool) {
+                        List<GenericType> genericTypes = new ArrayList<GenericType>(parameters.size());
+                        for (Token parameter : parameters) {
+                            genericTypes.add(parameter.toGenericType(typePool));
+                        }
+                        return GenericType.ForParameterizedType.Latent.of(typePool.describe(name).resolve(), genericTypes);
+                    }
+
+                    public static class Nested implements Token {
+
+                        private final String name;
+
+                        private final List<Token> parameters;
+
+                        private final Token ownerType;
+
+                        public Nested(String name, List<Token> parameters, Token ownerType) {
+                            this.name = name;
+                            this.parameters = parameters;
+                            this.ownerType = ownerType;
+                        }
+
+                        @Override
+                        public GenericType toGenericType(TypePool typePool) {
+                            List<GenericType> genericTypes = new ArrayList<GenericType>(parameters.size());
+                            for (Token parameter : parameters) {
+                                genericTypes.add(parameter.toGenericType(typePool));
+                            }
+                            return new GenericType.ForParameterizedType.Latent(typePool.describe(name).resolve(),
+                                    genericTypes,
+                                    ownerType.toGenericType(typePool));
+                        }
+                    }
+                }
+            }
+
+            class RejectingSignatureVisitor extends SignatureVisitor {
+
+                private static final String MESSAGE = "Unexpected token in generic signature";
+
+                public RejectingSignatureVisitor() {
+                    super(ASM_API_VERSION);
+                }
+
+                @Override
+                public void visitFormalTypeParameter(String name) {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitClassBound() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitInterfaceBound() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitSuperclass() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitInterface() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitParameterType() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitReturnType() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitExceptionType() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public void visitBaseType(char descriptor) {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public void visitTypeVariable(String name) {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitArrayType() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public void visitClassType(String name) {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public void visitInnerClassType(String name) {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public void visitTypeArgument() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public SignatureVisitor visitTypeArgument(char wildcard) {
+                    throw new IllegalStateException(MESSAGE);
+                }
+
+                @Override
+                public void visitEnd() {
+                    throw new IllegalStateException(MESSAGE);
+                }
+            }
+        }
+
+        protected static class GenericTypeExtractor extends GenericTypeRegistrant.RejectingSignatureVisitor implements GenericTypeRegistrant {
+
+            private final GenericTypeRegistrant genericTypeRegistrant;
+
+            private IncompleteToken incompleteToken;
+
+            protected GenericTypeExtractor(GenericTypeRegistrant genericTypeRegistrant) {
+                this.genericTypeRegistrant = genericTypeRegistrant;
+            }
+
+            @Override
+            public void visitBaseType(char descriptor) {
+                genericTypeRegistrant.register(Token.ForPrimitiveType.of(descriptor));
+            }
+
+            @Override
+            public void visitTypeVariable(String name) {
+                genericTypeRegistrant.register(new Token.ForTypeVariable(name));
+            }
+
+            @Override
+            public SignatureVisitor visitArrayType() {
+                return new GenericTypeExtractor(this);
+            }
+
+            @Override
+            public void register(Token componentTypeToken) {
+                genericTypeRegistrant.register(new Token.ForArray(componentTypeToken));
+            }
+
+            @Override
+            public void visitClassType(String name) {
+                incompleteToken = new IncompleteToken.ForTopLevelClass(name);
+            }
+
+            @Override
+            public void visitInnerClassType(String name) {
+                incompleteToken = new IncompleteToken.ForInnerClass(name, incompleteToken);
+            }
+
+            @Override
+            public SignatureVisitor visitTypeArgument(char wildcard) {
+                switch (wildcard) {
+                    case '-':
+                        return incompleteToken.appendLowerBound();
+                    case '+':
+                        return incompleteToken.appendUpperBound();
+                    case '=':
+                        return incompleteToken.appendDirectBound();
+                    default:
+                        throw new IllegalArgumentException("Unknown wildcard: " + wildcard);
+                }
+            }
+
+            @Override
+            public void visitEnd() {
+                genericTypeRegistrant.register(incompleteToken.toToken());
+            }
+
+            protected interface IncompleteToken {
+
+                SignatureVisitor appendLowerBound();
+
+                SignatureVisitor appendUpperBound();
+
+                SignatureVisitor appendDirectBound();
+
+                boolean isParameterized();
+
+                Token toToken();
+
+                abstract class AbstractBase implements IncompleteToken {
+
+                    protected final List<Token> parameters;
+
+                    public AbstractBase() {
+                        parameters = new LinkedList<Token>();
+                    }
+
+                    @Override
+                    public SignatureVisitor appendDirectBound() {
+                        return new GenericTypeExtractor(new ForDirectBound());
+                    }
+
+                    @Override
+                    public SignatureVisitor appendUpperBound() {
+                        return new GenericTypeExtractor(new ForUpperBound());
+                    }
+
+                    @Override
+                    public SignatureVisitor appendLowerBound() {
+                        return new GenericTypeExtractor(new ForLowerBound());
+                    }
+
+                    protected class ForDirectBound implements GenericTypeRegistrant {
+
+                        @Override
+                        public void register(Token token) {
+                            parameters.add(token);
+                        }
+                    }
+
+                    protected class ForUpperBound implements GenericTypeRegistrant {
+
+                        @Override
+                        public void register(Token token) {
+                            parameters.add(new Token.ForUpperBound(token));
+                        }
+                    }
+
+                    protected class ForLowerBound implements GenericTypeRegistrant {
+
+                        @Override
+                        public void register(Token token) {
+                            parameters.add(new Token.ForLowerBound(token));
+                        }
+                    }
+                }
+
+                class ForTopLevelClass extends AbstractBase {
+
+                    private final String name;
+
+                    public ForTopLevelClass(String name) {
+                        this.name = name;
+                    }
+
+                    @Override
+                    public Token toToken() {
+                        return isParameterized()
+                                ? new Token.ForParameterizedType(name, parameters)
+                                : new Token.ForRawType(name);
+                    }
+
+                    @Override
+                    public boolean isParameterized() {
+                        return !parameters.isEmpty();
+                    }
+                }
+
+                class ForInnerClass extends AbstractBase {
+
+                    private final String name;
+
+                    private final IncompleteToken outerClassToken;
+
+                    public ForInnerClass(String name, IncompleteToken outerClassToken) {
+                        this.name = name;
+                        this.outerClassToken = outerClassToken;
+                    }
+
+                    @Override
+                    public Token toToken() {
+                        return isParameterized() || outerClassToken.isParameterized()
+                                ? new Token.ForParameterizedType.Nested(name, parameters, outerClassToken.toToken())
+                                : new Token.ForRawType(name);
+                    }
+
+                    @Override
+                    public boolean isParameterized() {
+                        return !parameters.isEmpty() || !outerClassToken.isParameterized();
+                    }
+                }
+            }
+        }
+
         /**
          * A type extractor reads a class file and collects data that is relevant to create a type description.
          */
@@ -1561,8 +1993,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationVisitor visitArray(String name) {
-                    return new AnnotationExtractor(new ArrayLookup(name, componentTypeLocator.bind(name)),
-                            ComponentTypeLocator.Illegal.INSTANCE);
+                    return new AnnotationExtractor(new ArrayLookup(name, componentTypeLocator.bind(name)), ComponentTypeLocator.Illegal.INSTANCE);
                 }
 
                 @Override
@@ -3651,6 +4082,11 @@ public interface TypePool {
                     return hasModifiers()
                             ? parameterModifiers[index]
                             : super.getModifiers();
+                }
+
+                @Override
+                public GenericType getTypeGen() {
+                    return getTypeDescription();
                 }
 
                 @Override

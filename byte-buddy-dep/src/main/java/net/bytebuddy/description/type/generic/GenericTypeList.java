@@ -3,6 +3,7 @@ package net.bytebuddy.description.type.generic;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.FilterableList;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -15,7 +16,17 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
 
     TypeList asRawTypes();
 
-    class Explicit extends AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
+    String toSignature();
+
+    abstract class AbstractBase extends FilterableList.AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
+
+        @Override
+        public String toSignature() {
+            return null;
+        }
+    }
+
+    class Explicit extends AbstractBase {
 
         private final List<? extends GenericType> genericTypes;
 
@@ -48,7 +59,7 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
         }
     }
 
-    class ForLoadedType extends AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
+    class ForLoadedType extends AbstractBase {
 
         private final List<? extends Type> types;
 
@@ -91,9 +102,14 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
         public TypeList asRawTypes() {
             return new TypeList.Empty();
         }
+
+        @Override
+        public String toSignature() {
+            return null;
+        }
     }
 
-    abstract class LazyProjection extends AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
+    abstract class LazyProjection extends AbstractBase {
 
         public static class OfInterfaces extends LazyProjection {
 

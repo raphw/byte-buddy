@@ -615,6 +615,11 @@ public interface InstrumentedType extends TypeDescription {
                 }
 
                 @Override
+                public GenericType getTypeGen() {
+                    return parameterType;
+                }
+
+                @Override
                 public MethodDescription getDeclaringMethod() {
                     return MethodToken.this;
                 }

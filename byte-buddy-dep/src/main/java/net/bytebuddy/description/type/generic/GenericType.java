@@ -5,6 +5,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaMethod;
 
 import java.lang.reflect.*;
+import java.util.Collections;
+import java.util.List;
 
 public interface GenericType {
 
@@ -150,6 +152,38 @@ public interface GenericType {
                 return Sort.describe(genericArrayType.getGenericComponentType());
             }
         }
+
+        public static class Latent extends ForGenericArray {
+
+            public static GenericType of(GenericType componentType, int arity) {
+                if (arity < 0) {
+                    throw new IllegalArgumentException("Arity cannot be negative");
+                }
+                while (componentType.getSort().isGenericArray()) {
+                    arity++;
+                    componentType = componentType.getComponentType();
+                }
+                return arity == 0
+                        ? componentType
+                        : new Latent(componentType, arity);
+            }
+
+            private final GenericType componentType;
+
+            private final int arity;
+
+            protected Latent(GenericType componentType, int arity) {
+                this.componentType = componentType;
+                this.arity = arity;
+            }
+
+            @Override
+            public GenericType getComponentType() {
+                return arity == 0
+                        ? componentType
+                        : new Latent(componentType, arity - 1);
+            }
+        }
     }
 
     abstract class ForWildcardType implements GenericType {
@@ -263,6 +297,36 @@ public interface GenericType {
             @Override
             public GenericTypeList getUpperBounds() {
                 return new GenericTypeList.ForLoadedType(wildcardType.getUpperBounds());
+            }
+        }
+
+        public static class Latent extends ForWildcardType {
+
+            public static GenericType boundedAbove(GenericType upperBound) {
+                return new Latent(Collections.singletonList(upperBound), Collections.<GenericType>emptyList());
+            }
+
+            public static GenericType boundedBelow(GenericType lowerBound) {
+                return new Latent(Collections.<GenericType>emptyList(), Collections.singletonList(lowerBound));
+            }
+
+            private final List<? extends GenericType> upperBounds;
+
+            private final List<? extends GenericType> lowerBounds;
+
+            protected Latent(List<? extends GenericType> upperBounds, List<? extends GenericType> lowerBounds) {
+                this.upperBounds = upperBounds;
+                this.lowerBounds = lowerBounds;
+            }
+
+            @Override
+            public GenericTypeList getUpperBounds() {
+                return new GenericTypeList.Explicit(upperBounds);
+            }
+
+            @Override
+            public GenericTypeList getLowerBounds() {
+                return new GenericTypeList.Explicit(lowerBounds);
             }
         }
     }
@@ -383,6 +447,40 @@ public interface GenericType {
                 return new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType());
             }
         }
+
+        public static class Latent extends ForParameterizedType {
+
+            private final TypeDescription rawType;
+
+            private final List<? extends GenericType> parameters;
+
+            private final GenericType ownerType;
+
+            public static GenericType of(TypeDescription rawType, List<? extends GenericType> parameters) {
+                return new Latent(rawType, parameters, rawType.getEnclosingType());
+            }
+
+            public Latent(TypeDescription rawType, List<? extends GenericType> parameters, GenericType ownerType) {
+                this.rawType = rawType;
+                this.parameters = parameters;
+                this.ownerType = ownerType;
+            }
+
+            @Override
+            public TypeDescription asRawType() {
+                return rawType;
+            }
+
+            @Override
+            public GenericTypeList getParameters() {
+                return new GenericTypeList.Explicit(parameters);
+            }
+
+            @Override
+            public GenericType getOwnerType() {
+                return ownerType;
+            }
+        }
     }
 
     abstract class ForTypeVariable implements GenericType {
@@ -474,6 +572,36 @@ public interface GenericType {
             @Override
             public String getSymbol() {
                 return typeVariable.getName();
+            }
+        }
+
+        public static class Latent extends ForTypeVariable {
+
+            private final List<? extends GenericType> upperBounds;
+
+            private final TypeVariableSource typeVariableSource;
+
+            private final String symbol;
+
+            public Latent(List<? extends GenericType> upperBounds, TypeVariableSource typeVariableSource, String symbol) {
+                this.upperBounds = upperBounds;
+                this.typeVariableSource = typeVariableSource;
+                this.symbol = symbol;
+            }
+
+            @Override
+            public GenericTypeList getUpperBounds() {
+                return new GenericTypeList.Explicit(upperBounds);
+            }
+
+            @Override
+            public TypeVariableSource getVariableSource() {
+                return typeVariableSource;
+            }
+
+            @Override
+            public String getSymbol() {
+                return symbol;
             }
         }
     }
@@ -580,7 +708,7 @@ public interface GenericType {
             }
         }
 
-        public static class OfFieldType extends LazyProjection{
+        public static class OfFieldType extends LazyProjection {
 
             private final Field field;
 
