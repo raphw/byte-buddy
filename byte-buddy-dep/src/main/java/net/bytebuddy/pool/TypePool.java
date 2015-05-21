@@ -14,6 +14,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericType;
 import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -1368,13 +1369,23 @@ public interface TypePool {
 
                     private final String name;
 
-                    public ForTypeVariable(String name) {
+                    private final TypeVariableSourceToken typeVariableSourceToken;
+
+                    public ForTypeVariable(String name, TypeVariableSourceToken typeVariableSourceToken) {
                         this.name = name;
+                        this.typeVariableSourceToken = typeVariableSourceToken;
                     }
 
                     @Override
                     public GenericType toGenericType(TypePool typePool) {
-                        return null;
+                        // TODO: Need to traverse hierarchy! method -> type -> nested type
+                        return typeVariableSourceToken.resolve(typePool).getTypeVariables().filter(named(name)).getOnly();
+                    }
+
+                    public interface TypeVariableSourceToken {
+
+                        TypeVariableSource resolve(TypePool typePool);
+
                     }
                 }
 
@@ -1392,11 +1403,11 @@ public interface TypePool {
                     }
                 }
 
-                class ForLowerBound implements Token {
+                class ForLowerBoundWildcard implements Token {
 
                     private final Token baseType;
 
-                    public ForLowerBound(Token baseType) {
+                    public ForLowerBoundWildcard(Token baseType) {
                         this.baseType = baseType;
                     }
 
@@ -1406,11 +1417,11 @@ public interface TypePool {
                     }
                 }
 
-                class ForUpperBound implements Token {
+                class ForUpperBoundWildcard implements Token {
 
                     private final Token baseType;
 
-                    public ForUpperBound(Token baseType) {
+                    public ForUpperBoundWildcard(Token baseType) {
                         this.baseType = baseType;
                     }
 
@@ -1437,7 +1448,8 @@ public interface TypePool {
                         for (Token parameter : parameters) {
                             genericTypes.add(parameter.toGenericType(typePool));
                         }
-                        return GenericType.ForParameterizedType.Latent.of(typePool.describe(name).resolve(), genericTypes);
+                        TypeDescription rawType = typePool.describe(name).resolve();
+                        return new GenericType.ForParameterizedType.Latent(rawType, genericTypes, rawType.getEnclosingType());
                     }
 
                     public static class Nested implements Token {
@@ -1575,7 +1587,7 @@ public interface TypePool {
 
             @Override
             public void visitTypeVariable(String name) {
-                genericTypeRegistrant.register(new Token.ForTypeVariable(name));
+                genericTypeRegistrant.register(new Token.ForTypeVariable(name, null)); // TODO!
             }
 
             @Override
@@ -1627,6 +1639,8 @@ public interface TypePool {
 
                 boolean isParameterized();
 
+                String getName();
+
                 Token toToken();
 
                 abstract class AbstractBase implements IncompleteToken {
@@ -1664,7 +1678,7 @@ public interface TypePool {
 
                         @Override
                         public void register(Token token) {
-                            parameters.add(new Token.ForUpperBound(token));
+                            parameters.add(new Token.ForUpperBoundWildcard(token));
                         }
                     }
 
@@ -1672,53 +1686,65 @@ public interface TypePool {
 
                         @Override
                         public void register(Token token) {
-                            parameters.add(new Token.ForLowerBound(token));
+                            parameters.add(new Token.ForLowerBoundWildcard(token));
                         }
                     }
                 }
 
                 class ForTopLevelClass extends AbstractBase {
 
-                    private final String name;
+                    private final String internalName;
 
-                    public ForTopLevelClass(String name) {
-                        this.name = name;
+                    public ForTopLevelClass(String internalName) {
+                        this.internalName = internalName;
                     }
 
                     @Override
                     public Token toToken() {
                         return isParameterized()
-                                ? new Token.ForParameterizedType(name, parameters)
-                                : new Token.ForRawType(name);
+                                ? new Token.ForParameterizedType(getName(), parameters)
+                                : new Token.ForRawType(getName());
                     }
 
                     @Override
                     public boolean isParameterized() {
                         return !parameters.isEmpty();
                     }
+
+                    @Override
+                    public String getName() {
+                        return internalName.replace('/', '.');
+                    }
                 }
 
                 class ForInnerClass extends AbstractBase {
 
-                    private final String name;
+                    private static final char INNER_CLASS_SEPERATOR = '$';
+
+                    private final String internalName;
 
                     private final IncompleteToken outerClassToken;
 
-                    public ForInnerClass(String name, IncompleteToken outerClassToken) {
-                        this.name = name;
+                    public ForInnerClass(String internalName, IncompleteToken outerClassToken) {
+                        this.internalName = internalName;
                         this.outerClassToken = outerClassToken;
                     }
 
                     @Override
                     public Token toToken() {
                         return isParameterized() || outerClassToken.isParameterized()
-                                ? new Token.ForParameterizedType.Nested(name, parameters, outerClassToken.toToken())
-                                : new Token.ForRawType(name);
+                                ? new Token.ForParameterizedType.Nested(getName(), parameters, outerClassToken.toToken())
+                                : new Token.ForRawType(getName());
                     }
 
                     @Override
                     public boolean isParameterized() {
                         return !parameters.isEmpty() || !outerClassToken.isParameterized();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return outerClassToken.getName() + INNER_CLASS_SEPERATOR + internalName.replace('/', '.');
                     }
                 }
             }

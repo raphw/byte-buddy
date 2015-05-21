@@ -6,7 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 /**
  * Implementations describe an element represented in byte code, i.e. a type, a field or a method or a constructor.
  */
-public interface ByteCodeElement extends NamedElement, ModifierReviewable, DeclaredByType, AnnotatedCodeElement {
+public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierReviewable, DeclaredByType, AnnotatedCodeElement {
 
     /**
      * Returns the descriptor of this byte code element.
