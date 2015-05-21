@@ -1300,7 +1300,7 @@ public interface TypePool {
 
             interface Token {
 
-                GenericType toGenericType(TypePool typePool);
+                GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource);
 
                 enum ForPrimitiveType implements Token {
 
@@ -1346,7 +1346,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericType toGenericType(TypePool typePool) {
+                    public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                         return typeDescription;
                     }
                 }
@@ -1360,7 +1360,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericType toGenericType(TypePool typePool) {
+                    public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                         return typePool.describe(name).resolve();
                     }
                 }
@@ -1369,23 +1369,34 @@ public interface TypePool {
 
                     private final String name;
 
-                    private final TypeVariableSourceToken typeVariableSourceToken;
-
-                    public ForTypeVariable(String name, TypeVariableSourceToken typeVariableSourceToken) {
+                    public ForTypeVariable(String name) {
                         this.name = name;
-                        this.typeVariableSourceToken = typeVariableSourceToken;
                     }
 
                     @Override
-                    public GenericType toGenericType(TypePool typePool) {
-                        // TODO: Need to traverse hierarchy! method -> type -> nested type
-                        return typeVariableSourceToken.resolve(typePool).getTypeVariables().filter(named(name)).getOnly();
+                    public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        return typeVariableSource.getTypeVariables().filter(named(name)).getOnly();
                     }
 
-                    public interface TypeVariableSourceToken {
+                    public static class Formal implements Token {
 
-                        TypeVariableSource resolve(TypePool typePool);
+                        private final String name;
 
+                        private final List<Token> bounds;
+
+                        public Formal(String name, List<Token> bounds) {
+                            this.name = name;
+                            this.bounds = bounds;
+                        }
+
+                        @Override
+                        public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                            List<GenericType> genericTypes = new ArrayList<GenericType>(bounds.size());
+                            for (Token bound : bounds) {
+                                genericTypes.add(bound.toGenericType(typePool, typeVariableSource));
+                            }
+                            return new GenericType.ForTypeVariable.Latent(genericTypes, typeVariableSource, name);
+                        }
                     }
                 }
 
@@ -1398,8 +1409,8 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericType toGenericType(TypePool typePool) {
-                        return GenericType.ForGenericArray.Latent.of(componentTypeToken.toGenericType(typePool), 1);
+                    public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        return GenericType.ForGenericArray.Latent.of(componentTypeToken.toGenericType(typePool, typeVariableSource), 1);
                     }
                 }
 
@@ -1412,8 +1423,8 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericType toGenericType(TypePool typePool) {
-                        return GenericType.ForWildcardType.Latent.boundedBelow(baseType.toGenericType(typePool));
+                    public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        return GenericType.ForWildcardType.Latent.boundedBelow(baseType.toGenericType(typePool, typeVariableSource));
                     }
                 }
 
@@ -1426,8 +1437,8 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericType toGenericType(TypePool typePool) {
-                        return GenericType.ForWildcardType.Latent.boundedAbove(baseType.toGenericType(typePool));
+                    public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        return GenericType.ForWildcardType.Latent.boundedAbove(baseType.toGenericType(typePool, typeVariableSource));
                     }
                 }
 
@@ -1443,10 +1454,10 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericType toGenericType(TypePool typePool) {
+                    public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                         List<GenericType> genericTypes = new ArrayList<GenericType>(parameters.size());
                         for (Token parameter : parameters) {
-                            genericTypes.add(parameter.toGenericType(typePool));
+                            genericTypes.add(parameter.toGenericType(typePool, typeVariableSource));
                         }
                         TypeDescription rawType = typePool.describe(name).resolve();
                         return new GenericType.ForParameterizedType.Latent(rawType, genericTypes, rawType.getEnclosingType());
@@ -1467,14 +1478,14 @@ public interface TypePool {
                         }
 
                         @Override
-                        public GenericType toGenericType(TypePool typePool) {
+                        public GenericType toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                             List<GenericType> genericTypes = new ArrayList<GenericType>(parameters.size());
                             for (Token parameter : parameters) {
-                                genericTypes.add(parameter.toGenericType(typePool));
+                                genericTypes.add(parameter.toGenericType(typePool, typeVariableSource));
                             }
                             return new GenericType.ForParameterizedType.Latent(typePool.describe(name).resolve(),
                                     genericTypes,
-                                    ownerType.toGenericType(typePool));
+                                    ownerType.toGenericType(typePool, typeVariableSource));
                         }
                     }
                 }
@@ -1587,7 +1598,7 @@ public interface TypePool {
 
             @Override
             public void visitTypeVariable(String name) {
-                genericTypeRegistrant.register(new Token.ForTypeVariable(name, null)); // TODO!
+                genericTypeRegistrant.register(new Token.ForTypeVariable(name));
             }
 
             @Override
@@ -1745,6 +1756,266 @@ public interface TypePool {
                     @Override
                     public String getName() {
                         return outerClassToken.getName() + INNER_CLASS_SEPERATOR + internalName.replace('/', '.');
+                    }
+                }
+            }
+
+            protected abstract static class ForSignature<T extends ForSignature.Resolution> extends RejectingSignatureVisitor implements GenericTypeRegistrant {
+
+                protected final List<Token> typeVariableTokens;
+
+                private String currentTypeParameter;
+
+                private List<Token> currentBounds;
+
+                public ForSignature() {
+                    typeVariableTokens = new LinkedList<Token>();
+                }
+
+                @Override
+                public void visitFormalTypeParameter(String name) {
+                    collectTypeParameter();
+                    currentTypeParameter = name;
+                    currentBounds = new LinkedList<Token>();
+                }
+
+                @Override
+                public SignatureVisitor visitClassBound() {
+                    return new GenericTypeExtractor(this);
+                }
+
+                @Override
+                public SignatureVisitor visitInterfaceBound() {
+                    return new GenericTypeExtractor(this);
+                }
+
+                @Override
+                public void register(Token token) {
+                    currentBounds.add(token);
+                }
+
+                protected void collectTypeParameter() {
+                    if (currentTypeParameter != null) {
+                        typeVariableTokens.add(new Token.ForTypeVariable.Formal(currentTypeParameter, currentBounds));
+                    }
+                }
+
+                public abstract T resolve(TypePool typePool, TypeVariableSource typeVariableSource);
+
+                protected interface Resolution {
+
+                    List<GenericType> getTypeVariables();
+
+                    interface ForType extends Resolution {
+
+                        GenericType getSuperType();
+
+                        List<GenericType> getInterfaceTypes();
+
+                        class Simple implements ForType {
+
+                            private final GenericType superType;
+
+                            private final List<GenericType> interfaceTypes;
+
+                            private final List<GenericType> typeVariables;
+
+                            public Simple(GenericType superType, List<GenericType> interfaceTypes, List<GenericType> typeVariables) {
+                                this.superType = superType;
+                                this.interfaceTypes = interfaceTypes;
+                                this.typeVariables = typeVariables;
+                            }
+
+                            @Override
+                            public GenericType getSuperType() {
+                                return superType;
+                            }
+
+                            @Override
+                            public List<GenericType> getInterfaceTypes() {
+                                return interfaceTypes;
+                            }
+
+                            @Override
+                            public List<GenericType> getTypeVariables() {
+                                return typeVariables;
+                            }
+                        }
+                    }
+
+                    interface ForMethod extends Resolution {
+
+                        List<GenericType> getParameterTypes();
+
+                        GenericType getReturnType();
+
+                        List<GenericType> getExceptionTypes();
+
+                        class Simple implements ForMethod {
+
+                            private final List<GenericType> parameterTypes;
+
+                            private final GenericType returnType;
+
+                            private final List<GenericType> exceptionTypes;
+
+                            private final List<GenericType> typeVariables;
+
+                            public Simple(List<GenericType> parameterTypes,
+                                          GenericType returnType,
+                                          List<GenericType> exceptionTypes,
+                                          List<GenericType> typeVariables) {
+                                this.parameterTypes = parameterTypes;
+                                this.returnType = returnType;
+                                this.exceptionTypes = exceptionTypes;
+                                this.typeVariables = typeVariables;
+                            }
+
+                            @Override
+                            public List<GenericType> getParameterTypes() {
+                                return parameterTypes;
+                            }
+
+                            @Override
+                            public GenericType getReturnType() {
+                                return returnType;
+                            }
+
+                            @Override
+                            public List<GenericType> getExceptionTypes() {
+                                return exceptionTypes;
+                            }
+
+                            @Override
+                            public List<GenericType> getTypeVariables() {
+                                return typeVariables;
+                            }
+                        }
+                    }
+                }
+
+                protected static class OfType extends ForSignature<Resolution.ForType> {
+
+                    private Token superTypeToken;
+
+                    private final List<Token> interfaceTypeTokens;
+
+                    protected OfType() {
+                        interfaceTypeTokens = new LinkedList<Token>();
+                    }
+
+                    @Override
+                    public SignatureVisitor visitSuperclass() {
+                        collectTypeParameter();
+                        return new GenericTypeExtractor(new SuperTypeRegistrant());
+                    }
+
+                    @Override
+                    public SignatureVisitor visitInterface() {
+                        return new GenericTypeExtractor(new InterfaceTypeRegistrant());
+                    }
+
+                    @Override
+                    public Resolution.ForType resolve(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        List<GenericType> interfaceTypes = new ArrayList<GenericType>(interfaceTypeTokens.size());
+                        for (Token token : interfaceTypeTokens) {
+                            interfaceTypes.add(token.toGenericType(typePool, typeVariableSource));
+                        }
+                        List<GenericType> typeVariables = new ArrayList<GenericType>(interfaceTypeTokens.size());
+                        for (Token token : typeVariableTokens) {
+                            typeVariables.add(token.toGenericType(typePool, typeVariableSource));
+                        }
+                        return new Resolution.ForType.Simple(superTypeToken.toGenericType(typePool, typeVariableSource), interfaceTypes, typeVariables);
+                    }
+
+                    protected class SuperTypeRegistrant implements GenericTypeRegistrant {
+
+                        @Override
+                        public void register(Token token) {
+                            superTypeToken = token;
+                        }
+                    }
+
+                    protected class InterfaceTypeRegistrant implements GenericTypeRegistrant {
+
+                        @Override
+                        public void register(Token token) {
+                            interfaceTypeTokens.add(token);
+                        }
+                    }
+                }
+
+                protected static class OfMethod extends ForSignature<Resolution.ForMethod> {
+
+                    private final List<Token> parameterTypeTokens;
+
+                    private Token returnTypeToken;
+
+                    private final List<Token> exceptionTypeTokens;
+
+                    public OfMethod() {
+                        parameterTypeTokens = new LinkedList<Token>();
+                        exceptionTypeTokens = new LinkedList<Token>();
+                    }
+
+                    @Override
+                    public SignatureVisitor visitParameterType() {
+                        return new GenericTypeExtractor(new ParameterTypeRegistrant());
+                    }
+
+                    @Override
+                    public SignatureVisitor visitReturnType() {
+                        collectTypeParameter();
+                        return new GenericTypeExtractor(new ReturnTypeTypeRegistrant());
+                    }
+
+                    @Override
+                    public SignatureVisitor visitExceptionType() {
+                        return new GenericTypeExtractor(new InterfaceTypeRegistrant());
+                    }
+
+                    @Override
+                    public Resolution.ForMethod resolve(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        List<GenericType> parameterTypes = new ArrayList<GenericType>(parameterTypeTokens.size());
+                        for (Token token : parameterTypeTokens) {
+                            parameterTypes.add(token.toGenericType(typePool, typeVariableSource));
+                        }
+                        List<GenericType> exceptionTypes = new ArrayList<GenericType>(exceptionTypeTokens.size());
+                        for (Token token : exceptionTypeTokens) {
+                            exceptionTypes.add(token.toGenericType(typePool, typeVariableSource));
+                        }
+                        List<GenericType> typeVariables = new ArrayList<GenericType>(typeVariableTokens.size());
+                        for (Token token : typeVariableTokens) {
+                            typeVariables.add(token.toGenericType(typePool, typeVariableSource));
+                        }
+                        return new Resolution.ForMethod.Simple(parameterTypes,
+                                returnTypeToken.toGenericType(typePool, typeVariableSource),
+                                exceptionTypes,
+                                typeVariables);
+                    }
+
+                    protected class ParameterTypeRegistrant implements GenericTypeRegistrant {
+
+                        @Override
+                        public void register(Token token) {
+                            parameterTypeTokens.add(token);
+                        }
+                    }
+
+                    protected class ReturnTypeTypeRegistrant implements GenericTypeRegistrant {
+
+                        @Override
+                        public void register(Token token) {
+                            returnTypeToken = token;
+                        }
+                    }
+
+                    protected class InterfaceTypeRegistrant implements GenericTypeRegistrant {
+
+                        @Override
+                        public void register(Token token) {
+                            exceptionTypeTokens.add(token);
+                        }
                     }
                 }
             }
