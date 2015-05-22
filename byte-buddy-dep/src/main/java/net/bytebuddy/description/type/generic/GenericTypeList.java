@@ -22,7 +22,12 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
 
         @Override
         public String toSignature() {
-            return null;
+            return null; // TODO: implement, remove?
+        }
+
+        @Override
+        protected GenericTypeList wrap(List<GenericType> values) {
+            return new Explicit(values);
         }
     }
 
@@ -32,11 +37,6 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
 
         public Explicit(List<? extends GenericType> genericTypes) {
             this.genericTypes = genericTypes;
-        }
-
-        @Override
-        protected GenericTypeList wrap(List<GenericType> values) {
-            return new Explicit(values);
         }
 
         @Override
@@ -69,11 +69,6 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
 
         public ForLoadedType(List<? extends Type> types) {
             this.types = types;
-        }
-
-        @Override
-        protected GenericTypeList wrap(List<GenericType> values) {
-            return new Explicit(values);
         }
 
         @Override
@@ -133,11 +128,6 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
             public TypeList asRawTypes() {
                 return new TypeList.ForLoadedType(type.getInterfaces());
             }
-        }
-
-        @Override
-        protected GenericTypeList wrap(List<GenericType> values) {
-            return new Explicit(values);
         }
 
         public static class OfConstructorExceptionTypes extends LazyProjection {

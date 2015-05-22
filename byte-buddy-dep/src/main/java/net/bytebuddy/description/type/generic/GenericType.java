@@ -692,11 +692,11 @@ public interface GenericType extends NamedElement {
             return resolve().toString();
         }
 
-        public static class OfSuperType extends LazyProjection {
+        public static class OfLoadedSuperType extends LazyProjection {
 
             private final Class<?> type;
 
-            public OfSuperType(Class<?> type) {
+            public OfLoadedSuperType(Class<?> type) {
                 this.type = type;
             }
 
@@ -711,11 +711,11 @@ public interface GenericType extends NamedElement {
             }
         }
 
-        public static class OfReturnType extends LazyProjection {
+        public static class OfLoadedReturnType extends LazyProjection {
 
             private final Method method;
 
-            public OfReturnType(Method method) {
+            public OfLoadedReturnType(Method method) {
                 this.method = method;
             }
 
@@ -730,11 +730,11 @@ public interface GenericType extends NamedElement {
             }
         }
 
-        public static class OfFieldType extends LazyProjection {
+        public static class OfLoadedFieldType extends LazyProjection {
 
             private final Field field;
 
-            public OfFieldType(Field field) {
+            public OfLoadedFieldType(Field field) {
                 this.field = field;
             }
 
@@ -749,7 +749,7 @@ public interface GenericType extends NamedElement {
             }
         }
 
-        public static class OfParameter extends LazyProjection {
+        public static class OfLoadedParameter extends LazyProjection {
 
             protected static final JavaMethod GET_TYPE;
 
@@ -772,7 +772,7 @@ public interface GenericType extends NamedElement {
 
             private final Object parameter;
 
-            public OfParameter(Object parameter) {
+            public OfLoadedParameter(Object parameter) {
                 this.parameter = parameter;
             }
 

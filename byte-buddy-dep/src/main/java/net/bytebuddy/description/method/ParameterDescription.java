@@ -235,7 +235,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public GenericType getTypeGen() {
-            return new TypeDescription.LazyProjection.OfParameter(parameter);
+            return new GenericType.LazyProjection.OfLoadedParameter(parameter);
         }
 
         @Override

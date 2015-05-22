@@ -5,4 +5,6 @@ import net.bytebuddy.description.ByteCodeElement;
 public interface TypeVariableSource extends ByteCodeElement {
 
     GenericTypeList getTypeVariables();
+
+    TypeVariableSource getEnclosingSource();
 }

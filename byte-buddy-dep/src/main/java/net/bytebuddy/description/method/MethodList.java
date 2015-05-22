@@ -13,11 +13,19 @@ import java.util.List;
  */
 public interface MethodList extends FilterableList<MethodDescription, MethodList> {
 
+    abstract class AbstractBase extends FilterableList.AbstractBase<MethodDescription, MethodList> implements MethodList {
+
+        @Override
+        protected MethodList wrap(List<MethodDescription> values) {
+            return new Explicit(values);
+        }
+    }
+
     /**
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
      * are declared for a given type.
      */
-    class ForLoadedType extends AbstractBase<MethodDescription, MethodList> implements MethodList {
+    class ForLoadedType extends AbstractBase {
 
         /**
          * The loaded methods that are represented by this method list.
@@ -73,17 +81,12 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         public int size() {
             return constructors.size() + methods.size();
         }
-
-        @Override
-        protected MethodList wrap(List<MethodDescription> values) {
-            return new Explicit(values);
-        }
     }
 
     /**
      * A method list that is a wrapper for a given list of method descriptions.
      */
-    class Explicit extends AbstractBase<MethodDescription, MethodList> implements MethodList {
+    class Explicit extends AbstractBase {
 
         /**
          * The list of methods that is represented by this method list.
@@ -108,17 +111,12 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         public int size() {
             return methodDescriptions.size();
         }
-
-        @Override
-        protected MethodList wrap(List<MethodDescription> values) {
-            return new Explicit(values);
-        }
     }
 
     /**
      * An implementation of an empty method list.
      */
     class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
-
+        /* empty */
     }
 }

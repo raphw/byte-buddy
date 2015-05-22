@@ -107,7 +107,7 @@ public interface FieldDescription extends ByteCodeElement {
 
         @Override
         public GenericType getFieldTypeGen() {
-            return new GenericType.LazyProjection.OfFieldType(field);
+            return new GenericType.LazyProjection.OfLoadedFieldType(field);
         }
 
         @Override
