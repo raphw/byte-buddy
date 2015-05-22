@@ -26,10 +26,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
      */
     int getStackSize();
 
+    abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
+
+        @Override
+        protected TypeList wrap(List<TypeDescription> values) {
+            return new Explicit(values);
+        }
+    }
+
     /**
      * Implementation of a type list for an array of loaded types.
      */
-    class ForLoadedType extends AbstractBase<TypeDescription, TypeList> implements TypeList {
+    class ForLoadedType extends AbstractBase {
 
         /**
          * The loaded types this type list represents.
@@ -78,17 +86,12 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         public int getStackSize() {
             return StackSize.sizeOf(types);
         }
-
-        @Override
-        protected TypeList wrap(List<TypeDescription> values) {
-            return new Explicit(values);
-        }
     }
 
     /**
      * A wrapper implementation of an explicit list of types.
      */
-    class Explicit extends AbstractBase<TypeDescription, TypeList> implements TypeList {
+    class Explicit extends AbstractBase {
 
         /**
          * The list of type descriptions this list represents.
@@ -131,11 +134,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 stackSize += typeDescription.getStackSize().getSize();
             }
             return stackSize;
-        }
-
-        @Override
-        protected TypeList wrap(List<TypeDescription> values) {
-            return new Explicit(values);
         }
     }
 

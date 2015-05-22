@@ -587,6 +587,14 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
         }
 
         @Override
+        public TypeVariableSource getEnclosingSource() {
+            MethodDescription enclosingMethod = getEnclosingMethod();
+            return enclosingMethod == null
+                    ? getEnclosingType()
+                    : enclosingMethod;
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof TypeDescription
                     && getName().equals(((TypeDescription) other).getName());
@@ -836,7 +844,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
 
         @Override
         public GenericType getSuperTypeGen() {
-            return new LazyProjection.OfSuperType(type);
+            return new LazyProjection.OfLoadedSuperType(type);
         }
 
         @Override

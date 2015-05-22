@@ -466,6 +466,11 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
+        public TypeVariableSource getEnclosingSource() {
+            return getDeclaringType();
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
@@ -662,7 +667,7 @@ public interface MethodDescription extends TypeVariableSource {
 
         @Override
         public GenericType getReturnTypeGen() {
-            return new GenericType.LazyProjection.OfReturnType(method);
+            return new GenericType.LazyProjection.OfLoadedReturnType(method);
         }
 
         @Override

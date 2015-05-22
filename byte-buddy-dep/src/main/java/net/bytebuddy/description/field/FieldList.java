@@ -11,10 +11,18 @@ import java.util.List;
  */
 public interface FieldList extends FilterableList<FieldDescription, FieldList> {
 
+    abstract class AbstractBase extends FilterableList.AbstractBase<FieldDescription, FieldList> implements FieldList {
+
+        @Override
+        protected FieldList wrap(List<FieldDescription> values) {
+            return new Explicit(values);
+        }
+    }
+
     /**
      * An implementation of a field list for an array of loaded fields.
      */
-    class ForLoadedField extends AbstractBase<FieldDescription, FieldList> implements FieldList {
+    class ForLoadedField extends AbstractBase {
 
         /**
          * The loaded fields this field list represents.
@@ -48,17 +56,12 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         public int size() {
             return fields.size();
         }
-
-        @Override
-        protected FieldList wrap(List<FieldDescription> values) {
-            return new Explicit(values);
-        }
     }
 
     /**
      * A wrapper implementation of a field list for a given list of field descriptions.
      */
-    class Explicit extends AbstractBase<FieldDescription, FieldList> implements FieldList {
+    class Explicit extends AbstractBase {
 
         /**
          * The list of field descriptions this list represents.
@@ -83,17 +86,12 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         public int size() {
             return fieldDescriptions.size();
         }
-
-        @Override
-        protected FieldList wrap(List<FieldDescription> values) {
-            return new Explicit(values);
-        }
     }
 
     /**
      * An implementation of an empty field list.
      */
     class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
-
+        /* empty */
     }
 }
