@@ -1572,6 +1572,12 @@ public interface TypePool {
                     extends RejectingSignatureVisitor
                     implements GenericTypeRegistrant {
 
+                protected static <S extends LazyTypeDescription.GenericTypeToken.Resolution> S extract(String genericSignature, ForSignature<S> visitor) {
+                    SignatureReader signatureReader = new SignatureReader(genericSignature);
+                    signatureReader.accept(visitor);
+                    return visitor.resolve();
+                }
+
                 protected final List<LazyTypeDescription.GenericTypeToken> typeVariableTokens;
 
                 private String currentTypeParameter;
@@ -1613,6 +1619,12 @@ public interface TypePool {
                 public abstract T resolve();
 
                 protected static class OfType extends ForSignature<LazyTypeDescription.GenericTypeToken.Resolution.ForType> {
+
+                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForType extract(String genericSignature) {
+                        return genericSignature == null
+                                ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
+                                : ForSignature.extract(genericSignature, new OfType());
+                    }
 
                     private LazyTypeDescription.GenericTypeToken superTypeToken;
 
@@ -1656,6 +1668,12 @@ public interface TypePool {
                 }
 
                 protected static class OfMethod extends ForSignature<LazyTypeDescription.GenericTypeToken.Resolution.ForMethod> {
+
+                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForMethod extract(String genericSignature) {
+                        return genericSignature == null
+                                ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
+                                : ForSignature.extract(genericSignature, new OfMethod());
+                    }
 
                     private LazyTypeDescription.GenericTypeToken returnTypeToken;
 
@@ -1717,14 +1735,20 @@ public interface TypePool {
                     }
                 }
 
-                protected static class OfField extends RejectingSignatureVisitor implements GenericTypeRegistrant {
+                protected static class OfField implements GenericTypeRegistrant {
+
+                    public static LazyTypeDescription.GenericTypeToken.Resolution.ForField extract(String genericSignature) {
+                        if (genericSignature == null) {
+                            return LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE;
+                        } else {
+                            SignatureReader signatureReader = new SignatureReader(genericSignature);
+                            OfField visitor = new OfField();
+                            signatureReader.acceptType(new GenericTypeExtractor(visitor));
+                            return visitor.resolve();
+                        }
+                    }
 
                     private LazyTypeDescription.GenericTypeToken fieldTypeToken;
-
-                    @Override
-                    public SignatureVisitor visitSuperclass() {
-                        return new GenericTypeExtractor(this);
-                    }
 
                     @Override
                     public void register(LazyTypeDescription.GenericTypeToken token) {
@@ -1882,7 +1906,7 @@ public interface TypePool {
                         internalName,
                         superTypeName,
                         interfaceName,
-                        null, //GenericTypeExtractor.ForSignature.OfType.extract(genericSignature), TODO!
+                        GenericTypeExtractor.ForSignature.OfType.extract(genericSignature),
                         declarationContext,
                         anonymousType,
                         annotationTokens,
@@ -2200,7 +2224,7 @@ public interface TypePool {
                     fieldTokens.add(new LazyTypeDescription.FieldToken(modifiers,
                             internalName,
                             descriptor,
-                            genericSignature,
+                            GenericTypeExtractor.ForSignature.OfField.extract(genericSignature),
                             annotationTokens));
                 }
 
@@ -2409,7 +2433,7 @@ public interface TypePool {
                     methodTokens.add(new LazyTypeDescription.MethodToken(modifiers,
                             internalName,
                             descriptor,
-                            genericSignature,
+                            GenericTypeExtractor.ForSignature.OfMethod.extract(genericSignature),
                             exceptionName,
                             annotationTokens,
                             parameterAnnotationTokens,
@@ -2564,9 +2588,6 @@ public interface TypePool {
          */
         private final String superTypeName;
 
-        /**
-         * The generic signature of the type or {@code null} if the code is not generic.
-         */
         private final GenericTypeToken.Resolution.ForType signatureResolution;
 
         /**
@@ -3076,35 +3097,22 @@ public interface TypePool {
              */
             private final String descriptor;
 
-            /**
-             * The generic signature of the field or {@code null} if it is not generic.
-             */
-            private final String genericSignature;
+            private final GenericTypeToken.Resolution.ForField signatureResoltion;
 
             /**
              * A list of annotation tokens representing the annotations of the represented field.
              */
             private final List<AnnotationToken> annotationTokens;
 
-            /**
-             * Creates a new field token.
-             *
-             * @param modifiers        The modifiers of the represented field.
-             * @param name             The name of the field.
-             * @param descriptor       The descriptor of the field.
-             * @param genericSignature The generic signature of the field or {@code null} if it is not generic.
-             * @param annotationTokens A list of annotation tokens representing the annotations of the
-             *                         represented field.
-             */
             protected FieldToken(int modifiers,
                                  String name,
                                  String descriptor,
-                                 String genericSignature,
+                                 GenericTypeToken.Resolution.ForField signatureResoltion,
                                  List<AnnotationToken> annotationTokens) {
                 this.modifiers = modifiers;
                 this.name = name;
                 this.descriptor = descriptor;
-                this.genericSignature = genericSignature;
+                this.signatureResoltion = signatureResoltion;
                 this.annotationTokens = annotationTokens;
             }
 
@@ -3135,13 +3143,8 @@ public interface TypePool {
                 return descriptor;
             }
 
-            /**
-             * Returns the generic signature of the field or {@code null} if it is not generic.
-             *
-             * @return The generic signature of the field or {@code null} if it is not generic.
-             */
-            protected String getGenericSignature() {
-                return genericSignature;
+            protected GenericTypeToken.Resolution.ForField getSignatureResolution() {
+                return signatureResoltion;
             }
 
             /**
@@ -3163,7 +3166,7 @@ public interface TypePool {
                 return lazyTypeDescription.new LazyFieldDescription(getModifiers(),
                         getName(),
                         getDescriptor(),
-                        getGenericSignature(),
+                        getSignatureResolution(),
                         getAnnotationTokens());
             }
 
@@ -3175,7 +3178,7 @@ public interface TypePool {
                 return modifiers == that.modifiers
                         && annotationTokens.equals(that.annotationTokens)
                         && descriptor.equals(that.descriptor)
-                        && !(genericSignature != null ? !genericSignature.equals(that.genericSignature) : that.genericSignature != null)
+                        && signatureResoltion.equals(that.signatureResoltion)
                         && name.equals(that.name);
             }
 
@@ -3184,7 +3187,7 @@ public interface TypePool {
                 int result = modifiers;
                 result = 31 * result + name.hashCode();
                 result = 31 * result + descriptor.hashCode();
-                result = 31 * result + (genericSignature != null ? genericSignature.hashCode() : 0);
+                result = 31 * result + signatureResoltion.hashCode();
                 result = 31 * result + annotationTokens.hashCode();
                 return result;
             }
@@ -3195,7 +3198,7 @@ public interface TypePool {
                         "modifiers=" + modifiers +
                         ", name='" + name + '\'' +
                         ", descriptor='" + descriptor + '\'' +
-                        ", genericSignature='" + genericSignature + '\'' +
+                        ", signatureResoltion=" + signatureResoltion +
                         ", annotationTokens=" + annotationTokens +
                         '}';
             }
@@ -3221,10 +3224,7 @@ public interface TypePool {
              */
             private final String descriptor;
 
-            /**
-             * The generic signature of the method or {@code null} if it is not generic.
-             */
-            private final String genericSignature;
+            private final GenericTypeToken.Resolution.ForMethod signatureResolution;
 
             /**
              * An array of internal names of the exceptions of the represented method or {@code null} if there
@@ -3252,25 +3252,10 @@ public interface TypePool {
              */
             private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
 
-            /**
-             * Creates a new method token.
-             *
-             * @param modifiers                 The modifiers of the represented method.
-             * @param name                      The internal name of the represented method.
-             * @param descriptor                The descriptor of the represented method.
-             * @param genericSignature          The generic signature of the method or {@code null} if it is not generic.
-             * @param exceptionName             An array of internal names of the exceptions of the represented method
-             *                                  or {@code null} if there are no such exceptions.
-             * @param annotationTokens          A list of annotation tokens that are present on the represented method.
-             * @param parameterAnnotationTokens A map of parameter indices to tokens that represent their annotations.
-             * @param parameterTokens           A list of tokens describing meta data of the method's parameters.
-             * @param defaultValue              The default value of this method or {@code null} if there is no
-             *                                  such value.
-             */
             protected MethodToken(int modifiers,
                                   String name,
                                   String descriptor,
-                                  String genericSignature,
+                                  GenericTypeToken.Resolution.ForMethod signatureResolution,
                                   String[] exceptionName,
                                   List<AnnotationToken> annotationTokens,
                                   Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
@@ -3279,7 +3264,7 @@ public interface TypePool {
                 this.modifiers = modifiers;
                 this.name = name;
                 this.descriptor = descriptor;
-                this.genericSignature = genericSignature;
+                this.signatureResolution = signatureResolution;
                 this.exceptionName = exceptionName;
                 this.annotationTokens = annotationTokens;
                 this.parameterAnnotationTokens = parameterAnnotationTokens;
@@ -3314,13 +3299,8 @@ public interface TypePool {
                 return descriptor;
             }
 
-            /**
-             * Returns the generic signature of the method or {@code null} if it is not generic.
-             *
-             * @return The generic signature of the method or {@code null} if it is not generic.
-             */
-            protected String getGenericSignature() {
-                return genericSignature;
+            protected GenericTypeToken.Resolution.ForMethod getSignatureResolution() {
+                return signatureResolution;
             }
 
             /**
@@ -3379,7 +3359,7 @@ public interface TypePool {
                 return lazyTypeDescription.new LazyMethodDescription(getModifiers(),
                         getName(),
                         getDescriptor(),
-                        getGenericSignature(),
+                        getSignatureResolution(),
                         getExceptionName(),
                         getAnnotationTokens(),
                         getParameterAnnotationTokens(),
@@ -3397,7 +3377,7 @@ public interface TypePool {
                         && defaultValue.equals(that.defaultValue)
                         && descriptor.equals(that.descriptor)
                         && parameterTokens.equals(that.parameterTokens)
-                        && !(genericSignature != null ? !genericSignature.equals(that.genericSignature) : that.genericSignature != null)
+                        && signatureResolution.equals(that.signatureResolution)
                         && Arrays.equals(exceptionName, that.exceptionName)
                         && name.equals(that.name)
                         && parameterAnnotationTokens.equals(that.parameterAnnotationTokens);
@@ -3408,7 +3388,7 @@ public interface TypePool {
                 int result = modifiers;
                 result = 31 * result + name.hashCode();
                 result = 31 * result + descriptor.hashCode();
-                result = 31 * result + (genericSignature != null ? genericSignature.hashCode() : 0);
+                result = 31 * result + signatureResolution.hashCode();
                 result = 31 * result + Arrays.hashCode(exceptionName);
                 result = 31 * result + annotationTokens.hashCode();
                 result = 31 * result + parameterAnnotationTokens.hashCode();
@@ -3423,7 +3403,7 @@ public interface TypePool {
                         "modifiers=" + modifiers +
                         ", name='" + name + '\'' +
                         ", descriptor='" + descriptor + '\'' +
-                        ", genericSignature='" + genericSignature + '\'' +
+                        ", signatureResolution=" + signatureResolution +
                         ", exceptionName=" + Arrays.toString(exceptionName) +
                         ", annotationTokens=" + annotationTokens +
                         ", parameterAnnotationTokens=" + parameterAnnotationTokens +
@@ -4201,29 +4181,17 @@ public interface TypePool {
              */
             private final String fieldTypeName;
 
-            /**
-             * The generic signature of the method or {@code null} if it is not generic.
-             */
-            private final String genericSignature;
+            private final GenericTypeToken.Resolution.ForField signatureResolution;
 
             /**
              * A list of annotation descriptions of this field.
              */
             private final List<AnnotationDescription> declaredAnnotations;
 
-            /**
-             * Creates a lazy field description.
-             *
-             * @param modifiers        The modifiers of the represented field.
-             * @param name             The name of the field.
-             * @param descriptor       The descriptor of the field.
-             * @param genericSignature The generic signature of the field or {@code null} if it is not generic.
-             * @param annotationTokens A list of annotation tokens representing annotations that are declared by this field.
-             */
             private LazyFieldDescription(int modifiers,
                                          String name,
                                          String descriptor,
-                                         String genericSignature,
+                                         GenericTypeToken.Resolution.ForField signatureResolution,
                                          List<AnnotationToken> annotationTokens) {
                 this.modifiers = modifiers;
                 this.name = name;
@@ -4231,7 +4199,7 @@ public interface TypePool {
                 fieldTypeName = fieldType.getSort() == Type.ARRAY
                         ? fieldType.getInternalName().replace('/', '.')
                         : fieldType.getClassName();
-                this.genericSignature = genericSignature;
+                this.signatureResolution = signatureResolution;
                 declaredAnnotations = new ArrayList<AnnotationDescription>(annotationTokens.size());
                 for (AnnotationToken annotationToken : annotationTokens) {
                     declaredAnnotations.add(annotationToken.toAnnotationDescription(typePool));
@@ -4245,7 +4213,7 @@ public interface TypePool {
 
             @Override
             public GenericType getFieldTypeGen() {
-                return getFieldType();
+                return signatureResolution.resolveFieldType(fieldTypeName, typePool, this);
             }
 
             @Override
@@ -4270,7 +4238,7 @@ public interface TypePool {
 
             @Override
             public String getGenericSignature() {
-                return genericSignature;
+                return null;
             }
         }
 
@@ -4294,20 +4262,11 @@ public interface TypePool {
              */
             private final String returnTypeName;
 
-            /**
-             * The generic signature of the method or {@code null} if it is not generic.
-             */
-            private final String genericSignature;
+            private final GenericTypeToken.Resolution.ForMethod signatureResolution;
 
-            /**
-             * A list of parameter type of this method.
-             */
-            private final TypeList parameterTypes;
+            private final String[] parameterTypeInternalName;
 
-            /**
-             * A list of exception types of this method.
-             */
-            private final TypeList exceptionTypes;
+            private final String[] exceptionInternalName;
 
             /**
              * A list of annotation descriptions that are declared by this method.
@@ -4341,7 +4300,6 @@ public interface TypePool {
              * @param modifiers                 The modifiers of the represented method.
              * @param internalName              The internal name of this method.
              * @param methodDescriptor          The method descriptor of this method.
-             * @param genericSignature          The generic signature of the method or {@code null} if it is not generic.
              * @param exceptionInternalName     The internal names of the exceptions that are declared by this
              *                                  method or {@code null} if no exceptions are declared by this
              *                                  method.
@@ -4358,7 +4316,7 @@ public interface TypePool {
             private LazyMethodDescription(int modifiers,
                                           String internalName,
                                           String methodDescriptor,
-                                          String genericSignature,
+                                          GenericTypeToken.Resolution.ForMethod signatureResolution,
                                           String[] exceptionInternalName,
                                           List<AnnotationToken> annotationTokens,
                                           Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
@@ -4370,17 +4328,19 @@ public interface TypePool {
                 returnTypeName = returnType.getSort() == Type.ARRAY
                         ? returnType.getDescriptor().replace('/', '.')
                         : returnType.getClassName();
-                parameterTypes = new LazyTypeList(typePool, methodDescriptor);
-                this.genericSignature = genericSignature;
-                exceptionTypes = exceptionInternalName == null
-                        ? new TypeList.Empty()
-                        : new LazyTypeList(typePool, exceptionInternalName);
+                Type[] parameterType = Type.getArgumentTypes(methodDescriptor);
+                parameterTypeInternalName = new String[parameterType.length];
+                for (int index = 0; index < parameterType.length; index++) {
+                    parameterTypeInternalName[index] = parameterType[index].getInternalName();
+                }
+                this.signatureResolution = signatureResolution;
+                this.exceptionInternalName = exceptionInternalName;
                 declaredAnnotations = new ArrayList<AnnotationDescription>(annotationTokens.size());
                 for (AnnotationToken annotationToken : annotationTokens) {
                     declaredAnnotations.add(annotationToken.toAnnotationDescription(typePool));
                 }
-                declaredParameterAnnotations = new ArrayList<List<AnnotationDescription>>(parameterTypes.size());
-                for (int index = 0; index < parameterTypes.size(); index++) {
+                declaredParameterAnnotations = new ArrayList<List<AnnotationDescription>>(parameterType.length);
+                for (int index = 0; index < parameterType.length; index++) {
                     List<AnnotationToken> tokens = parameterAnnotationTokens.get(index);
                     List<AnnotationDescription> annotationDescriptions;
                     annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
@@ -4389,9 +4349,9 @@ public interface TypePool {
                     }
                     declaredParameterAnnotations.add(annotationDescriptions);
                 }
-                parameterNames = new String[parameterTypes.size()];
-                parameterModifiers = new Integer[parameterTypes.size()];
-                if (parameterTokens.size() == parameterTypes.size()) {
+                parameterNames = new String[parameterType.length];
+                parameterModifiers = new Integer[parameterType.length];
+                if (parameterTokens.size() == parameterType.length) {
                     int index = 0;
                     for (MethodToken.ParameterToken parameterToken : parameterTokens) {
                         parameterNames[index] = parameterToken.getName();
@@ -4409,17 +4369,21 @@ public interface TypePool {
 
             @Override
             public GenericType getReturnTypeGen() {
-                return getReturnType();
+                return signatureResolution.resolveReturnType(returnTypeName, typePool, this);
             }
 
             @Override
             public TypeList getExceptionTypes() {
-                return exceptionTypes;
+                return exceptionInternalName == null
+                        ? new TypeList.Empty()
+                        : new LazyTypeList(typePool, exceptionInternalName);
             }
 
             @Override
             public GenericTypeList getExceptionTypesGen() {
-                return new GenericTypeList.Explicit(getExceptionTypes());
+                return exceptionInternalName == null
+                        ? new GenericTypeList.Empty()
+                        : signatureResolution.resolveExceptionTypes(exceptionInternalName, typePool, this);
             }
 
             @Override
@@ -4461,7 +4425,7 @@ public interface TypePool {
 
             @Override
             public String getGenericSignature() {
-                return genericSignature;
+                return null;
             }
 
             /**
@@ -4491,12 +4455,17 @@ public interface TypePool {
 
                 @Override
                 public int size() {
-                    return parameterTypes.size();
+                    return parameterTypeInternalName.length;
                 }
 
                 @Override
                 public TypeList asTypeList() {
-                    return parameterTypes;
+                    return new LazyTypeList(typePool, parameterTypeInternalName);
+                }
+
+                @Override
+                public GenericTypeList asTypeListGen() {
+                    return signatureResolution.resolveParameterTypes(parameterTypeInternalName, typePool, LazyMethodDescription.this);
                 }
             }
 
@@ -4521,7 +4490,7 @@ public interface TypePool {
 
                 @Override
                 public TypeDescription getTypeDescription() {
-                    return parameterTypes.get(index);
+                    return typePool.describe(parameterTypeInternalName[index]).resolve();
                 }
 
                 @Override
@@ -4591,31 +4560,6 @@ public interface TypePool {
              * The stack size of all types in this list.
              */
             private final int stackSize;
-
-
-            /**
-             * Creates a new type list for a method's parameter types.
-             *
-             * @param methodDescriptor The method which arguments should be represented in this type list.
-             */
-            protected LazyTypeList(TypePool typePool, String methodDescriptor) {
-                this.typePool = typePool;
-                Type[] parameterType = Type.getArgumentTypes(methodDescriptor);
-                name = new String[parameterType.length];
-                internalName = new String[parameterType.length];
-                int index = 0, stackSize = 0;
-                for (Type aParameterType : parameterType) {
-                    name[index] = aParameterType.getSort() == Type.ARRAY
-                            ? aParameterType.getInternalName().replace('/', '.')
-                            : aParameterType.getClassName();
-                    internalName[index] = aParameterType.getSort() == Type.ARRAY
-                            ? aParameterType.getInternalName().replace('/', '.')
-                            : aParameterType.getClassName();
-                    stackSize += aParameterType.getSize();
-                    index++;
-                }
-                this.stackSize = stackSize;
-            }
 
             /**
              * Creates a new type list for a list of internal names.
