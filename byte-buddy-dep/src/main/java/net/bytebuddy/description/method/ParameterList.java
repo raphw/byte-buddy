@@ -2,6 +2,8 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.JavaMethod;
@@ -9,6 +11,7 @@ import net.bytebuddy.utility.JavaMethod;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +27,8 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
      * @return A list of type descriptions.
      */
     TypeList asTypeList();
+
+    GenericTypeList asTypeListGen();
 
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
@@ -133,6 +138,15 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
+        public GenericTypeList asTypeListGen() {
+            List<GenericType> types = new ArrayList<GenericType>(parameter.length);
+            for (Object aParameter : parameter) {
+                types.add(new GenericType.LazyProjection.OfLoadedParameter(aParameter));
+            }
+            return new GenericTypeList.Explicit(types);
+        }
+
+        @Override
         protected ParameterList wrap(List<ParameterDescription> values) {
             return new Explicit(values);
         }
@@ -188,6 +202,15 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             public TypeList asTypeList() {
                 return new TypeList.ForLoadedType(parameterType);
             }
+
+            @Override
+            public GenericTypeList asTypeListGen() {
+                List<GenericType> types = new ArrayList<GenericType>(parameterType.length);
+                for (int index = 0; index < parameterType.length; index++) {
+                    types.add(new GenericType.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType[index]));
+                }
+                return new GenericTypeList.Explicit(types);
+            }
         }
 
         /**
@@ -240,6 +263,14 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             @Override
             public TypeList asTypeList() {
                 return new TypeList.ForLoadedType(parameterType);
+            }
+            @Override
+            public GenericTypeList asTypeListGen() {
+                List<GenericType> types = new ArrayList<GenericType>(parameterType.length);
+                for (int index = 0; index < parameterType.length; index++) {
+                    types.add(new GenericType.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType[index]));
+                }
+                return new GenericTypeList.Explicit(types);
             }
         }
     }
@@ -305,6 +336,15 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
+        public GenericTypeList asTypeListGen() {
+            List<GenericType> types = new ArrayList<GenericType>(parameterDescriptions.size());
+            for (ParameterDescription parameterDescription : parameterDescriptions) {
+                types.add(parameterDescription.getTypeGen());
+            }
+            return new GenericTypeList.Explicit(types);
+        }
+
+        @Override
         protected ParameterList wrap(List<ParameterDescription> values) {
             return new Explicit(values);
         }
@@ -323,6 +363,11 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         @Override
         public TypeList asTypeList() {
             return new TypeList.Empty();
+        }
+
+        @Override
+        public GenericTypeList asTypeListGen() {
+            return new GenericTypeList.Empty();
         }
     }
 }

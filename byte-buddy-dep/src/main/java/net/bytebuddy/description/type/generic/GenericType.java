@@ -769,7 +769,6 @@ public interface GenericType extends NamedElement {
                 GET_GENERIC_TYPE = getGenericType;
             }
 
-
             private final Object parameter;
 
             public OfLoadedParameter(Object parameter) {
