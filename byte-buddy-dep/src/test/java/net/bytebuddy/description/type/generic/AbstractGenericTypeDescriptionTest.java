@@ -263,11 +263,10 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @SuppressWarnings("unused")
     public static class ShadowingTypeVariableType<T> {
 
+        @SuppressWarnings("all")
         <T> T foo() {
             return null;
         }
-
-        ;
     }
 
     @SuppressWarnings("unused")
