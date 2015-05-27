@@ -12,7 +12,6 @@ import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.annotation.Annotation;
@@ -307,10 +306,9 @@ public interface MethodDescription extends TypeVariableSource {
                 signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
                 boolean classBound = true;
                 for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
-                    SignatureVisitor boundVisitor = classBound
+                    upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(classBound
                             ? signatureWriter.visitClassBound()
-                            : signatureWriter.visitInterfaceBound();
-                    upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(boundVisitor));
+                            : signatureWriter.visitInterfaceBound()));
                     classBound = false;
                 }
                 signatureWriter.visitEnd();

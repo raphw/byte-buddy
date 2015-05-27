@@ -32,7 +32,7 @@ public interface GenericTypeDescription extends NamedElement {
 
     String getTypeName();
 
-    void accept(Visitor visitor);
+    <T> T accept(Visitor<T> visitor);
 
     enum Sort {
 
@@ -79,19 +79,21 @@ public interface GenericTypeDescription extends NamedElement {
         }
     }
 
-    interface Visitor {
+    interface Visitor<T> {
 
-        void onGenericArray(GenericTypeDescription genericTypeDescription);
+        T onGenericArray(GenericTypeDescription genericTypeDescription);
 
-        void onWildcardType(GenericTypeDescription genericTypeDescription);
+        T onWildcardType(GenericTypeDescription genericTypeDescription);
 
-        void onParameterizedType(GenericTypeDescription genericTypeDescription);
+        T onParameterizedType(GenericTypeDescription genericTypeDescription);
 
-        void onTypeVariable(GenericTypeDescription genericTypeDescription);
+        T onTypeVariable(GenericTypeDescription genericTypeDescription);
 
-        void onRawType(TypeDescription typeDescription);
+        T onRawType(TypeDescription typeDescription);
 
-        class ForSignatureVisitor implements Visitor {
+        class ForSignatureVisitor implements Visitor<SignatureVisitor> {
+
+            private static final int ONLY_CHARACTER = 0;
 
             private final SignatureVisitor signatureVisitor;
 
@@ -100,12 +102,13 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public void onGenericArray(GenericTypeDescription genericTypeDescription) {
+            public SignatureVisitor onGenericArray(GenericTypeDescription genericTypeDescription) {
                 genericTypeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
+                return signatureVisitor;
             }
 
             @Override
-            public void onWildcardType(GenericTypeDescription genericTypeDescription) {
+            public SignatureVisitor onWildcardType(GenericTypeDescription genericTypeDescription) {
                 GenericTypeList upperBounds = genericTypeDescription.getUpperBounds();
                 GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds();
                 if (upperBounds.isEmpty() && lowerBounds.isEmpty()) {
@@ -117,12 +120,14 @@ public interface GenericTypeDescription extends NamedElement {
                     lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
                     signatureVisitor.visitEnd();
                 }
+                return signatureVisitor;
             }
 
             @Override
-            public void onParameterizedType(GenericTypeDescription genericTypeDescription) {
+            public SignatureVisitor onParameterizedType(GenericTypeDescription genericTypeDescription) {
                 onOwnableType(genericTypeDescription);
                 signatureVisitor.visitEnd();
+                return signatureVisitor;
             }
 
             private void onOwnableType(GenericTypeDescription genericTypeDescription) {
@@ -142,17 +147,19 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public void onTypeVariable(GenericTypeDescription genericTypeDescription) {
+            public SignatureVisitor onTypeVariable(GenericTypeDescription genericTypeDescription) {
                 signatureVisitor.visitTypeVariable(genericTypeDescription.getSymbol());
+                return signatureVisitor;
             }
 
             @Override
-            public void onRawType(TypeDescription typeDescription) {
+            public SignatureVisitor onRawType(TypeDescription typeDescription) {
                 if (typeDescription.isPrimitive()) {
-                    signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(0));
+                    signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(ONLY_CHARACTER));
                 } else {
                     signatureVisitor.visitClassType(typeDescription.getInternalName());
                 }
+                return signatureVisitor;
             }
         }
     }
@@ -210,8 +217,8 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public void accept(Visitor visitor) {
-            visitor.onGenericArray(this);
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onGenericArray(this);
         }
 
         @Override
@@ -331,8 +338,8 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public void accept(Visitor visitor) {
-            visitor.onWildcardType(this);
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onWildcardType(this);
         }
 
         @Override
@@ -480,8 +487,8 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public void accept(Visitor visitor) {
-            visitor.onParameterizedType(this);
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onParameterizedType(this);
         }
 
         @Override
@@ -641,8 +648,8 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public void accept(Visitor visitor) {
-            visitor.onTypeVariable(this);
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onTypeVariable(this);
         }
 
         @Override
@@ -783,8 +790,8 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public void accept(Visitor visitor) {
-            resolve().accept(visitor);
+        public <T> T accept(Visitor<T> visitor) {
+            return resolve().accept(visitor);
         }
 
         @Override
