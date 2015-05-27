@@ -3,7 +3,8 @@ package net.bytebuddy.description.field;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -21,7 +22,7 @@ public interface FieldDescription extends ByteCodeElement {
      */
     TypeDescription getFieldType();
 
-    GenericType getFieldTypeGen();
+    GenericTypeDescription getFieldTypeGen();
 
     /**
      * An abstract base implementation of a field description.
@@ -45,7 +46,14 @@ public interface FieldDescription extends ByteCodeElement {
 
         @Override
         public String getGenericSignature() {
-            return null; // Currently, generics signatures supported poorly.
+            GenericTypeDescription fieldType = getFieldTypeGen();
+            if (fieldType.getSort().isRawType()) {
+                return null;
+            } else {
+                SignatureWriter signatureWriter = new SignatureWriter();
+                fieldType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter));
+                return signatureWriter.toString();
+            }
         }
 
         @Override
@@ -106,8 +114,8 @@ public interface FieldDescription extends ByteCodeElement {
         }
 
         @Override
-        public GenericType getFieldTypeGen() {
-            return new GenericType.LazyProjection.OfLoadedFieldType(field);
+        public GenericTypeDescription getFieldTypeGen() {
+            return new GenericTypeDescription.LazyProjection.OfLoadedFieldType(field);
         }
 
         @Override
@@ -186,7 +194,7 @@ public interface FieldDescription extends ByteCodeElement {
         }
 
         @Override
-        public GenericType getFieldTypeGen() {
+        public GenericTypeDescription getFieldTypeGen() {
             return fieldType;
         }
 

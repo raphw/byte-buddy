@@ -6,7 +6,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.Opcodes;
@@ -222,7 +222,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public GenericType getReturnTypeGen() {
+        public GenericTypeDescription getReturnTypeGen() {
             return methodChain.get(MOST_SPECIFIC).getReturnTypeGen();
         }
 
@@ -395,7 +395,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public GenericType getReturnTypeGen() {
+        public GenericTypeDescription getReturnTypeGen() {
             return methodDescriptions.get(ANY).getReturnTypeGen();
         }
 

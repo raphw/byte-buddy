@@ -6,13 +6,15 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureVisitor;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -28,7 +30,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
  */
-public interface TypeDescription extends GenericType, TypeVariableSource {
+public interface TypeDescription extends GenericTypeDescription, TypeVariableSource {
 
     /**
      * A representation of the {@link java.lang.Object} type.
@@ -156,7 +158,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
      */
     TypeDescription getSupertype();
 
-    GenericType getSuperTypeGen();
+    GenericTypeDescription getSuperTypeGen();
 
     /**
      * Returns a list of interfaces that are implemented by this type.
@@ -341,7 +343,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
 
         @Override
         public TypeDescription getSupertype() {
-            GenericType superType = getSuperTypeGen();
+            GenericTypeDescription superType = getSuperTypeGen();
             return superType == null
                     ? null
                     : superType.asRawType();
@@ -455,7 +457,34 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
 
         @Override
         public String getGenericSignature() {
-            return null; // Currently, generics signatures supported poorly.
+            GenericTypeDescription superType = getSuperTypeGen();
+            if (superType == null) {
+                return null;
+            }
+            SignatureWriter signatureWriter = new SignatureWriter();
+            boolean generic = false;
+            for (GenericTypeDescription typeVariable : getTypeVariables()) {
+                signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
+                boolean classBound = true;
+                for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
+                    SignatureVisitor boundVisitor = classBound
+                            ? signatureWriter.visitClassBound()
+                            : signatureWriter.visitInterfaceBound();
+                    upperBound.accept(new Visitor.ForSignatureVisitor(boundVisitor));
+                    classBound = false;
+                }
+                signatureWriter.visitEnd();
+                generic = true;
+            }
+            superType.accept(new Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
+            generic = generic || !superType.getSort().isRawType();
+            for (GenericTypeDescription interfaceType : getInterfacesGen()) {
+                interfaceType.accept(new Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
+                generic = generic || !interfaceType.getSort().isRawType();
+            }
+            return generic
+                    ? signatureWriter.toString()
+                    : null;
         }
 
         @Override
@@ -595,7 +624,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
         }
 
         @Override
-        public GenericType getOwnerType() {
+        public GenericTypeDescription getOwnerType() {
             return null;
         }
 
@@ -605,6 +634,11 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
             return enclosingMethod == null
                     ? getEnclosingType()
                     : enclosingMethod;
+        }
+
+        @Override
+        public void accept(Visitor visitor) {
+            visitor.onRawType(this);
         }
 
         @Override
@@ -853,7 +887,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
         }
 
         @Override
-        public GenericType getSuperTypeGen() {
+        public GenericTypeDescription getSuperTypeGen() {
             return type.getSuperclass() == null
                     ? null
                     : new LazyProjection.OfLoadedSuperType(type);
@@ -1097,7 +1131,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
         }
 
         @Override
-        public GenericType getSuperTypeGen() {
+        public GenericTypeDescription getSuperTypeGen() {
             return new ForLoadedType(Object.class);
         }
 
@@ -1254,7 +1288,7 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
         }
 
         @Override
-        public GenericType getSuperTypeGen() {
+        public GenericTypeDescription getSuperTypeGen() {
             return superType;
         }
 

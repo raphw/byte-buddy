@@ -11,7 +11,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -414,7 +414,7 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public GenericType getFieldTypeGen() {
+            public GenericTypeDescription getFieldTypeGen() {
                 return fieldType;
             }
 
@@ -512,7 +512,7 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public GenericType getReturnTypeGen() {
+            public GenericTypeDescription getReturnTypeGen() {
                 return returnType;
             }
 
@@ -615,7 +615,7 @@ public interface InstrumentedType extends TypeDescription {
                 }
 
                 @Override
-                public GenericType getTypeGen() {
+                public GenericTypeDescription getTypeGen() {
                     return parameterType;
                 }
 
