@@ -190,18 +190,8 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public TypeDescription getSupertype() {
-        return levelType.getSupertype();
-    }
-
-    @Override
     public GenericType getSuperTypeGen() {
         return levelType.getSuperTypeGen();
-    }
-
-    @Override
-    public TypeList getInterfaces() {
-        return new TypeList.Explicit(interfaces);
     }
 
     @Override
