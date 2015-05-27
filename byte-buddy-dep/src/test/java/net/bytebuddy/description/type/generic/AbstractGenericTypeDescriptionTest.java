@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -185,9 +187,29 @@ public abstract class AbstractGenericTypeDescriptionTest {
     }
 
     @Test
-    public void NestedTypeVariableType() throws Exception {
+    public void testNestedTypeVariableType() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(NestedTypeVariableType.class.getDeclaredField(FOO));
-        System.out.println(genericTypeDescription);
+        assertThat(genericTypeDescription.getTypeName(), is(NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(0));
+        Type ownerType = ((ParameterizedType) NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
+        assertThat(genericTypeDescription.getOwnerType(), is(GenericTypeDescription.Sort.describe(ownerType)));
+        assertThat(genericTypeDescription.getOwnerType().getParameters().size(), is(1));
+        assertThat(genericTypeDescription.getOwnerType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(genericTypeDescription.getOwnerType().getParameters().getOnly().getSymbol(), is(T));
+    }
+
+    @Test
+    public void testNestedSpecifiedTypeVariableType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getTypeName(), is(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(0));
+        Type ownerType = ((ParameterizedType) NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
+        assertThat(genericTypeDescription.getOwnerType(), is(GenericTypeDescription.Sort.describe(ownerType)));
+        assertThat(genericTypeDescription.getOwnerType().getParameters().size(), is(1));
+        assertThat(genericTypeDescription.getOwnerType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
+        assertThat(genericTypeDescription.getOwnerType().getParameters().getOnly(), is((GenericTypeDescription) TypeDescription.STRING));
     }
 
     @SuppressWarnings("unused")
@@ -243,35 +265,29 @@ public abstract class AbstractGenericTypeDescriptionTest {
 
         <T> T foo() {
             return null;
-        };
+        }
+
+        ;
     }
 
     @SuppressWarnings("unused")
     public static class NestedTypeVariableType<T> {
 
-        class Inner<U extends Inner<U>> {
+        class Placeholder {
             /* empty */
         }
 
-        class Placeholder extends Inner<Placeholder> {
-            /* empty */
-        }
-
-        Inner<Placeholder> foo;
+        Placeholder foo;
     }
 
     @SuppressWarnings("unused")
     public static class NestedSpecifiedTypeVariableType<T> {
 
-        class Inner<U extends NestedSpecifiedTypeVariableType<String>.Inner<U>> {
+        class Placeholder {
             /* empty */
         }
 
-        class Placeholder extends Inner<NestedSpecifiedTypeVariableType<String>.Placeholder> {
-            /* empty */
-        }
-
-        Inner<NestedSpecifiedTypeVariableType<String>.Placeholder> foo;
+        NestedSpecifiedTypeVariableType<String>.Placeholder foo;
     }
 
     @SuppressWarnings("unused")
