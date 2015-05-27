@@ -112,11 +112,11 @@ public interface GenericTypeDescription extends NamedElement {
                     if (lowerBounds.isEmpty()) {
                         signatureVisitor.visitTypeArgument();
                     } else {
-                        lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument('-')));
+                        lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
                         signatureVisitor.visitEnd();
                     }
                 } else {
-                    upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument('+')));
+                    upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
                     signatureVisitor.visitEnd();
                 }
             }
@@ -130,6 +130,9 @@ public interface GenericTypeDescription extends NamedElement {
                     signatureVisitor.visitClassType(genericTypeDescription.asRawType().getInternalName());
                 }
                 for (GenericTypeDescription upperBound : genericTypeDescription.getUpperBounds()) {
+                    if (!upperBound.getSort().isWildcard()) {
+                        signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF);
+                    }
                     upperBound.accept(this);
                 }
                 signatureVisitor.visitEnd();
