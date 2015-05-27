@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
@@ -25,6 +26,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
      * @return The sum of the size of all types contained in this list.
      */
     int getStackSize();
+
+    GenericTypeList asGenericTypes();
 
     abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
 
@@ -86,6 +89,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         public int getStackSize() {
             return StackSize.sizeOf(types);
         }
+
+        @Override
+        public GenericTypeList asGenericTypes() {
+            return new GenericTypeList.ForLoadedType(types);
+        }
     }
 
     /**
@@ -135,6 +143,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
             return stackSize;
         }
+
+        @Override
+        public GenericTypeList asGenericTypes() {
+            return new GenericTypeList.Explicit(typeDescriptions);
+        }
     }
 
     /**
@@ -150,6 +163,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         @Override
         public int getStackSize() {
             return 0;
+        }
+
+        @Override
+        public GenericTypeList asGenericTypes() {
+            return new GenericTypeList.Empty();
         }
     }
 }

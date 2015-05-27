@@ -313,6 +313,10 @@ public interface GenericType extends NamedElement {
 
         public static class Latent extends ForWildcardType {
 
+            public static GenericType unbounded() {
+                return new Latent(Collections.<GenericType>emptyList(), Collections.<GenericType>emptyList());
+            }
+
             public static GenericType boundedAbove(GenericType upperBound) {
                 return new Latent(Collections.singletonList(upperBound), Collections.<GenericType>emptyList());
             }
