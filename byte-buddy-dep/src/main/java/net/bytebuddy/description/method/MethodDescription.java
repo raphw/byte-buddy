@@ -5,13 +5,15 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureVisitor;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -49,7 +51,7 @@ public interface MethodDescription extends TypeVariableSource {
      */
     TypeDescription getReturnType();
 
-    GenericType getReturnTypeGen();
+    GenericTypeDescription getReturnTypeGen();
 
     /**
      * Returns a list of this method's parameters.
@@ -299,7 +301,35 @@ public interface MethodDescription extends TypeVariableSource {
 
         @Override
         public String getGenericSignature() {
-            return null; // Currently, generic signatures are supported poorly.
+            SignatureWriter signatureWriter = new SignatureWriter();
+            boolean generic = false;
+            for (GenericTypeDescription typeVariable : getTypeVariables()) {
+                signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
+                boolean classBound = true;
+                for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
+                    SignatureVisitor boundVisitor = classBound
+                            ? signatureWriter.visitClassBound()
+                            : signatureWriter.visitInterfaceBound();
+                    upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(boundVisitor));
+                    classBound = false;
+                }
+                signatureWriter.visitEnd();
+                generic = true;
+            }
+            GenericTypeDescription returnType = getReturnType();
+            returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
+            generic = generic || !returnType.getSort().isRawType();
+            for (GenericTypeDescription parameterType : getParameters().asTypeListGen()) {
+                parameterType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitParameterType()));
+                generic = generic || !parameterType.getSort().isRawType();
+            }
+            for (GenericTypeDescription exceptionType : getExceptionTypesGen()) {
+                exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
+                generic = generic || !exceptionType.getSort().isRawType();
+            }
+            return generic
+                    ? signatureWriter.toString()
+                    : null;
         }
 
         @Override
@@ -556,7 +586,7 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
-        public GenericType getReturnTypeGen() {
+        public GenericTypeDescription getReturnTypeGen() {
             return TypeDescription.VOID;
         }
 
@@ -666,8 +696,8 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
-        public GenericType getReturnTypeGen() {
-            return new GenericType.LazyProjection.OfLoadedReturnType(method);
+        public GenericTypeDescription getReturnTypeGen() {
+            return new GenericTypeDescription.LazyProjection.OfLoadedReturnType(method);
         }
 
         @Override
@@ -844,7 +874,7 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
-        public GenericType getReturnTypeGen() {
+        public GenericTypeDescription getReturnTypeGen() {
             return returnType;
         }
 

@@ -4,12 +4,13 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaMethod;
+import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.reflect.*;
 import java.util.Collections;
 import java.util.List;
 
-public interface GenericType extends NamedElement {
+public interface GenericTypeDescription extends NamedElement {
 
     Sort getSort();
 
@@ -19,17 +20,19 @@ public interface GenericType extends NamedElement {
 
     GenericTypeList getLowerBounds();
 
-    GenericType getComponentType();
+    GenericTypeDescription getComponentType();
 
     GenericTypeList getParameters();
 
     TypeVariableSource getVariableSource();
 
-    GenericType getOwnerType();
+    GenericTypeDescription getOwnerType();
 
     String getSymbol();
 
     String getTypeName();
+
+    void accept(Visitor visitor);
 
     enum Sort {
 
@@ -39,7 +42,7 @@ public interface GenericType extends NamedElement {
         WILDCARD,
         VARIABLE;
 
-        public static GenericType describe(Type type) {
+        public static GenericTypeDescription describe(Type type) {
             if (type instanceof Class<?>) {
                 return new TypeDescription.ForLoadedType((Class<?>) type);
             } else if (type instanceof GenericArrayType) {
@@ -76,7 +79,79 @@ public interface GenericType extends NamedElement {
         }
     }
 
-    abstract class ForGenericArray implements GenericType {
+    interface Visitor {
+
+        void onGenericArray(GenericTypeDescription genericTypeDescription);
+
+        void onWildcardType(GenericTypeDescription genericTypeDescription);
+
+        void onParameterizedType(GenericTypeDescription genericTypeDescription);
+
+        void onTypeVariable(GenericTypeDescription genericTypeDescription);
+
+        void onRawType(TypeDescription typeDescription);
+
+        class ForSignatureVisitor implements Visitor {
+
+            private final SignatureVisitor signatureVisitor;
+
+            public ForSignatureVisitor(SignatureVisitor signatureVisitor) {
+                this.signatureVisitor = signatureVisitor;
+            }
+
+            @Override
+            public void onGenericArray(GenericTypeDescription genericTypeDescription) {
+                genericTypeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
+            }
+
+            @Override
+            public void onWildcardType(GenericTypeDescription genericTypeDescription) {
+                GenericTypeList upperBounds = genericTypeDescription.getUpperBounds();
+                if (upperBounds.isEmpty()) {
+                    GenericTypeList lowerBounds = genericTypeDescription.getUpperBounds();
+                    if (lowerBounds.isEmpty()) {
+                        signatureVisitor.visitTypeArgument();
+                    } else {
+                        lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument('-')));
+                        signatureVisitor.visitEnd();
+                    }
+                } else {
+                    upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument('+')));
+                    signatureVisitor.visitEnd();
+                }
+            }
+
+            @Override
+            public void onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
+                if (ownerType != null) {
+                    signatureVisitor.visitInnerClassType(ownerType.asRawType().getInternalName());
+                } else {
+                    signatureVisitor.visitClassType(genericTypeDescription.asRawType().getInternalName());
+                }
+                for (GenericTypeDescription upperBound : genericTypeDescription.getUpperBounds()) {
+                    upperBound.accept(this);
+                }
+                signatureVisitor.visitEnd();
+            }
+
+            @Override
+            public void onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                signatureVisitor.visitTypeVariable(genericTypeDescription.getSymbol());
+            }
+
+            @Override
+            public void onRawType(TypeDescription typeDescription) {
+                if (typeDescription.isPrimitive()) {
+                    signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(0));
+                } else {
+                    signatureVisitor.visitClassType(typeDescription.getInternalName());
+                }
+            }
+        }
+    }
+
+    abstract class ForGenericArray implements GenericTypeDescription {
 
         @Override
         public Sort getSort() {
@@ -109,7 +184,7 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
-        public GenericType getOwnerType() {
+        public GenericTypeDescription getOwnerType() {
             return null;
         }
 
@@ -129,10 +204,15 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
+        public void accept(Visitor visitor) {
+            visitor.onGenericArray(this);
+        }
+
+        @Override
         public boolean equals(Object other) {
-            if (!(other instanceof GenericType)) return false;
-            GenericType genericType = (GenericType) other;
-            return genericType.getSort().isGenericArray() && getComponentType().equals(genericType.getComponentType());
+            if (!(other instanceof GenericTypeDescription)) return false;
+            GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
+            return genericTypeDescription.getSort().isGenericArray() && getComponentType().equals(genericTypeDescription.getComponentType());
         }
 
         @Override
@@ -154,14 +234,14 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            public GenericType getComponentType() {
+            public GenericTypeDescription getComponentType() {
                 return Sort.describe(genericArrayType.getGenericComponentType());
             }
         }
 
         public static class Latent extends ForGenericArray {
 
-            public static GenericType of(GenericType componentType, int arity) {
+            public static GenericTypeDescription of(GenericTypeDescription componentType, int arity) {
                 if (arity < 0) {
                     throw new IllegalArgumentException("Arity cannot be negative");
                 }
@@ -174,17 +254,17 @@ public interface GenericType extends NamedElement {
                         : new Latent(componentType, arity);
             }
 
-            private final GenericType componentType;
+            private final GenericTypeDescription componentType;
 
             private final int arity;
 
-            protected Latent(GenericType componentType, int arity) {
+            protected Latent(GenericTypeDescription componentType, int arity) {
                 this.componentType = componentType;
                 this.arity = arity;
             }
 
             @Override
-            public GenericType getComponentType() {
+            public GenericTypeDescription getComponentType() {
                 return arity == 0
                         ? componentType
                         : new Latent(componentType, arity - 1);
@@ -192,7 +272,7 @@ public interface GenericType extends NamedElement {
         }
     }
 
-    abstract class ForWildcardType implements GenericType {
+    abstract class ForWildcardType implements GenericTypeDescription {
 
         public static final String SYMBOL = "?";
 
@@ -210,7 +290,7 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
-        public GenericType getComponentType() {
+        public GenericTypeDescription getComponentType() {
             return null;
         }
 
@@ -225,7 +305,7 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
-        public GenericType getOwnerType() {
+        public GenericTypeDescription getOwnerType() {
             return null;
         }
 
@@ -245,24 +325,29 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
+        public void accept(Visitor visitor) {
+            visitor.onWildcardType(this);
+        }
+
+        @Override
         public int hashCode() {
             int lowerHash = 1, upperHash = 1;
-            for (GenericType genericType : getLowerBounds()) {
-                lowerHash = 31 * lowerHash + genericType.hashCode();
+            for (GenericTypeDescription genericTypeDescription : getLowerBounds()) {
+                lowerHash = 31 * lowerHash + genericTypeDescription.hashCode();
             }
-            for (GenericType genericType : getUpperBounds()) {
-                upperHash = 31 * upperHash + genericType.hashCode();
+            for (GenericTypeDescription genericTypeDescription : getUpperBounds()) {
+                upperHash = 31 * upperHash + genericTypeDescription.hashCode();
             }
             return lowerHash ^ upperHash;
         }
 
         @Override
         public boolean equals(Object other) {
-            if (!(other instanceof GenericType)) return false;
-            GenericType genericType = (GenericType) other;
-            return genericType.getSort().isWildcard()
-                    && getUpperBounds().equals(genericType.getUpperBounds())
-                    && getLowerBounds().equals(genericType.getLowerBounds());
+            if (!(other instanceof GenericTypeDescription)) return false;
+            GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
+            return genericTypeDescription.getSort().isWildcard()
+                    && getUpperBounds().equals(genericTypeDescription.getUpperBounds())
+                    && getLowerBounds().equals(genericTypeDescription.getLowerBounds());
         }
 
         @Override
@@ -282,11 +367,11 @@ public interface GenericType extends NamedElement {
                 stringBuilder.append(" super ");
             }
             boolean multiple = false;
-            for (GenericType genericType : bounds) {
+            for (GenericTypeDescription genericTypeDescription : bounds) {
                 if (multiple) {
                     stringBuilder.append(" & ");
                 }
-                stringBuilder.append(genericType.getTypeName());
+                stringBuilder.append(genericTypeDescription.getTypeName());
                 multiple = true;
             }
             return stringBuilder.toString();
@@ -313,23 +398,23 @@ public interface GenericType extends NamedElement {
 
         public static class Latent extends ForWildcardType {
 
-            public static GenericType unbounded() {
-                return new Latent(Collections.<GenericType>emptyList(), Collections.<GenericType>emptyList());
+            public static GenericTypeDescription unbounded() {
+                return new Latent(Collections.<GenericTypeDescription>emptyList(), Collections.<GenericTypeDescription>emptyList());
             }
 
-            public static GenericType boundedAbove(GenericType upperBound) {
-                return new Latent(Collections.singletonList(upperBound), Collections.<GenericType>emptyList());
+            public static GenericTypeDescription boundedAbove(GenericTypeDescription upperBound) {
+                return new Latent(Collections.singletonList(upperBound), Collections.<GenericTypeDescription>emptyList());
             }
 
-            public static GenericType boundedBelow(GenericType lowerBound) {
-                return new Latent(Collections.<GenericType>emptyList(), Collections.singletonList(lowerBound));
+            public static GenericTypeDescription boundedBelow(GenericTypeDescription lowerBound) {
+                return new Latent(Collections.<GenericTypeDescription>emptyList(), Collections.singletonList(lowerBound));
             }
 
-            private final List<? extends GenericType> upperBounds;
+            private final List<? extends GenericTypeDescription> upperBounds;
 
-            private final List<? extends GenericType> lowerBounds;
+            private final List<? extends GenericTypeDescription> lowerBounds;
 
-            protected Latent(List<? extends GenericType> upperBounds, List<? extends GenericType> lowerBounds) {
+            protected Latent(List<? extends GenericTypeDescription> upperBounds, List<? extends GenericTypeDescription> lowerBounds) {
                 this.upperBounds = upperBounds;
                 this.lowerBounds = lowerBounds;
             }
@@ -346,7 +431,7 @@ public interface GenericType extends NamedElement {
         }
     }
 
-    abstract class ForParameterizedType implements GenericType {
+    abstract class ForParameterizedType implements GenericTypeDescription {
 
         @Override
         public Sort getSort() {
@@ -364,7 +449,7 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
-        public GenericType getComponentType() {
+        public GenericTypeDescription getComponentType() {
             return null;
         }
 
@@ -389,12 +474,17 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
+        public void accept(Visitor visitor) {
+            visitor.onParameterizedType(this);
+        }
+
+        @Override
         public int hashCode() {
             int result = 1;
-            for (GenericType genericType : getLowerBounds()) {
-                result = 31 * result + genericType.hashCode();
+            for (GenericTypeDescription genericTypeDescription : getLowerBounds()) {
+                result = 31 * result + genericTypeDescription.hashCode();
             }
-            GenericType ownerType = getOwnerType();
+            GenericTypeDescription ownerType = getOwnerType();
             return result ^ (ownerType == null
                     ? asRawType().hashCode()
                     : ownerType.hashCode());
@@ -402,20 +492,20 @@ public interface GenericType extends NamedElement {
 
         @Override
         public boolean equals(Object other) {
-            if (!(other instanceof GenericType)) return false;
-            GenericType genericType = (GenericType) other;
-            if (!genericType.getSort().isParameterized()) return false;
-            GenericType ownerType = getOwnerType(), otherOwnerType = genericType.getOwnerType();
-            return asRawType().equals(genericType.asRawType())
+            if (!(other instanceof GenericTypeDescription)) return false;
+            GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
+            if (!genericTypeDescription.getSort().isParameterized()) return false;
+            GenericTypeDescription ownerType = getOwnerType(), otherOwnerType = genericTypeDescription.getOwnerType();
+            return asRawType().equals(genericTypeDescription.asRawType())
                     && !(ownerType == null && otherOwnerType != null) && !(ownerType != null && !ownerType.equals(otherOwnerType))
-                    && getParameters().equals(genericType.getParameters());
+                    && getParameters().equals(genericTypeDescription.getParameters());
 
         }
 
         @Override
         public String toString() {
             StringBuilder stringBuilder = new StringBuilder();
-            GenericType ownerType = getOwnerType();
+            GenericTypeDescription ownerType = getOwnerType();
             if (ownerType != null) {
                 stringBuilder.append(ownerType.getTypeName());
                 stringBuilder.append(".");
@@ -429,11 +519,11 @@ public interface GenericType extends NamedElement {
             if (!actualTypeArguments.isEmpty()) {
                 stringBuilder.append("<");
                 boolean multiple = false;
-                for (GenericType genericType : actualTypeArguments) {
+                for (GenericTypeDescription genericTypeDescription : actualTypeArguments) {
                     if (multiple) {
                         stringBuilder.append(", ");
                     }
-                    stringBuilder.append(genericType.getTypeName());
+                    stringBuilder.append(genericTypeDescription.getTypeName());
                     multiple = true;
                 }
                 stringBuilder.append(">");
@@ -455,7 +545,7 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            public GenericType getOwnerType() {
+            public GenericTypeDescription getOwnerType() {
                 Type ownerType = parameterizedType.getOwnerType();
                 return ownerType == null
                         ? null
@@ -472,11 +562,11 @@ public interface GenericType extends NamedElement {
 
             private final TypeDescription rawType;
 
-            private final List<? extends GenericType> parameters;
+            private final List<? extends GenericTypeDescription> parameters;
 
-            private final GenericType ownerType;
+            private final GenericTypeDescription ownerType;
 
-            public Latent(TypeDescription rawType, List<? extends GenericType> parameters, GenericType ownerType) {
+            public Latent(TypeDescription rawType, List<? extends GenericTypeDescription> parameters, GenericTypeDescription ownerType) {
                 this.rawType = rawType;
                 this.parameters = parameters;
                 this.ownerType = ownerType;
@@ -493,13 +583,13 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            public GenericType getOwnerType() {
+            public GenericTypeDescription getOwnerType() {
                 return ownerType;
             }
         }
     }
 
-    abstract class ForTypeVariable implements GenericType {
+    abstract class ForTypeVariable implements GenericTypeDescription {
 
         @Override
         public Sort getSort() {
@@ -515,7 +605,7 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
-        public GenericType getComponentType() {
+        public GenericTypeDescription getComponentType() {
             return null;
         }
 
@@ -530,7 +620,7 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
-        public GenericType getOwnerType() {
+        public GenericTypeDescription getOwnerType() {
             return null;
         }
 
@@ -545,17 +635,22 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
+        public void accept(Visitor visitor) {
+            visitor.onTypeVariable(this);
+        }
+
+        @Override
         public int hashCode() {
             return getVariableSource().hashCode() ^ getSymbol().hashCode();
         }
 
         @Override
         public boolean equals(Object other) {
-            if (!(other instanceof GenericType)) return false;
-            GenericType genericType = (GenericType) other;
-            return genericType.getSort().isTypeVariable()
-                    && genericType.getSymbol().equals(genericType.getSymbol())
-                    && genericType.getVariableSource().equals(genericType.getVariableSource());
+            if (!(other instanceof GenericTypeDescription)) return false;
+            GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
+            return genericTypeDescription.getSort().isTypeVariable()
+                    && genericTypeDescription.getSymbol().equals(genericTypeDescription.getSymbol())
+                    && genericTypeDescription.getVariableSource().equals(genericTypeDescription.getVariableSource());
         }
 
         @Override
@@ -598,13 +693,13 @@ public interface GenericType extends NamedElement {
 
         public static class Latent extends ForTypeVariable {
 
-            private final List<? extends GenericType> upperBounds;
+            private final List<? extends GenericTypeDescription> upperBounds;
 
             private final TypeVariableSource typeVariableSource;
 
             private final String symbol;
 
-            public Latent(List<? extends GenericType> upperBounds, TypeVariableSource typeVariableSource, String symbol) {
+            public Latent(List<? extends GenericTypeDescription> upperBounds, TypeVariableSource typeVariableSource, String symbol) {
                 this.upperBounds = upperBounds;
                 this.typeVariableSource = typeVariableSource;
                 this.symbol = symbol;
@@ -627,9 +722,9 @@ public interface GenericType extends NamedElement {
         }
     }
 
-    abstract class LazyProjection implements GenericType {
+    abstract class LazyProjection implements GenericTypeDescription {
 
-        protected abstract GenericType resolve();
+        protected abstract GenericTypeDescription resolve();
 
         @Override
         public Sort getSort() {
@@ -647,7 +742,7 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
-        public GenericType getComponentType() {
+        public GenericTypeDescription getComponentType() {
             return resolve().getComponentType();
         }
 
@@ -662,7 +757,7 @@ public interface GenericType extends NamedElement {
         }
 
         @Override
-        public GenericType getOwnerType() {
+        public GenericTypeDescription getOwnerType() {
             return resolve().getOwnerType();
         }
 
@@ -679,6 +774,11 @@ public interface GenericType extends NamedElement {
         @Override
         public String getSourceCodeName() {
             return resolve().getSourceCodeName();
+        }
+
+        @Override
+        public void accept(Visitor visitor) {
+            resolve().accept(visitor);
         }
 
         @Override
@@ -705,7 +805,7 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            protected GenericType resolve() {
+            protected GenericTypeDescription resolve() {
                 return Sort.describe(type.getGenericSuperclass());
             }
 
@@ -724,7 +824,7 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            protected GenericType resolve() {
+            protected GenericTypeDescription resolve() {
                 return Sort.describe(method.getGenericReturnType());
             }
 
@@ -743,7 +843,7 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            protected GenericType resolve() {
+            protected GenericTypeDescription resolve() {
                 return Sort.describe(field.getGenericType());
             }
 
@@ -780,7 +880,7 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            protected GenericType resolve() {
+            protected GenericTypeDescription resolve() {
                 return Sort.describe((Type) GET_GENERIC_TYPE.invoke(parameter));
             }
 
@@ -805,7 +905,7 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            protected GenericType resolve() {
+            protected GenericTypeDescription resolve() {
                 return Sort.describe(constructor.getGenericParameterTypes()[index]);
             }
 
@@ -830,7 +930,7 @@ public interface GenericType extends NamedElement {
             }
 
             @Override
-            protected GenericType resolve() {
+            protected GenericTypeDescription resolve() {
                 return Sort.describe(method.getGenericParameterTypes()[index]);
             }
 

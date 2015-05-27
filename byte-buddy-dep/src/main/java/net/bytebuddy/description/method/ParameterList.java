@@ -2,7 +2,7 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.FilterableList;
@@ -11,7 +11,6 @@ import net.bytebuddy.utility.JavaMethod;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -139,9 +138,9 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
         @Override
         public GenericTypeList asTypeListGen() {
-            List<GenericType> types = new ArrayList<GenericType>(parameter.length);
+            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameter.length);
             for (Object aParameter : parameter) {
-                types.add(new GenericType.LazyProjection.OfLoadedParameter(aParameter));
+                types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter(aParameter));
             }
             return new GenericTypeList.Explicit(types);
         }
@@ -205,9 +204,9 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
             @Override
             public GenericTypeList asTypeListGen() {
-                List<GenericType> types = new ArrayList<GenericType>(parameterType.length);
+                List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new GenericType.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType[index]));
+                    types.add(new GenericTypeDescription.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType[index]));
                 }
                 return new GenericTypeList.Explicit(types);
             }
@@ -266,9 +265,9 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
             @Override
             public GenericTypeList asTypeListGen() {
-                List<GenericType> types = new ArrayList<GenericType>(parameterType.length);
+                List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new GenericType.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType[index]));
+                    types.add(new GenericTypeDescription.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType[index]));
                 }
                 return new GenericTypeList.Explicit(types);
             }
@@ -337,7 +336,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
         @Override
         public GenericTypeList asTypeListGen() {
-            List<GenericType> types = new ArrayList<GenericType>(parameterDescriptions.size());
+            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterDescriptions.size());
             for (ParameterDescription parameterDescription : parameterDescriptions) {
                 types.add(parameterDescription.getTypeGen());
             }

@@ -3,7 +3,6 @@ package net.bytebuddy.description.type.generic;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.FilterableList;
-import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -12,13 +11,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public interface GenericTypeList extends FilterableList<GenericType, GenericTypeList> {
+public interface GenericTypeList extends FilterableList<GenericTypeDescription, GenericTypeList> {
 
     TypeList asRawTypes();
 
     String toSignature();
 
-    abstract class AbstractBase extends FilterableList.AbstractBase<GenericType, GenericTypeList> implements GenericTypeList {
+    abstract class AbstractBase extends FilterableList.AbstractBase<GenericTypeDescription, GenericTypeList> implements GenericTypeList {
 
         @Override
         public String toSignature() {
@@ -26,21 +25,21 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
         }
 
         @Override
-        protected GenericTypeList wrap(List<GenericType> values) {
+        protected GenericTypeList wrap(List<GenericTypeDescription> values) {
             return new Explicit(values);
         }
     }
 
     class Explicit extends AbstractBase {
 
-        private final List<? extends GenericType> genericTypes;
+        private final List<? extends GenericTypeDescription> genericTypes;
 
-        public Explicit(List<? extends GenericType> genericTypes) {
+        public Explicit(List<? extends GenericTypeDescription> genericTypes) {
             this.genericTypes = genericTypes;
         }
 
         @Override
-        public GenericType get(int index) {
+        public GenericTypeDescription get(int index) {
             return genericTypes.get(index);
         }
 
@@ -52,8 +51,8 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
         @Override
         public TypeList asRawTypes() {
             List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(genericTypes.size());
-            for (GenericType genericType : genericTypes) {
-                typeDescriptions.add(genericType.asRawType());
+            for (GenericTypeDescription genericTypeDescription : genericTypes) {
+                typeDescriptions.add(genericTypeDescription.asRawType());
             }
             return new TypeList.Explicit(typeDescriptions);
         }
@@ -72,8 +71,8 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
         }
 
         @Override
-        public GenericType get(int index) {
-            return GenericType.Sort.describe(types.get(index));
+        public GenericTypeDescription get(int index) {
+            return GenericTypeDescription.Sort.describe(types.get(index));
         }
 
         @Override
@@ -84,14 +83,14 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
         @Override
         public TypeList asRawTypes() {
             List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(types.size());
-            for (GenericType genericType : this) {
-                typeDescriptions.add(genericType.asRawType());
+            for (GenericTypeDescription genericTypeDescription : this) {
+                typeDescriptions.add(genericTypeDescription.asRawType());
             }
             return new TypeList.Explicit(typeDescriptions);
         }
     }
 
-    class Empty extends FilterableList.Empty<GenericType, GenericTypeList> implements GenericTypeList {
+    class Empty extends FilterableList.Empty<GenericTypeDescription, GenericTypeList> implements GenericTypeList {
 
         @Override
         public TypeList asRawTypes() {
@@ -115,8 +114,8 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
             }
 
             @Override
-            public GenericType get(int index) {
-                return GenericType.Sort.describe(type.getGenericInterfaces()[index]);
+            public GenericTypeDescription get(int index) {
+                return GenericTypeDescription.Sort.describe(type.getGenericInterfaces()[index]);
             }
 
             @Override
@@ -139,8 +138,8 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
             }
 
             @Override
-            public GenericType get(int index) {
-                return GenericType.Sort.describe(constructor.getGenericExceptionTypes()[index]);
+            public GenericTypeDescription get(int index) {
+                return GenericTypeDescription.Sort.describe(constructor.getGenericExceptionTypes()[index]);
             }
 
             @Override
@@ -163,8 +162,8 @@ public interface GenericTypeList extends FilterableList<GenericType, GenericType
             }
 
             @Override
-            public GenericType get(int index) {
-                return GenericType.Sort.describe(method.getGenericExceptionTypes()[index]);
+            public GenericTypeDescription get(int index) {
+                return GenericTypeDescription.Sort.describe(method.getGenericExceptionTypes()[index]);
             }
 
             @Override

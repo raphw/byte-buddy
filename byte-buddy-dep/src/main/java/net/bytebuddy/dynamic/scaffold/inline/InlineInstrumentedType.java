@@ -6,8 +6,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -190,7 +189,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public GenericType getSuperTypeGen() {
+    public GenericTypeDescription getSuperTypeGen() {
         return levelType.getSuperTypeGen();
     }
 

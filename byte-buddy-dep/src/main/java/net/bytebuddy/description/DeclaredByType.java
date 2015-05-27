@@ -1,7 +1,6 @@
 package net.bytebuddy.description;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericType;
 
 /**
  * This interface represents all elements that can be declared within a type, i.e. other types and type members.

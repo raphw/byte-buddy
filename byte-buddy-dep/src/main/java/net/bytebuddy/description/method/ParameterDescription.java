@@ -6,7 +6,7 @@ import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaMethod;
 
@@ -32,7 +32,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     TypeDescription getTypeDescription();
 
-    GenericType getTypeGen();
+    GenericTypeDescription getTypeGen();
 
     /**
      * Returns the method that declares this parameter.
@@ -234,8 +234,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public GenericType getTypeGen() {
-            return new GenericType.LazyProjection.OfLoadedParameter(parameter);
+        public GenericTypeDescription getTypeGen() {
+            return new GenericTypeDescription.LazyProjection.OfLoadedParameter(parameter);
         }
 
         @Override
@@ -329,7 +329,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public GenericType getTypeGen() {
+            public GenericTypeDescription getTypeGen() {
                 return new TypeDescription.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType);
             }
 
@@ -406,7 +406,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public GenericType getTypeGen() {
+            public GenericTypeDescription getTypeGen() {
                 return new TypeDescription.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType);
             }
 
@@ -486,7 +486,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public GenericType getTypeGen() {
+        public GenericTypeDescription getTypeGen() {
             return parameterType;
         }
 
