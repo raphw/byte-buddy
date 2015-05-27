@@ -47,13 +47,9 @@ public interface FieldDescription extends ByteCodeElement {
         @Override
         public String getGenericSignature() {
             GenericTypeDescription fieldType = getFieldTypeGen();
-            if (fieldType.getSort().isRawType()) {
-                return null;
-            } else {
-                SignatureWriter signatureWriter = new SignatureWriter();
-                fieldType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter));
-                return signatureWriter.toString();
-            }
+            return fieldType.getSort().isRawType()
+                    ? null
+                    : fieldType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(new SignatureWriter())).toString();
         }
 
         @Override

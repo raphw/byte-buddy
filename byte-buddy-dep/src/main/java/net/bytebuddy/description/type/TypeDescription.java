@@ -13,7 +13,6 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
@@ -467,10 +466,9 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
                 boolean classBound = true;
                 for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
-                    SignatureVisitor boundVisitor = classBound
+                    upperBound.accept(new Visitor.ForSignatureVisitor(classBound
                             ? signatureWriter.visitClassBound()
-                            : signatureWriter.visitInterfaceBound();
-                    upperBound.accept(new Visitor.ForSignatureVisitor(boundVisitor));
+                            : signatureWriter.visitInterfaceBound()));
                     classBound = false;
                 }
                 signatureWriter.visitEnd();
@@ -637,8 +635,8 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public void accept(Visitor visitor) {
-            visitor.onRawType(this);
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onRawType(this);
         }
 
         @Override

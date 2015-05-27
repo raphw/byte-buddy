@@ -1437,11 +1437,11 @@ public interface TypePool {
             @Override
             public SignatureVisitor visitTypeArgument(char wildcard) {
                 switch (wildcard) {
-                    case '-':
+                    case SignatureVisitor.SUPER:
                         return incompleteToken.appendLowerBound();
-                    case '+':
+                    case SignatureVisitor.EXTENDS:
                         return incompleteToken.appendUpperBound();
-                    case '=':
+                    case SignatureVisitor.INSTANCEOF:
                         return incompleteToken.appendDirectBound();
                     default:
                         throw new IllegalArgumentException("Unknown wildcard: " + wildcard);
