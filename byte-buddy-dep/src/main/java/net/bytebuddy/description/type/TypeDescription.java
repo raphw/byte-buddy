@@ -702,6 +702,11 @@ public interface TypeDescription extends GenericType, TypeVariableSource {
             }
 
             @Override
+            public String getCanonicalName() {
+                return getName().replace('$', '.');
+            }
+
+            @Override
             public String getSimpleName() {
                 int simpleNameIndex = getInternalName().lastIndexOf('$');
                 simpleNameIndex = simpleNameIndex == -1 ? getInternalName().lastIndexOf('/') : simpleNameIndex;
