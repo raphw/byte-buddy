@@ -107,25 +107,29 @@ public interface GenericTypeDescription extends NamedElement {
             @Override
             public void onWildcardType(GenericTypeDescription genericTypeDescription) {
                 GenericTypeList upperBounds = genericTypeDescription.getUpperBounds();
-                if (upperBounds.isEmpty()) {
-                    GenericTypeList lowerBounds = genericTypeDescription.getUpperBounds();
-                    if (lowerBounds.isEmpty()) {
-                        signatureVisitor.visitTypeArgument();
-                    } else {
-                        lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
-                        signatureVisitor.visitEnd();
-                    }
-                } else {
+                GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds();
+                if (upperBounds.isEmpty() && lowerBounds.isEmpty()) {
+                    signatureVisitor.visitTypeArgument();
+                } else if (upperBounds.isEmpty() /* && !lowerBounds.isEmpty() */) {
                     upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
+                    signatureVisitor.visitEnd();
+                } else /* if (!upperBounds.isEmpty() /* && lowerBounds.isEmpty()) */ {
+                    lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
                     signatureVisitor.visitEnd();
                 }
             }
 
             @Override
             public void onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                onOwnableType(genericTypeDescription);
+                signatureVisitor.visitEnd();
+            }
+
+            private void onOwnableType(GenericTypeDescription genericTypeDescription) {
                 GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
                 if (ownerType != null) {
-                    signatureVisitor.visitInnerClassType(ownerType.asRawType().getInternalName());
+                    onOwnableType(ownerType);
+                    signatureVisitor.visitInnerClassType(genericTypeDescription.asRawType().getSimpleName());
                 } else {
                     signatureVisitor.visitClassType(genericTypeDescription.asRawType().getInternalName());
                 }
@@ -135,7 +139,6 @@ public interface GenericTypeDescription extends NamedElement {
                     }
                     upperBound.accept(this);
                 }
-                signatureVisitor.visitEnd();
             }
 
             @Override
