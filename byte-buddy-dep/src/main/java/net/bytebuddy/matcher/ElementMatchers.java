@@ -16,6 +16,7 @@ import net.bytebuddy.description.type.TypeList;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -45,6 +46,14 @@ public final class ElementMatchers {
         return value == null
                 ? new NullMatcher<T>()
                 : new EqualityMatcher<T>(value);
+    }
+
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(Field field) {
+        return is(new FieldDescription.ForLoadedField(nonNull(field)));
+    }
+
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription fieldDescription) {
+        return new EqualityMatcher<T>(nonNull(fieldDescription));
     }
 
     /**

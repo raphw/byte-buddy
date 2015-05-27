@@ -4409,7 +4409,7 @@ public interface TypePool {
 
             @Override
             public GenericTypeList getTypeVariables() {
-                return new GenericTypeList.Empty();
+                return signatureResolution.resolveTypeVariables(typePool, this);
             }
 
             @Override
