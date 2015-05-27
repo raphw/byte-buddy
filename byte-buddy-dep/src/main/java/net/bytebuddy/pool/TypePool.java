@@ -2669,22 +2669,10 @@ public interface TypePool {
         }
 
         @Override
-        public TypeDescription getSupertype() {
-            return superTypeDescriptor == null || isInterface()
-                    ? null
-                    : TokenizedGenericType.toRawType(typePool, superTypeDescriptor);
-        }
-
-        @Override
         public GenericType getSuperTypeGen() {
             return superTypeDescriptor == null || isInterface()
                     ? null
                     : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, this);
-        }
-
-        @Override
-        public TypeList getInterfaces() {
-            return LazyTypeList.of(typePool, interfaceTypeDescriptors);
         }
 
         @Override

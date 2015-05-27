@@ -196,18 +196,10 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public TypeDescription getSupertype() {
-        return isInterface() ? null : superClass;
-    }
-
-    @Override
     public GenericType getSuperTypeGen() {
-        return isInterface() ? null : superClass;
-    }
-
-    @Override
-    public TypeList getInterfaces() {
-        return new TypeList.Explicit(interfaces);
+        return isInterface()
+                ? null
+                : superClass;
     }
 
     @Override

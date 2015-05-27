@@ -38,7 +38,7 @@ public class InlineInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
         when(targetType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
         when(targetType.getDeclaredFields()).thenReturn(new FieldList.Empty());
         when(targetType.getInterfaces()).thenReturn(new TypeList.Empty());
-        when(targetType.getSupertype()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(targetType.getSuperTypeGen()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(targetType.getPackage()).thenReturn(packageDescription);
         when(packageDescription.getName()).thenReturn(FOO);
     }
