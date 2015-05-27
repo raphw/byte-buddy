@@ -278,7 +278,7 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public GenericTypeDescription getComponentType() {
-                return arity == 0
+                return arity == 1
                         ? componentType
                         : new Latent(componentType, arity - 1);
             }

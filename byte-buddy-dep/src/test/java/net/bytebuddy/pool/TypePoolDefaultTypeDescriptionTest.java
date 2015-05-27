@@ -7,7 +7,9 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionTest {
@@ -33,8 +35,17 @@ public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionT
     protected GenericTypeDescription describe(Field field) {
         return typePool.describe(field.getDeclaringClass().getName()).resolve()
                 .getDeclaredFields()
-                .filter(named(field.getName()))
+                .filter(is(field))
                 .getOnly()
                 .getFieldTypeGen();
+    }
+
+    @Override
+    protected GenericTypeDescription describe(Method method) {
+        return typePool.describe(method.getDeclaringClass().getName()).resolve()
+                .getDeclaredMethods()
+                .filter(is(method))
+                .getOnly()
+                .getReturnTypeGen();
     }
 }

@@ -4,6 +4,7 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import static org.mockito.Mockito.mock;
 
@@ -17,6 +18,11 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     @Override
     protected GenericTypeDescription describe(Field field) {
         return GenericTypeDescription.ForGenericArray.Latent.of(GenericTypeDescription.Sort.describe(field.getGenericType()), 0);
+    }
+
+    @Override
+    protected GenericTypeDescription describe(Method method) {
+        return GenericTypeDescription.ForGenericArray.Latent.of(GenericTypeDescription.Sort.describe(method.getGenericReturnType()), 0);
     }
 
     @Test(expected = IllegalArgumentException.class)

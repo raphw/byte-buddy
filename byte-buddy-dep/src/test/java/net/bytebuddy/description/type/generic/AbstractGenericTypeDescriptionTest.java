@@ -1,8 +1,11 @@
 package net.bytebuddy.description.type.generic;
 
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -13,7 +16,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
 
     private static final String FOO = "foo";
 
+    private static final String T = "T";
+
     protected abstract GenericTypeDescription describe(Field field);
+
+    protected abstract GenericTypeDescription describe(Method method);
 
     @Test
     public void testSimpleParameterizedType() throws Exception {
@@ -73,15 +80,207 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getUpperBounds().size(), is(0));
     }
 
+    @Test
+    public void testGenericArrayType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(GenericArrayType.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.GENERIC_ARRAY));
+        assertThat(genericTypeDescription.getComponentType().getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getComponentType().getParameters().size(), is(1));
+        assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
+        assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().asRawType().represents(String.class), is(true));
+        assertThat(genericTypeDescription.getTypeName(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getVariableSource(), nullValue(TypeVariableSource.class));
+        assertThat(genericTypeDescription.getSymbol(), nullValue(String.class));
+        assertThat(genericTypeDescription.getLowerBounds().size(), is(0));
+        assertThat(genericTypeDescription.getUpperBounds().size(), is(0));
+    }
+
+    @Test
+    public void testTypeVariableType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(SimpleTypeVariableType.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
+        assertThat(genericTypeDescription.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(genericTypeDescription.getTypeName(), is(SimpleTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getComponentType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(SimpleTypeVariableType.class)));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
+        assertThat(genericTypeDescription.getLowerBounds().size(), is(0));
+    }
+
+    @Test
+    public void testSingleUpperBoundTypeVariableType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(SingleUpperBoundTypeVariableType.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
+        assertThat(genericTypeDescription.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.STRING));
+        assertThat(genericTypeDescription.getTypeName(), is(SingleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getComponentType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getVariableSource(),
+                is((TypeVariableSource) new TypeDescription.ForLoadedType(SingleUpperBoundTypeVariableType.class)));
+        assertThat(genericTypeDescription.getLowerBounds().size(), is(0));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
+    }
+
+    @Test
+    public void testMultipleUpperBoundTypeVariableType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getUpperBounds().size(), is(3));
+        assertThat(genericTypeDescription.getUpperBounds().get(0), is((GenericTypeDescription) TypeDescription.STRING));
+        assertThat(genericTypeDescription.getUpperBounds().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(genericTypeDescription.getUpperBounds().get(2), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(genericTypeDescription.getTypeName(), is(MultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getComponentType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getVariableSource(),
+                is((TypeVariableSource) new TypeDescription.ForLoadedType(MultipleUpperBoundTypeVariableType.class)));
+        assertThat(genericTypeDescription.getLowerBounds().size(), is(0));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
+    }
+
+    @Test
+    public void testInterfaceOnlyMultipleUpperBoundTypeVariableType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(InterfaceOnlyMultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getUpperBounds().size(), is(2));
+        assertThat(genericTypeDescription.getUpperBounds().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(genericTypeDescription.getUpperBounds().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(genericTypeDescription.getTypeName(),
+                is(InterfaceOnlyMultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getComponentType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getVariableSource(),
+                is((TypeVariableSource) new TypeDescription.ForLoadedType(InterfaceOnlyMultipleUpperBoundTypeVariableType.class)));
+        assertThat(genericTypeDescription.getLowerBounds().size(), is(0));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
+    }
+
+    @Test
+    public void testShadowedTypeVariableType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(ShadowingTypeVariableType.class.getDeclaredMethod(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
+        assertThat(genericTypeDescription.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(genericTypeDescription.getTypeName(), is(ShadowingTypeVariableType.class.getDeclaredMethod(FOO).getGenericReturnType().toString()));
+        assertThat(genericTypeDescription.getComponentType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getVariableSource(),
+                is((TypeVariableSource) new MethodDescription.ForLoadedMethod(ShadowingTypeVariableType.class.getDeclaredMethod(FOO))));
+        assertThat(genericTypeDescription.getLowerBounds().size(), is(0));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
+        assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
+    }
+
+    @Test
+    public void NestedTypeVariableType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(NestedTypeVariableType.class.getDeclaredField(FOO));
+        System.out.println(genericTypeDescription);
+    }
+
+    @SuppressWarnings("unused")
     public static class SimpleParameterizedType {
+
         List<String> foo;
     }
 
+    @SuppressWarnings("unused")
     public static class UpperBoundWildcardParameterizedType {
+
         List<? extends String> foo;
     }
 
+    @SuppressWarnings("unused")
     public static class LowerBoundWildcardParameterizedType {
+
         List<? super String> foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class GenericArrayType {
+
+        List<String>[] foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class SimpleTypeVariableType<T> {
+
+        T foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class SingleUpperBoundTypeVariableType<T extends String> {
+
+        T foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class MultipleUpperBoundTypeVariableType<T extends String & Foo & Bar> {
+
+        T foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class InterfaceOnlyMultipleUpperBoundTypeVariableType<T extends Foo & Bar> {
+
+        T foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShadowingTypeVariableType<T> {
+
+        <T> T foo() {
+            return null;
+        };
+    }
+
+    @SuppressWarnings("unused")
+    public static class NestedTypeVariableType<T> {
+
+        class Inner<U extends Inner<U>> {
+            /* empty */
+        }
+
+        class Placeholder extends Inner<Placeholder> {
+            /* empty */
+        }
+
+        Inner<Placeholder> foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class NestedSpecifiedTypeVariableType<T> {
+
+        class Inner<U extends NestedSpecifiedTypeVariableType<String>.Inner<U>> {
+            /* empty */
+        }
+
+        class Placeholder extends Inner<NestedSpecifiedTypeVariableType<String>.Placeholder> {
+            /* empty */
+        }
+
+        Inner<NestedSpecifiedTypeVariableType<String>.Placeholder> foo;
+    }
+
+    @SuppressWarnings("unused")
+    public interface Foo {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public interface Bar {
+        /* empty */
     }
 }
