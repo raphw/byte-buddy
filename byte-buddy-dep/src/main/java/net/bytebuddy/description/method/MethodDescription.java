@@ -310,6 +310,7 @@ public interface MethodDescription extends TypeVariableSource {
                     SignatureVisitor boundVisitor = classBound
                             ? signatureWriter.visitClassBound()
                             : signatureWriter.visitInterfaceBound();
+                    boundVisitor.visitTypeArgument(SignatureVisitor.EXTENDS);
                     upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(boundVisitor));
                     classBound = false;
                 }

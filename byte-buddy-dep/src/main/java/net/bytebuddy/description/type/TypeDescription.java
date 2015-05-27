@@ -470,6 +470,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                     SignatureVisitor boundVisitor = classBound
                             ? signatureWriter.visitClassBound()
                             : signatureWriter.visitInterfaceBound();
+                    boundVisitor.visitTypeArgument(SignatureVisitor.EXTENDS);
                     upperBound.accept(new Visitor.ForSignatureVisitor(boundVisitor));
                     classBound = false;
                 }
