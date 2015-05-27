@@ -155,7 +155,7 @@ public interface GenericTypeDescription extends NamedElement {
             @Override
             public SignatureVisitor onRawType(TypeDescription typeDescription) {
                 if (typeDescription.isPrimitive()) {
-                    signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(ONLY_CHARACTER));
+                    signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(0));
                 } else {
                     signatureVisitor.visitClassType(typeDescription.getInternalName());
                 }
@@ -366,18 +366,18 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public String toString() {
             StringBuilder stringBuilder = new StringBuilder(SYMBOL);
-            GenericTypeList bounds = getUpperBounds();
+            GenericTypeList bounds = getLowerBounds();
             if (!bounds.isEmpty()) {
                 if (bounds.size() == 1 && bounds.get(0).equals(TypeDescription.OBJECT)) {
                     return SYMBOL;
                 }
-                stringBuilder.append(" extends ");
+                stringBuilder.append(" super ");
             } else {
-                bounds = getLowerBounds();
+                bounds = getUpperBounds();
                 if (bounds.isEmpty()) {
                     return SYMBOL;
                 }
-                stringBuilder.append(" super ");
+                stringBuilder.append(" extends ");
             }
             boolean multiple = false;
             for (GenericTypeDescription genericTypeDescription : bounds) {
@@ -412,7 +412,7 @@ public interface GenericTypeDescription extends NamedElement {
         public static class Latent extends ForWildcardType {
 
             public static GenericTypeDescription unbounded() {
-                return new Latent(Collections.<GenericTypeDescription>emptyList(), Collections.<GenericTypeDescription>emptyList());
+                return new Latent(Collections.singletonList(TypeDescription.OBJECT), Collections.<GenericTypeDescription>emptyList());
             }
 
             public static GenericTypeDescription boundedAbove(GenericTypeDescription upperBound) {
@@ -420,7 +420,7 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             public static GenericTypeDescription boundedBelow(GenericTypeDescription lowerBound) {
-                return new Latent(Collections.<GenericTypeDescription>emptyList(), Collections.singletonList(lowerBound));
+                return new Latent(Collections.singletonList(TypeDescription.OBJECT), Collections.singletonList(lowerBound));
             }
 
             private final List<? extends GenericTypeDescription> upperBounds;

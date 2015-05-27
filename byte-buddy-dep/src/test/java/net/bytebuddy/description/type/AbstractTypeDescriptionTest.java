@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.generic.AbstractGenericTypeDescriptionTest;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ClassFileExtraction;
@@ -26,7 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public abstract class AbstractTypeDescriptionTest {
+public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDescriptionTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
