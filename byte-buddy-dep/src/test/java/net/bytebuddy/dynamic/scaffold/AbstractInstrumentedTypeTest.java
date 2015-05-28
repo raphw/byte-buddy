@@ -45,6 +45,7 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test
     public void testWithField() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
+        when(fieldType.asRawType()).thenReturn(fieldType); // REFACTOR
         when(fieldType.getName()).thenReturn(FOO);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
@@ -87,6 +88,7 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test(expected = IllegalArgumentException.class)
     public void testWithFieldDouble() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
+        when(fieldType.asRawType()).thenReturn(fieldType); // REFACTOR
         when(fieldType.getName()).thenReturn(FOO);
         makePlainInstrumentedType()
                 .withField(BAR, fieldType, Opcodes.ACC_PUBLIC)

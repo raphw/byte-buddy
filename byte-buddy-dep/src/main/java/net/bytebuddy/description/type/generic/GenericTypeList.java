@@ -15,14 +15,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
     TypeList asRawTypes();
 
-    String toSignature();
-
     abstract class AbstractBase extends FilterableList.AbstractBase<GenericTypeDescription, GenericTypeList> implements GenericTypeList {
-
-        @Override
-        public String toSignature() {
-            return null; // TODO: implement, remove?
-        }
 
         @Override
         protected GenericTypeList wrap(List<GenericTypeDescription> values) {
@@ -95,11 +88,6 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         @Override
         public TypeList asRawTypes() {
             return new TypeList.Empty();
-        }
-
-        @Override
-        public String toSignature() {
-            return null;
         }
     }
 

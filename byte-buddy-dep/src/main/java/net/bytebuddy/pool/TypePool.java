@@ -4209,11 +4209,6 @@ public interface TypePool {
             }
 
             @Override
-            public TypeDescription getFieldType() {
-                return TokenizedGenericType.toRawType(typePool, fieldTypeDescriptor);
-            }
-
-            @Override
             public GenericTypeDescription getFieldTypeGen() {
                 return signatureResolution.resolveFieldType(fieldTypeDescriptor, typePool, this);
             }

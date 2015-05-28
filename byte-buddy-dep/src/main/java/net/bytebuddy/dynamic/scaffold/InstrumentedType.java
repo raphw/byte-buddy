@@ -409,11 +409,6 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public TypeDescription getFieldType() {
-                return fieldType;
-            }
-
-            @Override
             public GenericTypeDescription getFieldTypeGen() {
                 return fieldType;
             }

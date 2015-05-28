@@ -30,6 +30,11 @@ public interface FieldDescription extends ByteCodeElement {
     abstract class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
 
         @Override
+        public TypeDescription getFieldType() {
+            return getFieldTypeGen().asRawType();
+        }
+
+        @Override
         public String getInternalName() {
             return getName();
         }
@@ -105,11 +110,6 @@ public interface FieldDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getFieldType() {
-            return new TypeDescription.ForLoadedType(field.getType());
-        }
-
-        @Override
         public GenericTypeDescription getFieldTypeGen() {
             return new GenericTypeDescription.LazyProjection.OfLoadedFieldType(field);
         }
@@ -182,11 +182,6 @@ public interface FieldDescription extends ByteCodeElement {
             this.fieldType = fieldType;
             this.declaringType = declaringType;
             this.modifiers = modifiers;
-        }
-
-        @Override
-        public TypeDescription getFieldType() {
-            return fieldType;
         }
 
         @Override
