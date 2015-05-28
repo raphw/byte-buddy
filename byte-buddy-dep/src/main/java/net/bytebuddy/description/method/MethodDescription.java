@@ -241,6 +241,16 @@ public interface MethodDescription extends TypeVariableSource {
                 | Modifier.NATIVE;
 
         @Override
+        public TypeDescription getReturnType() {
+            return getReturnTypeGen().asRawType();
+        }
+
+        @Override
+        public TypeList getExceptionTypes() {
+            return getExceptionTypesGen().asRawTypes();
+        }
+
+        @Override
         public String getUniqueSignature() {
             return getInternalName() + getDescriptor();
         }
@@ -579,11 +589,6 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
-        public TypeDescription getReturnType() {
-            return TypeDescription.VOID;
-        }
-
-        @Override
         public GenericTypeDescription getReturnTypeGen() {
             return TypeDescription.VOID;
         }
@@ -591,11 +596,6 @@ public interface MethodDescription extends TypeVariableSource {
         @Override
         public ParameterList getParameters() {
             return ParameterList.ForLoadedExecutable.of(constructor);
-        }
-
-        @Override
-        public TypeList getExceptionTypes() {
-            return new TypeList.ForLoadedType(constructor.getExceptionTypes());
         }
 
         @Override
@@ -689,11 +689,6 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
-        public TypeDescription getReturnType() {
-            return new TypeDescription.ForLoadedType(method.getReturnType());
-        }
-
-        @Override
         public GenericTypeDescription getReturnTypeGen() {
             return new GenericTypeDescription.LazyProjection.OfLoadedReturnType(method);
         }
@@ -701,11 +696,6 @@ public interface MethodDescription extends TypeVariableSource {
         @Override
         public ParameterList getParameters() {
             return ParameterList.ForLoadedExecutable.of(method);
-        }
-
-        @Override
-        public TypeList getExceptionTypes() {
-            return new TypeList.ForLoadedType(method.getExceptionTypes());
         }
 
         @Override
@@ -867,11 +857,6 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
-        public TypeDescription getReturnType() {
-            return returnType;
-        }
-
-        @Override
         public GenericTypeDescription getReturnTypeGen() {
             return returnType;
         }
@@ -879,11 +864,6 @@ public interface MethodDescription extends TypeVariableSource {
         @Override
         public ParameterList getParameters() {
             return ParameterList.Explicit.latent(this, parameterTypes);
-        }
-
-        @Override
-        public TypeList getExceptionTypes() {
-            return new TypeList.Explicit(exceptionTypes);
         }
 
         @Override

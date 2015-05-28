@@ -217,11 +217,6 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public TypeDescription getReturnType() {
-            return methodChain.get(MOST_SPECIFIC).getReturnType();
-        }
-
-        @Override
         public GenericTypeDescription getReturnTypeGen() {
             return methodChain.get(MOST_SPECIFIC).getReturnTypeGen();
         }
@@ -229,11 +224,6 @@ public interface MethodLookupEngine {
         @Override
         public ParameterList getParameters() {
             return methodChain.get(MOST_SPECIFIC).getParameters();
-        }
-
-        @Override
-        public TypeList getExceptionTypes() {
-            return methodChain.get(MOST_SPECIFIC).getExceptionTypes();
         }
 
         @Override
@@ -390,11 +380,6 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public TypeDescription getReturnType() {
-            return methodDescriptions.get(ANY).getReturnType();
-        }
-
-        @Override
         public GenericTypeDescription getReturnTypeGen() {
             return methodDescriptions.get(ANY).getReturnTypeGen();
         }
@@ -402,11 +387,6 @@ public interface MethodLookupEngine {
         @Override
         public ParameterList getParameters() {
             return ParameterList.Explicit.latent(this, methodDescriptions.get(ANY).getParameters().asTypeList());
-        }
-
-        @Override
-        public TypeList getExceptionTypes() {
-            return new TypeList.Empty();
         }
 
         @Override

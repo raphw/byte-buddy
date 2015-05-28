@@ -502,18 +502,8 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public TypeDescription getReturnType() {
-                return returnType;
-            }
-
-            @Override
             public GenericTypeDescription getReturnTypeGen() {
                 return returnType;
-            }
-
-            @Override
-            public TypeList getExceptionTypes() {
-                return new TypeList.Explicit(exceptionTypes);
             }
 
             @Override

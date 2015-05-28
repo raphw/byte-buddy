@@ -98,8 +98,10 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test
     public void testWithMethod() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
+        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         TypeDescription parameterType = mock(TypeDescription.class);
         TypeDescription exceptionType = mock(TypeDescription.class);
+        when(exceptionType.asRawType()).thenReturn(exceptionType); // REFACTOR
         when(returnType.getName()).thenReturn(FOO);
         when(parameterType.getName()).thenReturn(QUX);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
@@ -168,6 +170,7 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test(expected = IllegalArgumentException.class)
     public void testWithMethodDouble() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
+        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         when(returnType.getName()).thenReturn(FOO);
         makePlainInstrumentedType()
                 .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC)

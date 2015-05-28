@@ -60,6 +60,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Collections.singletonList(parameterType));
         when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
     }
 
     @Test
@@ -86,7 +87,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
                 when(mock.getExceptionTypes()).thenReturn(new TypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-                when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));
+                TypeDescription returnType = mock(TypeDescription.class);
+                when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+                when(mock.getReturnType()).thenReturn(returnType);
             }
         }).refine(new ObjectPropertyAssertion.Refinement<MethodRebaseResolver.MethodNameTransformer>() {
             @Override

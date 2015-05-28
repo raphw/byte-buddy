@@ -4358,18 +4358,8 @@ public interface TypePool {
             }
 
             @Override
-            public TypeDescription getReturnType() {
-                return TokenizedGenericType.toRawType(typePool, returnTypeDescriptor);
-            }
-
-            @Override
             public GenericTypeDescription getReturnTypeGen() {
                 return signatureResolution.resolveReturnType(returnTypeDescriptor, typePool, this);
-            }
-
-            @Override
-            public TypeList getExceptionTypes() {
-                return LazyTypeList.of(typePool, exceptionTypeDescriptors);
             }
 
             @Override

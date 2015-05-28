@@ -65,6 +65,7 @@ public class MethodRebaseResolverEnabledTest {
         ParameterList constructorParameterList = ParameterList.Explicit.latent(method, Collections.singletonList(parameterType));
         when(constructor.getParameters()).thenReturn(constructorParameterList);
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
+        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
     }
 
     @Test

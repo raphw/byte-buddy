@@ -182,6 +182,10 @@ public class ImplementationContextDefaultTest {
         when(secondField.getDescriptor()).thenReturn(FOO);
         when(secondField.getDeclaringType()).thenReturn(secondFieldDeclaringType);
         when(secondFieldDeclaringType.getInternalName()).thenReturn(BAZ);
+        when(firstSpecialReturnType.asRawType()).thenReturn(firstSpecialReturnType); // REFACTOR
+        when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType); // REFACTOR
+        when(firstSpecialExceptionType.asRawType()).thenReturn(firstSpecialExceptionType); // REFACTOR
+        when(secondSpecialExceptionType.asRawType()).thenReturn(secondSpecialExceptionType); // REFACTOR
     }
 
     @Test

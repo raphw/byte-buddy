@@ -60,6 +60,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(placeholderType.getDescriptor()).thenReturn(BAZ);
         when(otherPlaceHolderType.getDescriptor()).thenReturn(FOO);
+        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
     }
 
     @Test
@@ -87,7 +88,9 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
                 when(mock.getExceptionTypes()).thenReturn(new TypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-                when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));
+                TypeDescription returnType = mock(TypeDescription.class);
+                when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+                when(mock.getReturnType()).thenReturn(returnType);
                 when(mock.getInternalName()).thenReturn(FOO + System.identityHashCode(mock));
             }
         }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
