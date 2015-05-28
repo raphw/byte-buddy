@@ -19,14 +19,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.when;
 
 public class TargetTypeTest {
+
+    private static final String FOO = "foo";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription leftType, rightType;
+    private TypeDescription leftType, rightType, arrayType;
 
     @Test
     public void testIsFinal() throws Exception {
@@ -64,5 +67,20 @@ public class TargetTypeTest {
     @Test
     public void testDescription() throws Exception {
         assertThat(TargetType.DESCRIPTION.represents(TargetType.class), is(true));
+    }
+
+    @Test
+    public void testArrayTypeResolutionNonTargetType() throws Exception {
+        when(arrayType.isArray()).thenReturn(true);
+        when(arrayType.getComponentType()).thenReturn(leftType);
+        assertThat(TargetType.resolve(arrayType, rightType), is(arrayType));
+    }
+
+    @Test
+    public void testArrayTypeResolutionTargetType() throws Exception {
+        when(rightType.getDescriptor()).thenReturn(FOO);
+        when(arrayType.isArray()).thenReturn(true);
+        when(arrayType.getComponentType()).thenReturn(TargetType.DESCRIPTION);
+        assertThat(TargetType.resolve(arrayType, rightType), is(TypeDescription.ArrayProjection.of(rightType, 1)));
     }
 }

@@ -34,11 +34,12 @@ public final class TargetType {
      */
     public static TypeDescription resolve(TypeDescription typeDescription, TypeDescription actualTargetType) {
         int arity = 0;
-        while (typeDescription.isArray()) {
-            typeDescription = typeDescription.getComponentType();
+        TypeDescription targetType = typeDescription;
+        while (targetType.isArray()) {
+            targetType = targetType.getComponentType();
             arity++;
         }
-        return typeDescription.represents(TargetType.class)
+        return targetType.represents(TargetType.class)
                 ? TypeDescription.ArrayProjection.of(actualTargetType, arity)
                 : typeDescription;
     }

@@ -1686,8 +1686,7 @@ public interface DynamicType {
             public ExceptionDeclarableMethodInterception<S> defineConstructor(
                     List<? extends TypeDescription> parameterTypes,
                     ModifierContributor.ForMethod... modifier) {
-                return defineConstructor(parameterTypes,
-                        resolveModifierContributors(METHOD_MODIFIER_MASK & ~Opcodes.ACC_STATIC, nonNull(modifier)));
+                return defineConstructor(parameterTypes, resolveModifierContributors(METHOD_MODIFIER_MASK & ~Opcodes.ACC_STATIC, nonNull(modifier)));
             }
 
             @Override
