@@ -7,6 +7,7 @@ import net.bytebuddy.implementation.bind.ArgumentTypeResolver;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -27,6 +28,13 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     public ArgumentBinderTest() {
         super(Argument.class);
+    }
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        when(sourceType.asRawType()).thenReturn(sourceType); // REFACTOR
     }
 
     @Override

@@ -54,6 +54,7 @@ public class MethodRebaseResolverMethodsOnlyTest {
         when(constructor.isConstructor()).thenReturn(true);
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
     }
 
     @Test

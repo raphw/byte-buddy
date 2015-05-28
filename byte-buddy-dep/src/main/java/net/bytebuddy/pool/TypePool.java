@@ -4505,7 +4505,7 @@ public interface TypePool {
 
                 @Override
                 public GenericTypeDescription getTypeGen() {
-                    return getTypeDescription();
+                    return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, LazyMethodDescription.this).get(index);
                 }
 
                 @Override
@@ -4662,7 +4662,7 @@ public interface TypePool {
 
                 @Override
                 public GenericTypeDescription get(int index) {
-                    return genericTypeTokens.get(index).toGenericType(typePool, typeVariableSource);
+                    return new TokenizedGenericType(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), typeVariableSource);
                 }
 
                 @Override

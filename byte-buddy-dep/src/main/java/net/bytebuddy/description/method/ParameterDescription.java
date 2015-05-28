@@ -77,6 +77,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     abstract class AbstractParameterDescription extends AbstractModifierReviewable implements ParameterDescription {
 
         @Override
+        public TypeDescription getTypeDescription() {
+            return getTypeGen().asRawType();
+        }
+
+        @Override
         public String getName() {
             return NAME_PREFIX.concat(String.valueOf(getIndex()));
         }
@@ -229,11 +234,6 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public TypeDescription getTypeDescription() {
-            return new TypeDescription.ForLoadedType((Class<?>) GET_TYPE.invoke(parameter));
-        }
-
-        @Override
         public GenericTypeDescription getTypeGen() {
             return new GenericTypeDescription.LazyProjection.OfLoadedParameter(parameter);
         }
@@ -324,11 +324,6 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public TypeDescription getTypeDescription() {
-                return new TypeDescription.ForLoadedType(parameterType);
-            }
-
-            @Override
             public GenericTypeDescription getTypeGen() {
                 return new TypeDescription.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType);
             }
@@ -398,11 +393,6 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                 this.index = index;
                 this.parameterType = parameterType;
                 this.parameterAnnotation = parameterAnnotation;
-            }
-
-            @Override
-            public TypeDescription getTypeDescription() {
-                return new TypeDescription.ForLoadedType(parameterType);
             }
 
             @Override
@@ -478,11 +468,6 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             this.parameterType = parameterType;
             this.index = index;
             this.offset = offset;
-        }
-
-        @Override
-        public TypeDescription getTypeDescription() {
-            return parameterType;
         }
 
         @Override

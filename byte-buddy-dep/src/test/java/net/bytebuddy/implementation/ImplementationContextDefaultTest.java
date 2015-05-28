@@ -186,6 +186,8 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType); // REFACTOR
         when(firstSpecialExceptionType.asRawType()).thenReturn(firstSpecialExceptionType); // REFACTOR
         when(secondSpecialExceptionType.asRawType()).thenReturn(secondSpecialExceptionType); // REFACTOR
+        when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType); // REFACTOR
+        when(secondSpecialParameterType.asRawType()).thenReturn(secondSpecialParameterType); // REFACTOR
     }
 
     @Test

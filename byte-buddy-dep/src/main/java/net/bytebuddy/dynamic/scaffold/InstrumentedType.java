@@ -595,11 +595,6 @@ public interface InstrumentedType extends TypeDescription {
                 }
 
                 @Override
-                public TypeDescription getTypeDescription() {
-                    return parameterType;
-                }
-
-                @Override
                 public GenericTypeDescription getTypeGen() {
                     return parameterType;
                 }

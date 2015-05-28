@@ -100,6 +100,7 @@ public abstract class AbstractInstrumentedTypeTest {
         TypeDescription returnType = mock(TypeDescription.class);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         TypeDescription parameterType = mock(TypeDescription.class);
+        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
         TypeDescription exceptionType = mock(TypeDescription.class);
         when(exceptionType.asRawType()).thenReturn(exceptionType); // REFACTOR
         when(returnType.getName()).thenReturn(FOO);

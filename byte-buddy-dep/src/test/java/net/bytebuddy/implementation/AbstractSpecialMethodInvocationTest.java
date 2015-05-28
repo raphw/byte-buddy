@@ -38,6 +38,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         parameterTypes = new TypeList.Explicit(Collections.singletonList(parameterType));
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
     }
 
     protected abstract Implementation.SpecialMethodInvocation make(String name,

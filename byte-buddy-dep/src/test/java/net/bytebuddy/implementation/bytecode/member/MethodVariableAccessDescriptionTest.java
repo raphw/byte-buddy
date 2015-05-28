@@ -47,6 +47,8 @@ public class MethodVariableAccessDescriptionTest {
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(firstParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(firstParameterType.asRawType()).thenReturn(firstParameterType); // REFACTOR
+        when(secondParameterType.asRawType()).thenReturn(secondParameterType); // REFACTOR
         ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstParameterType, secondParameterType));
         when(methodDescription.getParameters()).thenReturn(parameterList);
     }

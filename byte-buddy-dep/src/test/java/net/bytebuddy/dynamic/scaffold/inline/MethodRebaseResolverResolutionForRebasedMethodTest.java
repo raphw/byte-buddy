@@ -61,6 +61,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Collections.singletonList(parameterType));
         when(methodDescription.getParameters()).thenReturn(parameterList);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
     }
 
     @Test

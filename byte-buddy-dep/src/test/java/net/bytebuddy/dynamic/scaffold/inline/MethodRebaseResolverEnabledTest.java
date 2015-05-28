@@ -66,6 +66,8 @@ public class MethodRebaseResolverEnabledTest {
         when(constructor.getParameters()).thenReturn(constructorParameterList);
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(placeholderType.asRawType()).thenReturn(placeholderType); // REFACTOR
     }
 
     @Test
