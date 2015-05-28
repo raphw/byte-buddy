@@ -134,6 +134,10 @@ constructor interception where a hard-coded super method call is required by the
 
 Extended public API with convenience methods.
 
+### 28. Mai 2015: Version 0.6.6
+
+Fixed error in resolution of the `TargetType` pseudo-variable when used as component type of an array.
+
 ### Current snapshot
 
 Currently, there are no changes.
