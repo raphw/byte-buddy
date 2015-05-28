@@ -1,15 +1,17 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.StreamDrainer;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
@@ -221,6 +223,54 @@ public interface ClassFileLocator {
             return "ClassFileLocator.ForClassLoader{" +
                     "classLoader=" + classLoader +
                     '}';
+        }
+    }
+
+    class ForJarFile implements ClassFileLocator {
+
+        private final JarFile jarFile;
+
+        public ForJarFile(JarFile jarFile) {
+            this.jarFile = jarFile;
+        }
+
+        @Override
+        public Resolution locate(String typeName) throws IOException {
+            ZipEntry zipEntry = jarFile.getEntry(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
+            if (zipEntry == null) {
+                return Resolution.Illegal.INSTANCE;
+            } else {
+                InputStream inputStream = jarFile.getInputStream(zipEntry);
+                try {
+                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
+                } finally {
+                    inputStream.close();
+                }
+            }
+        }
+    }
+
+    class ForFolder implements ClassFileLocator {
+
+        private final File folder;
+
+        public ForFolder(File folder) {
+            this.folder = folder;
+        }
+
+        @Override
+        public Resolution locate(String typeName) throws IOException {
+            File file = new File(folder, typeName.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
+            if (file.exists()) {
+                InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+                try {
+                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
+                } finally {
+                    inputStream.close();
+                }
+            } else {
+                return Resolution.Illegal.INSTANCE;
+            }
         }
     }
 
