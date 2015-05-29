@@ -9,7 +9,7 @@
     </parent>
 
     <artifactId>byte-buddy-dep</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
 
     <name>Byte Buddy (with dependencies)</name>
     <description>
@@ -55,5 +55,22 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${version.plugin.bundle}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>bundle</id>
+                        <goals>
+                            <goal>bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+              </plugin>
+          </plugins>
+      </build>
 </project>

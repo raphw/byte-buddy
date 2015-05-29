@@ -9,11 +9,10 @@
     </parent>
 
     <artifactId>byte-buddy-agent</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
 
     <properties>
         <bytebuddy.agent>net.bytebuddy.agent.ByteBuddyAgent$Installer</bytebuddy.agent>
-        <version.plugin.jar>2.4</version.plugin.jar>
     </properties>
 
     <name>Byte Buddy Java agent</name>
@@ -34,27 +33,29 @@
 
     <build>
         <plugins>
-            <!-- Configure both agent use and OSGI -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${version.plugin.jar}</version>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${version.plugin.bundle}</version>
+                <extensions>true</extensions>
                 <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <Premain-Class>${bytebuddy.agent}</Premain-Class>
-                            <Agent-Class>${bytebuddy.agent}</Agent-Class>
-                            <Can-Redefine-Classes>true</Can-Redefine-Classes>
-                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
-                            <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
-                            <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                            <Bundle-Name>${project.name}</Bundle-Name>
-                            <Bundle-Description>${project.description}</Bundle-Description>
-                            <Bundle-Version>${project.version}</Bundle-Version>
-                            <Export-Package>net.bytebuddy.*</Export-Package>
-                        </manifestEntries>
-                    </archive>
+                    <instructions>
+                        <Premain-Class>${bytebuddy.agent}</Premain-Class>
+                        <Agent-Class>${bytebuddy.agent}</Agent-Class>
+                        <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                        <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                        <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
+                        <Import-Package>com.sun.tools.attach;resolution:="optional"</Import-Package>
+                    </instructions>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>bundle</id>
+                        <goals>
+                            <goal>bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
