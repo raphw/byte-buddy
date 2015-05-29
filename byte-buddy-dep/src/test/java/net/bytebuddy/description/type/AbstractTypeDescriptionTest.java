@@ -18,9 +18,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -393,13 +395,20 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(Class.class).isConstantPool(), is(true));
     }
 
-    protected interface SampleInterface {
+    @Test
+    public void testGenericType() throws Exception {
+        assertThat(describe(SampleGenericType.class).getTypeVariables(), is(new TypeDescription.ForLoadedType(SampleGenericType.class).getTypeVariables()));
+        assertThat(describe(SampleGenericType.class).getSuperTypeGen(), is(new TypeDescription.ForLoadedType(SampleGenericType.class).getSuperTypeGen()));
+        assertThat(describe(SampleGenericType.class).getInterfacesGen(), is(new TypeDescription.ForLoadedType(SampleGenericType.class).getInterfacesGen()));
+    }
 
+    protected interface SampleInterface {
+        /* empty */
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
-
+        /* empty */
     }
 
     @Inherited
@@ -410,37 +419,49 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     }
 
     public interface SampleTransitiveInterface extends SampleInterface {
-
+        /* empty */
     }
 
     static class SamplePackagePrivate {
-
+        /* empty */
     }
 
     public static class SampleInterfaceImplementation implements SampleInterface {
-
+        /* empty */
     }
 
     public static class SampleIndirectInterfaceImplementation extends SampleInterfaceImplementation {
-
+        /* empty */
     }
 
     public static class SampleTransitiveInterfaceImplementation implements SampleTransitiveInterface {
-
+        /* empty */
     }
 
     @SampleAnnotation
     @OtherAnnotation(FOO)
     public class SampleClass {
-
+        /* empty */
     }
 
     public class SampleClassInherited extends SampleClass {
-
+        /* empty */
     }
 
     @OtherAnnotation(BAR)
     public class SampleClassInheritedOverride extends SampleClass {
+        /* empty */
+    }
 
+    public static class SampleGenericType<T extends ArrayList<T> & Callable<T>,
+            S extends Callable<?>,
+            U extends Callable<? extends Callable<U>>,
+            V extends ArrayList<? super ArrayList<V>>,
+            W extends Callable<W[]>> extends ArrayList<T> implements Callable<T> {
+
+        @Override
+        public T call() throws Exception {
+            return null;
+        }
     }
 }

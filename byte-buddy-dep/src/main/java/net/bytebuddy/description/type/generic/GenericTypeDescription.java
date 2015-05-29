@@ -3,6 +3,8 @@ package net.bytebuddy.description.type.generic;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaMethod;
 import org.objectweb.asm.signature.SignatureVisitor;
 
@@ -31,6 +33,13 @@ public interface GenericTypeDescription extends NamedElement {
     String getSymbol();
 
     String getTypeName();
+
+    /**
+     * Returns the size of the type described by this instance.
+     *
+     * @return The size of the type described by this instance.
+     */
+    StackSize getStackSize();
 
     <T> T accept(Visitor<T> visitor);
 
@@ -95,7 +104,7 @@ public interface GenericTypeDescription extends NamedElement {
 
             private static final int ONLY_CHARACTER = 0;
 
-            private final SignatureVisitor signatureVisitor;
+            protected final SignatureVisitor signatureVisitor;
 
             public ForSignatureVisitor(SignatureVisitor signatureVisitor) {
                 this.signatureVisitor = signatureVisitor;
@@ -109,18 +118,7 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public SignatureVisitor onWildcardType(GenericTypeDescription genericTypeDescription) {
-                GenericTypeList upperBounds = genericTypeDescription.getUpperBounds();
-                GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds();
-                if (upperBounds.isEmpty() && lowerBounds.isEmpty()) {
-                    signatureVisitor.visitTypeArgument();
-                } else if (upperBounds.isEmpty() /* && !lowerBounds.isEmpty() */) {
-                    upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
-                    signatureVisitor.visitEnd();
-                } else /* if (!upperBounds.isEmpty() /* && lowerBounds.isEmpty()) */ {
-                    lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
-                    signatureVisitor.visitEnd();
-                }
-                return signatureVisitor;
+                throw new IllegalStateException("Unexpected wildcard: " + genericTypeDescription);
             }
 
             @Override
@@ -138,11 +136,8 @@ public interface GenericTypeDescription extends NamedElement {
                 } else {
                     signatureVisitor.visitClassType(genericTypeDescription.asRawType().getInternalName());
                 }
-                for (GenericTypeDescription upperBound : genericTypeDescription.getUpperBounds()) {
-                    if (!upperBound.getSort().isWildcard()) {
-                        signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF);
-                    }
-                    upperBound.accept(this);
+                for (GenericTypeDescription upperBound : genericTypeDescription.getParameters()) {
+                    upperBound.accept(new OfParameter(signatureVisitor));
                 }
             }
 
@@ -155,11 +150,58 @@ public interface GenericTypeDescription extends NamedElement {
             @Override
             public SignatureVisitor onRawType(TypeDescription typeDescription) {
                 if (typeDescription.isPrimitive()) {
-                    signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(0));
+                    signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(ONLY_CHARACTER));
                 } else {
                     signatureVisitor.visitClassType(typeDescription.getInternalName());
                 }
                 return signatureVisitor;
+            }
+
+            protected static class OfParameter extends ForSignatureVisitor {
+
+                protected OfParameter(SignatureVisitor signatureVisitor) {
+                    super(signatureVisitor);
+                }
+
+                @Override
+                public SignatureVisitor onWildcardType(GenericTypeDescription genericTypeDescription) {
+                    GenericTypeList upperBounds = genericTypeDescription.getUpperBounds();
+                    GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds();
+                    if (upperBounds.getOnly().asRawType().represents(Object.class) && lowerBounds.isEmpty()) {
+                        signatureVisitor.visitTypeArgument();
+                    } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
+                        upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
+                        signatureVisitor.visitEnd();
+                    } else /* if (upperBounds.isEmpty() /* && !lowerBounds.isEmpty()) */ {
+                        lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
+                        signatureVisitor.visitEnd();
+                    }
+                    return signatureVisitor;
+                }
+
+                @Override
+                public SignatureVisitor onGenericArray(GenericTypeDescription genericTypeDescription) {
+                    genericTypeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                    return signatureVisitor;
+                }
+
+                @Override
+                public SignatureVisitor onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                    genericTypeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                    return signatureVisitor;
+                }
+
+                @Override
+                public SignatureVisitor onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                    genericTypeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                    return signatureVisitor;
+                }
+
+                @Override
+                public SignatureVisitor onRawType(TypeDescription typeDescription) {
+                    typeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                    return signatureVisitor;
+                }
             }
         }
     }
@@ -219,6 +261,11 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public <T> T accept(Visitor<T> visitor) {
             return visitor.onGenericArray(this);
+        }
+
+        @Override
+        public StackSize getStackSize() {
+            return StackSize.SINGLE;
         }
 
         @Override
@@ -340,6 +387,11 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public <T> T accept(Visitor<T> visitor) {
             return visitor.onWildcardType(this);
+        }
+
+        @Override
+        public StackSize getStackSize() {
+            return StackSize.SINGLE;
         }
 
         @Override
@@ -489,6 +541,11 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public <T> T accept(Visitor<T> visitor) {
             return visitor.onParameterizedType(this);
+        }
+
+        @Override
+        public StackSize getStackSize() {
+            return StackSize.SINGLE;
         }
 
         @Override
@@ -653,6 +710,11 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
+        public StackSize getStackSize() {
+            return StackSize.SINGLE;
+        }
+
+        @Override
         public int hashCode() {
             return getVariableSource().hashCode() ^ getSymbol().hashCode();
         }
@@ -711,6 +773,13 @@ public interface GenericTypeDescription extends NamedElement {
             private final TypeVariableSource typeVariableSource;
 
             private final String symbol;
+
+            public static GenericTypeDescription of(List<? extends GenericTypeDescription> bounds, TypeVariableSource typeVariableSource, String symbol) {
+                if (bounds.isEmpty()) {
+                    bounds = Collections.singletonList(TypeDescription.OBJECT);
+                } // TODO: Add validation
+                return new Latent(bounds, typeVariableSource, symbol);
+            }
 
             public Latent(List<? extends GenericTypeDescription> upperBounds, TypeVariableSource typeVariableSource, String symbol) {
                 this.upperBounds = upperBounds;
@@ -792,6 +861,11 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public <T> T accept(Visitor<T> visitor) {
             return resolve().accept(visitor);
+        }
+
+        @Override
+        public StackSize getStackSize() {
+            return asRawType().getStackSize();
         }
 
         @Override

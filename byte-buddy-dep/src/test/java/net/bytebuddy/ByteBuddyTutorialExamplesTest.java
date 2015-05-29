@@ -611,7 +611,7 @@ public class ByteBuddyTutorialExamplesTest {
 
         @Override
         public String name(UnnamedType unnamedType) {
-            return "i.heart.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
+            return "i.heart.ByteBuddy." + unnamedType.getSuperClass().asRawType().getSimpleName(); // TODO: Update tutorial!
         }
     }
 

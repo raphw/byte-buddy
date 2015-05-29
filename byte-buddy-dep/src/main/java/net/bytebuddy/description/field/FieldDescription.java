@@ -159,7 +159,7 @@ public interface FieldDescription extends ByteCodeElement {
         /**
          * The type of the field.
          */
-        private final TypeDescription fieldType;
+        private final GenericTypeDescription fieldType;
 
         /**
          * The field's modifiers.
@@ -176,7 +176,7 @@ public interface FieldDescription extends ByteCodeElement {
          */
         public Latent(String fieldName,
                       TypeDescription declaringType,
-                      TypeDescription fieldType,
+                      GenericTypeDescription fieldType,
                       int modifiers) {
             this.fieldName = fieldName;
             this.fieldType = fieldType;

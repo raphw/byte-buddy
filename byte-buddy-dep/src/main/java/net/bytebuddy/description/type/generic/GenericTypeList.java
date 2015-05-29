@@ -15,11 +15,27 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
     TypeList asRawTypes();
 
+    /**
+     * Returns the sum of the size of all types contained in this list.
+     *
+     * @return The sum of the size of all types contained in this list.
+     */
+    int getStackSize();
+
     abstract class AbstractBase extends FilterableList.AbstractBase<GenericTypeDescription, GenericTypeList> implements GenericTypeList {
 
         @Override
         protected GenericTypeList wrap(List<GenericTypeDescription> values) {
             return new Explicit(values);
+        }
+
+        @Override
+        public int getStackSize() {
+            int stackSize = 0;
+            for (GenericTypeDescription genericTypeDescription : this) {
+                stackSize += genericTypeDescription.getStackSize().getSize();
+            }
+            return stackSize;
         }
     }
 
@@ -88,6 +104,11 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         @Override
         public TypeList asRawTypes() {
             return new TypeList.Empty();
+        }
+
+        @Override
+        public int getStackSize() {
+            return 0;
         }
     }
 

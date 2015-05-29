@@ -1,0 +1,232 @@
+package net.bytebuddy.description.type.generic;
+
+import jdk.nashorn.internal.codegen.CompilerConstants;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.test.utility.DebuggingWrapper;
+import org.junit.Test;
+import org.objectweb.asm.util.ASMifier;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+public class GenericSignatureResolutionTest {
+
+    private static final String FOO = "foo";
+
+    @Test
+    public void testGenericType() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(GenericType.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(GenericType.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    @Test
+    public void testGenericField() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(GenericField.class)
+                .classVisitor(DebuggingWrapper.makeDefault())
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        FieldDescription createdField = new FieldDescription.ForLoadedField(type.getDeclaredField(FOO));
+        FieldDescription originalField = new FieldDescription.ForLoadedField(GenericField.class.getDeclaredField(FOO));
+        assertThat(createdField.getFieldTypeGen(), is(originalField.getFieldTypeGen()));
+    }
+
+    @Test
+    public void testGenericMethod() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .subclass(GenericMethod.class)
+                .method(named("foo"))
+                .intercept(FixedValue.nullValue())
+                .make();
+        Class<?> type = unloaded.load(GenericMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        MethodDescription createdMethod = new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(FOO, Exception.class));
+        MethodDescription originalMethod = new MethodDescription.ForLoadedMethod(GenericMethod.class.getDeclaredMethod(FOO, Exception.class));
+        assertThat(createdMethod.getTypeVariables(), is(originalMethod.getTypeVariables()));
+        assertThat(createdMethod.getReturnTypeGen(), is(originalMethod.getReturnTypeGen()));
+        assertThat(createdMethod.getParameters().getOnly().getTypeGen(), is(originalMethod.getParameters().getOnly().getTypeGen()));
+        assertThat(createdMethod.getExceptionTypesGen().getOnly(), is(originalMethod.getExceptionTypesGen().getOnly()));
+    }
+
+    @Test
+    public void testNoSuperType() throws Exception {
+        assertThat(new ByteBuddy().redefine(Object.class).make(), notNullValue(DynamicType.class));
+    }
+
+    @Test
+    public void testTypeVariableClassBound() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(TypeVariableClassBound.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableClassBound.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    @Test
+    public void testTypeVariableInterfaceBound() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(TypeVariableInterfaceBound.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableInterfaceBound.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    @Test
+    public void testTypeVariableClassAndInterfaceBound() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(TypeVariableClassAndInterfaceBound.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableClassAndInterfaceBound.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    @Test
+    public void testTypeVariableWildcardNoBound() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(TypeVariableWildcardNoBound.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardNoBound.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    @Test
+    public void testTypeVariableWildcardUpperClassBound() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(TypeVariableWildcardUpperClassBound.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardUpperClassBound.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    @Test
+    public void testTypeVariableWildcardUpperInterfaceBound() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(TypeVariableWildcardUpperInterfaceBound.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardUpperInterfaceBound.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    @Test
+    public void testTypeVariableWildcardLowerClassBound() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(TypeVariableWildcardLowerClassBound.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerClassBound.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    @Test
+    public void testTypeVariableWildcardLowerInerfaceBound() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(TypeVariableWildcardLowerClassBound.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerInerfaceBound.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
+        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+    }
+
+    public static abstract class GenericType<T extends ArrayList<T> & Callable<T>,
+            S extends Callable<?>,
+            U extends Callable<? extends Callable<U>>,
+            V extends ArrayList<? super ArrayList<V>>,
+            W extends Callable<W[]>> extends ArrayList<T> implements Callable<T> {
+    }
+
+    public static class GenericMethod {
+
+        <T extends Exception & Callable<T>> T foo(T arg) throws T {
+            return null;
+        }
+    }
+
+    public static class GenericField<T> {
+
+        T foo;
+    }
+
+    public static class TypeVariableClassBound<T extends ArrayList<T>> {
+        /* empty */
+    }
+
+    public static abstract class TypeVariableInterfaceBound<T extends Callable<T>> {
+        /* empty */
+    }
+
+    public static abstract class TypeVariableClassAndInterfaceBound<T extends ArrayList<T> & Callable<T>> {
+        /* empty */
+    }
+
+    public static class TypeVariableWildcardNoBound<T extends ArrayList<?>> {
+        /* empty */
+    }
+
+    public static class TypeVariableWildcardUpperClassBound<T extends ArrayList<? extends ArrayList<T>>> {
+        /* empty */
+    }
+
+    public static class TypeVariableWildcardUpperInterfaceBound<T extends ArrayList<? extends Callable<T>>> {
+        /* empty */
+    }
+
+    public static class TypeVariableWildcardLowerClassBound<T extends ArrayList<? super ArrayList<T>>> {
+        /* empty */
+    }
+
+    public static class TypeVariableWildcardLowerInerfaceBound<T extends ArrayList<? super Callable<T>>> {
+        /* empty */
+    }
+}

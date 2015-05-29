@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * Represents a type instrumentation that creates a new type based on a given superclass.
@@ -31,7 +32,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     /**
      * The super class of this type.
      */
-    private final TypeDescription superClass;
+    private final GenericTypeDescription superClass;
 
     /**
      * The interfaces that are represented by this type.
@@ -58,7 +59,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
      * @param namingStrategy   The naming strategy to be applied for this instrumentation.
      */
     public SubclassInstrumentedType(ClassFileVersion classFileVersion,
-                                    TypeDescription superClass,
+                                    GenericTypeDescription superClass,
                                     List<TypeDescription> interfaces,
                                     int modifiers,
                                     NamingStrategy namingStrategy) {
@@ -86,7 +87,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
      * @param typeInitializer       A type initializer to be applied for this instrumentation.
      */
     protected SubclassInstrumentedType(ClassFileVersion classFileVersion,
-                                       TypeDescription superClass,
+                                       GenericTypeDescription superClass,
                                        List<TypeDescription> interfaces,
                                        int modifiers,
                                        String name,
@@ -108,20 +109,18 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
 
     @Override
     public InstrumentedType withField(String internalName,
-                                      TypeDescription fieldType,
+                                      GenericTypeDescription fieldType,
                                       int modifiers) {
         FieldDescription additionalField = new FieldDescription.Latent(internalName, this, fieldType, modifiers);
         if (fieldDescriptions.contains(additionalField)) {
             throw new IllegalArgumentException("Field " + additionalField + " is already defined on " + this);
         }
-        List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
-        fieldDescriptions.add(additionalField);
         return new SubclassInstrumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 this.modifiers,
                 name,
-                fieldDescriptions,
+                join(fieldDescriptions, additionalField),
                 methodDescriptions,
                 loadedTypeInitializer,
                 typeInitializer);
@@ -129,9 +128,9 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
 
     @Override
     public InstrumentedType withMethod(String internalName,
-                                       TypeDescription returnType,
-                                       List<? extends TypeDescription> parameterTypes,
-                                       List<? extends TypeDescription> exceptionTypes,
+                                       GenericTypeDescription returnType,
+                                       List<? extends GenericTypeDescription> parameterTypes,
+                                       List<? extends GenericTypeDescription> exceptionTypes,
                                        int modifiers) {
         MethodDescription additionalMethod = new MethodDescription.Latent(internalName,
                 this,
@@ -142,15 +141,13 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
         if (methodDescriptions.contains(additionalMethod)) {
             throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }
-        List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
-        methodDescriptions.add(additionalMethod);
         return new SubclassInstrumentedType(classFileVersion,
                 superClass,
                 interfaces,
                 this.modifiers,
                 name,
                 fieldDescriptions,
-                methodDescriptions,
+                join(methodDescriptions, additionalMethod),
                 loadedTypeInitializer,
                 typeInitializer);
     }

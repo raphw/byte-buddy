@@ -300,12 +300,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * @param parameterTypes  A list of the parameter types.
          * @return A list describing these parameters.
          */
-        public static ParameterList latent(MethodDescription declaringMethod, List<? extends TypeDescription> parameterTypes) {
+        public static ParameterList latent(MethodDescription declaringMethod, List<? extends GenericTypeDescription> parameterTypes) {
             List<ParameterDescription> parameterDescriptions = new ArrayList<ParameterDescription>(parameterTypes.size());
             int index = 0, offset = declaringMethod.isStatic()
                     ? StackSize.ZERO.getSize()
                     : StackSize.SINGLE.getSize();
-            for (TypeDescription parameterType : parameterTypes) {
+            for (GenericTypeDescription parameterType : parameterTypes) {
                 parameterDescriptions.add(new ParameterDescription.Latent(declaringMethod,
                         parameterType,
                         index++,

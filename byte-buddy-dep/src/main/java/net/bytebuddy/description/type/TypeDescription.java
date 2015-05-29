@@ -13,23 +13,22 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.noneOf;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface.
  */
-public interface TypeDescription extends GenericTypeDescription, TypeVariableSource {
+public interface TypeDescription extends GenericTypeDescription, TypeVariableSource, Iterable<GenericTypeDescription> {
 
     /**
      * A representation of the {@link java.lang.Object} type.
@@ -261,13 +260,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     PackageDescription getPackage();
 
     /**
-     * Returns the size of the type described by this instance.
-     *
-     * @return The size of the type described by this instance.
-     */
-    StackSize getStackSize();
-
-    /**
      * Returns the annotations that this type declares or inherits from super types.
      *
      * @return A list of all inherited annotations.
@@ -320,6 +312,8 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      * @return {@code true} if instances of this type can be used for describing the given annotation value..
      */
     boolean isAnnotationValue(Object value);
+
+    Iterable<GenericTypeDescription> fullHierarchy();
 
     /**
      * An abstract base implementation of a type description.
@@ -464,14 +458,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             boolean generic = false;
             for (GenericTypeDescription typeVariable : getTypeVariables()) {
                 signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
-                boolean classBound = true;
                 for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
-                    upperBound.accept(new Visitor.ForSignatureVisitor(classBound
-                            ? signatureWriter.visitClassBound()
-                            : signatureWriter.visitInterfaceBound()));
-                    classBound = false;
+                    upperBound.accept(new Visitor.ForSignatureVisitor(upperBound.asRawType().isInterface()
+                            ? signatureWriter.visitInterfaceBound()
+                            : signatureWriter.visitClassBound()));
                 }
-                signatureWriter.visitEnd();
                 generic = true;
             }
             superType.accept(new Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
@@ -637,6 +628,106 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public <T> T accept(Visitor<T> visitor) {
             return visitor.onRawType(this);
+        }
+
+        @Override
+        public Iterator<GenericTypeDescription> iterator() {
+            return new SuperTypeIterator(this);
+        }
+
+        @Override
+        public Iterable<GenericTypeDescription> fullHierarchy() {
+            return new FullTypeHierarchyIterable(this);
+        }
+
+        protected static class SuperTypeIterator implements Iterator<GenericTypeDescription> {
+
+            private GenericTypeDescription nextType;
+
+            protected SuperTypeIterator(TypeDescription initialType) {
+                nextType = initialType;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return nextType != null;
+            }
+
+            @Override
+            public GenericTypeDescription next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException("End of type hierarchy");
+                }
+                try {
+                    return nextType;
+                } finally {
+                    nextType = nextType.asRawType().getSuperTypeGen(); // TODO: Retain variables
+                }
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("remove");
+            }
+        }
+
+        protected static class FullTypeHierarchyIterable implements Iterable<GenericTypeDescription> {
+
+            private final TypeDescription typeDescription;
+
+            public FullTypeHierarchyIterable(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public Iterator<GenericTypeDescription> iterator() {
+                return new FullTypeHierarchyIterator(typeDescription);
+            }
+        }
+
+        protected static class FullTypeHierarchyIterator implements Iterator<GenericTypeDescription> {
+
+            private static final int NEXT = 0;
+
+            private static final int AT_BEGINNING = 0;
+
+            private Iterator<GenericTypeDescription> classHierarchyIterator;
+
+            private final List<GenericTypeDescription> interfacesToVisit;
+
+            private final Set<TypeDescription> visitedInterfaces;
+
+            protected FullTypeHierarchyIterator(TypeDescription initialType) {
+                classHierarchyIterator = initialType.iterator();
+                interfacesToVisit = new LinkedList<GenericTypeDescription>(initialType.getInterfaces());
+                visitedInterfaces = new HashSet<TypeDescription>();
+            }
+
+            @Override
+            public boolean hasNext() {
+                return classHierarchyIterator.hasNext() || !interfacesToVisit.isEmpty();
+            }
+
+            @Override
+            public GenericTypeDescription next() {
+                if (classHierarchyIterator.hasNext()) {
+                    GenericTypeDescription nextClass = classHierarchyIterator.next();
+                    interfacesToVisit.addAll(nextClass.asRawType().getInterfaces().filter(noneOf(visitedInterfaces)));
+                    return nextClass;
+                } else if (!interfacesToVisit.isEmpty()) {
+                    GenericTypeDescription nextInterface = interfacesToVisit.remove(NEXT);
+                    visitedInterfaces.add(nextInterface.asRawType());
+                    interfacesToVisit.addAll(AT_BEGINNING, nextInterface.asRawType().getInterfaces().filter(noneOf(visitedInterfaces)));
+                    return nextInterface;
+                } else {
+                    throw new NoSuchElementException("The type hierarchy was fully traversed");
+                }
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("remove");
+            }
         }
 
         @Override
@@ -1263,12 +1354,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         /**
          * The super type or {@code null} if no such type exists.
          */
-        private final TypeDescription superType;
+        private final GenericTypeDescription superType;
 
         /**
          * The interfaces that this type implements.
          */
-        private final List<? extends TypeDescription> interfaces;
+        private final List<? extends GenericTypeDescription> interfaces;
 
         /**
          * Creates a new latent type.
@@ -1278,7 +1369,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
          * @param superType  The super type or {@code null} if no such type exists.
          * @param interfaces The interfaces that this type implements.
          */
-        public Latent(String name, int modifiers, TypeDescription superType, List<? extends TypeDescription> interfaces) {
+        public Latent(String name, int modifiers, GenericTypeDescription superType, List<? extends GenericTypeDescription> interfaces) {
             this.name = name;
             this.modifiers = modifiers;
             this.superType = superType;

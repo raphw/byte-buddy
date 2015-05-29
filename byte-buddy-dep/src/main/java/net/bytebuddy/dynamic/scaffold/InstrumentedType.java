@@ -10,7 +10,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
@@ -38,7 +37,7 @@ public interface InstrumentedType extends TypeDescription {
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
     InstrumentedType withField(String internalName,
-                               TypeDescription fieldType,
+                               GenericTypeDescription fieldType,
                                int modifiers);
 
     /**
@@ -52,9 +51,9 @@ public interface InstrumentedType extends TypeDescription {
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
     InstrumentedType withMethod(String internalName,
-                                TypeDescription returnType,
-                                List<? extends TypeDescription> parameterTypes,
-                                List<? extends TypeDescription> exceptionTypes,
+                                GenericTypeDescription returnType,
+                                List<? extends GenericTypeDescription> parameterTypes,
+                                List<? extends GenericTypeDescription> exceptionTypes,
                                 int modifiers);
 
     /**

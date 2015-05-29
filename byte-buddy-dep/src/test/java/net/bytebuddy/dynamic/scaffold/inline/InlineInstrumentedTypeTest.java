@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.scaffold.AbstractInstrumentedTypeTest;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import org.junit.Before;
@@ -37,7 +38,7 @@ public class InlineInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
     public void setUp() throws Exception {
         when(targetType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
         when(targetType.getDeclaredFields()).thenReturn(new FieldList.Empty());
-        when(targetType.getInterfaces()).thenReturn(new TypeList.Empty());
+        when(targetType.getInterfacesGen()).thenReturn(new GenericTypeList.Empty());
         when(targetType.getSuperTypeGen()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(targetType.getPackage()).thenReturn(packageDescription);
         when(packageDescription.getName()).thenReturn(FOO);

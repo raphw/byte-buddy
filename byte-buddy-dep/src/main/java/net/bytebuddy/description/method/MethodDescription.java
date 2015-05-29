@@ -321,16 +321,15 @@ public interface MethodDescription extends TypeVariableSource {
                             : signatureWriter.visitInterfaceBound()));
                     classBound = false;
                 }
-                signatureWriter.visitEnd();
                 generic = true;
             }
-            GenericTypeDescription returnType = getReturnType();
-            returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
-            generic = generic || !returnType.getSort().isRawType();
             for (GenericTypeDescription parameterType : getParameters().asTypeListGen()) {
                 parameterType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitParameterType()));
                 generic = generic || !parameterType.getSort().isRawType();
             }
+            GenericTypeDescription returnType = getReturnTypeGen();
+            returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
+            generic = generic || !returnType.getSort().isRawType();
             for (GenericTypeDescription exceptionType : getExceptionTypesGen()) {
                 exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
                 generic = generic || !exceptionType.getSort().isRawType();
@@ -800,12 +799,12 @@ public interface MethodDescription extends TypeVariableSource {
         /**
          * The return type of this method.
          */
-        private final TypeDescription returnType;
+        private final GenericTypeDescription returnType;
 
         /**
          * The parameter types of this methods.
          */
-        private final List<? extends TypeDescription> parameterTypes;
+        private final List<? extends GenericTypeDescription> parameterTypes;
 
         /**
          * The modifiers of this method.
@@ -815,7 +814,7 @@ public interface MethodDescription extends TypeVariableSource {
         /**
          * This method's exception types.
          */
-        private final List<? extends TypeDescription> exceptionTypes;
+        private final List<? extends GenericTypeDescription> exceptionTypes;
 
         /**
          * Creates an immutable latent method description.
@@ -829,10 +828,10 @@ public interface MethodDescription extends TypeVariableSource {
          */
         public Latent(String internalName,
                       TypeDescription declaringType,
-                      TypeDescription returnType,
-                      List<? extends TypeDescription> parameterTypes,
+                      GenericTypeDescription returnType,
+                      List<? extends GenericTypeDescription> parameterTypes,
                       int modifiers,
-                      List<? extends TypeDescription> exceptionTypes) {
+                      List<? extends GenericTypeDescription> exceptionTypes) {
             this.internalName = internalName;
             this.declaringType = declaringType;
             this.returnType = returnType;

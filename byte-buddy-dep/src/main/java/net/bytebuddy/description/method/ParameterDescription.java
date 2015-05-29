@@ -440,7 +440,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         /**
          * The type of the parameter.
          */
-        private final TypeDescription parameterType;
+        private final GenericTypeDescription parameterType;
 
         /**
          * The index of the parameter.
@@ -461,7 +461,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param offset          The parameter's offset in the local method variables array.
          */
         public Latent(MethodDescription declaringMethod,
-                      TypeDescription parameterType,
+                      GenericTypeDescription parameterType,
                       int index,
                       int offset) {
             this.declaringMethod = declaringMethod;

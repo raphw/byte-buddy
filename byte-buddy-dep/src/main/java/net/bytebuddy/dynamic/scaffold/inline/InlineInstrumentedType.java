@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * An instrumented type which enhances a given type description by an extending redefinition.
@@ -42,7 +43,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     /**
      * The additional interfaces that this type should implement.
      */
-    private final List<TypeDescription> interfaces;
+    private final List<GenericTypeDescription> interfaces;
 
     /**
      * Creates a new inlined instrumented type.
@@ -55,7 +56,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
      */
     public InlineInstrumentedType(ClassFileVersion classFileVersion,
                                   TypeDescription levelType,
-                                  List<TypeDescription> interfaces,
+                                  List<? extends GenericTypeDescription> interfaces,
                                   int modifiers,
                                   NamingStrategy namingStrategy) {
         super(LoadedTypeInitializer.NoOp.INSTANCE,
@@ -65,10 +66,10 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 levelType.getDeclaredMethods());
         this.levelType = levelType;
         this.modifiers = modifiers;
-        Set<TypeDescription> interfaceTypes = new HashSet<TypeDescription>(levelType.getInterfaces());
+        Set<GenericTypeDescription> interfaceTypes = new HashSet<GenericTypeDescription>(levelType.getInterfacesGen());
         interfaceTypes.addAll(interfaces);
-        this.interfaces = new ArrayList<TypeDescription>(interfaceTypes);
-        this.name = isValidTypeName(namingStrategy.name(new NamingStrategy.UnnamedType.Default(levelType.getSupertype(),
+        this.interfaces = new ArrayList<GenericTypeDescription>(interfaceTypes);
+        this.name = isValidTypeName(namingStrategy.name(new NamingStrategy.UnnamedType.Default(levelType.getSuperTypeGen(),
                 interfaces,
                 modifiers,
                 classFileVersion)));
@@ -88,7 +89,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
      */
     protected InlineInstrumentedType(TypeDescription levelType,
                                      String name,
-                                     List<TypeDescription> interfaces,
+                                     List<GenericTypeDescription> interfaces,
                                      int modifiers,
                                      List<? extends FieldDescription> fieldDescriptions,
                                      List<? extends MethodDescription> methodDescriptions,
@@ -107,19 +108,17 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
 
     @Override
     public InstrumentedType withField(String internalName,
-                                      TypeDescription fieldType,
+                                      GenericTypeDescription fieldType,
                                       int modifiers) {
         FieldDescription additionalField = new FieldDescription.Latent(internalName, this, fieldType, modifiers);
         if (fieldDescriptions.contains(additionalField)) {
             throw new IllegalArgumentException("Field " + additionalField + " is already defined on " + this);
         }
-        List<FieldDescription> fieldDescriptions = new ArrayList<FieldDescription>(this.fieldDescriptions);
-        fieldDescriptions.add(additionalField);
         return new InlineInstrumentedType(levelType,
                 name,
                 interfaces,
                 this.modifiers,
-                fieldDescriptions,
+                join(fieldDescriptions, additionalField),
                 methodDescriptions,
                 loadedTypeInitializer,
                 typeInitializer);
@@ -127,9 +126,9 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
 
     @Override
     public InstrumentedType withMethod(String internalName,
-                                       TypeDescription returnType,
-                                       List<? extends TypeDescription> parameterTypes,
-                                       List<? extends TypeDescription> exceptionTypes,
+                                       GenericTypeDescription returnType,
+                                       List<? extends GenericTypeDescription> parameterTypes,
+                                       List<? extends GenericTypeDescription> exceptionTypes,
                                        int modifiers) {
         MethodDescription additionalMethod = new MethodDescription.Latent(internalName,
                 this,
@@ -140,14 +139,12 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
         if (methodDescriptions.contains(additionalMethod)) {
             throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }
-        List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(this.methodDescriptions);
-        methodDescriptions.add(additionalMethod);
         return new InlineInstrumentedType(levelType,
                 name,
                 interfaces,
                 this.modifiers,
                 fieldDescriptions,
-                methodDescriptions,
+                join(methodDescriptions, additionalMethod),
                 loadedTypeInitializer,
                 typeInitializer);
     }
@@ -210,7 +207,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
 
     @Override
     public GenericTypeList getTypeVariables() {
-        return new GenericTypeList.Empty();
+        return levelType.getTypeVariables();
     }
 
     @Override
