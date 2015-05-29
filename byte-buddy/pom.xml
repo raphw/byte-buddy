@@ -67,6 +67,30 @@
             </activation>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.felix</groupId>
+                        <artifactId>maven-bundle-plugin</artifactId>
+                        <version>${version.plugin.bundle}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <instructions>
+                                <Export-Package>!${shade.source}.*,net.bytebuddy.*</Export-Package>
+                                <Import-Package>!${shade.source}.*</Import-Package>
+                                <Private-Package>${shade.source}.*</Private-Package>
+                                <Embed-Dependency>byte-buddy-dep;inline=true</Embed-Dependency>
+                                <Embed-Transitive>true</Embed-Transitive>
+                            </instructions>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>bundle</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>bundle</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <!-- Shade the ASM dependency and define OSGI manifest -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -89,18 +113,15 @@
                                             <shadedPattern>${shade.target}</shadedPattern>
                                         </relocation>
                                     </relocations>
-                                    <transformers>
-                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                            <manifestEntries>
-                                                <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                                                <Bundle-Name>${project.name}</Bundle-Name>
-                                                <Bundle-Description>${project.description}</Bundle-Description>
-                                                <Bundle-Version>${project.version}</Bundle-Version>
-                                                <Export-Package>!${shade.target}.*,net.bytebuddy.*</Export-Package>
-                                                <Private-Package>${shade.target}.*</Private-Package>
-                                            </manifestEntries>
-                                        </transformer>
-                                    </transformers>
+                                    <artifactSet>
+                                        <includes>
+                                            <!--
+                                            trick to avoid warnings from shade plugin because package
+                                            is already embedded by private-package instruction from bundle plugin
+                                            -->
+                                            <include>null:null</include>
+                                        </includes>
+                                    </artifactSet>
                                 </configuration>
                             </execution>
                         </executions>
