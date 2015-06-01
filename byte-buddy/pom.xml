@@ -97,6 +97,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
+                        <version>${version.plugin.jar}</version>
                         <configuration>
                             <archive>
                                 <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
@@ -106,7 +107,7 @@
                     <plugin>
                         <groupId>org.apache.felix</groupId>
                         <artifactId>maven-bundle-plugin</artifactId>
-                        <version>${version.plugin.jar}</version>
+                        <version>${version.plugin.bundle}</version>
                         <executions>
                             <execution>
                                 <id>bundle-manifest</id>
