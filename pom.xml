@@ -139,7 +139,7 @@
 
     <build>
         <plugins>
-            <!-- Define release properties -->
+            <!-- Define release properties. -->
             <plugin>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${version.plugin.release}</version>
@@ -149,7 +149,7 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
-            <!-- Enable mutation testing -->
+            <!-- Enable mutation testing. -->
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
@@ -163,7 +163,7 @@
                     </targetTests>
                 </configuration>
             </plugin>
-            <!-- Configure Cobertura support for evaluating test case coverage -->
+            <!-- Configure Cobertura support for evaluating test case coverage. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
@@ -185,7 +185,7 @@
                     <check />
                 </configuration>
             </plugin>
-            <!-- Generate coveralls reports from Travis -->
+            <!-- Generate coveralls reports from Travis. -->
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
@@ -225,7 +225,7 @@
         </pluginManagement>
     </build>
 
-    <!-- Define explicit version to overcome problem with generated reports -->
+    <!-- Define explicit version to overcome problem with generated reports. -->
     <reporting>
         <plugins>
             <plugin>
@@ -251,7 +251,7 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Create source code artifact -->
+                    <!-- Create source code artifact. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
@@ -265,7 +265,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Create javadoc artifact -->
+                    <!-- Create javadoc artifact. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
@@ -297,7 +297,7 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Sign artifacts -->
+                    <!-- Sign artifacts. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
@@ -322,7 +322,7 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Check style on build -->
+                    <!-- Check style on build. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>
@@ -347,7 +347,7 @@
         </profile>
         <profile>
             <id>android</id>
-            <!-- Only build the Android test application on demand -->
+            <!-- Only build the Android test application on demand. -->
             <modules>
                 <module>byte-buddy</module>
                 <module>byte-buddy-dep</module>

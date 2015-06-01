@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -13,6 +14,7 @@
 
     <properties>
         <bytebuddy.agent>net.bytebuddy.agent.ByteBuddyAgent$Installer</bytebuddy.agent>
+        <attach.package>com.sun.tools.attach</attach.package>
     </properties>
 
     <name>Byte Buddy Java agent</name>
@@ -33,31 +35,52 @@
 
     <build>
         <plugins>
+            <!-- Define bundle plugin in order to allow for 'bundle' packaging. -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>${version.plugin.bundle}</version>
                 <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Premain-Class>${bytebuddy.agent}</Premain-Class>
-                        <Agent-Class>${bytebuddy.agent}</Agent-Class>
-                        <Can-Redefine-Classes>true</Can-Redefine-Classes>
-                        <Can-Retransform-Classes>true</Can-Retransform-Classes>
-                        <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
-                        <Import-Package>com.sun.tools.attach;resolution:="optional"</Import-Package>
-                    </instructions>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>bundle</id>
-                        <goals>
-                            <goal>bundle</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>extras</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Specify OSGi packaging and agent manifest headers. -->
+                    <plugin>
+                        <groupId>org.apache.felix</groupId>
+                        <artifactId>maven-bundle-plugin</artifactId>
+                        <version>${version.plugin.bundle}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <instructions>
+                                <Premain-Class>${bytebuddy.agent}</Premain-Class>
+                                <Agent-Class>${bytebuddy.agent}</Agent-Class>
+                                <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                                <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                                <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
+                                <Import-Package>${attach.package};resolution:="optional"</Import-Package>
+                            </instructions>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>bundle</id>
+                                <goals>
+                                    <goal>bundle</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

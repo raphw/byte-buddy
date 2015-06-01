@@ -9,6 +9,7 @@
     </parent>
 
     <artifactId>byte-buddy</artifactId>
+    <!-- Cannot specify 'bundle' packaging in order to allow combined application of the shade and bundle plugin. -->
     <packaging>jar</packaging>
 
     <name>Byte Buddy (without dependencies)</name>
@@ -47,7 +48,7 @@
 
     <build>
         <plugins>
-            <!-- Disable pitest as it fails for empty modules -->
+            <!-- Disable pitest as it fails for empty modules. -->
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
@@ -60,6 +61,7 @@
     </build>
 
     <profiles>
+        <!-- Define artifact as OSGi bundle. -->
         <profile>
             <id>extras</id>
             <activation>
@@ -91,7 +93,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Shade the ASM dependency and define OSGI manifest -->
+                    <!-- Shade the ASM dependency. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
@@ -115,10 +117,7 @@
                                     </relocations>
                                     <artifactSet>
                                         <includes>
-                                            <!--
-                                            trick to avoid warnings from shade plugin because package
-                                            is already embedded by private-package instruction from bundle plugin
-                                            -->
+                                            <!-- Avoid warning on empty artifact by pseudo-including something. -->
                                             <include>null:null</include>
                                         </includes>
                                     </artifactSet>
@@ -126,7 +125,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Copy dependency version's javadoc artifact which is required for valid repository deployment -->
+                    <!-- Copy dependency version's javadoc artifact which is required for valid repository deployment. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
@@ -139,13 +138,14 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <copy file="${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar" tofile="${project.build.directory}/byte-buddy-${project.version}-javadoc.jar" />
+                                        <copy file="${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar"
+                                              tofile="${project.build.directory}/byte-buddy-${project.version}-javadoc.jar" />
                                     </target>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
-                    <!--Because the javadoc files are copied manually, they must be added as an artifact to the build process -->
+                    <!-- Because the javadoc files are copied manually, they must be added as an artifact to the build process. -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
@@ -160,9 +160,7 @@
                                 <configuration>
                                     <artifacts>
                                         <artifact>
-                                            <file>
-                                                ${project.build.directory}/byte-buddy-${project.version}-javadoc.jar
-                                            </file>
+                                            <file>${project.build.directory}/byte-buddy-${project.version}-javadoc.jar</file>
                                             <type>jar</type>
                                             <classifier>javadoc</classifier>
                                         </artifact>
