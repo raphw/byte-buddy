@@ -143,6 +143,8 @@ Fixed error in resolution of the `TargetType` pseudo-variable when used as compo
 - Upgraded ASM dependency to 0.5.4.
 - Fixed OSGi headers in all relevant artifacts.
 
+*Warning*: The `byte-buddy` artifact is accidentally deployed with a defect pom file which does not exclude the shaded resources.
+
 ### Current snapshot
 
 Currently, there are no changes.
