@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -54,7 +55,7 @@
         <version.plugin.compiler>3.1</version.plugin.compiler>
         <version.plugin.install>2.5.1</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
-        <version.plugin.javadoc>2.10.1</version.plugin.javadoc>
+        <version.plugin.javadoc>2.10.3</version.plugin.javadoc>
         <version.plugin.source>2.2.1</version.plugin.source>
         <version.plugin.shade>2.2</version.plugin.shade>
         <version.plugin.gpg>1.5</version.plugin.gpg>
@@ -182,7 +183,7 @@
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis. -->
@@ -277,14 +278,13 @@
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
-                            <!-- MNG-4618: Fails with Maven 3 due to a bug in the Maven plugin -->
-                            <!--<execution>-->
-                            <!--<id>aggregate-javadoc</id>-->
-                            <!--<goals>-->
-                            <!--<goal>aggregate</goal>-->
-                            <!--</goals>-->
-                            <!--<phase>package</phase>-->
-                            <!--</execution>-->
+                            <execution>
+                                <id>aggregate-javadoc</id>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
                         </executions>
                     </plugin>
                 </plugins>
