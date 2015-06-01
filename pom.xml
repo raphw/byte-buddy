@@ -48,7 +48,8 @@
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
-        <version.asm>5.0.3</version.asm>
+        <asm.javadoc>http://asm.ow2.org/asm50/javadoc/user/</asm.javadoc>
+        <version.asm>5.0.4</version.asm>
         <version.junit>4.12</version.junit>
         <version.mockito>1.10.19</version.mockito>
         <version.plugin.bundle>2.5.4</version.plugin.bundle>
@@ -259,7 +260,6 @@
                         <version>${version.plugin.source}</version>
                         <executions>
                             <execution>
-                                <id>attach-sources</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
@@ -278,14 +278,22 @@
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
-                            <execution>
-                                <id>aggregate-javadoc</id>
-                                <goals>
-                                    <goal>aggregate</goal>
-                                </goals>
-                                <phase>package</phase>
-                            </execution>
+                            <!-- Additionally to the regular jar file specified above, create an aggregated jar. -->
+                            <!-- This does not seem to work when activated during deployment (Shade plugin?). -->
+                            <!--<execution>-->
+                                <!--<id>aggregate-javadoc</id>-->
+                                <!--<goals>-->
+                                    <!--<goal>aggregate</goal>-->
+                                <!--</goals>-->
+                                <!--<phase>package</phase>-->
+                            <!--</execution>-->
                         </executions>
+                        <configuration>
+                            <detectJavaApiLink>true</detectJavaApiLink>
+                            <links>
+                                <link>${asm.javadoc}</link>
+                            </links>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -304,7 +312,6 @@
                         <version>${version.plugin.gpg}</version>
                         <executions>
                             <execution>
-                                <id>sign-artifacts</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
@@ -329,7 +336,6 @@
                         <version>${version.plugin.checkstyle}</version>
                         <executions>
                             <execution>
-                                <id>validate</id>
                                 <phase>validate</phase>
                                 <goals>
                                     <goal>check</goal>
