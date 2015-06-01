@@ -39,6 +39,7 @@
     -->
 
     <dependencies>
+        <!-- This dependency is itself not an OSGi module but is copied into a different namespace while building. -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>byte-buddy-dep</artifactId>
@@ -137,7 +138,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <copy file="${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar" tofile="${project.build.directory}/byte-buddy-${project.version}-javadoc.jar" />
+                                        <copy file="${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar"
+                                              tofile="${project.build.directory}/byte-buddy-${project.version}-javadoc.jar" />
                                     </target>
                                 </configuration>
                             </execution>
