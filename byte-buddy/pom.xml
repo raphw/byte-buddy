@@ -85,7 +85,6 @@
                         </configuration>
                         <executions>
                             <execution>
-                                <id>bundle</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>bundle</goal>
@@ -152,7 +151,6 @@
                         <version>${version.plugin.build-helper}</version>
                         <executions>
                             <execution>
-                                <id>attach-artifacts</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>attach-artifact</goal>

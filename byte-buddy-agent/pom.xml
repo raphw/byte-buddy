@@ -71,7 +71,6 @@
                         </configuration>
                         <executions>
                             <execution>
-                                <id>bundle</id>
                                 <goals>
                                     <goal>bundle</goal>
                                 </goals>

@@ -273,20 +273,24 @@
                         <version>${version.plugin.javadoc}</version>
                         <executions>
                             <execution>
-                                <id>attach-javadocs</id>
+                                <id>attach-javadoc</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
                             <!-- Additionally to the regular jar file specified above, create an aggregated jar. -->
-                            <!-- This does not seem to work when activated during deployment (Shade plugin?). -->
-                            <!--<execution>-->
-                                <!--<id>aggregate-javadoc</id>-->
-                                <!--<goals>-->
-                                    <!--<goal>aggregate</goal>-->
-                                <!--</goals>-->
-                                <!--<phase>package</phase>-->
-                            <!--</execution>-->
+                            <execution>
+                                <id>aggregate-javadoc</id>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <doctitle>Byte Buddy (full API), version ${project.version}</doctitle>
+                                    <!-- Fails due to repacking of ASM by the Shade plugin. -->
+                                    <failOnError>false</failOnError>
+                                </configuration>
+                            </execution>
                         </executions>
                         <configuration>
                             <detectJavaApiLink>true</detectJavaApiLink>
