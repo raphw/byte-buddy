@@ -125,21 +125,40 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Copy dependency version's javadoc artifact which is required for valid repository deployment. -->
+                    <!--
+                      Copy dependency version's javadoc artifact which is required for valid repository deployment.
+                      Copy dependency reduced pom to replace the original pom for the now shaded jar.
+                    -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>${version.plugin.ant}</version>
                         <executions>
                             <execution>
-                                <phase>package</phase>
+                                <id>copy-javadoc</id>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
+                                <phase>package</phase>
                                 <configuration>
                                     <target>
                                         <copy file="${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar"
                                               tofile="${project.build.directory}/byte-buddy-${project.version}-javadoc.jar" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>copy-dependency-reduced-pom</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <target>
+                                        <copy file="${project.basedir}/dependency-reduced-pom.xml"
+                                              tofile="${project.build.directory}/byte-buddy-${project.version}.pom"
+                                              overwrite="true"
+                                              force="true" />
                                     </target>
                                 </configuration>
                             </execution>

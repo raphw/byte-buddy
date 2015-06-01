@@ -1,6 +1,5 @@
 package net.bytebuddy.description.type.generic;
 
-import jdk.nashorn.internal.codegen.CompilerConstants;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -9,15 +8,10 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.DebuggingWrapper;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.objectweb.asm.util.ASMifier;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -25,6 +19,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@Ignore
 public class GenericSignatureResolutionTest {
 
     private static final String FOO = "foo";
@@ -184,6 +179,7 @@ public class GenericSignatureResolutionTest {
             U extends Callable<? extends Callable<U>>,
             V extends ArrayList<? super ArrayList<V>>,
             W extends Callable<W[]>> extends ArrayList<T> implements Callable<T> {
+
     }
 
     public static class GenericMethod {
