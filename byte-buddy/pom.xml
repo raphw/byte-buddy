@@ -110,7 +110,6 @@
                         <version>${version.plugin.bundle}</version>
                         <executions>
                             <execution>
-                                <id>bundle-manifest</id>
                                 <phase>process-classes</phase>
                                 <goals>
                                     <goal>manifest</goal>
@@ -190,9 +189,7 @@
                                 <configuration>
                                     <artifacts>
                                         <artifact>
-                                            <file>
-                                                ${project.build.directory}/byte-buddy-${project.version}-javadoc.jar
-                                            </file>
+                                            <file>${project.build.directory}/byte-buddy-${project.version}-javadoc.jar</file>
                                             <type>jar</type>
                                             <classifier>javadoc</classifier>
                                         </artifact>
