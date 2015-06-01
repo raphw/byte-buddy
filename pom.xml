@@ -47,13 +47,15 @@
         <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
-        <version.asm>5.0.3</version.asm>
+        <asm.javadoc>http://asm.ow2.org/asm50/javadoc/user/</asm.javadoc>
+        <version.asm>5.0.4</version.asm>
         <version.junit>4.12</version.junit>
         <version.mockito>1.10.19</version.mockito>
+        <version.plugin.bundle>2.5.4</version.plugin.bundle>
         <version.plugin.compiler>3.1</version.plugin.compiler>
         <version.plugin.install>2.5.1</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
-        <version.plugin.javadoc>2.10.1</version.plugin.javadoc>
+        <version.plugin.javadoc>2.10.3</version.plugin.javadoc>
         <version.plugin.source>2.2.1</version.plugin.source>
         <version.plugin.shade>2.2</version.plugin.shade>
         <version.plugin.gpg>1.5</version.plugin.gpg>
@@ -138,7 +140,7 @@
 
     <build>
         <plugins>
-            <!-- Define release properties -->
+            <!-- Define release properties. -->
             <plugin>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${version.plugin.release}</version>
@@ -148,7 +150,7 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
-            <!-- Enable mutation testing -->
+            <!-- Enable mutation testing. -->
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
@@ -162,7 +164,7 @@
                     </targetTests>
                 </configuration>
             </plugin>
-            <!-- Configure Cobertura support for evaluating test case coverage -->
+            <!-- Configure Cobertura support for evaluating test case coverage. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
@@ -184,7 +186,7 @@
                     <check />
                 </configuration>
             </plugin>
-            <!-- Generate coveralls reports from Travis -->
+            <!-- Generate coveralls reports from Travis. -->
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
@@ -224,7 +226,7 @@
         </pluginManagement>
     </build>
 
-    <!-- Define explicit version to overcome problem with generated reports -->
+    <!-- Define explicit version to overcome problem with generated reports. -->
     <reporting>
         <plugins>
             <plugin>
@@ -250,41 +252,51 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Create source code artifact -->
+                    <!-- Create source code artifact. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
                         <version>${version.plugin.source}</version>
                         <executions>
                             <execution>
-                                <id>attach-sources</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Create javadoc artifact -->
+                    <!-- Create javadoc artifact. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>${version.plugin.javadoc}</version>
                         <executions>
                             <execution>
-                                <id>attach-javadocs</id>
+                                <id>attach-javadoc</id>
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
-                            <!-- MNG-4618: Fails with Maven 3 due to a bug in the Maven plugin -->
-                            <!--<execution>-->
-                            <!--<id>aggregate-javadoc</id>-->
-                            <!--<goals>-->
-                            <!--<goal>aggregate</goal>-->
-                            <!--</goals>-->
-                            <!--<phase>package</phase>-->
-                            <!--</execution>-->
+                            <!-- Additionally to the regular jar file specified above, create an aggregated jar. -->
+                            <execution>
+                                <id>aggregate-javadoc</id>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                                <phase>package</phase>
+                                <configuration>
+                                    <doctitle>Byte Buddy (full API), version ${project.version}</doctitle>
+                                    <!-- Fails due to repacking of ASM by the Shade plugin. -->
+                                    <failOnError>false</failOnError>
+                                </configuration>
+                            </execution>
                         </executions>
+                        <configuration>
+                            <detectJavaApiLink>true</detectJavaApiLink>
+                            <links>
+                                <link>${asm.javadoc}</link>
+                            </links>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -296,14 +308,13 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Sign artifacts -->
+                    <!-- Sign artifacts. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>${version.plugin.gpg}</version>
                         <executions>
                             <execution>
-                                <id>sign-artifacts</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
@@ -321,14 +332,13 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Check style on build -->
+                    <!-- Check style on build. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>
                         <version>${version.plugin.checkstyle}</version>
                         <executions>
                             <execution>
-                                <id>validate</id>
                                 <phase>validate</phase>
                                 <goals>
                                     <goal>check</goal>
@@ -346,7 +356,7 @@
         </profile>
         <profile>
             <id>android</id>
-            <!-- Only build the Android test application on demand -->
+            <!-- Only build the Android test application on demand. -->
             <modules>
                 <module>byte-buddy</module>
                 <module>byte-buddy-dep</module>

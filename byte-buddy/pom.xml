@@ -9,6 +9,7 @@
     </parent>
 
     <artifactId>byte-buddy</artifactId>
+    <!-- Cannot specify 'bundle' packaging in order to allow combined application of the shade and bundle plugin. -->
     <packaging>jar</packaging>
 
     <name>Byte Buddy (without dependencies)</name>
@@ -47,7 +48,7 @@
 
     <build>
         <plugins>
-            <!-- Disable pitest as it fails for empty modules -->
+            <!-- Disable pitest as it fails for empty modules. -->
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
@@ -60,6 +61,7 @@
     </build>
 
     <profiles>
+        <!-- Define artifact as OSGi bundle. -->
         <profile>
             <id>extras</id>
             <activation>
@@ -67,7 +69,30 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Shade the ASM dependency and define OSGI manifest -->
+                    <plugin>
+                        <groupId>org.apache.felix</groupId>
+                        <artifactId>maven-bundle-plugin</artifactId>
+                        <version>${version.plugin.bundle}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <instructions>
+                                <Export-Package>!${shade.source}.*,net.bytebuddy.*</Export-Package>
+                                <Import-Package>!${shade.source}.*</Import-Package>
+                                <Private-Package>${shade.source}.*</Private-Package>
+                                <Embed-Dependency>byte-buddy-dep;inline=true</Embed-Dependency>
+                                <Embed-Transitive>true</Embed-Transitive>
+                            </instructions>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>bundle</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Shade the ASM dependency. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
@@ -89,23 +114,17 @@
                                             <shadedPattern>${shade.target}</shadedPattern>
                                         </relocation>
                                     </relocations>
-                                    <transformers>
-                                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                            <manifestEntries>
-                                                <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                                                <Bundle-Name>${project.name}</Bundle-Name>
-                                                <Bundle-Description>${project.description}</Bundle-Description>
-                                                <Bundle-Version>${project.version}</Bundle-Version>
-                                                <Export-Package>!${shade.target}.*,net.bytebuddy.*</Export-Package>
-                                                <Private-Package>${shade.target}.*</Private-Package>
-                                            </manifestEntries>
-                                        </transformer>
-                                    </transformers>
+                                    <artifactSet>
+                                        <includes>
+                                            <!-- Avoid warning on empty artifact by pseudo-including something. -->
+                                            <include>null:null</include>
+                                        </includes>
+                                    </artifactSet>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
-                    <!-- Copy dependency version's javadoc artifact which is required for valid repository deployment -->
+                    <!-- Copy dependency version's javadoc artifact which is required for valid repository deployment. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
@@ -124,14 +143,13 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--Because the javadoc files are copied manually, they must be added as an artifact to the build process -->
+                    <!-- Because the javadoc files are copied manually, they must be added as an artifact to the build process. -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
                         <version>${version.plugin.build-helper}</version>
                         <executions>
                             <execution>
-                                <id>attach-artifacts</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>attach-artifact</goal>
@@ -139,9 +157,7 @@
                                 <configuration>
                                     <artifacts>
                                         <artifact>
-                                            <file>
-                                                ${project.build.directory}/byte-buddy-${project.version}-javadoc.jar
-                                            </file>
+                                            <file>${project.build.directory}/byte-buddy-${project.version}-javadoc.jar</file>
                                             <type>jar</type>
                                             <classifier>javadoc</classifier>
                                         </artifact>
