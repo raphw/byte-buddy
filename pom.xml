@@ -60,6 +60,7 @@
         <version.plugin.shade>2.2</version.plugin.shade>
         <version.plugin.gpg>1.5</version.plugin.gpg>
         <version.plugin.jxr>2.4</version.plugin.jxr>
+        <version.plugin.jar>2.6</version.plugin.jar>
         <version.plugin.release>2.5.1</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
         <version.plugin.pitest>1.1.5</version.plugin.pitest>
@@ -196,6 +197,11 @@
 
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${version.plugin.jar}</version>
+                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
