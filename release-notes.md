@@ -138,12 +138,16 @@ Extended public API with convenience methods.
 
 Fixed error in resolution of the `TargetType` pseudo-variable when used as component type of an array.
 
-### 1. Juni 2015: version 0.6.7
+### 1. June 2015: version 0.6.7
 
 - Upgraded ASM dependency to 0.5.4.
 - Fixed OSGi headers in all relevant artifacts.
 
-*Warning*: The `byte-buddy` artifact is accidentally deployed with a defect pom file which does not exclude the shaded resources.
+*Warning*: The *byte-buddy* artifact is accidentally deployed with a defect pom file which does not exclude the shaded resources.
+
+### 1. June 2015: version 0.6.8
+
+Corrected incorrect deployment of version 0.6.7 which does not use a dependency reduced POM for the *byte-buddy* module.
 
 ### Current snapshot
 
