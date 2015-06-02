@@ -58,7 +58,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(mock(TypeDescription.class));
+        when(target.getType()).thenReturn(mock(TypeDescription.class));
         new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
@@ -68,7 +68,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testGetterForImplicitNamedFieldInHierarchy() throws Exception {
-        when(target.getTypeDescription()).thenReturn(getterType);
+        when(target.getType()).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -88,7 +88,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testGetterForExplicitNamedFieldInHierarchy() throws Exception {
-        when(target.getTypeDescription()).thenReturn(getterType);
+        when(target.getType()).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -107,7 +107,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testGetterForImplicitNamedFieldInNamedType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(getterType);
+        when(target.getType()).thenReturn(getterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
@@ -127,7 +127,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testGetterForExplicitNamedFieldInNamedType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(getterType);
+        when(target.getType()).thenReturn(getterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
@@ -146,7 +146,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testSetterForImplicitNamedFieldInHierarchy() throws Exception {
-        when(target.getTypeDescription()).thenReturn(setterType);
+        when(target.getType()).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -166,7 +166,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testSetterForExplicitNamedFieldInHierarchy() throws Exception {
-        when(target.getTypeDescription()).thenReturn(setterType);
+        when(target.getType()).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -186,7 +186,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testSetterForImplicitNamedFieldInNamedType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(setterType);
+        when(target.getType()).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -207,7 +207,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testSetterForExplicitNamedFieldInNamedType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(setterType);
+        when(target.getType()).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);

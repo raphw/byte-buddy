@@ -1400,9 +1400,9 @@ public interface TypeWriter<T> {
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
-                            (instrumentedType.getSupertype() == NO_SUPER_CLASS ?
+                            (instrumentedType.getSuperType() == NO_SUPER_CLASS ?
                                     TypeDescription.OBJECT :
-                                    instrumentedType.getSupertype()).getInternalName(),
+                                    instrumentedType.getSuperType()).getInternalName(),
                             instrumentedType.getInterfaces().toInternalNames());
                     attributeAppender.apply(this, instrumentedType);
                 }
@@ -1753,9 +1753,9 @@ public interface TypeWriter<T> {
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
-                        (instrumentedType.getSupertype() == null
+                        (instrumentedType.getSuperType() == null
                                 ? TypeDescription.OBJECT
-                                : instrumentedType.getSupertype()).getInternalName(),
+                                : instrumentedType.getSuperType()).getInternalName(),
                         instrumentedType.getInterfaces().toInternalNames());
                 attributeAppender.apply(classVisitor, instrumentedType);
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {

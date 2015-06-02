@@ -504,7 +504,7 @@ public interface MethodLookupEngine {
             MethodBucket methodBucket = new MethodBucket(typeDescription);
             Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
             TypeList defaultMethodRelevantInterfaces = typeDescription.getInterfaces();
-            while ((typeDescription = typeDescription.getSupertype()) != null) {
+            while ((typeDescription = typeDescription.getSuperType()) != null) {
                 methodBucket.pushClass(typeDescription);
                 interfaces.addAll(typeDescription.getInterfaces());
             }

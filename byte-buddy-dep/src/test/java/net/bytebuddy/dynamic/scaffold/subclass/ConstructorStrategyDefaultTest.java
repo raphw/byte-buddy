@@ -42,7 +42,7 @@ public class ConstructorStrategyDefaultTest {
         when(methodRegistry.append(any(LatentMethodMatcher.class),
                 any(MethodRegistry.Handler.class),
                 any(MethodAttributeAppender.Factory.class))).thenReturn(methodRegistry);
-        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(methodList);
     }
 
@@ -61,7 +61,7 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
     }
 
@@ -72,7 +72,7 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
     }
 
@@ -84,7 +84,7 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
     }
 

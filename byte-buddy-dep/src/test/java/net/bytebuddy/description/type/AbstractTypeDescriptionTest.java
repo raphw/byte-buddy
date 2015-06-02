@@ -237,15 +237,15 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testSuperType() throws Exception {
-        assertThat(describe(Object.class).getSupertype(), nullValue(TypeDescription.class));
-        assertThat(describe(SampleInterface.class).getSupertype(), nullValue(TypeDescription.class));
-        assertThat(describe(SampleAnnotation.class).getSupertype(), nullValue(TypeDescription.class));
-        assertThat(describe(void.class).getSupertype(), nullValue(TypeDescription.class));
-        assertThat(describe(SampleClass.class).getSupertype(),
+        assertThat(describe(Object.class).getSuperType(), nullValue(TypeDescription.class));
+        assertThat(describe(SampleInterface.class).getSuperType(), nullValue(TypeDescription.class));
+        assertThat(describe(SampleAnnotation.class).getSuperType(), nullValue(TypeDescription.class));
+        assertThat(describe(void.class).getSuperType(), nullValue(TypeDescription.class));
+        assertThat(describe(SampleClass.class).getSuperType(),
                 is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
-        assertThat(describe(SampleIndirectInterfaceImplementation.class).getSupertype(),
+        assertThat(describe(SampleIndirectInterfaceImplementation.class).getSuperType(),
                 is((TypeDescription) new TypeDescription.ForLoadedType(SampleInterfaceImplementation.class)));
-        assertThat(describe(Object[].class).getSupertype(),
+        assertThat(describe(Object[].class).getSuperType(),
                 is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
     }
 

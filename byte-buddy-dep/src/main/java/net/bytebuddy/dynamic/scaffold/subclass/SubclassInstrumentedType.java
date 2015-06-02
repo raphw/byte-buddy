@@ -12,7 +12,6 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -225,8 +224,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
 
     @Override
     public AnnotationList getInheritedAnnotations() {
-        return getSupertype() == null
+        return getSuperType() == null
                 ? new AnnotationList.Empty()
-                : getSupertype().getInheritedAnnotations().inherited(Collections.<TypeDescription>emptySet());
+                : getSuperType().getInheritedAnnotations().inherited(Collections.<TypeDescription>emptySet());
     }
 }

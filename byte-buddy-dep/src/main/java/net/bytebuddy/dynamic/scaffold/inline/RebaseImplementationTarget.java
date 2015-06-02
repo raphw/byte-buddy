@@ -46,7 +46,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     protected Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         return methodDescription.getDeclaringType().equals(typeDescription)
                 ? invokeSuper(methodRebaseResolver.resolve(methodDescription))
-                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSupertype());
+                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSuperType());
     }
 
     /**

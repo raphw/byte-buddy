@@ -212,12 +212,12 @@ public @interface Super {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(target.getTypeDescription())) {
+            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(target.getType())) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
                         .getValue(STRATEGY, EnumerationDescription.class).load(Instantiation.class)
-                        .proxyFor(target.getTypeDescription(), implementationTarget, annotation));
+                        .proxyFor(target.getType(), implementationTarget, annotation));
             }
         }
 

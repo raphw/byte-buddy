@@ -8,7 +8,6 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
@@ -296,9 +295,9 @@ public abstract class AbstractInstrumentedTypeTest {
 
     @Test
     public void testSupertype() {
-        assertThat(makePlainInstrumentedType().getSupertype(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
-        assertThat(makePlainInstrumentedType().getSupertype(), not(is((TypeDescription) new TypeDescription.ForLoadedType(Integer.class))));
-        assertThat(makePlainInstrumentedType().getSupertype(), not(is((TypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
+        assertThat(makePlainInstrumentedType().getSuperType(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(makePlainInstrumentedType().getSuperType(), not(is((TypeDescription) new TypeDescription.ForLoadedType(Integer.class))));
+        assertThat(makePlainInstrumentedType().getSuperType(), not(is((TypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
     }
 
     @Test

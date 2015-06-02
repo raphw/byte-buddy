@@ -4465,7 +4465,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeDescription getTypeDescription() {
+                public TypeDescription getType() {
                     return TokenizedGenericType.toRawType(typePool, parameterTypeDescriptors.get(index));
                 }
 

@@ -93,7 +93,7 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSupertype(), is(foo));
+        assertThat(dynamicType.getSuperType(), is(foo));
         assertThat(dynamicType.getInterfaces(), is((TypeList) new TypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
@@ -124,7 +124,7 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSupertype(), is(foo));
+        assertThat(dynamicType.getSuperType(), is(foo));
         assertThat(dynamicType.getInterfaces(), is((TypeList) new TypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
@@ -155,7 +155,7 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSupertype(), is(foo));
+        assertThat(dynamicType.getSuperType(), is(foo));
         assertThat(dynamicType.getInterfaces(), is((TypeList) new TypeList.ForLoadedType(Serializable.class)));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
@@ -186,7 +186,7 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSupertype(), is(foo));
+        assertThat(dynamicType.getSuperType(), is(foo));
         assertThat(dynamicType.getInterfaces(), is((TypeList) new TypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));

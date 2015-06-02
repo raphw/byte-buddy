@@ -23,14 +23,14 @@ public class JavaTypeTest {
     public void testMethodHandle() throws Exception {
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getName(), is("java.lang.invoke.MethodHandle"));
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
-        assertThat(JavaType.METHOD_HANDLE.getTypeStub().getSupertype(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(JavaType.METHOD_HANDLE.getTypeStub().getSuperType(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
     }
 
     @Test
     public void testMethodType() throws Exception {
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getName(), is("java.lang.invoke.MethodType"));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
-        assertThat(JavaType.METHOD_TYPE.getTypeStub().getSupertype(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(JavaType.METHOD_TYPE.getTypeStub().getSuperType(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().contains(new TypeDescription.ForLoadedType(Serializable.class)), is(true));
     }
 
@@ -38,14 +38,14 @@ public class JavaTypeTest {
     public void testMethodTypesLookup() throws Exception {
         assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getName(), is("java.lang.invoke.MethodHandles$Lookup"));
         assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL));
-        assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getSupertype(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getSuperType(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
     }
 
     @Test
     public void testCallSite() throws Exception {
         assertThat(JavaType.CALL_SITE.getTypeStub().getName(), is("java.lang.invoke.CallSite"));
         assertThat(JavaType.CALL_SITE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
-        assertThat(JavaType.CALL_SITE.getTypeStub().getSupertype(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(JavaType.CALL_SITE.getTypeStub().getSuperType(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
     }
 
     @Test

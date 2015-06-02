@@ -41,7 +41,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                                            BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                            OriginTypeIdentifier originTypeIdentifier) {
         super(finding, bridgeMethodResolverFactory);
-        TypeDescription superType = finding.getTypeDescription().getSupertype();
+        TypeDescription superType = finding.getTypeDescription().getSuperType();
         MethodList superConstructors = superType == null
                 ? new MethodList.Empty()
                 : superType.getDeclaredMethods().filter(isConstructor());
@@ -60,7 +60,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
         }
-        return Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSupertype());
+        return Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSuperType());
     }
 
     @Override
@@ -102,7 +102,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         SUPER_TYPE {
             @Override
             protected TypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription.getSupertype();
+                return typeDescription.getSuperType();
             }
         },
 

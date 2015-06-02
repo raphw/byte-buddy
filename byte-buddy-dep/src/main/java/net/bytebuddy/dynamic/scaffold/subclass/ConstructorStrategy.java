@@ -72,7 +72,7 @@ public interface ConstructorStrategy {
         DEFAULT_CONSTRUCTOR {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSupertype();
+                TypeDescription superType = instrumentedType.getSuperType();
                 MethodList methodList = superType == null
                         ? new MethodList.Empty()
                         : superType.getDeclaredMethods()
@@ -82,7 +82,7 @@ public interface ConstructorStrategy {
                     return methodList;
                 } else {
                     throw new IllegalArgumentException(String.format("%s does not declare a default constructor that " +
-                            "is visible to %s", instrumentedType.getSupertype(), instrumentedType));
+                            "is visible to %s", instrumentedType.getSuperType(), instrumentedType));
                 }
             }
 
@@ -103,7 +103,7 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSupertype();
+                TypeDescription superType = instrumentedType.getSuperType();
                 return superType == null
                         ? new MethodList.Empty()
                         : superType.getDeclaredMethods()
@@ -126,7 +126,7 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE_PUBLIC {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSupertype();
+                TypeDescription superType = instrumentedType.getSuperType();
                 return superType == null
                         ? new MethodList.Empty()
                         : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()));

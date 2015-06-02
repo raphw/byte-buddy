@@ -111,7 +111,7 @@ public class MethodCallProxy implements AuxiliaryType {
             typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType());
         }
         for (ParameterDescription parameterDescription : parameters) {
-            typeDescriptions.put(fieldName(currentIndex++), parameterDescription.getTypeDescription());
+            typeDescriptions.put(fieldName(currentIndex++), parameterDescription.getType());
         }
         return typeDescriptions;
     }

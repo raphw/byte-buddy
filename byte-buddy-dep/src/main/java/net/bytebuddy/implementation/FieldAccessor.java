@@ -127,7 +127,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getTypeDescription(),
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType(),
                 fieldDescription.getFieldType(),
                 dynamicallyTyped);
         if (!stackManipulation.isValid()) {
@@ -275,7 +275,7 @@ public abstract class FieldAccessor implements Implementation {
                     if (fieldList.size() == 1) {
                         return fieldList.getOnly();
                     }
-                } while (!(currentType = currentType.getSupertype()).represents(Object.class));
+                } while (!(currentType = currentType.getSuperType()).represents(Object.class));
                 throw new IllegalArgumentException("There is no field '" + name + " that is visible to " + instrumentedType);
             }
 

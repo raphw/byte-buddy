@@ -116,12 +116,12 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
         when(sourceParameterList.size()).thenReturn(2);
         when(sourceType.isPrimitive()).thenReturn(true);
         ParameterDescription leftParameter = mock(ParameterDescription.class);
-        when(leftParameter.getTypeDescription()).thenReturn(leftPrimitive);
+        when(leftParameter.getType()).thenReturn(leftPrimitive);
         when(leftParameterList.get(0)).thenReturn(leftParameter);
         when(left.getTargetParameterIndex(any(ArgumentTypeResolver.ParameterIndexToken.class)))
                 .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));
         ParameterDescription rightParameter = mock(ParameterDescription.class);
-        when(rightParameter.getTypeDescription()).thenReturn(rightPrimitive);
+        when(rightParameter.getType()).thenReturn(rightPrimitive);
         when(rightParameterList.get(0)).thenReturn(rightParameter);
         when(right.getTargetParameterIndex(any(ArgumentTypeResolver.ParameterIndexToken.class)))
                 .thenAnswer(new TokenAnswer(new int[][]{{0, 0}}));

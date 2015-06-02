@@ -58,7 +58,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(rebasedResolution.getAdditionalArguments()).thenReturn(additionalArguments);
         when(additionalArguments.isValid()).thenReturn(true);
         when(additionalArguments.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(QUX);
         when(superType.getStackSize()).thenReturn(StackSize.ZERO);
         when(superMethod.getDeclaringType()).thenReturn(superType);

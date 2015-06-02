@@ -45,7 +45,7 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
         super.setUp();
         when(source.getParameters()).thenReturn(sourceParameterList);
         when(sourceParameterList.get(anyInt())).thenReturn(sourceParameter);
-        when(sourceParameter.getTypeDescription()).thenReturn(sourceType);
+        when(sourceParameter.getType()).thenReturn(sourceType);
         when(leftMethod.getParameters()).thenReturn(leftParameterList);
         when(rightMethod.getParameters()).thenReturn(rightParameterList);
     }

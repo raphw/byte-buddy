@@ -45,7 +45,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     @Before
     public void setUp() throws Exception {
         when(parameterList.asTypeList()).thenReturn(parameterTypes);
-        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(superMethodConstructor)));
         when(superType.getInternalName()).thenReturn(BAR);
         when(superMethod.getDeclaringType()).thenReturn(superType);
@@ -117,7 +117,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         assertThat(new SubclassImplementationTarget(finding,
                         bridgeMethodResolverFactory,
                         SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE).getOriginType(),
-                is(finding.getTypeDescription().getSupertype()));
+                is(finding.getTypeDescription().getSuperType()));
     }
 
     @Test
@@ -137,7 +137,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
                 when(mock.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(mock.getTypeDescription()).thenReturn(typeDescription);
-                when(typeDescription.getSupertype()).thenReturn(typeDescription);
+                when(typeDescription.getSuperType()).thenReturn(typeDescription);
                 when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
             }
         }).refine(new ObjectPropertyAssertion.Refinement<BridgeMethodResolver.Factory>() {

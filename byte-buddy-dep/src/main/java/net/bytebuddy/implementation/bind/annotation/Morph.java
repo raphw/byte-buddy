@@ -167,7 +167,7 @@ public @interface Morph {
             MethodDescription methodDescription = methodCandidates.getOnly();
             if (!methodDescription.getReturnType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getTypeDescription().represents(Object[].class)) {
+            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getType().represents(Object[].class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single argument of type Object[]");
             }
             return methodDescription;
@@ -184,9 +184,9 @@ public @interface Morph {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getTypeDescription().equals(forwardingMethod.getDeclaringType())) {
+            if (!target.getType().equals(forwardingMethod.getDeclaringType())) {
                 throw new IllegalStateException(String.format("The installed type %s for the @Morph annotation does not " +
-                        "equal the annotated parameter type on %s", target.getTypeDescription(), target));
+                        "equal the annotated parameter type on %s", target.getType(), target));
             }
             Implementation.SpecialMethodInvocation specialMethodInvocation;
             TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);

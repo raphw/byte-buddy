@@ -582,7 +582,7 @@ public interface InstrumentedType extends TypeDescription {
                  * @param parameterDescription The parameter description to copy.
                  */
                 protected ParameterToken(String typeName, ParameterDescription parameterDescription) {
-                    parameterType = withSubstitutedSelfReference(typeName, parameterDescription.getTypeDescription());
+                    parameterType = withSubstitutedSelfReference(typeName, parameterDescription.getType());
                     index = parameterDescription.getIndex();
                     name = parameterDescription.isNamed()
                             ? parameterDescription.getName()

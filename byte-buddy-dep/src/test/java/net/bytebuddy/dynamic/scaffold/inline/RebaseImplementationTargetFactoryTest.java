@@ -48,7 +48,7 @@ public class RebaseImplementationTargetFactoryTest {
         when(finding.getInvokableMethods()).thenReturn(new MethodList.Empty());
         when(finding.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
-        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
         factory = new RebaseImplementationTarget.Factory(bridgeMethodResolverFactory, methodRebaseResolver);
     }

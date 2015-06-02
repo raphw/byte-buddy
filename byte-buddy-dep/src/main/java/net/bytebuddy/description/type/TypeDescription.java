@@ -13,7 +13,6 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
@@ -154,7 +153,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      * @return The component type of this array or {@code null} if type does not have a super type as for the
      * {@link java.lang.Object} type.
      */
-    TypeDescription getSupertype();
+    TypeDescription getSuperType();
 
     GenericTypeDescription getSuperTypeGen();
 
@@ -313,8 +312,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      */
     boolean isAnnotationValue(Object value);
 
-    Iterable<GenericTypeDescription> fullHierarchy();
-
     /**
      * An abstract base implementation of a type description.
      */
@@ -335,7 +332,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public TypeDescription getSupertype() {
+        public TypeDescription getSuperType() {
             GenericTypeDescription superType = getSuperTypeGen();
             return superType == null
                     ? null
@@ -502,21 +499,21 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 for (TypeDescription interfaceType : current.getInterfaces()) {
                     collect(interfaceType, interfaces);
                 }
-            } while ((current = current.getSupertype()) != null);
+            } while ((current = current.getSuperType()) != null);
             return new TypeList.Explicit(new ArrayList<TypeDescription>(interfaces));
         }
 
         @Override
         public AnnotationList getInheritedAnnotations() {
             AnnotationList declaredAnnotations = getDeclaredAnnotations();
-            if (getSupertype() == null) {
+            if (getSuperType() == null) {
                 return declaredAnnotations;
             } else {
                 Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>(declaredAnnotations.size());
                 for (AnnotationDescription annotationDescription : declaredAnnotations) {
                     annotationTypes.add(annotationDescription.getAnnotationType());
                 }
-                return new AnnotationList.Explicit(join(declaredAnnotations, getSupertype().getInheritedAnnotations().inherited(annotationTypes)));
+                return new AnnotationList.Explicit(join(declaredAnnotations, getSuperType().getInheritedAnnotations().inherited(annotationTypes)));
             }
         }
 
@@ -636,8 +633,20 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public Iterable<GenericTypeDescription> fullHierarchy() {
-            return new FullTypeHierarchyIterable(this);
+        public boolean equals(Object other) {
+            return other == this || other instanceof GenericTypeDescription
+                    && ((GenericTypeDescription) other).getSort().isRawType()
+                    && getInternalName().equals(((GenericTypeDescription) other).asRawType().getInternalName());
+        }
+
+        @Override
+        public int hashCode() {
+            return getInternalName().hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
         }
 
         protected static class SuperTypeIterator implements Iterator<GenericTypeDescription> {
@@ -671,82 +680,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             }
         }
 
-        protected static class FullTypeHierarchyIterable implements Iterable<GenericTypeDescription> {
-
-            private final TypeDescription typeDescription;
-
-            public FullTypeHierarchyIterable(TypeDescription typeDescription) {
-                this.typeDescription = typeDescription;
-            }
-
-            @Override
-            public Iterator<GenericTypeDescription> iterator() {
-                return new FullTypeHierarchyIterator(typeDescription);
-            }
-        }
-
-        protected static class FullTypeHierarchyIterator implements Iterator<GenericTypeDescription> {
-
-            private static final int NEXT = 0;
-
-            private static final int AT_BEGINNING = 0;
-
-            private Iterator<GenericTypeDescription> classHierarchyIterator;
-
-            private final List<GenericTypeDescription> interfacesToVisit;
-
-            private final Set<TypeDescription> visitedInterfaces;
-
-            protected FullTypeHierarchyIterator(TypeDescription initialType) {
-                classHierarchyIterator = initialType.iterator();
-                interfacesToVisit = new LinkedList<GenericTypeDescription>(initialType.getInterfaces());
-                visitedInterfaces = new HashSet<TypeDescription>();
-            }
-
-            @Override
-            public boolean hasNext() {
-                return classHierarchyIterator.hasNext() || !interfacesToVisit.isEmpty();
-            }
-
-            @Override
-            public GenericTypeDescription next() {
-                if (classHierarchyIterator.hasNext()) {
-                    GenericTypeDescription nextClass = classHierarchyIterator.next();
-                    interfacesToVisit.addAll(nextClass.asRawType().getInterfaces().filter(noneOf(visitedInterfaces)));
-                    return nextClass;
-                } else if (!interfacesToVisit.isEmpty()) {
-                    GenericTypeDescription nextInterface = interfacesToVisit.remove(NEXT);
-                    visitedInterfaces.add(nextInterface.asRawType());
-                    interfacesToVisit.addAll(AT_BEGINNING, nextInterface.asRawType().getInterfaces().filter(noneOf(visitedInterfaces)));
-                    return nextInterface;
-                } else {
-                    throw new NoSuchElementException("The type hierarchy was fully traversed");
-                }
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException("remove");
-            }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other == this || other instanceof GenericTypeDescription
-                    && ((GenericTypeDescription) other).getSort().isRawType()
-                    && getInternalName().equals(((GenericTypeDescription) other).asRawType().getInternalName());
-        }
-
-        @Override
-        public int hashCode() {
-            return getInternalName().hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
-        }
-
         /**
          * An adapter implementation of a {@link TypeDescription} that
          * describes any type that is not an array or a primitive type.
@@ -772,7 +705,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                     return true;
                 }
                 // The sub type has a super type and this super type is assignable to the super type.
-                TypeDescription targetTypeSuperType = targetType.getSupertype();
+                TypeDescription targetTypeSuperType = targetType.getSuperType();
                 if (targetTypeSuperType != null && targetTypeSuperType.isAssignableTo(sourceType)) {
                     return true;
                 }

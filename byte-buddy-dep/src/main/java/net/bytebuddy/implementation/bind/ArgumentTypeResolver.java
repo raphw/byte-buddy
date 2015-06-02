@@ -48,8 +48,8 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
                                                   MethodDelegationBinder.MethodBinding left,
                                                   int rightParameterIndex,
                                                   MethodDelegationBinder.MethodBinding right) {
-        TypeDescription leftParameterType = left.getTarget().getParameters().get(leftParameterIndex).getTypeDescription();
-        TypeDescription rightParameterType = right.getTarget().getParameters().get(rightParameterIndex).getTypeDescription();
+        TypeDescription leftParameterType = left.getTarget().getParameters().get(leftParameterIndex).getType();
+        TypeDescription rightParameterType = right.getTarget().getParameters().get(rightParameterIndex).getType();
         if (!leftParameterType.equals(rightParameterType)) {
             if (leftParameterType.isPrimitive() && rightParameterType.isPrimitive()) {
                 return PrimitiveTypePrecedence.forPrimitive(leftParameterType)
@@ -104,7 +104,7 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
             Integer rightParameterIndex = right.getTargetParameterIndex(parameterIndexToken);
             if (leftParameterIndex != null && rightParameterIndex != null) {
                 resolution = resolution.merge(
-                        resolveRivalBinding(sourceParameters.get(sourceParameterIndex).getTypeDescription(),
+                        resolveRivalBinding(sourceParameters.get(sourceParameterIndex).getType(),
                                 leftParameterIndex,
                                 left,
                                 rightParameterIndex,

@@ -30,7 +30,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      *
      * @return The parameter's type.
      */
-    TypeDescription getTypeDescription();
+    TypeDescription getType();
 
     GenericTypeDescription getTypeGen();
 
@@ -77,7 +77,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     abstract class AbstractParameterDescription extends AbstractModifierReviewable implements ParameterDescription {
 
         @Override
-        public TypeDescription getTypeDescription() {
+        public TypeDescription getType() {
             return getTypeGen().asRawType();
         }
 
@@ -139,8 +139,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                 stringBuilder.append(' ');
             }
             stringBuilder.append(isVarArgs()
-                    ? getTypeDescription().getName().replaceFirst("\\[\\]$", "...")
-                    : getTypeDescription().getName());
+                    ? getType().getName().replaceFirst("\\[\\]$", "...")
+                    : getType().getName());
             return stringBuilder.append(' ').append(getName()).toString();
         }
     }

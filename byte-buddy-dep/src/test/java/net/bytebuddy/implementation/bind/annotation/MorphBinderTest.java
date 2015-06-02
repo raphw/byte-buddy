@@ -42,14 +42,14 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(morphType);
+        when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(mock(TypeDescription.class));
         new Morph.Binder(morphMethod).bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test
     public void testSuperMethodCallInvalid() throws Exception {
-        when(target.getTypeDescription()).thenReturn(morphType);
+        when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         doReturn(void.class).when(annotation).defaultTarget();
         when(implementationTarget.invokeSuper(source, Implementation.Target.MethodLookup.Default.EXACT))
@@ -62,7 +62,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
 
     @Test
     public void testSuperMethodCallValid() throws Exception {
-        when(target.getTypeDescription()).thenReturn(morphType);
+        when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         doReturn(void.class).when(annotation).defaultTarget();
         when(implementationTarget.invokeSuper(source, Implementation.Target.MethodLookup.Default.EXACT))
@@ -78,7 +78,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testDefaultMethodCallImplicitInvalid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
-        when(target.getTypeDescription()).thenReturn(morphType);
+        when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(void.class).when(annotation).defaultTarget();
@@ -95,7 +95,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testDefaultMethodCallImplicitValid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
-        when(target.getTypeDescription()).thenReturn(morphType);
+        when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(void.class).when(annotation).defaultTarget();
@@ -113,7 +113,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testDefaultMethodCallExplicitInvalid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
-        when(target.getTypeDescription()).thenReturn(morphType);
+        when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(Foo.class).when(annotation).defaultTarget();
@@ -129,7 +129,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testDefaultMethodCallExplicitValid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
-        when(target.getTypeDescription()).thenReturn(morphType);
+        when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(Foo.class).when(annotation).defaultTarget();
