@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.generic.AbstractGenericTypeDescriptionTest;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ClassFileExtraction;
@@ -26,6 +27,7 @@ import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -166,15 +168,15 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testHashCode() throws Exception {
-        assertThat(describe(SampleClass.class).hashCode(), is(SampleClass.class.getName().hashCode()));
-        assertThat(describe(SampleInterface.class).hashCode(), is(SampleInterface.class.getName().hashCode()));
-        assertThat(describe(SampleAnnotation.class).hashCode(), is(SampleAnnotation.class.getName().hashCode()));
+        assertThat(describe(SampleClass.class).hashCode(), is(Type.getInternalName(SampleClass.class).hashCode()));
+        assertThat(describe(SampleInterface.class).hashCode(), is(Type.getInternalName(SampleInterface.class).hashCode()));
+        assertThat(describe(SampleAnnotation.class).hashCode(), is(Type.getInternalName(SampleAnnotation.class).hashCode()));
         assertThat(describe(SampleClass.class).hashCode(), is(describe(SampleClass.class).hashCode()));
         assertThat(describe(SampleClass.class).hashCode(), not(is(describe(SampleInterface.class).hashCode())));
         assertThat(describe(SampleClass.class).hashCode(), not(is(describe(SampleAnnotation.class).hashCode())));
         assertThat(describe(Object[].class).hashCode(), is(describe(Object[].class).hashCode()));
         assertThat(describe(Object[].class).hashCode(), not(is(describe(Object.class).hashCode())));
-        assertThat(describe(void.class).hashCode(), is(void.class.getName().hashCode()));
+        assertThat(describe(void.class).hashCode(), is(Type.getInternalName(void.class).hashCode()));
     }
 
     @Test
@@ -182,10 +184,15 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         TypeDescription identical = describe(SampleClass.class);
         assertThat(identical, equalTo(identical));
         TypeDescription equalFirst = mock(TypeDescription.class);
-        when(equalFirst.getName()).thenReturn(SampleClass.class.getName());
+        when(equalFirst.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(equalFirst.asRawType()).thenReturn(equalFirst);
+        when(equalFirst.getInternalName()).thenReturn(Type.getInternalName(SampleClass.class));
         assertThat(describe(SampleClass.class), equalTo(equalFirst));
         assertThat(describe(SampleClass.class), not(equalTo(describe(SampleInterface.class))));
         assertThat(describe(SampleClass.class), not(equalTo((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class))));
+        GenericTypeDescription nonRawType = mock(GenericTypeDescription.class);
+        when(nonRawType.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
+        assertThat(describe(SampleClass.class), not(equalTo(nonRawType)));
         assertThat(describe(SampleClass.class), not(equalTo(new Object())));
         assertThat(describe(SampleClass.class), not(equalTo(null)));
         assertThat(describe(Object[].class), equalTo((TypeDescription) new TypeDescription.ForLoadedType(Object[].class)));

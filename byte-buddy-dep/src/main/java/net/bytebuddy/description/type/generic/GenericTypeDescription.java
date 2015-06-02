@@ -153,6 +153,7 @@ public interface GenericTypeDescription extends NamedElement {
                     signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(ONLY_CHARACTER));
                 } else {
                     signatureVisitor.visitClassType(typeDescription.getInternalName());
+                    signatureVisitor.visitEnd();
                 }
                 return signatureVisitor;
             }
@@ -170,11 +171,9 @@ public interface GenericTypeDescription extends NamedElement {
                     if (upperBounds.getOnly().asRawType().represents(Object.class) && lowerBounds.isEmpty()) {
                         signatureVisitor.visitTypeArgument();
                     } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
-                        upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
-                        signatureVisitor.visitEnd();
-                    } else /* if (upperBounds.isEmpty() /* && !lowerBounds.isEmpty()) */ {
-                        lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
-                        signatureVisitor.visitEnd();
+                        lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
+                    } else /* if (!upperBounds.isEmpty() && lowerBounds.isEmpty()) */ {
+                        upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
                     }
                     return signatureVisitor;
                 }
@@ -874,8 +873,8 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public boolean equals(Object obj) {
-            return resolve().equals(obj);
+        public boolean equals(Object other) {
+            return resolve().equals(other);
         }
 
         @Override

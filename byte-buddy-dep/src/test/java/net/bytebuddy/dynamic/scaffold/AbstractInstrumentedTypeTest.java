@@ -4,6 +4,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -20,9 +21,7 @@ import org.objectweb.asm.Opcodes;
 import java.io.Serializable;
 import java.util.Collections;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.*;
@@ -248,16 +247,18 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test
     public void testHashCode() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
-        assertThat(instrumentedType.hashCode(), is(instrumentedType.getName().hashCode()));
+        assertThat(instrumentedType.hashCode(), is(instrumentedType.getInternalName().hashCode()));
     }
 
     @Test
     public void testEquals() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         TypeDescription other = mock(TypeDescription.class);
-        when(other.getName()).thenReturn(instrumentedType.getName());
-        assertThat(instrumentedType.equals(other), is(true));
-        verify(other, atLeast(1)).getName();
+        when(other.getInternalName()).thenReturn(instrumentedType.getInternalName());
+        when(other.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(other.asRawType()).thenReturn(other);
+        assertThat(instrumentedType, equalTo(other));
+        verify(other, atLeast(1)).getInternalName();
     }
 
     @Test

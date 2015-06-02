@@ -5,6 +5,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -46,6 +47,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit(Collections.singletonList(fieldDescription)));
         when(fieldDescription.getFieldType()).thenReturn(fieldType);
         when(fieldType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(fieldType.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(fieldType.asRawType()).thenReturn(fieldType);
     }
 
     @Override

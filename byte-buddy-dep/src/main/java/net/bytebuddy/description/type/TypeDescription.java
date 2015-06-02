@@ -732,13 +732,14 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public boolean equals(Object other) {
-            return other == this || other instanceof TypeDescription
-                    && getName().equals(((TypeDescription) other).getName());
+            return other == this || other instanceof GenericTypeDescription
+                    && ((GenericTypeDescription) other).getSort().isRawType()
+                    && getInternalName().equals(((GenericTypeDescription) other).asRawType().getInternalName());
         }
 
         @Override
         public int hashCode() {
-            return getName().hashCode();
+            return getInternalName().hashCode();
         }
 
         @Override

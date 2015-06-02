@@ -8,8 +8,8 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.DebuggingWrapper;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.objectweb.asm.util.ASMifier;
 
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -19,7 +19,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@Ignore
 public class GenericSignatureResolutionTest {
 
     private static final String FOO = "foo";
@@ -41,7 +40,6 @@ public class GenericSignatureResolutionTest {
     public void testGenericField() throws Exception {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(GenericField.class)
-                .classVisitor(DebuggingWrapper.makeDefault())
                 .make();
         Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         FieldDescription createdField = new FieldDescription.ForLoadedField(type.getDeclaredField(FOO));
