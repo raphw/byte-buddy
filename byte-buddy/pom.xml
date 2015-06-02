@@ -130,6 +130,7 @@
                                     net.bytebuddy.description.method,
                                     net.bytebuddy.description.modifier,
                                     net.bytebuddy.description.type,
+                                    net.bytebuddy.description.type.generic,
                                     net.bytebuddy.dynamic,
                                     net.bytebuddy.dynamic.loading,
                                     net.bytebuddy.dynamic.scaffold,
