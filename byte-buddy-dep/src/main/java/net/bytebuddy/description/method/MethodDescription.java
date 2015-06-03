@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -26,7 +27,7 @@ import java.util.List;
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface MethodDescription extends TypeVariableSource {
+public interface MethodDescription extends TypeVariableSource, NamedElement.WithGenericName {
 
     /**
      * The internal name of a Java constructor.
@@ -525,10 +526,48 @@ public interface MethodDescription extends TypeVariableSource {
         }
 
         @Override
+        public String toGenericString() {
+            StringBuilder stringBuilder = new StringBuilder();
+            int modifiers = getModifiers() & SOURCE_MODIFIERS;
+            if (modifiers != EMPTY_MASK) {
+                stringBuilder.append(Modifier.toString(modifiers)).append(" ");
+            }
+            if (isMethod()) {
+                stringBuilder.append(getReturnTypeGen().getSourceCodeName()).append(" ");
+                stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+            }
+            stringBuilder.append(getName()).append("(");
+            boolean first = true;
+            for (GenericTypeDescription typeDescription : getParameters().asTypeListGen()) {
+                if (!first) {
+                    stringBuilder.append(",");
+                } else {
+                    first = false;
+                }
+                stringBuilder.append(typeDescription.getSourceCodeName());
+            }
+            stringBuilder.append(")");
+            GenericTypeList exceptionTypes = getExceptionTypesGen();
+            if (exceptionTypes.size() > 0) {
+                stringBuilder.append(" throws ");
+                first = true;
+                for (GenericTypeDescription typeDescription : exceptionTypes) {
+                    if (!first) {
+                        stringBuilder.append(",");
+                    } else {
+                        first = false;
+                    }
+                    stringBuilder.append(typeDescription.getSourceCodeName());
+                }
+            }
+            return stringBuilder.toString();
+        }
+
+        @Override
         public String toString() {
             StringBuilder stringBuilder = new StringBuilder();
             int modifiers = getModifiers() & SOURCE_MODIFIERS;
-            if (modifiers != 0) {
+            if (modifiers != EMPTY_MASK) {
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
             if (isMethod()) {
@@ -556,7 +595,7 @@ public interface MethodDescription extends TypeVariableSource {
                     } else {
                         first = false;
                     }
-                    stringBuilder.append(typeDescription.getName());
+                    stringBuilder.append(typeDescription.getSourceCodeName());
                 }
             }
             return stringBuilder.toString();

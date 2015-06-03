@@ -8,10 +8,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
+import static junit.framework.Assert.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,7 +47,12 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(genericTypeDescription.getParameters().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.WILDCARD));
-        assertThat(genericTypeDescription.getParameters().getOnly().asRawType().represents(String.class), is(true));
+        try {
+            genericTypeDescription.getParameters().getOnly().asRawType();
+            fail();
+        } catch (IllegalStateException ignored) {
+            /* expected */
+        }
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().getOnly().asRawType().represents(String.class), is(true));
@@ -68,10 +72,20 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(genericTypeDescription.getParameters().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.WILDCARD));
-        assertThat(genericTypeDescription.getParameters().getOnly().asRawType().represents(Object.class), is(true));
+        try {
+            genericTypeDescription.getParameters().getOnly().asRawType();
+            fail();
+        } catch (IllegalStateException ignored) {
+            /* expected */
+        }
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
-        assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().getOnly().asRawType().represents(Object.class), is(true));
+        try {
+            genericTypeDescription.getParameters().getOnly().asRawType();
+            fail();
+        } catch (IllegalStateException ignored) {
+            /* expected */
+        }
         assertThat(genericTypeDescription.getParameters().getOnly().getLowerBounds().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getLowerBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
         assertThat(genericTypeDescription.getParameters().getOnly().getLowerBounds().getOnly().asRawType().represents(String.class), is(true));

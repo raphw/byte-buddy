@@ -1,7 +1,9 @@
 package net.bytebuddy.description.field;
 
+import com.sun.javafx.collections.ArrayListenerHelper;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericSignatureResolutionTest;
 import net.bytebuddy.test.packaging.VisibilityFieldTestHelper;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +12,7 @@ import org.mockito.asm.Type;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -166,6 +169,12 @@ public abstract class AbstractFieldDescriptionTest {
                 is((AnnotationList) new AnnotationList.ForLoadedAnnotation(second.getDeclaredAnnotations())));
     }
 
+    @Test
+    public void testToGenericString() throws Exception {
+        assertThat(describe(GenericField.class.getDeclaredField("foo")).toGenericString(),
+                is(GenericField.class.getDeclaredField("foo").toGenericString()));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
 
@@ -202,5 +211,10 @@ public abstract class AbstractFieldDescriptionTest {
         Void packagePrivateField;
 
         private Void privateField;
+    }
+
+    static class GenericField {
+
+        List<String> foo;
     }
 }

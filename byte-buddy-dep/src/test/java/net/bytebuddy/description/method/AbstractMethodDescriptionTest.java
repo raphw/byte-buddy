@@ -3,6 +3,7 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericSignatureResolutionTest;
 import net.bytebuddy.test.packaging.VisibilityMethodTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
@@ -551,6 +552,12 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(secondMethod).isInvokableOn(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
+    @Test
+    public void testToGenericString() throws Exception {
+        assertThat(describe(GenericMethod.class.getDeclaredMethod("foo", Exception.class)).toGenericString(),
+                is(GenericMethod.class.getDeclaredMethod("foo", Exception.class).toGenericString()));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
 
@@ -641,6 +648,13 @@ public abstract class AbstractMethodDescriptionTest {
 
         private void privateMethod() {
             /* do nothing*/
+        }
+    }
+
+    static class GenericMethod<T extends Exception> {
+
+        T foo(T t) throws T {
+            return null;
         }
     }
 }

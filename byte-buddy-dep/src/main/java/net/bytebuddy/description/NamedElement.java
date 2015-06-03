@@ -28,4 +28,9 @@ public interface NamedElement {
          */
         String getInternalName();
     }
+
+    interface WithGenericName extends WithRuntimeName {
+
+        String toGenericString();
+    }
 }

@@ -1,6 +1,7 @@
 package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -13,7 +14,7 @@ import java.lang.reflect.Modifier;
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
  * {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface FieldDescription extends ByteCodeElement {
+public interface FieldDescription extends ByteCodeElement, NamedElement.WithGenericName {
 
     /**
      * Returns a description of the type of this field.
@@ -79,9 +80,20 @@ public interface FieldDescription extends ByteCodeElement {
         }
 
         @Override
+        public String toGenericString() {
+            StringBuilder stringBuilder = new StringBuilder();
+            if (getModifiers() != EMPTY_MASK) {
+                stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
+            }
+            stringBuilder.append(getFieldTypeGen().getSourceCodeName()).append(" ");
+            stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+            return stringBuilder.append(getName()).toString();
+        }
+
+        @Override
         public String toString() {
             StringBuilder stringBuilder = new StringBuilder();
-            if (getModifiers() != 0) {
+            if (getModifiers() != EMPTY_MASK) {
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
             stringBuilder.append(getFieldType().getSourceCodeName()).append(" ");

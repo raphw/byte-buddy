@@ -342,10 +342,7 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public TypeDescription asRawType() {
-            GenericTypeList upperBounds = getUpperBounds();
-            return upperBounds.isEmpty()
-                    ? TypeDescription.OBJECT
-                    : upperBounds.get(0).asRawType();
+            throw new IllegalStateException("A wildcard cannot present an erasable type: " + this);
         }
 
         @Override

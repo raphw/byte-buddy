@@ -3,6 +3,8 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -18,10 +20,10 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
     protected MethodDescription describe(Method method) {
         return new MethodDescription.Latent(method.getName(),
                 new TypeDescription.ForLoadedType(method.getDeclaringClass()),
-                new TypeDescription.ForLoadedType(method.getReturnType()),
-                new TypeList.ForLoadedType(method.getParameterTypes()),
+                GenericTypeDescription.Sort.describe(method.getGenericReturnType()),
+                new GenericTypeList.ForLoadedType(method.getGenericParameterTypes()),
                 method.getModifiers(),
-                new TypeList.ForLoadedType(method.getExceptionTypes()));
+                new GenericTypeList.ForLoadedType(method.getGenericExceptionTypes()));
     }
 
     @Override
