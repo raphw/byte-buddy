@@ -3,7 +3,8 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericSignatureResolutionTest;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.test.packaging.VisibilityMethodTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
@@ -30,7 +31,7 @@ public abstract class AbstractMethodDescriptionTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private Method firstMethod, secondMethod, thirdMethod;
+    private Method firstMethod, secondMethod, thirdMethod, genericMethod;
 
     private Constructor<?> firstConstructor, secondConstructor;
 
@@ -62,6 +63,7 @@ public abstract class AbstractMethodDescriptionTest {
         thirdMethod = Sample.class.getDeclaredMethod("third", Object[].class, int[].class);
         firstConstructor = Sample.class.getDeclaredConstructor(Void.class);
         secondConstructor = Sample.class.getDeclaredConstructor(int[].class, long.class);
+        genericMethod = GenericMethod.class.getDeclaredMethod("foo", Exception.class);
     }
 
     @Test
@@ -553,9 +555,17 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
+    public void testGenericTypes() throws Exception {
+        assertThat(describe(genericMethod).getReturnTypeGen(), is(GenericTypeDescription.Sort.describe(genericMethod.getGenericReturnType())));
+        assertThat(describe(genericMethod).getParameters().asTypeListGen(),
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(genericMethod.getGenericParameterTypes())));
+        assertThat(describe(genericMethod).getExceptionTypesGen(),
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(genericMethod.getGenericExceptionTypes())));
+    }
+
+    @Test
     public void testToGenericString() throws Exception {
-        assertThat(describe(GenericMethod.class.getDeclaredMethod("foo", Exception.class)).toGenericString(),
-                is(GenericMethod.class.getDeclaredMethod("foo", Exception.class).toGenericString()));
+        assertThat(describe(genericMethod).toGenericString(), is(genericMethod.toGenericString()));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

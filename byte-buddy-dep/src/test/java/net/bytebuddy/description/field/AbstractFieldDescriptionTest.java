@@ -1,9 +1,8 @@
 package net.bytebuddy.description.field;
 
-import com.sun.javafx.collections.ArrayListenerHelper;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericSignatureResolutionTest;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.packaging.VisibilityFieldTestHelper;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractFieldDescriptionTest {
 
-    private Field first, second;
+    private Field first, second, genericField;
 
     protected abstract FieldDescription describe(Field field);
 
@@ -29,6 +28,7 @@ public abstract class AbstractFieldDescriptionTest {
     public void setUp() throws Exception {
         first = FirstSample.class.getDeclaredField("first");
         second = SecondSample.class.getDeclaredField("second");
+        genericField = GenericField.class.getDeclaredField("foo");
     }
 
     @Test
@@ -170,9 +170,13 @@ public abstract class AbstractFieldDescriptionTest {
     }
 
     @Test
+    public void testGenericTypes() throws Exception {
+        assertThat(describe(genericField).getFieldTypeGen(), is(GenericTypeDescription.Sort.describe(genericField.getGenericType())));
+    }
+
+    @Test
     public void testToGenericString() throws Exception {
-        assertThat(describe(GenericField.class.getDeclaredField("foo")).toGenericString(),
-                is(GenericField.class.getDeclaredField("foo").toGenericString()));
+        assertThat(describe(genericField).toGenericString(), is(genericField.toGenericString()));
     }
 
     @Retention(RetentionPolicy.RUNTIME)
