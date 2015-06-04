@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -169,6 +170,8 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
             public List<?> create() {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(typeDescription.isInterface()).thenReturn(true);
+                when(typeDescription.asRawType()).thenReturn(typeDescription);
+                when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
                 return Collections.singletonList(typeDescription);
             }
         }).apply();
