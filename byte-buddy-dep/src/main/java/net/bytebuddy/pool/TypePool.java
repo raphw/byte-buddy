@@ -27,6 +27,7 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
+import java.lang.reflect.MalformedParameterizedTypeException;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1633,9 +1634,13 @@ public interface TypePool {
                 protected static class OfType extends ForSignature<LazyTypeDescription.GenericTypeToken.Resolution.ForType> {
 
                     public static LazyTypeDescription.GenericTypeToken.Resolution.ForType extract(String genericSignature) {
-                        return genericSignature == null
-                                ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
-                                : ForSignature.extract(genericSignature, new OfType());
+                        try {
+                            return genericSignature == null
+                                    ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
+                                    : ForSignature.extract(genericSignature, new OfType());
+                        } catch (RuntimeException ignored) {
+                            return LazyTypeDescription.GenericTypeToken.Resolution.Defective.INSTANCE;
+                        }
                     }
 
                     private LazyTypeDescription.GenericTypeToken superTypeToken;
@@ -1682,9 +1687,13 @@ public interface TypePool {
                 protected static class OfMethod extends ForSignature<LazyTypeDescription.GenericTypeToken.Resolution.ForMethod> {
 
                     public static LazyTypeDescription.GenericTypeToken.Resolution.ForMethod extract(String genericSignature) {
-                        return genericSignature == null
-                                ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
-                                : ForSignature.extract(genericSignature, new OfMethod());
+                        try {
+                            return genericSignature == null
+                                    ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
+                                    : ForSignature.extract(genericSignature, new OfMethod());
+                        } catch (RuntimeException ignored) {
+                            return LazyTypeDescription.GenericTypeToken.Resolution.Defective.INSTANCE;
+                        }
                     }
 
                     private LazyTypeDescription.GenericTypeToken returnTypeToken;
@@ -1755,8 +1764,12 @@ public interface TypePool {
                         } else {
                             SignatureReader signatureReader = new SignatureReader(genericSignature);
                             OfField visitor = new OfField();
-                            signatureReader.acceptType(new GenericTypeExtractor(visitor));
-                            return visitor.resolve();
+                            try {
+                                signatureReader.acceptType(new GenericTypeExtractor(visitor));
+                                return visitor.resolve();
+                            } catch (RuntimeException ignored) {
+                                return LazyTypeDescription.GenericTypeToken.Resolution.Defective.INSTANCE;
+                            }
                         }
                     }
 
@@ -3658,6 +3671,46 @@ public interface TypePool {
                         return new GenericTypeList.Empty();
                     }
                 }
+
+                enum Defective implements ForType, ForMethod, ForField {
+
+                    INSTANCE;
+
+                    @Override
+                    public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
+                        return new TokenizedGenericType.Defective(typePool, fieldTypeDescriptor);
+                    }
+
+                    @Override
+                    public GenericTypeDescription resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
+                        return new TokenizedGenericType.Defective(typePool, returnTypeDescriptor);
+                    }
+
+                    @Override
+                    public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
+                        return new TokenizedGenericType.Defective.TokenList(typePool, parameterTypeDescriptors);
+                    }
+
+                    @Override
+                    public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
+                        return new TokenizedGenericType.Defective.TokenList(typePool, exceptionTypeDescriptors);
+                    }
+
+                    @Override
+                    public GenericTypeDescription resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
+                        return new TokenizedGenericType.Defective(typePool, superTypeDescriptor);
+                    }
+
+                    @Override
+                    public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
+                        return new TokenizedGenericType.Defective.TokenList(typePool, interfaceTypeDescriptors);
+                    }
+
+                    @Override
+                    public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        throw new MalformedParameterizedTypeException();
+                    }
+                }
             }
 
             enum ForPrimitiveType implements GenericTypeToken {
@@ -4718,6 +4771,56 @@ public interface TypePool {
                     }
                     return new TypeList.Explicit(typeDescriptions);
                 }
+            }
+
+            protected static class Defective extends GenericTypeDescription.LazyProjection {
+
+                private final TypePool typePool;
+
+                private final String rawTypeDescriptor;
+
+                protected Defective(TypePool typePool, String rawTypeDescriptor) {
+                    this.typePool = typePool;
+                    this.rawTypeDescriptor = rawTypeDescriptor;
+                }
+
+                @Override
+                protected GenericTypeDescription resolve() {
+                    throw new MalformedParameterizedTypeException();
+                }
+
+                @Override
+                public TypeDescription asRawType() {
+                    return toRawType(typePool, rawTypeDescriptor);
+                }
+
+                protected static class TokenList extends GenericTypeList.AbstractBase {
+
+                    private final TypePool typePool;
+
+                    private final List<String> rawTypeDescriptors;
+
+                    private TokenList(TypePool typePool, List<String> rawTypeDescriptors) {
+                        this.typePool = typePool;
+                        this.rawTypeDescriptors = rawTypeDescriptors;
+                    }
+
+                    @Override
+                    public GenericTypeDescription get(int index) {
+                        return new TokenizedGenericType.Defective(typePool, rawTypeDescriptors.get(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return rawTypeDescriptors.size();
+                    }
+
+                    @Override
+                    public TypeList asRawTypes() {
+                        return LazyTypeList.of(typePool, rawTypeDescriptors);
+                    }
+                }
+
             }
         }
     }

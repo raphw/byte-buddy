@@ -1757,7 +1757,7 @@ public interface AnnotationDescription {
         /**
          * The annotation type.
          */
-        protected final TypeDescription annotationType;
+        private final TypeDescription annotationType;
 
         /**
          * A mapping of annotation properties to their annotation values.
