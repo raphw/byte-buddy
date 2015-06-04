@@ -3,6 +3,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -63,6 +64,14 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.is(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
         assertThat(ElementMatchers.is(String.class).matches(new TypeDescription.ForLoadedType(Object.class)),
                 is(false));
+    }
+
+    @Test
+    public void testIsField() throws Exception {
+        assertThat(ElementMatchers.is(ElementMatchersTest.class.getDeclaredField("classLoader"))
+                .matches(new FieldDescription.ForLoadedField(ElementMatchersTest.class.getDeclaredField("classLoader"))), is(true));
+        assertThat(ElementMatchers.is(ElementMatchersTest.class.getDeclaredField("classLoader"))
+                .matches(new FieldDescription.ForLoadedField(ElementMatchersTest.class.getDeclaredField("javaVersionRule"))), is(false));
     }
 
     @Test

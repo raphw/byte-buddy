@@ -48,10 +48,24 @@ public final class ElementMatchers {
                 : new EqualityMatcher<T>(value);
     }
 
+    /**
+     * Exactly matches a given field as a {@link FieldDescription}.
+     *
+     * @param field The field to match by its description
+     * @param <T>   The type of the matched object.
+     * @return An element matcher that exactly matches the given field.
+     */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> is(Field field) {
         return is(new FieldDescription.ForLoadedField(nonNull(field)));
     }
 
+    /**
+     * Exactly matches a given {@link FieldDescription}.
+     *
+     * @param fieldDescription The field description to match.
+     * @param <T>              The type of the matched object.
+     * @return An element matcher that matches the given field description.
+     */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription fieldDescription) {
         return new EqualityMatcher<T>(nonNull(fieldDescription));
     }
