@@ -492,6 +492,26 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testDeclaresException() throws Exception {
+        assertThat(ElementMatchers.declaresException(IOException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.declaresException(SQLException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.declaresException(Error.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.declaresException(RuntimeException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.declaresException(IOException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.declaresException(SQLException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.declaresException(Error.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.declaresException(RuntimeException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+    }
+
+    @Test
     public void testCanThrow() throws Exception {
         assertThat(ElementMatchers.canThrow(IOException.class)
                 .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
@@ -511,10 +531,10 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(true));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @SuppressWarnings("unchecked")
-    public void testCanThrowValidates() throws Exception {
-        ElementMatchers.canThrow((Class) Object.class);
+    public void testDeclaresExceptionForNonThrowableType() throws Exception {
+        assertThat(ElementMatchers.declaresException((Class) Object.class).matches(new Object()), is(false));
     }
 
     @Test
