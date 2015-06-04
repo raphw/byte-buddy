@@ -685,9 +685,12 @@ public interface DynamicType {
         interface MatchedMethodInterception<S> {
 
             /**
-             * Intercepts the currently selected method by a given implementation.
+             * Intercepts the currently selected methods with the provided implementation. If this intercepted method is
+             * not yet declared by the current type, it might be added to the currently built type as a result of this
+             * interception. If the method is already declared by the current type, its byte code code might be copied
+             * into the body of a synthetic method in order to preserve the original code's invokeability.
              *
-             * @param implementation An implementation to apply to the currently selected method.
+             * @param implementation The implementation to apply to the currently selected method.
              * @return A builder which will intercept the currently selected methods by the given implementation.
              */
             MethodAnnotationTarget<S> intercept(Implementation implementation);
