@@ -445,7 +445,6 @@ public interface MethodDescription extends ByteCodeElement {
             }
             TypeDescription returnType = getReturnType();
             return (returnType.represents(boolean.class) && value instanceof Boolean)
-                    || (returnType.represents(boolean.class) && value instanceof Boolean)
                     || (returnType.represents(byte.class) && value instanceof Byte)
                     || (returnType.represents(char.class) && value instanceof Character)
                     || (returnType.represents(short.class) && value instanceof Short)
