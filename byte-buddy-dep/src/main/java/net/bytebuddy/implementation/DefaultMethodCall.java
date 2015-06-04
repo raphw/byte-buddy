@@ -12,7 +12,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.isInterface;
+import static net.bytebuddy.utility.ByteBuddyCommons.isImplementable;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 import static net.bytebuddy.utility.ByteBuddyCommons.toList;
 
@@ -48,10 +48,7 @@ public class DefaultMethodCall implements Implementation {
      *                              be called.
      */
     protected DefaultMethodCall(List<TypeDescription> prioritizedInterfaces) {
-        for (TypeDescription typeDescription : prioritizedInterfaces) {
-            isInterface(typeDescription);
-        }
-        this.prioritizedInterfaces = prioritizedInterfaces;
+        this.prioritizedInterfaces = isImplementable(prioritizedInterfaces);
     }
 
     /**

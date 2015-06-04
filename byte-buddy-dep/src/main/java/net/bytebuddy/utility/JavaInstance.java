@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.utility.ByteBuddyCommons.isActualType;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
 
 /**
  * Returns a Java instance of an object that has a special meaning to the Java virtual machine and that is not
@@ -133,7 +133,7 @@ public interface JavaInstance {
          * @return A method type of the given return type and parameter types.
          */
         public static MethodType of(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
-            return new MethodType(nonNull(returnType), nonVoid(parameterTypes));
+            return new MethodType(nonNull(returnType), isActualType(parameterTypes));
         }
 
         /**
@@ -300,7 +300,7 @@ public interface JavaInstance {
 
     /**
      * Represents a {@code java.lang.invoke.MethodHandle} object. Note that constant {@code MethodHandle}s cannot
-     * be represented within the constant pool of a Java class and can therefore not be represented as an instace of
+     * be represented within the constant pool of a Java class and can therefore not be represented as an instance of
      * this representation order.
      */
     class MethodHandle implements JavaInstance {

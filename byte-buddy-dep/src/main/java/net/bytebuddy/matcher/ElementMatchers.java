@@ -740,7 +740,7 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Iterable<? extends TypeDescription> typeDescriptions) {
         List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
         for (TypeDescription typeDescription : typeDescriptions) {
-            typeMatchers.add(is(nonVoid(typeDescription)));
+            typeMatchers.add(is(isActualType(typeDescription)));
         }
         return takesArguments(new CollectionOneToOneMatcher<TypeDescription>(typeMatchers));
     }
@@ -1000,7 +1000,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a setter method with the specified argument type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(TypeDescription typeDescription) {
-        return isSetter(is(nonVoid(typeDescription)));
+        return isSetter(is(isActualType(typeDescription)));
     }
 
     /**
@@ -1045,7 +1045,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a getter method with the given type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(TypeDescription typeDescription) {
-        return isGetter(is(nonVoid(typeDescription)));
+        return isGetter(is(isActualType(typeDescription)));
     }
 
     /**

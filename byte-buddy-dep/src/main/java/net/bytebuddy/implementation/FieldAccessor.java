@@ -717,7 +717,7 @@ public abstract class FieldAccessor implements Implementation {
             return new ForNamedField(assigner,
                     dynamicallyTyped,
                     fieldName,
-                    PreparationHandler.FieldDefiner.of(fieldName, nonVoid(typeDescription), nonNull(modifier)),
+                    PreparationHandler.FieldDefiner.of(fieldName, isActualType(typeDescription), nonNull(modifier)),
                     FieldLocator.ForInstrumentedType.INSTANCE);
         }
 

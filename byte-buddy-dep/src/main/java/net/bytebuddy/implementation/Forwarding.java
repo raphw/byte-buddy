@@ -102,7 +102,7 @@ public class Forwarding implements Implementation {
      */
     public static Implementation toStaticField(String fieldName, TypeDescription fieldType) {
         return new Forwarding(isValidIdentifier(fieldName),
-                nonVoid(fieldType),
+                isActualType(fieldType),
                 PreparationHandler.ForStaticField.INSTANCE);
     }
 

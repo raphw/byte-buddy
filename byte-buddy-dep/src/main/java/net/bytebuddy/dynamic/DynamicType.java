@@ -1319,7 +1319,7 @@ public interface DynamicType {
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(Collection<? extends TypeDescription> interfaceTypes) {
-                return new DefaultOptionalMatchedMethodInterception(new ArrayList<TypeDescription>(isInterface(interfaceTypes)));
+                return new DefaultOptionalMatchedMethodInterception(new ArrayList<TypeDescription>(isImplementable(interfaceTypes)));
             }
 
             @Override
@@ -1620,7 +1620,7 @@ public interface DynamicType {
             public FieldValueTarget<S> defineField(String name,
                                                    TypeDescription fieldTypeDescription,
                                                    int modifiers) {
-                return new DefaultFieldValueTarget(new FieldToken(isValidIdentifier(name), nonVoid(fieldTypeDescription), modifiers),
+                return new DefaultFieldValueTarget(new FieldToken(isValidIdentifier(name), isActualType(fieldTypeDescription), modifiers),
                         defaultFieldAttributeAppenderFactory);
             }
 
@@ -1639,11 +1639,7 @@ public interface DynamicType {
                                                                          TypeDescription returnType,
                                                                          List<? extends TypeDescription> parameterTypes,
                                                                          ModifierContributor.ForMethod... modifier) {
-                return new DefaultExceptionDeclarableMethodInterception(new MethodToken(isValidIdentifier(name),
-                        nonNull(returnType),
-                        nonVoid(parameterTypes),
-                        Collections.<TypeDescription>emptyList(),
-                        resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier))));
+                return defineMethod(name, returnType, parameterTypes, resolveModifierContributors(METHOD_MODIFIER_MASK, modifier));
             }
 
             @Override
@@ -1679,8 +1675,8 @@ public interface DynamicType {
                                                                          List<? extends TypeDescription> parameterTypes,
                                                                          int modifiers) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodToken(isValidIdentifier(name),
-                        nonNull(returnType),
-                        nonVoid(parameterTypes),
+                        isActualTypeOrVoid(returnType),
+                        isActualType(parameterTypes),
                         Collections.<TypeDescription>emptyList(),
                         modifiers));
             }
@@ -1713,7 +1709,7 @@ public interface DynamicType {
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(List<? extends TypeDescription> parameterTypes, int modifiers) {
-                return new DefaultExceptionDeclarableMethodInterception(new MethodToken(nonVoid(parameterTypes),
+                return new DefaultExceptionDeclarableMethodInterception(new MethodToken(isActualType(parameterTypes),
                         Collections.<TypeDescription>emptyList(),
                         modifiers));
             }
@@ -2717,7 +2713,7 @@ public interface DynamicType {
                     return materialize(new MethodToken(methodToken.getInternalName(),
                             methodToken.getReturnType(),
                             methodToken.getParameterTypes(),
-                            unique(isThrowable(new ArrayList<TypeDescription>(exceptionTypes))),
+                            uniqueRaw(isThrowable(new ArrayList<TypeDescription>(exceptionTypes))),
                             methodToken.getModifiers()));
                 }
 
@@ -2988,7 +2984,7 @@ public interface DynamicType {
                             namingStrategy,
                             auxiliaryTypeNamingStrategy,
                             targetType,
-                            joinUnique(interfaceTypes, additionalInterfaceTypes),
+                            joinUniqueRaw(interfaceTypes, additionalInterfaceTypes),
                             modifiers,
                             attributeAppender,
                             ignoredMethods,

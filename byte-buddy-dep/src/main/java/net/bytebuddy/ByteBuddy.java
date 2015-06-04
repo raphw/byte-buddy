@@ -386,7 +386,7 @@ public class ByteBuddy {
         List<TypeDescription> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).isInterface()) {
             actualSuperType = TypeDescription.OBJECT;
-            interfaceTypes = joinUnique(superType, interfaceTypes);
+            interfaceTypes = joinUniqueRaw(interfaceTypes, Collections.singleton(superType));
         }
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 nonNull(namingStrategy.subclass(superType)),
@@ -753,7 +753,7 @@ public class ByteBuddy {
                                              ClassFileLocator classFileLocator,
                                              MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         return new RebaseDynamicTypeBuilder<T>(classFileVersion,
-                nonNull(namingStrategy.rebase(levelType)),
+                nonNull(namingStrategy.rebase(isDefineable(levelType))),
                 auxiliaryTypeNamingStrategy,
                 levelType,
                 interfaceTypes,
@@ -997,7 +997,7 @@ public class ByteBuddy {
         return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
-                joinUnique(interfaceTypes, toList(isInterface(types))),
+                joinUniqueRaw(interfaceTypes, toList(isImplementable(types))),
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
@@ -1376,19 +1376,20 @@ public class ByteBuddy {
     public interface MethodInterceptable {
 
         /**
-         * Intercepts the given method with the given implementations.
+         * Intercepts the currently selected methods with the provided implementation. If this intercepted method is
+         * not yet declared by the current type, it might be added to the currently built type as a result of this
+         * interception. If the method is already declared by the current type, its byte code code might be copied
+         * into the body of a synthetic method in order to preserve the original code's invokeability.
          *
-         * @param implementation The implementation to apply to the selected methods.
-         * @return A method annotation target for this instance with the given implementation applied to the
-         * current selection.
+         * @param implementation The implementation to apply to the currently selected method.
+         * @return A configuration which will intercept the currently selected methods by the given implementation.
          */
         MethodAnnotationTarget intercept(Implementation implementation);
 
         /**
-         * Defines the currently selected methods as {@code abstract}.
+         * Implements the currently selected methods as {@code abstract} methods.
          *
-         * @return A method annotation target for this instance with implementing the currently selected methods
-         * as {@code abstract}.
+         * @return A configuration which will implement the currently selected methods as {@code abstract} methods.
          */
         MethodAnnotationTarget withoutCode();
 
@@ -1397,7 +1398,7 @@ public class ByteBuddy {
          *
          * @param value The value that the annotation property should set as a default.
          * @param type  The type of the annotation property.
-         * @return A builder which defines the given default value for all matched methods.
+         * @return A configuration which defines the given default value for all matched methods.
          */
         MethodAnnotationTarget withDefaultValue(Object value, Class<?> type);
 
@@ -1408,7 +1409,7 @@ public class ByteBuddy {
          * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
          *
          * @param value A non-loaded value that the annotation property should set as a default.
-         * @return A builder which defines the given default value for all matched methods.
+         * @return A configuration which defines the given default value for all matched methods.
          */
         MethodAnnotationTarget withDefaultValue(Object value);
     }

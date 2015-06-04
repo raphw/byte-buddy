@@ -2199,7 +2199,7 @@ public class MethodCall implements Implementation {
          */
         public MethodCall onInstanceField(TypeDescription typeDescription, String fieldName) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForInstanceField(nonNull(fieldName), nonVoid(typeDescription)),
+                    new TargetHandler.ForInstanceField(nonNull(fieldName), isActualType(typeDescription)),
                     argumentLoaders,
                     MethodInvoker.ForStandardInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
