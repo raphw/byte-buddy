@@ -12,10 +12,12 @@ import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.ArrayList;
@@ -258,52 +260,23 @@ public interface InstrumentedType extends TypeDescription {
             methodDescriptions = Collections.emptyList();
         }
 
-        /**
-         * Creates a new instrumented type with the given loaded type initializer and field and methods. All field and
-         * method descriptions will be replaced by new instances where type descriptions with the internalName of this
-         * type as given by {@code typeInternalName} are replaced by references to {@code this}.
-         *
-         * @param loadedTypeInitializer A loaded type initializer for this instrumented type.
-         * @param typeInitializer       A type initializer for this instrumented type.
-         * @param typeName              The non-internal name of this instrumented type.
-         * @param fieldDescriptions     A list of field descriptions for this instrumented type.
-         * @param methodDescriptions    A list of method descriptions for this instrumented type.
-         */
         protected AbstractBase(LoadedTypeInitializer loadedTypeInitializer,
                                TypeInitializer typeInitializer,
-                               String typeName,
+                               ElementMatcher<? super TypeDescription> matcher,
                                List<? extends FieldDescription> fieldDescriptions,
                                List<? extends MethodDescription> methodDescriptions) {
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.typeInitializer = typeInitializer;
+            // TODO: Type variables! Special resolution. Before element resolution to allow for variable lookup.
+            // TODO: Super type, Interfaces (parameterized!)
             this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
             for (FieldDescription fieldDescription : fieldDescriptions) {
-                this.fieldDescriptions.add(new FieldToken(typeName, fieldDescription));
+                this.fieldDescriptions.add(new FieldToken(matcher, fieldDescription));
             }
             this.methodDescriptions = new ArrayList<MethodDescription>(methodDescriptions.size());
             for (MethodDescription methodDescription : methodDescriptions) {
-                this.methodDescriptions.add(new MethodToken(typeName, methodDescription));
+                this.methodDescriptions.add(new MethodToken(matcher, methodDescription));
             }
-        }
-
-        /**
-         * Substitutes an <i>outdated</i> reference to the instrumented type with a reference to <i>this</i>.
-         *
-         * @param typeName        The non-internal name of this instrumented type.
-         * @param typeDescription The type description to be checked to represent this instrumented type.
-         * @return This type, if the type description represents the name of the instrumented type or the given
-         * instrumented type if this is not the case.
-         */
-        private TypeDescription withSubstitutedSelfReference(String typeName, TypeDescription typeDescription) {
-            int arity = 0;
-            TypeDescription componentType = typeDescription;
-            while (componentType.isArray()) {
-                arity++;
-                componentType = componentType.getComponentType();
-            }
-            return componentType.getName().equals(typeName)
-                    ? ArrayProjection.of(this, arity)
-                    : typeDescription;
         }
 
         @Override
@@ -382,7 +355,7 @@ public interface InstrumentedType extends TypeDescription {
             /**
              * The type of the field.
              */
-            private final TypeDescription fieldType;
+            private final GenericTypeDescription fieldType;
 
             /**
              * The modifiers of the field.
@@ -394,15 +367,9 @@ public interface InstrumentedType extends TypeDescription {
              */
             private final List<AnnotationDescription> declaredAnnotations;
 
-            /**
-             * Creates a new field for the enclosing instrumented type.
-             *
-             * @param typeName         The non-internal name of the enclosing instrumented type.
-             * @param fieldDescription The field description to copy.
-             */
-            private FieldToken(String typeName, FieldDescription fieldDescription) {
+            private FieldToken(ElementMatcher<? super TypeDescription> matcher, FieldDescription fieldDescription) {
                 name = fieldDescription.getName();
-                fieldType = withSubstitutedSelfReference(typeName, fieldDescription.getFieldType());
+                fieldType = TargetType.resolve(fieldDescription.getFieldTypeGen(), InstrumentedType.AbstractBase.this, matcher);
                 modifiers = fieldDescription.getModifiers();
                 declaredAnnotations = fieldDescription.getDeclaredAnnotations();
             }
@@ -420,11 +387,6 @@ public interface InstrumentedType extends TypeDescription {
             @Override
             public String getName() {
                 return name;
-            }
-
-            @Override
-            public String getDescriptor() {
-                return fieldType.getDescriptor();
             }
 
             @Override
@@ -451,12 +413,12 @@ public interface InstrumentedType extends TypeDescription {
             /**
              * The return type of the represented method.
              */
-            private final TypeDescription returnType;
+            private final GenericTypeDescription returnType;
 
             /**
              * The exception types of the represented method.
              */
-            private final List<TypeDescription> exceptionTypes;
+            private final List<GenericTypeDescription> exceptionTypes;
 
             /**
              * The modifiers of the represented method.
@@ -478,24 +440,15 @@ public interface InstrumentedType extends TypeDescription {
              */
             private final Object defaultValue;
 
-            /**
-             * Creates a new method or constructor for the enclosing instrumented type.
-             *
-             * @param typeName          The non-internal name of the enclosing instrumented type.
-             * @param methodDescription The method description to copy.
-             */
-            private MethodToken(String typeName, MethodDescription methodDescription) {
+            private MethodToken(ElementMatcher<? super TypeDescription> matcher, MethodDescription methodDescription) {
                 internalName = methodDescription.getInternalName();
-                returnType = withSubstitutedSelfReference(typeName, methodDescription.getReturnType());
-                exceptionTypes = new ArrayList<TypeDescription>(methodDescription.getExceptionTypes().size());
-                for (TypeDescription typeDescription : methodDescription.getExceptionTypes()) {
-                    exceptionTypes.add(withSubstitutedSelfReference(typeName, typeDescription));
-                }
+                returnType = TargetType.resolve(methodDescription.getReturnTypeGen(), InstrumentedType.AbstractBase.this, matcher);
+                exceptionTypes = TargetType.resolve(methodDescription.getExceptionTypesGen(), InstrumentedType.AbstractBase.this, matcher);
                 modifiers = methodDescription.getModifiers();
                 declaredAnnotations = methodDescription.getDeclaredAnnotations();
                 parameters = new ArrayList<ParameterDescription>(methodDescription.getParameters().size());
                 for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                    parameters.add(new ParameterToken(typeName, parameterDescription));
+                    parameters.add(new ParameterToken(matcher, parameterDescription));
                 }
                 defaultValue = methodDescription.getDefaultValue();
             }
@@ -553,7 +506,7 @@ public interface InstrumentedType extends TypeDescription {
                 /**
                  * The type of the parameter.
                  */
-                private final TypeDescription parameterType;
+                private final GenericTypeDescription parameterType;
 
                 /**
                  * The index of the parameter.
@@ -575,14 +528,8 @@ public interface InstrumentedType extends TypeDescription {
                  */
                 private final List<AnnotationDescription> parameterAnnotations;
 
-                /**
-                 * Creates a new parameter token based on an existing description of a parameter.
-                 *
-                 * @param typeName             The name of the type.
-                 * @param parameterDescription The parameter description to copy.
-                 */
-                protected ParameterToken(String typeName, ParameterDescription parameterDescription) {
-                    parameterType = withSubstitutedSelfReference(typeName, parameterDescription.getType());
+                protected ParameterToken(ElementMatcher<? super TypeDescription> matcher, ParameterDescription parameterDescription) {
+                    parameterType = TargetType.resolve(parameterDescription.getTypeGen(), InstrumentedType.AbstractBase.this, matcher);
                     index = parameterDescription.getIndex();
                     name = parameterDescription.isNamed()
                             ? parameterDescription.getName()

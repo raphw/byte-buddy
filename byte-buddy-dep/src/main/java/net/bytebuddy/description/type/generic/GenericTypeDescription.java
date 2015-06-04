@@ -4,7 +4,6 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaMethod;
 import org.objectweb.asm.signature.SignatureVisitor;
 
@@ -764,7 +763,7 @@ public interface GenericTypeDescription extends NamedElement {
 
         public static class Latent extends ForTypeVariable {
 
-            private final List<? extends GenericTypeDescription> upperBounds;
+            private final List<? extends GenericTypeDescription> bounds;
 
             private final TypeVariableSource typeVariableSource;
 
@@ -777,15 +776,15 @@ public interface GenericTypeDescription extends NamedElement {
                 return new Latent(bounds, typeVariableSource, symbol);
             }
 
-            public Latent(List<? extends GenericTypeDescription> upperBounds, TypeVariableSource typeVariableSource, String symbol) {
-                this.upperBounds = upperBounds;
+            public Latent(List<? extends GenericTypeDescription> bounds, TypeVariableSource typeVariableSource, String symbol) {
+                this.bounds = bounds;
                 this.typeVariableSource = typeVariableSource;
                 this.symbol = symbol;
             }
 
             @Override
             public GenericTypeList getUpperBounds() {
-                return new GenericTypeList.Explicit(upperBounds);
+                return new GenericTypeList.Explicit(bounds);
             }
 
             @Override

@@ -15,6 +15,7 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -96,7 +97,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                                        TypeInitializer typeInitializer) {
         super(loadedTypeInitializer,
                 typeInitializer,
-                name,
+                named(name),
                 fieldDescriptions,
                 methodDescriptions);
         this.classFileVersion = classFileVersion;

@@ -1920,7 +1920,7 @@ public interface DynamicType {
                  * @return A type description for the actual return type.
                  */
                 protected TypeDescription resolveReturnType(TypeDescription instrumentedType) {
-                    return TargetType.resolve(returnType, instrumentedType);
+                    return TargetType.resolveRaw(returnType, instrumentedType, is(TargetType.DESCRIPTION));
                 }
 
                 /**
@@ -1931,7 +1931,7 @@ public interface DynamicType {
                  * @return A list of type descriptions for the actual parameter types.
                  */
                 protected List<TypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
-                    return TargetType.resolve(parameterTypes, instrumentedType);
+                    return TargetType.resolveRaw(parameterTypes, instrumentedType, is(TargetType.DESCRIPTION));
                 }
 
                 /**
@@ -1941,11 +1941,7 @@ public interface DynamicType {
                  * @return A list of type descriptions for the actual exception types.
                  */
                 protected List<TypeDescription> resolveExceptionTypes(TypeDescription instrumentedType) {
-                    List<TypeDescription> exceptionTypes = new ArrayList<TypeDescription>(this.exceptionTypes.size());
-                    for (TypeDescription exceptionType : this.exceptionTypes) {
-                        exceptionTypes.add(TargetType.resolve(exceptionType, instrumentedType));
-                    }
-                    return exceptionTypes;
+                    return TargetType.resolveRaw(this.exceptionTypes, instrumentedType, is(TargetType.DESCRIPTION));
                 }
 
                 /**
@@ -2062,7 +2058,7 @@ public interface DynamicType {
                  * @return A type description for the actual field type.
                  */
                 protected TypeDescription resolveFieldType(TypeDescription instrumentedType) {
-                    return TargetType.resolve(fieldType, instrumentedType);
+                    return TargetType.resolveRaw(fieldType, instrumentedType, is(TargetType.DESCRIPTION));
                 }
 
                 /**

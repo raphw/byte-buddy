@@ -7,4 +7,6 @@ public interface TypeVariableSource extends ByteCodeElement {
     GenericTypeList getTypeVariables();
 
     TypeVariableSource getEnclosingSource();
+
+    // TODO: TypeVariableSource find(String symbol);
 }

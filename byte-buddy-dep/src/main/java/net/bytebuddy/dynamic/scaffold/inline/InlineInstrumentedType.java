@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -61,7 +62,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                                   NamingStrategy namingStrategy) {
         super(LoadedTypeInitializer.NoOp.INSTANCE,
                 TypeInitializer.None.INSTANCE,
-                levelType.getName(),
+                named(levelType.getName()),
                 levelType.getDeclaredFields(),
                 levelType.getDeclaredMethods());
         this.levelType = levelType;
@@ -97,7 +98,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                                      TypeInitializer typeInitializer) {
         super(loadedTypeInitializer,
                 typeInitializer,
-                name,
+                named(name),
                 fieldDescriptions,
                 methodDescriptions);
         this.levelType = levelType;
