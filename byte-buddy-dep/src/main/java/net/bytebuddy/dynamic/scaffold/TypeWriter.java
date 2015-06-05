@@ -2,11 +2,13 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -923,19 +925,22 @@ public interface TypeWriter<T> {
             @Override
             public void visit(int version, int modifier, String name, String signature, String superName, String[] interfaces) {
                 ClassFileVersion classFileVersion = new ClassFileVersion(version);
-                if ((modifier & Opcodes.ACC_ANNOTATION) != 0) {
+                if (name.endsWith("." + PackageDescription.PACKAGE_CLASS_NAME)) {
+                    constraint = Constraint.PACKAGE_CLASS;
+                } else if ((modifier & Opcodes.ACC_ANNOTATION) != ModifierReviewable.EMPTY_MASK) {
                     constraint = classFileVersion.isSupportsDefaultMethods()
                             ? Constraint.JAVA8_ANNOTATION
                             : Constraint.ANNOTATION;
-                } else if ((modifier & Opcodes.ACC_INTERFACE) != 0) {
+                } else if ((modifier & Opcodes.ACC_INTERFACE) != ModifierReviewable.EMPTY_MASK) {
                     constraint = classFileVersion.isSupportsDefaultMethods()
                             ? Constraint.JAVA8_INTERFACE
                             : Constraint.INTERFACE;
-                } else if ((modifier & Opcodes.ACC_ABSTRACT) != 0) {
+                } else if ((modifier & Opcodes.ACC_ABSTRACT) != ModifierReviewable.EMPTY_MASK) {
                     constraint = Constraint.ABSTRACT_CLASS;
                 } else {
                     constraint = Constraint.MANIFEST_CLASS;
                 }
+                constraint.assertPackage(modifier, interfaces);
                 super.visit(version, modifier, name, signature, superName, interfaces);
             }
 
@@ -1006,32 +1011,34 @@ public interface TypeWriter<T> {
                 /**
                  * Constraints for a non-abstract class.
                  */
-                MANIFEST_CLASS("non-abstract class", true, true, true, true, false, true, false),
+                MANIFEST_CLASS("non-abstract class", true, true, true, true, false, true, false, true),
 
                 /**
                  * Constraints for an abstract class.
                  */
-                ABSTRACT_CLASS("abstract class", true, true, true, true, true, true, false),
+                ABSTRACT_CLASS("abstract class", true, true, true, true, true, true, false, true),
 
                 /**
                  * Constrains for an interface type before Java 8.
                  */
-                INTERFACE("interface (Java 7-)", false, false, false, false, true, false, false),
+                INTERFACE("interface (Java 7-)", false, false, false, false, true, false, false, true),
 
                 /**
                  * Constrains for an interface type since Java 8.
                  */
-                JAVA8_INTERFACE("interface (Java 8+)", false, false, false, true, true, true, false),
+                JAVA8_INTERFACE("interface (Java 8+)", false, false, false, true, true, true, false, true),
 
                 /**
                  * Constrains for an annotation type before Java 8.
                  */
-                ANNOTATION("annotation (Java 7-)", false, false, false, false, true, false, true),
+                ANNOTATION("annotation (Java 7-)", false, false, false, false, true, false, true, true),
 
                 /**
                  * Constrains for an annotation type since Java 8.
                  */
-                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, true, true);
+                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, true, true, true),
+
+                PACKAGE_CLASS("package definition", false, true, false, false, true, false, false, false);
 
                 /**
                  * A name to represent the type being validated within an error message.
@@ -1073,6 +1080,8 @@ public interface TypeWriter<T> {
                  */
                 private final boolean allowsDefaultValue;
 
+                private final boolean allowsNonPackage;
+
                 /**
                  * Creates a new constraint.
                  *
@@ -1092,7 +1101,8 @@ public interface TypeWriter<T> {
                            boolean allowsStaticMethods,
                            boolean allowsAbstract,
                            boolean allowsNonAbstract,
-                           boolean allowsDefaultValue) {
+                           boolean allowsDefaultValue,
+                           boolean allowsNonPackage) {
                     this.sortName = sortName;
                     this.allowsConstructor = allowsConstructor;
                     this.allowsNonPublic = allowsNonPublic;
@@ -1101,6 +1111,7 @@ public interface TypeWriter<T> {
                     this.allowsAbstract = allowsAbstract;
                     this.allowsNonAbstract = allowsNonAbstract;
                     this.allowsDefaultValue = allowsDefaultValue;
+                    this.allowsNonPackage = allowsNonPackage;
                 }
 
                 /**
@@ -1155,6 +1166,14 @@ public interface TypeWriter<T> {
                 protected void assertDefault(String name) {
                     if (!allowsDefaultValue) {
                         throw new IllegalStateException("Cannot define define default value on " + name + " for " + sortName);
+                    }
+                }
+
+                protected void assertPackage(int modifier, String[] interfaces) {
+                    if (!allowsNonPackage && modifier != PackageDescription.PACKAGE_MODIFIERS) {
+                        throw new IllegalStateException("Cannot alter modifier for " + sortName);
+                    } else if (!allowsNonPackage && interfaces != null) {
+                        throw new IllegalStateException("Cannot implement interface for " + sortName);
                     }
                 }
 

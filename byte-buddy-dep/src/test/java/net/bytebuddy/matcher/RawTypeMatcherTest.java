@@ -25,7 +25,7 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
 
     @SuppressWarnings("unchecked")
     public RawTypeMatcherTest() {
-        super((Class<? extends RawTypeMatcher<?>>) (Object) RawTypeMatcher.class, "asRawType");
+        super((Class<? extends RawTypeMatcher<?>>) (Object) RawTypeMatcher.class, "rawType");
     }
 
     @Before

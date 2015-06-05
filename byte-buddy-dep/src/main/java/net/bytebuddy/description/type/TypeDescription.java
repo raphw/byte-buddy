@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import com.sun.javaws.jnl.PackageDesc;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -21,7 +22,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.noneOf;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
@@ -456,16 +457,16 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             for (GenericTypeDescription typeVariable : getTypeVariables()) {
                 signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
                 for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
-                    upperBound.accept(new Visitor.ForSignatureVisitor(upperBound.asRawType().isInterface()
+                    upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(upperBound.asRawType().isInterface()
                             ? signatureWriter.visitInterfaceBound()
                             : signatureWriter.visitClassBound()));
                 }
                 generic = true;
             }
-            superType.accept(new Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
+            superType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
             generic = generic || !superType.getSort().isRawType();
             for (GenericTypeDescription interfaceType : getInterfacesGen()) {
-                interfaceType.accept(new Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
+                interfaceType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
                 generic = generic || !interfaceType.getSort().isRawType();
             }
             return generic
@@ -623,7 +624,25 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public <T> T accept(Visitor<T> visitor) {
+        public GenericTypeDescription findVariable(String symbol) {
+            GenericTypeList typeVariables = getTypeVariables().filter(named(symbol));
+            if (typeVariables.isEmpty()) {
+                TypeVariableSource enclosingSource = getEnclosingSource();
+                return enclosingSource == null
+                        ? null
+                        : enclosingSource.findVariable(symbol);
+            } else {
+                return typeVariables.getOnly();
+            }
+        }
+
+        @Override
+        public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+            return visitor.onType(this);
+        }
+
+        @Override
+        public <T> T accept(GenericTypeDescription.Visitor<T> visitor) {
             return visitor.onRawType(this);
         }
 
@@ -1392,6 +1411,90 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public GenericTypeList getTypeVariables() {
             return new GenericTypeList.Empty();
+        }
+    }
+
+    class ForPackageDescription extends AbstractTypeDescription.OfSimpleType {
+
+        private final PackageDescription packageDescription;
+
+        public ForPackageDescription(PackageDescription packageDescription) {
+            this.packageDescription = packageDescription;
+        }
+
+        @Override
+        public GenericTypeDescription getSuperTypeGen() {
+            return TypeDescription.OBJECT;
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public MethodDescription getEnclosingMethod() {
+            return null;
+        }
+
+        @Override
+        public TypeDescription getEnclosingType() {
+            return null;
+        }
+
+        @Override
+        public boolean isAnonymousClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isLocalClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isMemberClass() {
+            return false;
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.Empty();
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            return new MethodList.Empty();
+        }
+
+        @Override
+        public PackageDescription getPackage() {
+            return packageDescription;
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return packageDescription.getDeclaredAnnotations();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return null;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public int getModifiers() {
+            return PackageDescription.PACKAGE_MODIFIERS;
+        }
+
+        @Override
+        public String getName() {
+            return packageDescription.getName();
         }
     }
 }

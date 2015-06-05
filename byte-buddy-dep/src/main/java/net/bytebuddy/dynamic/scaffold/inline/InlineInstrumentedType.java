@@ -63,6 +63,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
         super(LoadedTypeInitializer.NoOp.INSTANCE,
                 TypeInitializer.None.INSTANCE,
                 named(levelType.getName()),
+                levelType.getTypeVariables(),
                 levelType.getDeclaredFields(),
                 levelType.getDeclaredMethods());
         this.levelType = levelType;
@@ -76,22 +77,11 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 classFileVersion)));
     }
 
-    /**
-     * Creates a new inlined instrumented type.
-     *
-     * @param levelType             The name of the instrumented type.
-     * @param name                  The name of the instrumented type.
-     * @param interfaces            The additional interfaces that this type should implement.
-     * @param modifiers             The name of the instrumented type.
-     * @param fieldDescriptions     A list of field descriptions for this instrumented type.
-     * @param methodDescriptions    A list of method descriptions for this instrumented type.
-     * @param loadedTypeInitializer A loaded type initializer for this instrumented type.
-     * @param typeInitializer       A type initializer for this instrumented type.
-     */
     protected InlineInstrumentedType(TypeDescription levelType,
                                      String name,
                                      List<GenericTypeDescription> interfaces,
                                      int modifiers,
+                                     List<? extends GenericTypeDescription> typeVariables,
                                      List<? extends FieldDescription> fieldDescriptions,
                                      List<? extends MethodDescription> methodDescriptions,
                                      LoadedTypeInitializer loadedTypeInitializer,
@@ -99,6 +89,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
         super(loadedTypeInitializer,
                 typeInitializer,
                 named(name),
+                typeVariables,
                 fieldDescriptions,
                 methodDescriptions);
         this.levelType = levelType;
@@ -119,6 +110,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 name,
                 interfaces,
                 this.modifiers,
+                typeVariables,
                 join(fieldDescriptions, additionalField),
                 methodDescriptions,
                 loadedTypeInitializer,
@@ -144,6 +136,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 name,
                 interfaces,
                 this.modifiers,
+                typeVariables,
                 fieldDescriptions,
                 join(methodDescriptions, additionalMethod),
                 loadedTypeInitializer,
@@ -156,6 +149,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 name,
                 interfaces,
                 modifiers,
+                typeVariables,
                 fieldDescriptions,
                 methodDescriptions,
                 new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer),
@@ -168,22 +162,11 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 name,
                 interfaces,
                 modifiers,
+                typeVariables,
                 fieldDescriptions,
                 methodDescriptions,
                 loadedTypeInitializer,
                 typeInitializer.expandWith(byteCodeAppender));
-    }
-
-    @Override
-    public TypeDescription detach() {
-        return new InlineInstrumentedType(levelType,
-                name,
-                interfaces,
-                modifiers,
-                fieldDescriptions,
-                methodDescriptions,
-                LoadedTypeInitializer.NoOp.INSTANCE,
-                TypeInitializer.None.INSTANCE);
     }
 
     @Override
@@ -204,11 +187,6 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     @Override
     public int getModifiers() {
         return modifiers;
-    }
-
-    @Override
-    public GenericTypeList getTypeVariables() {
-        return levelType.getTypeVariables();
     }
 
     @Override

@@ -416,8 +416,7 @@ public interface MethodRegistry {
                 }
             }
             MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
-            ElementMatcher<? super MethodDescription> instrumented = (ElementMatcher<? super MethodDescription>) not(anyOf(implementations.keySet()))
-                    .and(methodFilter.resolve(instrumentedType));
+            ElementMatcher<? super MethodDescription> instrumented = not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType));
             List<MethodDescription> methodDescriptions = join(typeInitializerOf(instrumentedType), finding.getInvokableMethods().filter(instrumented));
             for (MethodDescription methodDescription : methodDescriptions) {
                 for (Entry entry : entries) {

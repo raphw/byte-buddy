@@ -3788,10 +3788,10 @@ public interface TypePool {
 
             class ForTypeVariable implements GenericTypeToken {
 
-                private final String name;
+                private final String symbol;
 
-                public ForTypeVariable(String name) {
-                    this.name = name;
+                public ForTypeVariable(String symbol) {
+                    this.symbol = symbol;
                 }
 
                 @Override
@@ -3801,24 +3801,22 @@ public interface TypePool {
 
                 @Override
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    do {
-                        GenericTypeList typeVariables = typeVariableSource.getTypeVariables().filter(named(name));
-                        if (!typeVariables.isEmpty()) {
-                            return typeVariables.getOnly();
-                        }
-                        typeVariableSource = typeVariableSource.getEnclosingSource();
-                    } while (typeVariableSource != null);
-                    throw new IllegalStateException("Cannot resolve type variable: " + name);
+                    GenericTypeDescription typeVariable = typeVariableSource.findVariable(symbol);
+                    if (typeVariable == null) {
+                        throw new IllegalStateException("Cannot resolve type variable " + symbol + " for " + typeVariableSource);
+                    } else {
+                        return typeVariable;
+                    }
                 }
 
                 public static class Formal implements GenericTypeToken {
 
-                    private final String name;
+                    private final String symbol;
 
                     private final List<GenericTypeToken> bounds;
 
-                    public Formal(String name, List<GenericTypeToken> bounds) {
-                        this.name = name;
+                    public Formal(String symbol, List<GenericTypeToken> bounds) {
+                        this.symbol = symbol;
                         this.bounds = bounds;
                     }
 
@@ -3854,12 +3852,12 @@ public interface TypePool {
 
                         @Override
                         public TypeVariableSource getVariableSource() {
-                            return typeVariableSource; // TODO: Really?
+                            return typeVariableSource;
                         }
 
                         @Override
                         public String getSymbol() {
-                            return name;
+                            return symbol;
                         }
                     }
                 }
@@ -4178,11 +4176,6 @@ public interface TypePool {
         private static class LazyPackageDescription extends PackageDescription.AbstractPackageDescription {
 
             /**
-             * The name of the {@code package-info} class that represents a compiled Java package.
-             */
-            private static final String PACKAGE_INFO = ".package-info";
-
-            /**
              * The type pool to use for look-ups.
              */
             private final TypePool typePool;
@@ -4205,7 +4198,7 @@ public interface TypePool {
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                Resolution resolution = typePool.describe(name + PACKAGE_INFO);
+                Resolution resolution = typePool.describe(name + "." + PackageDescription.PACKAGE_CLASS_NAME);
                 return resolution.isResolved()
                         ? resolution.resolve().getDeclaredAnnotations()
                         : new AnnotationList.Empty();

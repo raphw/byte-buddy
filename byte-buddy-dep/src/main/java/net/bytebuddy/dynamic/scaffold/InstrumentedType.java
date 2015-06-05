@@ -12,6 +12,7 @@ import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -90,15 +91,6 @@ public interface InstrumentedType extends TypeDescription {
      * @return This instrumented type's type initializer.
      */
     TypeInitializer getTypeInitializer();
-
-    /**
-     * Creates a <i>compressed</i> version of this instrumented type which only needs to fulfil the
-     * {@link TypeDescription} interface. This allows
-     * for a potential compression of the representation of {@code this} instrumented type.
-     *
-     * @return A (potentially) compressed version of {@code this} instrumented type.
-     */
-    TypeDescription detach();
 
     /**
      * A type initializer is responsible for defining a type's static initialization block.
@@ -239,6 +231,8 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected final TypeInitializer typeInitializer;
 
+        protected final List<GenericTypeDescription> typeVariables;
+
         /**
          * A list of field descriptions registered for this instrumented type.
          */
@@ -256,6 +250,7 @@ public interface InstrumentedType extends TypeDescription {
         protected AbstractBase() {
             loadedTypeInitializer = LoadedTypeInitializer.NoOp.INSTANCE;
             typeInitializer = TypeInitializer.None.INSTANCE;
+            typeVariables = Collections.emptyList();
             fieldDescriptions = Collections.emptyList();
             methodDescriptions = Collections.emptyList();
         }
@@ -263,12 +258,15 @@ public interface InstrumentedType extends TypeDescription {
         protected AbstractBase(LoadedTypeInitializer loadedTypeInitializer,
                                TypeInitializer typeInitializer,
                                ElementMatcher<? super TypeDescription> matcher,
+                               List<? extends GenericTypeDescription> typeVariables,
                                List<? extends FieldDescription> fieldDescriptions,
                                List<? extends MethodDescription> methodDescriptions) {
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.typeInitializer = typeInitializer;
-            // TODO: Type variables! Special resolution. Before element resolution to allow for variable lookup.
-            // TODO: Super type, Interfaces (parameterized!)
+            this.typeVariables = new ArrayList<GenericTypeDescription>(typeVariables.size());
+            for (GenericTypeDescription typeVariable : typeVariables) {
+                this.typeVariables.add(new TypeVariableToken(matcher, typeVariable));
+            }
             this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
             for (FieldDescription fieldDescription : fieldDescriptions) {
                 this.fieldDescriptions.add(new FieldToken(matcher, fieldDescription));
@@ -315,6 +313,11 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Explicit(typeVariables);
+        }
+
+        @Override
         public FieldList getDeclaredFields() {
             return new FieldList.Explicit(fieldDescriptions);
         }
@@ -340,6 +343,34 @@ public interface InstrumentedType extends TypeDescription {
             return packageName == null
                     ? null
                     : new PackageDescription.Simple(packageName);
+        }
+
+        protected class TypeVariableToken extends GenericTypeDescription.ForTypeVariable {
+
+            private final String symbol;
+
+            private final List<GenericTypeDescription> bounds;
+
+            private TypeVariableToken(ElementMatcher<? super TypeDescription> matcher, GenericTypeDescription typeVariable) {
+                symbol = typeVariable.getSymbol();
+                bounds = null; // TODO!
+//                bounds = TargetType.resolve(typeVariable.getUpperBounds(), AbstractBase.this, matcher);
+            }
+
+            @Override
+            public GenericTypeList getUpperBounds() {
+                return new GenericTypeList.Explicit(bounds);
+            }
+
+            @Override
+            public TypeVariableSource getVariableSource() {
+                return AbstractBase.this;
+            }
+
+            @Override
+            public String getSymbol() {
+                return symbol;
+            }
         }
 
         /**
@@ -369,7 +400,7 @@ public interface InstrumentedType extends TypeDescription {
 
             private FieldToken(ElementMatcher<? super TypeDescription> matcher, FieldDescription fieldDescription) {
                 name = fieldDescription.getName();
-                fieldType = TargetType.resolve(fieldDescription.getFieldTypeGen(), InstrumentedType.AbstractBase.this, matcher);
+                fieldType = TargetType.resolve(fieldDescription.getFieldTypeGen(), AbstractBase.this, matcher);
                 modifiers = fieldDescription.getModifiers();
                 declaredAnnotations = fieldDescription.getDeclaredAnnotations();
             }
@@ -410,6 +441,8 @@ public interface InstrumentedType extends TypeDescription {
              */
             private final String internalName;
 
+            private final List<GenericTypeDescription> typeVariables;
+
             /**
              * The return type of the represented method.
              */
@@ -442,8 +475,12 @@ public interface InstrumentedType extends TypeDescription {
 
             private MethodToken(ElementMatcher<? super TypeDescription> matcher, MethodDescription methodDescription) {
                 internalName = methodDescription.getInternalName();
-                returnType = TargetType.resolve(methodDescription.getReturnTypeGen(), InstrumentedType.AbstractBase.this, matcher);
-                exceptionTypes = TargetType.resolve(methodDescription.getExceptionTypesGen(), InstrumentedType.AbstractBase.this, matcher);
+                typeVariables = new ArrayList<GenericTypeDescription>(methodDescription.getTypeVariables().size());
+                for (GenericTypeDescription typeVariable : methodDescription.getTypeVariables()) {
+                    typeVariables.add(new TypeVariableToken(matcher, typeVariable));
+                }
+                returnType = TargetType.resolve(methodDescription.getReturnTypeGen(), AbstractBase.this, matcher);
+                exceptionTypes = TargetType.resolve(methodDescription.getExceptionTypesGen(), AbstractBase.this, matcher);
                 modifiers = methodDescription.getModifiers();
                 declaredAnnotations = methodDescription.getDeclaredAnnotations();
                 parameters = new ArrayList<ParameterDescription>(methodDescription.getParameters().size());
@@ -490,12 +527,39 @@ public interface InstrumentedType extends TypeDescription {
 
             @Override
             public GenericTypeList getTypeVariables() {
-                return new GenericTypeList.Empty();
+                return new GenericTypeList.Explicit(typeVariables);
             }
 
             @Override
             public Object getDefaultValue() {
                 return defaultValue;
+            }
+
+            protected class TypeVariableToken extends GenericTypeDescription.ForTypeVariable {
+
+                private final String symbol;
+
+                private final List<GenericTypeDescription> bounds;
+
+                private TypeVariableToken(ElementMatcher<? super TypeDescription> matcher, GenericTypeDescription typeVariable) {
+                    symbol = typeVariable.getSymbol();
+                    bounds = TargetType.resolve(typeVariable.getUpperBounds(), AbstractBase.this, matcher);
+                }
+
+                @Override
+                public GenericTypeList getUpperBounds() {
+                    return new GenericTypeList.Explicit(bounds);
+                }
+
+                @Override
+                public TypeVariableSource getVariableSource() {
+                    return MethodToken.this;
+                }
+
+                @Override
+                public String getSymbol() {
+                    return symbol;
+                }
             }
 
             /**
@@ -529,7 +593,7 @@ public interface InstrumentedType extends TypeDescription {
                 private final List<AnnotationDescription> parameterAnnotations;
 
                 protected ParameterToken(ElementMatcher<? super TypeDescription> matcher, ParameterDescription parameterDescription) {
-                    parameterType = TargetType.resolve(parameterDescription.getTypeGen(), InstrumentedType.AbstractBase.this, matcher);
+                    parameterType = TargetType.resolve(parameterDescription.getTypeGen(), AbstractBase.this, matcher);
                     index = parameterDescription.getIndex();
                     name = parameterDescription.isNamed()
                             ? parameterDescription.getName()

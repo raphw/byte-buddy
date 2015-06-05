@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -73,24 +74,12 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 classFileVersion)));
     }
 
-    /**
-     * Creates a new immutable type instrumentation for a loaded superclass.
-     *
-     * @param classFileVersion      The class file version of this instrumentation.
-     * @param superClass            The superclass of this instrumentation.
-     * @param interfaces            A collection of loaded interfaces that are implemented by this instrumented class.
-     * @param modifiers             The modifiers for this instrumentation.
-     * @param name                  The name of this instrumented type.
-     * @param fieldDescriptions     A list of field descriptions to be applied for this instrumentation.
-     * @param methodDescriptions    A list of method descriptions to be applied for this instrumentation.
-     * @param loadedTypeInitializer A loaded type initializer to be applied for this instrumentation.
-     * @param typeInitializer       A type initializer to be applied for this instrumentation.
-     */
     protected SubclassInstrumentedType(ClassFileVersion classFileVersion,
                                        GenericTypeDescription superClass,
                                        List<TypeDescription> interfaces,
                                        int modifiers,
                                        String name,
+                                       List<? extends GenericTypeDescription> typeVariables,
                                        List<? extends FieldDescription> fieldDescriptions,
                                        List<? extends MethodDescription> methodDescriptions,
                                        LoadedTypeInitializer loadedTypeInitializer,
@@ -98,6 +87,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
         super(loadedTypeInitializer,
                 typeInitializer,
                 named(name),
+                typeVariables,
                 fieldDescriptions,
                 methodDescriptions);
         this.classFileVersion = classFileVersion;
@@ -120,6 +110,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 interfaces,
                 this.modifiers,
                 name,
+                typeVariables,
                 join(fieldDescriptions, additionalField),
                 methodDescriptions,
                 loadedTypeInitializer,
@@ -146,6 +137,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 interfaces,
                 this.modifiers,
                 name,
+                typeVariables,
                 fieldDescriptions,
                 join(methodDescriptions, additionalMethod),
                 loadedTypeInitializer,
@@ -159,6 +151,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 interfaces,
                 modifiers,
                 name,
+                typeVariables,
                 fieldDescriptions,
                 methodDescriptions,
                 new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer),
@@ -172,23 +165,11 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 interfaces,
                 modifiers,
                 name,
+                typeVariables,
                 fieldDescriptions,
                 methodDescriptions,
                 loadedTypeInitializer,
                 typeInitializer.expandWith(byteCodeAppender));
-    }
-
-    @Override
-    public TypeDescription detach() {
-        return new SubclassInstrumentedType(classFileVersion,
-                superClass,
-                interfaces,
-                modifiers,
-                name,
-                fieldDescriptions,
-                methodDescriptions,
-                LoadedTypeInitializer.NoOp.INSTANCE,
-                TypeInitializer.None.INSTANCE);
     }
 
     @Override
@@ -211,11 +192,6 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     @Override
     public int getModifiers() {
         return modifiers;
-    }
-
-    @Override
-    public GenericTypeList getTypeVariables() {
-        return new GenericTypeList.Empty();
     }
 
     @Override

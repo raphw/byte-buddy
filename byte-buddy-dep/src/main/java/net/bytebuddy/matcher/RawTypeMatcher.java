@@ -43,6 +43,6 @@ public class RawTypeMatcher<T extends GenericTypeDescription> extends ElementMat
 
     @Override
     public String toString() {
-        return "asRawType(" + rawTypeMatcher + ")";
+        return "rawType(" + rawTypeMatcher + ")";
     }
 }

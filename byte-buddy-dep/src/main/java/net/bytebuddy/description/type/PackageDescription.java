@@ -3,11 +3,16 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
+import org.objectweb.asm.Opcodes;
 
 /**
  * A package description represents a Java package.
  */
 public interface PackageDescription extends NamedElement.WithRuntimeName, AnnotatedCodeElement {
+
+    String PACKAGE_CLASS_NAME = "package-info";
+
+    int PACKAGE_MODIFIERS = Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_SYNTHETIC;
 
     /**
      * Checks if this package description represents a sealed package.
@@ -99,7 +104,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
          *
          * @param aPackage The represented package.
          */
-        protected ForLoadedPackage(Package aPackage) {
+        public ForLoadedPackage(Package aPackage) {
             this.aPackage = aPackage;
         }
 

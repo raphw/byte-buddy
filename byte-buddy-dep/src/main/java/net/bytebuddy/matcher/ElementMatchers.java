@@ -347,7 +347,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A type matcher for a generic type that matches the matched type's raw type against the given type description matcher.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> asRawType(ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> rawType(ElementMatcher<? super TypeDescription> matcher) {
         return new RawTypeMatcher<T>(matcher);
     }
 
@@ -969,7 +969,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches a non-overridden {@link Object#finalize()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultFinalizer() {
-        return isFinalizer().and(isDeclaredBy(Object.class));
+        return isFinalizer().and(isDeclaredBy(TypeDescription.OBJECT));
     }
 
     /**
@@ -979,7 +979,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#finalize()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isFinalizer() {
-        return named("finalize").and(takesArguments(0)).and(returns(void.class));
+        return named("finalize").and(takesArguments(0)).and(returns(TypeDescription.VOID));
     }
 
     /**
@@ -999,7 +999,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#equals(Object)} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isEquals() {
-        return named("equals").and(takesArguments(Object.class)).and(returns(boolean.class));
+        return named("equals").and(takesArguments(TypeDescription.OBJECT)).and(returns(boolean.class));
     }
 
     /**
@@ -1009,7 +1009,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#clone()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isClone() {
-        return named("clone").and(takesArguments(0)).and(returns(Object.class));
+        return named("clone").and(takesArguments(0)).and(returns(TypeDescription.OBJECT));
     }
 
     /**
@@ -1019,7 +1019,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#toString()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isToString() {
-        return named("toString").and(takesArguments(0)).and(returns(String.class));
+        return named("toString").and(takesArguments(0)).and(returns(TypeDescription.STRING));
     }
 
     /**
@@ -1029,7 +1029,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any setter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter() {
-        return nameStartsWith("set").and(takesArguments(1)).and(returns(void.class));
+        return nameStartsWith("set").and(takesArguments(1)).and(returns(TypeDescription.VOID));
     }
 
     /**
@@ -1072,7 +1072,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any getter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter() {
-        return takesArguments(0).and(not(returns(void.class))).and(nameStartsWith("get")
+        return takesArguments(0).and(not(returns(TypeDescription.VOID))).and(nameStartsWith("get")
                 .or(nameStartsWith("is").and(returns(anyOf(boolean.class, Boolean.class)))));
     }
 
@@ -1122,7 +1122,7 @@ public final class ElementMatchers {
         TypeList parameterTypes = methodDescription.getParameters().asTypeList();
         List<ElementMatcher<GenericTypeDescription>> matchers = new ArrayList<ElementMatcher<GenericTypeDescription>>(parameterTypes.size());
         for (TypeDescription typeDescription : parameterTypes) {
-            matchers.add(asRawType(isSubTypeOf(typeDescription)));
+            matchers.add(rawType(isSubTypeOf(typeDescription)));
         }
         return (methodDescription.isStatic() ? ElementMatchers.<T>isStatic() : ElementMatchers.<T>not(isStatic()))
                 .<T>and(named(methodDescription.getSourceCodeName()))

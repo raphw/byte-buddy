@@ -878,7 +878,7 @@ public abstract class FieldAccessor implements Implementation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(name, TargetType.resolve(typeDescription, instrumentedType, is(TargetType.DESCRIPTION)), modifiers);
+                    return instrumentedType.withField(name, TargetType.resolve(typeDescription, instrumentedType, TargetType.MATCHER), modifiers);
                 }
 
                 @Override

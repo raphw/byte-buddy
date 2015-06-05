@@ -10,6 +10,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -17,9 +19,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractGenericTypeDescriptionTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
-    private static final String T = "T";
+    private static final String T = "T", S = "S", U = "U", V = "V";
 
     protected abstract GenericTypeDescription describe(Field field);
 
@@ -210,6 +212,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getParameters().size(), is(0));
         Type ownerType = ((ParameterizedType) NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
         assertThat(genericTypeDescription.getOwnerType(), is(GenericTypeDescription.Sort.describe(ownerType)));
+        assertThat(genericTypeDescription.getOwnerType().getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(genericTypeDescription.getOwnerType().getParameters().size(), is(1));
         assertThat(genericTypeDescription.getOwnerType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(genericTypeDescription.getOwnerType().getParameters().getOnly().getSymbol(), is(T));
@@ -223,9 +226,103 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getParameters().size(), is(0));
         Type ownerType = ((ParameterizedType) NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
         assertThat(genericTypeDescription.getOwnerType(), is(GenericTypeDescription.Sort.describe(ownerType)));
+        assertThat(genericTypeDescription.getOwnerType().getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(genericTypeDescription.getOwnerType().getParameters().size(), is(1));
         assertThat(genericTypeDescription.getOwnerType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
         assertThat(genericTypeDescription.getOwnerType().getParameters().getOnly(), is((GenericTypeDescription) TypeDescription.STRING));
+    }
+
+    @Test
+    public void testNestedStaticTypeVariableType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(NestedStaticTypeVariableType.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getTypeName(), is(NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(1));
+        assertThat(genericTypeDescription.getParameters().getOnly(), is((GenericTypeDescription) TypeDescription.STRING));
+        Type ownerType = ((ParameterizedType) NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
+        assertThat(genericTypeDescription.getOwnerType(), is(GenericTypeDescription.Sort.describe(ownerType)));
+        assertThat(genericTypeDescription.getOwnerType().getSort(), is(GenericTypeDescription.Sort.RAW));
+    }
+
+    @Test
+    public void testNestedInnerType() throws Exception {
+        GenericTypeDescription foo = describe(NestedInnerType.InnerType.class.getDeclaredMethod(FOO));
+        assertThat(foo.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(foo.getSymbol(), is(T));
+        assertThat(foo.getUpperBounds().size(), is(1));
+        assertThat(foo.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(foo.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerType.class)));
+        GenericTypeDescription bar = describe(NestedInnerType.InnerType.class.getDeclaredMethod(BAR));
+        assertThat(bar.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(bar.getSymbol(), is(S));
+        assertThat(bar.getUpperBounds().size(), is(1));
+        assertThat(bar.getUpperBounds().getOnly(), is(foo));
+        assertThat(bar.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerType.InnerType.class)));
+        GenericTypeDescription qux = describe(NestedInnerType.InnerType.class.getDeclaredMethod(QUX));
+        assertThat(qux.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(qux.getSymbol(), is(U));
+        assertThat(qux.getUpperBounds().size(), is(1));
+        assertThat(qux.getUpperBounds().getOnly(), is(foo));
+        MethodDescription quxMethod = new MethodDescription.ForLoadedMethod(NestedInnerType.InnerType.class.getDeclaredMethod(QUX));
+        assertThat(qux.getVariableSource(), is((TypeVariableSource) quxMethod));
+    }
+
+    @Test
+    public void testNestedInnerMethod() throws Exception {
+        Class<?> innerType = new NestedInnerMethod().foo();
+        GenericTypeDescription foo = describe(innerType.getDeclaredMethod(FOO));
+        assertThat(foo.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(foo.getSymbol(), is(T));
+        assertThat(foo.getUpperBounds().size(), is(1));
+        assertThat(foo.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(foo.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerMethod.class)));
+        GenericTypeDescription bar = describe(innerType.getDeclaredMethod(BAR));
+        assertThat(bar.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(bar.getSymbol(), is(S));
+        assertThat(bar.getUpperBounds().size(), is(1));
+        assertThat(bar.getUpperBounds().getOnly(), is(foo));
+        assertThat(bar.getVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(NestedInnerMethod.class.getDeclaredMethod(FOO))));
+        GenericTypeDescription qux = describe(innerType.getDeclaredMethod(QUX));
+        assertThat(qux.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(qux.getSymbol(), is(U));
+        assertThat(qux.getUpperBounds().size(), is(1));
+        assertThat(qux.getUpperBounds().getOnly(), is(bar));
+        assertThat(qux.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(innerType)));
+        GenericTypeDescription baz = describe(innerType.getDeclaredMethod(BAZ));
+        assertThat(baz.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(baz.getSymbol(), is(V));
+        assertThat(baz.getUpperBounds().size(), is(1));
+        assertThat(baz.getUpperBounds().getOnly(), is(qux));
+        assertThat(baz.getVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(innerType.getDeclaredMethod(BAZ))));
+
+    }
+
+    @Test
+    public void testRecursiveTypeVariable() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(RecursiveTypeVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
+        GenericTypeDescription upperBound = genericTypeDescription.getUpperBounds().getOnly();
+        assertThat(upperBound.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(upperBound.asRawType(), is((GenericTypeDescription) genericTypeDescription.asRawType()));
+        assertThat(upperBound.getParameters().size(), is(1));
+        assertThat(upperBound.getParameters().getOnly(), is(genericTypeDescription));
+    }
+
+    @Test
+    public void testBackwardsReferenceTypeVariable() throws Exception {
+        GenericTypeDescription foo = describe(BackwardsReferenceTypeVariable.class.getDeclaredField(FOO));
+        assertThat(foo.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(foo.getSymbol(), is(S));
+        assertThat(foo.getUpperBounds().size(), is(1));
+        TypeDescription backwardsReference = new TypeDescription.ForLoadedType(BackwardsReferenceTypeVariable.class);
+        assertThat(foo.getUpperBounds().getOnly(), is(backwardsReference.getTypeVariables().filter(named(T)).getOnly()));
+        GenericTypeDescription bar = describe(BackwardsReferenceTypeVariable.class.getDeclaredField(BAR));
+        assertThat(bar.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(bar.getSymbol(), is(T));
+        assertThat(bar.getUpperBounds().size(), is(1));
+        assertThat(bar.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
     }
 
     @SuppressWarnings("unused")
@@ -303,6 +400,75 @@ public abstract class AbstractGenericTypeDescriptionTest {
         }
 
         NestedSpecifiedTypeVariableType<String>.Placeholder foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class NestedStaticTypeVariableType<T> {
+
+        static class Placeholder<S> {
+            /* empty */
+        }
+
+        NestedStaticTypeVariableType.Placeholder<String> foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class NestedInnerType<T> {
+
+        class InnerType<S extends T> {
+
+            <U extends S> T foo() {
+                return null;
+            }
+
+            <U extends S> S bar() {
+                return null;
+            }
+
+            <U extends S> U qux() {
+                return null;
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class NestedInnerMethod<T> {
+
+        <S extends T> Class<?> foo() {
+            class InnerType<U extends S> {
+
+                <V extends U> T foo() {
+                    return null;
+                }
+
+                <V extends U> S bar() {
+                    return null;
+                }
+
+                <V extends U> U qux() {
+                    return null;
+                }
+
+                <V extends U> V baz() {
+                    return null;
+                }
+            }
+            return InnerType.class;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class RecursiveTypeVariable<T extends RecursiveTypeVariable<T>> {
+
+        T foo;
+    }
+
+    @SuppressWarnings("unused")
+    public static class BackwardsReferenceTypeVariable<T, S extends T> {
+
+        S foo;
+
+        T bar;
     }
 
     @SuppressWarnings("unused")

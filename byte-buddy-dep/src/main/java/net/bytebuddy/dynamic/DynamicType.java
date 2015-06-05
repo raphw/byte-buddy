@@ -1920,7 +1920,7 @@ public interface DynamicType {
                  * @return A type description for the actual return type.
                  */
                 protected TypeDescription resolveReturnType(TypeDescription instrumentedType) {
-                    return TargetType.resolveRaw(returnType, instrumentedType, is(TargetType.DESCRIPTION));
+                    return TargetType.resolve(returnType, instrumentedType, TargetType.MATCHER);
                 }
 
                 /**
@@ -1931,7 +1931,7 @@ public interface DynamicType {
                  * @return A list of type descriptions for the actual parameter types.
                  */
                 protected List<TypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
-                    return TargetType.resolveRaw(parameterTypes, instrumentedType, is(TargetType.DESCRIPTION));
+                    return TargetType.resolve(parameterTypes, instrumentedType, TargetType.MATCHER).asRawTypes();
                 }
 
                 /**
@@ -1941,7 +1941,7 @@ public interface DynamicType {
                  * @return A list of type descriptions for the actual exception types.
                  */
                 protected List<TypeDescription> resolveExceptionTypes(TypeDescription instrumentedType) {
-                    return TargetType.resolveRaw(this.exceptionTypes, instrumentedType, is(TargetType.DESCRIPTION));
+                    return TargetType.resolve(exceptionTypes, instrumentedType, TargetType.MATCHER).asRawTypes();
                 }
 
                 /**
@@ -2058,7 +2058,7 @@ public interface DynamicType {
                  * @return A type description for the actual field type.
                  */
                 protected TypeDescription resolveFieldType(TypeDescription instrumentedType) {
-                    return TargetType.resolveRaw(fieldType, instrumentedType, is(TargetType.DESCRIPTION));
+                    return TargetType.resolve(fieldType, instrumentedType, TargetType.MATCHER);
                 }
 
                 /**
@@ -3290,8 +3290,7 @@ public interface DynamicType {
         @Override
         public File toJar(File file, Manifest manifest) throws IOException {
             file.createNewFile();
-            JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)),
-                    manifest);
+            JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)), manifest);
             try {
                 for (Map.Entry<TypeDescription, byte[]> entry : getRawAuxiliaryTypes().entrySet()) {
                     outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));

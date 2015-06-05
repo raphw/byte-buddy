@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
@@ -506,6 +508,19 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public TypeVariableSource getEnclosingSource() {
             return getDeclaringType();
+        }
+
+        @Override
+        public GenericTypeDescription findVariable(String symbol) {
+            GenericTypeList typeVariables = getTypeVariables().filter(named(symbol));
+            return typeVariables.isEmpty()
+                    ? getEnclosingSource().findVariable(symbol)
+                    : typeVariables.getOnly();
+        }
+
+        @Override
+        public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+            return visitor.onMethod(this);
         }
 
         @Override

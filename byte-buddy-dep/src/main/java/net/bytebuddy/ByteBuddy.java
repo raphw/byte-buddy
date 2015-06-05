@@ -1,11 +1,13 @@
 package net.bytebuddy;
 
+import com.sun.javaws.jnl.PackageDesc;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.*;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -485,6 +487,33 @@ public class ByteBuddy {
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
+    }
+
+    public DynamicType.Builder<?> makePackage(String name) {
+        return new SubclassDynamicTypeBuilder<Class<?>>(classFileVersion,
+                new NamingStrategy.Fixed(isValidIdentifier(name) + "." + PackageDescription.PACKAGE_CLASS_NAME),
+                auxiliaryTypeNamingStrategy,
+                TypeDescription.OBJECT,
+                new TypeList.Empty(),
+                PackageDescription.PACKAGE_MODIFIERS,
+                typeAttributeAppender,
+                ignoredMethods,
+                bridgeMethodResolverFactory,
+                classVisitorWrapperChain,
+                new FieldRegistry.Default(),
+                methodRegistry,
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                ConstructorStrategy.Default.NO_CONSTRUCTORS);
+    }
+
+    public DynamicType.Builder<?> rebase(Package aPackage, ClassFileLocator classFileLocator) {
+        return rebase(new PackageDescription.ForLoadedPackage(aPackage), classFileLocator);
+    }
+
+    public DynamicType.Builder<?> rebase(PackageDescription packageDescription, ClassFileLocator classFileLocator) {
+        return rebase(new TypeDescription.ForPackageDescription(packageDescription), classFileLocator);
     }
 
     /**

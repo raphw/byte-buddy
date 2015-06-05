@@ -11,6 +11,8 @@ import java.lang.reflect.*;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 public interface GenericTypeDescription extends NamedElement {
 
     Sort getSort();
