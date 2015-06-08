@@ -62,7 +62,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                                   NamingStrategy namingStrategy) {
         super(LoadedTypeInitializer.NoOp.INSTANCE,
                 TypeInitializer.None.INSTANCE,
-                named(levelType.getName()),
+                named(levelType.getSourceCodeName()),
                 levelType.getTypeVariables(),
                 levelType.getDeclaredFields(),
                 levelType.getDeclaredMethods());

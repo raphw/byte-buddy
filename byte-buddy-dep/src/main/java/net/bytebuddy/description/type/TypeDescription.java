@@ -56,6 +56,13 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     TypeDescription ENUM = new ForLoadedType(Enum.class);
 
     /**
+     * The modifiers of any array type.
+     */
+    int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
+
+    GenericTypeList ARRAY_INTERFACES = new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class);
+
+    /**
      * Checks if {@code value} is an instance of the type represented by this instance.
      *
      * @param value The object of interest.
@@ -156,16 +163,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      */
     TypeDescription getSuperType();
 
-    GenericTypeDescription getSuperTypeGen();
-
     /**
      * Returns a list of interfaces that are implemented by this type.
      *
      * @return A list of interfaces that are implemented by this type.
      */
     TypeList getInterfaces();
-
-    GenericTypeList getInterfacesGen();
 
     /**
      * Returns all interfaces that are implemented by this type, either directly or indirectly.
@@ -689,7 +692,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 try {
                     return nextType;
                 } finally {
-                    nextType = nextType.asRawType().getSuperTypeGen(); // TODO: Retain variables
+                    nextType = nextType.getSuperTypeGen();
                 }
             }
 
@@ -938,7 +941,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public GenericTypeList getInterfacesGen() {
             return isArray()
-                    ? new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class)
+                    ? ARRAY_INTERFACES
                     : new GenericTypeList.LazyProjection.OfInterfaces(type);
         }
 
@@ -1056,11 +1059,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     class ArrayProjection extends AbstractTypeDescription {
 
         /**
-         * The modifiers of any array type.
-         */
-        private static final int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
-
-        /**
          * The base component type which is itself not an array.
          */
         private final TypeDescription componentType;
@@ -1140,8 +1138,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public boolean isAssignableTo(TypeDescription typeDescription) {
             return typeDescription.represents(Object.class)
-                    || typeDescription.represents(Serializable.class)
-                    || typeDescription.represents(Cloneable.class)
+                    || ARRAY_INTERFACES.contains(typeDescription)
                     || isArrayAssignable(typeDescription, this);
         }
 
@@ -1179,7 +1176,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeList getInterfacesGen() {
-            return new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class);
+            return ARRAY_INTERFACES;
         }
 
         @Override

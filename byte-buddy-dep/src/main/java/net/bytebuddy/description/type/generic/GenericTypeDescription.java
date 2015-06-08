@@ -2,22 +2,28 @@ package net.bytebuddy.description.type.generic;
 
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaMethod;
 import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.reflect.*;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public interface GenericTypeDescription extends NamedElement {
 
     Sort getSort();
 
     TypeDescription asRawType();
+
+    GenericTypeDescription getSuperTypeGen();
+
+    GenericTypeList getInterfacesGen();
 
     GenericTypeList getUpperBounds();
 
@@ -204,6 +210,250 @@ public interface GenericTypeDescription extends NamedElement {
                 }
             }
         }
+
+        abstract class Substitutor implements Visitor<GenericTypeDescription> {
+
+            @Override
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
+                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(genericTypeDescription.getParameters().size());
+                for (GenericTypeDescription parameter : genericTypeDescription.getParameters()) {
+                    parameters.add(parameter.accept(this));
+                }
+                return new GenericTypeDescription.ForParameterizedType.Latent(genericTypeDescription.asRawType(),
+                        parameters,
+                        ownerType == null
+                                ? null
+                                : ownerType.accept(this));
+            }
+
+            @Override
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
+                return GenericTypeDescription.ForGenericArray.Latent.of(genericTypeDescription.getComponentType().accept(this), 1);
+            }
+
+            @Override
+            public GenericTypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
+                GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds(), upperBounds = genericTypeDescription.getUpperBounds();
+                return lowerBounds.isEmpty()
+                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(upperBounds.getOnly().accept(this))
+                        : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+            }
+
+            public static class ForTypeVariable extends Substitutor {
+
+                public static Visitor<GenericTypeDescription> bind(GenericTypeDescription typeDescription) {
+                    Map<GenericTypeDescription, GenericTypeDescription> bindings = new HashMap<GenericTypeDescription, GenericTypeDescription>();
+                    do {
+                        GenericTypeList parameters = typeDescription.getParameters();
+                        int index = 0;
+                        for (GenericTypeDescription typeVariable : typeDescription.asRawType().getTypeVariables()) {
+                            bindings.put(typeVariable, parameters.get(index++));
+                        }
+                        typeDescription = typeDescription.getOwnerType();
+                    } while (typeDescription != null);
+                    return new ForTypeVariable(bindings);
+                }
+
+                private final Map<GenericTypeDescription, GenericTypeDescription> bindings;
+
+                protected ForTypeVariable(Map<GenericTypeDescription, GenericTypeDescription> bindings) {
+                    this.bindings = bindings;
+                }
+
+                @Override
+                public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                    GenericTypeDescription substitution = bindings.get(genericTypeDescription);
+                    if (substitution == null) {
+                        throw new IllegalArgumentException("Cannot substitute " + genericTypeDescription + " with " + bindings);
+                    }
+                    return substitution;
+                }
+
+                @Override
+                public GenericTypeDescription onRawType(TypeDescription typeDescription) {
+                    return typeDescription;
+                }
+            }
+
+            public static class ForRawType extends Substitutor implements TypeVariableSource.Visitor<ForRawType.TypeVariableProxy> {
+
+                public static Visitor<GenericTypeDescription> replace(TypeDescription substitute,
+                                                                      ElementMatcher<? super TypeDescription> substitutionMatcher) {
+                    return new ForRawType(substitute, substitutionMatcher);
+                }
+
+                private final TypeDescription substitute;
+
+                private final ElementMatcher<? super TypeDescription> substitutionMatcher;
+
+                protected ForRawType(TypeDescription substitute, ElementMatcher<? super TypeDescription> substitutionMatcher) {
+                    this.substitute = substitute;
+                    this.substitutionMatcher = substitutionMatcher;
+                }
+
+                @Override
+                public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                    return genericTypeDescription.getVariableSource().accept(this).resolve(genericTypeDescription);
+                }
+
+                @Override
+                public GenericTypeDescription onRawType(TypeDescription typeDescription) {
+                    int arity = 0;
+                    TypeDescription componentType = typeDescription;
+                    while (componentType.isArray()) {
+                        componentType = componentType.getComponentType();
+                        arity++;
+                    }
+                    return substitutionMatcher.matches(componentType)
+                            ? TypeDescription.ArrayProjection.of(substitute, arity)
+                            : typeDescription;
+                }
+
+                @Override
+                public TypeVariableProxy onType(TypeDescription typeDescription) {
+                    return substitutionMatcher.matches(typeDescription)
+                            ? new TypeVariableProxy.ForType(substitute)
+                            : TypeVariableProxy.Retaining.INSTANCE;
+                }
+
+                @Override
+                @SuppressWarnings("unchecked")
+                public TypeVariableProxy onMethod(MethodDescription methodDescription) {
+                    return substitutionMatcher.matches(methodDescription.getDeclaringType())
+                            ? TypeVariableProxy.ForMethod.of(substitute, (Visitor<TypeDescription>) (Object) this, methodDescription)
+                            : TypeVariableProxy.Retaining.INSTANCE;
+                }
+
+                protected static abstract class LazyTypeVariable extends GenericTypeDescription.ForTypeVariable {
+
+                    protected final String symbol;
+
+                    protected LazyTypeVariable(String symbol) {
+                        this.symbol = symbol;
+                    }
+
+                    @Override
+                    public GenericTypeList getUpperBounds() {
+                        return resolve().getUpperBounds();
+                    }
+
+                    @Override
+                    public TypeVariableSource getVariableSource() {
+                        return resolve().getVariableSource();
+                    }
+
+                    @Override
+                    public String getSymbol() {
+                        return symbol;
+                    }
+
+                    protected abstract GenericTypeDescription resolve();
+
+                    protected static class OfType extends LazyTypeVariable {
+
+                        private final TypeDescription typeDescription;
+
+                        protected OfType(String symbol, TypeDescription typeDescription) {
+                            super(symbol);
+                            this.typeDescription = typeDescription;
+                        }
+
+                        @Override
+                        protected GenericTypeDescription resolve() {
+                            GenericTypeDescription genericTypeDescription = typeDescription.findVariable(symbol);
+                            if (genericTypeDescription == null) {
+                                throw new IllegalStateException("Cannot resolve type variable '" + symbol + "' for " + typeDescription);
+                            }
+                            return genericTypeDescription;
+                        }
+                    }
+
+                    protected static class OfMethod extends LazyTypeVariable {
+
+                        private final TypeDescription typeDescription;
+
+                        private final ElementMatcher<? super MethodDescription> typeVariableMethodMatcher;
+
+                        protected OfMethod(String symbol, TypeDescription typeDescription, ElementMatcher<? super MethodDescription> typeVariableMethodMatcher) {
+                            super(symbol);
+                            this.typeDescription = typeDescription;
+                            this.typeVariableMethodMatcher = typeVariableMethodMatcher;
+                        }
+
+                        @Override
+                        protected GenericTypeDescription resolve() {
+                            MethodList methodDescriptions = typeDescription.getDeclaredMethods().filter(typeVariableMethodMatcher);
+                            if (methodDescriptions.isEmpty()) {
+                                throw new IllegalStateException("Cannot resolve method " + typeVariableMethodMatcher + " declared by " + typeDescription);
+                            }
+                            GenericTypeDescription genericTypeDescription = methodDescriptions.getOnly().findVariable(symbol);
+                            if (genericTypeDescription == null) {
+                                throw new IllegalStateException("Cannot resolve type variable '" + symbol + "' for " + methodDescriptions.getOnly());
+                            }
+                            return genericTypeDescription;
+                        }
+                    }
+                }
+
+                protected interface TypeVariableProxy {
+
+                    GenericTypeDescription resolve(GenericTypeDescription original);
+
+                    enum Retaining implements TypeVariableProxy {
+
+                        INSTANCE;
+
+                        @Override
+                        public GenericTypeDescription resolve(GenericTypeDescription original) {
+                            return original;
+                        }
+                    }
+
+                    class ForType implements TypeVariableProxy {
+
+                        private final TypeDescription substitute;
+
+                        protected ForType(TypeDescription substitute) {
+                            this.substitute = substitute;
+                        }
+
+                        @Override
+                        public GenericTypeDescription resolve(GenericTypeDescription original) {
+                            return new LazyTypeVariable.OfType(original.getSymbol(), substitute);
+                        }
+                    }
+
+                    class ForMethod implements TypeVariableProxy {
+
+                        protected static TypeVariableProxy of(TypeDescription substitute,
+                                                           Visitor<TypeDescription> substitutor,
+                                                           MethodDescription methodDescription) {
+                            return new ForMethod(substitute,
+                                    returns(rawType(methodDescription.getReturnType().asRawType().accept(substitutor)))
+                                            .and(takesArguments(rawTypes(methodDescription.getParameters().asTypeListGen().asRawTypes().accept(substitutor))))
+                                            .and(methodDescription.isConstructor()
+                                                    ? isConstructor()
+                                                    : ElementMatchers.<MethodDescription>named(methodDescription.getName())));
+                        }
+
+                        private final TypeDescription substitute;
+
+                        private final ElementMatcher<? super MethodDescription> typeVariableMethodMatcher;
+
+                        protected ForMethod(TypeDescription substitute, ElementMatcher<? super MethodDescription> typeVariableMethodMatcher) {
+                            this.substitute = substitute;
+                            this.typeVariableMethodMatcher = typeVariableMethodMatcher;
+                        }
+
+                        @Override
+                        public GenericTypeDescription resolve(GenericTypeDescription original) {
+                            return new LazyTypeVariable.OfMethod(original.getSymbol(), substitute, typeVariableMethodMatcher);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     abstract class ForGenericArray implements GenericTypeDescription {
@@ -216,6 +466,16 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public TypeDescription asRawType() {
             return TypeDescription.ArrayProjection.of(getComponentType().asRawType(), 1);
+        }
+
+        @Override
+        public GenericTypeDescription getSuperTypeGen() {
+            throw new IllegalStateException("A generic array does not imply a super type definition: " + this);
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            throw new IllegalStateException("A generic array does not imply an interface type definition: " + this);
         }
 
         @Override
@@ -343,7 +603,17 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public TypeDescription asRawType() {
-            throw new IllegalStateException("A wildcard cannot present an erasable type: " + this);
+            throw new IllegalStateException("A wildcard does not represent an erasable type: " + this);
+        }
+
+        @Override
+        public GenericTypeDescription getSuperTypeGen() {
+            throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            throw new IllegalStateException("A wildcard does not imply an interface type definition: " + this);
         }
 
         @Override
@@ -501,6 +771,16 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
+        public GenericTypeDescription getSuperTypeGen() {
+            return asRawType().getSuperTypeGen().accept(Visitor.Substitutor.ForTypeVariable.bind(this));
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            return asRawType().getInterfacesGen().accept(Visitor.Substitutor.ForTypeVariable.bind(this));
+        }
+
+        @Override
         public GenericTypeList getUpperBounds() {
             return new GenericTypeList.Empty();
         }
@@ -566,7 +846,6 @@ public interface GenericTypeDescription extends NamedElement {
             return asRawType().equals(genericTypeDescription.asRawType())
                     && !(ownerType == null && otherOwnerType != null) && !(ownerType != null && !ownerType.equals(otherOwnerType))
                     && getParameters().equals(genericTypeDescription.getParameters());
-
         }
 
         @Override
@@ -669,6 +948,16 @@ public interface GenericTypeDescription extends NamedElement {
             return upperBounds.isEmpty()
                     ? TypeDescription.OBJECT
                     : upperBounds.get(0).asRawType();
+        }
+
+        @Override
+        public GenericTypeDescription getSuperTypeGen() {
+            throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            throw new IllegalStateException("A type variable does not imply an interface type definition: " + this);
         }
 
         @Override
@@ -808,6 +1097,16 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public Sort getSort() {
             return resolve().getSort();
+        }
+
+        @Override
+        public GenericTypeList getInterfacesGen() {
+            return resolve().getInterfacesGen();
+        }
+
+        @Override
+        public GenericTypeDescription getSuperTypeGen() {
+            return resolve().getSuperTypeGen();
         }
 
         @Override

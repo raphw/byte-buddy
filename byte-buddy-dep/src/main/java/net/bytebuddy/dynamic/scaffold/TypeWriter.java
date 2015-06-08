@@ -925,7 +925,7 @@ public interface TypeWriter<T> {
             @Override
             public void visit(int version, int modifier, String name, String signature, String superName, String[] interfaces) {
                 ClassFileVersion classFileVersion = new ClassFileVersion(version);
-                if (name.endsWith("." + PackageDescription.PACKAGE_CLASS_NAME)) {
+                if (name.endsWith("/" + PackageDescription.PACKAGE_CLASS_NAME)) {
                     constraint = Constraint.PACKAGE_CLASS;
                 } else if ((modifier & Opcodes.ACC_ANNOTATION) != ModifierReviewable.EMPTY_MASK) {
                     constraint = classFileVersion.isSupportsDefaultMethods()

@@ -29,18 +29,20 @@ public class InlineInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
     private static final String FOO = "foo", BAR = "bar", FOOBAR = FOO + "." + BAR;
 
     @Mock
-    private TypeDescription targetType;
+    private TypeDescription levelType;
 
     @Mock
     private PackageDescription packageDescription;
 
     @Before
     public void setUp() throws Exception {
-        when(targetType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        when(targetType.getDeclaredFields()).thenReturn(new FieldList.Empty());
-        when(targetType.getInterfacesGen()).thenReturn(new GenericTypeList.Empty());
-        when(targetType.getSuperTypeGen()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        when(targetType.getPackage()).thenReturn(packageDescription);
+        when(levelType.getSourceCodeName()).thenReturn(FOO);
+        when(levelType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        when(levelType.getDeclaredFields()).thenReturn(new FieldList.Empty());
+        when(levelType.getInterfacesGen()).thenReturn(new GenericTypeList.Empty());
+        when(levelType.getTypeVariables()).thenReturn(new GenericTypeList.Empty());
+        when(levelType.getSuperTypeGen()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(levelType.getPackage()).thenReturn(packageDescription);
         when(packageDescription.getName()).thenReturn(FOO);
     }
 
@@ -48,7 +50,7 @@ public class InlineInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
     protected InstrumentedType makePlainInstrumentedType() {
         return new InlineInstrumentedType(
                 ClassFileVersion.forCurrentJavaVersion(),
-                targetType,
+                levelType,
                 new TypeList.ForLoadedType(Collections.<Class<?>>singletonList(Serializable.class)),
                 Opcodes.ACC_PUBLIC,
                 new NamingStrategy.Fixed(FOOBAR));

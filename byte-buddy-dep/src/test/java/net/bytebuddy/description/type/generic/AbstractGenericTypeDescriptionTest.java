@@ -11,8 +11,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.sameInstance;
-import static org.junit.Assert.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,12 +47,6 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(genericTypeDescription.getParameters().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.WILDCARD));
-        try {
-            genericTypeDescription.getParameters().getOnly().asRawType();
-            fail();
-        } catch (IllegalStateException ignored) {
-            /* expected */
-        }
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().getOnly().asRawType().represents(String.class), is(true));
@@ -68,26 +60,29 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getUpperBounds().size(), is(0));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testUpperBoundWildcardParameterizedTypeNoErasure() throws Exception {
+        describe(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().asRawType();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUpperBoundWildcardParameterizedTypeNoSuperType() throws Exception {
+        describe(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSuperTypeGen();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUpperBoundWildcardParameterizedTypeNoInterfaces() throws Exception {
+        describe(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getInterfacesGen();
+    }
+
     @Test
     public void testLowerBoundWildcardParameterizedType() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(genericTypeDescription.getParameters().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.WILDCARD));
-        try {
-            genericTypeDescription.getParameters().getOnly().asRawType();
-            fail();
-        } catch (IllegalStateException ignored) {
-            /* expected */
-        }
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
-        try {
-            genericTypeDescription.getParameters().getOnly().asRawType();
-            fail();
-        } catch (IllegalStateException ignored) {
-            /* expected */
-        }
         assertThat(genericTypeDescription.getParameters().getOnly().getLowerBounds().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly().getLowerBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
         assertThat(genericTypeDescription.getParameters().getOnly().getLowerBounds().getOnly().asRawType().represents(String.class), is(true));
@@ -98,6 +93,21 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getSymbol(), nullValue(String.class));
         assertThat(genericTypeDescription.getLowerBounds().size(), is(0));
         assertThat(genericTypeDescription.getUpperBounds().size(), is(0));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLowerBoundWildcardParameterizedTypeNoErasure() throws Exception {
+        describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().asRawType();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLowerBoundWildcardParameterizedTypeNoSuperType() throws Exception {
+        describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSuperTypeGen();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLowerBoundWildcardParameterizedTypeNoInterfaces() throws Exception {
+        describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getInterfacesGen();
     }
 
     @Test
@@ -116,6 +126,16 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getUpperBounds().size(), is(0));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testGenericArrayTypeNoSuperType() throws Exception {
+        describe(GenericArrayType.class.getDeclaredField(FOO)).getSuperTypeGen();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGenericArrayTypeNoInterfaceTypes() throws Exception {
+        describe(GenericArrayType.class.getDeclaredField(FOO)).getInterfacesGen();
+    }
+
     @Test
     public void testTypeVariableType() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(SimpleTypeVariableType.class.getDeclaredField(FOO));
@@ -130,6 +150,16 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
         assertThat(genericTypeDescription.getLowerBounds().size(), is(0));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeVariableTypeNoSuperType() throws Exception {
+        describe(SimpleTypeVariableType.class.getDeclaredField(FOO)).getSuperTypeGen();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeVariableTypeNoInterfaceTypes() throws Exception {
+        describe(SimpleTypeVariableType.class.getDeclaredField(FOO)).getInterfacesGen();
     }
 
     @Test
@@ -325,6 +355,24 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(bar.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
     }
 
+    @Test
+    public void testParameterizedTypeHierarchyResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(Resolution.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(1));
+        GenericTypeDescription superType = genericTypeDescription.getSuperTypeGen();
+        assertThat(superType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Resolution.Base.class)));
+        assertThat(superType.getParameters().size(), is(2));
+        assertThat(superType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(superType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(genericTypeDescription.getInterfacesGen().size(), is(1));
+        GenericTypeDescription interfaceType = genericTypeDescription.getInterfacesGen().getOnly();
+        assertThat(interfaceType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Resolution.BaseInterface.class)));
+        assertThat(interfaceType.getParameters().size(), is(2));
+        assertThat(interfaceType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(interfaceType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+    }
+
     @SuppressWarnings("unused")
     public static class SimpleParameterizedType {
 
@@ -469,6 +517,24 @@ public abstract class AbstractGenericTypeDescriptionTest {
         S foo;
 
         T bar;
+    }
+
+    @SuppressWarnings("unused")
+    public static class Resolution<T> {
+
+        private Resolution<Foo>.Inner<Bar> foo;
+
+        public class Inner<S> extends Base<T, S> implements BaseInterface<T, S> {
+            /* empty */
+        }
+
+        public static class Base<V, W> {
+            /* empty */
+        }
+
+        public static interface BaseInterface<V, W> {
+            /* empty */
+        }
     }
 
     @SuppressWarnings("unused")

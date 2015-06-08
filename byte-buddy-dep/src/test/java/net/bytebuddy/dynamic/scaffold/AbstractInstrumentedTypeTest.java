@@ -14,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -44,6 +45,7 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithField() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
         when(fieldType.asRawType()).thenReturn(fieldType); // REFACTOR
+        when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType);
         when(fieldType.getName()).thenReturn(FOO);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
@@ -97,10 +99,13 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithMethod() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
         TypeDescription parameterType = mock(TypeDescription.class);
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         TypeDescription exceptionType = mock(TypeDescription.class);
         when(exceptionType.asRawType()).thenReturn(exceptionType); // REFACTOR
+        when(exceptionType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(exceptionType);
         when(returnType.getName()).thenReturn(FOO);
         when(parameterType.getName()).thenReturn(QUX);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
@@ -171,6 +176,7 @@ public abstract class AbstractInstrumentedTypeTest {
         TypeDescription returnType = mock(TypeDescription.class);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         when(returnType.getName()).thenReturn(FOO);
+        when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
         makePlainInstrumentedType()
                 .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC)
                 .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC);

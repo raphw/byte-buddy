@@ -2,6 +2,8 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,12 +34,15 @@ public class DynamicTypeBuilderTokenTest {
     @Mock
     private TypeDescription singleType, parameterType, exceptionType;
 
-    private TypeList parameterTypes, exceptionTypes;
+    private GenericTypeList parameterTypes, exceptionTypes;
 
     @Before
     public void setUp() throws Exception {
-        parameterTypes = new TypeList.Explicit(Collections.singletonList(parameterType));
-        exceptionTypes = new TypeList.Explicit(Collections.singletonList(exceptionType));
+        parameterTypes = new GenericTypeList.Explicit(Collections.singletonList(parameterType));
+        exceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(exceptionType));
+        when(singleType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(singleType);
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
+        when(exceptionType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(exceptionType);
     }
 
     @Test
@@ -78,7 +84,7 @@ public class DynamicTypeBuilderTokenTest {
         DynamicType.Builder.AbstractBase.MethodToken equalButParameterType = mock(DynamicType.Builder.AbstractBase.MethodToken.class);
         when(equalButParameterType.getInternalName()).thenReturn(BAR);
         when(equalButParameterType.getReturnType()).thenReturn(singleType);
-        when(equalButParameterType.getParameterTypes()).thenReturn(new TypeList.Empty());
+        when(equalButParameterType.getParameterTypes()).thenReturn(new GenericTypeList.Empty());
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, parameterTypes, exceptionTypes, QUX),
                 not(is(equalButParameterType)));
     }
@@ -87,17 +93,17 @@ public class DynamicTypeBuilderTokenTest {
     @SuppressWarnings("unchecked")
     public void testMethodTokenSubstitute() throws Exception {
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, TargetType.DESCRIPTION, parameterTypes, exceptionTypes, QUX)
-                .resolveReturnType(singleType), is(singleType));
+                .resolveReturnType(singleType), is((GenericTypeDescription) singleType));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, parameterTypes, new TypeList.ForLoadedType(TargetType.class), QUX)
-                .resolveExceptionTypes(singleType), is((List<TypeDescription>) new TypeList.Explicit(Collections.singletonList(singleType))));
+                .resolveExceptionTypes(singleType), is((List<GenericTypeDescription>) new GenericTypeList.Explicit(Collections.singletonList(singleType))));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, new TypeList.ForLoadedType(TargetType.class), exceptionTypes, QUX)
-                .resolveParameterTypes(singleType), is((List<TypeDescription>) new TypeList.Explicit(Collections.singletonList(singleType))));
+                .resolveParameterTypes(singleType), is((List<GenericTypeDescription>) new GenericTypeList.Explicit(Collections.singletonList(singleType))));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, parameterTypes, exceptionTypes, QUX)
-                .resolveReturnType(mock(TypeDescription.class)), is(singleType));
+                .resolveReturnType(mock(TypeDescription.class)), is((GenericTypeDescription) singleType));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, parameterTypes, exceptionTypes, QUX)
-                .resolveExceptionTypes(mock(TypeDescription.class)), is((List<TypeDescription>) exceptionTypes));
+                .resolveExceptionTypes(mock(TypeDescription.class)), is((List<GenericTypeDescription>) exceptionTypes));
         assertThat(new DynamicType.Builder.AbstractBase.MethodToken(FOO, singleType, parameterTypes, exceptionTypes, QUX)
-                .resolveParameterTypes(mock(TypeDescription.class)), is((List<TypeDescription>) parameterTypes));
+                .resolveParameterTypes(mock(TypeDescription.class)), is((List<GenericTypeDescription>) parameterTypes));
     }
 
     @Test
@@ -124,9 +130,9 @@ public class DynamicTypeBuilderTokenTest {
     @Test
     public void testFieldTokenSubstitute() throws Exception {
         assertThat(new DynamicType.Builder.AbstractBase.FieldToken(FOO, TargetType.DESCRIPTION, QUX)
-                .resolveFieldType(singleType), is(singleType));
+                .resolveFieldType(singleType), is((GenericTypeDescription) singleType));
         assertThat(new DynamicType.Builder.AbstractBase.FieldToken(FOO, singleType, QUX)
-                .resolveFieldType(mock(TypeDescription.class)), is(singleType));
+                .resolveFieldType(mock(TypeDescription.class)), is((GenericTypeDescription) singleType));
     }
 
     @Test

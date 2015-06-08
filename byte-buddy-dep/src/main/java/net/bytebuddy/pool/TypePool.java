@@ -3803,7 +3803,7 @@ public interface TypePool {
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     GenericTypeDescription typeVariable = typeVariableSource.findVariable(symbol);
                     if (typeVariable == null) {
-                        throw new IllegalStateException("Cannot resolve type variable " + symbol + " for " + typeVariableSource);
+                        throw new IllegalStateException("Cannot resolve type variable '" + symbol + "' for " + typeVariableSource);
                     } else {
                         return typeVariable;
                     }

@@ -10,6 +10,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
@@ -1847,18 +1848,18 @@ public interface DynamicType {
                  * A description of the return type of the method or a type describing the
                  * {@link net.bytebuddy.dynamic.TargetType} placeholder.
                  */
-                protected final TypeDescription returnType;
+                protected final GenericTypeDescription returnType;
 
                 /**
                  * A list of parameter type descriptions for the method which might be represented by the
                  * {@link net.bytebuddy.dynamic.TargetType} placeholder.
                  */
-                protected final List<TypeDescription> parameterTypes;
+                protected final List<GenericTypeDescription> parameterTypes;
 
                 /**
                  * A list of exception type descriptions for the method.
                  */
-                protected final List<TypeDescription> exceptionTypes;
+                protected final List<GenericTypeDescription> exceptionTypes;
 
                 /**
                  * The modifiers of the method.
@@ -1872,8 +1873,8 @@ public interface DynamicType {
                  * @param exceptionTypes A list of exception types that are declared for the constructor.
                  * @param modifiers      The modifiers of the constructor.
                  */
-                public MethodToken(List<? extends TypeDescription> parameterTypes,
-                                   List<? extends TypeDescription> exceptionTypes,
+                public MethodToken(List<? extends GenericTypeDescription> parameterTypes,
+                                   List<? extends GenericTypeDescription> exceptionTypes,
                                    int modifiers) {
                     this(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                             TypeDescription.VOID,
@@ -1892,14 +1893,14 @@ public interface DynamicType {
                  * @param modifiers      The modifiers of the method.
                  */
                 public MethodToken(String internalName,
-                                   TypeDescription returnType,
-                                   List<? extends TypeDescription> parameterTypes,
-                                   List<? extends TypeDescription> exceptionTypes,
+                                   GenericTypeDescription returnType,
+                                   List<? extends GenericTypeDescription> parameterTypes,
+                                   List<? extends GenericTypeDescription> exceptionTypes,
                                    int modifiers) {
                     this.internalName = internalName;
                     this.returnType = returnType;
-                    this.parameterTypes = Collections.unmodifiableList(new ArrayList<TypeDescription>(parameterTypes));
-                    this.exceptionTypes = Collections.unmodifiableList(new ArrayList<TypeDescription>(exceptionTypes));
+                    this.parameterTypes = Collections.unmodifiableList(new ArrayList<GenericTypeDescription>(parameterTypes));
+                    this.exceptionTypes = Collections.unmodifiableList(new ArrayList<GenericTypeDescription>(exceptionTypes));
                     this.modifiers = modifiers;
                 }
 
@@ -1919,8 +1920,8 @@ public interface DynamicType {
                  * @param instrumentedType The instrumented place which is used for replacement.
                  * @return A type description for the actual return type.
                  */
-                protected TypeDescription resolveReturnType(TypeDescription instrumentedType) {
-                    return TargetType.resolve(returnType, instrumentedType, TargetType.MATCHER);
+                protected GenericTypeDescription resolveReturnType(TypeDescription instrumentedType) {
+                    return TargetType.resolve(returnType, instrumentedType);
                 }
 
                 /**
@@ -1930,8 +1931,8 @@ public interface DynamicType {
                  * @param instrumentedType The instrumented place which is used for replacement.
                  * @return A list of type descriptions for the actual parameter types.
                  */
-                protected List<TypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
-                    return TargetType.resolve(parameterTypes, instrumentedType, TargetType.MATCHER).asRawTypes();
+                protected List<GenericTypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
+                    return TargetType.resolve(parameterTypes, instrumentedType);
                 }
 
                 /**
@@ -1940,8 +1941,8 @@ public interface DynamicType {
                  * @param instrumentedType The instrumented place which is used for replacement.
                  * @return A list of type descriptions for the actual exception types.
                  */
-                protected List<TypeDescription> resolveExceptionTypes(TypeDescription instrumentedType) {
-                    return TargetType.resolve(exceptionTypes, instrumentedType, TargetType.MATCHER).asRawTypes();
+                protected List<GenericTypeDescription> resolveExceptionTypes(TypeDescription instrumentedType) {
+                    return TargetType.resolve(exceptionTypes, instrumentedType);
                 }
 
                 /**
@@ -1958,7 +1959,7 @@ public interface DynamicType {
                  *
                  * @return A description of the return type of this method token.
                  */
-                public TypeDescription getReturnType() {
+                public GenericTypeDescription getReturnType() {
                     return returnType;
                 }
 
@@ -1967,7 +1968,7 @@ public interface DynamicType {
                  *
                  * @return A list of descriptions of the parameter types of this method token.
                  */
-                public List<TypeDescription> getParameterTypes() {
+                public List<GenericTypeDescription> getParameterTypes() {
                     return parameterTypes;
                 }
 
@@ -1976,7 +1977,7 @@ public interface DynamicType {
                  *
                  * @return A list of exception types of this method token.
                  */
-                public List<TypeDescription> getExceptionTypes() {
+                public List<GenericTypeDescription> getExceptionTypes() {
                     return exceptionTypes;
                 }
 
@@ -2057,8 +2058,8 @@ public interface DynamicType {
                  * @param instrumentedType The instrumented place which is used for replacement.
                  * @return A type description for the actual field type.
                  */
-                protected TypeDescription resolveFieldType(TypeDescription instrumentedType) {
-                    return TargetType.resolve(fieldType, instrumentedType, TargetType.MATCHER);
+                protected GenericTypeDescription resolveFieldType(TypeDescription instrumentedType) {
+                    return TargetType.resolve(fieldType, instrumentedType);
                 }
 
                 /**

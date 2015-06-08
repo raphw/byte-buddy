@@ -1,11 +1,14 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,11 +32,22 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
     GenericTypeList asGenericTypes();
 
+    <T extends GenericTypeDescription> List<T> accept(GenericTypeDescription.Visitor<T> visitor);
+
     abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
 
         @Override
         protected TypeList wrap(List<TypeDescription> values) {
             return new Explicit(values);
+        }
+
+        @Override
+        public <T extends GenericTypeDescription> List<T> accept(GenericTypeDescription.Visitor<T> visitor) {
+            List<T> visited = new ArrayList<T>(size());
+            for (TypeDescription typeDescription : this) {
+                visited.add(typeDescription.accept(visitor));
+            }
+            return visited;
         }
     }
 
@@ -168,6 +182,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         @Override
         public GenericTypeList asGenericTypes() {
             return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public <T extends GenericTypeDescription> List<T> accept(GenericTypeDescription.Visitor<T> visitor) {
+            return Collections.emptyList();
         }
     }
 }

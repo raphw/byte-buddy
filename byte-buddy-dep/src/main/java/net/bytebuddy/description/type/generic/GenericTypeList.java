@@ -15,6 +15,8 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
     TypeList asRawTypes();
 
+    GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+
     /**
      * Returns the sum of the size of all types contained in this list.
      *
@@ -27,6 +29,15 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         @Override
         protected GenericTypeList wrap(List<GenericTypeDescription> values) {
             return new Explicit(values);
+        }
+
+        @Override
+        public GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            List<GenericTypeDescription> visited = new ArrayList<GenericTypeDescription>(size());
+            for (GenericTypeDescription genericTypeDescription : this) {
+                visited.add(genericTypeDescription.accept(visitor));
+            }
+            return new Explicit(visited);
         }
 
         @Override
@@ -104,6 +115,11 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         @Override
         public TypeList asRawTypes() {
             return new TypeList.Empty();
+        }
+
+        @Override
+        public GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return new GenericTypeList.Empty();
         }
 
         @Override

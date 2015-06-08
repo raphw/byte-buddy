@@ -339,6 +339,14 @@ public final class ElementMatchers {
         return noneOf(new AnnotationList.ForLoadedAnnotation(nonNull(value)));
     }
 
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> rawType(Class<?> type) {
+        return rawType(is(nonNull(type)));
+    }
+
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> rawType(TypeDescription typeDescription) {
+        return rawType(is(nonNull(typeDescription)));
+    }
+
     /**
      * Converts a matcher for a type description into a matcher for a raw type of the matched generic type against the given matcher. A wildcard
      * type which does not define a raw type results in a negative match.
@@ -348,7 +356,29 @@ public final class ElementMatchers {
      * @return A type matcher for a generic type that matches the matched type's raw type against the given type description matcher.
      */
     public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> rawType(ElementMatcher<? super TypeDescription> matcher) {
-        return new RawTypeMatcher<T>(matcher);
+        return new RawTypeMatcher<T>(nonNull(matcher));
+    }
+
+    public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(Class<?>... type) {
+        return rawTypes(new TypeList.ForLoadedType(type));
+    }
+
+    public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(TypeDescription... typeDescription) {
+        return rawTypes(Arrays.asList(typeDescription));
+    }
+
+    public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(
+            Iterable<? extends TypeDescription> typeDescriptions) {
+        List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
+        for (GenericTypeDescription typeDescription : typeDescriptions) {
+            typeMatchers.add(is(nonNull(typeDescription)));
+        }
+        return rawTypes(new CollectionOneToOneMatcher<TypeDescription>(typeMatchers));
+    }
+
+    public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(
+            ElementMatcher<? super Iterable<? extends TypeDescription>> matcher) {
+        return new CollectionRawTypeMatcher<T>(matcher);
     }
 
     /**
@@ -884,7 +914,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a method description by its declared exceptions.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(
-            ElementMatcher<? super List<? extends TypeDescription>> exceptionMatcher) {
+            ElementMatcher<? super Iterable<? extends TypeDescription>> exceptionMatcher) {
         return new MethodExceptionTypeMatcher<T>(nonNull(exceptionMatcher));
     }
 

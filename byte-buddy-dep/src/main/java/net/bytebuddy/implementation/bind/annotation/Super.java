@@ -105,8 +105,7 @@ public @interface Super {
                                                  AnnotationDescription.Loadable<Super> annotation) {
                 TypeDescription[] constructorParameters = annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class);
                 List<TypeDescription> typeDescriptions = TargetType.resolve(Arrays.asList(constructorParameters),
-                        implementationTarget.getTypeDescription(),
-                        TargetType.MATCHER).asRawTypes();
+                        implementationTarget.getTypeDescription()).asRawTypes();
                 return new TypeProxy.ForSuperMethodByConstructor(parameterType,
                         implementationTarget,
                         typeDescriptions,
