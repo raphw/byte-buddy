@@ -15,7 +15,8 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
     int PACKAGE_MODIFIERS = Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_SYNTHETIC;
 
     /**
-     * Checks if this package description represents a sealed package.
+     * Checks if this package description represents a sealed package. This information is only available
+     * for descriptions that represented loaded packages as packages are sealed by a {@link ClassLoader}.
      *
      * @return {@code true} if this package is sealed.
      */
