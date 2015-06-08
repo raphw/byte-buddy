@@ -2,6 +2,7 @@ package net.bytebuddy.description.type.generic;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bytecode.StackSize;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -66,6 +67,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testUpperBoundWildcardParameterizedTypeNoStackSize() throws Exception {
+        describe(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getStackSize();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoSuperType() throws Exception {
         describe(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSuperTypeGen();
     }
@@ -101,6 +107,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testLowerBoundWildcardParameterizedTypeNoStackSize() throws Exception {
+        describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getStackSize();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoSuperType() throws Exception {
         describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSuperTypeGen();
     }
@@ -117,6 +128,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getComponentType().getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(genericTypeDescription.getComponentType().getParameters().size(), is(1));
         assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.RAW));
+        assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().asRawType().represents(String.class), is(true));
         assertThat(genericTypeDescription.getTypeName(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
@@ -143,6 +155,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getSymbol(), is(T));
         assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
         assertThat(genericTypeDescription.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(genericTypeDescription.getUpperBounds().getOnly().getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getTypeName(), is(SimpleTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.getComponentType(), nullValue(GenericTypeDescription.class));
         assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
@@ -169,6 +182,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getSymbol(), is(T));
         assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
         assertThat(genericTypeDescription.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.STRING));
+        assertThat(genericTypeDescription.getUpperBounds().getOnly().getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getTypeName(), is(SingleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.getComponentType(), nullValue(GenericTypeDescription.class));
         assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
@@ -184,6 +198,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         GenericTypeDescription genericTypeDescription = describe(MultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getUpperBounds().size(), is(3));
         assertThat(genericTypeDescription.getUpperBounds().get(0), is((GenericTypeDescription) TypeDescription.STRING));
         assertThat(genericTypeDescription.getUpperBounds().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
@@ -203,6 +218,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         GenericTypeDescription genericTypeDescription = describe(InterfaceOnlyMultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getUpperBounds().size(), is(2));
         assertThat(genericTypeDescription.getUpperBounds().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(genericTypeDescription.getUpperBounds().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
@@ -222,6 +238,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         GenericTypeDescription genericTypeDescription = describe(ShadowingTypeVariableType.class.getDeclaredMethod(FOO));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(genericTypeDescription.getSymbol(), is(T));
+        assertThat(genericTypeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
         assertThat(genericTypeDescription.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
         assertThat(genericTypeDescription.getTypeName(), is(ShadowingTypeVariableType.class.getDeclaredMethod(FOO).getGenericReturnType().toString()));
@@ -239,6 +256,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         GenericTypeDescription genericTypeDescription = describe(NestedTypeVariableType.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getTypeName(), is(NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getParameters().size(), is(0));
         Type ownerType = ((ParameterizedType) NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
         assertThat(genericTypeDescription.getOwnerType(), is(GenericTypeDescription.Sort.describe(ownerType)));
@@ -253,6 +271,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         GenericTypeDescription genericTypeDescription = describe(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getTypeName(), is(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getParameters().size(), is(0));
         Type ownerType = ((ParameterizedType) NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
         assertThat(genericTypeDescription.getOwnerType(), is(GenericTypeDescription.Sort.describe(ownerType)));
@@ -267,6 +286,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         GenericTypeDescription genericTypeDescription = describe(NestedStaticTypeVariableType.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getTypeName(), is(NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getParameters().size(), is(1));
         assertThat(genericTypeDescription.getParameters().getOnly(), is((GenericTypeDescription) TypeDescription.STRING));
         Type ownerType = ((ParameterizedType) NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();

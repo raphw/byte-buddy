@@ -658,7 +658,7 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public StackSize getStackSize() {
-            return StackSize.SINGLE;
+            throw new IllegalStateException("A wildcard does not imply an operand stack size: " + this);
         }
 
         @Override

@@ -3746,7 +3746,7 @@ public interface TypePool {
                         case 'D':
                             return DOUBLE;
                         default:
-                            throw new IllegalArgumentException("Not a valid descriptor: " + descriptor);
+                            throw new IllegalArgumentException("Not a valid primitive type descriptor: " + descriptor);
                     }
                 }
 
