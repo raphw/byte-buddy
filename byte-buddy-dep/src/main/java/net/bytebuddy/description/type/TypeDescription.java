@@ -700,6 +700,13 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             public void remove() {
                 throw new UnsupportedOperationException("remove");
             }
+
+            @Override
+            public String toString() {
+                return "TypeDescription.AbstractTypeDescription.SuperTypeIterator{" +
+                        "nextType=" + nextType +
+                        '}';
+            }
         }
 
         /**

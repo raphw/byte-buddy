@@ -8,6 +8,7 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.Opcodes;
@@ -19,15 +20,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -409,6 +406,30 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(SampleGenericType.class).getInterfacesGen(), is(new TypeDescription.ForLoadedType(SampleGenericType.class).getInterfacesGen()));
     }
 
+    @Test
+    public void testHierarchyIteration() throws Exception {
+        Iterator<GenericTypeDescription> iterator = describe(Traversal.class).iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Traversal.class)));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void testHierarchyEnds() throws Exception {
+        Iterator<GenericTypeDescription> iterator = describe(Object.class).iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.hasNext(), is(false));
+        iterator.next();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeDescription.AbstractTypeDescription.SuperTypeIterator.class).applyMutable();
+    }
+
     protected interface SampleInterface {
         /* empty */
     }
@@ -470,5 +491,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         public T call() throws Exception {
             return null;
         }
+    }
+
+    public static class Traversal {
+        /* empty */
     }
 }
