@@ -175,7 +175,7 @@ public interface GenericTypeDescription extends NamedElement {
                 public SignatureVisitor onWildcardType(GenericTypeDescription genericTypeDescription) {
                     GenericTypeList upperBounds = genericTypeDescription.getUpperBounds();
                     GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds();
-                    if (upperBounds.getOnly().asRawType().represents(Object.class) && lowerBounds.isEmpty()) {
+                    if (lowerBounds.isEmpty() && upperBounds.getOnly().asRawType().represents(Object.class)) {
                         signatureVisitor.visitTypeArgument();
                     } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
                         lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
@@ -687,26 +687,15 @@ public interface GenericTypeDescription extends NamedElement {
             StringBuilder stringBuilder = new StringBuilder(SYMBOL);
             GenericTypeList bounds = getLowerBounds();
             if (!bounds.isEmpty()) {
-                if (bounds.size() == 1 && bounds.get(0).equals(TypeDescription.OBJECT)) {
-                    return SYMBOL;
-                }
                 stringBuilder.append(" super ");
             } else {
                 bounds = getUpperBounds();
-                if (bounds.isEmpty()) {
+                if (bounds.getOnly().equals(TypeDescription.OBJECT)) {
                     return SYMBOL;
                 }
                 stringBuilder.append(" extends ");
             }
-            boolean multiple = false;
-            for (GenericTypeDescription genericTypeDescription : bounds) {
-                if (multiple) {
-                    stringBuilder.append(" & ");
-                }
-                stringBuilder.append(genericTypeDescription.getTypeName());
-                multiple = true;
-            }
-            return stringBuilder.toString();
+            return stringBuilder.append(bounds.getOnly().getTypeName()).toString();
         }
 
         public static class OfLoadedType extends ForWildcardType {
