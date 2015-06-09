@@ -4482,12 +4482,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeList asTypeList() {
-                    return LazyTypeList.of(typePool, parameterTypeDescriptors);
-                }
-
-                @Override
-                public GenericTypeList asTypeListGen() {
+                public GenericTypeList asTypeList() {
                     return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, LazyMethodDescription.this);
                 }
             }

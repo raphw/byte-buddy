@@ -5,6 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -43,7 +44,10 @@ public class MethodConstantTest {
     private ParameterList parameterList;
 
     @Mock
-    private TypeList typeList;
+    private GenericTypeList typeList;
+
+    @Mock
+    private TypeList rawTypeList;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -61,7 +65,8 @@ public class MethodConstantTest {
         when(methodDescription.getParameters()).thenReturn(parameterList);
         when(parameterList.asTypeList()).thenReturn(typeList);
         when(declaringType.getDescriptor()).thenReturn(BAR);
-        when(typeList.iterator()).thenReturn(Collections.singletonList(parameterType).iterator());
+        when(typeList.asRawTypes()).thenReturn(rawTypeList);
+        when(rawTypeList.iterator()).thenReturn(Collections.singletonList(parameterType).iterator());
         when(parameterType.getDescriptor()).thenReturn(QUX);
         when(fieldDescription.getType()).thenReturn(fieldType);
         when(fieldDescription.isStatic()).thenReturn(true);

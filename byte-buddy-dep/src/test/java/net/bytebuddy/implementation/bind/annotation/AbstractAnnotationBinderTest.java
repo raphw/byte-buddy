@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -54,7 +55,10 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected ParameterList sourceParameterList;
 
     @Mock
-    protected TypeList sourceTypeList;
+    protected GenericTypeList sourceTypeList;
+
+    @Mock
+    protected TypeList rawSourceTypeList;
 
     protected AbstractAnnotationBinderTest(Class<T> annotationType) {
         this.annotationType = annotationType;
@@ -74,6 +78,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         when(source.getParameters()).thenReturn(sourceParameterList);
         when(sourceParameterList.asTypeList()).thenReturn(sourceTypeList);
+        when(sourceTypeList.asRawTypes()).thenReturn(rawSourceTypeList);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(stackManipulation);
         when(implementationTarget.getTypeDescription()).thenReturn(instrumentedType);
         when(implementationTarget.getOriginType()).thenReturn(instrumentedType);

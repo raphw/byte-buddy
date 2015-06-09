@@ -270,7 +270,7 @@ public enum MethodInvocation {
             return MethodInvocation.this.equals(((Invocation) other).getOuterInstance())
                     && methodDescription.getInternalName().equals(that.methodDescription.getInternalName())
                     && methodDescription.getReturnType().asRawType().equals(((Invocation) other).methodDescription.getReturnType().asRawType())
-                    && methodDescription.getParameters().asTypeList().equals(((Invocation) other).methodDescription.getParameters().asTypeList())
+                    && methodDescription.getParameters().asTypeList().asRawTypes().equals(((Invocation) other).methodDescription.getParameters().asTypeList().asRawTypes())
                     && typeDescription.equals(that.typeDescription);
         }
 
@@ -279,7 +279,7 @@ public enum MethodInvocation {
             int result = typeDescription.hashCode();
             result = 31 * result + MethodInvocation.this.hashCode();
             result = 31 * result + methodDescription.getInternalName().hashCode();
-            result = 31 * result + methodDescription.getParameters().asTypeList().hashCode();
+            result = 31 * result + methodDescription.getParameters().asTypeList().asRawTypes().hashCode();
             result = 31 * result + methodDescription.getReturnType().asRawType().hashCode();
             return result;
         }

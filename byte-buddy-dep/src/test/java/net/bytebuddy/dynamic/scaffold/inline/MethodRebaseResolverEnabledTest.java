@@ -3,8 +3,8 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -86,7 +86,8 @@ public class MethodRebaseResolverEnabledTest {
         assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.LegalTrivial.INSTANCE));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
-        assertThat(resolution.getResolvedMethod().getParameters().asTypeList(), is((TypeList) new TypeList.Explicit(Collections.singletonList(parameterType))));
+        assertThat(resolution.getResolvedMethod().getParameters().asTypeList(),
+                is((GenericTypeList) new GenericTypeList.Explicit(Collections.singletonList(parameterType))));
         assertThat(resolution.getResolvedMethod().isSynthetic(), is(true));
     }
 
@@ -97,7 +98,8 @@ public class MethodRebaseResolverEnabledTest {
         assertThat(resolution.getAdditionalArguments(), is((StackManipulation) NullConstant.INSTANCE));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(FOO));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
-        assertThat(resolution.getResolvedMethod().getParameters().asTypeList(), is((TypeList) new TypeList.Explicit(Arrays.asList(parameterType, placeholderType))));
+        assertThat(resolution.getResolvedMethod().getParameters().asTypeList(),
+                is((GenericTypeList) new GenericTypeList.Explicit(Arrays.asList(parameterType, placeholderType))));
         assertThat(resolution.getResolvedMethod().isSynthetic(), is(true));
     }
 

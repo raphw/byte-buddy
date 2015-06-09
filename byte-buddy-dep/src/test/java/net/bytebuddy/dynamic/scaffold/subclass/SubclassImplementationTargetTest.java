@@ -4,7 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
@@ -39,7 +39,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private ParameterList parameterList;
 
     @Mock
-    private TypeList parameterTypes;
+    private GenericTypeList parameterTypes;
 
     @Override
     @Before

@@ -93,7 +93,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public int getOffset() {
-            TypeList parameterType = getDeclaringMethod().getParameters().asTypeList();
+            TypeList parameterType = getDeclaringMethod().getParameters().asTypeList().asRawTypes();
             int offset = getDeclaringMethod().isStatic()
                     ? StackSize.ZERO.getSize()
                     : StackSize.SINGLE.getSize();

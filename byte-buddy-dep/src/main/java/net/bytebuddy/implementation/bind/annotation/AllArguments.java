@@ -142,8 +142,8 @@ public @interface AllArguments {
             int offset = source.isStatic() || includeThis ? 0 : 1;
             boolean dynamicallyTyped = RuntimeType.Verifier.check(target);
             for (TypeDescription sourceParameter : includeThis
-                    ? join(implementationTarget.getTypeDescription(), source.getParameters().asTypeList())
-                    : source.getParameters().asTypeList()) {
+                    ? join(implementationTarget.getTypeDescription(), source.getParameters().asTypeList().asRawTypes())
+                    : source.getParameters().asTypeList().asRawTypes()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.forType(sourceParameter).loadOffset(offset),
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), dynamicallyTyped));

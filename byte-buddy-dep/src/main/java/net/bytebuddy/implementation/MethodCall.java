@@ -2278,7 +2278,7 @@ public class MethodCall implements Implementation {
                           Context implementationContext,
                           MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
-            TypeList methodParameters = invokedMethod.getParameters().asTypeList();
+            TypeList methodParameters = invokedMethod.getParameters().asTypeList().asRawTypes();
             if (methodParameters.size() != argumentLoaders.size()) {
                 throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
             }

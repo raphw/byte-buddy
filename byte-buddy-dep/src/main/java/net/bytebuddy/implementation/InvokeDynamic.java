@@ -1045,8 +1045,8 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public List<TypeDescription> getParameterTypes() {
                     return methodDescription.isStatic()
-                            ? methodDescription.getParameters().asTypeList()
-                            : new TypeList.Explicit(join(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList()));
+                            ? methodDescription.getParameters().asTypeList().asRawTypes()
+                            : new TypeList.Explicit(join(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asRawTypes()));
                 }
 
                 @Override
@@ -1116,8 +1116,8 @@ public class InvokeDynamic implements Implementation {
                                         boolean dynamicallyTyped) {
                     return new Resolved.Simple(MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             instrumentedMethod.isStatic()
-                                    ? instrumentedMethod.getParameters().asTypeList()
-                                    : join(instrumentedMethod.getDeclaringType(), instrumentedMethod.getParameters().asTypeList()));
+                                    ? instrumentedMethod.getParameters().asTypeList().asRawTypes()
+                                    : join(instrumentedMethod.getDeclaringType(), instrumentedMethod.getParameters().asTypeList().asRawTypes()));
                 }
 
                 @Override
@@ -1146,7 +1146,7 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameters().asTypeList());
+                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameters().asTypeList().asRawTypes());
                 }
 
                 @Override

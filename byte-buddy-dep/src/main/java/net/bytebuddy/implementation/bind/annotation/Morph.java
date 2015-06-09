@@ -701,7 +701,7 @@ public @interface Morph {
                         StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadOffset(1);
                         StackManipulation[] parameterLoading = new StackManipulation[accessorMethod.getParameters().size()];
                         int index = 0;
-                        for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList()) {
+                        for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList().asRawTypes()) {
                             parameterLoading[index] = new StackManipulation.Compound(arrayReference,
                                     IntegerConstant.forValue(index),
                                     ArrayAccess.REFERENCE.load(),

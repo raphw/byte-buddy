@@ -47,7 +47,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                 : superType.getDeclaredMethods().filter(isConstructor());
         this.superConstructors = new HashMap<TypeList, MethodDescription>(superConstructors.size());
         for (MethodDescription superConstructor : superConstructors) {
-            this.superConstructors.put(superConstructor.getParameters().asTypeList(), superConstructor);
+            this.superConstructors.put(superConstructor.getParameters().asTypeList().asRawTypes(), superConstructor);
         }
         this.originTypeIdentifier = originTypeIdentifier;
     }
@@ -55,7 +55,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     @Override
     protected Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         if (methodDescription.isConstructor()) {
-            methodDescription = this.superConstructors.get(methodDescription.getParameters().asTypeList());
+            methodDescription = this.superConstructors.get(methodDescription.getParameters().asTypeList().asRawTypes());
             if (methodDescription == null) {
                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }

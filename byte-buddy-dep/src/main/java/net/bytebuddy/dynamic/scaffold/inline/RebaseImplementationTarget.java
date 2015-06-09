@@ -170,14 +170,14 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
             return isValid() == specialMethodInvocation.isValid()
                     && instrumentedType.equals(specialMethodInvocation.getTypeDescription())
                     && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
-                    && methodDescription.getParameters().asTypeList().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList())
+                    && methodDescription.getParameters().asTypeList().asRawTypes().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList().asRawTypes())
                     && methodDescription.getReturnType().asRawType().equals(specialMethodInvocation.getMethodDescription().getReturnType().asRawType());
         }
 
         @Override
         public int hashCode() {
             int result = methodDescription.getInternalName().hashCode();
-            result = 31 * result + methodDescription.getParameters().asTypeList().hashCode();
+            result = 31 * result + methodDescription.getParameters().asTypeList().asRawTypes().hashCode();
             result = 31 * result + methodDescription.getReturnType().asRawType().hashCode();
             result = 31 * result + instrumentedType.hashCode();
             return result;

@@ -66,7 +66,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     private void testLegalStrictBinding(boolean dynamicallyTyped, Annotation... targetAnnotation) throws Exception {
         when(annotation.value()).thenReturn(AllArguments.Assignment.STRICT);
         when(stackManipulation.isValid()).thenReturn(true);
-        when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
@@ -90,7 +90,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(1);
         when(annotation.value()).thenReturn(AllArguments.Assignment.STRICT);
         when(stackManipulation.isValid()).thenReturn(false);
-        when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
@@ -113,7 +113,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(1);
         when(annotation.value()).thenReturn(AllArguments.Assignment.SLACK);
         when(stackManipulation.isValid()).thenReturn(false);
-        when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);

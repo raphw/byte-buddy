@@ -289,7 +289,7 @@ public @interface Pipe {
              * given method.
              */
             private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
-                TypeList parameterTypes = methodDescription.getParameters().asTypeList();
+                TypeList parameterTypes = methodDescription.getParameters().asTypeList().asRawTypes();
                 LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>(parameterTypes.size());
                 int currentIndex = 0;
                 for (TypeDescription parameterType : parameterTypes) {

@@ -94,11 +94,11 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testParameterTypes() throws Exception {
-        assertThat(describe(firstMethod).getParameters().asTypeList(), is((TypeList) new TypeList.ForLoadedType(firstMethod.getParameterTypes())));
-        assertThat(describe(secondMethod).getParameters().asTypeList(), is((TypeList) new TypeList.ForLoadedType(secondMethod.getParameterTypes())));
-        assertThat(describe(thirdMethod).getParameters().asTypeList(), is((TypeList) new TypeList.ForLoadedType(thirdMethod.getParameterTypes())));
-        assertThat(describe(firstConstructor).getParameters().asTypeList(), is((TypeList) new TypeList.ForLoadedType(firstConstructor.getParameterTypes())));
-        assertThat(describe(secondConstructor).getParameters().asTypeList(), is((TypeList) new TypeList.ForLoadedType(secondConstructor.getParameterTypes())));
+        assertThat(describe(firstMethod).getParameters().asTypeList(), is((GenericTypeList) new GenericTypeList.ForLoadedType(firstMethod.getParameterTypes())));
+        assertThat(describe(secondMethod).getParameters().asTypeList(), is((GenericTypeList) new GenericTypeList.ForLoadedType(secondMethod.getParameterTypes())));
+        assertThat(describe(thirdMethod).getParameters().asTypeList(), is((GenericTypeList) new GenericTypeList.ForLoadedType(thirdMethod.getParameterTypes())));
+        assertThat(describe(firstConstructor).getParameters().asTypeList(), is((GenericTypeList) new GenericTypeList.ForLoadedType(firstConstructor.getParameterTypes())));
+        assertThat(describe(secondConstructor).getParameters().asTypeList(), is((GenericTypeList) new GenericTypeList.ForLoadedType(secondConstructor.getParameterTypes())));
     }
 
     @Test
@@ -559,7 +559,7 @@ public abstract class AbstractMethodDescriptionTest {
     @Test
     public void testGenericTypes() throws Exception {
         assertThat(describe(genericMethod).getReturnType(), is(GenericTypeDescription.Sort.describe(genericMethod.getGenericReturnType())));
-        assertThat(describe(genericMethod).getParameters().asTypeListGen(),
+        assertThat(describe(genericMethod).getParameters().asTypeList(),
                 is((GenericTypeList) new GenericTypeList.ForLoadedType(genericMethod.getGenericParameterTypes())));
         assertThat(describe(genericMethod).getExceptionTypes(),
                 is((GenericTypeList) new GenericTypeList.ForLoadedType(genericMethod.getGenericExceptionTypes())));

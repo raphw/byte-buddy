@@ -114,7 +114,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return A list of stack manipulation that loads all arguments of an instrumented method.
      */
     private List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
-        TypeList parameterTypes = instrumentedMethod.getParameters().asTypeList();
+        TypeList parameterTypes = instrumentedMethod.getParameters().asTypeList().asRawTypes();
         List<StackManipulation> instruction = new ArrayList<StackManipulation>(parameterTypes.size());
         TypeDescription objectType = TypeDescription.OBJECT;
         int currentIndex = 1;

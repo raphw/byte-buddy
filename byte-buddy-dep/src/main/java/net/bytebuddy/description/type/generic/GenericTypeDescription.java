@@ -430,8 +430,8 @@ public interface GenericTypeDescription extends NamedElement {
                                                            Visitor<TypeDescription> substitutor,
                                                            MethodDescription methodDescription) {
                             return new ForMethod(substitute,
-                                    returns(rawType(methodDescription.getReturnType().asRawType().accept(substitutor)))
-                                            .and(takesArguments(rawTypes(methodDescription.getParameters().asTypeListGen().asRawTypes().accept(substitutor))))
+                                    returns(methodDescription.getReturnType().asRawType().accept(substitutor))
+                                            .and(takesArguments(methodDescription.getParameters().asTypeList().asRawTypes().accept(substitutor)))
                                             .and(methodDescription.isConstructor()
                                                     ? isConstructor()
                                                     : ElementMatchers.<MethodDescription>named(methodDescription.getName())));

@@ -20,14 +20,7 @@ import java.util.List;
  */
 public interface ParameterList extends FilterableList<ParameterDescription, ParameterList> {
 
-    /**
-     * Transforms the list of parameters into a list of type descriptions.
-     *
-     * @return A list of type descriptions.
-     */
-    TypeList asTypeList();
-
-    GenericTypeList asTypeListGen();
+    GenericTypeList asTypeList();
 
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
@@ -127,17 +120,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public TypeList asTypeList() {
-            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameter.length);
-            for (Object aParameter : parameter) {
-                Class<?> type = (Class<?>) ParameterDescription.ForLoadedParameter.GET_TYPE.invoke(aParameter);
-                typeDescriptions.add(new TypeDescription.ForLoadedType(type));
-            }
-            return new TypeList.Explicit(typeDescriptions);
-        }
-
-        @Override
-        public GenericTypeList asTypeListGen() {
+        public GenericTypeList asTypeList() {
             List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameter.length);
             for (Object aParameter : parameter) {
                 types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter(aParameter));
@@ -198,12 +181,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
 
             @Override
-            public TypeList asTypeList() {
-                return new TypeList.ForLoadedType(parameterType);
-            }
-
-            @Override
-            public GenericTypeList asTypeListGen() {
+            public GenericTypeList asTypeList() {
                 List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
                     types.add(new GenericTypeDescription.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType[index]));
@@ -260,11 +238,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
 
             @Override
-            public TypeList asTypeList() {
-                return new TypeList.ForLoadedType(parameterType);
-            }
-            @Override
-            public GenericTypeList asTypeListGen() {
+            public GenericTypeList asTypeList() {
                 List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
                     types.add(new GenericTypeDescription.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType[index]));
@@ -326,16 +300,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public TypeList asTypeList() {
-            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterDescriptions.size());
-            for (ParameterDescription parameterDescription : parameterDescriptions) {
-                typeDescriptions.add(parameterDescription.getType().asRawType());
-            }
-            return new TypeList.Explicit(typeDescriptions);
-        }
-
-        @Override
-        public GenericTypeList asTypeListGen() {
+        public GenericTypeList asTypeList() {
             List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterDescriptions.size());
             for (ParameterDescription parameterDescription : parameterDescriptions) {
                 types.add(parameterDescription.getType());
@@ -360,12 +325,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public TypeList asTypeList() {
-            return new TypeList.Empty();
-        }
-
-        @Override
-        public GenericTypeList asTypeListGen() {
+        public GenericTypeList asTypeList() {
             return new GenericTypeList.Empty();
         }
     }

@@ -386,7 +386,7 @@ public interface MethodLookupEngine {
 
         @Override
         public ParameterList getParameters() {
-            return ParameterList.Explicit.latent(this, methodDescriptions.get(ANY).getParameters().asTypeList());
+            return ParameterList.Explicit.latent(this, methodDescriptions.get(ANY).getParameters().asTypeList().asRawTypes());
         }
 
         @Override

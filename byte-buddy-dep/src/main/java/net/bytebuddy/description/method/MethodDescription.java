@@ -281,7 +281,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public String getDescriptor() {
             StringBuilder descriptor = new StringBuilder("(");
-            for (TypeDescription parameterType : getParameters().asTypeList()) {
+            for (TypeDescription parameterType : getParameters().asTypeList().asRawTypes()) {
                 descriptor.append(parameterType.getDescriptor());
             }
             return descriptor.append(")").append(getReturnType().asRawType().getDescriptor()).toString();
@@ -302,7 +302,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 }
                 generic = true;
             }
-            for (GenericTypeDescription parameterType : getParameters().asTypeListGen()) {
+            for (GenericTypeDescription parameterType : getParameters().asTypeList()) {
                 parameterType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitParameterType()));
                 generic = generic || !parameterType.getSort().isRawType();
             }
@@ -376,7 +376,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType()))) {
                 return false;
             }
-            TypeList parameterTypes = getParameters().asTypeList();
+            TypeList parameterTypes = getParameters().asTypeList().asRawTypes();
             switch (parameterTypes.size()) {
                 case 0:
                     return false;
@@ -424,10 +424,10 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
                 }
             }
-            List<TypeDescription> parameterTypes = getParameters().asTypeList();
+            TypeList parameterTypes = getParameters().asTypeList().asRawTypes();
             // The following assumes that the bootstrap method is a valid one, as checked above.
             if (parameterTypes.size() < 4) {
-                return arguments.size() == 0 || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
+                return arguments.isEmpty() || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
             } else {
                 int index = 4;
                 Iterator<?> argumentIterator = arguments.iterator();
@@ -506,7 +506,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
                     && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
                     && getReturnType().asRawType().equals(((MethodDescription) other).getReturnType().asRawType())
-                    && getParameters().asTypeList().equals(((MethodDescription) other).getParameters().asTypeList());
+                    && getParameters().asTypeList().asRawTypes().equals(((MethodDescription) other).getParameters().asTypeList().asRawTypes());
         }
 
         @Override
@@ -514,7 +514,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             int hashCode = getDeclaringType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
             hashCode = 31 * hashCode + getReturnType().asRawType().hashCode();
-            return 31 * hashCode + getParameters().asTypeList().hashCode();
+            return 31 * hashCode + getParameters().asTypeList().asRawTypes().hashCode();
         }
 
         @Override
@@ -530,7 +530,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
-            for (GenericTypeDescription typeDescription : getParameters().asTypeListGen()) {
+            for (GenericTypeDescription typeDescription : getParameters().asTypeList()) {
                 if (!first) {
                     stringBuilder.append(",");
                 } else {
@@ -568,7 +568,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
-            for (TypeDescription typeDescription : getParameters().asTypeList()) {
+            for (TypeDescription typeDescription : getParameters().asTypeList().asRawTypes()) {
                 if (!first) {
                     stringBuilder.append(",");
                 } else {

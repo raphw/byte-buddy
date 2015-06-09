@@ -156,9 +156,8 @@ public enum MethodVariableAccess {
         } else {
             offset = StackSize.ZERO.getSize();
         }
-        for (TypeDescription parameterType : methodDescription.getParameters().asTypeList()) {
-            stackManipulation[parameterIndex++] = typeCastingHandler
-                    .wrapNext(forType(parameterType).loadOffset(offset), parameterType);
+        for (TypeDescription parameterType : methodDescription.getParameters().asTypeList().asRawTypes()) {
+            stackManipulation[parameterIndex++] = typeCastingHandler.wrapNext(forType(parameterType).loadOffset(offset), parameterType);
             offset += parameterType.getStackSize().getSize();
         }
         return new StackManipulation.Compound(stackManipulation);
@@ -239,7 +238,7 @@ public enum MethodVariableAccess {
              * @param targetMethod The target of the bridge method.
              */
             public ForBridgeTarget(MethodDescription targetMethod) {
-                typeIterator = targetMethod.getParameters().asTypeList().iterator();
+                typeIterator = targetMethod.getParameters().asTypeList().asRawTypes().iterator();
             }
 
             @Override

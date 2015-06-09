@@ -1648,7 +1648,7 @@ public interface DynamicType {
                 }
                 return defineMethod(methodDescription.getName(),
                         methodDescription.getReturnType(),
-                        methodDescription.getParameters().asTypeListGen(),
+                        methodDescription.getParameters().asTypeList(),
                         methodDescription.getModifiers()).throwing(methodDescription.getExceptionTypes());
             }
 
@@ -1692,7 +1692,7 @@ public interface DynamicType {
                 if (!methodDescription.isConstructor()) {
                     throw new IllegalArgumentException("Not a constructor: " + methodDescription);
                 }
-                return defineConstructor(methodDescription.getParameters().asTypeListGen(), methodDescription.getModifiers())
+                return defineConstructor(methodDescription.getParameters().asTypeList(), methodDescription.getModifiers())
                         .throwing(methodDescription.getExceptionTypes());
             }
 

@@ -534,7 +534,8 @@ public class ElementMatchersTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testDeclaresExceptionForNonThrowableType() throws Exception {
-        assertThat(ElementMatchers.declaresException((Class) Object.class).matches(new Object()), is(false));
+        ElementMatcher<Object> elementMatcher = (ElementMatcher) ElementMatchers.declaresException((Class) Object.class);
+        assertThat(elementMatcher.matches(new Object()), is(false));
     }
 
     @Test

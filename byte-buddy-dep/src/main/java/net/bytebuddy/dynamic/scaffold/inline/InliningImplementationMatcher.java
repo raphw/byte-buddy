@@ -51,7 +51,7 @@ public class InliningImplementationMatcher implements LatentMethodMatcher {
                     ? isConstructor()
                     : ElementMatchers.<MethodDescription>named(methodDescription.getName());
             signature = signature.and(returns(methodDescription.getReturnType().asRawType()));
-            signature = signature.and(takesArguments(methodDescription.getParameters().asTypeList()));
+            signature = signature.and(takesArguments(methodDescription.getParameters().asTypeList().asRawTypes()));
             predefinedMethodSignatures = predefinedMethodSignatures.or(signature);
         }
         return new InliningImplementationMatcher(ignoredMethods, predefinedMethodSignatures);
