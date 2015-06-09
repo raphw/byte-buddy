@@ -97,7 +97,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(),
+        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(),
                 methodDescription.getReturnType(),
                 dynamicallyTyped);
         if (!stackManipulation.isValid()) {
@@ -128,7 +128,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
         StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType(),
-                fieldDescription.getFieldType(),
+                fieldDescription.getType().asRawType(),
                 dynamicallyTyped);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
@@ -140,7 +140,7 @@ public abstract class FieldAccessor implements Implementation {
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
-                        MethodVariableAccess.forType(fieldDescription.getFieldType())
+                        MethodVariableAccess.forType(fieldDescription.getType().asRawType())
                                 .loadOffset(methodDescription.getParameters().get(0).getOffset()),
                         stackManipulation,
                         FieldAccess.forField(fieldDescription).putter()

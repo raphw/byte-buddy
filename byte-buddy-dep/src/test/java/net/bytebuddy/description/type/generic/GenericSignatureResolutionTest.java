@@ -7,9 +7,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
-import org.objectweb.asm.util.ASMifier;
 
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -44,7 +42,7 @@ public class GenericSignatureResolutionTest {
         Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         FieldDescription createdField = new FieldDescription.ForLoadedField(type.getDeclaredField(FOO));
         FieldDescription originalField = new FieldDescription.ForLoadedField(GenericField.class.getDeclaredField(FOO));
-        assertThat(createdField.getFieldTypeGen(), is(originalField.getFieldTypeGen()));
+        assertThat(createdField.getType(), is(originalField.getType()));
     }
 
     @Test

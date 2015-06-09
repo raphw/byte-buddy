@@ -42,8 +42,8 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testFieldType() throws Exception {
-        assertThat(describe(first).getFieldType(), is((TypeDescription) new TypeDescription.ForLoadedType(first.getType())));
-        assertThat(describe(second).getFieldType(), is((TypeDescription) new TypeDescription.ForLoadedType(second.getType())));
+        assertThat(describe(first).getType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(first.getType())));
+        assertThat(describe(second).getType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(second.getType())));
     }
 
     @Test
@@ -171,7 +171,8 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testGenericTypes() throws Exception {
-        assertThat(describe(genericField).getFieldTypeGen(), is(GenericTypeDescription.Sort.describe(genericField.getGenericType())));
+        assertThat(describe(genericField).getType(), is(GenericTypeDescription.Sort.describe(genericField.getGenericType())));
+        assertThat(describe(genericField).getType().asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(genericField.getType())));
     }
 
     @Test

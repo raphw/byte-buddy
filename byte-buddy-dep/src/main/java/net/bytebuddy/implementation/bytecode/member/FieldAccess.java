@@ -194,7 +194,7 @@ public enum FieldAccess {
                         fieldDescription.getDeclaringType().getInternalName(),
                         fieldDescription.getInternalName(),
                         fieldDescription.getDescriptor());
-                return resolveSize(fieldDescription.getFieldType().getStackSize());
+                return resolveSize(fieldDescription.getType().getStackSize());
             }
 
             /**

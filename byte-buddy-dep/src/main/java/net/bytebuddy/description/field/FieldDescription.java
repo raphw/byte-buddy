@@ -16,24 +16,12 @@ import java.lang.reflect.Modifier;
  */
 public interface FieldDescription extends ByteCodeElement, NamedElement.WithGenericName {
 
-    /**
-     * Returns a description of the type of this field.
-     *
-     * @return A type description of this field.
-     */
-    TypeDescription getFieldType();
-
-    GenericTypeDescription getFieldTypeGen();
+    GenericTypeDescription getType();
 
     /**
      * An abstract base implementation of a field description.
      */
     abstract class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
-
-        @Override
-        public TypeDescription getFieldType() {
-            return getFieldTypeGen().asRawType();
-        }
 
         @Override
         public String getInternalName() {
@@ -47,12 +35,12 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
 
         @Override
         public String getDescriptor() {
-            return getFieldType().getDescriptor();
+            return getType().asRawType().getDescriptor();
         }
 
         @Override
         public String getGenericSignature() {
-            GenericTypeDescription fieldType = getFieldTypeGen();
+            GenericTypeDescription fieldType = getType();
             return fieldType.getSort().isRawType()
                     ? null
                     : fieldType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(new SignatureWriter())).toString();
@@ -85,7 +73,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
             if (getModifiers() != EMPTY_MASK) {
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
-            stringBuilder.append(getFieldTypeGen().getSourceCodeName()).append(" ");
+            stringBuilder.append(getType().getSourceCodeName()).append(" ");
             stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
@@ -96,7 +84,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
             if (getModifiers() != EMPTY_MASK) {
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
-            stringBuilder.append(getFieldType().getSourceCodeName()).append(" ");
+            stringBuilder.append(getType().asRawType().getSourceCodeName()).append(" ");
             stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
@@ -122,7 +110,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public GenericTypeDescription getFieldTypeGen() {
+        public GenericTypeDescription getType() {
             return new GenericTypeDescription.LazyProjection.OfLoadedFieldType(field);
         }
 
@@ -197,7 +185,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public GenericTypeDescription getFieldTypeGen() {
+        public GenericTypeDescription getType() {
             return fieldType;
         }
 

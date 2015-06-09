@@ -716,7 +716,7 @@ public interface Implementation {
                             randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
-                            fieldDescription.getFieldType(),
+                            fieldDescription.getType().asRawType(),
                             Collections.<TypeDescription>emptyList(),
                             resolveModifier(fieldDescription.isStatic()),
                             Collections.<TypeDescription>emptyList());
@@ -746,7 +746,7 @@ public interface Implementation {
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
                             TypeDescription.VOID,
-                            Collections.singletonList(fieldDescription.getFieldType()),
+                            Collections.singletonList(fieldDescription.getType().asRawType()),
                             resolveModifier(fieldDescription.isStatic()),
                             Collections.<TypeDescription>emptyList());
                     registerSetter(fieldDescription, accessorMethod);
@@ -1039,7 +1039,7 @@ public interface Implementation {
                                     ? StackManipulation.LegalTrivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter(),
-                            MethodReturn.returning(fieldDescription.getFieldType())
+                            MethodReturn.returning(fieldDescription.getType().asRawType())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }

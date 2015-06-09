@@ -183,7 +183,7 @@ public interface JavaInstance {
          * @return The type of a setter for the given field.
          */
         public static MethodType ofSetter(FieldDescription fieldDescription) {
-            return new MethodType(TypeDescription.VOID, Collections.singletonList(fieldDescription.getFieldType()));
+            return new MethodType(TypeDescription.VOID, Collections.singletonList(fieldDescription.getType().asRawType()));
         }
 
         /**
@@ -203,7 +203,7 @@ public interface JavaInstance {
          * @return The type of a getter for the given field.
          */
         public static MethodType ofGetter(FieldDescription fieldDescription) {
-            return new MethodType(fieldDescription.getFieldType(), Collections.<TypeDescription>emptyList());
+            return new MethodType(fieldDescription.getType().asRawType(), Collections.<TypeDescription>emptyList());
         }
 
         /**
@@ -576,7 +576,7 @@ public interface JavaInstance {
             return new MethodHandle(HandleType.ofGetter(fieldDescription),
                     fieldDescription.getDeclaringType(),
                     fieldDescription.getInternalName(),
-                    fieldDescription.getFieldType(),
+                    fieldDescription.getType().asRawType(),
                     Collections.<TypeDescription>emptyList());
         }
 
@@ -601,7 +601,7 @@ public interface JavaInstance {
                     fieldDescription.getDeclaringType(),
                     fieldDescription.getInternalName(),
                     TypeDescription.VOID,
-                    Collections.singletonList(fieldDescription.getFieldType()));
+                    Collections.singletonList(fieldDescription.getType().asRawType()));
         }
 
         @Override

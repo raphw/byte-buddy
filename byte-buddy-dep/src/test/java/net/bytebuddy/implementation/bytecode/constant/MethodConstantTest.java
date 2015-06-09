@@ -63,7 +63,7 @@ public class MethodConstantTest {
         when(declaringType.getDescriptor()).thenReturn(BAR);
         when(typeList.iterator()).thenReturn(Collections.singletonList(parameterType).iterator());
         when(parameterType.getDescriptor()).thenReturn(QUX);
-        when(fieldDescription.getFieldType()).thenReturn(fieldType);
+        when(fieldDescription.getType()).thenReturn(fieldType);
         when(fieldDescription.isStatic()).thenReturn(true);
         when(fieldType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);

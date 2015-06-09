@@ -1589,12 +1589,12 @@ public class InvokeDynamic implements Implementation {
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
-                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(), typeDescription, dynamicallyTyped);
+                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(), typeDescription, dynamicallyTyped);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + typeDescription);
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
-                            stackManipulation), fieldDescription.getFieldType());
+                            stackManipulation), fieldDescription.getType().asRawType());
                 }
 
                 @Override
@@ -1743,7 +1743,7 @@ public class InvokeDynamic implements Implementation {
                                     ? StackManipulation.LegalTrivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter()
-                    ), fieldDescription.getFieldType());
+                    ), fieldDescription.getType().asRawType());
                 }
 
                 @Override

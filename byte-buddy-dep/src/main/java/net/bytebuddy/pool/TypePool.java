@@ -4255,7 +4255,7 @@ public interface TypePool {
             }
 
             @Override
-            public GenericTypeDescription getFieldTypeGen() {
+            public GenericTypeDescription getType() {
                 return signatureResolution.resolveFieldType(fieldTypeDescriptor, typePool, this);
             }
 

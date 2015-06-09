@@ -399,13 +399,13 @@ public interface InstrumentedType extends TypeDescription {
 
             private FieldToken(GenericTypeDescription.Visitor<GenericTypeDescription> substitutor, FieldDescription fieldDescription) {
                 name = fieldDescription.getName();
-                fieldType = fieldDescription.getFieldTypeGen().accept(substitutor);
+                fieldType = fieldDescription.getType().accept(substitutor);
                 modifiers = fieldDescription.getModifiers();
                 declaredAnnotations = fieldDescription.getDeclaredAnnotations();
             }
 
             @Override
-            public GenericTypeDescription getFieldTypeGen() {
+            public GenericTypeDescription getType() {
                 return fieldType;
             }
 

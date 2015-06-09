@@ -2399,7 +2399,7 @@ public class ByteBuddy {
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
                 MethodDescription cloneArrayMethod = new MethodDescription.Latent(CLONE_METHOD_NAME,
-                        valuesField.getFieldType(),
+                        valuesField.getType().asRawType(),
                         TypeDescription.OBJECT,
                         Collections.<TypeDescription>emptyList(),
                         Opcodes.ACC_PUBLIC,
@@ -2407,7 +2407,7 @@ public class ByteBuddy {
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),
                         MethodInvocation.invoke(cloneArrayMethod),
-                        TypeCasting.to(valuesField.getFieldType()),
+                        TypeCasting.to(valuesField.getType().asRawType()),
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }

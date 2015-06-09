@@ -10,7 +10,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionTest {
 
@@ -37,7 +36,7 @@ public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionT
                 .getDeclaredFields()
                 .filter(is(field))
                 .getOnly()
-                .getFieldTypeGen();
+                .getType();
     }
 
     @Override

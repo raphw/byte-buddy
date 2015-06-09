@@ -1248,7 +1248,7 @@ public class MethodCall implements Implementation {
                                 ? StackManipulation.LegalTrivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(fieldDescription).getter(),
-                        assigner.assign(fieldDescription.getFieldType(), targetType, dynamicallyTyped)
+                        assigner.assign(fieldDescription.getType().asRawType(), targetType, dynamicallyTyped)
                 );
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + targetType);

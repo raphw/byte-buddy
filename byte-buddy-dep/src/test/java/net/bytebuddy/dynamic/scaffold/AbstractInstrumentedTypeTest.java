@@ -52,7 +52,7 @@ public abstract class AbstractInstrumentedTypeTest {
         instrumentedType = instrumentedType.withField(BAR, fieldType, Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getFieldType(), is(fieldType));
+        assertThat(fieldDescription.getType(), is((GenericTypeDescription) fieldType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
         assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
@@ -65,7 +65,7 @@ public abstract class AbstractInstrumentedTypeTest {
         instrumentedType = instrumentedType.withField(BAR, instrumentedType, Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getFieldType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getType(), sameInstance((GenericTypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
         assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
@@ -78,8 +78,9 @@ public abstract class AbstractInstrumentedTypeTest {
         instrumentedType = instrumentedType.withField(BAR, TypeDescription.ArrayProjection.of(instrumentedType, 1), Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getFieldType().isArray(), is(true));
-        assertThat(fieldDescription.getFieldType().getComponentType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getType().getSort(), is(GenericTypeDescription.Sort.RAW));
+        assertThat(fieldDescription.getType().asRawType().isArray(), is(true));
+        assertThat(fieldDescription.getType().asRawType().getComponentType(), sameInstance((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
         assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));

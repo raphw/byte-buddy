@@ -448,7 +448,7 @@ public @interface Pipe {
                         for (FieldDescription fieldDescription : fieldList) {
                             fieldLoading[index] = new StackManipulation.Compound(
                                     thisReference,
-                                    MethodVariableAccess.forType(fieldDescription.getFieldType())
+                                    MethodVariableAccess.forType(fieldDescription.getType().asRawType())
                                             .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
                                     FieldAccess.forField(fieldDescription).putter()
                             );

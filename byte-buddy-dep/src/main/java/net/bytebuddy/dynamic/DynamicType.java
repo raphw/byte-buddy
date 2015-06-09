@@ -1624,7 +1624,7 @@ public interface DynamicType {
 
             @Override
             public FieldValueTarget<S> defineField(FieldDescription fieldDescription) {
-                return defineField(fieldDescription.getName(), fieldDescription.getFieldTypeGen(), fieldDescription.getModifiers());
+                return defineField(fieldDescription.getName(), fieldDescription.getType(), fieldDescription.getModifiers());
             }
 
             @Override
