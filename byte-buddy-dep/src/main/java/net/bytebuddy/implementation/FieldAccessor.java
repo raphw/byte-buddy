@@ -98,7 +98,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
         StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(),
-                methodDescription.getReturnType(),
+                methodDescription.getReturnType().asRawType(),
                 dynamicallyTyped);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
@@ -172,7 +172,7 @@ public abstract class FieldAccessor implements Implementation {
                         ? StackManipulation.LegalTrivial.INSTANCE
                         : MethodVariableAccess.REFERENCE.loadOffset(0),
                 fieldAccess,
-                MethodReturn.returning(methodDescription.getReturnType())
+                MethodReturn.returning(methodDescription.getReturnType().asRawType())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), methodDescription.getStackSize());
     }

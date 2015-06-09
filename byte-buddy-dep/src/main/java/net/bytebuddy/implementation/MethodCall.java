@@ -2095,12 +2095,12 @@ public class MethodCall implements Implementation {
                                              boolean dynamicallyTyped) {
                 StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
                         ? invokedMethod.getDeclaringType()
-                        : invokedMethod.getReturnType(), interceptedMethod.getReturnType(), dynamicallyTyped);
+                        : invokedMethod.getReturnType().asRawType(), interceptedMethod.getReturnType().asRawType(), dynamicallyTyped);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + interceptedMethod);
                 }
                 return new StackManipulation.Compound(stackManipulation,
-                        MethodReturn.returning(interceptedMethod.getReturnType()));
+                        MethodReturn.returning(interceptedMethod.getReturnType().asRawType()));
             }
 
             @Override
@@ -2127,7 +2127,7 @@ public class MethodCall implements Implementation {
                                              boolean dynamicallyTyped) {
                 return Removal.pop(invokedMethod.isConstructor()
                         ? invokedMethod.getDeclaringType()
-                        : invokedMethod.getReturnType());
+                        : invokedMethod.getReturnType().asRawType());
             }
 
             @Override

@@ -1647,7 +1647,7 @@ public interface DynamicType {
                     throw new IllegalArgumentException("Not a method: " + methodDescription);
                 }
                 return defineMethod(methodDescription.getName(),
-                        methodDescription.getReturnTypeGen(),
+                        methodDescription.getReturnType(),
                         methodDescription.getParameters().asTypeListGen(),
                         methodDescription.getModifiers()).throwing(methodDescription.getExceptionTypesGen());
             }

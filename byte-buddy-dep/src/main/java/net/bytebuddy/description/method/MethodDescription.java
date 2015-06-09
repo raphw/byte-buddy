@@ -46,14 +46,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
-    /**
-     * Returns a description of the return type of the method described by this instance.
-     *
-     * @return A description of the return type of the method described by this instance.
-     */
-    TypeDescription getReturnType();
-
-    GenericTypeDescription getReturnTypeGen();
+    GenericTypeDescription getReturnType();
 
     /**
      * Returns a list of this method's parameters.
@@ -244,11 +237,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 | Modifier.NATIVE;
 
         @Override
-        public TypeDescription getReturnType() {
-            return getReturnTypeGen().asRawType();
-        }
-
-        @Override
         public TypeList getExceptionTypes() {
             return getExceptionTypesGen().asRawTypes();
         }
@@ -308,7 +296,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             for (TypeDescription parameterType : getParameters().asTypeList()) {
                 descriptor.append(parameterType.getDescriptor());
             }
-            return descriptor.append(")").append(getReturnType().getDescriptor()).toString();
+            return descriptor.append(")").append(getReturnType().asRawType().getDescriptor()).toString();
         }
 
         @Override
@@ -330,7 +318,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 parameterType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitParameterType()));
                 generic = generic || !parameterType.getSort().isRawType();
             }
-            GenericTypeDescription returnType = getReturnTypeGen();
+            GenericTypeDescription returnType = getReturnType();
             returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
             generic = generic || !returnType.getSort().isRawType();
             for (GenericTypeDescription exceptionType : getExceptionTypesGen()) {
@@ -394,8 +382,9 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public boolean isBootstrap() {
+            TypeDescription returnType = getReturnType().asRawType();
             if ((isMethod() && (!isStatic()
-                    || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getReturnType()) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(getReturnType()))))
+                    || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(returnType) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(returnType))))
                     || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType()))) {
                 return false;
             }
@@ -480,7 +469,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         public boolean isDefaultValue() {
             return !isConstructor()
                     && !isStatic()
-                    && getReturnType().isAnnotationReturnType()
+                    && getReturnType().asRawType().isAnnotationReturnType()
                     && getParameters().isEmpty();
         }
 
@@ -489,7 +478,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             if (!isDefaultValue()) {
                 return false;
             }
-            TypeDescription returnType = getReturnType();
+            TypeDescription returnType = getReturnType().asRawType();
             return (returnType.represents(boolean.class) && value instanceof Boolean)
                     || (returnType.represents(boolean.class) && value instanceof Boolean)
                     || (returnType.represents(byte.class) && value instanceof Byte)
@@ -528,7 +517,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             return other == this || other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
                     && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
-                    && getReturnType().equals(((MethodDescription) other).getReturnType())
+                    && getReturnType().asRawType().equals(((MethodDescription) other).getReturnType().asRawType())
                     && getParameters().asTypeList().equals(((MethodDescription) other).getParameters().asTypeList());
         }
 
@@ -536,7 +525,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         public int hashCode() {
             int hashCode = getDeclaringType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
-            hashCode = 31 * hashCode + getReturnType().hashCode();
+            hashCode = 31 * hashCode + getReturnType().asRawType().hashCode();
             return 31 * hashCode + getParameters().asTypeList().hashCode();
         }
 
@@ -548,7 +537,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnTypeGen().getSourceCodeName()).append(" ");
+                stringBuilder.append(getReturnType().getSourceCodeName()).append(" ");
                 stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
@@ -586,7 +575,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnType().getSourceCodeName()).append(" ");
+                stringBuilder.append(getReturnType().asRawType().getSourceCodeName()).append(" ");
                 stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
@@ -642,7 +631,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeDescription getReturnTypeGen() {
+        public GenericTypeDescription getReturnType() {
             return TypeDescription.VOID;
         }
 
@@ -742,7 +731,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeDescription getReturnTypeGen() {
+        public GenericTypeDescription getReturnType() {
             return new GenericTypeDescription.LazyProjection.OfLoadedReturnType(method);
         }
 
@@ -910,7 +899,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeDescription getReturnTypeGen() {
+        public GenericTypeDescription getReturnType() {
             return returnType;
         }
 

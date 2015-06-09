@@ -20,6 +20,6 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Override
     protected GenericTypeDescription describe(Method method) {
-        return new MethodDescription.ForLoadedMethod(method).getReturnTypeGen();
+        return new MethodDescription.ForLoadedMethod(method).getReturnType();
     }
 }

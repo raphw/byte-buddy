@@ -340,7 +340,7 @@ public interface AnnotationAppender {
          */
         private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation) {
             for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
-                apply(annotationVisitor, methodDescription.getReturnType(), methodDescription.getName(), annotation.getValue(methodDescription));
+                apply(annotationVisitor, methodDescription.getReturnType().asRawType(), methodDescription.getName(), annotation.getValue(methodDescription));
             }
             annotationVisitor.visitEnd();
         }

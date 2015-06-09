@@ -145,8 +145,7 @@ public @interface FieldProxy {
          * @return A binder for the {@link FieldProxy}
          * annotation.
          */
-        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(Class<?> getterType,
-                                                                                             Class<?> setterType) {
+        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(Class<?> getterType, Class<?> setterType) {
             return install(new TypeDescription.ForLoadedType(nonNull(getterType)), new TypeDescription.ForLoadedType(nonNull(setterType)));
         }
 
@@ -166,16 +165,15 @@ public @interface FieldProxy {
          * @return A binder for the {@link FieldProxy}
          * annotation.
          */
-        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(TypeDescription getterType,
-                                                                                             TypeDescription setterType) {
+        public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(TypeDescription getterType, TypeDescription setterType) {
             MethodDescription getterMethod = onlyMethod(nonNull(getterType));
-            if (!getterMethod.getReturnType().represents(Object.class)) {
+            if (!getterMethod.getReturnType().asRawType().represents(Object.class)) {
                 throw new IllegalArgumentException(getterMethod + " must take a single Object-typed parameter");
             } else if (getterMethod.getParameters().size() != 0) {
                 throw new IllegalArgumentException(getterMethod + " must not declare parameters");
             }
             MethodDescription setterMethod = onlyMethod(nonNull(setterType));
-            if (!setterMethod.getReturnType().represents(void.class)) {
+            if (!setterMethod.getReturnType().asRawType().represents(void.class)) {
                 throw new IllegalArgumentException(setterMethod + " must return void");
             } else if (setterMethod.getParameters().size() != 1 || !setterMethod.getParameters().get(0).getType().represents(Object.class)) {
                 throw new IllegalArgumentException(setterMethod + " must declare a single Object-typed parameters");
@@ -472,8 +470,10 @@ public @interface FieldProxy {
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodInvocation.invoke(getterMethod),
-                                assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.DYNAMICALLY_TYPED),
-                                MethodReturn.returning(instrumentedMethod.getReturnType())
+                                assigner.assign(getterMethod.getReturnType().asRawType(),
+                                        instrumentedMethod.getReturnType().asRawType(),
+                                        Assigner.DYNAMICALLY_TYPED),
+                                MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }

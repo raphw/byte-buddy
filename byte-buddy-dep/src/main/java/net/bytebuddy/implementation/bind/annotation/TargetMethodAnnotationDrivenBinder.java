@@ -267,9 +267,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
             @Override
             public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
-                return new StackManipulation.Compound(assigner.assign(target.isConstructor() ? target.getDeclaringType() : target.getReturnType(),
-                        source.getReturnType(),
-                        RuntimeType.Verifier.check(target)), MethodReturn.returning(source.getReturnType()));
+                return new StackManipulation.Compound(assigner.assign(target.isConstructor()
+                                ? target.getDeclaringType()
+                                : target.getReturnType().asRawType(),
+                        source.getReturnType().asRawType(),
+                        RuntimeType.Verifier.check(target)), MethodReturn.returning(source.getReturnType().asRawType()));
             }
 
             @Override
@@ -290,7 +292,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
             @Override
             public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
-                return Removal.pop(target.isConstructor() ? target.getDeclaringType() : target.getReturnType());
+                return Removal.pop(target.isConstructor()
+                        ? target.getDeclaringType()
+                        : target.getReturnType().asRawType());
             }
 
             @Override

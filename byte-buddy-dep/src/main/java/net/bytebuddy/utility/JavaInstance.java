@@ -163,7 +163,7 @@ public interface JavaInstance {
          * @return The method type of the given method.
          */
         public static MethodType of(MethodDescription methodDescription) {
-            return new MethodType(methodDescription.getReturnType(), methodDescription.getParameters().asTypeList());
+            return new MethodType(methodDescription.getReturnType().asRawType(), methodDescription.getParameters().asTypeList());
         }
 
         /**
@@ -522,7 +522,7 @@ public interface JavaInstance {
             return new MethodHandle(HandleType.of(methodDescription),
                     methodDescription.getDeclaringType(),
                     methodDescription.getInternalName(),
-                    methodDescription.getReturnType(),
+                    methodDescription.getReturnType().asRawType(),
                     methodDescription.getParameters().asTypeList());
 
         }
@@ -552,7 +552,7 @@ public interface JavaInstance {
             return new MethodHandle(HandleType.ofSpecial(methodDescription),
                     typeDescription,
                     methodDescription.getInternalName(),
-                    methodDescription.getReturnType(),
+                    methodDescription.getReturnType().asRawType(),
                     methodDescription.getParameters().asTypeList());
         }
 

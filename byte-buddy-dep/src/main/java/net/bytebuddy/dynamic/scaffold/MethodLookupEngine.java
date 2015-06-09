@@ -217,8 +217,8 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public GenericTypeDescription getReturnTypeGen() {
-            return methodChain.get(MOST_SPECIFIC).getReturnTypeGen();
+        public GenericTypeDescription getReturnType() {
+            return methodChain.get(MOST_SPECIFIC).getReturnType();
         }
 
         @Override
@@ -380,8 +380,8 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public GenericTypeDescription getReturnTypeGen() {
-            return methodDescriptions.get(ANY).getReturnTypeGen();
+        public GenericTypeDescription getReturnType() {
+            return methodDescriptions.get(ANY).getReturnType();
         }
 
         @Override

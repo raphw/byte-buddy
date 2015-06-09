@@ -210,7 +210,7 @@ public class DefaultMethodCall implements Implementation {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                     defaultMethodInvocation,
-                    MethodReturn.returning(instrumentedMethod.getReturnType())
+                    MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }

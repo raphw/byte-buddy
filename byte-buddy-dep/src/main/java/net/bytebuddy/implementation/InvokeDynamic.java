@@ -1034,7 +1034,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public TypeDescription getReturnType() {
-                    return methodDescription.getReturnType();
+                    return methodDescription.getReturnType().asRawType();
                 }
 
                 @Override
@@ -2665,7 +2665,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public TypeDescription resolve(MethodDescription methodDescription) {
-                    return methodDescription.getReturnType();
+                    return methodDescription.getReturnType().asRawType();
                 }
 
                 @Override
@@ -2974,11 +2974,11 @@ public class InvokeDynamic implements Implementation {
                                              TypeDescription returnType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType(), dynamicallyTyped);
+                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType().asRawType(), dynamicallyTyped);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
                 }
-                return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType()));
+                return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType().asRawType()));
             }
 
             @Override
@@ -3005,7 +3005,7 @@ public class InvokeDynamic implements Implementation {
                                              boolean dynamicallyTyped) {
                 return Removal.pop(interceptedMethod.isConstructor()
                         ? interceptedMethod.getDeclaringType()
-                        : interceptedMethod.getReturnType());
+                        : interceptedMethod.getReturnType().asRawType());
             }
 
             @Override

@@ -478,7 +478,7 @@ public interface InstrumentedType extends TypeDescription {
                 for (GenericTypeDescription typeVariable : methodDescription.getTypeVariables()) {
                     typeVariables.add(new TypeVariableToken(substitutor, typeVariable));
                 }
-                returnType = methodDescription.getReturnTypeGen().accept(substitutor);
+                returnType = methodDescription.getReturnType().accept(substitutor);
                 exceptionTypes = methodDescription.getExceptionTypesGen().accept(substitutor);
                 modifiers = methodDescription.getModifiers();
                 declaredAnnotations = methodDescription.getDeclaredAnnotations();
@@ -490,7 +490,7 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public GenericTypeDescription getReturnTypeGen() {
+            public GenericTypeDescription getReturnType() {
                 return returnType;
             }
 

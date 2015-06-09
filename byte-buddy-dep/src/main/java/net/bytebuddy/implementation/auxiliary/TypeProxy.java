@@ -894,7 +894,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                             fieldLoadingInstruction,
                             MethodVariableAccess.forBridgeMethodInvocation(instrumentedMethod, proxyMethod),
                             MethodInvocation.invoke(proxyMethod),
-                            MethodReturn.returning(instrumentedMethod.getReturnType())
+                            MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                     ).apply(methodVisitor, implementationContext);
                 }
 

@@ -1145,6 +1145,7 @@ public interface TypePool {
                                 .filter(named(name))
                                 .getOnly()
                                 .getReturnType()
+                                .asRawType()
                                 .getComponentType()
                                 .getName();
                     }
@@ -4404,7 +4405,7 @@ public interface TypePool {
             }
 
             @Override
-            public GenericTypeDescription getReturnTypeGen() {
+            public GenericTypeDescription getReturnType() {
                 return signatureResolution.resolveReturnType(returnTypeDescriptor, typePool, this);
             }
 

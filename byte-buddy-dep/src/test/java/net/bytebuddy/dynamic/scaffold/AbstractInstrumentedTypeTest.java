@@ -120,7 +120,7 @@ public abstract class AbstractInstrumentedTypeTest {
                 Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
-        assertThat(methodDescription.getReturnType(), is(returnType));
+        assertThat(methodDescription.getReturnType(), is((GenericTypeDescription) returnType));
         assertThat(methodDescription.getParameters().size(), is(1));
         assertThat(methodDescription.getParameters().asTypeList(), is(Collections.singletonList(parameterType)));
         assertThat(methodDescription.getExceptionTypes().size(), is(1));
@@ -141,7 +141,7 @@ public abstract class AbstractInstrumentedTypeTest {
                 Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
-        assertThat(methodDescription.getReturnType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getReturnType(), sameInstance((GenericTypeDescription) instrumentedType));
         assertThat(methodDescription.getParameters().size(), is(1));
         assertThat(methodDescription.getParameters().asTypeList().get(0), sameInstance((TypeDescription) instrumentedType));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
@@ -161,8 +161,8 @@ public abstract class AbstractInstrumentedTypeTest {
                 Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
-        assertThat(methodDescription.getReturnType().isArray(), is(true));
-        assertThat(methodDescription.getReturnType().getComponentType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getReturnType().asRawType().isArray(), is(true));
+        assertThat(methodDescription.getReturnType().getComponentType(), sameInstance((GenericTypeDescription) instrumentedType));
         assertThat(methodDescription.getParameters().size(), is(1));
         assertThat(methodDescription.getParameters().asTypeList().get(0).isArray(), is(true));
         assertThat(methodDescription.getParameters().asTypeList().get(0).getComponentType(), sameInstance((TypeDescription) instrumentedType));

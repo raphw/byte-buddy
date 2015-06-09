@@ -56,7 +56,7 @@ public class GenericSignatureResolutionTest {
         MethodDescription createdMethod = new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(FOO, Exception.class));
         MethodDescription originalMethod = new MethodDescription.ForLoadedMethod(GenericMethod.class.getDeclaredMethod(FOO, Exception.class));
         assertThat(createdMethod.getTypeVariables(), is(originalMethod.getTypeVariables()));
-        assertThat(createdMethod.getReturnTypeGen(), is(originalMethod.getReturnTypeGen()));
+        assertThat(createdMethod.getReturnType(), is(originalMethod.getReturnType()));
         assertThat(createdMethod.getParameters().getOnly().getTypeGen(), is(originalMethod.getParameters().getOnly().getTypeGen()));
         assertThat(createdMethod.getExceptionTypesGen().getOnly(), is(originalMethod.getExceptionTypesGen().getOnly()));
     }

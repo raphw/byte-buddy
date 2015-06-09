@@ -764,7 +764,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return An element matcher that matches a given return type against another {@code matcher}.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super GenericTypeDescription> matcher) {
         return new MethodReturnTypeMatcher<T>(nonNull(matcher));
     }
 
@@ -1156,7 +1156,7 @@ public final class ElementMatchers {
         }
         return (methodDescription.isStatic() ? ElementMatchers.<T>isStatic() : ElementMatchers.<T>not(isStatic()))
                 .<T>and(named(methodDescription.getSourceCodeName()))
-                .<T>and(returns(isSubTypeOf(methodDescription.getReturnType())))
+                .<T>and(returns(rawType(isSubTypeOf(methodDescription.getReturnType().asRawType()))))
                 .and(takesArguments(new CollectionOneToOneMatcher<GenericTypeDescription>(matchers)));
     }
 

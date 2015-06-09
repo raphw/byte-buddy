@@ -166,7 +166,7 @@ public @interface Pipe {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
             MethodDescription methodDescription = methodCandidates.getOnly();
-            if (!methodDescription.getReturnType().represents(Object.class)) {
+            if (!methodDescription.getReturnType().asRawType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
             } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single Object-typed argument");
@@ -575,7 +575,9 @@ public @interface Pipe {
                                 assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType(), Assigner.DYNAMICALLY_TYPED),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
-                                assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.DYNAMICALLY_TYPED),
+                                assigner.assign(redirectedMethod.getReturnType().asRawType(),
+                                        instrumentedMethod.getReturnType().asRawType(),
+                                        Assigner.DYNAMICALLY_TYPED),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

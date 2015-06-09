@@ -574,7 +574,7 @@ public interface TypeWriter<T> {
                     }
                     AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotationDefault();
                     AnnotationAppender.Default.apply(annotationVisitor,
-                            methodDescription.getReturnType(),
+                            methodDescription.getReturnType().asRawType(),
                             AnnotationAppender.NO_NAME,
                             annotationValue);
                     annotationVisitor.visitEnd();

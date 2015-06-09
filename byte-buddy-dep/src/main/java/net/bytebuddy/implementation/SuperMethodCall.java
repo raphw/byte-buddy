@@ -156,7 +156,7 @@ public enum SuperMethodCall implements Implementation {
             RETURNING {
                 @Override
                 protected StackManipulation of(MethodDescription methodDescription) {
-                    return MethodReturn.returning(methodDescription.getReturnType());
+                    return MethodReturn.returning(methodDescription.getReturnType().asRawType());
                 }
             },
 
@@ -166,7 +166,7 @@ public enum SuperMethodCall implements Implementation {
             DROPPING {
                 @Override
                 protected StackManipulation of(MethodDescription methodDescription) {
-                    return Removal.pop(methodDescription.getReturnType());
+                    return Removal.pop(methodDescription.getReturnType().asRawType());
                 }
             };
 

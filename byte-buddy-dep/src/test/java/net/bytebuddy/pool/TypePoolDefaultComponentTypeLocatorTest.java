@@ -32,12 +32,12 @@ public class TypePoolDefaultComponentTypeLocatorTest {
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(methodDescription)));
         when(methodDescription.getSourceCodeName()).thenReturn(FOO);
         TypeDescription returnType = mock(TypeDescription.class);
+        when(returnType.asRawType()).thenReturn(returnType);
         when(methodDescription.getReturnType()).thenReturn(returnType);
         TypeDescription componentType = mock(TypeDescription.class);
         when(returnType.getComponentType()).thenReturn(componentType);
         when(componentType.getName()).thenReturn(QUX);
-        assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR)
-                .bind(FOO).lookup(), is(QUX));
+        assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR).bind(FOO).lookup(), is(QUX));
     }
 
     @Test

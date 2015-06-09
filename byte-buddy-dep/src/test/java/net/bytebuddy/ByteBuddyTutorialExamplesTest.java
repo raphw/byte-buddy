@@ -441,7 +441,7 @@ public class ByteBuddyTutorialExamplesTest {
         public Size apply(MethodVisitor methodVisitor,
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
-            if (!instrumentedMethod.getReturnType().represents(int.class)) {
+            if (!instrumentedMethod.getReturnType().asRawType().represents(int.class)) { // TODO: change tutorial!
                 throw new IllegalArgumentException(instrumentedMethod + " must return int");
             }
             StackManipulation.Size operandStackSize = new StackManipulation.Compound(

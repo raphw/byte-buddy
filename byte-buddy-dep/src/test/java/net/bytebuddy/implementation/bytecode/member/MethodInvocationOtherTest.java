@@ -33,6 +33,7 @@ public class MethodInvocationOtherTest {
                 TypeDescription returnType = mock(TypeDescription.class);
                 when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
                 when(mock.getReturnType()).thenReturn(returnType);
+                when(returnType.asRawType()).thenReturn(returnType);
                 when(mock.getInternalName()).thenReturn(FOO);
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
             }

@@ -45,6 +45,6 @@ public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionT
                 .getDeclaredMethods()
                 .filter(is(method))
                 .getOnly()
-                .getReturnTypeGen();
+                .getReturnType();
     }
 }
