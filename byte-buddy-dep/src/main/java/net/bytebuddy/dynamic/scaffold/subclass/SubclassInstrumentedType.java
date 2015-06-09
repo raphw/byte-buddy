@@ -8,7 +8,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
-import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -38,7 +37,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     /**
      * The interfaces that are represented by this type.
      */
-    private final List<TypeDescription> interfaces;
+    private final List<GenericTypeDescription> interfaces;
 
     /**
      * The modifiers of this type.
@@ -61,7 +60,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
      */
     public SubclassInstrumentedType(ClassFileVersion classFileVersion,
                                     GenericTypeDescription superClass,
-                                    List<TypeDescription> interfaces,
+                                    List<GenericTypeDescription> interfaces,
                                     int modifiers,
                                     NamingStrategy namingStrategy) {
         this.classFileVersion = classFileVersion;
@@ -76,7 +75,7 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
 
     protected SubclassInstrumentedType(ClassFileVersion classFileVersion,
                                        GenericTypeDescription superClass,
-                                       List<TypeDescription> interfaces,
+                                       List<GenericTypeDescription> interfaces,
                                        int modifiers,
                                        String name,
                                        List<? extends GenericTypeDescription> typeVariables,

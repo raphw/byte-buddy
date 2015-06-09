@@ -5,6 +5,7 @@ import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
@@ -118,7 +119,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              NamingStrategy namingStrategy,
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                              TypeDescription levelType,
-                                             List<? extends TypeDescription> interfaceTypes,
+                                             List<? extends GenericTypeDescription> interfaceTypes,
                                              int modifiers,
                                              TypeAttributeAppender attributeAppender,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -136,7 +137,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 levelType,
-                new ArrayList<TypeDescription>(interfaceTypes),
+                new ArrayList<GenericTypeDescription>(interfaceTypes),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
@@ -156,7 +157,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  TypeDescription levelType,
-                                                 List<TypeDescription> interfaceTypes,
+                                                 List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,

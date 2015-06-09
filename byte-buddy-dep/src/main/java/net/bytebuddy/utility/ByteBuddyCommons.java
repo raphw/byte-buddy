@@ -446,18 +446,25 @@ public final class ByteBuddyCommons {
      * @return The modifier created by these modifiers.
      */
     public static int resolveModifierContributors(int mask, ModifierContributor... modifierContributor) {
-        int modifier = 0;
+        int modifiers = 0;
         Set<Class<?>> modifierContributorTypes = new HashSet<Class<?>>(modifierContributor.length);
         for (ModifierContributor contributor : modifierContributor) {
             if (!modifierContributorTypes.add(contributor.getClass())) {
                 throw new IllegalArgumentException(contributor + " is already registered with a different value");
             }
-            modifier |= contributor.getMask();
+            modifiers |= contributor.getMask();
         }
-        if ((modifier & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
-            throw new IllegalArgumentException("Illegal modifiers " + Arrays.asList(modifierContributor));
+        if ((modifiers & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
+            throw new IllegalArgumentException("Illegal modifiers: " + Arrays.asList(modifierContributor));
         }
-        return modifier;
+        return modifiers;
+    }
+
+    public static int legalModifiers(int mask, int modifiers) {
+        if ((modifiers & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
+            throw new IllegalArgumentException("Illegal modifiers: " + modifiers);
+        }
+        return modifiers;
     }
 
     /**

@@ -5,6 +5,7 @@ import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
@@ -59,7 +60,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       NamingStrategy namingStrategy,
                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                       TypeDescription superType,
-                                      List<? extends TypeDescription> interfaceTypes,
+                                      List<? extends GenericTypeDescription> interfaceTypes,
                                       int modifiers,
                                       TypeAttributeAppender attributeAppender,
                                       ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -75,7 +76,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 superType,
-                new ArrayList<TypeDescription>(interfaceTypes),
+                new ArrayList<GenericTypeDescription>(interfaceTypes),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
@@ -122,7 +123,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          NamingStrategy namingStrategy,
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                          TypeDescription superType,
-                                         List<TypeDescription> interfaceTypes,
+                                         List<GenericTypeDescription> interfaceTypes,
                                          int modifiers,
                                          TypeAttributeAppender attributeAppender,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -161,7 +162,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  TypeDescription targetType,
-                                                 List<TypeDescription> interfaceTypes,
+                                                 List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
