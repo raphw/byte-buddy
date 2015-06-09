@@ -1322,7 +1322,7 @@ public interface DynamicType {
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(Collection<? extends GenericTypeDescription> interfaceTypes) {
-                return new DefaultOptionalMatchedMethodInterception(new ArrayList<GenericTypeDescription>(isImplementable(interfaceTypes)));
+                return new DefaultOptionalMatchedMethodInterception(new GenericTypeList.Explicit(isImplementable(toList(interfaceTypes))));
             }
 
             @Override
@@ -1902,8 +1902,8 @@ public interface DynamicType {
                     return (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName)
                             ? isConstructor()
                             : ElementMatchers.<MethodDescription>named(internalName))
-                            .and(returns(resolveReturnType(instrumentedType)))
-                            .<MethodDescription>and(takesArguments(resolveParameterTypes(instrumentedType)));
+                            .and(returns(resolveReturnType(instrumentedType).asRawType()))
+                            .<MethodDescription>and(takesArguments(resolveParameterTypes(instrumentedType).asRawTypes()));
                 }
 
                 /**
@@ -1924,7 +1924,7 @@ public interface DynamicType {
                  * @param instrumentedType The instrumented place which is used for replacement.
                  * @return A list of type descriptions for the actual parameter types.
                  */
-                protected List<GenericTypeDescription> resolveParameterTypes(TypeDescription instrumentedType) {
+                protected GenericTypeList resolveParameterTypes(TypeDescription instrumentedType) {
                     return TargetType.resolve(parameterTypes, instrumentedType);
                 }
 
@@ -1934,7 +1934,7 @@ public interface DynamicType {
                  * @param instrumentedType The instrumented place which is used for replacement.
                  * @return A list of type descriptions for the actual exception types.
                  */
-                protected List<GenericTypeDescription> resolveExceptionTypes(TypeDescription instrumentedType) {
+                protected GenericTypeList resolveExceptionTypes(TypeDescription instrumentedType) {
                     return TargetType.resolve(exceptionTypes, instrumentedType);
                 }
 
@@ -2935,35 +2935,35 @@ public interface DynamicType {
                 /**
                  * A list of all interfaces to implement.
                  */
-                private List<GenericTypeDescription> additionalInterfaceTypes;
+                private GenericTypeList additionalInterfaceTypes;
 
                 /**
                  * Creates a new subclass optional matched method interception.
                  *
                  * @param interfaceTypes An array of all interfaces to implement.
                  */
-                protected DefaultOptionalMatchedMethodInterception(List<GenericTypeDescription> interfaceTypes) {
+                protected DefaultOptionalMatchedMethodInterception(GenericTypeList interfaceTypes) {
                     additionalInterfaceTypes = interfaceTypes;
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Implementation implementation) {
-                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).intercept(nonNull(implementation));
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes.asRawTypes()))).intercept(nonNull(implementation));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
-                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withoutCode();
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes.asRawTypes()))).withoutCode();
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
-                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withDefaultValue(value, type);
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes.asRawTypes()))).withDefaultValue(value, type);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
-                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withDefaultValue(value);
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes.asRawTypes()))).withDefaultValue(value);
                 }
 
                 @Override

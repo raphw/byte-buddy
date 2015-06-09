@@ -1,6 +1,5 @@
 package net.bytebuddy;
 
-import com.sun.javaws.jnl.PackageDesc;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -10,6 +9,8 @@ import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
@@ -43,6 +44,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -88,7 +90,7 @@ public class ByteBuddy {
     /**
      * A list of interface types to be implemented by any class that is implemented by the current configuration.
      */
-    protected final List<TypeDescription> interfaceTypes;
+    protected final List<GenericTypeDescription> interfaceTypes;
 
     /**
      * A matcher for identifying methods that should never be intercepted.
@@ -154,7 +156,7 @@ public class ByteBuddy {
         this(nonNull(classFileVersion),
                 new NamingStrategy.Unbound.Default(BYTE_BUDDY_DEFAULT_PREFIX),
                 new AuxiliaryType.NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_SUFFIX),
-                new TypeList.Empty(),
+                new GenericTypeList.Empty(),
                 isDefaultFinalizer().or(isSynthetic().and(not(isVisibilityBridge()))),
                 BridgeMethodResolver.Simple.Factory.FAIL_ON_REQUEST,
                 new ClassVisitorWrapper.Chain(),
@@ -191,7 +193,7 @@ public class ByteBuddy {
     protected ByteBuddy(ClassFileVersion classFileVersion,
                         NamingStrategy.Unbound namingStrategy,
                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                        List<TypeDescription> interfaceTypes,
+                        List<GenericTypeDescription> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
@@ -239,7 +241,7 @@ public class ByteBuddy {
      *
      * @return The naming strategy for the current configuration.
      */
-    public List<TypeDescription> getInterfaceTypes() {
+    public List<GenericTypeDescription> getInterfaceTypes() {
         return Collections.unmodifiableList(interfaceTypes);
     }
 
@@ -385,7 +387,7 @@ public class ByteBuddy {
      */
     public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
         TypeDescription actualSuperType = isExtendable(superType);
-        List<TypeDescription> interfaceTypes = this.interfaceTypes;
+        List<GenericTypeDescription> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).isInterface()) {
             actualSuperType = TypeDescription.OBJECT;
             interfaceTypes = joinUniqueRaw(interfaceTypes, Collections.singleton(superType));
@@ -427,7 +429,7 @@ public class ByteBuddy {
      */
     @SuppressWarnings("unchecked")
     public <T> DynamicType.Builder<T> makeInterface(Class<T> type) {
-        return (DynamicType.Builder<T>) makeInterface(Collections.<TypeDescription>singletonList(new TypeDescription.ForLoadedType(nonNull(type))));
+        return (DynamicType.Builder<T>) makeInterface(Collections.<GenericTypeDescription>singletonList(new TypeDescription.ForLoadedType(nonNull(type))));
     }
 
     /**
@@ -437,8 +439,8 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
-    public DynamicType.Builder<?> makeInterface(Class<?>... type) {
-        return makeInterface(new TypeList.ForLoadedType(nonNull(type)));
+    public DynamicType.Builder<?> makeInterface(Type... type) {
+        return makeInterface(new GenericTypeList.ForLoadedType(nonNull(type)));
     }
 
     /**
@@ -448,8 +450,8 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
-    public DynamicType.Builder<?> makeInterface(Iterable<? extends Class<?>> types) {
-        return makeInterface(new TypeList.ForLoadedType(toList(types)));
+    public DynamicType.Builder<?> makeInterface(Iterable<? extends Type> types) {
+        return makeInterface(new GenericTypeList.ForLoadedType(toList(types)));
     }
 
     /**
@@ -459,7 +461,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
-    public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
+    public DynamicType.Builder<?> makeInterface(GenericTypeDescription... typeDescription) {
         return makeInterface(Arrays.asList(typeDescription));
     }
 
@@ -470,7 +472,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
-    public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDescription> typeDescriptions) {
+    public DynamicType.Builder<?> makeInterface(Collection<? extends GenericTypeDescription> typeDescriptions) {
         return new SubclassDynamicTypeBuilder<Object>(classFileVersion,
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
@@ -989,8 +991,8 @@ public class ByteBuddy {
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interfaces.
      */
-    public OptionalMethodInterception withImplementing(Class<?>... type) {
-        return withImplementing(new TypeList.ForLoadedType(nonNull(type)));
+    public OptionalMethodInterception withImplementing(Type... type) {
+        return withImplementing(new GenericTypeList.ForLoadedType(nonNull(type)));
     }
 
     /**
@@ -1000,8 +1002,8 @@ public class ByteBuddy {
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interfaces.
      */
-    public OptionalMethodInterception withImplementing(Iterable<? extends Class<?>> types) {
-        return withImplementing(new TypeList.ForLoadedType(toList(types)));
+    public OptionalMethodInterception withImplementing(Iterable<? extends Type> types) {
+        return withImplementing(new GenericTypeList.ForLoadedType(toList(types)));
     }
 
     /**
@@ -1011,8 +1013,8 @@ public class ByteBuddy {
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interfaces.
      */
-    public OptionalMethodInterception withImplementing(TypeDescription... type) {
-        return withImplementing(Arrays.asList(nonNull(type)));
+    public OptionalMethodInterception withImplementing(GenericTypeDescription... type) {
+        return withImplementing(Arrays.asList(type));
     }
 
     /**
@@ -1022,7 +1024,7 @@ public class ByteBuddy {
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interfaces.
      */
-    public OptionalMethodInterception withImplementing(Collection<? extends TypeDescription> types) {
+    public OptionalMethodInterception withImplementing(Collection<? extends GenericTypeDescription> types) {
         return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
@@ -1036,7 +1038,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new ArrayList<TypeDescription>(types)))));
+                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new GenericTypeList.Explicit(toList(types)).asRawTypes()))));
     }
 
     /**
@@ -1492,7 +1494,7 @@ public class ByteBuddy {
         protected MethodAnnotationTarget(ClassFileVersion classFileVersion,
                                          NamingStrategy.Unbound namingStrategy,
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                         List<TypeDescription> interfaceTypes,
+                                         List<GenericTypeDescription> interfaceTypes,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
                                          BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
@@ -1725,7 +1727,7 @@ public class ByteBuddy {
         protected OptionalMethodInterception(ClassFileVersion classFileVersion,
                                              NamingStrategy.Unbound namingStrategy,
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                             List<TypeDescription> interfaceTypes,
+                                             List<GenericTypeDescription> interfaceTypes,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
                                              BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                              ClassVisitorWrapper.Chain classVisitorWrapperChain,
@@ -1836,7 +1838,7 @@ public class ByteBuddy {
         protected Proxy(ClassFileVersion classFileVersion,
                         NamingStrategy.Unbound namingStrategy,
                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                        List<TypeDescription> interfaceTypes,
+                        List<GenericTypeDescription> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
@@ -1872,7 +1874,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public List<TypeDescription> getInterfaceTypes() {
+        public List<GenericTypeDescription> getInterfaceTypes() {
             return materialize().getInterfaceTypes();
         }
 
@@ -2041,22 +2043,22 @@ public class ByteBuddy {
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(Class<?>... type) {
+        public OptionalMethodInterception withImplementing(Type... type) {
             return materialize().withImplementing(type);
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(Iterable<? extends Class<?>> types) {
+        public OptionalMethodInterception withImplementing(Iterable<? extends Type> types) {
             return materialize().withImplementing(types);
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(TypeDescription... type) {
+        public OptionalMethodInterception withImplementing(GenericTypeDescription... type) {
             return materialize().withImplementing(type);
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(Collection<? extends TypeDescription> types) {
+        public OptionalMethodInterception withImplementing(Collection<? extends GenericTypeDescription> types) {
             return materialize().withImplementing(types);
         }
 
@@ -2096,22 +2098,32 @@ public class ByteBuddy {
         }
 
         @Override
+        public DynamicType.Builder<?> makeInterface() {
+            return materialize().makeInterface();
+        }
+
+        @Override
         public <T> DynamicType.Builder<T> makeInterface(Class<T> type) {
             return materialize().makeInterface(type);
         }
 
         @Override
-        public DynamicType.Builder<?> makeInterface(Class<?>... type) {
+        public DynamicType.Builder<?> makeInterface(Type... type) {
             return materialize().makeInterface(type);
         }
 
         @Override
-        public DynamicType.Builder<?> makeInterface(Iterable<? extends Class<?>> types) {
+        public DynamicType.Builder<?> makeInterface(GenericTypeDescription... typeDescription) {
+            return materialize().makeInterface(typeDescription);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makeInterface(Iterable<? extends Type> types) {
             return materialize().makeInterface(types);
         }
 
         @Override
-        public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDescription> typeDescriptions) {
+        public DynamicType.Builder<?> makeInterface(Collection<? extends GenericTypeDescription> typeDescriptions) {
             return materialize().makeInterface(typeDescriptions);
         }
 
@@ -2128,6 +2140,21 @@ public class ByteBuddy {
         @Override
         public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<String> values) {
             return materialize().makeEnumeration(values);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makePackage(String name) {
+            return super.makePackage(name);
+        }
+
+        @Override
+        public DynamicType.Builder<?> rebase(Package aPackage, ClassFileLocator classFileLocator) {
+            return super.rebase(aPackage, classFileLocator);
+        }
+
+        @Override
+        public DynamicType.Builder<?> rebase(PackageDescription packageDescription, ClassFileLocator classFileLocator) {
+            return super.rebase(packageDescription, classFileLocator);
         }
 
         @Override
