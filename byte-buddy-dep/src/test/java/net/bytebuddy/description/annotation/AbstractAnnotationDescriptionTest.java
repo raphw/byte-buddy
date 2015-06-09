@@ -381,7 +381,8 @@ public abstract class AbstractAnnotationDescriptionTest {
                 new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
                 new TypeList.Empty(),
                 Opcodes.ACC_PUBLIC,
-                new TypeList.Empty())), is(rawValue));
+                new TypeList.Empty(),
+                new AnnotationList.Empty())), is(rawValue));
         assertThat(annotation.annotationType().getDeclaredMethod(methodName)
                 .invoke(describe(annotation).prepare(annotation.annotationType()).load()), is(loadedValue));
     }

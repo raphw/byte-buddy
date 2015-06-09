@@ -2403,7 +2403,8 @@ public class ByteBuddy {
                         TypeDescription.OBJECT,
                         Collections.<TypeDescription>emptyList(),
                         Opcodes.ACC_PUBLIC,
-                        Collections.<TypeDescription>emptyList());
+                        Collections.<TypeDescription>emptyList(),
+                        Collections.<AnnotationDescription>emptyList());
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),
                         MethodInvocation.invoke(cloneArrayMethod),

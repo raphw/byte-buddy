@@ -309,7 +309,8 @@ public interface MethodRebaseResolver {
                         REBASED_METHOD_MODIFIER
                                 | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
                                 | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0),
-                        methodDescription.getExceptionTypes());
+                        methodDescription.getExceptionTypes(),
+                        methodDescription.getDeclaredAnnotations());
             }
 
             @Override
@@ -367,7 +368,8 @@ public interface MethodRebaseResolver {
                         methodDescription.getReturnType(),
                         join(methodDescription.getParameters().asTypeList(), placeholderType),
                         REBASED_METHOD_MODIFIER,
-                        methodDescription.getExceptionTypes());
+                        methodDescription.getExceptionTypes(),
+                        methodDescription.getDeclaredAnnotations());
             }
 
             @Override

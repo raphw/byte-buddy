@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -29,7 +30,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                 returnType,
                 parameterTypes,
                 Opcodes.ACC_PUBLIC,
-                Collections.<TypeDescription>emptyList()), targetType, mock(StackManipulation.class));
+                Collections.<TypeDescription>emptyList(),
+                Collections.<AnnotationDescription>emptyList()), targetType, mock(StackManipulation.class));
     }
 
     @Test
@@ -42,7 +44,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                         mock(TypeDescription.class),
                         new TypeList.Empty(),
                         Opcodes.ACC_PUBLIC,
-                        Collections.<TypeDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
+                        Collections.<TypeDescription>emptyList(),
+                        Collections.<AnnotationDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
         assertThat(specialMethodInvocation.isValid(), is(true));
     }
 
@@ -56,7 +59,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                         mock(TypeDescription.class),
                         new TypeList.Empty(),
                         Opcodes.ACC_PUBLIC,
-                        Collections.<TypeDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
+                        Collections.<TypeDescription>emptyList(),
+                        Collections.<AnnotationDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 }

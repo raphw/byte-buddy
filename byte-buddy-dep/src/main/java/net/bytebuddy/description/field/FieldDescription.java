@@ -2,6 +2,7 @@ package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -9,6 +10,8 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
@@ -166,22 +169,18 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
          */
         private final int modifiers;
 
-        /**
-         * Creates an immutable latent field description.
-         *
-         * @param fieldName     The name of the field.
-         * @param declaringType The type for which this field is defined.
-         * @param fieldType     The type of the field.
-         * @param modifiers     The field's modifiers.
-         */
+        private final List<? extends AnnotationDescription> declaredAnnotations;
+
         public Latent(String fieldName,
                       TypeDescription declaringType,
                       GenericTypeDescription fieldType,
-                      int modifiers) {
+                      int modifiers,
+                      List<? extends AnnotationDescription> declaredAnnotations) {
             this.fieldName = fieldName;
             this.fieldType = fieldType;
             this.declaringType = declaringType;
             this.modifiers = modifiers;
+            this.declaredAnnotations = declaredAnnotations;
         }
 
         @Override
@@ -191,7 +190,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Empty();
+            return new AnnotationList.Explicit(declaredAnnotations);
         }
 
         @Override

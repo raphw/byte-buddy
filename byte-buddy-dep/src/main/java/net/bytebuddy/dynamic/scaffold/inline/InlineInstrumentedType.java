@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -12,10 +13,7 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.isValidTypeName;
@@ -102,7 +100,11 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     public InstrumentedType withField(String internalName,
                                       GenericTypeDescription fieldType,
                                       int modifiers) {
-        FieldDescription additionalField = new FieldDescription.Latent(internalName, this, fieldType, modifiers);
+        FieldDescription additionalField = new FieldDescription.Latent(internalName,
+                this,
+                fieldType,
+                modifiers,
+                Collections.<AnnotationDescription>emptyList());
         if (fieldDescriptions.contains(additionalField)) {
             throw new IllegalArgumentException("Field " + additionalField + " is already defined on " + this);
         }
@@ -128,7 +130,8 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 returnType,
                 parameterTypes,
                 modifiers,
-                exceptionTypes);
+                exceptionTypes,
+                Collections.<AnnotationDescription>emptyList());
         if (methodDescriptions.contains(additionalMethod)) {
             throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }

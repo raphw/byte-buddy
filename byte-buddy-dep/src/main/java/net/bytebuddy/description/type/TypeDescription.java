@@ -219,20 +219,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     boolean isMemberClass();
 
     /**
-     * Returns a list of fields that are declared by this type.
-     *
-     * @return A list of fields that are declared by this type.
-     */
-    FieldList getDeclaredFields();
-
-    /**
-     * Returns a list of methods that are declared by this type.
-     *
-     * @return A list of methods that are declared by this type.
-     */
-    MethodList getDeclaredMethods();
-
-    /**
      * Returns the package internalName of the type described by this instance.
      *
      * @return The package internalName of the type described by this instance.

@@ -847,28 +847,22 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          */
         private final List<? extends GenericTypeDescription> exceptionTypes;
 
-        /**
-         * Creates an immutable latent method description.
-         *
-         * @param internalName   The internal name of the method.
-         * @param declaringType  The type that is declaring this method latently.
-         * @param returnType     The return type of this method.
-         * @param parameterTypes The parameter types of this method.
-         * @param modifiers      The modifiers of this method.
-         * @param exceptionTypes The exception types of this method.
-         */
+        private final List<? extends AnnotationDescription> declaredAnnotations;
+
         public Latent(String internalName,
                       TypeDescription declaringType,
                       GenericTypeDescription returnType,
                       List<? extends GenericTypeDescription> parameterTypes,
                       int modifiers,
-                      List<? extends GenericTypeDescription> exceptionTypes) {
+                      List<? extends GenericTypeDescription> exceptionTypes,
+                      List<? extends AnnotationDescription> declaredAnnotations) {
             this.internalName = internalName;
             this.declaringType = declaringType;
             this.returnType = returnType;
             this.parameterTypes = parameterTypes;
             this.modifiers = modifiers;
             this.exceptionTypes = exceptionTypes;
+            this.declaredAnnotations = declaredAnnotations;
         }
 
         /**
@@ -883,7 +877,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     TypeDescription.VOID,
                     new TypeList.Empty(),
                     TYPE_INITIALIZER_MODIFIER,
-                    Collections.<TypeDescription>emptyList());
+                    Collections.<TypeDescription>emptyList(),
+                    Collections.<AnnotationDescription>emptyList());
         }
 
         @Override
@@ -903,7 +898,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Empty();
+            return new AnnotationList.Explicit(declaredAnnotations);
         }
 
         @Override

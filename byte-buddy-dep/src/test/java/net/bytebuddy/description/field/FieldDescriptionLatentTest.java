@@ -20,15 +20,7 @@ public class FieldDescriptionLatentTest extends AbstractFieldDescriptionTest {
         return new FieldDescription.Latent(field.getName(),
                 new TypeDescription.ForLoadedType(field.getDeclaringClass()),
                 GenericTypeDescription.Sort.describe(field.getGenericType()),
-                field.getModifiers());
-    }
-
-    @Test
-    @Override
-    public void testAnnotations() throws Exception {
-        assertThat(new FieldDescription.Latent(FOO,
-                mock(TypeDescription.class),
-                mock(TypeDescription.class),
-                0).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
+                field.getModifiers(),
+                new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations()));
     }
 }

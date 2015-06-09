@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -28,7 +29,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
         when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(
-                name, mock(TypeDescription.class), returnType, parameterTypes, Opcodes.ACC_PUBLIC, new TypeList.Empty()));
+                name, mock(TypeDescription.class), returnType, parameterTypes, Opcodes.ACC_PUBLIC, new TypeList.Empty(), new AnnotationList.Empty()));
         return new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, targetType);
     }
 
@@ -37,7 +38,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
         when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(
-                FOO, mock(TypeDescription.class), mock(TypeDescription.class), new TypeList.Empty(), Opcodes.ACC_STATIC, new TypeList.Empty()));
+                FOO, mock(TypeDescription.class), mock(TypeDescription.class), new TypeList.Empty(), Opcodes.ACC_STATIC, new TypeList.Empty(), new AnnotationList.Empty()));
         Implementation.SpecialMethodInvocation specialMethodInvocation =
                 new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, mock(TypeDescription.class));
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -48,7 +49,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Illegal.INSTANCE);
         when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(
-                FOO, mock(TypeDescription.class), mock(TypeDescription.class), new TypeList.Empty(), Opcodes.ACC_PUBLIC, new TypeList.Empty()));
+                FOO, mock(TypeDescription.class), mock(TypeDescription.class), new TypeList.Empty(), Opcodes.ACC_PUBLIC, new TypeList.Empty(), new AnnotationList.Empty()));
         Implementation.SpecialMethodInvocation specialMethodInvocation =
                 new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, mock(TypeDescription.class));
         assertThat(specialMethodInvocation.isValid(), is(false));

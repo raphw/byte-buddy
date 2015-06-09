@@ -23,7 +23,8 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
                 GenericTypeDescription.Sort.describe(method.getGenericReturnType()),
                 new GenericTypeList.ForLoadedType(method.getGenericParameterTypes()),
                 method.getModifiers(),
-                new GenericTypeList.ForLoadedType(method.getGenericExceptionTypes()));
+                new GenericTypeList.ForLoadedType(method.getGenericExceptionTypes()),
+                new AnnotationList.ForLoadedAnnotation(method.getDeclaredAnnotations()));
     }
 
     @Override
@@ -33,16 +34,8 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
                 new TypeDescription.ForLoadedType(void.class),
                 new TypeList.ForLoadedType(constructor.getParameterTypes()),
                 constructor.getModifiers(),
-                new TypeList.ForLoadedType(constructor.getExceptionTypes()));
-    }
-
-    @Test
-    @Override
-    public void testAnnotations() throws Exception {
-        assertThat(describe(Object.class.getDeclaredMethod("toString")).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.Empty()));
-        assertThat(describe(Object.class.getDeclaredConstructor()).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.Empty()));
+                new TypeList.ForLoadedType(constructor.getExceptionTypes()),
+                new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations()));
     }
 
     @Test

@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -100,7 +101,11 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     public InstrumentedType withField(String internalName,
                                       GenericTypeDescription fieldType,
                                       int modifiers) {
-        FieldDescription additionalField = new FieldDescription.Latent(internalName, this, fieldType, modifiers);
+        FieldDescription additionalField = new FieldDescription.Latent(internalName,
+                this,
+                fieldType,
+                modifiers,
+                Collections.<AnnotationDescription>emptyList());
         if (fieldDescriptions.contains(additionalField)) {
             throw new IllegalArgumentException("Field " + additionalField + " is already defined on " + this);
         }
@@ -127,7 +132,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                 returnType,
                 parameterTypes,
                 modifiers,
-                exceptionTypes);
+                exceptionTypes,
+                Collections.<AnnotationDescription>emptyList());
         if (methodDescriptions.contains(additionalMethod)) {
             throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }

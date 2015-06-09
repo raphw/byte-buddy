@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -680,7 +681,8 @@ public interface Implementation {
                             specialMethodInvocation.getMethodDescription().getReturnType(),
                             specialMethodInvocation.getMethodDescription().getParameters().asTypeList(),
                             resolveModifier(specialMethodInvocation.getMethodDescription().isStatic()),
-                            specialMethodInvocation.getMethodDescription().getExceptionTypes());
+                            specialMethodInvocation.getMethodDescription().getExceptionTypes(),
+                            Collections.<AnnotationDescription>emptyList());
                     registerAccessor(specialMethodInvocation, accessorMethod);
                 }
                 return accessorMethod;
@@ -719,7 +721,8 @@ public interface Implementation {
                             fieldDescription.getType().asRawType(),
                             Collections.<TypeDescription>emptyList(),
                             resolveModifier(fieldDescription.isStatic()),
-                            Collections.<TypeDescription>emptyList());
+                            Collections.<TypeDescription>emptyList(),
+                            Collections.<AnnotationDescription>emptyList());
                     registerGetter(fieldDescription, accessorMethod);
                 }
                 return accessorMethod;
@@ -748,7 +751,8 @@ public interface Implementation {
                             TypeDescription.VOID,
                             Collections.singletonList(fieldDescription.getType().asRawType()),
                             resolveModifier(fieldDescription.isStatic()),
-                            Collections.<TypeDescription>emptyList());
+                            Collections.<TypeDescription>emptyList(),
+                            Collections.<AnnotationDescription>emptyList());
                     registerSetter(fieldDescription, accessorMethod);
                 }
                 return accessorMethod;
@@ -793,7 +797,8 @@ public interface Implementation {
                 fieldCache = new FieldDescription.Latent(String.format("%s$%s", FIELD_CACHE_PREFIX, randomString.nextString()),
                         instrumentedType,
                         fieldType,
-                        FIELD_CACHE_MODIFIER);
+                        FIELD_CACHE_MODIFIER,
+                        Collections.<AnnotationDescription>emptyList());
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }

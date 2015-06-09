@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.ModifierReviewable;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -1685,7 +1686,8 @@ public interface TypeWriter<T> {
                                 TypeDescription.VOID,
                                 new TypeList.Empty(),
                                 TYPE_INITIALIZER_PROXY_MODIFIERS,
-                                Collections.<TypeDescription>emptyList());
+                                Collections.<TypeDescription>emptyList(),
+                                Collections.<AnnotationDescription>emptyList());
                     }
 
                     @Override

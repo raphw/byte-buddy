@@ -1,6 +1,8 @@
 package net.bytebuddy.description.type.generic;
 
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -19,11 +21,17 @@ public interface GenericTypeDescription extends NamedElement {
 
     Sort getSort();
 
+    String getTypeName();
+
     TypeDescription asRawType();
 
     GenericTypeDescription getSuperType();
 
     GenericTypeList getInterfaces();
+
+    FieldList getDeclaredFields();
+
+    MethodList getDeclaredMethods();
 
     GenericTypeList getUpperBounds();
 
@@ -38,8 +46,6 @@ public interface GenericTypeDescription extends NamedElement {
     GenericTypeDescription getOwnerType();
 
     String getSymbol();
-
-    String getTypeName();
 
     /**
      * Returns the size of the type described by this instance.
@@ -479,6 +485,16 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
+        public FieldList getDeclaredFields() {
+            throw new IllegalStateException("A generic array does not imply field definitions: " + this);
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            throw new IllegalStateException("A generic array does not imply method definitions: " + this);
+        }
+
+        @Override
         public GenericTypeList getUpperBounds() {
             return new GenericTypeList.Empty();
         }
@@ -614,6 +630,16 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public GenericTypeList getInterfaces() {
             throw new IllegalStateException("A wildcard does not imply an interface type definition: " + this);
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            throw new IllegalStateException("A wildcard does not imply field definitions: " + this);
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            throw new IllegalStateException("A wildcard does not imply method definitions: " + this);
         }
 
         @Override
@@ -767,6 +793,38 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public GenericTypeList getInterfaces() {
             return asRawType().getInterfaces().accept(Visitor.Substitutor.ForTypeVariable.bind(this));
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            FieldList declaredFields = asRawType().getDeclaredFields();
+            List<FieldDescription> resolved = new ArrayList<FieldDescription>(declaredFields.size());
+            Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariable.bind(this);
+            for (FieldDescription fieldDescription : declaredFields) {
+                resolved.add(new FieldDescription.Latent(fieldDescription.getName(),
+                        fieldDescription.getDeclaringType(),
+                        fieldDescription.getType().accept(visitor),
+                        fieldDescription.getModifiers(),
+                        fieldDescription.getDeclaredAnnotations()));
+            }
+            return new FieldList.Explicit(resolved);
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            MethodList declaredMethods = asRawType().getDeclaredMethods();
+            List<MethodDescription> resolved = new ArrayList<MethodDescription>(declaredMethods.size());
+            Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariable.bind(this);
+            for (MethodDescription methodDescription : declaredMethods) {
+                resolved.add(new MethodDescription.Latent(methodDescription.getInternalName(),
+                        methodDescription.getDeclaringType(),
+                        methodDescription.getReturnType().accept(visitor),
+                        methodDescription.getParameters().asTypeList().accept(visitor),
+                        methodDescription.getModifiers(),
+                        methodDescription.getExceptionTypes().accept(visitor),
+                        methodDescription.getDeclaredAnnotations()));
+            }
+            return new MethodList.Explicit(resolved);
         }
 
         @Override
@@ -950,6 +1008,16 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
+        public FieldList getDeclaredFields() {
+            throw new IllegalStateException("A type variable does not imply field definitions: " + this);
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            throw new IllegalStateException("A type variable does not imply method definitions: " + this);
+        }
+
+        @Override
         public GenericTypeDescription getComponentType() {
             return null;
         }
@@ -1096,6 +1164,16 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public GenericTypeDescription getSuperType() {
             return resolve().getSuperType();
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            return resolve().getDeclaredFields();
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            return resolve().getDeclaredMethods();
         }
 
         @Override
