@@ -3,8 +3,8 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -88,7 +88,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
             @Override
             public void apply(MethodDescription mock) {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
-                when(mock.getExceptionTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
                 TypeDescription returnType = mock(TypeDescription.class);
                 when(returnType.asRawType()).thenReturn(returnType); // REFACTOR

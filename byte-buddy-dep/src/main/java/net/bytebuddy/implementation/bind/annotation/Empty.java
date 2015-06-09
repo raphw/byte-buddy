@@ -40,7 +40,7 @@ public @interface Empty {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(DefaultValue.of(target.getType()));
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(DefaultValue.of(target.getType().asRawType()));
         }
 
         @Override

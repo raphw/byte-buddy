@@ -481,15 +481,15 @@ public abstract class AbstractMethodDescriptionTest {
     @Test
     public void testExceptions() throws Exception {
         assertThat(describe(firstMethod).getExceptionTypes(),
-                is((TypeList) new TypeList.ForLoadedType(firstMethod.getExceptionTypes())));
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(firstMethod.getExceptionTypes())));
         assertThat(describe(secondMethod).getExceptionTypes(),
-                is((TypeList) new TypeList.ForLoadedType(secondMethod.getExceptionTypes())));
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(secondMethod.getExceptionTypes())));
         assertThat(describe(thirdMethod).getExceptionTypes(),
-                is((TypeList) new TypeList.ForLoadedType(thirdMethod.getExceptionTypes())));
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(thirdMethod.getExceptionTypes())));
         assertThat(describe(firstConstructor).getExceptionTypes(),
-                is((TypeList) new TypeList.ForLoadedType(firstConstructor.getExceptionTypes())));
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(firstConstructor.getExceptionTypes())));
         assertThat(describe(secondConstructor).getExceptionTypes(),
-                is((TypeList) new TypeList.ForLoadedType(secondConstructor.getExceptionTypes())));
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(secondConstructor.getExceptionTypes())));
     }
 
     @Test
@@ -561,7 +561,7 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(genericMethod).getReturnType(), is(GenericTypeDescription.Sort.describe(genericMethod.getGenericReturnType())));
         assertThat(describe(genericMethod).getParameters().asTypeListGen(),
                 is((GenericTypeList) new GenericTypeList.ForLoadedType(genericMethod.getGenericParameterTypes())));
-        assertThat(describe(genericMethod).getExceptionTypesGen(),
+        assertThat(describe(genericMethod).getExceptionTypes(),
                 is((GenericTypeList) new GenericTypeList.ForLoadedType(genericMethod.getGenericExceptionTypes())));
     }
 

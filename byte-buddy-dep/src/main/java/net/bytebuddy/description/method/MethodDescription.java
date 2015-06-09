@@ -55,14 +55,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     ParameterList getParameters();
 
-    /**
-     * Returns a description of the exception types of the method described by this instance.
-     *
-     * @return A description of the exception types of the method described by this instance.
-     */
-    TypeList getExceptionTypes();
-
-    GenericTypeList getExceptionTypesGen();
+    GenericTypeList getExceptionTypes();
 
     /**
      * Returns this method modifier but adjusts its state of being abstract.
@@ -237,11 +230,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 | Modifier.NATIVE;
 
         @Override
-        public TypeList getExceptionTypes() {
-            return getExceptionTypesGen().asRawTypes();
-        }
-
-        @Override
         public String getUniqueSignature() {
             return getInternalName() + getDescriptor();
         }
@@ -321,7 +309,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             GenericTypeDescription returnType = getReturnType();
             returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
             generic = generic || !returnType.getSort().isRawType();
-            for (GenericTypeDescription exceptionType : getExceptionTypesGen()) {
+            for (GenericTypeDescription exceptionType : getExceptionTypes()) {
                 exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
                 generic = generic || !exceptionType.getSort().isRawType();
             }
@@ -551,7 +539,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 stringBuilder.append(typeDescription.getSourceCodeName());
             }
             stringBuilder.append(")");
-            GenericTypeList exceptionTypes = getExceptionTypesGen();
+            GenericTypeList exceptionTypes = getExceptionTypes();
             if (exceptionTypes.size() > 0) {
                 stringBuilder.append(" throws ");
                 first = true;
@@ -589,7 +577,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 stringBuilder.append(typeDescription.getSourceCodeName());
             }
             stringBuilder.append(")");
-            TypeList exceptionTypes = getExceptionTypes();
+            TypeList exceptionTypes = getExceptionTypes().asRawTypes();
             if (exceptionTypes.size() > 0) {
                 stringBuilder.append(" throws ");
                 first = true;
@@ -641,7 +629,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeList getExceptionTypesGen() {
+        public GenericTypeList getExceptionTypes() {
             return new GenericTypeList.LazyProjection.OfConstructorExceptionTypes(constructor);
         }
 
@@ -741,7 +729,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeList getExceptionTypesGen() {
+        public GenericTypeList getExceptionTypes() {
             return new GenericTypeList.LazyProjection.OfMethodExceptionTypes(method);
         }
 
@@ -909,7 +897,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeList getExceptionTypesGen() {
+        public GenericTypeList getExceptionTypes() {
             return new GenericTypeList.Explicit(exceptionTypes);
         }
 

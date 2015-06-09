@@ -501,7 +501,7 @@ public class ByteBuddyTutorialExamplesTest {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().represents(String.class)) {
+            if (!target.getType().asRawType().represents(String.class)) { // TODO: Change tutorial
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }
             StackManipulation constant = new TextConstant(annotation.loadSilent().value());

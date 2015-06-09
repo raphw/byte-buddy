@@ -329,7 +329,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         public TypeList asTypeList() {
             List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterDescriptions.size());
             for (ParameterDescription parameterDescription : parameterDescriptions) {
-                typeDescriptions.add(parameterDescription.getType());
+                typeDescriptions.add(parameterDescription.getType().asRawType());
             }
             return new TypeList.Explicit(typeDescriptions);
         }
@@ -338,7 +338,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         public GenericTypeList asTypeListGen() {
             List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterDescriptions.size());
             for (ParameterDescription parameterDescription : parameterDescriptions) {
-                types.add(parameterDescription.getTypeGen());
+                types.add(parameterDescription.getType());
             }
             return new GenericTypeList.Explicit(types);
         }

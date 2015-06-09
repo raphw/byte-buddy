@@ -26,10 +26,10 @@ public class ParameterListForLoadedExecutableTest {
         assertThat(parameterList.size(), is(2));
         assertThat(parameterList.get(0).getIndex(), is(0));
         assertThat(parameterList.get(0).getOffset(), is(1));
-        assertThat(parameterList.get(0).getType().represents(Void.class), is(true));
+        assertThat(parameterList.get(0).getType().asRawType().represents(Void.class), is(true));
         assertThat(parameterList.get(1).getIndex(), is(1));
         assertThat(parameterList.get(1).getOffset(), is(2));
-        assertThat(parameterList.get(1).getType().represents(Void.class), is(true));
+        assertThat(parameterList.get(1).getType().asRawType().represents(Void.class), is(true));
     }
 
     @Test

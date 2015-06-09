@@ -124,7 +124,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(methodDescription.getParameters().size(), is(1));
         assertThat(methodDescription.getParameters().asTypeList(), is(Collections.singletonList(parameterType)));
         assertThat(methodDescription.getExceptionTypes().size(), is(1));
-        assertThat(methodDescription.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
+        assertThat(methodDescription.getExceptionTypes(), is(Collections.<GenericTypeDescription>singletonList(exceptionType)));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
         assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));

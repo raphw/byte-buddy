@@ -479,7 +479,7 @@ public interface InstrumentedType extends TypeDescription {
                     typeVariables.add(new TypeVariableToken(substitutor, typeVariable));
                 }
                 returnType = methodDescription.getReturnType().accept(substitutor);
-                exceptionTypes = methodDescription.getExceptionTypesGen().accept(substitutor);
+                exceptionTypes = methodDescription.getExceptionTypes().accept(substitutor);
                 modifiers = methodDescription.getModifiers();
                 declaredAnnotations = methodDescription.getDeclaredAnnotations();
                 parameters = new ArrayList<ParameterDescription>(methodDescription.getParameters().size());
@@ -495,7 +495,7 @@ public interface InstrumentedType extends TypeDescription {
             }
 
             @Override
-            public GenericTypeList getExceptionTypesGen() {
+            public GenericTypeList getExceptionTypes() {
                 return new GenericTypeList.Explicit(exceptionTypes);
             }
 
@@ -592,7 +592,7 @@ public interface InstrumentedType extends TypeDescription {
                 private final List<AnnotationDescription> parameterAnnotations;
 
                 protected ParameterToken(GenericTypeDescription.Visitor<GenericTypeDescription> substitutor, ParameterDescription parameterDescription) {
-                    parameterType = parameterDescription.getTypeGen().accept(substitutor);
+                    parameterType = parameterDescription.getType().accept(substitutor);
                     index = parameterDescription.getIndex();
                     name = parameterDescription.isNamed()
                             ? parameterDescription.getName()
@@ -604,7 +604,7 @@ public interface InstrumentedType extends TypeDescription {
                 }
 
                 @Override
-                public GenericTypeDescription getTypeGen() {
+                public GenericTypeDescription getType() {
                     return parameterType;
                 }
 

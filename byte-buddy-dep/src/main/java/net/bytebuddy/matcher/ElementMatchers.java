@@ -902,7 +902,8 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(TypeDescription exceptionType) {
         return exceptionType.isAssignableTo(Throwable.class)
-                ? ElementMatchers.<T>declaresException(new CollectionItemMatcher<TypeDescription>(new SubTypeMatcher<TypeDescription>(exceptionType)))
+                ? ElementMatchers.<T>declaresException(new CollectionItemMatcher<GenericTypeDescription>(
+                rawType(new SubTypeMatcher<TypeDescription>(exceptionType))))
                 : new BooleanMatcher<T>(false);
     }
 
@@ -914,7 +915,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a method description by its declared exceptions.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(
-            ElementMatcher<? super Iterable<? extends TypeDescription>> exceptionMatcher) {
+            ElementMatcher<? super Iterable<? extends GenericTypeDescription>> exceptionMatcher) {
         return new MethodExceptionTypeMatcher<T>(nonNull(exceptionMatcher));
     }
 

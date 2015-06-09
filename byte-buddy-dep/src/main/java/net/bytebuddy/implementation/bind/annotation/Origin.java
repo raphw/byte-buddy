@@ -75,7 +75,7 @@ public @interface Origin {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            TypeDescription parameterType = target.getType();
+            TypeDescription parameterType = target.getType().asRawType();
             if (parameterType.represents(Class.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(implementationTarget.getOriginType()));
             } else if (parameterType.represents(Method.class)) {

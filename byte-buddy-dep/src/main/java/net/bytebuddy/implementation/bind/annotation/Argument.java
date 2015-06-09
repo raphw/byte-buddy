@@ -162,8 +162,8 @@ public @interface Argument {
             } else if (source.getParameters().size() <= argument.value()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return argument.bindingMechanic().makeBinding(source.getParameters().get(argument.value()).getType(),
-                    target.getType(),
+            return argument.bindingMechanic().makeBinding(source.getParameters().get(argument.value()).getType().asRawType(),
+                    target.getType().asRawType(),
                     argument.value(),
                     assigner,
                     RuntimeType.Verifier.check(target),

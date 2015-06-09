@@ -395,7 +395,7 @@ public interface TypeWriter<T> {
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
+                            methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     ParameterList parameterList = methodDescription.getParameters();
                     if (parameterList.hasExplicitMetaData()) {
                         for (ParameterDescription parameterDescription : parameterList) {
@@ -1449,7 +1449,7 @@ public interface TypeWriter<T> {
                                 injectedCode.getInjectorProxyMethod().getInternalName(),
                                 injectedCode.getInjectorProxyMethod().getDescriptor(),
                                 injectedCode.getInjectorProxyMethod().getGenericSignature(),
-                                injectedCode.getInjectorProxyMethod().getExceptionTypes().toInternalNames());
+                                injectedCode.getInjectorProxyMethod().getExceptionTypes().asRawTypes().toInternalNames());
                     }
                     MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                     return methodDescription == RETAIN_METHOD
@@ -1473,14 +1473,14 @@ public interface TypeWriter<T> {
                                 methodDescription.getInternalName(),
                                 methodDescription.getDescriptor(),
                                 methodDescription.getGenericSignature(),
-                                methodDescription.getExceptionTypes().toInternalNames());
+                                methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     }
                     MethodVisitor methodVisitor = super.visitMethod(
                             methodDescription.getAdjustedModifiers(entry.getSort().isImplemented()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
+                            methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     return abstractOrigin
                             ? new AttributeObtainingMethodVisitor(methodVisitor, entry, methodDescription)
                             : new CodePreservingMethodVisitor(methodVisitor, entry, methodDescription);
@@ -1567,7 +1567,7 @@ public interface TypeWriter<T> {
                                 resolution.getResolvedMethod().getInternalName(),
                                 resolution.getResolvedMethod().getDescriptor(),
                                 resolution.getResolvedMethod().getGenericSignature(),
-                                resolution.getResolvedMethod().getExceptionTypes().toInternalNames())
+                                resolution.getResolvedMethod().getExceptionTypes().asRawTypes().toInternalNames())
                                 : IGNORE_METHOD;
                         super.visitCode();
                     }

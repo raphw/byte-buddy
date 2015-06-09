@@ -35,6 +35,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
     public void setUp() throws Exception {
         super.setUp();
         when(sourceType.asRawType()).thenReturn(sourceType); // REFACTOR
+        when(targetType.asRawType()).thenReturn(targetType);
     }
 
     @Override

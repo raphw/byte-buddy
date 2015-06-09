@@ -4410,7 +4410,7 @@ public interface TypePool {
             }
 
             @Override
-            public GenericTypeList getExceptionTypesGen() {
+            public GenericTypeList getExceptionTypes() {
                 return signatureResolution.resolveExceptionTypes(exceptionTypeDescriptors, typePool, this);
             }
 
@@ -4512,11 +4512,6 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeDescription getType() {
-                    return TokenizedGenericType.toRawType(typePool, parameterTypeDescriptors.get(index));
-                }
-
-                @Override
                 public MethodDescription getDeclaringMethod() {
                     return LazyMethodDescription.this;
                 }
@@ -4551,7 +4546,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription getTypeGen() {
+                public GenericTypeDescription getType() {
                     return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, LazyMethodDescription.this).get(index);
                 }
 

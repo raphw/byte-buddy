@@ -8,6 +8,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -19,8 +20,6 @@ import static org.mockito.Mockito.*;
 public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
 
     private static final String FOO = "foo";
-
-    private static final int INDEX = 0;
 
     @Mock
     private MethodDescription morphMethod;
@@ -38,6 +37,14 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> getSimpleBinder() {
         return new Morph.Binder(morphMethod);
+    }
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        when(morphType.asRawType()).thenReturn(morphType);
+        when(defaultType.asRawType()).thenReturn(defaultType);
     }
 
     @Test(expected = IllegalStateException.class)

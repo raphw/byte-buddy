@@ -14,7 +14,6 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 import java.lang.annotation.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -212,12 +211,12 @@ public @interface Super {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(target.getType())) {
+            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(target.getType().asRawType())) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
                         .getValue(STRATEGY, EnumerationDescription.class).load(Instantiation.class)
-                        .proxyFor(target.getType(), implementationTarget, annotation));
+                        .proxyFor(target.getType().asRawType(), implementationTarget, annotation));
             }
         }
 

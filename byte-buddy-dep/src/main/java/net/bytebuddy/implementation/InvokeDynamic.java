@@ -1798,8 +1798,8 @@ public class InvokeDynamic implements Implementation {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getType())
-                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getType());
+                    return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getType().asRawType())
+                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getType().asRawType());
                 }
 
                 @Override
@@ -1861,14 +1861,14 @@ public class InvokeDynamic implements Implementation {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType(),
+                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType().asRawType(),
                             typeDescription,
                             dynamicallyTyped);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalArgumentException("Cannot assign " + parameters.get(index) + " to " + typeDescription);
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.forType(parameters.get(index)
-                            .getType()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
+                            .getType().asRawType()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
                 }
 
                 @Override

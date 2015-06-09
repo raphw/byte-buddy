@@ -49,6 +49,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(fieldType.getStackSize()).thenReturn(StackSize.ZERO);
         when(fieldType.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
         when(fieldType.asRawType()).thenReturn(fieldType);
+        when(setterType.asRawType()).thenReturn(setterType);
+        when(getterType.asRawType()).thenReturn(getterType);
     }
 
     @Override
@@ -58,7 +60,9 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalType() throws Exception {
-        when(target.getType()).thenReturn(mock(TypeDescription.class));
+        TypeDescription targetType = mock(TypeDescription.class);
+        when(targetType.asRawType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,

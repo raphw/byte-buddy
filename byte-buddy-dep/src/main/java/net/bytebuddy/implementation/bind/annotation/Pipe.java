@@ -168,7 +168,7 @@ public @interface Pipe {
             MethodDescription methodDescription = methodCandidates.getOnly();
             if (!methodDescription.getReturnType().asRawType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getType().represents(Object.class)) {
+            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().getOnly().getType().asRawType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single Object-typed argument");
             }
             return methodDescription;
@@ -185,9 +185,9 @@ public @interface Pipe {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().equals(forwardingMethod.getDeclaringType())) {
+            if (!target.getType().asRawType().equals(forwardingMethod.getDeclaringType())) {
                 throw new IllegalStateException(String.format("The installed type %s for the @Pipe annotation does not " +
-                        "equal the annotated parameter type on %s", target.getType(), target));
+                        "equal the annotated parameter type on %s", target.getType().asRawType(), target));
             } else if (source.isStatic()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }

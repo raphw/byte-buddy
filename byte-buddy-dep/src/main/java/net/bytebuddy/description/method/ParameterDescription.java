@@ -25,14 +25,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     String NAME_PREFIX = "arg";
 
-    /**
-     * Returns the parameter's type.
-     *
-     * @return The parameter's type.
-     */
-    TypeDescription getType();
-
-    GenericTypeDescription getTypeGen();
+    GenericTypeDescription getType();
 
     /**
      * Returns the method that declares this parameter.
@@ -75,11 +68,6 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      * A base implementation of a method parameter description.
      */
     abstract class AbstractParameterDescription extends AbstractModifierReviewable implements ParameterDescription {
-
-        @Override
-        public TypeDescription getType() {
-            return getTypeGen().asRawType();
-        }
 
         @Override
         public String getName() {
@@ -139,8 +127,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                 stringBuilder.append(' ');
             }
             stringBuilder.append(isVarArgs()
-                    ? getType().getName().replaceFirst("\\[\\]$", "...")
-                    : getType().getName());
+                    ? getType().asRawType().getName().replaceFirst("\\[\\]$", "...")
+                    : getType().asRawType().getName());
             return stringBuilder.append(' ').append(getName()).toString();
         }
     }
@@ -234,7 +222,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public GenericTypeDescription getTypeGen() {
+        public GenericTypeDescription getType() {
             return new GenericTypeDescription.LazyProjection.OfLoadedParameter(parameter);
         }
 
@@ -324,7 +312,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public GenericTypeDescription getTypeGen() {
+            public GenericTypeDescription getType() {
                 return new TypeDescription.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType);
             }
 
@@ -396,7 +384,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public GenericTypeDescription getTypeGen() {
+            public GenericTypeDescription getType() {
                 return new TypeDescription.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType);
             }
 
@@ -471,7 +459,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public GenericTypeDescription getTypeGen() {
+        public GenericTypeDescription getType() {
             return parameterType;
         }
 

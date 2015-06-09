@@ -127,7 +127,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType(),
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType().asRawType(),
                 fieldDescription.getType().asRawType(),
                 dynamicallyTyped);
         if (!stackManipulation.isValid()) {

@@ -133,10 +133,10 @@ public @interface AllArguments {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().isArray()) {
+            if (!target.getType().asRawType().isArray()) {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
-            ArrayFactory arrayFactory = ArrayFactory.forType(target.getType().getComponentType());
+            ArrayFactory arrayFactory = ArrayFactory.forType(target.getType().asRawType().getComponentType());
             boolean includeThis = !source.isStatic() && annotation.loadSilent().includeSelf();
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;

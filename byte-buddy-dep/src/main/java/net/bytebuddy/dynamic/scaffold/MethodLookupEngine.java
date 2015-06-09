@@ -227,7 +227,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public GenericTypeList getExceptionTypesGen() {
+        public GenericTypeList getExceptionTypes() {
             return new GenericTypeList.Explicit(methodChain.get(MOST_SPECIFIC).getExceptionTypes());
         }
 
@@ -390,7 +390,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public GenericTypeList getExceptionTypesGen() {
+        public GenericTypeList getExceptionTypes() {
             return new GenericTypeList.Empty();
         }
 

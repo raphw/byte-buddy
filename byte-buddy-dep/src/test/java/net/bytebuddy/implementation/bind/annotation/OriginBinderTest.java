@@ -36,6 +36,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(targetType);
+        when(targetType.asRawType()).thenReturn(targetType);
     }
 
     @Override

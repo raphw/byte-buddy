@@ -33,6 +33,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     public void setUp() throws Exception {
         super.setUp();
         when(stackManipulation.isValid()).thenReturn(true);
+        when(parameterType.asRawType()).thenReturn(parameterType);
     }
 
     @Override

@@ -5,8 +5,8 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
@@ -105,12 +105,12 @@ public class ImplementationContextDefaultTest {
     @Mock
     private TypeDescription firstFieldDeclaringType, secondFieldDeclaringType;
 
-    private TypeList firstSpecialExceptionTypes, secondSpecialExceptionTypes;
+    private GenericTypeList firstSpecialExceptionTypes, secondSpecialExceptionTypes;
 
     @Before
     public void setUp() throws Exception {
-        firstSpecialExceptionTypes = new TypeList.Explicit(Collections.singletonList(firstSpecialExceptionType));
-        secondSpecialExceptionTypes = new TypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
+        firstSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(firstSpecialExceptionType));
+        secondSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(methodPool.target(any(MethodDescription.class))).thenReturn(entry);
         when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
@@ -471,7 +471,7 @@ public class ImplementationContextDefaultTest {
         assertThat(firstFieldGetter.getReturnType(), is((GenericTypeDescription) firstFieldType));
         assertThat(firstFieldGetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldGetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
-        assertThat(firstFieldGetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(firstFieldGetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldGetter = implementationContext.registerGetterFor(secondField);
@@ -479,7 +479,7 @@ public class ImplementationContextDefaultTest {
         assertThat(secondFieldGetter.getReturnType(), is((GenericTypeDescription) secondFieldType));
         assertThat(secondFieldGetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldGetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
-        assertThat(secondFieldGetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(secondFieldGetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         assertThat(implementationContext.registerGetterFor(secondField), is(secondFieldGetter));
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
@@ -541,7 +541,7 @@ public class ImplementationContextDefaultTest {
         assertThat(firstFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
-        assertThat(firstFieldSetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(firstFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldSetter = implementationContext.registerSetterFor(secondField);
@@ -549,7 +549,7 @@ public class ImplementationContextDefaultTest {
         assertThat(secondFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
-        assertThat(secondFieldSetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(secondFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         assertThat(implementationContext.registerSetterFor(secondField), is(secondFieldSetter));
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
