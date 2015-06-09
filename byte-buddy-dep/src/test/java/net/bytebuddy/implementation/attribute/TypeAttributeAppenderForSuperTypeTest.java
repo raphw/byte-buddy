@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.attribute;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.asm.Type;
@@ -13,6 +14,11 @@ public class TypeAttributeAppenderForSuperTypeTest extends AbstractTypeAttribute
 
     @Mock
     private TypeDescription superType;
+
+    @Before
+    public void setUp() throws Exception {
+        when(superType.asRawType()).thenReturn(superType);
+    }
 
     @Test
     public void testSuperTypeAnnotationAppender() throws Exception {

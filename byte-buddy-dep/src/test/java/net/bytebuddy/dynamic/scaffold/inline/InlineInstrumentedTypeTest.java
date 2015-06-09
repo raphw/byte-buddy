@@ -39,9 +39,9 @@ public class InlineInstrumentedTypeTest extends AbstractInstrumentedTypeTest {
         when(levelType.getSourceCodeName()).thenReturn(FOO);
         when(levelType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
         when(levelType.getDeclaredFields()).thenReturn(new FieldList.Empty());
-        when(levelType.getInterfacesGen()).thenReturn(new GenericTypeList.Empty());
+        when(levelType.getInterfaces()).thenReturn(new GenericTypeList.Empty());
         when(levelType.getTypeVariables()).thenReturn(new GenericTypeList.Empty());
-        when(levelType.getSuperTypeGen()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(levelType.getSuperType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(levelType.getPackage()).thenReturn(packageDescription);
         when(packageDescription.getName()).thenReturn(FOO);
     }

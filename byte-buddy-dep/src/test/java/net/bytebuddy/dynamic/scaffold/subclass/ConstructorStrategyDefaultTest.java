@@ -44,6 +44,7 @@ public class ConstructorStrategyDefaultTest {
                 any(MethodAttributeAppender.Factory.class))).thenReturn(methodRegistry);
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(methodList);
+        when(superType.asRawType()).thenReturn(superType);
     }
 
     @Test

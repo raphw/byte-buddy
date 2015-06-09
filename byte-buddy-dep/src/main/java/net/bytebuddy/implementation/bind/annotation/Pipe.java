@@ -156,7 +156,7 @@ public @interface Pipe {
         private static MethodDescription onlyMethod(TypeDescription typeDescription) {
             if (!typeDescription.isInterface()) {
                 throw new IllegalArgumentException(typeDescription + " is not an interface");
-            } else if (typeDescription.getInterfaces().size() > 0) {
+            } else if (!typeDescription.getInterfaces().isEmpty()) {
                 throw new IllegalArgumentException(typeDescription + " must not extend other interfaces");
             } else if (!typeDescription.isPublic()) {
                 throw new IllegalArgumentException(typeDescription + " is mot public");

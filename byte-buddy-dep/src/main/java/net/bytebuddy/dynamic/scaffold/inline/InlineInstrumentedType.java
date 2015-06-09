@@ -68,10 +68,10 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 levelType.getDeclaredMethods());
         this.levelType = levelType;
         this.modifiers = modifiers;
-        Set<GenericTypeDescription> interfaceTypes = new HashSet<GenericTypeDescription>(levelType.getInterfacesGen());
+        Set<GenericTypeDescription> interfaceTypes = new HashSet<GenericTypeDescription>(levelType.getInterfaces());
         interfaceTypes.addAll(interfaces);
         this.interfaces = new ArrayList<GenericTypeDescription>(interfaceTypes);
-        this.name = isValidTypeName(namingStrategy.name(new NamingStrategy.UnnamedType.Default(levelType.getSuperTypeGen(),
+        this.name = isValidTypeName(namingStrategy.name(new NamingStrategy.UnnamedType.Default(levelType.getSuperType(),
                 interfaces,
                 modifiers,
                 classFileVersion)));
@@ -170,12 +170,12 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public GenericTypeDescription getSuperTypeGen() {
-        return levelType.getSuperTypeGen();
+    public GenericTypeDescription getSuperType() {
+        return levelType.getSuperType();
     }
 
     @Override
-    public GenericTypeList getInterfacesGen() {
+    public GenericTypeList getInterfaces() {
         return new GenericTypeList.Explicit(interfaces);
     }
 

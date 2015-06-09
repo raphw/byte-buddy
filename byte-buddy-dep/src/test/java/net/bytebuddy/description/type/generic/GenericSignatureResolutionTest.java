@@ -30,8 +30,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(GenericType.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     @Test
@@ -75,8 +75,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     @Test
@@ -88,8 +88,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     @Test
@@ -101,8 +101,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableClassAndInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     @Test
@@ -114,8 +114,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardNoBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     @Test
@@ -127,8 +127,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardUpperClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     @Test
@@ -140,8 +140,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardUpperInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     @Test
@@ -153,8 +153,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     @Test
@@ -166,8 +166,8 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerInerfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperTypeGen(), is(originalType.getSuperTypeGen()));
-        assertThat(createdType.getInterfacesGen(), is(originalType.getInterfacesGen()));
+        assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
     public static abstract class GenericType<T extends ArrayList<T> & Callable<T>,

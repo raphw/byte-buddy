@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -72,7 +73,7 @@ public interface ConstructorStrategy {
         DEFAULT_CONSTRUCTOR {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSuperType();
+                TypeDescription superType = instrumentedType.getSuperType().asRawType();
                 MethodList methodList = superType == null
                         ? new MethodList.Empty()
                         : superType.getDeclaredMethods()
@@ -82,7 +83,7 @@ public interface ConstructorStrategy {
                     return methodList;
                 } else {
                     throw new IllegalArgumentException(String.format("%s does not declare a default constructor that " +
-                            "is visible to %s", instrumentedType.getSuperType(), instrumentedType));
+                            "is visible to %s", instrumentedType.getSuperType().asRawType(), instrumentedType));
                 }
             }
 
@@ -103,10 +104,10 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSuperType();
+                GenericTypeDescription superType = instrumentedType.getSuperType();
                 return superType == null
                         ? new MethodList.Empty()
-                        : superType.getDeclaredMethods()
+                        : superType.asRawType().getDeclaredMethods()
                         .filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)));
             }
 
@@ -126,10 +127,10 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE_PUBLIC {
             @Override
             public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSuperType();
+                GenericTypeDescription superType = instrumentedType.getSuperType();
                 return superType == null
                         ? new MethodList.Empty()
-                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()));
+                        : superType.asRawType().getDeclaredMethods().filter(isPublic().and(isConstructor()));
             }
 
             @Override

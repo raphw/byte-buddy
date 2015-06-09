@@ -46,6 +46,7 @@ public class SubclassImplementationTargetFactoryTest {
         when(finding.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
         when(instrumentedType.getSuperType()).thenReturn(superType);
+        when(superType.asRawType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
         factory = new SubclassImplementationTarget.Factory(bridgeMethodResolverFactory,
                 SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE);

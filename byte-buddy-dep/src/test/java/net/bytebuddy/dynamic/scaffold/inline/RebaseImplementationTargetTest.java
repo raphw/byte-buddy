@@ -61,6 +61,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(QUX);
         when(superType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(superType.asRawType()).thenReturn(superType);
         when(superMethod.getDeclaringType()).thenReturn(superType);
         when(superMethod.getReturnType()).thenReturn(returnType);
         when(superMethod.getInternalName()).thenReturn(BAZ);
@@ -76,7 +77,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     }
 
     @Override
-    protected Implementation.Target makeimplementationTarget() {
+    protected Implementation.Target makeImplementationTarget() {
         return new RebaseImplementationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver);
     }
 

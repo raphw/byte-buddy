@@ -48,6 +48,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(superMethodConstructor)));
         when(superType.getInternalName()).thenReturn(BAR);
+        when(superType.asRawType()).thenReturn(superType);
         when(superMethod.getDeclaringType()).thenReturn(superType);
         when(superType.getStackSize()).thenReturn(StackSize.ZERO);
         when(superMethod.getReturnType()).thenReturn(returnType);
@@ -64,7 +65,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     }
 
     @Override
-    protected Implementation.Target makeimplementationTarget() {
+    protected Implementation.Target makeImplementationTarget() {
         return new SubclassImplementationTarget(finding,
                 bridgeMethodResolverFactory,
                 SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE);
@@ -137,6 +138,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
                 when(mock.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(mock.getTypeDescription()).thenReturn(typeDescription);
+                when(typeDescription.asRawType()).thenReturn(typeDescription);
                 when(typeDescription.getSuperType()).thenReturn(typeDescription);
                 when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
             }

@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.Implementation;
@@ -41,10 +42,10 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                                            BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                            OriginTypeIdentifier originTypeIdentifier) {
         super(finding, bridgeMethodResolverFactory);
-        TypeDescription superType = finding.getTypeDescription().getSuperType();
+        GenericTypeDescription superType = finding.getTypeDescription().getSuperType();
         MethodList superConstructors = superType == null
                 ? new MethodList.Empty()
-                : superType.getDeclaredMethods().filter(isConstructor());
+                : superType.asRawType().getDeclaredMethods().filter(isConstructor());
         this.superConstructors = new HashMap<TypeList, MethodDescription>(superConstructors.size());
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.getParameters().asTypeList().asRawTypes(), superConstructor);
@@ -60,7 +61,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
         }
-        return Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSuperType());
+        return Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSuperType().asRawType());
     }
 
     @Override
@@ -102,7 +103,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         SUPER_TYPE {
             @Override
             protected TypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription.getSuperType();
+                return typeDescription.getSuperType().asRawType();
             }
         },
 

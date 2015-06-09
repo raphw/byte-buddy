@@ -8,7 +8,8 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -93,8 +94,8 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSuperType(), is(foo));
-        assertThat(dynamicType.getInterfaces(), is((TypeList) new TypeList.Empty()));
+        assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
+        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));
@@ -124,8 +125,8 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSuperType(), is(foo));
-        assertThat(dynamicType.getInterfaces(), is((TypeList) new TypeList.Empty()));
+        assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
+        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));
@@ -155,8 +156,8 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSuperType(), is(foo));
-        assertThat(dynamicType.getInterfaces(), is((TypeList) new TypeList.ForLoadedType(Serializable.class)));
+        assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
+        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedType(Serializable.class)));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(true));
@@ -186,8 +187,8 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSuperType(), is(foo));
-        assertThat(dynamicType.getInterfaces(), is((TypeList) new TypeList.Empty()));
+        assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
+        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));
@@ -342,6 +343,7 @@ public class TypeProxyCreationTest {
         verifyNoMoreInteractions(specialMethodInvocation);
     }
 
+    @SuppressWarnings("unchecked")
     public static class Foo {
 
         private Void target;
@@ -350,6 +352,7 @@ public class TypeProxyCreationTest {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static class FooProxyMake {
 
         private Void target;

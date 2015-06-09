@@ -21,9 +21,9 @@ public interface GenericTypeDescription extends NamedElement {
 
     TypeDescription asRawType();
 
-    GenericTypeDescription getSuperTypeGen();
+    GenericTypeDescription getSuperType();
 
-    GenericTypeList getInterfacesGen();
+    GenericTypeList getInterfaces();
 
     GenericTypeList getUpperBounds();
 
@@ -469,12 +469,12 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
+        public GenericTypeDescription getSuperType() {
             throw new IllegalStateException("A generic array does not imply a super type definition: " + this);
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
+        public GenericTypeList getInterfaces() {
             throw new IllegalStateException("A generic array does not imply an interface type definition: " + this);
         }
 
@@ -607,12 +607,12 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
+        public GenericTypeDescription getSuperType() {
             throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
+        public GenericTypeList getInterfaces() {
             throw new IllegalStateException("A wildcard does not imply an interface type definition: " + this);
         }
 
@@ -760,13 +760,13 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
-            return asRawType().getSuperTypeGen().accept(Visitor.Substitutor.ForTypeVariable.bind(this));
+        public GenericTypeDescription getSuperType() {
+            return asRawType().getSuperType().accept(Visitor.Substitutor.ForTypeVariable.bind(this));
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
-            return asRawType().getInterfacesGen().accept(Visitor.Substitutor.ForTypeVariable.bind(this));
+        public GenericTypeList getInterfaces() {
+            return asRawType().getInterfaces().accept(Visitor.Substitutor.ForTypeVariable.bind(this));
         }
 
         @Override
@@ -940,12 +940,12 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
+        public GenericTypeDescription getSuperType() {
             throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
+        public GenericTypeList getInterfaces() {
             throw new IllegalStateException("A type variable does not imply an interface type definition: " + this);
         }
 
@@ -1089,13 +1089,13 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
-            return resolve().getInterfacesGen();
+        public GenericTypeList getInterfaces() {
+            return resolve().getInterfaces();
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
-            return resolve().getSuperTypeGen();
+        public GenericTypeDescription getSuperType() {
+            return resolve().getSuperType();
         }
 
         @Override

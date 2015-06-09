@@ -77,7 +77,7 @@ public @interface SuperCall {
                     Implementation.Target.MethodLookup.Default.EXACT);
             if (!specialMethodInvocation.isValid()
                     && source.isDefaultMethod()
-                    && implementationTarget.getTypeDescription().getInterfaces().contains(source.getDeclaringType())
+                    && implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(source.getDeclaringType())
                     && annotation.loadSilent().fallbackToDefault()) {
                 specialMethodInvocation = implementationTarget.invokeDefault(source.getDeclaringType(), source.getUniqueSignature());
             }

@@ -1,6 +1,5 @@
 package net.bytebuddy.description.type;
 
-import com.sun.javaws.jnl.PackageDesc;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -156,28 +155,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     boolean isPrimitive();
 
     /**
-     * Returns the component type of this type.
-     *
-     * @return The component type of this array or {@code null} if type does not have a super type as for the
-     * {@link java.lang.Object} type.
-     */
-    TypeDescription getSuperType();
-
-    /**
-     * Returns a list of interfaces that are implemented by this type.
-     *
-     * @return A list of interfaces that are implemented by this type.
-     */
-    TypeList getInterfaces();
-
-    /**
-     * Returns all interfaces that are implemented by this type, either directly or indirectly.
-     *
-     * @return A list of all interfaces of this type in random order.
-     */
-    TypeList getInheritedInterfaces();
-
-    /**
      * Returns a description of the enclosing method of this type.
      *
      * @return A description of the enclosing method of this type or {@code null} if there is no such method.
@@ -321,33 +298,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      */
     abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
-        /**
-         * Collects all interfaces for a given type description.
-         *
-         * @param typeDescription An interface type to check for other interfaces.
-         * @param interfaces      A collection of already discovered interfaces.
-         */
-        private static void collect(TypeDescription typeDescription, Set<TypeDescription> interfaces) {
-            if (interfaces.add(typeDescription)) {
-                for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    collect(interfaceType, interfaces);
-                }
-            }
-        }
-
-        @Override
-        public TypeDescription getSuperType() {
-            GenericTypeDescription superType = getSuperTypeGen();
-            return superType == null
-                    ? null
-                    : superType.asRawType();
-        }
-
-        @Override
-        public TypeList getInterfaces() {
-            return getInterfacesGen().asRawTypes();
-        }
-
         @Override
         public Sort getSort() {
             return Sort.RAW;
@@ -451,7 +401,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public String getGenericSignature() {
-            GenericTypeDescription superType = getSuperTypeGen();
+            GenericTypeDescription superType = getSuperType();
             if (superType == null) {
                 return null;
             }
@@ -468,7 +418,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             }
             superType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
             generic = generic || !superType.getSort().isRawType();
-            for (GenericTypeDescription interfaceType : getInterfacesGen()) {
+            for (GenericTypeDescription interfaceType : getInterfaces()) {
                 interfaceType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
                 generic = generic || !interfaceType.getSort().isRawType();
             }
@@ -496,18 +446,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public TypeList getInheritedInterfaces() {
-            Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
-            TypeDescription current = this;
-            do {
-                for (TypeDescription interfaceType : current.getInterfaces()) {
-                    collect(interfaceType, interfaces);
-                }
-            } while ((current = current.getSuperType()) != null);
-            return new TypeList.Explicit(new ArrayList<TypeDescription>(interfaces));
-        }
-
-        @Override
         public AnnotationList getInheritedAnnotations() {
             AnnotationList declaredAnnotations = getDeclaredAnnotations();
             if (getSuperType() == null) {
@@ -517,7 +455,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 for (AnnotationDescription annotationDescription : declaredAnnotations) {
                     annotationTypes.add(annotationDescription.getAnnotationType());
                 }
-                return new AnnotationList.Explicit(join(declaredAnnotations, getSuperType().getInheritedAnnotations().inherited(annotationTypes)));
+                return new AnnotationList.Explicit(join(declaredAnnotations, getSuperType().asRawType().getInheritedAnnotations().inherited(annotationTypes)));
             }
         }
 
@@ -692,7 +630,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 try {
                     return nextType;
                 } finally {
-                    nextType = nextType.getSuperTypeGen();
+                    nextType = nextType.getSuperType();
                 }
             }
 
@@ -734,13 +672,13 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                     return true;
                 }
                 // The sub type has a super type and this super type is assignable to the super type.
-                TypeDescription targetTypeSuperType = targetType.getSuperType();
-                if (targetTypeSuperType != null && targetTypeSuperType.isAssignableTo(sourceType)) {
+                GenericTypeDescription targetTypeSuperType = targetType.getSuperType();
+                if (targetTypeSuperType != null && targetTypeSuperType.asRawType().isAssignableTo(sourceType)) {
                     return true;
                 }
                 // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
                 if (sourceType.isInterface()) {
-                    for (TypeDescription interfaceType : targetType.getInterfaces()) {
+                    for (TypeDescription interfaceType : targetType.getInterfaces().asRawTypes()) {
                         if (interfaceType.isAssignableTo(sourceType)) {
                             return true;
                         }
@@ -939,14 +877,14 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
+        public GenericTypeDescription getSuperType() {
             return type.getSuperclass() == null
                     ? null
                     : new LazyProjection.OfLoadedSuperType(type);
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
+        public GenericTypeList getInterfaces() {
             return isArray()
                     ? ARRAY_INTERFACES
                     : new GenericTypeList.LazyProjection.OfInterfaces(type);
@@ -1177,12 +1115,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
+        public GenericTypeDescription getSuperType() {
             return new ForLoadedType(Object.class);
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
+        public GenericTypeList getInterfaces() {
             return ARRAY_INTERFACES;
         }
 
@@ -1334,12 +1272,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
+        public GenericTypeDescription getSuperType() {
             return superType;
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
+        public GenericTypeList getInterfaces() {
             return new GenericTypeList.Explicit(interfaces);
         }
 
@@ -1427,12 +1365,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getSuperTypeGen() {
+        public GenericTypeDescription getSuperType() {
             return TypeDescription.OBJECT;
         }
 
         @Override
-        public GenericTypeList getInterfacesGen() {
+        public GenericTypeList getInterfaces() {
             return new GenericTypeList.Empty();
         }
 

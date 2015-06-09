@@ -111,7 +111,7 @@ public enum SuperMethodCall implements Implementation {
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
             StackManipulation superMethodCall = instrumentedMethod.isDefaultMethod()
-                    && implementationTarget.getTypeDescription().getInterfaces().contains(instrumentedMethod.getDeclaringType())
+                    && implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(instrumentedMethod.getDeclaringType())
                     ? implementationTarget.invokeDefault(instrumentedMethod.getDeclaringType(), instrumentedMethod.getUniqueSignature())
                     : implementationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.EXACT);
             if (!superMethodCall.isValid()) {

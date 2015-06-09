@@ -503,10 +503,11 @@ public interface MethodLookupEngine {
         public Finding process(TypeDescription typeDescription) {
             MethodBucket methodBucket = new MethodBucket(typeDescription);
             Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
-            TypeList defaultMethodRelevantInterfaces = typeDescription.getInterfaces();
-            while ((typeDescription = typeDescription.getSuperType()) != null) {
-                methodBucket.pushClass(typeDescription);
-                interfaces.addAll(typeDescription.getInterfaces());
+            TypeList defaultMethodRelevantInterfaces = typeDescription.getInterfaces().asRawTypes();
+            GenericTypeDescription currentType = typeDescription;
+            while ((currentType = currentType.getSuperType()) != null) {
+                methodBucket.pushClass(currentType.asRawType());
+                interfaces.addAll(currentType.getInterfaces().asRawTypes());
             }
             Map<TypeDescription, Set<MethodDescription>> defaultMethods = apply(methodBucket,
                     interfaces,
@@ -757,7 +758,7 @@ public interface MethodLookupEngine {
                         }
                         defaultMethodLookup.register(methodDescription);
                     }
-                    for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
+                    for (TypeDescription interfaceType : typeDescription.getInterfaces().asRawTypes()) {
                         pushInterface(interfaceType, locallyProcessedMethods, defaultMethodLookup);
                     }
                     defaultMethodLookup.complete(typeDescription);
@@ -926,7 +927,7 @@ public interface MethodLookupEngine {
                     public void complete(TypeDescription typeDescription) {
                         Set<String> methodDeclarations = this.methodDeclarations.get(typeDescription);
                         Set<MethodDescription> defaultMethods = this.defaultMethods.get(typeDescription);
-                        for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
+                        for (TypeDescription interfaceType : typeDescription.getInterfaces().asRawTypes()) {
                             for (MethodDescription methodDescription : this.defaultMethods.get(interfaceType)) {
                                 if (!methodDeclarations.contains(methodDescription.getUniqueSignature())) {
                                     defaultMethods.add(methodDescription);

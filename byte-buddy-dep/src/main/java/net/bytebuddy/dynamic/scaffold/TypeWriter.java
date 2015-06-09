@@ -1421,8 +1421,8 @@ public interface TypeWriter<T> {
                             instrumentedType.getGenericSignature(),
                             (instrumentedType.getSuperType() == NO_SUPER_CLASS ?
                                     TypeDescription.OBJECT :
-                                    instrumentedType.getSuperType()).getInternalName(),
-                            instrumentedType.getInterfaces().toInternalNames());
+                                    instrumentedType.getSuperType().asRawType()).getInternalName(),
+                            instrumentedType.getInterfaces().asRawTypes().toInternalNames());
                     attributeAppender.apply(this, instrumentedType);
                 }
 
@@ -1774,8 +1774,8 @@ public interface TypeWriter<T> {
                         instrumentedType.getGenericSignature(),
                         (instrumentedType.getSuperType() == null
                                 ? TypeDescription.OBJECT
-                                : instrumentedType.getSuperType()).getInternalName(),
-                        instrumentedType.getInterfaces().toInternalNames());
+                                : instrumentedType.getSuperType().asRawType()).getInternalName(),
+                        instrumentedType.getInterfaces().asRawTypes().toInternalNames());
                 attributeAppender.apply(classVisitor, instrumentedType);
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, fieldDescription);

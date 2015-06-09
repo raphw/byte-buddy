@@ -172,14 +172,14 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     }
 
     @Override
-    public GenericTypeDescription getSuperTypeGen() {
+    public GenericTypeDescription getSuperType() {
         return isInterface()
                 ? null
                 : superClass;
     }
 
     @Override
-    public GenericTypeList getInterfacesGen() {
+    public GenericTypeList getInterfaces() {
         return new GenericTypeList.Explicit(interfaces);
     }
 
@@ -200,8 +200,9 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
 
     @Override
     public AnnotationList getInheritedAnnotations() {
-        return getSuperType() == null
+        GenericTypeDescription superType = getSuperType();
+        return superType == null
                 ? new AnnotationList.Empty()
-                : getSuperType().getInheritedAnnotations().inherited(Collections.<TypeDescription>emptySet());
+                : superType.asRawType().getInheritedAnnotations().inherited(Collections.<TypeDescription>emptySet());
     }
 }

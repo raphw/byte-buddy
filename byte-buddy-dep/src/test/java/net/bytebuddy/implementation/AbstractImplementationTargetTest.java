@@ -79,10 +79,10 @@ public abstract class AbstractImplementationTargetTest {
         when(defaultType.isInterface()).thenReturn(true);
         when(defaultMethod.isSpecializableFor(defaultType)).thenReturn(true);
         when(defaultType.getInternalName()).thenReturn(BAZBAR);
-        implementationTarget = makeimplementationTarget();
+        implementationTarget = makeImplementationTarget();
     }
 
-    protected abstract Implementation.Target makeimplementationTarget();
+    protected abstract Implementation.Target makeImplementationTarget();
 
     @Test
     public void testDefaultMethodInvocation() throws Exception {

@@ -4,7 +4,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -84,7 +84,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Test
     public void testDefaultMethodCallImplicitInvalid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedType(Foo.class));
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
@@ -101,7 +101,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Test
     public void testDefaultMethodCallImplicitValid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedType(Foo.class));
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
@@ -119,7 +119,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Test
     public void testDefaultMethodCallExplicitInvalid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedType(Foo.class));
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
@@ -135,7 +135,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Test
     public void testDefaultMethodCallExplicitValid() throws Exception {
         when(source.getUniqueSignature()).thenReturn(FOO);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.ForLoadedType(Foo.class));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedType(Foo.class));
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);

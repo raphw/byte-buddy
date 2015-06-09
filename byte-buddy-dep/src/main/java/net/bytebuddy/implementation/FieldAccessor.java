@@ -275,7 +275,7 @@ public abstract class FieldAccessor implements Implementation {
                     if (fieldList.size() == 1) {
                         return fieldList.getOnly();
                     }
-                } while (!(currentType = currentType.getSuperType()).represents(Object.class));
+                } while (!(currentType = currentType.getSuperType().asRawType()).represents(Object.class));
                 throw new IllegalArgumentException("There is no field '" + name + " that is visible to " + instrumentedType);
             }
 

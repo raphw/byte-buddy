@@ -5,6 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -302,16 +303,19 @@ public abstract class AbstractInstrumentedTypeTest {
 
     @Test
     public void testSupertype() {
-        assertThat(makePlainInstrumentedType().getSuperType(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
-        assertThat(makePlainInstrumentedType().getSuperType(), not(is((TypeDescription) new TypeDescription.ForLoadedType(Integer.class))));
-        assertThat(makePlainInstrumentedType().getSuperType(), not(is((TypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
+        assertThat(makePlainInstrumentedType().getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(makePlainInstrumentedType().getSuperType(), not(is((GenericTypeDescription) new TypeDescription.ForLoadedType(Integer.class))));
+        assertThat(makePlainInstrumentedType().getSuperType(), not(is((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
     }
 
     @Test
     public void testInterfaces() {
-        TypeList interfaces = makePlainInstrumentedType().getInterfaces();
+        GenericTypeList interfaces = makePlainInstrumentedType().getInterfaces();
         assertThat(interfaces.size(), is(1));
-        assertThat(interfaces.get(0), is(is((TypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
+        assertThat(interfaces.get(0), is(is((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
+        TypeList rawInterfaces = interfaces.asRawTypes();
+        assertThat(rawInterfaces.size(), is(1));
+        assertThat(rawInterfaces.get(0), is(is((TypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
     }
 
     @Test

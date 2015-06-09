@@ -143,7 +143,7 @@ public class DefaultMethodCall implements Implementation {
      */
     private List<TypeDescription> filterRelevant(TypeDescription typeDescription) {
         List<TypeDescription> filtered = new ArrayList<TypeDescription>(prioritizedInterfaces.size());
-        Set<TypeDescription> relevant = new HashSet<TypeDescription>(typeDescription.getInterfaces());
+        Set<TypeDescription> relevant = new HashSet<TypeDescription>(typeDescription.getInterfaces().asRawTypes());
         for (TypeDescription prioritizedInterface : prioritizedInterfaces) {
             if (relevant.remove(prioritizedInterface)) {
                 filtered.add(prioritizedInterface);
@@ -197,7 +197,7 @@ public class DefaultMethodCall implements Implementation {
         protected Appender(Target implementationTarget, List<TypeDescription> prioritizedInterfaces) {
             this.implementationTarget = implementationTarget;
             this.prioritizedInterfaces = prioritizedInterfaces;
-            this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(implementationTarget.getTypeDescription().getInterfaces());
+            this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(implementationTarget.getTypeDescription().getInterfaces().asRawTypes());
             nonPrioritizedInterfaces.removeAll(prioritizedInterfaces);
         }
 

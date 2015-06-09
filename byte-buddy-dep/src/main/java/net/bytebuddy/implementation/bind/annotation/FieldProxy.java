@@ -9,6 +9,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -191,7 +192,7 @@ public @interface FieldProxy {
         private static MethodDescription onlyMethod(TypeDescription typeDescription) {
             if (!typeDescription.isInterface()) {
                 throw new IllegalArgumentException(typeDescription + " is not an interface");
-            } else if (typeDescription.getInterfaces().size() > 0) {
+            } else if (!typeDescription.getInterfaces().isEmpty()) {
                 throw new IllegalArgumentException(typeDescription + " must not extend other interfaces");
             } else if (!typeDescription.isPublic()) {
                 throw new IllegalArgumentException(typeDescription + " is mot public");
@@ -951,9 +952,9 @@ public @interface FieldProxy {
 
                     @Override
                     protected Resolution resolve(TypeDescription instrumentedType) {
-                        TypeDescription currentType = instrumentedType;
+                        GenericTypeDescription currentType = instrumentedType;
                         do {
-                            FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                            FieldList fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
                             if (fieldList.size() == 1) {
                                 return new Resolution.Resolved(fieldList.getOnly());
                             }

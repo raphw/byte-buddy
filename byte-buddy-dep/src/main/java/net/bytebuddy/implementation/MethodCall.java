@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -1228,10 +1229,10 @@ public class MethodCall implements Implementation {
                                              TypeDescription targetType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                TypeDescription currentType = instrumentedType;
+                GenericTypeDescription currentType = instrumentedType;
                 FieldDescription fieldDescription = null;
                 do {
-                    FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName));
+                    FieldList fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
                     if (fieldList.size() != 0) {
                         fieldDescription = fieldList.getOnly();
                     }

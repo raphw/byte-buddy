@@ -146,7 +146,7 @@ public @interface DefaultCall {
                                                                       MethodDescription source) {
                     String uniqueSignature = source.getUniqueSignature();
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces()) {
+                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asRawTypes()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
