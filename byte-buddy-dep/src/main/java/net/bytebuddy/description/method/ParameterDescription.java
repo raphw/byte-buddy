@@ -3,6 +3,7 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -14,6 +15,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
 
 /**
  * Description of the parameter of a Java method or constructor.
@@ -430,6 +432,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          */
         private final GenericTypeDescription parameterType;
 
+        private final List<? extends AnnotationDescription> declaredAnnotations;
+
         /**
          * The index of the parameter.
          */
@@ -450,10 +454,12 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          */
         public Latent(MethodDescription declaringMethod,
                       GenericTypeDescription parameterType,
+                      List<? extends AnnotationDescription> declaredAnnotations,
                       int index,
                       int offset) {
             this.declaringMethod = declaringMethod;
             this.parameterType = parameterType;
+            this.declaredAnnotations = declaredAnnotations;
             this.index = index;
             this.offset = offset;
         }
@@ -490,7 +496,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Empty();
+            return new AnnotationList.Explicit(declaredAnnotations);
         }
     }
 }

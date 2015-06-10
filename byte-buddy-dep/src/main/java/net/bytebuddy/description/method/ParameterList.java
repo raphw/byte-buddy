@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -282,6 +283,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             for (GenericTypeDescription parameterType : parameterTypes) {
                 parameterDescriptions.add(new ParameterDescription.Latent(declaringMethod,
                         parameterType,
+                        Collections.<AnnotationDescription>emptyList(),
                         index++,
                         offset));
                 offset += parameterType.getStackSize().getSize();

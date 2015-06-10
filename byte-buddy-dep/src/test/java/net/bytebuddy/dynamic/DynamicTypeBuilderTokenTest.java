@@ -37,6 +37,7 @@ public class DynamicTypeBuilderTokenTest {
     private GenericTypeList parameterTypes, exceptionTypes;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         parameterTypes = new GenericTypeList.Explicit(Collections.singletonList(parameterType));
         exceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(exceptionType));

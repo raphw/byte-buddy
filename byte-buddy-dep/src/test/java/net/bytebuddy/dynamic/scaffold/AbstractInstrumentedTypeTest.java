@@ -43,6 +43,7 @@ public abstract class AbstractInstrumentedTypeTest {
     protected abstract InstrumentedType makePlainInstrumentedType();
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testWithField() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
         when(fieldType.asRawType()).thenReturn(fieldType); // REFACTOR
@@ -98,6 +99,7 @@ public abstract class AbstractInstrumentedTypeTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testWithMethod() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
@@ -174,6 +176,7 @@ public abstract class AbstractInstrumentedTypeTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
     public void testWithMethodDouble() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
