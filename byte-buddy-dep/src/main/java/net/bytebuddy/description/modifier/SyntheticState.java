@@ -5,7 +5,10 @@ import org.objectweb.asm.Opcodes;
 /**
  * Defines if a type or member is supposed to be marked as synthetic.
  */
-public enum SyntheticState implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
+public enum SyntheticState implements ModifierContributor.ForType,
+        ModifierContributor.ForMethod,
+        ModifierContributor.ForField,
+        ModifierContributor.ForParameter {
 
     /**
      * Modifier for marking a type member as synthetic.

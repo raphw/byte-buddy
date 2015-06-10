@@ -47,6 +47,8 @@ public final class ByteBuddyCommons {
     public static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
             | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
 
+    public static final int PARAMETER_MODIFIER_MASK = Modifier.FINAL | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
+
     /**
      * A collection of all keywords of the Java programming language.
      */

@@ -1637,8 +1637,10 @@ public interface DynamicType {
 
             @Override
             public MatchedMethodInterception<S> defineMethod(Method method) {
-                return defineMethod(method.getName(), method.getGenericReturnType(), Arrays.asList(method.getGenericParameterTypes()), method.getModifiers())
-                        .throwing(method.getGenericExceptionTypes());
+                return defineMethod(method.getName(),
+                        method.getGenericReturnType(),
+                        Arrays.asList(method.getGenericParameterTypes()),
+                        method.getModifiers()).throwing(method.getGenericExceptionTypes());
             }
 
             @Override

@@ -8,7 +8,6 @@ import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,7 +31,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
     GenericTypeList asGenericTypes();
 
-    <T extends GenericTypeDescription> List<T> accept(GenericTypeDescription.Visitor<T> visitor);
+    TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor);
 
     abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
 
@@ -42,12 +41,12 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         }
 
         @Override
-        public <T extends GenericTypeDescription> List<T> accept(GenericTypeDescription.Visitor<T> visitor) {
-            List<T> visited = new ArrayList<T>(size());
+        public TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor) {
+            List<TypeDescription> visited = new ArrayList<TypeDescription>(size());
             for (TypeDescription typeDescription : this) {
                 visited.add(typeDescription.accept(visitor));
             }
-            return visited;
+            return new Explicit(visited);
         }
     }
 
@@ -185,8 +184,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         }
 
         @Override
-        public <T extends GenericTypeDescription> List<T> accept(GenericTypeDescription.Visitor<T> visitor) {
-            return Collections.emptyList();
+        public TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor) {
+            return this;
         }
     }
 }

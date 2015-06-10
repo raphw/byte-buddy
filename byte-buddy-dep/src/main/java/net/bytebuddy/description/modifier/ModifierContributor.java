@@ -43,4 +43,8 @@ public interface ModifierContributor {
     interface ForType extends ModifierContributor {
         /* marker interface */
     }
+
+    interface ForParameter extends ModifierContributor {
+        /* marker interface */
+    }
 }
