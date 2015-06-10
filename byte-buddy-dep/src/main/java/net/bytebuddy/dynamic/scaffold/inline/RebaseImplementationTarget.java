@@ -124,8 +124,8 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
             this.instrumentedType = instrumentedType;
             methodDescription = resolution.getResolvedMethod();
             stackManipulation = new Compound(resolution.getAdditionalArguments(), resolution.getResolvedMethod().isStatic()
-                    ? MethodInvocation.invoke(resolution.getResolvedMethod())
-                    : MethodInvocation.invoke(resolution.getResolvedMethod()).special(instrumentedType));
+                    ? MethodInvocation.invoke(methodDescription)
+                    : MethodInvocation.invoke(methodDescription).special(instrumentedType));
         }
 
         /**

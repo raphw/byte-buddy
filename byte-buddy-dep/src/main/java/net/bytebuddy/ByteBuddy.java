@@ -5,6 +5,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -2401,9 +2402,9 @@ public class ByteBuddy {
                 MethodDescription cloneArrayMethod = new MethodDescription.Latent(CLONE_METHOD_NAME,
                         valuesField.getType().asRawType(),
                         TypeDescription.OBJECT,
-                        Collections.<TypeDescription>emptyList(),
+                        Collections.<ParameterDescription.Token>emptyList(),
                         Opcodes.ACC_PUBLIC,
-                        Collections.<TypeDescription>emptyList(),
+                        Collections.<GenericTypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList());
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),

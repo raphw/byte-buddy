@@ -2,12 +2,15 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,10 +28,14 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                                                           TypeDescription returnType,
                                                           List<TypeDescription> parameterTypes,
                                                           TypeDescription targetType) {
+        List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(parameterTypes.size());
+        for (TypeDescription parameterType : parameterTypes) {
+            tokens.add(new ParameterDescription.Token(parameterType));
+        }
         return new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(name,
                 mock(TypeDescription.class),
                 returnType,
-                parameterTypes,
+                tokens,
                 Opcodes.ACC_PUBLIC,
                 Collections.<TypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList()), targetType, mock(StackManipulation.class));
@@ -42,9 +49,9 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                 new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(FOO,
                         mock(TypeDescription.class),
                         mock(TypeDescription.class),
-                        new TypeList.Empty(),
+                        Collections.<ParameterDescription.Token>emptyList(),
                         Opcodes.ACC_PUBLIC,
-                        Collections.<TypeDescription>emptyList(),
+                        Collections.<GenericTypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
         assertThat(specialMethodInvocation.isValid(), is(true));
     }
@@ -57,7 +64,7 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                 new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(FOO,
                         mock(TypeDescription.class),
                         mock(TypeDescription.class),
-                        new TypeList.Empty(),
+                        Collections.<ParameterDescription.Token>emptyList(),
                         Opcodes.ACC_PUBLIC,
                         Collections.<TypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList()), mock(TypeDescription.class), stackManipulation);

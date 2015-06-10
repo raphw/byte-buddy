@@ -19,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -833,14 +834,11 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         private final GenericTypeDescription returnType;
 
         /**
-         * The parameter types of this methods.
-         */
-        private final List<? extends GenericTypeDescription> parameterTypes;
-
-        /**
          * The modifiers of this method.
          */
         private final int modifiers;
+
+        private final List<ParameterDescription> parameterDescriptions;
 
         /**
          * This method's exception types.
@@ -854,13 +852,43 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                       GenericTypeDescription returnType,
                       List<? extends GenericTypeDescription> parameterTypes,
                       int modifiers,
+                      List<? extends GenericTypeDescription> exceptionTypes) {
+            this.internalName = internalName;
+            this.declaringType = declaringType;
+            this.returnType = returnType;
+            this.parameterDescriptions = new ArrayList<ParameterDescription>(parameterTypes.size());
+            this.modifiers = modifiers;
+            int index = 0, offset = isStatic() ? 0 : 1;
+            for (GenericTypeDescription parameterType : parameterTypes) {
+                parameterDescriptions.add(new ParameterDescription.Latent(this,
+                        parameterType,
+                        Collections.<AnnotationDescription>emptyList(),
+                        index++,
+                        offset));
+                offset += parameterType.getStackSize().getSize();
+            }
+            this.exceptionTypes = exceptionTypes;
+            declaredAnnotations = Collections.emptyList();
+        }
+
+        public Latent(String internalName,
+                      TypeDescription declaringType,
+                      GenericTypeDescription returnType,
+                      List<? extends ParameterDescription.Token> tokens,
+                      int modifiers,
                       List<? extends GenericTypeDescription> exceptionTypes,
                       List<? extends AnnotationDescription> declaredAnnotations) {
             this.internalName = internalName;
             this.declaringType = declaringType;
             this.returnType = returnType;
-            this.parameterTypes = parameterTypes;
+            this.parameterDescriptions = new ArrayList<ParameterDescription>(tokens.size());
             this.modifiers = modifiers;
+            int index = 0, offset = isStatic() ? 0 : 1;
+            for (ParameterDescription.Token token : tokens) {
+                ParameterDescription parameterDescription = token.toDescription(this, index++, offset);
+                parameterDescriptions.add(parameterDescription);
+                offset += parameterDescription.getType().getStackSize().getSize();
+            }
             this.exceptionTypes = exceptionTypes;
             this.declaredAnnotations = declaredAnnotations;
         }
@@ -875,9 +903,9 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             return new Latent(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME,
                     declaringType,
                     TypeDescription.VOID,
-                    new TypeList.Empty(),
+                    Collections.<ParameterDescription.Token>emptyList(),
                     TYPE_INITIALIZER_MODIFIER,
-                    Collections.<TypeDescription>emptyList(),
+                    Collections.<GenericTypeDescription>emptyList(),
                     Collections.<AnnotationDescription>emptyList());
         }
 
@@ -888,7 +916,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public ParameterList getParameters() {
-            return ParameterList.Explicit.latent(this, parameterTypes);
+            return new ParameterList.Explicit(parameterDescriptions);
         }
 
         @Override

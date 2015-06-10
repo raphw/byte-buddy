@@ -21,6 +21,8 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
     GenericTypeList asTypeList();
 
+    List<ParameterDescription.Token> asTokenList();
+
     List<ParameterDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
     /**
@@ -43,6 +45,15 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
                 }
             }
             return true;
+        }
+
+        @Override
+        public List<ParameterDescription.Token> asTokenList() {
+            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
+            for (ParameterDescription parameterDescription : this) {
+                tokens.add(parameterDescription.toToken());
+            }
+            return tokens;
         }
 
         @Override
@@ -330,6 +341,11 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         @Override
         public GenericTypeList asTypeList() {
             return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public List<ParameterDescription.Token> asTokenList() {
+            return Collections.<ParameterDescription.Token>emptyList();
         }
 
         @Override

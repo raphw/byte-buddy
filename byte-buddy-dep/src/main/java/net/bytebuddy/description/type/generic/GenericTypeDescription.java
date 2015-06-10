@@ -819,7 +819,7 @@ public interface GenericTypeDescription extends NamedElement {
                 resolved.add(new MethodDescription.Latent(methodDescription.getInternalName(),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType().accept(visitor),
-                        methodDescription.getParameters().asTypeList().accept(visitor),
+                        methodDescription.getParameters().accept(visitor),
                         methodDescription.getModifiers(),
                         methodDescription.getExceptionTypes().accept(visitor),
                         methodDescription.getDeclaredAnnotations()));

@@ -15,6 +15,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -66,6 +67,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     int getOffset();
 
+    Token toToken();
+
     /**
      * A base implementation of a method parameter description.
      */
@@ -103,6 +106,18 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                 offset += parameterType.get(i).getStackSize().getSize();
             }
             return offset;
+        }
+
+        @Override
+        public Token toToken() {
+            return new Token(getType(),
+                    getDeclaredAnnotations(),
+                    isNamed()
+                            ? getName()
+                            : Token.NO_NAME,
+                    hasModifiers()
+                            ? (Integer) getModifiers()
+                            : Token.NO_MODIFIERS);
         }
 
         @Override
@@ -539,6 +554,14 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         private final String name;
 
         private final Integer modifiers;
+
+        public Token(GenericTypeDescription typeDescription) {
+            this(typeDescription, Collections.<AnnotationDescription>emptyList());
+        }
+
+        public Token(GenericTypeDescription typeDescription, List<? extends AnnotationDescription> annotationDescriptions) {
+            this(typeDescription, annotationDescriptions, NO_NAME, NO_MODIFIERS);
+        }
 
         public Token(GenericTypeDescription typeDescription,
                      List<? extends AnnotationDescription> annotationDescriptions,

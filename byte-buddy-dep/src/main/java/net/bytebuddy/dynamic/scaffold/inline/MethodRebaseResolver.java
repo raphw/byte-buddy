@@ -1,8 +1,10 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -305,7 +307,7 @@ public interface MethodRebaseResolver {
                         methodNameTransformer.transform(methodDescription),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
-                        methodDescription.getParameters().asTypeList(),
+                        methodDescription.getParameters().asTokenList(),
                         REBASED_METHOD_MODIFIER
                                 | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
                                 | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0),
@@ -366,7 +368,7 @@ public interface MethodRebaseResolver {
                 this.methodDescription = new MethodDescription.Latent(methodDescription.getInternalName(),
                         methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
-                        join(methodDescription.getParameters().asTypeList(), placeholderType),
+                        join(methodDescription.getParameters().asTokenList(), new ParameterDescription.Token(placeholderType)),
                         REBASED_METHOD_MODIFIER,
                         methodDescription.getExceptionTypes(),
                         methodDescription.getDeclaredAnnotations());

@@ -2,8 +2,11 @@ package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericSignatureResolutionTest;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -379,10 +383,10 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(annotation).getValue(new MethodDescription.Latent(methodName,
                 new TypeDescription.ForLoadedType(annotation.annotationType()),
                 new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
-                new TypeList.Empty(),
+                Collections.<ParameterDescription.Token>emptyList(),
                 Opcodes.ACC_PUBLIC,
-                new TypeList.Empty(),
-                new AnnotationList.Empty())), is(rawValue));
+                Collections.<GenericTypeDescription>emptyList(),
+                Collections.<AnnotationDescription>emptyList())), is(rawValue));
         assertThat(annotation.annotationType().getDeclaredMethod(methodName)
                 .invoke(describe(annotation).prepare(annotation.annotationType()).load()), is(loadedValue));
     }

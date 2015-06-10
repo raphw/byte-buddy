@@ -4,7 +4,9 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -678,11 +680,10 @@ public interface Implementation {
                             randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
-                            specialMethodInvocation.getMethodDescription().getReturnType(),
-                            specialMethodInvocation.getMethodDescription().getParameters().asTypeList(),
+                            specialMethodInvocation.getMethodDescription().getReturnType().asRawType(),
+                            specialMethodInvocation.getMethodDescription().getParameters().asTypeList().asRawTypes(),
                             resolveModifier(specialMethodInvocation.getMethodDescription().isStatic()),
-                            specialMethodInvocation.getMethodDescription().getExceptionTypes(),
-                            Collections.<AnnotationDescription>emptyList());
+                            specialMethodInvocation.getMethodDescription().getExceptionTypes().asRawTypes());
                     registerAccessor(specialMethodInvocation, accessorMethod);
                 }
                 return accessorMethod;
@@ -719,9 +720,9 @@ public interface Implementation {
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
                             fieldDescription.getType().asRawType(),
-                            Collections.<TypeDescription>emptyList(),
+                            Collections.<ParameterDescription.Token>emptyList(),
                             resolveModifier(fieldDescription.isStatic()),
-                            Collections.<TypeDescription>emptyList(),
+                            Collections.<GenericTypeDescription>emptyList(),
                             Collections.<AnnotationDescription>emptyList());
                     registerGetter(fieldDescription, accessorMethod);
                 }
@@ -749,9 +750,9 @@ public interface Implementation {
                     accessorMethod = new MethodDescription.Latent(name,
                             instrumentedType,
                             TypeDescription.VOID,
-                            Collections.singletonList(fieldDescription.getType().asRawType()),
+                            Collections.singletonList(new ParameterDescription.Token(fieldDescription.getType().asRawType())),
                             resolveModifier(fieldDescription.isStatic()),
-                            Collections.<TypeDescription>emptyList(),
+                            Collections.<GenericTypeDescription>emptyList(),
                             Collections.<AnnotationDescription>emptyList());
                     registerSetter(fieldDescription, accessorMethod);
                 }

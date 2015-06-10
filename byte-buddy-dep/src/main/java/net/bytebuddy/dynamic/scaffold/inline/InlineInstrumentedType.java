@@ -130,8 +130,7 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                 returnType,
                 parameterTypes,
                 modifiers,
-                exceptionTypes,
-                Collections.<AnnotationDescription>emptyList());
+                exceptionTypes);
         if (methodDescriptions.contains(additionalMethod)) {
             throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }
