@@ -44,6 +44,11 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
             return true;
         }
+
+        @Override
+        protected ParameterList wrap(List<ParameterDescription> values) {
+            return new Explicit(values);
+        }
     }
 
     /**
@@ -129,11 +134,6 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             return new GenericTypeList.Explicit(types);
         }
 
-        @Override
-        protected ParameterList wrap(List<ParameterDescription> values) {
-            return new Explicit(values);
-        }
-
         /**
          * Represents a list of method parameters on virtual machines where the {@code java.lang.reflect.Parameter}
          * type is not available.
@@ -164,11 +164,6 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
                 this.method = method;
                 this.parameterType = method.getParameterTypes();
                 this.parameterAnnotation = method.getParameterAnnotations();
-            }
-
-            @Override
-            protected ParameterList wrap(List<ParameterDescription> values) {
-                return new Explicit(values);
             }
 
             @Override
@@ -221,11 +216,6 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
                 this.constructor = constructor;
                 this.parameterType = constructor.getParameterTypes();
                 this.parameterAnnotation = constructor.getParameterAnnotations();
-            }
-
-            @Override
-            protected ParameterList wrap(List<ParameterDescription> values) {
-                return new Explicit(values);
             }
 
             @Override
@@ -308,11 +298,6 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
                 types.add(parameterDescription.getType());
             }
             return new GenericTypeList.Explicit(types);
-        }
-
-        @Override
-        protected ParameterList wrap(List<ParameterDescription> values) {
-            return new Explicit(values);
         }
     }
 
