@@ -1,8 +1,6 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -22,6 +20,8 @@ import java.util.List;
 public interface ParameterList extends FilterableList<ParameterDescription, ParameterList> {
 
     GenericTypeList asTypeList();
+
+    List<ParameterDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
@@ -43,6 +43,22 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
                 }
             }
             return true;
+        }
+
+        @Override
+        public List<ParameterDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
+            for (ParameterDescription parameterDescription : this) {
+                tokens.add(new ParameterDescription.Token(parameterDescription.getType().accept(visitor),
+                        parameterDescription.getDeclaredAnnotations(),
+                        parameterDescription.isNamed()
+                                ? parameterDescription.getName()
+                                : ParameterDescription.Token.NO_NAME,
+                        parameterDescription.hasModifiers()
+                                ? (Integer) parameterDescription.getModifiers()
+                                : ParameterDescription.Token.NO_MODIFIERS));
+            }
+            return tokens;
         }
 
         @Override
@@ -314,6 +330,11 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         @Override
         public GenericTypeList asTypeList() {
             return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public List<ParameterDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return Collections.<ParameterDescription.Token>emptyList();
         }
     }
 }

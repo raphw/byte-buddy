@@ -4454,12 +4454,7 @@ public interface TypePool {
             /**
              * A lazy list of parameter descriptions for the enclosing method description.
              */
-            private class LazyParameterList extends FilterableList.AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
-
-                @Override
-                protected ParameterList wrap(List<ParameterDescription> values) {
-                    return new Explicit(values);
-                }
+            private class LazyParameterList extends ParameterList.AbstractBase implements ParameterList {
 
                 @Override
                 public ParameterDescription get(int index) {

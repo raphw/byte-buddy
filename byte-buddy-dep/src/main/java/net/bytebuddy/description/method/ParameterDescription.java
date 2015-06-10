@@ -422,6 +422,10 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     class Latent extends AbstractParameterDescription {
 
+        private static final String NO_NAME = null;
+
+        private static final Integer NO_MODIFIERS = null;
+
         /**
          * The method that is declaring the parameter.
          */
@@ -434,6 +438,10 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         private final List<? extends AnnotationDescription> declaredAnnotations;
 
+        private final String name;
+
+        private final Integer modifiers;
+
         /**
          * The index of the parameter.
          */
@@ -444,22 +452,26 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          */
         private final int offset;
 
-        /**
-         * Creates a latent description of a parameter.
-         *
-         * @param declaringMethod The method that is declaring the parameter.
-         * @param parameterType   The type of the parameter.
-         * @param index           The index of the parameter.
-         * @param offset          The parameter's offset in the local method variables array.
-         */
         public Latent(MethodDescription declaringMethod,
                       GenericTypeDescription parameterType,
                       List<? extends AnnotationDescription> declaredAnnotations,
                       int index,
                       int offset) {
+            this(declaringMethod, parameterType, declaredAnnotations, NO_NAME, NO_MODIFIERS, index, offset);
+        }
+
+        public Latent(MethodDescription declaringMethod,
+                      GenericTypeDescription parameterType,
+                      List<? extends AnnotationDescription> declaredAnnotations,
+                      String name,
+                      Integer modifiers,
+                      int index,
+                      int offset) {
             this.declaringMethod = declaringMethod;
             this.parameterType = parameterType;
             this.declaredAnnotations = declaredAnnotations;
+            this.name = name;
+            this.modifiers = modifiers;
             this.index = index;
             this.offset = offset;
         }
@@ -486,17 +498,82 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public boolean isNamed() {
-            return false;
+            return name != null;
         }
 
         @Override
         public boolean hasModifiers() {
-            return false;
+            return modifiers != null;
+        }
+
+        @Override
+        public String getName() {
+            return isNamed()
+                    ? name
+                    : super.getName();
+        }
+
+        @Override
+        public int getModifiers() {
+            return hasModifiers()
+                    ? modifiers
+                    : super.getModifiers();
         }
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.Explicit(declaredAnnotations);
+        }
+    }
+
+    class Token {
+
+        public static final String NO_NAME = null;
+
+        public static final Integer NO_MODIFIERS = null;
+
+        private final GenericTypeDescription typeDescription;
+
+        private final List<? extends AnnotationDescription> annotationDescriptions;
+
+        private final String name;
+
+        private final Integer modifiers;
+
+        public Token(GenericTypeDescription typeDescription,
+                     List<? extends AnnotationDescription> annotationDescriptions,
+                     String name,
+                     Integer modifiers) {
+            this.typeDescription = typeDescription;
+            this.annotationDescriptions = annotationDescriptions;
+            this.name = name;
+            this.modifiers = modifiers;
+        }
+
+        public GenericTypeDescription getType() {
+            return typeDescription;
+        }
+
+        public List<? extends AnnotationDescription> getAnnotationDescriptions() {
+            return annotationDescriptions;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Integer getModifiers() {
+            return modifiers;
+        }
+
+        public ParameterDescription toDescription(MethodDescription declaringMethod, int index, int offset) {
+            return new Latent(declaringMethod,
+                    getType(),
+                    getAnnotationDescriptions(),
+                    getName(),
+                    getModifiers(),
+                    index,
+                    offset);
         }
     }
 }
