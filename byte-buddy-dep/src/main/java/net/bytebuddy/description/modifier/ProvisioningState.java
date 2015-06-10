@@ -2,7 +2,7 @@ package net.bytebuddy.description.modifier;
 
 import org.objectweb.asm.Opcodes;
 
-public enum Mandate implements ModifierContributor.ForParameter {
+public enum ProvisioningState implements ModifierContributor.ForParameter {
 
     MANDATED(Opcodes.ACC_MANDATED),
 
@@ -10,11 +10,11 @@ public enum Mandate implements ModifierContributor.ForParameter {
 
     private final int mask;
 
-    Mandate(int mask) {
+    ProvisioningState(int mask) {
         this.mask = mask;
     }
 
-    public static Mandate is(boolean mandated) {
+    public static ProvisioningState is(boolean mandated) {
         return mandated ? MANDATED : NON_MANDATED;
     }
 
