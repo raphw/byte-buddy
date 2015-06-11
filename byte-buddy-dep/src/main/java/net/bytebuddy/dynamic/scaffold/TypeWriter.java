@@ -1681,9 +1681,8 @@ public interface TypeWriter<T> {
                      * Creates a new type initializer injection.
                      */
                     private TypeInitializerInjection() {
-                        injectorProxyMethod = new MethodDescription.Latent(
+                        injectorProxyMethod = new MethodDescription.Latent(instrumentedType,
                                 String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, RandomString.make()),
-                                instrumentedType,
                                 TypeDescription.VOID,
                                 Collections.<ParameterDescription.Token>emptyList(),
                                 TYPE_INITIALIZER_PROXY_MODIFIERS,

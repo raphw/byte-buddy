@@ -380,8 +380,8 @@ public abstract class AbstractAnnotationDescriptionTest {
     private void assertValue(Annotation annotation, String methodName, Object rawValue, Object loadedValue) throws Exception {
         assertThat(describe(annotation).getValue(new MethodDescription
                 .ForLoadedMethod(annotation.annotationType().getDeclaredMethod(methodName))), is(rawValue));
-        assertThat(describe(annotation).getValue(new MethodDescription.Latent(methodName,
-                new TypeDescription.ForLoadedType(annotation.annotationType()),
+        assertThat(describe(annotation).getValue(new MethodDescription.Latent(new TypeDescription.ForLoadedType(annotation.annotationType()),
+                methodName,
                 new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
                 Collections.<ParameterDescription.Token>emptyList(),
                 Opcodes.ACC_PUBLIC,

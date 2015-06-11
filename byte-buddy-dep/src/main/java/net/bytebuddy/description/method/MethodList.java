@@ -1,9 +1,11 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -13,11 +15,29 @@ import java.util.List;
  */
 public interface MethodList extends FilterableList<MethodDescription, MethodList> {
 
+    List<MethodDescription.Token> asTokenList();
+
+    List<MethodDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+
     abstract class AbstractBase extends FilterableList.AbstractBase<MethodDescription, MethodList> implements MethodList {
 
         @Override
         protected MethodList wrap(List<MethodDescription> values) {
             return new Explicit(values);
+        }
+
+        @Override
+        public List<MethodDescription.Token> asTokenList() {
+            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
+        }
+
+        @Override
+        public List<MethodDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            List<MethodDescription.Token> tokens = new ArrayList<MethodDescription.Token>(size());
+            for (MethodDescription methodDescription : this) {
+                tokens.add(methodDescription.accept(visitor));
+            }
+            return tokens;
         }
     }
 
@@ -117,6 +137,15 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
      * An implementation of an empty method list.
      */
     class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
-        /* empty */
+
+        @Override
+        public List<MethodDescription.Token> asTokenList() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<MethodDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return Collections.emptyList();
+        }
     }
 }

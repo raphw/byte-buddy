@@ -58,6 +58,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
     GenericTypeList getExceptionTypes();
 
+    String getUniqueSignature();
+
     /**
      * Returns this method modifier but adjusts its state of being abstract.
      *
@@ -136,15 +138,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     boolean isSpecializableFor(TypeDescription typeDescription);
 
     /**
-     * Returns the unique signature of a byte code method. A unique signature is defined as the concatenation of
-     * the internal name of the method / constructor and the method descriptor. Note that methods on byte code
-     * level do consider two similar methods with different return type as distinct methods.
-     *
-     * @return A unique signature of this byte code level method.
-     */
-    String getUniqueSignature();
-
-    /**
      * Returns the default value of this method or {@code null} if no such value exists. The returned values might be
      * of a different type than usual:
      * <ul>
@@ -212,6 +205,10 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      * @return {@code true} if the given value can describe a default annotation value for this method.
      */
     boolean isDefaultValue(Object value);
+
+    Token toToken();
+
+    Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
     /**
      * An abstract base implementation of a method description.
@@ -499,6 +496,21 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
             return visitor.onMethod(this);
+        }
+
+        @Override
+        public Token toToken() {
+            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
+        }
+
+        @Override
+        public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return new Token(getInternalName(),
+                    getReturnType().accept(visitor),
+                    getModifiers(),
+                    getParameters().accept(visitor),
+                    getExceptionTypes().accept(visitor),
+                    getDeclaredAnnotations());
         }
 
         @Override
@@ -819,14 +831,14 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     class Latent extends AbstractMethodDescription {
 
         /**
-         * the internal name of this method.
-         */
-        private final String internalName;
-
-        /**
          * The type that is declaring this method.
          */
         private final TypeDescription declaringType;
+
+        /**
+         * the internal name of this method.
+         */
+        private final String internalName;
 
         /**
          * The return type of this method.
@@ -838,7 +850,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          */
         private final int modifiers;
 
-        private final List<ParameterDescription> parameterDescriptions;
+        private final List<? extends ParameterDescription.Token> parameterTokens;
 
         /**
          * This method's exception types.
@@ -847,48 +859,28 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         private final List<? extends AnnotationDescription> declaredAnnotations;
 
-        public Latent(String internalName,
-                      TypeDescription declaringType,
-                      GenericTypeDescription returnType,
-                      List<? extends GenericTypeDescription> parameterTypes,
-                      int modifiers,
-                      List<? extends GenericTypeDescription> exceptionTypes) {
-            this.internalName = internalName;
-            this.declaringType = declaringType;
-            this.returnType = returnType;
-            this.parameterDescriptions = new ArrayList<ParameterDescription>(parameterTypes.size());
-            this.modifiers = modifiers;
-            int index = 0, offset = isStatic() ? 0 : 1;
-            for (GenericTypeDescription parameterType : parameterTypes) {
-                parameterDescriptions.add(new ParameterDescription.Latent(this,
-                        parameterType,
-                        Collections.<AnnotationDescription>emptyList(),
-                        index++,
-                        offset));
-                offset += parameterType.getStackSize().getSize();
-            }
-            this.exceptionTypes = exceptionTypes;
-            declaredAnnotations = Collections.emptyList();
+        public Latent(TypeDescription declaringType, Token token) {
+            this(declaringType,
+                    token.getInternalName(),
+                    token.getReturnType(),
+                    token.getParameterTokens(),
+                    token.getModifiers(),
+                    token.getExceptionTypes(),
+                    token.getAnnotations());
         }
 
-        public Latent(String internalName,
-                      TypeDescription declaringType,
+        public Latent(TypeDescription declaringType,
+                      String internalName,
                       GenericTypeDescription returnType,
-                      List<? extends ParameterDescription.Token> tokens,
+                      List<? extends ParameterDescription.Token> parameterTokens,
                       int modifiers,
                       List<? extends GenericTypeDescription> exceptionTypes,
                       List<? extends AnnotationDescription> declaredAnnotations) {
-            this.internalName = internalName;
             this.declaringType = declaringType;
+            this.internalName = internalName;
             this.returnType = returnType;
-            this.parameterDescriptions = new ArrayList<ParameterDescription>(tokens.size());
+            this.parameterTokens = parameterTokens;
             this.modifiers = modifiers;
-            int index = 0, offset = isStatic() ? 0 : 1;
-            for (ParameterDescription.Token token : tokens) {
-                ParameterDescription parameterDescription = token.toDescription(this, index++, offset);
-                parameterDescriptions.add(parameterDescription);
-                offset += parameterDescription.getType().getStackSize().getSize();
-            }
             this.exceptionTypes = exceptionTypes;
             this.declaredAnnotations = declaredAnnotations;
         }
@@ -900,8 +892,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          * @return A method description of the type initializer of the given type.
          */
         public static MethodDescription typeInitializerOf(TypeDescription declaringType) {
-            return new Latent(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME,
-                    declaringType,
+            return new Latent(declaringType,
+                    MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME,
                     TypeDescription.VOID,
                     Collections.<ParameterDescription.Token>emptyList(),
                     TYPE_INITIALIZER_MODIFIER,
@@ -916,7 +908,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public ParameterList getParameters() {
-            return new ParameterList.Explicit(parameterDescriptions);
+            return new ParameterTokenList();
         }
 
         @Override
@@ -952,6 +944,146 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public GenericTypeList getTypeVariables() {
             return new GenericTypeList.Empty();
+        }
+
+        protected class ParameterTokenList extends ParameterList.AbstractBase {
+
+            @Override
+            public ParameterDescription get(int index) {
+                int offset = Latent.this.isStatic() ? 0 : 1;
+                for (ParameterDescription.Token token : parameterTokens.subList(0, index)) {
+                    offset += token.getType().getStackSize().getSize();
+                }
+                return new ParameterDescription.Latent(Latent.this, parameterTokens.get(index), index, offset);
+            }
+
+            @Override
+            public int size() {
+                return parameterTokens.size();
+            }
+
+            @Override
+            public GenericTypeList asTypeList() {
+                List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterTokens.size());
+                for (ParameterDescription.Token token : parameterTokens) {
+                    types.add(token.getType());
+                }
+                return new GenericTypeList.Explicit(types);
+            }
+        }
+    }
+
+    class Token {
+
+        private final String internalName;
+
+        private final GenericTypeDescription returnType;
+
+        private final int modifiers;
+
+        private final List<ParameterDescription.Token> parameterTokens;
+
+        private final List<? extends GenericTypeDescription> exceptionTypes;
+
+        private final List<? extends AnnotationDescription> annotations;
+
+        public Token(String internalName,
+                     GenericTypeDescription returnType,
+                     int modifiers,
+                     List<ParameterDescription.Token> parameterTokens) {
+            this(internalName,
+                    returnType,
+                    modifiers,
+                    parameterTokens,
+                    Collections.<GenericTypeDescription>emptyList(),
+                    Collections.<AnnotationDescription>emptyList());
+        }
+
+        public Token(String internalName,
+                     GenericTypeDescription returnType,
+                     int modifiers,
+                     List<ParameterDescription.Token> parameterTokens,
+                     List<? extends GenericTypeDescription> exceptionTypes) {
+            this(internalName,
+                    returnType,
+                    modifiers,
+                    parameterTokens,
+                    exceptionTypes,
+                    Collections.<AnnotationDescription>emptyList());
+        }
+
+        public Token(String internalName,
+                     GenericTypeDescription returnType,
+                     int modifiers,
+                     List<ParameterDescription.Token> parameterTokens,
+                     List<? extends GenericTypeDescription> exceptionTypes,
+                     List<? extends AnnotationDescription> annotations) {
+            this.internalName = internalName;
+            this.returnType = returnType;
+            this.modifiers = modifiers;
+            this.parameterTokens = parameterTokens;
+            this.exceptionTypes = exceptionTypes;
+            this.annotations = annotations;
+        }
+
+        public String getInternalName() {
+            return internalName;
+        }
+
+        public GenericTypeDescription getReturnType() {
+            return returnType;
+        }
+
+        public int getModifiers() {
+            return modifiers;
+        }
+
+        public List<ParameterDescription.Token> getParameterTokens() {
+            return parameterTokens;
+        }
+
+        public List<? extends GenericTypeDescription> getExceptionTypes() {
+            return exceptionTypes;
+        }
+
+        public List<? extends AnnotationDescription> getAnnotations() {
+            return annotations;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof Token)) return false;
+            Token token = (Token) other;
+            if (!internalName.equals(token.internalName)) return false;
+            if (!returnType.asRawType().equals(token.returnType.asRawType())) return false;
+            if (parameterTokens.size() != token.parameterTokens.size()) return false;
+            for (int index = 0; index < parameterTokens.size(); index++) {
+                if (parameterTokens.get(index).getType().asRawType().equals(token.parameterTokens.get(index).getType().asRawType())) return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = internalName.hashCode();
+            result = 31 * result + returnType.asRawType().hashCode();
+            for (ParameterDescription.Token parameterToken : parameterTokens) {
+                result = 31 * result + parameterToken.getType().asRawType().hashCode();
+            }
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodDescription.Token{" +
+                    "internalName='" + internalName + '\'' +
+                    ", returnType=" + returnType +
+                    ", modifiers=" + modifiers +
+                    ", parameterTokens=" + parameterTokens +
+                    ", exceptionTypes=" + exceptionTypes +
+                    ", annotations=" + annotations +
+                    '}';
         }
     }
 }

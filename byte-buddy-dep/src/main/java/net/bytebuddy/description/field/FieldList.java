@@ -1,9 +1,12 @@
 package net.bytebuddy.description.field;
 
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -11,7 +14,25 @@ import java.util.List;
  */
 public interface FieldList extends FilterableList<FieldDescription, FieldList> {
 
+    List<FieldDescription.Token> asTokenList();
+
+    List<FieldDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+
     abstract class AbstractBase extends FilterableList.AbstractBase<FieldDescription, FieldList> implements FieldList {
+
+        @Override
+        public List<FieldDescription.Token> asTokenList() {
+            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
+        }
+
+        @Override
+        public List<FieldDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            List<FieldDescription.Token> tokens = new ArrayList<FieldDescription.Token>(size());
+            for (FieldDescription fieldDescription : this) {
+                tokens.add(fieldDescription.accept(visitor));
+            }
+            return tokens;
+        }
 
         @Override
         protected FieldList wrap(List<FieldDescription> values) {
@@ -92,6 +113,15 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
      * An implementation of an empty field list.
      */
     class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
-        /* empty */
+
+        @Override
+        public List<FieldDescription.Token> asTokenList() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<FieldDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return Collections.emptyList();
+        }
     }
 }

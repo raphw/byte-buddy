@@ -2399,8 +2399,8 @@ public class ByteBuddy {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
-                MethodDescription cloneArrayMethod = new MethodDescription.Latent(CLONE_METHOD_NAME,
-                        valuesField.getType().asRawType(),
+                MethodDescription cloneArrayMethod = new MethodDescription.Latent(valuesField.getType().asRawType(),
+                        CLONE_METHOD_NAME,
                         TypeDescription.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
                         Opcodes.ACC_PUBLIC,

@@ -19,5 +19,20 @@ public interface TypeVariableSource extends ByteCodeElement {
         T onType(TypeDescription typeDescription);
 
         T onMethod(MethodDescription methodDescription);
+
+        enum NoOp implements Visitor<TypeVariableSource> {
+
+            INSTANCE;
+
+            @Override
+            public TypeVariableSource onType(TypeDescription typeDescription) {
+                return typeDescription;
+            }
+
+            @Override
+            public TypeVariableSource onMethod(MethodDescription methodDescription) {
+                return methodDescription;
+            }
+        }
     }
 }

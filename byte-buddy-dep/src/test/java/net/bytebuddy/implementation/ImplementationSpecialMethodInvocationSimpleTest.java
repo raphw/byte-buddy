@@ -32,8 +32,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
         for (TypeDescription parameterType : parameterTypes) {
             tokens.add(new ParameterDescription.Token(parameterType));
         }
-        return new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(name,
-                mock(TypeDescription.class),
+        return new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(mock(TypeDescription.class),
+                name,
                 returnType,
                 tokens,
                 Opcodes.ACC_PUBLIC,
@@ -46,8 +46,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
         StackManipulation stackManipulation = mock(StackManipulation.class);
         when(stackManipulation.isValid()).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation =
-                new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(FOO,
-                        mock(TypeDescription.class),
+                new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(mock(TypeDescription.class),
+                        FOO,
                         mock(TypeDescription.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Opcodes.ACC_PUBLIC,
@@ -61,8 +61,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
         StackManipulation stackManipulation = mock(StackManipulation.class);
         when(stackManipulation.isValid()).thenReturn(false);
         Implementation.SpecialMethodInvocation specialMethodInvocation =
-                new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(FOO,
-                        mock(TypeDescription.class),
+                new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(mock(TypeDescription.class),
+                        FOO,
                         mock(TypeDescription.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Opcodes.ACC_PUBLIC,

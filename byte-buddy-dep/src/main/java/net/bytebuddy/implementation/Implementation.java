@@ -678,12 +678,13 @@ public interface Implementation {
                     String name = String.format("%s$%s$%s", specialMethodInvocation.getMethodDescription().getInternalName(),
                             ACCESSOR_METHOD_SUFFIX,
                             randomString.nextString());
-                    accessorMethod = new MethodDescription.Latent(name,
-                            instrumentedType,
+                    accessorMethod = new MethodDescription.Latent(instrumentedType,
+                            name,
                             specialMethodInvocation.getMethodDescription().getReturnType().asRawType(),
-                            specialMethodInvocation.getMethodDescription().getParameters().asTypeList().asRawTypes(),
+                            specialMethodInvocation.getMethodDescription().getParameters().accept(GenericTypeDescription.Visitor.Erasing.INSTANCE),
                             resolveModifier(specialMethodInvocation.getMethodDescription().isStatic()),
-                            specialMethodInvocation.getMethodDescription().getExceptionTypes().asRawTypes());
+                            specialMethodInvocation.getMethodDescription().getExceptionTypes().asRawTypes(),
+                            Collections.<AnnotationDescription>emptyList());
                     registerAccessor(specialMethodInvocation, accessorMethod);
                 }
                 return accessorMethod;
@@ -717,8 +718,8 @@ public interface Implementation {
                     String name = String.format("%s$%s$%s", fieldDescription.getName(),
                             ACCESSOR_METHOD_SUFFIX,
                             randomString.nextString());
-                    accessorMethod = new MethodDescription.Latent(name,
-                            instrumentedType,
+                    accessorMethod = new MethodDescription.Latent(instrumentedType,
+                            name,
                             fieldDescription.getType().asRawType(),
                             Collections.<ParameterDescription.Token>emptyList(),
                             resolveModifier(fieldDescription.isStatic()),
@@ -747,8 +748,8 @@ public interface Implementation {
                     String name = String.format("%s$%s$%s", fieldDescription.getName(),
                             ACCESSOR_METHOD_SUFFIX,
                             randomString.nextString());
-                    accessorMethod = new MethodDescription.Latent(name,
-                            instrumentedType,
+                    accessorMethod = new MethodDescription.Latent(instrumentedType,
+                            name,
                             TypeDescription.VOID,
                             Collections.singletonList(new ParameterDescription.Token(fieldDescription.getType().asRawType())),
                             resolveModifier(fieldDescription.isStatic()),
@@ -795,8 +796,8 @@ public interface Implementation {
                     return fieldCache;
                 }
                 validateFieldCacheAccessibility();
-                fieldCache = new FieldDescription.Latent(String.format("%s$%s", FIELD_CACHE_PREFIX, randomString.nextString()),
-                        instrumentedType,
+                fieldCache = new FieldDescription.Latent(instrumentedType,
+                        String.format("%s$%s", FIELD_CACHE_PREFIX, randomString.nextString()),
                         fieldType,
                         FIELD_CACHE_MODIFIER,
                         Collections.<AnnotationDescription>emptyList());

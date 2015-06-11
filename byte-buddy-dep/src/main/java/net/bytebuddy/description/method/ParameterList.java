@@ -49,25 +49,14 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
         @Override
         public List<ParameterDescription.Token> asTokenList() {
-            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
-            for (ParameterDescription parameterDescription : this) {
-                tokens.add(parameterDescription.toToken());
-            }
-            return tokens;
+            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
         }
 
         @Override
         public List<ParameterDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
             for (ParameterDescription parameterDescription : this) {
-                tokens.add(new ParameterDescription.Token(parameterDescription.getType().accept(visitor),
-                        parameterDescription.getDeclaredAnnotations(),
-                        parameterDescription.isNamed()
-                                ? parameterDescription.getName()
-                                : ParameterDescription.Token.NO_NAME,
-                        parameterDescription.hasModifiers()
-                                ? (Integer) parameterDescription.getModifiers()
-                                : ParameterDescription.Token.NO_MODIFIERS));
+                tokens.add(parameterDescription.accept(visitor));
             }
             return tokens;
         }
@@ -299,13 +288,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
                     : StackSize.SINGLE.getSize();
             for (GenericTypeDescription parameterType : parameterTypes) {
                 parameterDescriptions.add(new ParameterDescription.Latent(declaringMethod,
-                        parameterType,
-                        Collections.<AnnotationDescription>emptyList(),
+                        new ParameterDescription.Token(parameterType, Collections.<AnnotationDescription>emptyList()),
                         index++,
                         offset));
                 offset += parameterType.getStackSize().getSize();
             }
-            return new Explicit(parameterDescriptions);
+            return new Explicit(parameterDescriptions); // TODO: Refactor!
         }
 
         @Override

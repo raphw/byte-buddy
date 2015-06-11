@@ -48,8 +48,8 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
     public void testIsValid() throws Exception {
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
-        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(FOO,
-                mock(TypeDescription.class),
+        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(mock(TypeDescription.class),
+                FOO,
                 mock(GenericTypeDescription.class),
                 Collections.<ParameterDescription.Token>emptyList(),
                 Opcodes.ACC_STATIC,
@@ -64,8 +64,8 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
     public void testIsInvalid() throws Exception {
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Illegal.INSTANCE);
-        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(FOO,
-                mock(TypeDescription.class),
+        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(mock(TypeDescription.class),
+                FOO,
                 mock(GenericTypeDescription.class),
                 Collections.<ParameterDescription.Token>emptyList(),
                 Opcodes.ACC_PUBLIC,

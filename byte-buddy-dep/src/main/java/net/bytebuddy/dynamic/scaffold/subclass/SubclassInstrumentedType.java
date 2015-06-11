@@ -6,6 +6,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
@@ -101,8 +102,8 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
     public InstrumentedType withField(String internalName,
                                       GenericTypeDescription fieldType,
                                       int modifiers) {
-        FieldDescription additionalField = new FieldDescription.Latent(internalName,
-                this,
+        FieldDescription additionalField = new FieldDescription.Latent(this,
+                internalName,
                 fieldType,
                 modifiers,
                 Collections.<AnnotationDescription>emptyList());
@@ -127,12 +128,13 @@ public class SubclassInstrumentedType extends InstrumentedType.AbstractBase {
                                        List<? extends GenericTypeDescription> parameterTypes,
                                        List<? extends GenericTypeDescription> exceptionTypes,
                                        int modifiers) {
-        MethodDescription additionalMethod = new MethodDescription.Latent(internalName,
-                this,
+        MethodDescription additionalMethod = new MethodDescription.Latent(this,
+                internalName,
                 returnType,
-                parameterTypes,
+                ParameterDescription.Token.asList(parameterTypes),
                 modifiers,
-                exceptionTypes);
+                exceptionTypes,
+                Collections.<AnnotationDescription>emptyList());
         if (methodDescriptions.contains(additionalMethod)) {
             throw new IllegalArgumentException("Method " + additionalMethod + " is already defined on " + this);
         }

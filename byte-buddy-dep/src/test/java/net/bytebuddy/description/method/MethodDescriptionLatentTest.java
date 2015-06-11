@@ -30,8 +30,8 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
                     parameterDescription.getModifiers())
                     : new ParameterDescription.Token(parameterDescription.getType(), parameterDescription.getDeclaredAnnotations()));
         }
-        return new MethodDescription.Latent(method.getName(),
-                new TypeDescription.ForLoadedType(method.getDeclaringClass()),
+        return new MethodDescription.Latent(new TypeDescription.ForLoadedType(method.getDeclaringClass()),
+                method.getName(),
                 GenericTypeDescription.Sort.describe(method.getGenericReturnType()),
                 tokens,
                 method.getModifiers(),
@@ -51,8 +51,8 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
                     parameterDescription.getModifiers())
                     : new ParameterDescription.Token(parameterDescription.getType(), parameterDescription.getDeclaredAnnotations()));
         }
-        return new MethodDescription.Latent(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                new TypeDescription.ForLoadedType(constructor.getDeclaringClass()),
+        return new MethodDescription.Latent(new TypeDescription.ForLoadedType(constructor.getDeclaringClass()),
+                MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                 TypeDescription.VOID,
                 tokens,
                 constructor.getModifiers(),

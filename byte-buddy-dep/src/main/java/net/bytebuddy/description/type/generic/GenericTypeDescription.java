@@ -217,6 +217,66 @@ public interface GenericTypeDescription extends NamedElement {
             }
         }
 
+        enum Erasing implements Visitor<TypeDescription> {
+
+            INSTANCE;
+
+            @Override
+            public TypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription.asRawType();
+            }
+
+            @Override
+            public TypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
+                throw new IllegalArgumentException("Cannot erase wildcard: " + genericTypeDescription);
+            }
+
+            @Override
+            public TypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription.asRawType();
+            }
+
+            @Override
+            public TypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription.asRawType();
+            }
+
+            @Override
+            public TypeDescription onRawType(TypeDescription typeDescription) {
+                return typeDescription;
+            }
+        }
+
+        enum NoOp implements Visitor<GenericTypeDescription> {
+
+            INSTANCE;
+
+            @Override
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription;
+            }
+
+            @Override
+            public GenericTypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription;
+            }
+
+            @Override
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription;
+            }
+
+            @Override
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription;
+            }
+
+            @Override
+            public GenericTypeDescription onRawType(TypeDescription typeDescription) {
+                return typeDescription;
+            }
+        }
+
         abstract class Substitutor implements Visitor<GenericTypeDescription> {
 
             @Override
@@ -801,11 +861,7 @@ public interface GenericTypeDescription extends NamedElement {
             List<FieldDescription> resolved = new ArrayList<FieldDescription>(declaredFields.size());
             Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariable.bind(this);
             for (FieldDescription fieldDescription : declaredFields) {
-                resolved.add(new FieldDescription.Latent(fieldDescription.getName(),
-                        fieldDescription.getDeclaringType(),
-                        fieldDescription.getType().accept(visitor),
-                        fieldDescription.getModifiers(),
-                        fieldDescription.getDeclaredAnnotations()));
+                resolved.add(new FieldDescription.Latent(fieldDescription.getDeclaringType(), fieldDescription.accept(visitor)));
             }
             return new FieldList.Explicit(resolved);
         }
@@ -816,13 +872,7 @@ public interface GenericTypeDescription extends NamedElement {
             List<MethodDescription> resolved = new ArrayList<MethodDescription>(declaredMethods.size());
             Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariable.bind(this);
             for (MethodDescription methodDescription : declaredMethods) {
-                resolved.add(new MethodDescription.Latent(methodDescription.getInternalName(),
-                        methodDescription.getDeclaringType(),
-                        methodDescription.getReturnType().accept(visitor),
-                        methodDescription.getParameters().accept(visitor),
-                        methodDescription.getModifiers(),
-                        methodDescription.getExceptionTypes().accept(visitor),
-                        methodDescription.getDeclaredAnnotations()));
+                resolved.add(new MethodDescription.Latent(methodDescription.getDeclaringType(), methodDescription.accept(visitor)));
             }
             return new MethodList.Explicit(resolved);
         }

@@ -17,8 +17,8 @@ public class FieldDescriptionLatentTest extends AbstractFieldDescriptionTest {
 
     @Override
     protected FieldDescription describe(Field field) {
-        return new FieldDescription.Latent(field.getName(),
-                new TypeDescription.ForLoadedType(field.getDeclaringClass()),
+        return new FieldDescription.Latent(new TypeDescription.ForLoadedType(field.getDeclaringClass()),
+                field.getName(),
                 GenericTypeDescription.Sort.describe(field.getGenericType()),
                 field.getModifiers(),
                 new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations()));

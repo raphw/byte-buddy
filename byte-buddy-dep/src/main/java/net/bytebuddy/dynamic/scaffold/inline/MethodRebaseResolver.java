@@ -303,9 +303,8 @@ public interface MethodRebaseResolver {
              * @param methodNameTransformer A transformer for renaming a rebased method.
              */
             public ForRebasedMethod(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
-                this.methodDescription = new MethodDescription.Latent(
+                this.methodDescription = new MethodDescription.Latent(methodDescription.getDeclaringType(),
                         methodNameTransformer.transform(methodDescription),
-                        methodDescription.getDeclaringType(),
                         methodDescription.getReturnType(),
                         methodDescription.getParameters().asTokenList(),
                         REBASED_METHOD_MODIFIER
@@ -365,8 +364,8 @@ public interface MethodRebaseResolver {
              * @param placeholderType   A placeholder type which is added to a rebased constructor.
              */
             public ForRebasedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
-                this.methodDescription = new MethodDescription.Latent(methodDescription.getInternalName(),
-                        methodDescription.getDeclaringType(),
+                this.methodDescription = new MethodDescription.Latent(methodDescription.getDeclaringType(),
+                        methodDescription.getInternalName(),
                         methodDescription.getReturnType(),
                         join(methodDescription.getParameters().asTokenList(), new ParameterDescription.Token(placeholderType)),
                         REBASED_METHOD_MODIFIER,

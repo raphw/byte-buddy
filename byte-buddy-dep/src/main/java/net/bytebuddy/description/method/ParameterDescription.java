@@ -15,6 +15,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,6 +70,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
     Token toToken();
 
+    Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+
     /**
      * A base implementation of a method parameter description.
      */
@@ -110,7 +113,12 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public Token toToken() {
-            return new Token(getType(),
+            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
+        }
+
+        @Override
+        public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return new Token(getType().accept(visitor),
                     getDeclaredAnnotations(),
                     isNamed()
                             ? getName()
@@ -437,10 +445,6 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     class Latent extends AbstractParameterDescription {
 
-        private static final String NO_NAME = null;
-
-        private static final Integer NO_MODIFIERS = null;
-
         /**
          * The method that is declaring the parameter.
          */
@@ -467,12 +471,14 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          */
         private final int offset;
 
-        public Latent(MethodDescription declaringMethod,
-                      GenericTypeDescription parameterType,
-                      List<? extends AnnotationDescription> declaredAnnotations,
-                      int index,
-                      int offset) {
-            this(declaringMethod, parameterType, declaredAnnotations, NO_NAME, NO_MODIFIERS, index, offset);
+        public Latent(MethodDescription declaringMethod, Token token, int index, int offset) {
+            this(declaringMethod,
+                    token.getType(),
+                    token.getAnnotations(),
+                    token.getName(),
+                    token.getModifiers(),
+                    index,
+                    offset);
         }
 
         public Latent(MethodDescription declaringMethod,
@@ -547,6 +553,14 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         public static final Integer NO_MODIFIERS = null;
 
+        public static List<Token> asList(List<? extends GenericTypeDescription> typeDescriptions) {
+            List<Token> tokens = new ArrayList<Token>(typeDescriptions.size());
+            for (GenericTypeDescription typeDescription : typeDescriptions) {
+                tokens.add(new Token(typeDescription));
+            }
+            return tokens;
+        }
+
         private final GenericTypeDescription typeDescription;
 
         private final List<? extends AnnotationDescription> annotationDescriptions;
@@ -577,7 +591,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             return typeDescription;
         }
 
-        public List<? extends AnnotationDescription> getAnnotationDescriptions() {
+        public List<? extends AnnotationDescription> getAnnotations() {
             return annotationDescriptions;
         }
 
@@ -589,14 +603,28 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             return modifiers;
         }
 
-        public ParameterDescription toDescription(MethodDescription declaringMethod, int index, int offset) {
-            return new Latent(declaringMethod,
-                    getType(),
-                    getAnnotationDescriptions(),
-                    getName(),
-                    getModifiers(),
-                    index,
-                    offset);
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof Token)) return false;
+            Token token = (Token) other;
+            return !(name != null ? !name.equals(token.name) : token.name != null);
+
+        }
+
+        @Override
+        public int hashCode() {
+            return name != null ? name.hashCode() : 0;
+        }
+
+        @Override
+        public String toString() {
+            return "ParameterDescription.Token{" +
+                    "typeDescription=" + typeDescription +
+                    ", annotationDescriptions=" + annotationDescriptions +
+                    ", name='" + name + '\'' +
+                    ", modifiers=" + modifiers +
+                    '}';
         }
     }
 }
