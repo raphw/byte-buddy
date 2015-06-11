@@ -14,11 +14,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -42,6 +44,7 @@ public class MethodRebaseResolverMethodsOnlyTest {
     private MethodRebaseResolver methodRebaseResolver;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         Set<MethodDescription> methodDescriptions = new HashSet<MethodDescription>();
@@ -56,6 +59,7 @@ public class MethodRebaseResolverMethodsOnlyTest {
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
     }
 
     @Test

@@ -675,11 +675,10 @@ public interface Implementation {
             public MethodDescription registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
                 MethodDescription accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
                 if (accessorMethod == null) {
-                    String name = String.format("%s$%s$%s", specialMethodInvocation.getMethodDescription().getInternalName(),
-                            ACCESSOR_METHOD_SUFFIX,
-                            randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(instrumentedType,
-                            name,
+                            String.format("%s$%s$%s", specialMethodInvocation.getMethodDescription().getInternalName(),
+                                    ACCESSOR_METHOD_SUFFIX,
+                                    randomString.nextString()),
                             specialMethodInvocation.getMethodDescription().getReturnType().asRawType(),
                             specialMethodInvocation.getMethodDescription().getParameters().accept(GenericTypeDescription.Visitor.Erasing.INSTANCE),
                             resolveModifier(specialMethodInvocation.getMethodDescription().isStatic()),
@@ -715,11 +714,8 @@ public interface Implementation {
             public MethodDescription registerGetterFor(FieldDescription fieldDescription) {
                 MethodDescription accessorMethod = registeredGetters.get(fieldDescription);
                 if (accessorMethod == null) {
-                    String name = String.format("%s$%s$%s", fieldDescription.getName(),
-                            ACCESSOR_METHOD_SUFFIX,
-                            randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(instrumentedType,
-                            name,
+                            String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, randomString.nextString()),
                             fieldDescription.getType().asRawType(),
                             Collections.<ParameterDescription.Token>emptyList(),
                             resolveModifier(fieldDescription.isStatic()),
@@ -745,11 +741,8 @@ public interface Implementation {
             public MethodDescription registerSetterFor(FieldDescription fieldDescription) {
                 MethodDescription accessorMethod = registeredSetters.get(fieldDescription);
                 if (accessorMethod == null) {
-                    String name = String.format("%s$%s$%s", fieldDescription.getName(),
-                            ACCESSOR_METHOD_SUFFIX,
-                            randomString.nextString());
                     accessorMethod = new MethodDescription.Latent(instrumentedType,
-                            name,
+                            String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, randomString.nextString()),
                             TypeDescription.VOID,
                             Collections.singletonList(new ParameterDescription.Token(fieldDescription.getType().asRawType())),
                             resolveModifier(fieldDescription.isStatic()),

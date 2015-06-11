@@ -186,8 +186,7 @@ public @interface Pipe {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
             if (!target.getType().asRawType().equals(forwardingMethod.getDeclaringType())) {
-                throw new IllegalStateException(String.format("The installed type %s for the @Pipe annotation does not " +
-                        "equal the annotated parameter type on %s", target.getType().asRawType(), target));
+                throw new IllegalStateException("Illegal use of @Pipe for " + target + " which was installed for " + forwardingMethod.getDeclaringType());
             } else if (source.isStatic()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }

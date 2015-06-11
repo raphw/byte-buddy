@@ -48,6 +48,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     private Implementation.Context implementationContext;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
@@ -62,6 +63,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(placeholderType.getDescriptor()).thenReturn(BAZ);
         when(otherPlaceHolderType.getDescriptor()).thenReturn(FOO);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
     }
 
@@ -73,7 +75,8 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(FOO));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
-        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Arrays.asList(parameterType, placeholderType))));
+        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(),
+                Arrays.asList(parameterType, placeholderType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));

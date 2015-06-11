@@ -16,6 +16,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +49,7 @@ public class MethodRebaseResolverEnabledTest {
     private MethodRebaseResolver methodRebaseResolver;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
@@ -68,6 +70,7 @@ public class MethodRebaseResolverEnabledTest {
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(placeholderType.asRawType()).thenReturn(placeholderType); // REFACTOR
     }
 

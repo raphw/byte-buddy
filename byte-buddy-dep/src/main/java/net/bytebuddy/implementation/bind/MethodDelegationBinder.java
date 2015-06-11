@@ -921,8 +921,7 @@ public interface MethodDelegationBinder {
                             return right;
                         case AMBIGUOUS:
                         case UNKNOWN:
-                            throw new IllegalArgumentException(String.format("Could not resolve ambiguous delegation " +
-                                    "of %s: %s or %s", source, left, right));
+                            throw new IllegalArgumentException("Could not resolve ambiguous delegation of " + source + " to either " + left + " or " + right);
                         default:
                             throw new AssertionError();
                     }

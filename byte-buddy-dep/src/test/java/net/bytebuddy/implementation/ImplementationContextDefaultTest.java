@@ -108,6 +108,7 @@ public class ImplementationContextDefaultTest {
     private GenericTypeList firstSpecialExceptionTypes, secondSpecialExceptionTypes;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         firstSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(firstSpecialExceptionType));
         secondSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
@@ -188,6 +189,8 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialExceptionType.asRawType()).thenReturn(secondSpecialExceptionType); // REFACTOR
         when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType); // REFACTOR
         when(secondSpecialParameterType.asRawType()).thenReturn(secondSpecialParameterType); // REFACTOR
+        when(firstSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstSpecialParameterType);
+        when(secondSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondSpecialParameterType);
     }
 
     @Test

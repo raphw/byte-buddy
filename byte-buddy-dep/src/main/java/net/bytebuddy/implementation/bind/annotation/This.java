@@ -64,11 +64,9 @@ public @interface This {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
             if (target.getType().asRawType().isPrimitive()) {
-                throw new IllegalStateException(String.format("The %d. argument virtual %s is a primitive type " +
-                        "and can never be bound to an instance", target.getIndex(), target));
+                throw new IllegalStateException(target + " uses a primitive type with a @This annotation");
             } else if (target.getType().asRawType().isArray()) {
-                throw new IllegalStateException(String.format("The %d. argument virtual %s is an array type " +
-                        "and can never be bound to an instance", target.getIndex(), target));
+                throw new IllegalStateException(target + " uses an array type with a @This annotation");
             } else if (source.isStatic() && !annotation.loadSilent().optional()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }

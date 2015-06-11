@@ -1043,8 +1043,7 @@ public interface DynamicType {
                     } else if (typeDescription.represents(long.class)) {
                         return LONG;
                     } else {
-                        throw new IllegalStateException(String.format("A field of type %s does not permit an " +
-                                "integer-typed default value", typeDescription));
+                        throw new IllegalStateException("A field of type " + typeDescription + " does not permit an integer-typed default value");
                     }
                 }
 
@@ -1056,7 +1055,7 @@ public interface DynamicType {
                  */
                 public Object validate(int value) {
                     if (value < minimum || value > maximum) {
-                        throw new IllegalArgumentException(String.format("The value %d overflows for %s", value, this));
+                        throw new IllegalArgumentException(value + " overflows for " + this);
                     }
                     return value;
                 }
@@ -2478,7 +2477,7 @@ public interface DynamicType {
                     if (fieldToken.getFieldType().getSort().isRawType() && fieldToken.getFieldType().asRawType().represents(legalType)) {
                         return defaultValue;
                     } else {
-                        throw new IllegalStateException(String.format("The given value %s was not of the required type %s", defaultValue, legalType));
+                        throw new IllegalStateException(defaultValue + " is not assignable to the field type " + legalType);
                     }
                 }
 

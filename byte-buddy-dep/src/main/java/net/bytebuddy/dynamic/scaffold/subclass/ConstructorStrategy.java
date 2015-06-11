@@ -82,8 +82,7 @@ public interface ConstructorStrategy {
                 if (methodList.size() == 1) {
                     return methodList;
                 } else {
-                    throw new IllegalArgumentException(String.format("%s does not declare a default constructor that " +
-                            "is visible to %s", instrumentedType.getSuperType().asRawType(), instrumentedType));
+                    throw new IllegalArgumentException(instrumentedType.getSuperType() + " declares no constructor that is visible to " + instrumentedType);
                 }
             }
 

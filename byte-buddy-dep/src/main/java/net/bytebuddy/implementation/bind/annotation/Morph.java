@@ -185,8 +185,7 @@ public @interface Morph {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
             if (!target.getType().asRawType().equals(forwardingMethod.getDeclaringType())) {
-                throw new IllegalStateException(String.format("The installed type %s for the @Morph annotation does not " +
-                        "equal the annotated parameter type on %s", target.getType().asRawType(), target));
+                throw new IllegalStateException("Illegal use of @Morph for " + target + " which was installed for " + forwardingMethod.getDeclaringType());
             }
             Implementation.SpecialMethodInvocation specialMethodInvocation;
             TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);
