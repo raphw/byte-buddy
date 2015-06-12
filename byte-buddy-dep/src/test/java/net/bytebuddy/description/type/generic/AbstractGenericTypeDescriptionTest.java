@@ -390,7 +390,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(qux.getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(qux.getSymbol(), is(U));
         assertThat(qux.getUpperBounds().size(), is(1));
-        assertThat(qux.getUpperBounds().getOnly(), is(foo));
+        assertThat(qux.getUpperBounds().getOnly(), is(bar));
         MethodDescription quxMethod = new MethodDescription.ForLoadedMethod(NestedInnerType.InnerType.class.getDeclaredMethod(QUX));
         assertThat(qux.getVariableSource(), is((TypeVariableSource) quxMethod));
     }

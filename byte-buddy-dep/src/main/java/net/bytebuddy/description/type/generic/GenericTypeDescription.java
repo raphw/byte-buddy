@@ -62,7 +62,8 @@ public interface GenericTypeDescription extends NamedElement {
         GENERIC_ARRAY,
         PARAMETERIZED,
         WILDCARD,
-        VARIABLE;
+        VARIABLE,
+        DETACHED_VARIABLE;
 
         public static GenericTypeDescription describe(Type type) {
             if (type instanceof Class<?>) {
@@ -97,7 +98,11 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         public boolean isTypeVariable() {
-            return this == VARIABLE;
+            return this == VARIABLE || this == DETACHED_VARIABLE;
+        }
+
+        public boolean isDetachedTypeVariable() {
+            return this == DETACHED_VARIABLE;
         }
     }
 
@@ -493,8 +498,8 @@ public interface GenericTypeDescription extends NamedElement {
                     class ForMethod implements TypeVariableProxy {
 
                         protected static TypeVariableProxy of(TypeDescription substitute,
-                                                           Visitor<TypeDescription> substitutor,
-                                                           MethodDescription methodDescription) {
+                                                              Visitor<TypeDescription> substitutor,
+                                                              MethodDescription methodDescription) {
                             return new ForMethod(substitute,
                                     returns(methodDescription.getReturnType().asRawType().accept(substitutor))
                                             .and(takesArguments(methodDescription.getParameters().asTypeList().asRawTypes().accept(substitutor)))
@@ -1116,9 +1121,9 @@ public interface GenericTypeDescription extends NamedElement {
         public boolean equals(Object other) {
             if (!(other instanceof GenericTypeDescription)) return false;
             GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
-            return genericTypeDescription.getSort().isTypeVariable()
-                    && genericTypeDescription.getSymbol().equals(genericTypeDescription.getSymbol())
-                    && genericTypeDescription.getVariableSource().equals(genericTypeDescription.getVariableSource());
+            return genericTypeDescription.getSort().isTypeVariable() && !genericTypeDescription.getSort().isDetachedTypeVariable()
+                    && getSymbol().equals(genericTypeDescription.getSymbol())
+                    && getVariableSource().equals(genericTypeDescription.getVariableSource());
         }
 
         @Override
@@ -1193,6 +1198,53 @@ public interface GenericTypeDescription extends NamedElement {
             @Override
             public String getSymbol() {
                 return symbol;
+            }
+        }
+
+        public static class Detached extends ForTypeVariable {
+
+            private final String symbol;
+
+            public Detached(String symbol) {
+                this.symbol = symbol;
+            }
+
+            @Override
+            public GenericTypeList getUpperBounds() {
+                throw new IllegalStateException("A detached type variable cannot be resolved for its bounds: " + this);
+            }
+
+            @Override
+            public TypeVariableSource getVariableSource() {
+                throw new IllegalStateException("A detached type variable cannot be queried for its defining source: " + this);
+            }
+
+            @Override
+            public String getSymbol() {
+                return symbol;
+            }
+
+            @Override
+            public Sort getSort() {
+                return Sort.DETACHED_VARIABLE;
+            }
+
+            @Override
+            public TypeDescription asRawType() {
+                throw new IllegalStateException("A detached type variable cannot be reduced to a raw type: " + this);
+            }
+
+            @Override
+            public int hashCode() {
+                return symbol.hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (!(other instanceof GenericTypeDescription)) return false;
+                GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
+                return genericTypeDescription.getSort().isTypeVariable() && genericTypeDescription.getSort().isDetachedTypeVariable()
+                        && genericTypeDescription.getSymbol().equals(genericTypeDescription.getSymbol());
             }
         }
     }
