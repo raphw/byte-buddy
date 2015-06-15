@@ -34,9 +34,10 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
         }
         return new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(mock(TypeDescription.class),
                 name,
+                Opcodes.ACC_PUBLIC,
+                Collections.<GenericTypeDescription>emptyList(),
                 returnType,
                 tokens,
-                Opcodes.ACC_PUBLIC,
                 Collections.<TypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList()), targetType, mock(StackManipulation.class));
     }
@@ -48,9 +49,10 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
         Implementation.SpecialMethodInvocation specialMethodInvocation =
                 new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(mock(TypeDescription.class),
                         FOO,
+                        Opcodes.ACC_PUBLIC,
+                        Collections.<GenericTypeDescription>emptyList(),
                         mock(TypeDescription.class),
                         Collections.<ParameterDescription.Token>emptyList(),
-                        Opcodes.ACC_PUBLIC,
                         Collections.<GenericTypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -63,9 +65,10 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
         Implementation.SpecialMethodInvocation specialMethodInvocation =
                 new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(mock(TypeDescription.class),
                         FOO,
+                        Opcodes.ACC_PUBLIC,
+                        Collections.<GenericTypeDescription>emptyList(),
                         mock(TypeDescription.class),
                         Collections.<ParameterDescription.Token>emptyList(),
-                        Opcodes.ACC_PUBLIC,
                         Collections.<TypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
         assertThat(specialMethodInvocation.isValid(), is(false));

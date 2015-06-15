@@ -2401,9 +2401,10 @@ public class ByteBuddy {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
                 MethodDescription cloneArrayMethod = new MethodDescription.Latent(valuesField.getType().asRawType(),
                         CLONE_METHOD_NAME,
+                        Opcodes.ACC_PUBLIC,
+                        Collections.<GenericTypeDescription>emptyList(),
                         TypeDescription.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
-                        Opcodes.ACC_PUBLIC,
                         Collections.<GenericTypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList());
                 return new Size(new StackManipulation.Compound(

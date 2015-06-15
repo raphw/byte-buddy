@@ -303,13 +303,15 @@ public interface MethodRebaseResolver {
              * @param methodNameTransformer A transformer for renaming a rebased method.
              */
             public ForRebasedMethod(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
+                // TODO: Proper transformation.
                 this.methodDescription = new MethodDescription.Latent(methodDescription.getDeclaringType(),
                         methodNameTransformer.transform(methodDescription),
-                        methodDescription.getReturnType(),
-                        methodDescription.getParameters().asTokenList(),
                         REBASED_METHOD_MODIFIER
                                 | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
                                 | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0),
+                        methodDescription.getTypeVariables(),
+                        methodDescription.getReturnType(),
+                        methodDescription.getParameters().asTokens(),
                         methodDescription.getExceptionTypes(),
                         methodDescription.getDeclaredAnnotations());
             }
@@ -364,11 +366,13 @@ public interface MethodRebaseResolver {
              * @param placeholderType   A placeholder type which is added to a rebased constructor.
              */
             public ForRebasedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
+                // TODO: Proper modification!
                 this.methodDescription = new MethodDescription.Latent(methodDescription.getDeclaringType(),
                         methodDescription.getInternalName(),
-                        methodDescription.getReturnType(),
-                        join(methodDescription.getParameters().asTokenList(), new ParameterDescription.Token(placeholderType)),
                         REBASED_METHOD_MODIFIER,
+                        methodDescription.getTypeVariables(),
+                        methodDescription.getReturnType(),
+                        join(methodDescription.getParameters().asTokens(), new ParameterDescription.Token(placeholderType)),
                         methodDescription.getExceptionTypes(),
                         methodDescription.getDeclaredAnnotations());
             }

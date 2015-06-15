@@ -1,6 +1,8 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -21,9 +23,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
     GenericTypeList asTypeList();
 
-    List<ParameterDescription.Token> asTokenList();
-
-    List<ParameterDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens();
 
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
@@ -48,17 +48,21 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public List<ParameterDescription.Token> asTokenList() {
-            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens() {
+            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
+            for (ParameterDescription parameterDescription : this) {
+                tokens.add(parameterDescription.asToken());
+            }
+            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(tokens);
         }
 
         @Override
-        public List<ParameterDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
+        public GenericTypeList asTypeList() {
+            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(size());
             for (ParameterDescription parameterDescription : this) {
-                tokens.add(parameterDescription.accept(visitor));
+                types.add(parameterDescription.getType());
             }
-            return tokens;
+            return new GenericTypeList.Explicit(types);
         }
 
         @Override
@@ -305,14 +309,31 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         public int size() {
             return parameterDescriptions.size();
         }
+    }
+
+    class ForTokens extends AbstractBase {
+
+        private final MethodDescription declaringMethod;
+
+        private final List<? extends ParameterDescription.Token> tokens;
+
+        public ForTokens(MethodDescription declaringMethod, List<? extends ParameterDescription.Token> tokens) {
+            this.declaringMethod = declaringMethod;
+            this.tokens = tokens;
+        }
 
         @Override
-        public GenericTypeList asTypeList() {
-            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterDescriptions.size());
-            for (ParameterDescription parameterDescription : parameterDescriptions) {
-                types.add(parameterDescription.getType());
+        public ParameterDescription get(int index) {
+            int offset = declaringMethod.isStatic() ? 0 : 1;
+            for (ParameterDescription.Token token : tokens.subList(0, index)) {
+                offset += token.getType().getStackSize().getSize();
             }
-            return new GenericTypeList.Explicit(types);
+            return new ParameterDescription.Latent(declaringMethod, tokens.get(index), index, offset);
+        }
+
+        @Override
+        public int size() {
+            return tokens.size();
         }
     }
 
@@ -332,13 +353,8 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public List<ParameterDescription.Token> asTokenList() {
-            return Collections.<ParameterDescription.Token>emptyList();
-        }
-
-        @Override
-        public List<ParameterDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-            return Collections.<ParameterDescription.Token>emptyList();
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens() {
+            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
         }
     }
 }

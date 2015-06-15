@@ -11,7 +11,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -1681,11 +1680,13 @@ public interface TypeWriter<T> {
                      * Creates a new type initializer injection.
                      */
                     private TypeInitializerInjection() {
+                        // TODO: Check!
                         injectorProxyMethod = new MethodDescription.Latent(instrumentedType,
                                 String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, RandomString.make()),
+                                TYPE_INITIALIZER_PROXY_MODIFIERS,
+                                Collections.<GenericTypeDescription>emptyList(),
                                 TypeDescription.VOID,
                                 Collections.<ParameterDescription.Token>emptyList(),
-                                TYPE_INITIALIZER_PROXY_MODIFIERS,
                                 Collections.<GenericTypeDescription>emptyList(),
                                 Collections.<AnnotationDescription>emptyList());
                     }

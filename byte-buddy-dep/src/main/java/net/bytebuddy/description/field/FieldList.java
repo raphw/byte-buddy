@@ -1,6 +1,9 @@
 package net.bytebuddy.description.field;
 
+import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.Field;
@@ -14,24 +17,17 @@ import java.util.List;
  */
 public interface FieldList extends FilterableList<FieldDescription, FieldList> {
 
-    List<FieldDescription.Token> asTokenList();
-
-    List<FieldDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList();
 
     abstract class AbstractBase extends FilterableList.AbstractBase<FieldDescription, FieldList> implements FieldList {
 
         @Override
-        public List<FieldDescription.Token> asTokenList() {
-            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
-        }
-
-        @Override
-        public List<FieldDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
             List<FieldDescription.Token> tokens = new ArrayList<FieldDescription.Token>(size());
             for (FieldDescription fieldDescription : this) {
-                tokens.add(fieldDescription.accept(visitor));
+                tokens.add(fieldDescription.asToken());
             }
-            return tokens;
+            return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(tokens);
         }
 
         @Override
@@ -109,19 +105,36 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         }
     }
 
+    class ForTokens extends AbstractBase {
+
+        private final TypeDescription declaringType;
+
+        private final List<? extends FieldDescription.Token> tokens;
+
+        public ForTokens(TypeDescription declaringType, List<? extends FieldDescription.Token> tokens) {
+            this.declaringType = declaringType;
+            this.tokens = tokens;
+        }
+
+        @Override
+        public FieldDescription get(int index) {
+            return new FieldDescription.Latent(declaringType, tokens.get(index));
+        }
+
+        @Override
+        public int size() {
+            return tokens.size();
+        }
+    }
+
     /**
      * An implementation of an empty field list.
      */
     class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
 
         @Override
-        public List<FieldDescription.Token> asTokenList() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<FieldDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-            return Collections.emptyList();
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
+            return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.<FieldDescription.Token>emptyList());
         }
     }
 }

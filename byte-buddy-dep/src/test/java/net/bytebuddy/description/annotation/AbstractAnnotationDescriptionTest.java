@@ -382,9 +382,10 @@ public abstract class AbstractAnnotationDescriptionTest {
                 .ForLoadedMethod(annotation.annotationType().getDeclaredMethod(methodName))), is(rawValue));
         assertThat(describe(annotation).getValue(new MethodDescription.Latent(new TypeDescription.ForLoadedType(annotation.annotationType()),
                 methodName,
+                Opcodes.ACC_PUBLIC,
+                Collections.<GenericTypeDescription>emptyList(),
                 new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
                 Collections.<ParameterDescription.Token>emptyList(),
-                Opcodes.ACC_PUBLIC,
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList())), is(rawValue));
         assertThat(annotation.annotationType().getDeclaredMethod(methodName)

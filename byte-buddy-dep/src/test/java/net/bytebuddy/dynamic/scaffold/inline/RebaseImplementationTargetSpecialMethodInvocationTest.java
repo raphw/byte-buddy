@@ -50,9 +50,10 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
         when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(mock(TypeDescription.class),
                 FOO,
+                Opcodes.ACC_STATIC,
+                Collections.<GenericTypeDescription>emptyList(),
                 mock(GenericTypeDescription.class),
                 Collections.<ParameterDescription.Token>emptyList(),
-                Opcodes.ACC_STATIC,
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList()));
         Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution,
@@ -66,9 +67,10 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Illegal.INSTANCE);
         when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(mock(TypeDescription.class),
                 FOO,
+                Opcodes.ACC_PUBLIC,
+                Collections.<GenericTypeDescription>emptyList(),
                 mock(GenericTypeDescription.class),
                 Collections.<ParameterDescription.Token>emptyList(),
-                Opcodes.ACC_PUBLIC,
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList()));
         Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution,

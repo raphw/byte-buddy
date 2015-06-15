@@ -128,9 +128,10 @@ public class InlineInstrumentedType extends InstrumentedType.AbstractBase {
                                        int modifiers) {
         MethodDescription additionalMethod = new MethodDescription.Latent(this,
                 internalName,
+                modifiers,
+                Collections.<GenericTypeDescription>emptyList(),
                 returnType,
                 ParameterDescription.Token.asList(parameterTypes),
-                modifiers,
                 exceptionTypes,
                 Collections.<AnnotationDescription>emptyList());
         if (methodDescriptions.contains(additionalMethod)) {

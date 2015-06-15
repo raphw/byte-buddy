@@ -1,5 +1,8 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -15,9 +18,7 @@ import java.util.List;
  */
 public interface MethodList extends FilterableList<MethodDescription, MethodList> {
 
-    List<MethodDescription.Token> asTokenList();
-
-    List<MethodDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList();
 
     abstract class AbstractBase extends FilterableList.AbstractBase<MethodDescription, MethodList> implements MethodList {
 
@@ -27,19 +28,13 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         @Override
-        public List<MethodDescription.Token> asTokenList() {
-            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
-        }
-
-        @Override
-        public List<MethodDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
             List<MethodDescription.Token> tokens = new ArrayList<MethodDescription.Token>(size());
-            for (MethodDescription methodDescription : this) {
-                tokens.add(methodDescription.accept(visitor));
+            for (MethodDescription fieldDescription : this) {
+                tokens.add(fieldDescription.asToken());
             }
-            return tokens;
-        }
-    }
+            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(tokens);
+        }}
 
     /**
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
@@ -133,19 +128,36 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
     }
 
+    class ForTokens extends AbstractBase {
+
+        private final TypeDescription declaringType;
+
+        private final List<? extends MethodDescription.Token> tokens;
+
+        public ForTokens(TypeDescription declaringType, List<? extends MethodDescription.Token> tokens) {
+            this.declaringType = declaringType;
+            this.tokens = tokens;
+        }
+
+        @Override
+        public MethodDescription get(int index) {
+            return new MethodDescription.Latent(declaringType, tokens.get(index));
+        }
+
+        @Override
+        public int size() {
+            return tokens.size();
+        }
+    }
+
     /**
      * An implementation of an empty method list.
      */
     class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
 
         @Override
-        public List<MethodDescription.Token> asTokenList() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public List<MethodDescription.Token> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-            return Collections.emptyList();
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
+            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(Collections.<MethodDescription.Token>emptyList());
         }
     }
 }

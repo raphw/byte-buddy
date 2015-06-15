@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
@@ -68,9 +69,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     int getOffset();
 
-    Token toToken();
-
-    Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+    Token asToken();
 
     /**
      * A base implementation of a method parameter description.
@@ -112,13 +111,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public Token toToken() {
-            return accept(GenericTypeDescription.Visitor.NoOp.INSTANCE);
-        }
-
-        @Override
-        public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-            return new Token(getType().accept(visitor),
+        public Token asToken() {
+            return new Token(getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(getDeclaringMethod().getDeclaringType())),
                     getDeclaredAnnotations(),
                     isNamed()
                             ? getName()
@@ -547,7 +541,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
     }
 
-    class Token {
+    class Token implements ByteCodeElement.Token<Token> {
 
         public static final String NO_NAME = null;
 
@@ -591,8 +585,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             return typeDescription;
         }
 
-        public List<? extends AnnotationDescription> getAnnotations() {
-            return annotationDescriptions;
+        public AnnotationList getAnnotations() {
+            return new AnnotationList.Explicit(annotationDescriptions);
         }
 
         public String getName() {
@@ -601,6 +595,14 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         public Integer getModifiers() {
             return modifiers;
+        }
+
+        @Override
+        public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return new Token(getType().accept(visitor),
+                    annotationDescriptions, // Field access to avoid nesting of lists.
+                    getName(),
+                    getModifiers());
         }
 
         @Override

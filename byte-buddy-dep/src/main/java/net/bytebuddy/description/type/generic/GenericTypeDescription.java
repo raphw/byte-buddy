@@ -6,6 +6,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -98,7 +99,7 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         public boolean isTypeVariable() {
-            return this == VARIABLE || this == DETACHED_VARIABLE;
+            return this == VARIABLE;
         }
 
         public boolean isDetachedTypeVariable() {
@@ -222,7 +223,7 @@ public interface GenericTypeDescription extends NamedElement {
             }
         }
 
-        enum Erasing implements Visitor<TypeDescription> {
+        enum ForErasure implements Visitor<TypeDescription> {
 
             INSTANCE;
 
@@ -248,36 +249,6 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public TypeDescription onRawType(TypeDescription typeDescription) {
-                return typeDescription;
-            }
-        }
-
-        enum NoOp implements Visitor<GenericTypeDescription> {
-
-            INSTANCE;
-
-            @Override
-            public GenericTypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription;
-            }
-
-            @Override
-            public GenericTypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription;
-            }
-
-            @Override
-            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription;
-            }
-
-            @Override
-            public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription;
-            }
-
-            @Override
-            public GenericTypeDescription onRawType(TypeDescription typeDescription) {
                 return typeDescription;
             }
         }
@@ -309,6 +280,203 @@ public interface GenericTypeDescription extends NamedElement {
                 return lowerBounds.isEmpty()
                         ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(upperBounds.getOnly().accept(this))
                         : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+            }
+
+            public static class ForAttachment extends Substitutor {
+
+                public static ForAttachment of(FieldDescription fieldDescription) {
+                    return new ForAttachment(fieldDescription.getDeclaringType(), fieldDescription.getDeclaringType());
+                }
+
+                public static ForAttachment of(MethodDescription methodDescription) {
+                    return new ForAttachment(methodDescription.getDeclaringType(), methodDescription);
+                }
+
+                public static ForAttachment of(TypeDescription typeDescription) {
+                    return new ForAttachment(typeDescription, typeDescription);
+                }
+
+                private final TypeDescription declaringType;
+
+                private final TypeVariableSource typeVariableSource;
+
+                private final Map<String, GenericTypeDescription> formalVariables;
+
+                protected ForAttachment(TypeDescription declaringType, TypeVariableSource typeVariableSource) {
+                    this.declaringType = declaringType;
+                    this.typeVariableSource = typeVariableSource;
+                    formalVariables = new HashMap<String, GenericTypeDescription>();
+                }
+
+                @Override
+                public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                    if (genericTypeDescription.getSort().isTypeVariable()) {
+                        throw new IllegalStateException("Type variable is not detached: " + genericTypeDescription);
+                    }
+                    GenericTypeDescription typeVariable = formalVariables.get(genericTypeDescription.getSymbol());
+                    if (typeVariable == null) {
+                        typeVariable = typeVariableSource.findVariable(genericTypeDescription.getSymbol());
+                    }
+                    if (typeVariable == null) {
+                        throw new IllegalStateException("Cannot attach undefined type variable: " + genericTypeDescription);
+                    }
+                    return typeVariable;
+                }
+
+                @Override
+                public GenericTypeDescription onRawType(TypeDescription typeDescription) {
+                    return typeDescription.equals(TargetType.DESCRIPTION)
+                            ? declaringType
+                            : typeDescription;
+                }
+
+                protected void register(String symbol, GenericTypeDescription typeVariable) {
+                    if (formalVariables.put(symbol, typeVariable) != null) {
+                        throw new IllegalArgumentException("Nominal type variable is already defined: " + symbol);
+                    }
+                }
+
+                public class OfFormalVariable implements GenericTypeDescription.Visitor<GenericTypeDescription> {
+
+                    private final List<? super GenericTypeDescription> typeVariables;
+
+                    public OfFormalVariable(List<? super GenericTypeDescription> typeVariables) {
+                        this.typeVariables = typeVariables;
+                    }
+
+                    @Override
+                    public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                        if (genericTypeDescription.getSort().isTypeVariable()) {
+                            throw new IllegalStateException("Type variable is not detached: " + genericTypeDescription);
+                        }
+                        return new AttachedTypeVariable(genericTypeDescription.getSymbol(),
+                                typeVariableSource,
+                                genericTypeDescription.getUpperBounds(),
+                                typeVariables,
+                                ForAttachment.this);
+                    }
+
+                    @Override
+                    public GenericTypeDescription onRawType(TypeDescription typeDescription) {
+                        throw new IllegalArgumentException("Expected type variable: " + typeDescription);
+                    }
+
+                    @Override
+                    public GenericTypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
+                        throw new IllegalArgumentException("Expected type variable: " + genericTypeDescription);
+                    }
+
+                    @Override
+                    public GenericTypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
+                        throw new IllegalArgumentException("Expected type variable: " + genericTypeDescription);
+                    }
+
+                    @Override
+                    public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                        throw new IllegalArgumentException("Expected type variable: " + genericTypeDescription);
+                    }
+                }
+
+                protected static class AttachedTypeVariable extends GenericTypeDescription.ForTypeVariable {
+
+                    private final String symbol;
+
+                    private final TypeVariableSource typeVariableSource;
+
+                    private final List<GenericTypeDescription> bounds;
+
+                    public AttachedTypeVariable(String symbol,
+                                                TypeVariableSource typeVariableSource,
+                                                List<GenericTypeDescription> bounds,
+                                                List<? super GenericTypeDescription> typeVariables,
+                                                GenericTypeDescription.Visitor<GenericTypeDescription> visitor) {
+                        this.symbol = symbol;
+                        this.typeVariableSource = typeVariableSource;
+                        typeVariables.add(this);
+                        this.bounds = new ArrayList<GenericTypeDescription>(bounds.size());
+                        for (GenericTypeDescription bound : bounds) {
+                            this.bounds.add(bound.accept(visitor));
+                        }
+                    }
+
+                    @Override
+                    public GenericTypeList getUpperBounds() {
+                        return new GenericTypeList.Explicit(bounds);
+                    }
+
+                    @Override
+                    public TypeVariableSource getVariableSource() {
+                        return typeVariableSource;
+                    }
+
+                    @Override
+                    public String getSymbol() {
+                        return symbol;
+                    }
+                }
+            }
+
+            public static class ForDetachment extends Substitutor {
+
+                private final TypeDescription declaringType;
+
+                private final Map<String, GenericTypeDescription> detachedVariables;
+
+                public ForDetachment(TypeDescription declaringType) {
+                    this.declaringType = declaringType;
+                    detachedVariables = new HashMap<String, GenericTypeDescription>();
+                }
+
+                @Override
+                public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                    if (genericTypeDescription.getSort().isDetachedTypeVariable()) {
+                        throw new IllegalStateException("Type variable already detached: " + genericTypeDescription);
+                    }
+                    GenericTypeDescription typeVariable = detachedVariables.get(genericTypeDescription.getSymbol());
+                    if (typeVariable == null) {
+                        typeVariable = new DetachedTypeVariable(genericTypeDescription.getSymbol(),
+                                genericTypeDescription.getUpperBounds(),
+                                this);
+                    }
+                    return typeVariable;
+                }
+
+                @Override
+                public GenericTypeDescription onRawType(TypeDescription typeDescription) {
+                    return declaringType.equals(typeDescription)
+                            ? TargetType.DESCRIPTION
+                            : typeDescription;
+                }
+
+                protected void register(String symbol, GenericTypeDescription typeVariable) {
+                    detachedVariables.put(symbol, typeVariable);
+                }
+
+                protected static class DetachedTypeVariable extends GenericTypeDescription.ForTypeVariable.InDetachedForm {
+
+                    private final String symbol;
+
+                    private final List<GenericTypeDescription> bounds;
+
+                    public DetachedTypeVariable(String symbol, List<GenericTypeDescription> bounds, ForDetachment visitor) {
+                        this.symbol = symbol;
+                        visitor.register(symbol, this);
+                        this.bounds = new ArrayList<GenericTypeDescription>(bounds.size());
+                        for (GenericTypeDescription bound : bounds) {
+                            this.bounds.add(bound.accept(visitor));
+                        }
+                    }
+
+                    @Override
+                    public GenericTypeList getUpperBounds() {
+                        return new GenericTypeList.Explicit(bounds);
+                    }
+
+                    @Override
+                    public String getSymbol() {
+                        return symbol;
+                    }
+                }
             }
 
             public static class ForTypeVariable extends Substitutor {
@@ -446,7 +614,9 @@ public interface GenericTypeDescription extends NamedElement {
 
                         private final ElementMatcher<? super MethodDescription> typeVariableMethodMatcher;
 
-                        protected OfMethod(String symbol, TypeDescription typeDescription, ElementMatcher<? super MethodDescription> typeVariableMethodMatcher) {
+                        protected OfMethod(String symbol,
+                                           TypeDescription typeDescription,
+                                           ElementMatcher<? super MethodDescription> typeVariableMethodMatcher) {
                             super(symbol);
                             this.typeDescription = typeDescription;
                             this.typeVariableMethodMatcher = typeVariableMethodMatcher;
@@ -866,7 +1036,7 @@ public interface GenericTypeDescription extends NamedElement {
             List<FieldDescription> resolved = new ArrayList<FieldDescription>(declaredFields.size());
             Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariable.bind(this);
             for (FieldDescription fieldDescription : declaredFields) {
-                resolved.add(new FieldDescription.Latent(fieldDescription.getDeclaringType(), fieldDescription.accept(visitor)));
+                resolved.add(new FieldDescription.Latent(fieldDescription.getDeclaringType(), fieldDescription.asToken().accept(visitor)));
             }
             return new FieldList.Explicit(resolved);
         }
@@ -877,7 +1047,7 @@ public interface GenericTypeDescription extends NamedElement {
             List<MethodDescription> resolved = new ArrayList<MethodDescription>(declaredMethods.size());
             Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariable.bind(this);
             for (MethodDescription methodDescription : declaredMethods) {
-                resolved.add(new MethodDescription.Latent(methodDescription.getDeclaringType(), methodDescription.accept(visitor)));
+                resolved.add(new MethodDescription.Latent(methodDescription.getDeclaringType(), methodDescription.asToken().accept(visitor)));
             }
             return new MethodList.Explicit(resolved);
         }
@@ -1121,7 +1291,7 @@ public interface GenericTypeDescription extends NamedElement {
         public boolean equals(Object other) {
             if (!(other instanceof GenericTypeDescription)) return false;
             GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
-            return genericTypeDescription.getSort().isTypeVariable() && !genericTypeDescription.getSort().isDetachedTypeVariable()
+            return genericTypeDescription.getSort().isTypeVariable()
                     && getSymbol().equals(genericTypeDescription.getSymbol())
                     && getVariableSource().equals(genericTypeDescription.getVariableSource());
         }
@@ -1129,6 +1299,33 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public String toString() {
             return getSymbol();
+        }
+
+        public abstract static class InDetachedForm extends ForTypeVariable {
+
+            @Override
+            public Sort getSort() {
+                return Sort.DETACHED_VARIABLE;
+            }
+
+            @Override
+            public TypeVariableSource getVariableSource() {
+                throw new IllegalStateException("A detached type variable does not represent a source: " + this);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (!(other instanceof GenericTypeDescription)) return false;
+                GenericTypeDescription typeVariable = (GenericTypeDescription) other;
+                return typeVariable.getSort().isDetachedTypeVariable()
+                        && getSymbol().equals(typeVariable.getSymbol());
+            }
+
+            @Override
+            public int hashCode() {
+                return getSymbol().hashCode();
+            }
         }
 
         public static class OfLoadedType extends ForTypeVariable {
@@ -1161,90 +1358,6 @@ public interface GenericTypeDescription extends NamedElement {
             @Override
             public String getSymbol() {
                 return typeVariable.getName();
-            }
-        }
-
-        public static class Latent extends ForTypeVariable {
-
-            private final List<? extends GenericTypeDescription> bounds;
-
-            private final TypeVariableSource typeVariableSource;
-
-            private final String symbol;
-
-            public static GenericTypeDescription of(List<? extends GenericTypeDescription> bounds, TypeVariableSource typeVariableSource, String symbol) {
-                if (bounds.isEmpty()) {
-                    bounds = Collections.singletonList(TypeDescription.OBJECT);
-                } // TODO: Add validation
-                return new Latent(bounds, typeVariableSource, symbol);
-            }
-
-            public Latent(List<? extends GenericTypeDescription> bounds, TypeVariableSource typeVariableSource, String symbol) {
-                this.bounds = bounds;
-                this.typeVariableSource = typeVariableSource;
-                this.symbol = symbol;
-            }
-
-            @Override
-            public GenericTypeList getUpperBounds() {
-                return new GenericTypeList.Explicit(bounds);
-            }
-
-            @Override
-            public TypeVariableSource getVariableSource() {
-                return typeVariableSource;
-            }
-
-            @Override
-            public String getSymbol() {
-                return symbol;
-            }
-        }
-
-        public static class Detached extends ForTypeVariable {
-
-            private final String symbol;
-
-            public Detached(String symbol) {
-                this.symbol = symbol;
-            }
-
-            @Override
-            public GenericTypeList getUpperBounds() {
-                throw new IllegalStateException("A detached type variable cannot be resolved for its bounds: " + this);
-            }
-
-            @Override
-            public TypeVariableSource getVariableSource() {
-                throw new IllegalStateException("A detached type variable cannot be queried for its defining source: " + this);
-            }
-
-            @Override
-            public String getSymbol() {
-                return symbol;
-            }
-
-            @Override
-            public Sort getSort() {
-                return Sort.DETACHED_VARIABLE;
-            }
-
-            @Override
-            public TypeDescription asRawType() {
-                throw new IllegalStateException("A detached type variable cannot be reduced to a raw type: " + this);
-            }
-
-            @Override
-            public int hashCode() {
-                return symbol.hashCode();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (!(other instanceof GenericTypeDescription)) return false;
-                GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
-                return genericTypeDescription.getSort().isTypeVariable() && genericTypeDescription.getSort().isDetachedTypeVariable()
-                        && genericTypeDescription.getSymbol().equals(genericTypeDescription.getSymbol());
             }
         }
     }
