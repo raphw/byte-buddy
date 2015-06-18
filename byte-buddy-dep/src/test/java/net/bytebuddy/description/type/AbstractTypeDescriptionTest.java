@@ -321,6 +321,9 @@ public abstract class AbstractTypeDescriptionTest {
         assertThat(describe(SamplePackagePrivate.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
         assertThat(describe(SampleInterface.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
         assertThat(describe(SampleAnnotation.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(int.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(describe(SampleInterface[].class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(describe(SamplePackagePrivate[].class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
     @Test

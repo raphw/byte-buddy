@@ -471,6 +471,14 @@ public abstract class AbstractMethodDescriptionTest {
                 .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(String.class))
                 .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
+                .isVisibleTo(new TypeDescription.ForLoadedType(MethodVisibilityType.class)), is(true));
+        assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
+                .isVisibleTo(new TypeDescription.ForLoadedType(MethodVisibilityType.class)), is(true));
+        assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
     @Test
@@ -641,6 +649,17 @@ public abstract class AbstractMethodDescriptionTest {
 
         private void privateMethod() {
             /* do nothing*/
+        }
+    }
+
+    public static class MethodVisibilityType {
+
+        public void packagePrivateArgument(PackagePrivateType arg) {
+            /* do nothing */
+        }
+
+        public PackagePrivateType packagePrivateReturnType() {
+            return null;
         }
     }
 }

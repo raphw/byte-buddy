@@ -48,6 +48,7 @@ public interface FieldDescription extends ByteCodeElement {
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return getDeclaringType().isVisibleTo(typeDescription)
+                    && getFieldType().isVisibleTo(typeDescription)
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))

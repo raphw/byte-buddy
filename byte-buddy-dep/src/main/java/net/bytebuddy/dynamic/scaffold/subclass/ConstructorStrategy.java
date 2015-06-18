@@ -106,8 +106,7 @@ public interface ConstructorStrategy {
                 TypeDescription superType = instrumentedType.getSupertype();
                 return superType == null
                         ? new MethodList.Empty()
-                        : superType.getDeclaredMethods()
-                        .filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)));
+                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)));
             }
 
             @Override

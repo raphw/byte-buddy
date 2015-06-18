@@ -305,11 +305,18 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return getDeclaringType().isVisibleTo(typeDescription)
-                    && (isPublic()
+            if (!getDeclaringType().isVisibleTo(typeDescription) || !getReturnType().isVisibleTo(typeDescription)) {
+                return false;
+            }
+            for (TypeDescription parameterType : getParameters().asTypeList()) {
+                if (!parameterType.isVisibleTo(typeDescription)) {
+                    return false;
+                }
+            }
+            return isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType())));
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType()));
         }
 
         @Override

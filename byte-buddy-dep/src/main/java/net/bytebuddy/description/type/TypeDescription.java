@@ -428,7 +428,9 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic() || isProtected() || isSamePackage(typeDescription);
+            return isPrimitive() || (isArray()
+                    ? getComponentType().isVisibleTo(typeDescription)
+                    : (isPublic() || isProtected() || isSamePackage(typeDescription)));
         }
 
         @Override
@@ -484,7 +486,9 @@ public interface TypeDescription extends ByteCodeElement {
          */
         protected String getPackageName() {
             String name = getName();
-            int packageIndex = name.lastIndexOf('.');
+            int packageIndex = isArray()
+                    ? -1
+                    : name.lastIndexOf('.');
             return packageIndex == -1
                     ? null
                     : name.substring(0, packageIndex);

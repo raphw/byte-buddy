@@ -24,7 +24,9 @@ public interface ByteCodeElement extends NamedElement, ModifierReviewable, Decla
     String getGenericSignature();
 
     /**
-     * Checks if this element is visible from a given type.
+     * Checks if this element is visible from a given type. Methods are only considered visible if their return type and their parameter
+     * types are also visible to the given type. Similarly, fields are only considered visible if the field's type is visible to the
+     * given type. For array types, a type is considered visible only if the component type is visible to the given type.
      *
      * @param typeDescription The type which is checked for its access of this element.
      * @return {@code true} if this element is visible for {@code typeDescription}.
