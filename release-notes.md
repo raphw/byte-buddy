@@ -149,6 +149,11 @@ Fixed error in resolution of the `TargetType` pseudo-variable when used as compo
 
 Corrected incorrect deployment of version 0.6.7 which does not use a dependency reduced POM for the *byte-buddy* module.
 
-### Current snapshot
+### 18. June 2015: version 0.6.10 (and 0.6.9)
 
-Currently, there are no changes.
+- Corrected the resolution of a type's visibility to another type to determine if a method can be legally overridden.
+- Previous version 0.6.9 contained another bug when attempting to fix this problem.
+
+### Current version
+
+Currently, there are no changes
