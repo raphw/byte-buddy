@@ -36,10 +36,14 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         return new ByteBuddy().redefine(Foo.class);
     }
 
+
+
     @Override
     protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return new ByteBuddy().redefine(typeDescription, classFileLocator);
     }
+
+
 
     @Test
     public void testConstructorRetentionNoAuxiliaryType() throws Exception {

@@ -20,6 +20,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
@@ -174,6 +175,19 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(type.newInstance(), notNullValue(Object.class));
         Class<?> foo = classLoader.loadClass(Bar.class.getName());
         assertThat(foo.getDeclaredField(FOO).get(null), is((Object) FOO));
+    }
+
+    @Test
+    public void testDefinedMethodIsNotIgnored() throws Exception {
+        Class<?> type = createPlain()
+                .ignoreMethods(any())
+                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Method method = type.getDeclaredMethod(FOO);
+        assertThat(method.invoke(type.newInstance()), is((Object) FOO));
     }
 
     public static class Foo {
