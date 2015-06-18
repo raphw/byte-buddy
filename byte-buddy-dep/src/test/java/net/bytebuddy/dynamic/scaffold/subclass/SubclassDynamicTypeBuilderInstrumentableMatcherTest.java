@@ -42,7 +42,17 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isOverridable()).thenReturn(true);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(otherType);
+        when(methodDescription.isVisibleTo(typeDescription)).thenReturn(true);
         assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
+    }
+
+    @Test
+    public void testNotMatchesOverridableIfNotVisible() throws Exception {
+        when(methodDescription.isOverridable()).thenReturn(true);
+        when(ignoredMethods.matches(methodDescription)).thenReturn(false);
+        when(methodDescription.getDeclaringType()).thenReturn(otherType);
+        when(methodDescription.isVisibleTo(typeDescription)).thenReturn(false);
+        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
     }
 
     @Test
