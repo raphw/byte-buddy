@@ -205,10 +205,11 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * Locates a field of a given name or throws an exception if no field with such a name exists.
          *
-         * @param name The name of the field to locate.
+         * @param name         The name of the field to locate.
+         * @param staticMethod {@code true} if the intercepted method is static.
          * @return A representation of this field.
          */
-        FieldDescription locate(String name);
+        FieldDescription locate(String name, boolean staticMethod);
 
         /**
          * A factory that only looks up fields in the instrumented type.
@@ -268,11 +269,11 @@ public abstract class FieldAccessor implements Implementation {
             }
 
             @Override
-            public FieldDescription locate(String name) {
+            public FieldDescription locate(String name, boolean staticMethod) {
                 TypeDescription currentType = instrumentedType;
                 do {
                     FieldList fieldList = currentType.getDeclaredFields().filter(named(name).and(isVisibleTo(instrumentedType)));
-                    if (fieldList.size() == 1) {
+                    if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                         return fieldList.getOnly();
                     }
                 } while (!(currentType = currentType.getSupertype()).represents(Object.class));
@@ -345,9 +346,9 @@ public abstract class FieldAccessor implements Implementation {
             }
 
             @Override
-            public FieldDescription locate(String name) {
+            public FieldDescription locate(String name, boolean staticMethod) {
                 FieldList fieldList = targetType.getDeclaredFields().filter(named(name).and(isVisibleTo(instrumentedType)));
-                if (fieldList.size() != 1) {
+                if (fieldList.isEmpty() || (staticMethod && !fieldList.getOnly().isStatic())) {
                     throw new IllegalArgumentException("No field named " + name + " on " + targetType + " is visible to " + instrumentedType);
                 }
                 return fieldList.getOnly();
@@ -940,12 +941,12 @@ public abstract class FieldAccessor implements Implementation {
             if (takesArguments(0).and(not(returns(void.class))).matches(instrumentedMethod)) {
                 return applyGetter(methodVisitor,
                         implementationContext,
-                        fieldLocator.locate(getFieldName(instrumentedMethod)),
+                        fieldLocator.locate(getFieldName(instrumentedMethod), instrumentedMethod.isStatic()),
                         instrumentedMethod);
             } else if (takesArguments(1).and(returns(void.class)).matches(instrumentedMethod)) {
                 return applySetter(methodVisitor,
                         implementationContext,
-                        fieldLocator.locate(getFieldName(instrumentedMethod)),
+                        fieldLocator.locate(getFieldName(instrumentedMethod), instrumentedMethod.isStatic()),
                         instrumentedMethod);
             } else {
                 throw new IllegalArgumentException("Method " + implementationContext + " is no bean property");

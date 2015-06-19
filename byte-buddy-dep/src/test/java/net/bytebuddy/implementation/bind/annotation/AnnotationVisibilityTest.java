@@ -27,18 +27,19 @@ public class AnnotationVisibilityTest {
                 {AllArguments.class},
                 {Argument.class},
                 {BindingPriority.class},
-                {IgnoreForBinding.class},
-                {Origin.class},
-                {RuntimeType.class},
-                {This.class},
-                {Super.class},
                 {Default.class},
-                {SuperCall.class},
                 {DefaultCall.class},
                 {Empty.class},
-                {Pipe.class},
+                {FieldProxy.class},
+                {FieldValue.class},
+                {IgnoreForBinding.class},
                 {Morph.class},
-                {FieldProxy.class}
+                {Origin.class},
+                {Pipe.class},
+                {RuntimeType.class},
+                {Super.class},
+                {SuperCall.class},
+                {This.class}
         });
     }
 

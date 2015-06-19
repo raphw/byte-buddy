@@ -80,7 +80,9 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * explicitly define and therewith alter the arguments that are handed to the super method. <b>This annotation needs
  * to be installed and explicitly registered before it can be used.</b> See the documentation to the annotation for
  * further information.</li>
- * <li>{@link FieldProxy}: Allows to access fields via getter
+ * <li>{@link net.bytebuddy.implementation.bind.annotation.FieldValue}: Allows to access a field's value at the time
+ * of the method invocation. The field's value is directly assigned to the annotated parameter.</li>
+ * <li>{@link net.bytebuddy.implementation.bind.annotation.FieldProxy}: Allows to access fields via getter
  * and setter proxies. <b>This annotation needs to be installed and explicitly registered before it can be used.</b>
  * Note that any field access requires boxing such that a use of {@link net.bytebuddy.implementation.FieldAccessor} in
  * combination with {@link net.bytebuddy.implementation.MethodDelegation#andThen(Implementation)} might be a more
@@ -445,6 +447,7 @@ public class MethodDelegation implements Implementation {
                 Default.Binder.INSTANCE,
                 SuperCall.Binder.INSTANCE,
                 DefaultCall.Binder.INSTANCE,
+                FieldValue.Binder.INSTANCE,
                 Empty.Binder.INSTANCE);
     }
 

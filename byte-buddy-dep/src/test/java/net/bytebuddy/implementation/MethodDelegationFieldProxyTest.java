@@ -214,8 +214,6 @@ public class MethodDelegationFieldProxyTest extends AbstractImplementationTest {
         public void swap() {
             /* do nothing */
         }
-
-
     }
 
     public static class ExplicitInherited extends Explicit {

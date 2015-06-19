@@ -226,7 +226,7 @@ public @interface FieldProxy {
             }
             FieldLocator.Resolution resolution = FieldLocator.of(annotation.getValue(FIELD_NAME, String.class), source)
                     .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getTypeDescription())
-                    .resolve(implementationTarget.getTypeDescription());
+                    .resolve(implementationTarget.getTypeDescription(), source.isStatic());
             return resolution.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new AccessorProxy(
                     resolution.getFieldDescription(),
@@ -899,9 +899,10 @@ public @interface FieldProxy {
                  * Locates a field if possible and returns a corresponding resolution.
                  *
                  * @param instrumentedType The instrumented type from which a field is to be accessed.
+                 * @param staticMethod     {@code true} if the intercepted method is static.
                  * @return A resolution of the field name lookup.
                  */
-                protected abstract Resolution resolve(TypeDescription instrumentedType);
+                protected abstract Resolution resolve(TypeDescription instrumentedType, boolean staticMethod);
 
                 /**
                  * Represents a lookup engine that can only produce illegal look-ups.
@@ -909,7 +910,7 @@ public @interface FieldProxy {
                 protected static class Illegal extends LookupEngine {
 
                     @Override
-                    protected Resolution resolve(TypeDescription instrumentedType) {
+                    protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
                         return new Resolution.Unresolved();
                     }
 
@@ -950,11 +951,11 @@ public @interface FieldProxy {
                     }
 
                     @Override
-                    protected Resolution resolve(TypeDescription instrumentedType) {
+                    protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
                         TypeDescription currentType = instrumentedType;
                         do {
                             FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
-                            if (fieldList.size() == 1) {
+                            if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                                 return new Resolution.Resolved(fieldList.getOnly());
                             }
                         } while ((currentType = currentType.getSupertype()) != null);
@@ -1007,9 +1008,9 @@ public @interface FieldProxy {
                     }
 
                     @Override
-                    protected Resolution resolve(TypeDescription instrumentedType) {
+                    protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
                         FieldList fieldList = typeDescription.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
-                        return fieldList.size() == 1
+                        return !fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())
                                 ? new Resolution.Resolved(fieldList.getOnly())
                                 : new Resolution.Unresolved();
                     }
@@ -1069,8 +1070,7 @@ public @interface FieldProxy {
                     if (isSetter().matches(methodDescription)) {
                         fieldName = methodDescription.getInternalName().substring(3);
                     } else if (isGetter().matches(methodDescription)) {
-                        fieldName = methodDescription.getInternalName()
-                                .substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
+                        fieldName = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
                     } else {
                         return new Illegal();
                     }
