@@ -256,6 +256,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldValue.Binder.class).apply();
         ObjectPropertyAssertion.of(FieldValue.Binder.FieldLocator.ForFieldInHierarchy.class).apply();
         ObjectPropertyAssertion.of(FieldValue.Binder.FieldLocator.ForSpecificType.class).apply();
         ObjectPropertyAssertion.of(FieldValue.Binder.FieldLocator.Impossible.class).apply();

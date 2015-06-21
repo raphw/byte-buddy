@@ -42,6 +42,9 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * must similarly return {@code void} and take a single {@link java.lang.Object} argument. After installing these
  * interfaces with the {@link FieldProxy.Binder}, this
  * binder needs to be registered with a {@link net.bytebuddy.implementation.MethodDelegation} before it can be used.
+ *
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

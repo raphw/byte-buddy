@@ -35,7 +35,7 @@ import java.lang.reflect.Method;
  * Any other parameter type will cause an {@link java.lang.IllegalStateException}.
  *
  * @see net.bytebuddy.implementation.MethodDelegation
- * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

@@ -16,7 +16,7 @@ import java.lang.annotation.*;
  * {@code foo} method casting the target's method return value to {@code String} before returning a value itself.
  *
  * @see net.bytebuddy.implementation.MethodDelegation
- * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

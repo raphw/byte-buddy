@@ -26,7 +26,7 @@ import java.util.LinkedHashSet;
  * if the source method parameter at the specified index is not assignable to the annotated parameter.
  *
  * @see net.bytebuddy.implementation.MethodDelegation
- * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  * @see net.bytebuddy.implementation.bind.annotation.RuntimeType
  */
 @Documented

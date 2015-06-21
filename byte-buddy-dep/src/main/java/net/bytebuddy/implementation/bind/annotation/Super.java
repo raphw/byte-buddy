@@ -50,6 +50,9 @@ import static net.bytebuddy.matcher.ElementMatchers.returns;
  * <p>&nbsp;</p>
  * If a method parameter is not a super type of the instrumented type, the method with the parameter that is annoted by
  * #{@code Super} is not considered a possible delegation target.
+ *
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

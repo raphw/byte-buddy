@@ -77,9 +77,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  *   .appendParameterBinder(Pipe.Binder.install(ForwardingType.class))
  * </pre>
  *
- * @see net.bytebuddy.implementation.bind.annotation.Pipe.Binder
  * @see net.bytebuddy.implementation.MethodDelegation
- * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

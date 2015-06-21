@@ -16,6 +16,9 @@ import java.lang.annotation.*;
  * directly implemented by the instrumented type. The generated proxy will directly implement the parameter's
  * interface. If the interface of the annotation is not implemented by the instrumented type, the method with this
  * parameter is not considered as a binding target.
+ *
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

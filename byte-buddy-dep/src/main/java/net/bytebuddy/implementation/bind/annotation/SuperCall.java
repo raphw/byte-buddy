@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
  * type.
  *
  * @see net.bytebuddy.implementation.MethodDelegation
- * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

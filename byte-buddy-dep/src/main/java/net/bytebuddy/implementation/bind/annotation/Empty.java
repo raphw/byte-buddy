@@ -13,6 +13,9 @@ import java.lang.annotation.*;
 /**
  * Binds the parameter type's default value to the annotated parameter, i.e. {@code null} or a numeric value
  * representing zero.
+ *
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

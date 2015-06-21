@@ -21,7 +21,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * parameter is considered to be unbindable.
  *
  * @see net.bytebuddy.implementation.MethodDelegation
- * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

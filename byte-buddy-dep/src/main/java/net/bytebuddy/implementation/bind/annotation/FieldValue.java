@@ -24,7 +24,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * assignable to the given field. For attempting a type casting, the {@link RuntimeType} annotation can be
  * applied to the parameter.
  *
- * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.RuntimeType
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

@@ -44,6 +44,9 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * {@link net.bytebuddy.implementation.bind.annotation.SuperCall} or
  * {@link net.bytebuddy.implementation.bind.annotation.DefaultCall} annotations which call a super
  * method using the same arguments as the intercepted method was invoked with.
+ *
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

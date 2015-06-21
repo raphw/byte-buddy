@@ -67,6 +67,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method}
  * or a {@link java.lang.Class} instance. A {@code Method}-typed parameter is assigned a reference to the original method that
  * is overriden. A {@code Class}-typed parameter is assigned the type of the caller.</li>
+ * <li>{@link net.bytebuddy.implementation.bind.annotation.StubValue}: Assigns the (boxed) default value of the
+ * intercepted method's return type to the parameter. If the return type is {@code void}, {@code null} is assigned.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Empty}: Assigns the parameter type's
  * default value, i.e. {@code null} for a reference type or zero for primitive types. This is an opportunity to
  * ignore a parameter.</li>
@@ -448,6 +450,7 @@ public class MethodDelegation implements Implementation {
                 SuperCall.Binder.INSTANCE,
                 DefaultCall.Binder.INSTANCE,
                 FieldValue.Binder.INSTANCE,
+                StubValue.Binder.INSTANCE,
                 Empty.Binder.INSTANCE);
     }
 

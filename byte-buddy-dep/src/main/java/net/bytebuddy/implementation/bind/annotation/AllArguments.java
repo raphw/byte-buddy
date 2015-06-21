@@ -31,9 +31,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
  * use a {@link net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment#SLACK} assignment
  * which simply skips non-assignable values instead.
  *
- * @see net.bytebuddy.implementation.bind.annotation.AllArguments.Assignment
  * @see net.bytebuddy.implementation.MethodDelegation
- * @see TargetMethodAnnotationDrivenBinder
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  * @see net.bytebuddy.implementation.bind.annotation.RuntimeType
  */
 @Documented
@@ -140,13 +139,12 @@ public @interface AllArguments {
             boolean includeThis = !source.isStatic() && annotation.loadSilent().includeSelf();
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;
-            boolean dynamicallyTyped = RuntimeType.Verifier.check(target);
             for (TypeDescription sourceParameter : includeThis
                     ? join(implementationTarget.getTypeDescription(), source.getParameters().asTypeList())
                     : source.getParameters().asTypeList()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.forType(sourceParameter).loadOffset(offset),
-                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), dynamicallyTyped));
+                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), RuntimeType.Verifier.check(target)));
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
                 } else if (annotation.loadSilent().value().isStrict()) {

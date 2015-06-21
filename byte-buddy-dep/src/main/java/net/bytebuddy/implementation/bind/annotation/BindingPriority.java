@@ -9,6 +9,9 @@ import java.lang.annotation.*;
 /**
  * Defines a binding priority for a target method. If two target methods can be bound to a source method,
  * the one with the higher priority will be selected.
+ *
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

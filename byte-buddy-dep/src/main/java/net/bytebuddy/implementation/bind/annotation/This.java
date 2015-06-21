@@ -18,8 +18,7 @@ import java.lang.annotation.*;
  * the list of possible binding candidates of the static source method.
  *
  * @see net.bytebuddy.implementation.MethodDelegation
- * @see TargetMethodAnnotationDrivenBinder
- * @see net.bytebuddy.implementation.bind.annotation.RuntimeType
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -74,8 +73,7 @@ public @interface This {
             }
             StackManipulation assignment = source.isStatic()
                     ? NullConstant.INSTANCE
-                    : new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX),
-                    assigner.assign(implementationTarget.getTypeDescription(), target.getTypeDescription(), RuntimeType.Verifier.check(target)));
+                    : MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX);
             return assignment.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(assignment)
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
