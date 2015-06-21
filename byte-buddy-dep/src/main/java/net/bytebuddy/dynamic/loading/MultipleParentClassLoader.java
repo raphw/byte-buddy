@@ -152,6 +152,11 @@ public class MultipleParentClassLoader extends ClassLoader {
     public static class Builder {
 
         /**
+         * Indicates the first index of a list.
+         */
+        private static final int ONLY = 0;
+
+        /**
          * The class loaders that were collected.
          */
         private final List<ClassLoader> classLoaders;
@@ -224,7 +229,7 @@ public class MultipleParentClassLoader extends ClassLoader {
          */
         public ClassLoader build() {
             return classLoaders.size() == 1
-                    ? classLoaders.get(0)
+                    ? classLoaders.get(ONLY)
                     : new MultipleParentClassLoader(classLoaders);
         }
 
