@@ -195,7 +195,6 @@ public class MultipleParentClassLoader extends ClassLoader {
                 classLoaders.add(type.getClassLoader());
             }
             return append(classLoaders);
-
         }
 
         /**
