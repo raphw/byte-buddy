@@ -147,7 +147,7 @@ public class MultipleParentClassLoader extends ClassLoader {
      * A builder to collect class loader and that creates a
      * {@link net.bytebuddy.dynamic.loading.MultipleParentClassLoader} only if multiple or no
      * {@link java.lang.ClassLoader}s are found in the process. If exactly a single class loader is found,
-     * this class loader is returned.
+     * this class loader is returned. All class loaders are applied in their collection order.
      */
     public static class Builder {
 
@@ -205,7 +205,7 @@ public class MultipleParentClassLoader extends ClassLoader {
         /**
          * Appends the given class loaders if they were not yet collected.
          *
-         * @param classLoader The class loaders to collected.
+         * @param classLoader The class loaders to be collected.
          * @return A new builder instance with the additional class loaders.
          */
         public Builder append(ClassLoader... classLoader) {
