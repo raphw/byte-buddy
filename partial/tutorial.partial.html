@@ -1742,6 +1742,19 @@ class Qux extends Foo&lt;Integer&gt; {
         Using this annotation is meant for voiding an interceptor's parameter.
     </span></li>
     <li><span>
+        <code>@StubValue</code>: With this annotation, the annotated parameter is injected a stub value of the
+        intercepted method. For reference-return-types and <code>void</code> methods, the value <code>null</code>
+        is injected. For methods that return a primitive value, the equivalent boxing type of <code>0</code> is
+        injected. This can be helpful in combination when defining a generic interceptor that returns
+        a <code>Object</code> type while using a <code>@RuntimeType</code> annotation. By returning the injected
+        value, the method behaves as a stub while correctly considering primitive return types.
+    </span></li>
+    <li><span>
+        <code>@FieldValue</code>: This annotation locates a field in the instrumented type's class hierarchy and
+        injects the field's value into the annotated parameter. If no visible field of a compatible type can be
+        found for the annotated parameter, the target method is not bound.
+    </span></li>
+    <li><span>
         <code>@FieldProxy</code>: Using this annotation, Byte Buddy injects an accessor for a given field. The accessed
         field can either be specified explicitly by its name or it is derived from a getter or setter methods name,
         in case that the intercepted method represents such a method. Before this annotation can be used, it needs
