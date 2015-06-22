@@ -21,6 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.security.ProtectionDomain;
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -108,7 +109,7 @@ public class AnnotationAppenderDefaultTest {
         when(target.visit(any(String.class), anyBoolean())).thenReturn(annotationVisitor);
         AnnotationDescription annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         AnnotationAppender.AnnotationVisibility annotationVisibility = AnnotationAppender.AnnotationVisibility.of(annotationDescription);
-        annotationAppender.append(annotationDescription, annotationVisibility);
+        annotationAppender.append(annotationDescription, none(), annotationVisibility);
         switch (annotationVisibility) {
             case RUNTIME:
                 verify(target).visit(Type.getDescriptor(annotation.annotationType()), true);

@@ -22,7 +22,7 @@ public class TypeAttributeAppenderForTypeTest extends AbstractTypeAttributeAppen
 
     @Test
     public void testObjectProperties() throws Exception {
-        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Void.class, String.class).iterator();
+        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Void.class, String.class, Void.class, String.class).iterator();
         ObjectPropertyAssertion.of(TypeAttributeAppender.ForType.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {

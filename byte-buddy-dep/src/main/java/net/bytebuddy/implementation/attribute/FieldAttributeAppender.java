@@ -2,12 +2,16 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.FieldVisitor;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.FieldVisitor}.
@@ -123,20 +127,35 @@ public interface FieldAttributeAppender {
         private final List<? extends AnnotationDescription> annotations;
 
         /**
+         * A matcher to identify default properties.
+         */
+        private final ElementMatcher<? super MethodDescription> defaultProperties;
+
+        /**
          * Creates a new field annotation appender.
          *
          * @param annotations The annotations to be appended to the field.
          */
         public ForAnnotation(List<? extends AnnotationDescription> annotations) {
+            this(annotations, none());
+        }
+
+        /**
+         * Creates a new annotation attribute appender for explicit annotation values. All values, including default values, are copied.
+         *
+         * @param annotations       The annotations to be appended to the field.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForAnnotation(List<? extends AnnotationDescription> annotations, ElementMatcher<? super MethodDescription> defaultProperties) {
             this.annotations = annotations;
+            this.defaultProperties = defaultProperties;
         }
 
         @Override
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            AnnotationAppender annotationAppender =
-                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
             for (AnnotationDescription annotation : annotations) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                annotationAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
@@ -148,17 +167,21 @@ public interface FieldAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && annotations.equals(((ForAnnotation) other).annotations);
+                    && annotations.equals(((ForAnnotation) other).annotations)
+                    && defaultProperties.equals(((ForAnnotation) other).defaultProperties);
         }
 
         @Override
         public int hashCode() {
-            return annotations.hashCode();
+            return annotations.hashCode() + 31 * defaultProperties.hashCode();
         }
 
         @Override
         public String toString() {
-            return "FieldAttributeAppender.ForAnnotation{annotations=" + annotations + '}';
+            return "FieldAttributeAppender.ForAnnotation{" +
+                    "annotations=" + annotations +
+                    "defaultProperties=" + defaultProperties +
+                    '}';
         }
     }
 
@@ -166,7 +189,7 @@ public interface FieldAttributeAppender {
      * Writes all annotations that are found on a field that belongs to a loaded type of the JVM as visible
      * annotations.
      */
-    class ForLoadedField implements FieldAttributeAppender, Factory {
+    class ForField implements FieldAttributeAppender, Factory {
 
         /**
          * The field from which the annotations should be copied.
@@ -174,20 +197,54 @@ public interface FieldAttributeAppender {
         private final FieldDescription fieldDescription;
 
         /**
-         * Creates a new field attribute appender that appends all annotations that are found on a loaded field.
+         * A matcher to identify default properties.
+         */
+        private final ElementMatcher<? super MethodDescription> defaultProperties;
+
+        /**
+         * Creates a new field attribute appender that appends all annotations that are found on a field.
          *
          * @param field The field from which the annotations to append are read.
          */
-        public ForLoadedField(Field field) {
-            this.fieldDescription = new FieldDescription.ForLoadedField(field);
+        public ForField(Field field) {
+            this(new FieldDescription.ForLoadedField(field));
+        }
+
+        /**
+         * Creates a new field attribute appender that appends all annotations that are found on a field.
+         *
+         * @param fieldDescription The field from which the annotations to append are read.
+         */
+        public ForField(FieldDescription fieldDescription) {
+            this(fieldDescription, none());
+        }
+
+        /**
+         * Creates a new field attribute appender that appends all annotations that are found on a field.
+         *
+         * @param field             The field from which the annotations to append are read.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForField(Field field, ElementMatcher<? super MethodDescription> defaultProperties) {
+            this(new FieldDescription.ForLoadedField(field), defaultProperties);
+        }
+
+        /**
+         * Creates a new field attribute appender that appends all annotations that are found on a field.
+         *
+         * @param fieldDescription  The field from which the annotations to append are read.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForField(FieldDescription fieldDescription, ElementMatcher<? super MethodDescription> defaultProperties) {
+            this.fieldDescription = fieldDescription;
+            this.defaultProperties = defaultProperties;
         }
 
         @Override
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            AnnotationAppender annotationAppender =
-                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
             for (AnnotationDescription annotation : this.fieldDescription.getDeclaredAnnotations()) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.RUNTIME);
+                annotationAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
@@ -199,17 +256,21 @@ public interface FieldAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && fieldDescription.equals(((ForLoadedField) other).fieldDescription);
+                    && fieldDescription.equals(((ForField) other).fieldDescription)
+                    && defaultProperties.equals(((ForField) other).defaultProperties);
         }
 
         @Override
         public int hashCode() {
-            return fieldDescription.hashCode();
+            return fieldDescription.hashCode() + 31 * defaultProperties.hashCode();
         }
 
         @Override
         public String toString() {
-            return "FieldAttributeAppender.ForLoadedField{fieldDescription=" + fieldDescription + '}';
+            return "FieldAttributeAppender.ForField{" +
+                    "fieldDescription=" + fieldDescription +
+                    ", defaultProperties=" + defaultProperties +
+                    '}';
         }
     }
 

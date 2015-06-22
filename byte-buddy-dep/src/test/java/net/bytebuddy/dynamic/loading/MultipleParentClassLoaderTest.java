@@ -109,7 +109,7 @@ public class MultipleParentClassLoaderTest {
     }
 
     @Test
-    public void testMultipleParenEnumerationURL() throws Exception {
+    public void testMultipleParentEnumerationURL() throws Exception {
         ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(first, second, null).build();
         Enumeration<URL> foo = classLoader.getResources(FOO);
         assertThat(foo.hasMoreElements(), is(true));

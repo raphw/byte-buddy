@@ -4,11 +4,15 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.*;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
+
+import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * Annotation appenders are capable of writing annotations to a specified target.
@@ -24,11 +28,14 @@ public interface AnnotationAppender {
      * Terminally writes the given annotation to the specified target.
      *
      * @param annotation           The annotation to be written.
+     * @param defaultProperties    A matcher to identify default valued properties which should not be written.
      * @param annotationVisibility Determines the annotation visibility for the given annotation.
      * @return Usually {@code this} or any other annotation appender capable of writing another annotation to
      * the specified target.
      */
-    AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility);
+    AnnotationAppender append(AnnotationDescription annotation,
+                              ElementMatcher<? super MethodDescription> defaultProperties,
+                              AnnotationVisibility annotationVisibility);
 
     /**
      * Determines if an annotation should be written to a specified target and if the annotation should be marked
@@ -337,9 +344,12 @@ public interface AnnotationAppender {
          *
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param annotation        The annotation to be written.
+         * @param defaultProperties A matcher to identify default valued properties which should not be written.
          */
-        private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation) {
-            for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
+        private static void handle(AnnotationVisitor annotationVisitor,
+                                   AnnotationDescription annotation,
+                                   ElementMatcher<? super MethodDescription> defaultProperties) {
+            for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods().filter(not(defaultProperties))) {
                 apply(annotationVisitor, methodDescription.getReturnType(), methodDescription.getName(), annotation.getValue(methodDescription));
             }
             annotationVisitor.visitEnd();
@@ -355,7 +365,7 @@ public interface AnnotationAppender {
          */
         public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
             if (valueType.isAnnotation()) {
-                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value);
+                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, none());
             } else if (valueType.isEnum()) {
                 annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((EnumerationDescription) value).getValue());
             } else if (valueType.isAssignableFrom(Class.class)) {
@@ -374,9 +384,11 @@ public interface AnnotationAppender {
         }
 
         @Override
-        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility) {
+        public AnnotationAppender append(AnnotationDescription annotation,
+                                         ElementMatcher<? super MethodDescription> defaultProperties,
+                                         AnnotationVisibility annotationVisibility) {
             if (!annotationVisibility.isSuppressed()) {
-                doAppend(annotation, annotationVisibility.isVisible());
+                doAppend(annotation, defaultProperties, annotationVisibility.isVisible());
             }
             return this;
         }
@@ -384,11 +396,14 @@ public interface AnnotationAppender {
         /**
          * Tries to append a given annotation by reflectively reading an annotation.
          *
-         * @param annotation The annotation to be written.
-         * @param visible    {@code true} if this annotation should be treated as visible at runtime.
+         * @param annotation        The annotation to be written.
+         * @param defaultProperties A matcher to identify default valued properties which should not be written.
+         * @param visible           {@code true} if this annotation should be treated as visible at runtime.
          */
-        private void doAppend(AnnotationDescription annotation, boolean visible) {
-            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation);
+        private void doAppend(AnnotationDescription annotation,
+                              ElementMatcher<? super MethodDescription> defaultProperties,
+                              boolean visible) {
+            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, defaultProperties);
         }
 
         @Override

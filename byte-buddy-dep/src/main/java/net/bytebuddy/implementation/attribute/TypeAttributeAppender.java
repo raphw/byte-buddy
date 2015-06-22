@@ -1,11 +1,15 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.ClassVisitor;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.ClassVisitor}.
@@ -55,10 +59,9 @@ public interface TypeAttributeAppender {
 
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
-            AnnotationAppender annotationAppender =
-                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             for (AnnotationDescription annotation : typeDescription.getSupertype().getDeclaredAnnotations()) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                annotationAppender.append(annotation, none(), AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
@@ -80,37 +83,56 @@ public interface TypeAttributeAppender {
         private final List<? extends AnnotationDescription> annotations;
 
         /**
-         * Creates a new single annotation attribute appender.
+         * A matcher to identify default properties.
+         */
+        private final ElementMatcher<? super MethodDescription> defaultProperties;
+
+        /**
+         * Creates a new annotation attribute appender for explicit annotation values. All values, including default values, are copied.
          *
          * @param annotations The annotations to append.
          */
         public ForAnnotation(List<? extends AnnotationDescription> annotations) {
+            this(annotations, none());
+        }
+
+        /**
+         * Creates a new annotation attribute appender for explicit annotation values.
+         *
+         * @param annotations       The annotations to write to the given type.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForAnnotation(List<? extends AnnotationDescription> annotations, ElementMatcher<? super MethodDescription> defaultProperties) {
             this.annotations = annotations;
+            this.defaultProperties = defaultProperties;
         }
 
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
-            AnnotationAppender annotationAppender =
-                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             for (AnnotationDescription annotation : annotations) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                annotationAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && annotations.equals(((ForAnnotation) other).annotations);
+                    && annotations.equals(((ForAnnotation) other).annotations)
+                    && defaultProperties.equals(((ForAnnotation) other).defaultProperties);
         }
 
         @Override
         public int hashCode() {
-            return annotations.hashCode();
+            return annotations.hashCode() + 31 * defaultProperties.hashCode();
         }
 
         @Override
         public String toString() {
-            return "TypeAttributeAppender.ForAnnotation{annotations=" + annotations + '}';
+            return "TypeAttributeAppender.ForAnnotation{" +
+                    "annotations=" + annotations +
+                    ", defaultProperties=" + defaultProperties +
+                    '}';
         }
     }
 
@@ -125,12 +147,17 @@ public interface TypeAttributeAppender {
         private final TypeDescription typeDescription;
 
         /**
+         * A matcher to identify default properties.
+         */
+        private final ElementMatcher<? super MethodDescription> defaultProperties;
+
+        /**
          * Creates a new attribute appender that writes all annotations declared for the given loaded type.
          *
          * @param type The loaded type.
          */
         public ForType(Class<?> type) {
-            typeDescription = new TypeDescription.ForLoadedType(type);
+            this(new TypeDescription.ForLoadedType(type));
         }
 
         /**
@@ -139,32 +166,56 @@ public interface TypeAttributeAppender {
          * @param typeDescription The type description.
          */
         public ForType(TypeDescription typeDescription) {
+            this(typeDescription, none());
+        }
+
+        /**
+         * Creates a new attribute appender that writes all annotations declared for the given loaded type.
+         *
+         * @param type              The loaded type.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForType(Class<?> type, ElementMatcher<? super MethodDescription> defaultProperties) {
+            this(new TypeDescription.ForLoadedType(type), defaultProperties);
+        }
+
+        /**
+         * Creates a new attribute appender that writes all annotations declared for the given type description.
+         *
+         * @param typeDescription   The type description.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForType(TypeDescription typeDescription, ElementMatcher<? super MethodDescription> defaultProperties) {
             this.typeDescription = typeDescription;
+            this.defaultProperties = defaultProperties;
         }
 
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
-            AnnotationAppender annotationAppender =
-                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             for (AnnotationDescription annotation : this.typeDescription.getDeclaredAnnotations()) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                annotationAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && typeDescription.equals(((ForType) other).typeDescription);
+                    && typeDescription.equals(((ForType) other).typeDescription)
+                    && defaultProperties.equals(((ForType) other).defaultProperties);
         }
 
         @Override
         public int hashCode() {
-            return typeDescription.hashCode();
+            return typeDescription.hashCode() + 31 * defaultProperties.hashCode();
         }
 
         @Override
         public String toString() {
-            return "TypeAttributeAppender.ForType{typeDescription=" + typeDescription + '}';
+            return "TypeAttributeAppender.ForType{" +
+                    "typeDescription=" + typeDescription +
+                    ", defaultProperties=" + defaultProperties +
+                    '}';
         }
     }
 

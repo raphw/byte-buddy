@@ -14,7 +14,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttributeAppenderTest {
+public class FieldAttributeAppenderForFieldTest extends AbstractFieldAttributeAppenderTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -27,13 +27,13 @@ public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttri
 
     @Test
     public void testMakeReturnsSameInstance() throws Exception {
-        assertThat(new FieldAttributeAppender.ForLoadedField(field).make(mock(TypeDescription.class)),
-                is((FieldAttributeAppender) new FieldAttributeAppender.ForLoadedField(field)));
+        assertThat(new FieldAttributeAppender.ForField(field).make(mock(TypeDescription.class)),
+                is((FieldAttributeAppender) new FieldAttributeAppender.ForField(field)));
     }
 
     @Test
     public void testLoadedFieldAttributeAppender() throws Exception {
-        FieldAttributeAppender fieldAttributeAppender = new FieldAttributeAppender.ForLoadedField(field);
+        FieldAttributeAppender fieldAttributeAppender = new FieldAttributeAppender.ForField(field);
         fieldAttributeAppender.apply(fieldVisitor, fieldDescription);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(fieldVisitor);
@@ -42,8 +42,11 @@ public class FieldAttributeAppenderForLoadedFieldTest extends AbstractFieldAttri
 
     @Test
     public void testObjectProperties() throws Exception {
-        final Iterator<Field> iterator = Arrays.asList(Sample.class.getDeclaredField(FOO), Sample.class.getDeclaredField(BAR)).iterator();
-        ObjectPropertyAssertion.of(FieldAttributeAppender.ForLoadedField.class).create(new ObjectPropertyAssertion.Creator<Field>() {
+        final Iterator<Field> iterator = Arrays.asList(Sample.class.getDeclaredField(FOO),
+                Sample.class.getDeclaredField(BAR),
+                Sample.class.getDeclaredField(FOO),
+                Sample.class.getDeclaredField(BAR)).iterator();
+        ObjectPropertyAssertion.of(FieldAttributeAppender.ForField.class).create(new ObjectPropertyAssertion.Creator<Field>() {
             @Override
             public Field create() {
                 return iterator.next();

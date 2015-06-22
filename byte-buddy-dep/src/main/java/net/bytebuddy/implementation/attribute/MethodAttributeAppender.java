@@ -4,12 +4,15 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.MethodVisitor}.
@@ -65,16 +68,15 @@ public interface MethodAttributeAppender {
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender methodAppender =
-                    new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
+            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
             for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
-                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                methodAppender.append(annotation, none(), AnnotationAppender.AnnotationVisibility.of(annotation));
             }
             int index = 0;
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
                 AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++));
                 for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
-                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                    parameterAppender.append(annotation, none(), AnnotationAppender.AnnotationVisibility.of(annotation));
                 }
             }
         }
@@ -164,9 +166,15 @@ public interface MethodAttributeAppender {
         private final List<? extends AnnotationDescription> annotations;
 
         /**
+         * A matcher to identify default properties.
+         */
+        private final ElementMatcher<? super MethodDescription> defaultProperties;
+
+        /**
          * The target to which the annotations are written to.
          */
         private final Target target;
+
 
         /**
          * Create a new annotation appender for a method.
@@ -174,8 +182,7 @@ public interface MethodAttributeAppender {
          * @param annotations The annotations to append to the target method.
          */
         public ForAnnotation(List<? extends AnnotationDescription> annotations) {
-            this.annotations = annotations;
-            target = Target.OnMethod.INSTANCE;
+            this(annotations, none());
         }
 
         /**
@@ -185,7 +192,33 @@ public interface MethodAttributeAppender {
          * @param annotations    The annotations to append to the target method parameter.
          */
         public ForAnnotation(int parameterIndex, List<? extends AnnotationDescription> annotations) {
+            this(parameterIndex, annotations, none());
+        }
+
+        /**
+         * Create a new annotation appender for a method.
+         *
+         * @param annotations       The annotations to append to the target method.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForAnnotation(List<? extends AnnotationDescription> annotations, ElementMatcher<? super MethodDescription> defaultProperties) {
             this.annotations = annotations;
+            this.defaultProperties = defaultProperties;
+            target = Target.OnMethod.INSTANCE;
+        }
+
+        /**
+         * Create a new annotation appender for a method parameter.
+         *
+         * @param parameterIndex    The index of the target parameter.
+         * @param annotations       The annotations to append to the target method parameter.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForAnnotation(int parameterIndex,
+                             List<? extends AnnotationDescription> annotations,
+                             ElementMatcher<? super MethodDescription> defaultProperties) {
+            this.annotations = annotations;
+            this.defaultProperties = defaultProperties;
             target = new Target.OnMethodParameter(parameterIndex);
         }
 
@@ -193,7 +226,7 @@ public interface MethodAttributeAppender {
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             AnnotationAppender appender = new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
             for (AnnotationDescription annotation : this.annotations) {
-                appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                appender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
@@ -206,18 +239,20 @@ public interface MethodAttributeAppender {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && annotations.equals(((ForAnnotation) other).annotations)
+                    && defaultProperties.equals(((ForAnnotation) other).defaultProperties)
                     && target.equals(((ForAnnotation) other).target);
         }
 
         @Override
         public int hashCode() {
-            return 31 * annotations.hashCode() + target.hashCode();
+            return 31 * (31 * annotations.hashCode() + defaultProperties.hashCode()) + target.hashCode();
         }
 
         @Override
         public String toString() {
             return "MethodAttributeAppender.ForAnnotation{" +
                     "annotations=" + annotations +
+                    ", defaultProperties=" + defaultProperties +
                     ", target=" + target +
                     '}';
         }
@@ -311,29 +346,92 @@ public interface MethodAttributeAppender {
      * the target method and the given method must have compatible signatures, i.e. an identical number of method
      * parameters. Otherwise, an exception is thrown when this attribute appender is applied on a method.
      */
-    class ForLoadedMethod implements MethodAttributeAppender, Factory {
+    class ForMethod implements MethodAttributeAppender, Factory {
 
         /**
          * The method of which the annotations are to be copied.
          */
-        private final Method method;
+        private final MethodDescription methodDescription;
 
         /**
-         * Creates a new attribute appender for a loaded method.
-         *
-         * @param method The method which is read for annotations to write to an instrumented method.
+         * A matcher to identify default properties.
          */
-        public ForLoadedMethod(Method method) {
-            this.method = method;
+        private final ElementMatcher<? super MethodDescription> defaultProperties;
+
+        /**
+         * Creates a method attribute appender that copies the annotations of the given constructor.
+         *
+         * @param constructor The constructor to copy the attributes from.
+         */
+        public ForMethod(Constructor<?> constructor) {
+            this(new MethodDescription.ForLoadedConstructor(constructor));
+        }
+
+        /**
+         * Creates a method attribute appender that copies the annotations of the given method.
+         *
+         * @param method The method to copy the attributes from.
+         */
+        public ForMethod(Method method) {
+            this(new MethodDescription.ForLoadedMethod(method));
+        }
+
+        /**
+         * Creates a method attribute appender that copies the annotations of the given method description.
+         *
+         * @param methodDescription The method description to copy the attributes from.
+         */
+        public ForMethod(MethodDescription methodDescription) {
+            this(methodDescription, none());
+        }
+
+        /**
+         * Creates a method attribute appender that copies the annotations of the given constructor.
+         *
+         * @param constructor       The constructor to copy the attributes from.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForMethod(Constructor<?> constructor, ElementMatcher<? super MethodDescription> defaultProperties) {
+            this(new MethodDescription.ForLoadedConstructor(constructor), defaultProperties);
+        }
+
+        /**
+         * Creates a method attribute appender that copies the annotations of the given method.
+         *
+         * @param method            The method to copy the attributes from.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForMethod(Method method, ElementMatcher<? super MethodDescription> defaultProperties) {
+            this(new MethodDescription.ForLoadedMethod(method), defaultProperties);
+        }
+
+        /**
+         * Creates a method attribute appender that copies the annotations of the given method description.
+         *
+         * @param methodDescription The method description to copy the attributes from.
+         * @param defaultProperties A matcher to identify default properties.
+         */
+        public ForMethod(MethodDescription methodDescription, ElementMatcher<? super MethodDescription> defaultProperties) {
+            this.methodDescription = methodDescription;
+            this.defaultProperties = defaultProperties;
         }
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            if (method.getParameterTypes().length > methodDescription.getParameters().size()) {
-                throw new IllegalArgumentException("The constructor " + method + " has more parameters than the instrumented method " + methodDescription);
+            if (this.methodDescription.getParameters().size() > methodDescription.getParameters().size()) {
+                throw new IllegalArgumentException(this.methodDescription + " has more parameters than the instrumented method " + methodDescription);
             }
-            // Instead of implementing the appender we piggy-back on an existing implementation.
-            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForLoadedMethod(method));
+            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
+            for (AnnotationDescription annotation : this.methodDescription.getDeclaredAnnotations()) {
+                methodAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
+            }
+            int index = 0;
+            for (ParameterDescription parameterDescription : this.methodDescription.getParameters()) {
+                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++));
+                for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
+                    parameterAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
+                }
+            }
         }
 
         @Override
@@ -344,69 +442,21 @@ public interface MethodAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && method.equals(((ForLoadedMethod) other).method);
+                    && methodDescription.equals(((ForMethod) other).methodDescription)
+                    && defaultProperties.equals(((ForMethod) other).defaultProperties);
         }
 
         @Override
         public int hashCode() {
-            return method.hashCode();
+            return 31 * methodDescription.hashCode() + defaultProperties.hashCode();
         }
 
         @Override
         public String toString() {
-            return "MethodAttributeAppender.ForLoadedMethod{method=" + method + '}';
-        }
-    }
-
-    /**
-     * Implementation of a method attribute appender that writes all annotations of a given loaded constructor to the
-     * method that is being created. This includes method and parameter annotations. In order to being able to do so,
-     * the target method and the given constructor must have compatible signatures, i.e. an identical number of method
-     * parameters. Otherwise, an exception is thrown when this attribute appender is applied on a method.
-     */
-    class ForLoadedConstructor implements MethodAttributeAppender, Factory {
-
-        /**
-         * The constructor for which the annotations are to be copied.
-         */
-        private final Constructor<?> constructor;
-
-        /**
-         * Creates a new attribute appender for a loaded constructor.
-         *
-         * @param constructor The constructor which is read for annotations to write to an instrumented method.
-         */
-        public ForLoadedConstructor(Constructor<?> constructor) {
-            this.constructor = constructor;
-        }
-
-        @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            if (constructor.getParameterTypes().length > methodDescription.getParameters().size()) {
-                throw new IllegalArgumentException("The constructor " + constructor + " has more parameters than the instrumented method " + methodDescription);
-            }
-            ForInstrumentedMethod.INSTANCE.apply(methodVisitor, new MethodDescription.ForLoadedConstructor(constructor));
-        }
-
-        @Override
-        public MethodAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && constructor.equals(((ForLoadedConstructor) other).constructor);
-        }
-
-        @Override
-        public int hashCode() {
-            return constructor.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodAttributeAppender.ForLoadedConstructor{constructor=" + constructor + '}';
+            return "MethodAttributeAppender.ForMethod{" +
+                    "methodDescription=" + methodDescription +
+                    ", defaultProperties=" + defaultProperties +
+                    '}';
         }
     }
 
