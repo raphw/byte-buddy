@@ -1,5 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.matcher.ElementMatcher;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -220,6 +222,22 @@ public class MultipleParentClassLoader extends ClassLoader {
          */
         public Builder append(List<? extends ClassLoader> classLoaders) {
             return new Builder(joinUnique(this.classLoaders, classLoaders));
+        }
+
+        /**
+         * Removes all class loaders that match the given filter.
+         *
+         * @param matcher The matcher to be used for filtering.
+         * @return A builder that does not longer consider any appended class loaders that matched the provided matcher.
+         */
+        public Builder filter(ElementMatcher<? super ClassLoader> matcher) {
+            List<ClassLoader> classLoaders = new ArrayList<ClassLoader>(this.classLoaders.size());
+            for (ClassLoader classLoader : this.classLoaders) {
+                if (!matcher.matches(classLoader)) {
+                    classLoaders.add(classLoader);
+                }
+            }
+            return new Builder(classLoaders);
         }
 
         /**

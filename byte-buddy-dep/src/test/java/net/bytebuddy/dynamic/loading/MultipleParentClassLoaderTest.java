@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -12,6 +13,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
+import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
@@ -55,7 +57,16 @@ public class MultipleParentClassLoaderTest {
 
     @Test
     public void testSingleParentReturnsOriginal() throws Exception {
-        assertThat(new MultipleParentClassLoader.Builder().append(getClass().getClassLoader(), getClass().getClassLoader())
+        assertThat(new MultipleParentClassLoader.Builder()
+                .append(getClass().getClassLoader(), getClass().getClassLoader())
+                .build(), is(getClass().getClassLoader()));
+    }
+
+    @Test
+    public void testClassLoaderFilter() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder()
+                .append(getClass().getClassLoader(), null)
+                .filter(isBootstrapClassLoader())
                 .build(), is(getClass().getClassLoader()));
     }
 

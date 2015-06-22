@@ -2,14 +2,15 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.utility.StreamDrainer;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
@@ -220,6 +221,119 @@ public interface ClassFileLocator {
         public String toString() {
             return "ClassFileLocator.ForClassLoader{" +
                     "classLoader=" + classLoader +
+                    '}';
+        }
+    }
+
+    /**
+     * A class file locator that locates classes within a Java <i>jar</i> file.
+     */
+    class ForJarFile implements ClassFileLocator, Closeable {
+
+        /**
+         * The jar file to read from.
+         */
+        private final JarFile jarFile;
+
+        /**
+         * Creates a new class file locator for the given jar file.
+         *
+         * @param jarFile The jar file to read from.
+         */
+        public ForJarFile(JarFile jarFile) {
+            this.jarFile = jarFile;
+        }
+
+        @Override
+        public Resolution locate(String typeName) throws IOException {
+            ZipEntry zipEntry = jarFile.getEntry(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
+            if (zipEntry == null) {
+                return Resolution.Illegal.INSTANCE;
+            } else {
+                InputStream inputStream = jarFile.getInputStream(zipEntry);
+                try {
+                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
+                } finally {
+                    inputStream.close();
+                }
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            jarFile.close();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || other instanceof ForJarFile
+                    && jarFile.equals(((ForJarFile) other).jarFile);
+        }
+
+        @Override
+        public int hashCode() {
+            return jarFile.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileLocator.ForJarFile{" +
+                    "jarFile=" + jarFile +
+                    '}';
+        }
+    }
+
+    /**
+     * A class file locator that finds files from a standardized Java folder structure with
+     * folders donating packages and class files being saved as {@code <classname>.class} files
+     * within their package folder.
+     */
+    class ForFolder implements ClassFileLocator {
+
+        /**
+         * The base folder of the package structure.
+         */
+        private final File folder;
+
+        /**
+         * Creates a new class file locator for a folder structure of class files.
+         *
+         * @param folder The base folder of the package structure.
+         */
+        public ForFolder(File folder) {
+            this.folder = folder;
+        }
+
+        @Override
+        public Resolution locate(String typeName) throws IOException {
+            File file = new File(folder, typeName.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
+            if (file.exists()) {
+                InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+                try {
+                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
+                } finally {
+                    inputStream.close();
+                }
+            } else {
+                return Resolution.Illegal.INSTANCE;
+            }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || other instanceof ForFolder
+                    && folder.equals(((ForFolder) other).folder);
+        }
+
+        @Override
+        public int hashCode() {
+            return folder.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileLocator.ForFolder{" +
+                    "folder=" + folder +
                     '}';
         }
     }
