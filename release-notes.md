@@ -154,6 +154,8 @@ Corrected incorrect deployment of version 0.6.7 which does not use a dependency 
 - Corrected the resolution of a type's visibility to another type to determine if a method can be legally overridden.
 - Previous version 0.6.9 contained another bug when attempting to fix this problem.
 
-### Current version
+### 22. June 2015: version 0.6.11
 
-Currently, there are no changes
+- Added additional `ClassFileLocator`s for locating jar files in folders and jar files.
+- Added explicit check for invalid access of instance fields from static methods in field accessing interceptors.
+- Added the `@StubValue` and `@FieldValue` annotations.
