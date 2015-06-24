@@ -156,6 +156,10 @@ public final class ElementMatchers {
         return new EqualityMatcher<T>(nonNull(annotationDescription));
     }
 
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> represents(MethodDescription.Token methodToken) {
+        return new MethodTokenMatcher<T>(is(methodToken));
+    }
+
     /**
      * Inverts another matcher.
      *

@@ -493,7 +493,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public GenericTypeDescription getType() {
-            return parameterType;
+            return parameterType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
@@ -600,7 +600,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         @Override
         public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             return new Token(getType().accept(visitor),
-                    annotationDescriptions, // Field access to avoid nesting of lists.
+                    getAnnotations(),
                     getName(),
                     getModifiers());
         }

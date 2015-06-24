@@ -92,6 +92,20 @@ public interface FieldRegistry {
          * @return The name of the field to be matched by this field matcher.
          */
         String getFieldName();
+
+        class Simple implements LatentFieldMatcher {
+
+            private final String fieldName;
+
+            public Simple(String fieldName) {
+                this.fieldName = fieldName;
+            }
+
+            @Override
+            public String getFieldName() {
+                return fieldName;
+            }
+        }
     }
 
     /**

@@ -62,8 +62,8 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         @Override
         public FieldDescription.Token asToken() {
             return new FieldDescription.Token(getName(),
-                    getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(getDeclaringType())),
                     getModifiers(),
+                    getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(getDeclaringType())),
                     getDeclaredAnnotations());
         }
 
@@ -195,14 +195,14 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
                       List<? extends AnnotationDescription> declaredAnnotations) {
             this.declaringType = declaringType;
             this.fieldName = fieldName;
-            this.fieldType = fieldType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+            this.fieldType = fieldType;
             this.modifiers = modifiers;
             this.declaredAnnotations = declaredAnnotations;
         }
 
         @Override
         public GenericTypeDescription getType() {
-            return fieldType;
+            return fieldType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
@@ -230,19 +230,19 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
 
         private final String name;
 
-        private final GenericTypeDescription type;
-
         private final int modifiers;
+
+        private final GenericTypeDescription type;
 
         private final List<? extends AnnotationDescription> annotations;
 
         public Token(String name,
-                     GenericTypeDescription type,
                      int modifiers,
+                     GenericTypeDescription type,
                      List<? extends AnnotationDescription> annotations) {
             this.name = name;
-            this.type = type;
             this.modifiers = modifiers;
+            this.type = type;
             this.annotations = annotations;
         }
 
@@ -265,9 +265,9 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         @Override
         public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             return new Token(getName(),
-                    getType().accept(visitor),
                     getModifiers(),
-                    annotations); // Field access to avoid nesting of lists.
+                    getType().accept(visitor),
+                    getAnnotations());
         }
 
         @Override
@@ -287,8 +287,8 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         public String toString() {
             return "FieldDescription.Token{" +
                     "name='" + name + '\'' +
-                    ", type=" + type +
                     ", modifiers=" + modifiers +
+                    ", type=" + type +
                     ", annotations=" + annotations +
                     '}';
         }

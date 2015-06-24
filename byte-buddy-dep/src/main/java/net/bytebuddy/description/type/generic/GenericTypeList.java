@@ -1,5 +1,8 @@
 package net.bytebuddy.description.type.generic;
 
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.FilterableList;
@@ -48,6 +51,15 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
             }
             return stackSize;
         }
+
+        @Override
+        public TypeList asRawTypes() {
+            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(size());
+            for (GenericTypeDescription genericTypeDescription : this) {
+                typeDescriptions.add(genericTypeDescription.asRawType());
+            }
+            return new TypeList.Explicit(typeDescriptions);
+        }
     }
 
     class Explicit extends AbstractBase {
@@ -66,15 +78,6 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         @Override
         public int size() {
             return genericTypes.size();
-        }
-
-        @Override
-        public TypeList asRawTypes() {
-            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(genericTypes.size());
-            for (GenericTypeDescription genericTypeDescription : genericTypes) {
-                typeDescriptions.add(genericTypeDescription.asRawType());
-            }
-            return new TypeList.Explicit(typeDescriptions);
         }
     }
 
@@ -107,6 +110,122 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 typeDescriptions.add(genericTypeDescription.asRawType());
             }
             return new TypeList.Explicit(typeDescriptions);
+        }
+    }
+
+    class ForDetachedTypes extends AbstractBase {
+
+        public static GenericTypeList attach(TypeDescription typeDescription, List<? extends GenericTypeDescription> detachedTypes) {
+            return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(typeDescription), detachedTypes);
+        }
+
+        public static GenericTypeList attach(FieldDescription fieldDescription, List<? extends GenericTypeDescription> detachedTypes) {
+            return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(fieldDescription), detachedTypes);
+        }
+
+        public static GenericTypeList attach(MethodDescription methodDescription, List<? extends GenericTypeDescription> detachedTypes) {
+            return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(methodDescription), detachedTypes);
+        }
+
+        public static GenericTypeList attach(ParameterDescription parameterDescription, List<? extends GenericTypeDescription> detachedTypes) {
+            return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(parameterDescription), detachedTypes);
+        }
+
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        private final List<? extends GenericTypeDescription> detachedTypes;
+
+        protected ForDetachedTypes(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor,
+                                   List<? extends GenericTypeDescription> detachedTypes) {
+            this.visitor = visitor;
+            this.detachedTypes = detachedTypes;
+        }
+
+        @Override
+        public GenericTypeDescription get(int index) {
+            return detachedTypes.get(index).accept(visitor);
+        }
+
+        @Override
+        public int size() {
+            return detachedTypes.size();
+        }
+
+        public static class OfTypeVariable extends GenericTypeList.AbstractBase {
+
+            public static GenericTypeList attach(TypeDescription typeDescription, List<? extends GenericTypeDescription> detachedTypes) {
+                return new OfTypeVariable(typeDescription, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(typeDescription), detachedTypes);
+            }
+
+            public static GenericTypeList attach(MethodDescription methodDescription, List<? extends GenericTypeDescription> detachedTypes) {
+                return new OfTypeVariable(methodDescription, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(methodDescription), detachedTypes);
+            }
+
+            private final TypeVariableSource typeVariableSource;
+
+            private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+            private final List<? extends GenericTypeDescription> detachedTypes;
+
+            protected OfTypeVariable(TypeVariableSource typeVariableSource,
+                                     GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor,
+                                     List<? extends GenericTypeDescription> detachedTypes) {
+                this.typeVariableSource = typeVariableSource;
+                this.visitor = visitor;
+                this.detachedTypes = detachedTypes;
+            }
+
+            @Override
+            public GenericTypeDescription get(int index) {
+                return LazyTypeVariable.of(detachedTypes.get(index), typeVariableSource, visitor);
+            }
+
+            @Override
+            public int size() {
+                return detachedTypes.size();
+            }
+
+            protected static class LazyTypeVariable extends GenericTypeDescription.ForTypeVariable {
+
+                public static GenericTypeDescription of(GenericTypeDescription detachedVariable,
+                                                        TypeVariableSource typeVariableSource,
+                                                        GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+                    return new LazyTypeVariable(detachedVariable.getSymbol(), typeVariableSource, visitor, detachedVariable.getUpperBounds());
+                }
+
+                private final String symbol;
+
+                private final TypeVariableSource typeVariableSource;
+
+                private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+                private final List<? extends GenericTypeDescription> detachedBounds;
+
+                protected LazyTypeVariable(String symbol,
+                                           TypeVariableSource typeVariableSource,
+                                           GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor,
+                                           List<? extends GenericTypeDescription> detachedBounds) {
+                    this.symbol = symbol;
+                    this.typeVariableSource = typeVariableSource;
+                    this.visitor = visitor;
+                    this.detachedBounds = detachedBounds;
+                }
+
+                @Override
+                public GenericTypeList getUpperBounds() {
+                    return new ForDetachedTypes(visitor, detachedBounds);
+                }
+
+                @Override
+                public TypeVariableSource getVariableSource() {
+                    return typeVariableSource;
+                }
+
+                @Override
+                public String getSymbol() {
+                    return symbol;
+                }
+            }
         }
     }
 

@@ -685,7 +685,8 @@ public interface Implementation {
                             specialMethodInvocation.getMethodDescription().getReturnType().asRawType(),
                             specialMethodInvocation.getMethodDescription().getParameters().asTokens().accept(GenericTypeDescription.Visitor.ForErasure.INSTANCE),
                             specialMethodInvocation.getMethodDescription().getExceptionTypes().asRawTypes(),
-                            Collections.<AnnotationDescription>emptyList());
+                            Collections.<AnnotationDescription>emptyList(),
+                            MethodDescription.NO_DEFAULT_VALUE);
                     registerAccessor(specialMethodInvocation, accessorMethod);
                 }
                 return accessorMethod;
@@ -723,7 +724,8 @@ public interface Implementation {
                             fieldDescription.getType().asRawType(),
                             Collections.<ParameterDescription.Token>emptyList(),
                             Collections.<GenericTypeDescription>emptyList(),
-                            Collections.<AnnotationDescription>emptyList());
+                            Collections.<AnnotationDescription>emptyList(),
+                            MethodDescription.NO_DEFAULT_VALUE);
                     registerGetter(fieldDescription, accessorMethod);
                 }
                 return accessorMethod;
@@ -751,7 +753,8 @@ public interface Implementation {
                             TypeDescription.VOID,
                             Collections.singletonList(new ParameterDescription.Token(fieldDescription.getType().asRawType())),
                             Collections.<GenericTypeDescription>emptyList(),
-                            Collections.<AnnotationDescription>emptyList());
+                            Collections.<AnnotationDescription>emptyList(),
+                            MethodDescription.NO_DEFAULT_VALUE);
                     registerSetter(fieldDescription, accessorMethod);
                 }
                 return accessorMethod;

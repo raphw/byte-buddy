@@ -7,6 +7,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -46,13 +47,14 @@ public class GenericSignatureResolutionTest {
     }
 
     @Test
+    @Ignore("Requires refactoring of instrumented type!")
     public void testGenericMethod() throws Exception {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
-                .subclass(GenericMethod.class)
+                .redefine(GenericMethod.class)
                 .method(named("foo"))
                 .intercept(FixedValue.nullValue())
                 .make();
-        Class<?> type = unloaded.load(GenericMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         MethodDescription createdMethod = new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(FOO, Exception.class));
         MethodDescription originalMethod = new MethodDescription.ForLoadedMethod(GenericMethod.class.getDeclaredMethod(FOO, Exception.class));
         assertThat(createdMethod.getTypeVariables(), is(originalMethod.getTypeVariables()));
@@ -158,13 +160,13 @@ public class GenericSignatureResolutionTest {
     }
 
     @Test
-    public void testTypeVariableWildcardLowerInerfaceBound() throws Exception {
+    public void testTypeVariableWildcardLowerInterfaceBound() throws Exception {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
-                .redefine(TypeVariableWildcardLowerClassBound.class)
+                .redefine(TypeVariableWildcardLowerInterfaceBound.class)
                 .make();
         Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerInerfaceBound.class);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperType(), is(originalType.getSuperType()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -218,7 +220,7 @@ public class GenericSignatureResolutionTest {
         /* empty */
     }
 
-    public static class TypeVariableWildcardLowerInerfaceBound<T extends ArrayList<? super Callable<T>>> {
+    public static class TypeVariableWildcardLowerInterfaceBound<T extends ArrayList<? super Callable<T>>> {
         /* empty */
     }
 }

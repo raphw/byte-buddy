@@ -48,6 +48,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
+    Object NO_DEFAULT_VALUE = null;
+
     GenericTypeDescription getReturnType();
 
     /**
@@ -506,7 +508,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     getReturnType().accept(visitor),
                     getParameters().asTokens(),
                     getExceptionTypes().accept(visitor),
-                    getDeclaredAnnotations());
+                    getDeclaredAnnotations(),
+                    getDefaultValue());
         }
 
         @Override
@@ -841,21 +844,23 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          */
         private final int modifiers;
 
-        private final List<GenericTypeDescription> typeVariables;
+        private final List<? extends GenericTypeDescription> typeVariables;
 
         /**
          * The return type of this method.
          */
         private final GenericTypeDescription returnType;
 
-        private final List<ParameterDescription.Token> parameterTokens;
+        private final List<? extends ParameterDescription.Token> parameterTokens;
 
         /**
          * This method's exception types.
          */
-        private final List<GenericTypeDescription> exceptionTypes;
+        private final List<? extends GenericTypeDescription> exceptionTypes;
 
-        private final List<AnnotationDescription> declaredAnnotations;
+        private final List<? extends AnnotationDescription> declaredAnnotations;
+
+        private final Object defaultValue;
 
         public Latent(TypeDescription declaringType, Token token) {
             this(declaringType,
@@ -865,7 +870,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     token.getReturnType(),
                     token.getParameterTokens(),
                     token.getExceptionTypes(),
-                    token.getAnnotations());
+                    token.getAnnotations(),
+                    token.getDefaultValue());
         }
 
         public Latent(TypeDescription declaringType,
@@ -875,25 +881,17 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                       GenericTypeDescription returnType,
                       List<? extends ParameterDescription.Token> parameterTokens,
                       List<? extends GenericTypeDescription> exceptionTypes,
-                      List<? extends AnnotationDescription> declaredAnnotations) {
+                      List<? extends AnnotationDescription> declaredAnnotations,
+                      Object defaultValue) {
             this.declaringType = declaringType;
             this.internalName = internalName;
             this.modifiers = modifiers;
-            GenericTypeDescription.Visitor.Substitutor.ForAttachment visitor = GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this);
-            this.typeVariables = new ArrayList<GenericTypeDescription>(typeVariables.size());
-            for (GenericTypeDescription typeVariable : typeVariables) {
-                this.typeVariables.add(typeVariable.accept(visitor.new OfFormalVariable(this.typeVariables)));
-            }
-            this.returnType = returnType.accept(visitor);
-            this.parameterTokens = new ArrayList<ParameterDescription.Token>();
-            for (ParameterDescription.Token parameterToken : parameterTokens) {
-                this.parameterTokens.add(parameterToken.accept(visitor));
-            }
-            this.exceptionTypes = new ArrayList<GenericTypeDescription>(exceptionTypes.size());
-            for (GenericTypeDescription exceptionType : exceptionTypes) {
-                this.exceptionTypes.add(exceptionType.accept(visitor));
-            }
-            this.declaredAnnotations = new ArrayList<AnnotationDescription>(declaredAnnotations);
+            this.typeVariables = typeVariables;
+            this.returnType = returnType;
+            this.parameterTokens = parameterTokens;
+            this.exceptionTypes = exceptionTypes;
+            this.declaredAnnotations = declaredAnnotations;
+            this.defaultValue = defaultValue;
         }
 
         /**
@@ -910,12 +908,13 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     TypeDescription.VOID,
                     Collections.<ParameterDescription.Token>emptyList(),
                     Collections.<GenericTypeDescription>emptyList(),
-                    Collections.<AnnotationDescription>emptyList());
+                    Collections.<AnnotationDescription>emptyList(),
+                    MethodDescription.NO_DEFAULT_VALUE);
         }
 
         @Override
         public GenericTypeDescription getReturnType() {
-            return returnType;
+            return returnType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
@@ -925,7 +924,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public GenericTypeList getExceptionTypes() {
-            return new GenericTypeList.Explicit(exceptionTypes);
+            return GenericTypeList.ForDetachedTypes.attach(this, exceptionTypes);
         }
 
         @Override
@@ -950,12 +949,12 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public Object getDefaultValue() {
-            return null;
+            return defaultValue;
         }
 
         @Override
         public GenericTypeList getTypeVariables() {
-            return new GenericTypeList.Explicit(typeVariables);
+            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
         }
     }
 
@@ -969,19 +968,22 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         private final GenericTypeDescription returnType;
 
-        private final List<ParameterDescription.Token> parameterTokens;
+        private final List<? extends ParameterDescription.Token> parameterTokens;
 
         private final List<? extends GenericTypeDescription> exceptionTypes;
 
         private final List<? extends AnnotationDescription> annotations;
 
+        private final Object defaultValue;
+
         public Token(String internalName,
                      int modifiers,
                      List<GenericTypeDescription> typeVariables,
                      GenericTypeDescription returnType,
-                     List<ParameterDescription.Token> parameterTokens,
+                     List<? extends ParameterDescription.Token> parameterTokens,
                      List<? extends GenericTypeDescription> exceptionTypes,
-                     List<? extends AnnotationDescription> annotations) {
+                     List<? extends AnnotationDescription> annotations,
+                     Object defaultValue) {
             this.internalName = internalName;
             this.modifiers = modifiers;
             this.typeVariables = typeVariables;
@@ -989,6 +991,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             this.parameterTokens = parameterTokens;
             this.exceptionTypes = exceptionTypes;
             this.annotations = annotations;
+            this.defaultValue = defaultValue;
         }
 
         public String getInternalName() {
@@ -1019,6 +1022,10 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             return new AnnotationList.Explicit(annotations);
         }
 
+        public Object getDefaultValue() {
+            return defaultValue;
+        }
+
         @Override
         public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             return new Token(getInternalName(),
@@ -1027,7 +1034,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     getReturnType().accept(visitor),
                     getParameterTokens().accept(visitor),
                     getExceptionTypes().accept(visitor),
-                    annotations); // Field access to avoid nesting of lists.
+                    getAnnotations(),
+                    getDefaultValue());
         }
 
         @Override

@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.TypeProxy;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -15,9 +14,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 import java.lang.annotation.*;
 import java.util.Arrays;
-import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.returns;
 
@@ -102,12 +99,10 @@ public @interface Super {
             protected StackManipulation proxyFor(TypeDescription parameterType,
                                                  Implementation.Target implementationTarget,
                                                  AnnotationDescription.Loadable<Super> annotation) {
-                TypeDescription[] constructorParameters = annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class);
-                List<TypeDescription> typeDescriptions = TargetType.resolve(Arrays.asList(constructorParameters),
-                        implementationTarget.getTypeDescription()).asRawTypes();
+                // TODO: Reconsider target type!
                 return new TypeProxy.ForSuperMethodByConstructor(parameterType,
                         implementationTarget,
-                        typeDescriptions,
+                        Arrays.asList(annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class)),
                         annotation.getValue(IGNORE_FINALIZER, Boolean.class),
                         annotation.getValue(SERIALIZABLE_PROXY, Boolean.class));
             }

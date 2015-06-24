@@ -428,7 +428,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPublic() || isProtected() || isSamePackage(typeDescription);
+            return isPrimitive()
+                    || isPublic()
+                    || isProtected()
+                    || isSamePackage(typeDescription)
+                    || (isArray() && getComponentType().isVisibleTo(typeDescription));
         }
 
         @Override
@@ -463,19 +467,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             } else {
                 return getName();
             }
-        }
-
-        /**
-         * Returns the name of this type's package.
-         *
-         * @return The name of this type's package or {@code null} if this type is defined in the default package.
-         */
-        protected String getPackageName() {
-            String name = getName();
-            int packageIndex = name.lastIndexOf('.');
-            return packageIndex == -1
-                    ? null
-                    : name.substring(0, packageIndex);
         }
 
         @Override

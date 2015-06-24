@@ -291,7 +291,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-            return (ElementMatcher<? super MethodDescription>) isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType));
+            return isOverridable().and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType));
         }
 
         @Override

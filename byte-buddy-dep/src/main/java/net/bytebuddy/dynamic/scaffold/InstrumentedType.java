@@ -7,22 +7,20 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
-import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static net.bytebuddy.utility.ByteBuddyCommons.joinUnique;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
@@ -33,12 +31,12 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param internalName The internal name of the new field.
-     * @param fieldType    A description of the type of the new field.
-     * @param modifiers    The modifier of the new field.
+     * @param name      The internal name of the new field.
+     * @param fieldType A description of the type of the new field.
+     * @param modifiers The modifier of the new field.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
-    InstrumentedType withField(String internalName,
+    InstrumentedType withField(String name,
                                GenericTypeDescription fieldType,
                                int modifiers);
 
@@ -215,116 +213,169 @@ public interface InstrumentedType extends TypeDescription {
         }
     }
 
-    /**
-     * An abstract base implementation of an instrumented type.
-     */
-    abstract class AbstractBase extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
+    class Default extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
 
-        /**
-         * The loaded type initializer for this instrumented type.
-         */
-        protected final LoadedTypeInitializer loadedTypeInitializer;
+        private final String name;
 
-        /**
-         * The type initializer for this instrumented type.
-         */
-        protected final TypeInitializer typeInitializer;
+        private final int modifiers;
 
-        protected final List<GenericTypeDescription> typeVariables;
+        private final GenericTypeDescription superType;
 
-        /**
-         * A list of field descriptions registered for this instrumented type.
-         */
-        protected final List<FieldDescription> fieldDescriptions;
+        private final List<? extends GenericTypeDescription> interfaceTypes;
 
-        /**
-         * A list of method descriptions registered for this instrumented type.
-         */
-        protected final List<MethodDescription> methodDescriptions;
+        private final List<? extends GenericTypeDescription> typeVariables;
 
-        /**
-         * Creates a new instrumented type with a no-op loaded type initializer and without registered fields or
-         * methods.
-         */
-        protected AbstractBase() {
-            loadedTypeInitializer = LoadedTypeInitializer.NoOp.INSTANCE;
-            typeInitializer = TypeInitializer.None.INSTANCE;
-            typeVariables = Collections.emptyList();
-            fieldDescriptions = Collections.emptyList();
-            methodDescriptions = Collections.emptyList();
+        private final List<? extends FieldDescription.Token> fieldTokens;
+
+        private final List<? extends MethodDescription.Token> methodTokens;
+
+        private final List<? extends AnnotationDescription> annotationDescriptions;
+
+        private final TypeInitializer typeInitializer;
+
+        private final LoadedTypeInitializer loadedTypeInitializer;
+
+        private final TypeDescription declaringType;
+
+        private final MethodDescription enclosingMethod;
+
+        private final TypeDescription enclosingType;
+
+        private final boolean memberClass;
+
+        private final boolean anonymousClass;
+
+        private final boolean localClass;
+
+        public Default(String name,
+                       int modifiers,
+                       List<? extends GenericTypeDescription> typeVariables,
+                       GenericTypeDescription superType,
+                       List<? extends GenericTypeDescription> interfaceTypes,
+                       List<? extends FieldDescription.Token> fieldTokens,
+                       List<? extends MethodDescription.Token> methodTokens,
+                       List<? extends AnnotationDescription> annotationDescriptions,
+                       TypeInitializer typeInitializer,
+                       LoadedTypeInitializer loadedTypeInitializer) {
+            this(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    null,
+                    null,
+                    null,
+                    false,
+                    false,
+                    false);
         }
 
-        protected AbstractBase(LoadedTypeInitializer loadedTypeInitializer,
-                               TypeInitializer typeInitializer,
-                               ElementMatcher<? super TypeDescription> matcher,
-                               List<? extends GenericTypeDescription> typeVariables,
-                               List<? extends FieldDescription> fieldDescriptions,
-                               List<? extends MethodDescription> methodDescriptions) {
-            GenericTypeDescription.Visitor<GenericTypeDescription> substitutor = GenericTypeDescription.Visitor.Substitutor.ForRawType.replace(this, matcher);
-            this.loadedTypeInitializer = loadedTypeInitializer;
+        public Default(String name,
+                       int modifiers,
+                       List<? extends GenericTypeDescription> typeVariables,
+                       GenericTypeDescription superType,
+                       List<? extends GenericTypeDescription> interfaceTypes,
+                       List<? extends FieldDescription.Token> fieldTokens,
+                       List<? extends MethodDescription.Token> methodTokens,
+                       List<? extends AnnotationDescription> annotationDescriptions,
+                       TypeInitializer typeInitializer,
+                       LoadedTypeInitializer loadedTypeInitializer,
+                       TypeDescription declaringType,
+                       MethodDescription enclosingMethod,
+                       TypeDescription enclosingType,
+                       boolean memberClass,
+                       boolean anonymousClass,
+                       boolean localClass) {
+            this.name = name;
+            this.modifiers = modifiers;
+            this.typeVariables = typeVariables;
+            this.superType = superType;
+            this.interfaceTypes = interfaceTypes;
+            this.fieldTokens = fieldTokens;
+            this.methodTokens = methodTokens;
+            this.annotationDescriptions = annotationDescriptions;
             this.typeInitializer = typeInitializer;
-            this.typeVariables = new ArrayList<GenericTypeDescription>(typeVariables.size());
-            for (GenericTypeDescription typeVariable : typeVariables) {
-                this.typeVariables.add(new TypeVariableToken(substitutor, typeVariable));
-            }
-            this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
-            for (FieldDescription fieldDescription : fieldDescriptions) {
-                this.fieldDescriptions.add(new FieldToken(substitutor, fieldDescription));
-            }
-            this.methodDescriptions = new ArrayList<MethodDescription>(methodDescriptions.size());
-            for (MethodDescription methodDescription : methodDescriptions) {
-                this.methodDescriptions.add(new MethodToken(substitutor, methodDescription));
-            }
+            this.loadedTypeInitializer = loadedTypeInitializer;
+            this.declaringType = declaringType;
+            this.enclosingMethod = enclosingMethod;
+            this.enclosingType = enclosingType;
+            this.memberClass = memberClass;
+            this.anonymousClass = anonymousClass;
+            this.localClass = localClass;
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
-            return null;
+        public InstrumentedType withField(String name,
+                                          GenericTypeDescription fieldType,
+                                          int modifiers) {
+            return new Default(this.name,
+                    this.modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    joinUnique(fieldTokens, new FieldDescription.Token(name, fieldType, modifiers, Collections.<AnnotationDescription>emptyList())),
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
         }
 
         @Override
-        public TypeDescription getEnclosingType() {
-            return null;
+        public InstrumentedType withMethod(String internalName,
+                                           GenericTypeDescription returnType,
+                                           List<? extends GenericTypeDescription> parameterTypes,
+                                           List<? extends GenericTypeDescription> exceptionTypes,
+                                           int modifiers) {
+            return new Default(name,
+                    this.modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    joinUnique(methodTokens, new MethodDescription.Token(internalName,
+                            modifiers,
+                            Collections.<GenericTypeDescription>emptyList(),
+                            returnType,
+                            ParameterDescription.Token.asList(parameterTypes),
+                            exceptionTypes,
+                            Collections.<AnnotationDescription>emptyList(),
+                            MethodDescription.NO_DEFAULT_VALUE)),
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
-            return null;
+        public InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
         }
 
         @Override
-        public boolean isAnonymousClass() {
-            return false;
-        }
-
-        @Override
-        public String getCanonicalName() {
-            return getName();
-        }
-
-        @Override
-        public boolean isLocalClass() {
-            return false;
-        }
-
-        @Override
-        public boolean isMemberClass() {
-            return false;
-        }
-
-        @Override
-        public GenericTypeList getTypeVariables() {
-            return new GenericTypeList.Explicit(typeVariables);
-        }
-
-        @Override
-        public FieldList getDeclaredFields() {
-            return new FieldList.Explicit(fieldDescriptions);
-        }
-
-        @Override
-        public MethodList getDeclaredMethods() {
-            return new MethodList.Explicit(methodDescriptions);
+        public InstrumentedType withInitializer(ByteCodeAppender byteCodeAppender) {
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
         }
 
         @Override
@@ -338,315 +389,81 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
+        public MethodDescription getEnclosingMethod() {
+            return enclosingMethod;
+        }
+
+        @Override
+        public TypeDescription getEnclosingType() {
+            return enclosingType;
+        }
+
+        @Override
+        public boolean isAnonymousClass() {
+            return anonymousClass;
+        }
+
+        @Override
+        public boolean isLocalClass() {
+            return localClass;
+        }
+
+        @Override
+        public boolean isMemberClass() {
+            return memberClass;
+        }
+
+        @Override
         public PackageDescription getPackage() {
-            String packageName = getPackageName();
-            return packageName == null
+            int packageIndex = name.lastIndexOf('.');
+            return packageIndex == -1
                     ? null
-                    : new PackageDescription.Simple(packageName);
+                    : new PackageDescription.Simple(name.substring(0, packageIndex));
         }
 
-        protected class TypeVariableToken extends GenericTypeDescription.ForTypeVariable {
-
-            private final String symbol;
-
-            private final List<GenericTypeDescription> bounds;
-
-            private TypeVariableToken(GenericTypeDescription.Visitor<GenericTypeDescription> substitutor, GenericTypeDescription typeVariable) {
-                symbol = typeVariable.getSymbol();
-                bounds = typeVariable.getUpperBounds().accept(substitutor);
-            }
-
-            @Override
-            public GenericTypeList getUpperBounds() {
-                return new GenericTypeList.Explicit(bounds);
-            }
-
-            @Override
-            public TypeVariableSource getVariableSource() {
-                return AbstractBase.this;
-            }
-
-            @Override
-            public String getSymbol() {
-                return symbol;
-            }
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Explicit(annotationDescriptions);
         }
 
-        /**
-         * An implementation of a new field for the enclosing instrumented type.
-         */
-        protected class FieldToken extends FieldDescription.AbstractFieldDescription {
-
-            /**
-             * The name of the field token.
-             */
-            private final String name;
-
-            /**
-             * The type of the field.
-             */
-            private final GenericTypeDescription fieldType;
-
-            /**
-             * The modifiers of the field.
-             */
-            private final int modifiers;
-
-            /**
-             * The declared annotations of this field.
-             */
-            private final List<AnnotationDescription> declaredAnnotations;
-
-            private FieldToken(GenericTypeDescription.Visitor<GenericTypeDescription> substitutor, FieldDescription fieldDescription) {
-                name = fieldDescription.getName();
-                fieldType = fieldDescription.getType().accept(substitutor);
-                modifiers = fieldDescription.getModifiers();
-                declaredAnnotations = fieldDescription.getDeclaredAnnotations();
-            }
-
-            @Override
-            public GenericTypeDescription getType() {
-                return fieldType;
-            }
-
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.Explicit(declaredAnnotations);
-            }
-
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public TypeDescription getDeclaringType() {
-                return AbstractBase.this;
-            }
-
-            @Override
-            public int getModifiers() {
-                return modifiers;
-            }
+        @Override
+        public TypeDescription getDeclaringType() {
+            return declaringType;
         }
 
-        /**
-         * An implementation of a new method or constructor for the enclosing instrumented type.
-         */
-        protected class MethodToken extends MethodDescription.AbstractMethodDescription {
+        @Override
+        public GenericTypeDescription getSuperType() {
+            return superType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+        }
 
-            /**
-             * The internal name of the represented method.
-             */
-            private final String internalName;
+        @Override
+        public GenericTypeList getInterfaces() {
+            return GenericTypeList.ForDetachedTypes.attach(this, interfaceTypes);
+        }
 
-            private final List<GenericTypeDescription> typeVariables;
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.ForTokens(this, fieldTokens);
+        }
 
-            /**
-             * The return type of the represented method.
-             */
-            private final GenericTypeDescription returnType;
+        @Override
+        public MethodList getDeclaredMethods() {
+            return new MethodList.ForTokens(this, methodTokens);
+        }
 
-            /**
-             * The exception types of the represented method.
-             */
-            private final List<GenericTypeDescription> exceptionTypes;
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, interfaceTypes);
+        }
 
-            /**
-             * The modifiers of the represented method.
-             */
-            private final int modifiers;
+        @Override
+        public int getModifiers() {
+            return modifiers;
+        }
 
-            /**
-             * The declared annotations of this method.
-             */
-            private final List<AnnotationDescription> declaredAnnotations;
-
-            /**
-             * A list of descriptions of the method's parameters.
-             */
-            private final List<ParameterDescription> parameters;
-
-            /**
-             * The default value of this method or {@code null} if no such value exists.
-             */
-            private final Object defaultValue;
-
-            private MethodToken(GenericTypeDescription.Visitor<GenericTypeDescription> substitutor, MethodDescription methodDescription) {
-                internalName = methodDescription.getInternalName();
-                typeVariables = new ArrayList<GenericTypeDescription>(methodDescription.getTypeVariables().size());
-                for (GenericTypeDescription typeVariable : methodDescription.getTypeVariables()) {
-                    typeVariables.add(new TypeVariableToken(substitutor, typeVariable));
-                }
-                returnType = methodDescription.getReturnType().accept(substitutor);
-                exceptionTypes = methodDescription.getExceptionTypes().accept(substitutor);
-                modifiers = methodDescription.getModifiers();
-                declaredAnnotations = methodDescription.getDeclaredAnnotations();
-                parameters = new ArrayList<ParameterDescription>(methodDescription.getParameters().size());
-                for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                    parameters.add(new ParameterToken(substitutor, parameterDescription));
-                }
-                defaultValue = methodDescription.getDefaultValue();
-            }
-
-            @Override
-            public GenericTypeDescription getReturnType() {
-                return returnType;
-            }
-
-            @Override
-            public GenericTypeList getExceptionTypes() {
-                return new GenericTypeList.Explicit(exceptionTypes);
-            }
-
-            @Override
-            public ParameterList getParameters() {
-                return new ParameterList.Explicit(parameters);
-            }
-
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.Explicit(declaredAnnotations);
-            }
-
-            @Override
-            public String getInternalName() {
-                return internalName;
-            }
-
-            @Override
-            public TypeDescription getDeclaringType() {
-                return AbstractBase.this;
-            }
-
-            @Override
-            public int getModifiers() {
-                return modifiers;
-            }
-
-            @Override
-            public GenericTypeList getTypeVariables() {
-                return new GenericTypeList.Explicit(typeVariables);
-            }
-
-            @Override
-            public Object getDefaultValue() {
-                return defaultValue;
-            }
-
-            protected class TypeVariableToken extends GenericTypeDescription.ForTypeVariable {
-
-                private final String symbol;
-
-                private final List<GenericTypeDescription> bounds;
-
-                private TypeVariableToken(GenericTypeDescription.Visitor<GenericTypeDescription> substitutor, GenericTypeDescription typeVariable) {
-                    symbol = typeVariable.getSymbol();
-                    bounds = typeVariable.getUpperBounds().accept(substitutor);
-                }
-
-                @Override
-                public GenericTypeList getUpperBounds() {
-                    return new GenericTypeList.Explicit(bounds);
-                }
-
-                @Override
-                public TypeVariableSource getVariableSource() {
-                    return MethodToken.this;
-                }
-
-                @Override
-                public String getSymbol() {
-                    return symbol;
-                }
-            }
-
-            /**
-             * An implementation of a method parameter for a method of an instrumented type.
-             */
-            protected class ParameterToken extends ParameterDescription.AbstractParameterDescription {
-
-                /**
-                 * The type of the parameter.
-                 */
-                private final GenericTypeDescription parameterType;
-
-                /**
-                 * The index of the parameter.
-                 */
-                private final int index;
-
-                /**
-                 * The name of the parameter or {@code null} if no explicit name is known for this parameter.
-                 */
-                private final String name;
-
-                /**
-                 * The modifiers of this parameter or {@code null} if no such modifiers are known.
-                 */
-                private final Integer modifiers;
-
-                /**
-                 * The annotations of this parameter.
-                 */
-                private final List<AnnotationDescription> parameterAnnotations;
-
-                protected ParameterToken(GenericTypeDescription.Visitor<GenericTypeDescription> substitutor, ParameterDescription parameterDescription) {
-                    parameterType = parameterDescription.getType().accept(substitutor);
-                    index = parameterDescription.getIndex();
-                    name = parameterDescription.isNamed()
-                            ? parameterDescription.getName()
-                            : null;
-                    modifiers = parameterDescription.hasModifiers()
-                            ? getModifiers()
-                            : null;
-                    parameterAnnotations = parameterDescription.getDeclaredAnnotations();
-                }
-
-                @Override
-                public GenericTypeDescription getType() {
-                    return parameterType;
-                }
-
-                @Override
-                public MethodDescription getDeclaringMethod() {
-                    return MethodToken.this;
-                }
-
-                @Override
-                public int getIndex() {
-                    return index;
-                }
-
-                @Override
-                public boolean isNamed() {
-                    return name != null;
-                }
-
-                @Override
-                public boolean hasModifiers() {
-                    return modifiers != null;
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Explicit(parameterAnnotations);
-                }
-
-                @Override
-                public int getModifiers() {
-                    return hasModifiers()
-                            ? modifiers
-                            : super.getModifiers();
-                }
-
-                @Override
-                public String getName() {
-                    return isNamed()
-                            ? name
-                            : super.getName();
-                }
-            }
+        @Override
+        public String getName() {
+            return name;
         }
     }
 }

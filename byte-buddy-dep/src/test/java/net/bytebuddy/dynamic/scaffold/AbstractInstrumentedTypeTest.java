@@ -92,6 +92,7 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithFieldDouble() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
         when(fieldType.asRawType()).thenReturn(fieldType); // REFACTOR
+        when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType); // REFACTOR
         when(fieldType.getName()).thenReturn(FOO);
         makePlainInstrumentedType()
                 .withField(BAR, fieldType, Opcodes.ACC_PUBLIC)

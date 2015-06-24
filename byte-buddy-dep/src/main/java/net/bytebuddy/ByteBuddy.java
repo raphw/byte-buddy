@@ -2406,7 +2406,8 @@ public class ByteBuddy {
                         TypeDescription.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<GenericTypeDescription>emptyList(),
-                        Collections.<AnnotationDescription>emptyList());
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE);
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),
                         MethodInvocation.invoke(cloneArrayMethod),

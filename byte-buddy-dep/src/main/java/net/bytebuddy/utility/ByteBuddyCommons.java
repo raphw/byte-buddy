@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -326,6 +327,31 @@ public final class ByteBuddyCommons {
         return result;
     }
 
+    public static <T> List<T> joinUnique(List<? extends T> list, T element) {
+        List<T> result = new ArrayList<T>(list.size() + 1);
+        for (T listElement : list) {
+            if (listElement.equals(element)) {
+                throw new IllegalArgumentException("Conflicting elements: " + listElement + " and " + element);
+            }
+            result.add(listElement);
+        }
+        result.add(element);
+        return result;
+
+    }
+
+    public static <T extends Collection<? extends AnnotationDescription>> T uniqueAnnotation(T annotationDescriptions) {
+        Map<TypeDescription, AnnotationDescription> annotations = new HashMap<TypeDescription, AnnotationDescription>(annotationDescriptions.size());
+        for (AnnotationDescription annotationDescription : annotationDescriptions) {
+            AnnotationDescription conflictingAnnotation = annotations.put(annotationDescription.getAnnotationType(), annotationDescription);
+            if (conflictingAnnotation != null) {
+                throw new IllegalArgumentException("Duplicate annotations: " + annotationDescription + " and " + conflictingAnnotation);
+            }
+        }
+        return annotationDescriptions;
+
+    }
+
     /**
      * Validates that a collection of generic type descriptions does not contain duplicate raw types.
      *
@@ -462,7 +488,7 @@ public final class ByteBuddyCommons {
         return modifiers;
     }
 
-    public static int legalModifiers(int mask, int modifiers) {
+    public static int isLegalModifiers(int mask, int modifiers) {
         if ((modifiers & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
             throw new IllegalArgumentException("Illegal modifiers: " + modifiers);
         }

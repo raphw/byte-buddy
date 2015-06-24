@@ -1688,7 +1688,8 @@ public interface TypeWriter<T> {
                                 TypeDescription.VOID,
                                 Collections.<ParameterDescription.Token>emptyList(),
                                 Collections.<GenericTypeDescription>emptyList(),
-                                Collections.<AnnotationDescription>emptyList());
+                                Collections.<AnnotationDescription>emptyList(),
+                                MethodDescription.NO_DEFAULT_VALUE);
                     }
 
                     @Override
