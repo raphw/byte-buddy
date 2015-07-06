@@ -3,21 +3,24 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
 
 /**
  * A dynamic type builder that rebases a given type, i.e. it behaves like if a subclass was defined where any methods
@@ -64,7 +67,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                     NamingStrategy namingStrategy,
                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                     TypeDescription levelType,
-                                    List<? extends GenericTypeDescription> interfaceTypes,
+                                    List<TypeDescription> interfaceTypes,
                                     int modifiers,
                                     TypeAttributeAppender attributeAppender,
                                     ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -81,18 +84,19 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 levelType,
-                new ArrayList<GenericTypeDescription>(interfaceTypes),
+                joinUniqueRaw(interfaceTypes, levelType.getInterfaces().asRawTypes()),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
-                fieldRegistry, methodRegistry,
+                fieldRegistry,
+                methodRegistry,
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                Collections.<FieldToken>emptyList(),
-                Collections.<MethodToken>emptyList(),
+                levelType.getDeclaredFields().asTokenList(),
+                levelType.getDeclaredMethods().asTokenList(),
                 classFileLocator,
                 methodNameTransformer);
     }
@@ -128,7 +132,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        NamingStrategy namingStrategy,
                                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                        TypeDescription levelType,
-                                       List<GenericTypeDescription> interfaceTypes,
+                                       List<TypeDescription> interfaceTypes,
                                        int modifiers,
                                        TypeAttributeAppender attributeAppender,
                                        ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -139,8 +143,8 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        MethodLookupEngine.Factory methodLookupEngineFactory,
                                        FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                        MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                       List<FieldToken> fieldTokens,
-                                       List<MethodToken> methodTokens,
+                                       List<FieldDescription.Token> fieldTokens,
+                                       List<MethodDescription.Token> methodTokens,
                                        ClassFileLocator classFileLocator,
                                        MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         super(classFileVersion,
@@ -153,7 +157,8 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
-                fieldRegistry, methodRegistry,
+                fieldRegistry,
+                methodRegistry,
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
@@ -168,7 +173,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  TypeDescription levelType,
-                                                 List<GenericTypeDescription> interfaceTypes,
+                                                 List<TypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -179,8 +184,8 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                                  MethodLookupEngine.Factory methodLookupEngineFactory,
                                                  FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                                  MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                                 List<FieldToken> fieldTokens,
-                                                 List<MethodToken> methodTokens) {
+                                                 List<FieldDescription.Token> fieldTokens,
+                                                 List<MethodDescription.Token> methodTokens) {
         return new RebaseDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
@@ -204,11 +209,23 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(applyRecordedMembersTo(new InlineInstrumentedType(classFileVersion,
-                        targetType,
-                        interfaceTypes,
+        MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
+                        .UnnamedType.Default(targetType.getSuperType().asRawType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        namingStrategy)),
+                        Collections.<GenericTypeDescription>emptyList(),
+                        targetType.getSuperType(),
+                        interfaceTypes,
+                        fieldTokens,
+                        methodTokens,
+                        targetType.getDeclaredAnnotations(),
+                        InstrumentedType.TypeInitializer.None.INSTANCE,
+                        LoadedTypeInitializer.NoOp.INSTANCE,
+                        targetType.getDeclaringType(),
+                        targetType.getEnclosingMethod(),
+                        targetType.getEnclosingType(),
+                        targetType.isMemberClass(),
+                        targetType.isAnonymousClass(),
+                        targetType.isLocalClass()),
                 methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
                 InliningImplementationMatcher.of(ignoredMethods, targetType));
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Enabled.make(preparedMethodRegistry.getInstrumentedMethods(),

@@ -318,7 +318,7 @@ public interface InstrumentedType extends TypeDescription {
                     typeVariables,
                     superType,
                     interfaceTypes,
-                    joinUnique(fieldTokens, new FieldDescription.Token(name, fieldType, modifiers, Collections.<AnnotationDescription>emptyList())),
+                    joinUnique(fieldTokens, new FieldDescription.Token(name, modifiers, fieldType, Collections.<AnnotationDescription>emptyList())),
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,

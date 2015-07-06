@@ -95,15 +95,15 @@ public interface FieldRegistry {
 
         class Simple implements LatentFieldMatcher {
 
-            private final String fieldName;
+            private final FieldDescription.Token fieldToken;
 
-            public Simple(String fieldName) {
-                this.fieldName = fieldName;
+            public Simple(FieldDescription.Token fieldToken) {
+                this.fieldToken = fieldToken;
             }
 
             @Override
             public String getFieldName() {
-                return fieldName;
+                return fieldToken.getName();
             }
         }
     }
@@ -148,8 +148,7 @@ public interface FieldRegistry {
         @Override
         public FieldRegistry.Prepared prepare(TypeDescription instrumentedType) {
             Map<String, TypeWriter.FieldPool.Entry> entries = new HashMap<String, TypeWriter.FieldPool.Entry>(this.entries.size());
-            Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders =
-                    new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>(this.entries.size());
+            Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>(this.entries.size());
             for (Map.Entry<String, Entry> entry : this.entries.entrySet()) {
                 FieldAttributeAppender attributeAppender = attributeAppenders.get(entry.getValue().getAttributeAppenderFactory());
                 if (attributeAppender == null) {

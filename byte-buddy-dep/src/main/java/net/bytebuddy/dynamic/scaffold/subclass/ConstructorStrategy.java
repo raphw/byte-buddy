@@ -40,8 +40,7 @@ public interface ConstructorStrategy {
      * @return A method registry that is capable of providing byte code for the constructors that were added by
      * this strategy.
      */
-    MethodRegistry inject(MethodRegistry methodRegistry,
-                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
+    MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
 
     /**
      * Default implementations of constructor strategies.

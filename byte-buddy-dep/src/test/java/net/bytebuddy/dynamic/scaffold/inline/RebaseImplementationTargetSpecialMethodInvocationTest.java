@@ -55,7 +55,8 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
                 mock(GenericTypeDescription.class),
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<GenericTypeDescription>emptyList(),
-                Collections.<AnnotationDescription>emptyList()));
+                Collections.<AnnotationDescription>emptyList(),
+                MethodDescription.NO_DEFAULT_VALUE));
         Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution,
                 mock(TypeDescription.class));
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -72,7 +73,8 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
                 mock(GenericTypeDescription.class),
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<GenericTypeDescription>emptyList(),
-                Collections.<AnnotationDescription>emptyList()));
+                Collections.<AnnotationDescription>emptyList(),
+                MethodDescription.NO_DEFAULT_VALUE));
         Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution,
                 mock(TypeDescription.class));
         assertThat(specialMethodInvocation.isValid(), is(false));

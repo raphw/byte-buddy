@@ -39,7 +39,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                 returnType,
                 tokens,
                 Collections.<TypeDescription>emptyList(),
-                Collections.<AnnotationDescription>emptyList()), targetType, mock(StackManipulation.class));
+                Collections.<AnnotationDescription>emptyList(),
+                MethodDescription.NO_DEFAULT_VALUE), targetType, mock(StackManipulation.class));
     }
 
     @Test
@@ -54,7 +55,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                         mock(TypeDescription.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<GenericTypeDescription>emptyList(),
-                        Collections.<AnnotationDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE), mock(TypeDescription.class), stackManipulation);
         assertThat(specialMethodInvocation.isValid(), is(true));
     }
 
@@ -70,7 +72,8 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
                         mock(TypeDescription.class),
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription>emptyList(),
-                        Collections.<AnnotationDescription>emptyList()), mock(TypeDescription.class), stackManipulation);
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE), mock(TypeDescription.class), stackManipulation);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 }

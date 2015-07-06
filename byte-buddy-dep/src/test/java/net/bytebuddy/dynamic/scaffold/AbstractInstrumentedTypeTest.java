@@ -42,6 +42,8 @@ public abstract class AbstractInstrumentedTypeTest {
 
     protected abstract InstrumentedType makePlainInstrumentedType();
 
+    // TODO: Make non-abstract!
+
     @Test
     @SuppressWarnings("unchecked")
     public void testWithField() throws Exception {
@@ -89,6 +91,7 @@ public abstract class AbstractInstrumentedTypeTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
     public void testWithFieldDouble() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
         when(fieldType.asRawType()).thenReturn(fieldType); // REFACTOR

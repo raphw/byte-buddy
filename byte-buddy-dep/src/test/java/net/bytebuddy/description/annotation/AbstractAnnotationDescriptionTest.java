@@ -387,7 +387,8 @@ public abstract class AbstractAnnotationDescriptionTest {
                 new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<GenericTypeDescription>emptyList(),
-                Collections.<AnnotationDescription>emptyList())), is(rawValue));
+                Collections.<AnnotationDescription>emptyList(),
+                MethodDescription.NO_DEFAULT_VALUE)), is(rawValue));
         assertThat(annotation.annotationType().getDeclaredMethod(methodName)
                 .invoke(describe(annotation).prepare(annotation.annotationType()).load()), is(loadedValue));
     }

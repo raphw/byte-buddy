@@ -2731,10 +2731,11 @@ public interface TypePool {
 
         @Override
         public PackageDescription getPackage() {
-            String packageName = getPackageName();
-            return packageName == null
+            String name = getName();
+            int index = name.lastIndexOf('.');
+            return index == -1
                     ? null
-                    : new LazyPackageDescription(typePool, packageName);
+                    : new LazyPackageDescription(typePool, name.substring(0, index));
         }
 
         @Override
