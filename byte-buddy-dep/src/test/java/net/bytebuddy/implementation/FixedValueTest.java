@@ -49,6 +49,13 @@ public class FixedValueTest extends AbstractImplementationTest {
     }
 
     @Test
+    public void testClassConstantPool() throws Exception {
+        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(Object.class)).getLoaded();
+        assertThat(qux.getDeclaredFields().length, is(0));
+        assertEquals(Object.class, qux.newInstance().bar());
+    }
+
+    @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeConstantPool() throws Exception {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaInstance.MethodType.of(void.class, Object.class))).getLoaded();

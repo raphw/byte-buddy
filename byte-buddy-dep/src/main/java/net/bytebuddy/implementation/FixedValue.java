@@ -97,7 +97,7 @@ public abstract class FixedValue implements Implementation {
                     Assigner.DEFAULT,
                     Assigner.STATICALLY_TYPED);
         } else if (type == Class.class) {
-            return new ForPoolValue(ClassConstant.of(new TypeDescription.ForLoadedType(type)),
+            return new ForPoolValue(ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) fixedValue)),
                     TypeDescription.CLASS,
                     Assigner.DEFAULT,
                     Assigner.STATICALLY_TYPED);
