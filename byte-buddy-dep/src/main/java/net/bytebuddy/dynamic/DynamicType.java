@@ -1279,7 +1279,7 @@ public interface DynamicType {
 
             @Override
             public Builder<S> classFileVersion(ClassFileVersion classFileVersion) {
-                return null;
+                return null; // TODO
             }
 
             @Override
@@ -1299,13 +1299,7 @@ public interface DynamicType {
 
             @Override
             public MethodInterception.Optional<S> implement(Collection<? extends GenericTypeDescription> interfaceTypes) {
-                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(interfaceTypes.size());
-                for (GenericTypeDescription interfaceType : interfaceTypes) {
-                    typeDescriptions.add(interfaceType.asRawType());
-                }
-                return new OptionalInterception(new ArrayList<GenericTypeDescription>(interfaceTypes),
-                        isDeclaredBy(anyOf(typeDescriptions)),
-                        defaultMethodAttributeAppenderFactory);
+                return new OptionalInterception(new ArrayList<GenericTypeDescription>(interfaceTypes), defaultMethodAttributeAppenderFactory);
             }
 
             @Override
@@ -1411,6 +1405,21 @@ public interface DynamicType {
                 return defineField(fieldDescription.getName(),
                         fieldDescription.getType(),
                         fieldDescription.getModifiers()).annotateField(fieldDescription.getDeclaredAnnotations());
+            }
+
+            @Override
+            public TypeVariableDefinable<S> withTypeVariable(String symbol, Collection<? extends GenericTypeDescription> bounds) {
+                return new TypeVariableContainer().withTypeVariable(symbol, bounds);
+            }
+
+            @Override
+            public MethodInterception.ParameterDefinable.Binary<S> defineMethod(String name, GenericTypeDescription returnType, int modifiers) {
+                return new TypeVariableContainer().defineMethod(name, returnType, modifiers);
+            }
+
+            @Override
+            public MethodInterception.ParameterDefinable.Binary<S> defineConstructor(int modifiers) {
+                return new TypeVariableContainer().defineConstructor(modifiers);
             }
 
             @Override
@@ -1681,19 +1690,42 @@ public interface DynamicType {
                 }
             }
 
+            protected class TypeVariableContainer extends TypeVariableDefinable.AbstractBase<S> {
+
+                private final List<GenericTypeDescription> typeVariables;
+
+                protected TypeVariableContainer() {
+                    this(Collections.<GenericTypeDescription>emptyList());
+                }
+
+                protected TypeVariableContainer(List<GenericTypeDescription> typeVariables) {
+                    this.typeVariables = typeVariables;
+                }
+
+                @Override
+                public TypeVariableDefinable<S> withTypeVariable(String symbol, Collection<? extends GenericTypeDescription> bounds) {
+                    return new TypeVariableContainer(joinUnique(typeVariables, null)); // TODO
+                }
+
+                @Override
+                public MethodInterception.ParameterDefinable.Binary<S> defineMethod(String name, GenericTypeDescription returnType, int modifiers) {
+                    return null; // TODO
+                }
+
+                @Override
+                public MethodInterception.ParameterDefinable.Binary<S> defineConstructor(int modifiers) {
+                    return null; // TODO
+                }
+            }
+
             protected class OptionalInterception extends MethodInterception.Optional.AbstractBase<S> {
 
                 private final List<GenericTypeDescription> interfaceTypes;
 
-                private final ElementMatcher<? super MethodDescription> declarationMatcher;
-
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
-                public OptionalInterception(List<GenericTypeDescription> interfaceTypes,
-                                            ElementMatcher<? super MethodDescription> declarationMatcher,
-                                            MethodAttributeAppender.Factory attributeAppenderFactory) {
+                public OptionalInterception(List<GenericTypeDescription> interfaceTypes, MethodAttributeAppender.Factory attributeAppenderFactory) {
                     this.interfaceTypes = interfaceTypes;
-                    this.declarationMatcher = declarationMatcher;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                 }
 
@@ -1719,6 +1751,10 @@ public interface DynamicType {
 
                 @Override
                 protected Builder<S> materialize(MethodRegistry.Handler handler, Object defaultValue) {
+                    ElementMatcher.Junction<TypeDescription> declaringType = none();
+                    for (GenericTypeDescription interfaceType : interfaceTypes) {
+                        declaringType = declaringType.or(is(interfaceType));
+                    }
                     return Builder.AbstractBase.this.materialize(classFileVersion,
                             modifiers,
                             joinUniqueRaw(Builder.AbstractBase.this.interfaceTypes, interfaceTypes),
@@ -1732,7 +1768,7 @@ public interface DynamicType {
                             methodLookupEngineFactory, defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
                             fieldRegistry,
-                            methodRegistry.append(new LatentMethodMatcher.Resolved(declarationMatcher), handler, attributeAppenderFactory),
+                            methodRegistry.append(new LatentMethodMatcher.Resolved(isDeclaredBy(declaringType)), handler, attributeAppenderFactory),
                             fieldTokens,
                             methodTokens);
                 }
@@ -1740,7 +1776,6 @@ public interface DynamicType {
                 @Override
                 public ForMatchedMethod<S> attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
                     return new OptionalInterception(interfaceTypes,
-                            declarationMatcher,
                             new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory, nonNull(attributeAppenderFactory)));
                 }
 
