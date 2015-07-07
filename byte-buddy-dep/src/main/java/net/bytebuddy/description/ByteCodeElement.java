@@ -35,18 +35,48 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
      */
     boolean isVisibleTo(TypeDescription typeDescription);
 
-    interface Token<T extends Token> {
+    /**
+     * Representation of a tokenized, detached byte code element.
+     *
+     * @param <T> The actual token type.
+     */
+    interface Token<T extends Token<T>> {
 
+        /**
+         * Transforms the types represented by this token by applying the given visitor to them.
+         *
+         * @param visitor The visitor to transform all types that are represented by this token.
+         * @return This token with all of its represented types transformed by the supplied visitor.
+         */
         T accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
+        /**
+         * A list of tokens.
+         *
+         * @param <S> The actual token type.
+         */
         class TokenList<S extends Token<S>> extends AbstractList<S> {
 
+            /**
+             * The tokens that this list represents.
+             */
             private final List<? extends S> tokens;
 
+            /**
+             * Creates a list of tokens.
+             *
+             * @param tokens The tokens that this list represents.
+             */
             public TokenList(List<? extends S> tokens) {
                 this.tokens = tokens;
             }
 
+            /**
+             * Transforms all tokens that are represented by this list.
+             *
+             * @param visitor The visitor to apply to all tokens.
+             * @return A list containing the transformed tokens.
+             */
             public TokenList<S> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
                 List<S> tokens = new ArrayList<S>(this.tokens.size());
                 for (S token : this.tokens) {
