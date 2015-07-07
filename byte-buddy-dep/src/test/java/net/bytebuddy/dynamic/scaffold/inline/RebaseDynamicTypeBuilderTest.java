@@ -1,7 +1,10 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -21,6 +24,8 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForInliningTest {
 
@@ -89,7 +94,19 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
         ObjectPropertyAssertion.of(RebaseDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
             public List<?> create() {
-                return Collections.singletonList(new Object());
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.asRawType()).thenReturn(typeDescription);
+                return Collections.singletonList(typeDescription);
+            }
+        }).create(new ObjectPropertyAssertion.Creator<TypeDescription>() {
+            @Override
+            public TypeDescription create() {
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.asRawType()).thenReturn(typeDescription);
+                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Collections.singletonList(typeDescription)));
+                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty());
+                when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+                return typeDescription;
             }
         }).apply();
     }

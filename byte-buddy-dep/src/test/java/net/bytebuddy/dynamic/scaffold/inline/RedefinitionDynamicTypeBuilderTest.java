@@ -1,14 +1,22 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -21,6 +29,8 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForInliningTest {
 
@@ -85,11 +95,24 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(RedefinitionDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
             public List<?> create() {
-                return Collections.singletonList(new Object());
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.asRawType()).thenReturn(typeDescription);
+                return Collections.singletonList(typeDescription);
+            }
+        }).create(new ObjectPropertyAssertion.Creator<TypeDescription>() {
+            @Override
+            public TypeDescription create() {
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.asRawType()).thenReturn(typeDescription);
+                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Collections.singletonList(typeDescription)));
+                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty());
+                when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+                return typeDescription;
             }
         }).apply();
     }

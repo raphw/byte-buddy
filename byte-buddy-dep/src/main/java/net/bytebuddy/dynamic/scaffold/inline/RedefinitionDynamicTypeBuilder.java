@@ -198,10 +198,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
     @Override
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
-                        .UnnamedType.Default(targetType.getSuperType() == null ? null : targetType.getSuperType().asRawType(),
-                        interfaceTypes,
-                        modifiers,
-                        classFileVersion)),
+                        .UnnamedType.Default(targetType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
                         targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
                         targetType.getSuperType(),

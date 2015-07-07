@@ -210,7 +210,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
     @Override
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
-                        .UnnamedType.Default(targetType.getSuperType().asRawType(), interfaceTypes, modifiers, classFileVersion)),
+                        .UnnamedType.Default(targetType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
                         targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
                         targetType.getSuperType(),
