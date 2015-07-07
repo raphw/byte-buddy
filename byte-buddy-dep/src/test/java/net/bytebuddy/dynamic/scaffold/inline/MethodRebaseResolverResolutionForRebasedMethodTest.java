@@ -67,7 +67,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
 
     @Test
     public void testPreservation() throws Exception {
-        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
+        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedMethod.of(methodDescription, methodNameTransformer);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));

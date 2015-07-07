@@ -1,10 +1,13 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.auxiliary.TrivialType;
@@ -289,31 +292,17 @@ public interface MethodRebaseResolver {
          */
         class ForRebasedMethod implements Resolution {
 
+            public static Resolution of(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
+                return new ForRebasedMethod(new RebasedMethod(methodDescription, methodNameTransformer));
+            }
+
             /**
              * The rebased method.
              */
             private final MethodDescription methodDescription;
 
-            /**
-             * Creates a {@link MethodRebaseResolver.Resolution} for a
-             * rebased method.
-             *
-             * @param methodDescription     The original method that should be rebased.
-             * @param methodNameTransformer A transformer for renaming a rebased method.
-             */
-            public ForRebasedMethod(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
-                // TODO: Proper transformation.
-                this.methodDescription = new MethodDescription.Latent(methodDescription.getDeclaringType(),
-                        methodNameTransformer.transform(methodDescription),
-                        REBASED_METHOD_MODIFIER
-                                | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
-                                | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0),
-                        methodDescription.getTypeVariables(),
-                        methodDescription.getReturnType(),
-                        methodDescription.getParameters().asTokens(),
-                        methodDescription.getExceptionTypes(),
-                        methodDescription.getDeclaredAnnotations(),
-                        MethodDescription.NO_DEFAULT_VALUE);
+            protected ForRebasedMethod(MethodDescription methodDescription) {
+                this.methodDescription = methodDescription;
             }
 
             @Override
@@ -346,6 +335,65 @@ public interface MethodRebaseResolver {
             public String toString() {
                 return "MethodRebaseResolver.Resolution.ForRebasedMethod{methodDescription=" + methodDescription + '}';
             }
+
+            protected static class RebasedMethod extends MethodDescription.AbstractMethodDescription {
+
+                private final MethodDescription methodDescription;
+
+                private final MethodNameTransformer methodNameTransformer;
+
+                public RebasedMethod(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
+                    this.methodDescription = methodDescription;
+                    this.methodNameTransformer = methodNameTransformer;
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return methodDescription.getReturnType().asRawType();
+                }
+
+                @Override
+                public ParameterList getParameters() {
+                    return ParameterList.Explicit.latent(this, methodDescription.getParameters().asTypeList().asRawTypes());
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return methodDescription.getExceptionTypes().asRawTypes().asGenericTypes();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return methodDescription.getDeclaringType();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return REBASED_METHOD_MODIFIER
+                            | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
+                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0);
+                }
+
+                @Override
+                public String getInternalName() {
+                    return methodNameTransformer.transform(methodDescription);
+                }
+            }
         }
 
         /**
@@ -353,29 +401,17 @@ public interface MethodRebaseResolver {
          */
         class ForRebasedConstructor implements Resolution {
 
+            public static Resolution of(MethodDescription methodDescription, TypeDescription placeholderType) {
+                return new ForRebasedConstructor(new RebasedConstructor(methodDescription, placeholderType));
+            }
+
             /**
              * The rebased constructor.
              */
             private final MethodDescription methodDescription;
 
-            /**
-             * Creates a {@link MethodRebaseResolver.Resolution} for a
-             * rebased method.
-             *
-             * @param methodDescription The constructor to rebase.
-             * @param placeholderType   A placeholder type which is added to a rebased constructor.
-             */
-            public ForRebasedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
-                // TODO: Proper modification!
-                this.methodDescription = new MethodDescription.Latent(methodDescription.getDeclaringType(),
-                        methodDescription.getInternalName(),
-                        REBASED_METHOD_MODIFIER,
-                        methodDescription.getTypeVariables(),
-                        methodDescription.getReturnType(),
-                        join(methodDescription.getParameters().asTokens(), new ParameterDescription.Token(placeholderType)),
-                        methodDescription.getExceptionTypes(),
-                        methodDescription.getDeclaredAnnotations(),
-                        MethodDescription.NO_DEFAULT_VALUE);
+            public ForRebasedConstructor(MethodDescription methodDescription) {
+                this.methodDescription = methodDescription;
             }
 
             @Override
@@ -407,6 +443,63 @@ public interface MethodRebaseResolver {
             @Override
             public String toString() {
                 return "MethodRebaseResolver.Resolution.ForRebasedConstructor{methodDescription=" + methodDescription + '}';
+            }
+
+            protected static class RebasedConstructor extends MethodDescription.AbstractMethodDescription {
+
+                private final MethodDescription methodDescription;
+
+                private final TypeDescription placeholderType;
+
+                public RebasedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
+                    this.methodDescription = methodDescription;
+                    this.placeholderType = placeholderType;
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return TypeDescription.VOID;
+                }
+
+                @Override
+                public ParameterList getParameters() {
+                    return ParameterList.Explicit.latent(this, join(methodDescription.getParameters().asTypeList().asRawTypes(), placeholderType));
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return methodDescription.getExceptionTypes().asRawTypes().asGenericTypes();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return methodDescription.getDeclaringType();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return REBASED_METHOD_MODIFIER;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return MethodDescription.CONSTRUCTOR_INTERNAL_NAME;
+                }
             }
         }
     }
@@ -494,7 +587,7 @@ public interface MethodRebaseResolver {
             if (methodDescription.isConstructor()) {
                 throw new IllegalArgumentException();
             }
-            return new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
+            return Resolution.ForRebasedMethod.of(methodDescription, methodNameTransformer);
         }
 
         @Override
@@ -592,8 +685,8 @@ public interface MethodRebaseResolver {
         @Override
         protected Resolution rebase(MethodDescription methodDescription) {
             return methodDescription.isConstructor()
-                    ? new Resolution.ForRebasedConstructor(methodDescription, placeholderType.getTypeDescription())
-                    : new Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
+                    ? Resolution.ForRebasedConstructor.of(methodDescription, placeholderType.getTypeDescription())
+                    : Resolution.ForRebasedMethod.of(methodDescription, methodNameTransformer);
         }
 
         @Override

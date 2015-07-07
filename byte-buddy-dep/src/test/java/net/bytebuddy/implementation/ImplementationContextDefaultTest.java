@@ -610,7 +610,7 @@ public class ImplementationContextDefaultTest {
         ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyMutable();
         ObjectPropertyAssertion.of(Implementation.Context.Default.FieldCacheEntry.class).apply();
         ObjectPropertyAssertion.of(Implementation.Context.Default.AccessorMethodDelegation.class).apply();
-        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldSetter.class).apply();
-        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldGetter.class).apply();
+        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldSetterDelegation.class).apply();
+        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldGetterDelegation.class).apply();
     }
 }

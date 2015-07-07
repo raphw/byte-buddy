@@ -4,13 +4,11 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -21,13 +19,13 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
     @Override
     protected MethodDescription describe(Method method) {
         return new MethodDescription.Latent(new TypeDescription.ForLoadedType(method.getDeclaringClass()),
-                new MethodDescription.ForLoadedMethod(method).asToken());
+                new MethodDescription.ForLoadedMethod(method).asToken(ElementMatchers.is(method.getDeclaringClass())));
     }
 
     @Override
     protected MethodDescription describe(Constructor<?> constructor) {
         return new MethodDescription.Latent(new TypeDescription.ForLoadedType(constructor.getDeclaringClass()),
-                new MethodDescription.ForLoadedConstructor(constructor).asToken());
+                new MethodDescription.ForLoadedConstructor(constructor).asToken(ElementMatchers.is(constructor.getDeclaringClass())));
     }
 
     @Test

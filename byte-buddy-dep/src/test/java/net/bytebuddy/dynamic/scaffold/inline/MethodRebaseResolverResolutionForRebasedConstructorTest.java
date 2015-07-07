@@ -69,7 +69,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
 
     @Test
     public void testPreservation() throws Exception {
-        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.ForRebasedConstructor(methodDescription, placeholderType);
+        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedConstructor.of(methodDescription, placeholderType);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(FOO));

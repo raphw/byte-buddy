@@ -294,6 +294,7 @@ public interface GenericTypeDescription extends NamedElement {
                     int arity = 0;
                     while (typeDescription.isArray()) {
                         typeDescription = typeDescription.getComponentType();
+                        arity++;
                     }
                     return TypeDescription.ArrayProjection.of(onComponentType(typeDescription), arity);
                 }
@@ -363,9 +364,7 @@ public interface GenericTypeDescription extends NamedElement {
                     }
                     GenericTypeDescription typeVariable = detachedVariables.get(genericTypeDescription.getSymbol());
                     if (typeVariable == null) {
-                        typeVariable = new DetachedTypeVariable(genericTypeDescription.getSymbol(),
-                                genericTypeDescription.getUpperBounds(),
-                                this);
+                        typeVariable = new DetachedTypeVariable(genericTypeDescription.getSymbol(), genericTypeDescription.getUpperBounds(), this);
                     }
                     return typeVariable;
                 }

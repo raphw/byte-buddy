@@ -1,12 +1,13 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -673,102 +674,35 @@ public interface Implementation {
 
             @Override
             public MethodDescription registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
-                // TODO: Check.
                 MethodDescription accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
                 if (accessorMethod == null) {
-                    accessorMethod = new MethodDescription.Latent(instrumentedType,
-                            String.format("%s$%s$%s", specialMethodInvocation.getMethodDescription().getInternalName(),
-                                    ACCESSOR_METHOD_SUFFIX,
-                                    randomString.nextString()),
-                            resolveModifier(specialMethodInvocation.getMethodDescription().isStatic()),
-                            specialMethodInvocation.getMethodDescription().getTypeVariables(),
-                            specialMethodInvocation.getMethodDescription().getReturnType().asRawType(),
-                            specialMethodInvocation.getMethodDescription().getParameters().asTokens().accept(GenericTypeDescription.Visitor.ForErasure.INSTANCE),
-                            specialMethodInvocation.getMethodDescription().getExceptionTypes().asRawTypes(),
-                            Collections.<AnnotationDescription>emptyList(),
-                            MethodDescription.NO_DEFAULT_VALUE);
-                    registerAccessor(specialMethodInvocation, accessorMethod);
+                    accessorMethod = new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), randomString.nextString());
+                    registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
+                    accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
                 }
                 return accessorMethod;
-            }
-
-            /**
-             * Resolves the modifier for an accessor method.
-             *
-             * @param isStatic {@code true} if the accessor method is supposed to be static.
-             * @return The modifier for the method.
-             */
-            private int resolveModifier(boolean isStatic) {
-                return ACCESSOR_METHOD_MODIFIER | (isStatic ? Opcodes.ACC_STATIC : 0);
-            }
-
-            /**
-             * Registers a new accessor method.
-             *
-             * @param specialMethodInvocation The special method invocation that the accessor method should invoke.
-             * @param accessorMethod          The accessor method for this invocation.
-             */
-            private void registerAccessor(Implementation.SpecialMethodInvocation specialMethodInvocation, MethodDescription accessorMethod) {
-                registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
-                accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
             }
 
             @Override
             public MethodDescription registerGetterFor(FieldDescription fieldDescription) {
                 MethodDescription accessorMethod = registeredGetters.get(fieldDescription);
                 if (accessorMethod == null) {
-                    accessorMethod = new MethodDescription.Latent(instrumentedType,
-                            String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, randomString.nextString()),
-                            resolveModifier(fieldDescription.isStatic()),
-                            Collections.<GenericTypeDescription>emptyList(),
-                            fieldDescription.getType().asRawType(),
-                            Collections.<ParameterDescription.Token>emptyList(),
-                            Collections.<GenericTypeDescription>emptyList(),
-                            Collections.<AnnotationDescription>emptyList(),
-                            MethodDescription.NO_DEFAULT_VALUE);
-                    registerGetter(fieldDescription, accessorMethod);
+                    accessorMethod = new FieldGetter(instrumentedType, fieldDescription, randomString.nextString());
+                    registeredGetters.put(fieldDescription, accessorMethod);
+                    accessorMethodEntries.put(accessorMethod, new FieldGetterDelegation(fieldDescription));
                 }
                 return accessorMethod;
-            }
-
-            /**
-             * Registers a new getter method.
-             *
-             * @param fieldDescription The field to read.
-             * @param accessorMethod   The accessor method for this field.
-             */
-            private void registerGetter(FieldDescription fieldDescription, MethodDescription accessorMethod) {
-                registeredGetters.put(fieldDescription, accessorMethod);
-                accessorMethodEntries.put(accessorMethod, new FieldGetter(fieldDescription));
             }
 
             @Override
             public MethodDescription registerSetterFor(FieldDescription fieldDescription) {
                 MethodDescription accessorMethod = registeredSetters.get(fieldDescription);
                 if (accessorMethod == null) {
-                    accessorMethod = new MethodDescription.Latent(instrumentedType,
-                            String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, randomString.nextString()),
-                            resolveModifier(fieldDescription.isStatic()),
-                            Collections.<GenericTypeDescription>emptyList(),
-                            TypeDescription.VOID,
-                            Collections.singletonList(new ParameterDescription.Token(fieldDescription.getType().asRawType())),
-                            Collections.<GenericTypeDescription>emptyList(),
-                            Collections.<AnnotationDescription>emptyList(),
-                            MethodDescription.NO_DEFAULT_VALUE);
-                    registerSetter(fieldDescription, accessorMethod);
+                    accessorMethod = new FieldSetter(instrumentedType, fieldDescription, randomString.nextString());
+                    registeredSetters.put(fieldDescription, accessorMethod);
+                    accessorMethodEntries.put(accessorMethod, new FieldSetterDelegation(fieldDescription));
                 }
                 return accessorMethod;
-            }
-
-            /**
-             * Registers a new setter method.
-             *
-             * @param fieldDescription The field to write to.
-             * @param accessorMethod   The accessor method for this field.
-             */
-            private void registerSetter(FieldDescription fieldDescription, MethodDescription accessorMethod) {
-                registeredSetters.put(fieldDescription, accessorMethod);
-                accessorMethodEntries.put(accessorMethod, new FieldSetter(fieldDescription));
             }
 
             @Override
@@ -796,11 +730,7 @@ public interface Implementation {
                     return fieldCache;
                 }
                 validateFieldCacheAccessibility();
-                fieldCache = new FieldDescription.Latent(instrumentedType,
-                        String.format("%s$%s", FIELD_CACHE_PREFIX, randomString.nextString()),
-                        fieldType,
-                        FIELD_CACHE_MODIFIER,
-                        Collections.<AnnotationDescription>emptyList());
+                fieldCache = new CacheValueField(instrumentedType, fieldType, randomString.nextString());
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
@@ -863,6 +793,46 @@ public interface Implementation {
                         ", randomString=" + randomString +
                         ", canRegisterFieldCache=" + canRegisterFieldCache +
                         '}';
+            }
+
+            protected static class CacheValueField extends FieldDescription.AbstractFieldDescription {
+
+                private final TypeDescription instrumentedType;
+
+                private final TypeDescription fieldType;
+
+                private final String suffix;
+
+                protected CacheValueField(TypeDescription instrumentedType, TypeDescription fieldType, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.fieldType = fieldType;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public GenericTypeDescription getType() {
+                    return fieldType;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return FIELD_CACHE_MODIFIER;
+                }
+
+                @Override
+                public String getName() {
+                    return String.format("%s$%s", FIELD_CACHE_PREFIX, suffix);
+                }
             }
 
             /**
@@ -939,6 +909,192 @@ public interface Implementation {
                             "fieldValue=" + fieldValue +
                             ", fieldType=" + fieldType +
                             '}';
+                }
+            }
+
+            protected static class AccessorMethod extends MethodDescription.AbstractMethodDescription {
+
+                private final TypeDescription instrumentedType;
+
+                private final MethodDescription methodDescription;
+
+                private final String suffix;
+
+                protected AccessorMethod(TypeDescription instrumentedType, MethodDescription methodDescription, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.methodDescription = methodDescription;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return methodDescription.getReturnType().asRawType();
+                }
+
+                @Override
+                public ParameterList getParameters() {
+                    return ParameterList.Explicit.latent(this, methodDescription.getParameters().asTypeList().asRawTypes());
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return methodDescription.getExceptionTypes().asRawTypes().asGenericTypes();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return methodDescription.isStatic()
+                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
+                            : ACCESSOR_METHOD_MODIFIER;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return String.format("%s$%s$%s", methodDescription.getInternalName(), ACCESSOR_METHOD_SUFFIX, suffix);
+                }
+            }
+
+            protected static class FieldGetter extends MethodDescription.AbstractMethodDescription {
+
+                private final TypeDescription instrumentedType;
+
+                private final FieldDescription fieldDescription;
+
+                private final String suffix;
+
+                protected FieldGetter(TypeDescription instrumentedType, FieldDescription fieldDescription, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.fieldDescription = fieldDescription;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return fieldDescription.getType().asRawType();
+                }
+
+                @Override
+                public ParameterList getParameters() {
+                    return new ParameterList.Empty();
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return fieldDescription.isStatic()
+                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
+                            : ACCESSOR_METHOD_MODIFIER;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, suffix);
+                }
+            }
+
+            protected static class FieldSetter extends MethodDescription.AbstractMethodDescription {
+
+                private final TypeDescription instrumentedType;
+
+                private final FieldDescription fieldDescription;
+
+                private final String suffix;
+
+                protected FieldSetter(TypeDescription instrumentedType, FieldDescription fieldDescription, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.fieldDescription = fieldDescription;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return TypeDescription.VOID;
+                }
+
+                @Override
+                public ParameterList getParameters() {
+                    return ParameterList.Explicit.latent(this, Collections.singletonList(fieldDescription.getType().asRawType()));
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return fieldDescription.isStatic()
+                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
+                            : ACCESSOR_METHOD_MODIFIER;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, suffix);
                 }
             }
 
@@ -1023,7 +1179,7 @@ public interface Implementation {
             /**
              * An implementation for a field getter.
              */
-            protected static class FieldGetter extends AbstractDelegationEntry {
+            protected static class FieldGetterDelegation extends AbstractDelegationEntry {
 
                 /**
                  * The field to read from.
@@ -1035,7 +1191,7 @@ public interface Implementation {
                  *
                  * @param fieldDescription The field to read.
                  */
-                protected FieldGetter(FieldDescription fieldDescription) {
+                protected FieldGetterDelegation(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
                 }
 
@@ -1054,7 +1210,7 @@ public interface Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldDescription.equals(((FieldGetter) other).fieldDescription);
+                            && fieldDescription.equals(((FieldGetterDelegation) other).fieldDescription);
                 }
 
                 @Override
@@ -1073,7 +1229,7 @@ public interface Implementation {
             /**
              * An implementation for a field setter.
              */
-            protected static class FieldSetter extends AbstractDelegationEntry {
+            protected static class FieldSetterDelegation extends AbstractDelegationEntry {
 
                 /**
                  * The field to write to.
@@ -1085,7 +1241,7 @@ public interface Implementation {
                  *
                  * @param fieldDescription The field to write to.
                  */
-                protected FieldSetter(FieldDescription fieldDescription) {
+                protected FieldSetterDelegation(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
                 }
 
@@ -1102,7 +1258,7 @@ public interface Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldDescription.equals(((FieldSetter) other).fieldDescription);
+                            && fieldDescription.equals(((FieldSetterDelegation) other).fieldDescription);
                 }
 
                 @Override
