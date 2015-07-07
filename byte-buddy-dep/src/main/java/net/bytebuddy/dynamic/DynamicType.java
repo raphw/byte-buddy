@@ -2442,7 +2442,7 @@ public interface DynamicType {
                  * @return A subclass matched method interception that represents the materialized method.
                  */
                 private DefaultMatchedMethodInterception materialize(MethodDescription.Token methodToken) {
-                    return new DefaultMatchedMethodInterception(new LatentMethodMatcher.Resolved(represents(methodToken)), join(methodTokens, methodToken));
+                    return new DefaultMatchedMethodInterception(new LatentMethodMatcher.ForToken(methodToken), join(methodTokens, methodToken));
                 }
 
                 @Override

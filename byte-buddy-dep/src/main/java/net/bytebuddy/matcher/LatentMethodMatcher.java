@@ -2,6 +2,10 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+
+import static net.bytebuddy.matcher.ElementMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.represents;
 
 /**
  * A method matcher that is resolved by handing over the instrumented type before the matcher is applied to a method.
@@ -56,6 +60,20 @@ public interface LatentMethodMatcher {
             return "LatentMethodMatcher.Resolved{" +
                     "methodMatcher=" + methodMatcher +
                     '}';
+        }
+    }
+
+    class ForToken implements LatentMethodMatcher {
+
+        private final MethodDescription.Token methodToken;
+
+        public ForToken(MethodDescription.Token methodToken) {
+            this.methodToken = methodToken;
+        }
+
+        @Override
+        public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
+            return represents(methodToken.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
         }
     }
 }

@@ -560,7 +560,7 @@ public class ByteBuddy {
      * @return A builder for a new enumeration type with the given values.
      */
     @SuppressWarnings("unchecked")
-    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<String> values) {
+    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<? extends String> values) {
         if (unique(nonNull(values)).size() == 0) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
@@ -2138,7 +2138,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<String> values) {
+        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<? extends String> values) {
             return materialize().makeEnumeration(values);
         }
 
