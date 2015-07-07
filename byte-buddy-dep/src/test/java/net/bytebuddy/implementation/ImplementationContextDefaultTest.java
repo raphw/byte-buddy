@@ -169,6 +169,7 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialMethod.getParameters()).thenReturn(secondSpecialMethodParameters);
         when(firstFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
         when(firstFieldType.asRawType()).thenReturn(firstFieldType); // REFACTOR
+        when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType); // REFACTOR
         when(firstField.getType()).thenReturn(firstFieldType);
         when(firstField.getName()).thenReturn(FOO);
         when(firstField.getInternalName()).thenReturn(FOO);
@@ -177,6 +178,7 @@ public class ImplementationContextDefaultTest {
         when(firstFieldDeclaringType.getInternalName()).thenReturn(QUX);
         when(secondFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
         when(secondFieldType.asRawType()).thenReturn(secondFieldType); // REFACTOR
+        when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType); // REFACTOR
         when(secondField.getType()).thenReturn(secondFieldType);
         when(secondField.getName()).thenReturn(BAR);
         when(secondField.getInternalName()).thenReturn(BAR);

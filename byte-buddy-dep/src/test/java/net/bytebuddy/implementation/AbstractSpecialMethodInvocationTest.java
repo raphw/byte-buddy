@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,11 +36,14 @@ public abstract class AbstractSpecialMethodInvocationTest {
     private TypeList parameterTypes;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         parameterTypes = new TypeList.Explicit(Collections.singletonList(parameterType));
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType); // REFACTOR
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType); // REFACTOR
     }
 
     protected abstract Implementation.SpecialMethodInvocation make(String name,
@@ -47,6 +52,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
                                                                    TypeDescription targetType);
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testEquals() throws Exception {
         Implementation.SpecialMethodInvocation identical = make(FOO, returnType, parameterTypes, targetType);
         assertThat(identical, is(identical));
@@ -90,6 +96,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(equalMethodButParameter.getReturnType()).thenReturn(returnType);
         TypeDescription parameterType = mock(TypeDescription.class);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         ParameterList equalMethodButParameterParameters = ParameterList.Explicit.latent(equalMethodButParameter, Collections.singletonList(parameterType));
         when(equalMethodButParameter.getParameters()).thenReturn(equalMethodButParameterParameters);
         assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButParameter)));

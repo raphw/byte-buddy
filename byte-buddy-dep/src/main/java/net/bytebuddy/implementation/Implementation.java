@@ -323,7 +323,11 @@ public interface Implementation {
                     public MethodDescription resolve(MethodDescription methodDescription,
                                                      Map<String, MethodDescription> invokableMethods,
                                                      BridgeMethodResolver bridgeMethodResolver) {
-                        return bridgeMethodResolver.resolve(invokableMethods.get(methodDescription.getUniqueSignature()));
+                        MethodDescription mostSpecificMethod = invokableMethods.get(methodDescription.getUniqueSignature());
+                        if (mostSpecificMethod == null) {
+                            throw new IllegalArgumentException("Cannot invoke: " + methodDescription);
+                        }
+                        return bridgeMethodResolver.resolve(mostSpecificMethod);
                     }
                 };
 
@@ -382,8 +386,7 @@ public interface Implementation {
              * @param bridgeMethodResolverFactory A factory for creating a
              *                                    {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver}.
              */
-            protected AbstractBase(MethodLookupEngine.Finding finding,
-                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+            protected AbstractBase(MethodLookupEngine.Finding finding, BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                 bridgeMethodResolver = bridgeMethodResolverFactory.make(finding.getInvokableMethods());
                 typeDescription = finding.getTypeDescription();
                 invokableMethods = new HashMap<String, MethodDescription>(finding.getInvokableMethods().size());
@@ -406,8 +409,7 @@ public interface Implementation {
             }
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription,
-                                                                      MethodLookup methodLookup) {
+            public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription, MethodLookup methodLookup) {
                 return invokeSuper(methodLookup.resolve(methodDescription, invokableMethods, bridgeMethodResolver));
             }
 
@@ -420,8 +422,7 @@ public interface Implementation {
             protected abstract Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription);
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType,
-                                                                        String uniqueMethodSignature) {
+            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature) {
                 Map<String, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
                 if (defaultMethods != null) {
                     MethodDescription defaultMethod = defaultMethods.get(uniqueMethodSignature);
@@ -1220,7 +1221,7 @@ public interface Implementation {
 
                 @Override
                 public String toString() {
-                    return "Implementation.Context.Default.FieldGetter{" +
+                    return "Implementation.Context.Default.FieldGetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
                             '}';
                 }
@@ -1268,7 +1269,7 @@ public interface Implementation {
 
                 @Override
                 public String toString() {
-                    return "Implementation.Context.Default.FieldSetter{" +
+                    return "Implementation.Context.Default.FieldSetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
                             '}';
                 }

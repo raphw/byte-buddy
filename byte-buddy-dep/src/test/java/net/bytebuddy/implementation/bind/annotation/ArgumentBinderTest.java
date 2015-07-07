@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.ArgumentTypeResolver;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -32,10 +33,13 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     @Override
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();
         when(sourceType.asRawType()).thenReturn(sourceType); // REFACTOR
+        when(sourceType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(sourceType); // REFACTOR
         when(targetType.asRawType()).thenReturn(targetType);
+        when(targetType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(targetType); // REFACTOR
     }
 
     @Override
