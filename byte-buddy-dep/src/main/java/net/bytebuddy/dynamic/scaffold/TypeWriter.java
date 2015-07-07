@@ -108,6 +108,8 @@ public interface TypeWriter<T> {
                  */
                 INSTANCE;
 
+                private static final Object NO_DEFAULT_VALUE = null;
+
                 @Override
                 public FieldAttributeAppender getFieldAppender() {
                     return FieldAttributeAppender.NoOp.INSTANCE;
@@ -115,7 +117,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Object getDefaultValue() {
-                    return null;
+                    return NO_DEFAULT_VALUE;
                 }
 
                 @Override
@@ -124,7 +126,7 @@ public interface TypeWriter<T> {
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
-                            null).visitEnd();
+                            NO_DEFAULT_VALUE).visitEnd();
                 }
 
                 @Override
@@ -185,10 +187,8 @@ public interface TypeWriter<T> {
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other)
-                        return true;
-                    if (other == null || getClass() != other.getClass())
-                        return false;
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
                     Simple simple = (Simple) other;
                     return attributeAppender.equals(simple.attributeAppender)
                             && !(defaultValue != null ?

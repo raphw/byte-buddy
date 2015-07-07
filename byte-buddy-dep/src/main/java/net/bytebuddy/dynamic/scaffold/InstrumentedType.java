@@ -219,11 +219,11 @@ public interface InstrumentedType extends TypeDescription {
 
         private final int modifiers;
 
+        private final List<? extends GenericTypeDescription> typeVariables;
+
         private final GenericTypeDescription superType;
 
         private final List<? extends GenericTypeDescription> interfaceTypes;
-
-        private final List<? extends GenericTypeDescription> typeVariables;
 
         private final List<? extends FieldDescription.Token> fieldTokens;
 
@@ -453,7 +453,7 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public GenericTypeList getTypeVariables() {
-            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, interfaceTypes);
+            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
         }
 
         @Override
