@@ -47,7 +47,6 @@ public class GenericSignatureResolutionTest {
     }
 
     @Test
-    @Ignore("Requires refactoring of instrumented type!")
     public void testGenericMethod() throws Exception {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(GenericMethod.class)
