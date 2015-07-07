@@ -52,12 +52,12 @@ public class ClassInjectorUsingReflectionTest {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IllegalStateException.class)
     public void testFaultyReflectionStoreClassMethod() throws Exception {
         new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getFindLoadedClassMethod();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IllegalStateException.class)
     public void testFaultyReflectionStoreLoadByteArray() throws Exception {
         new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getLoadByteArrayMethod();
     }
