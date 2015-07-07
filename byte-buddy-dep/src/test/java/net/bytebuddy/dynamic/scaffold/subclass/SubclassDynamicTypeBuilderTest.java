@@ -160,6 +160,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     public void testEnumerationDefinition() throws Exception {
         Class<? extends Enum<?>> type = new ByteBuddy()
                 .makeEnumeration(FOO, BAR)
+                .classVisitor(DebuggingWrapper.makeDefault())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

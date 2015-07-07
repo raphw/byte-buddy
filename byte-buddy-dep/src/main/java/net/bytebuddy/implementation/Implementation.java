@@ -765,7 +765,7 @@ public interface Implementation {
                 if (injectedCode.isDefined()) {
                     typeInitializer = typeInitializer.expandWith(injectedCode.getByteCodeAppender());
                 }
-                MethodDescription typeInitializerMethod = MethodDescription.Latent.typeInitializerOf(instrumentedType);
+                MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
                 TypeWriter.MethodPool.Entry initializerEntry = methodPool.target(typeInitializerMethod);
                 if (initializerEntry.getSort().isImplemented() && typeInitializer.isDefined()) {
                     initializerEntry = initializerEntry.prepend(typeInitializer);

@@ -545,7 +545,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isMethod()
                 .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
         assertThat(ElementMatchers.isMethod()
-                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(false));
+                .matches(new MethodDescription.Latent.TypeInitializer(mock(TypeDescription.class))), is(false));
     }
 
     @Test
@@ -555,7 +555,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isConstructor()
                 .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
         assertThat(ElementMatchers.isConstructor()
-                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(false));
+                .matches(new MethodDescription.Latent.TypeInitializer(mock(TypeDescription.class))), is(false));
     }
 
     @Test
@@ -574,7 +574,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isTypeInitializer()
                 .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
         assertThat(ElementMatchers.isTypeInitializer()
-                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(true));
+                .matches(new MethodDescription.Latent.TypeInitializer(mock(TypeDescription.class))), is(true));
     }
 
     @Test

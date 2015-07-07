@@ -205,7 +205,7 @@ public class ImplementationContextDefaultTest {
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
-        verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(methodPool).target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(methodPool);
         verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);
@@ -266,7 +266,7 @@ public class ImplementationContextDefaultTest {
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(entry).getSort();
-        verify(entry).apply(classVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(entry).apply(classVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(entry);
         verifyZeroInteractions(classVisitor);
         verify(typeInitializer, atLeast(1)).isDefined();
@@ -296,7 +296,7 @@ public class ImplementationContextDefaultTest {
         verify(otherTypeInitializer, atLeast(1)).isDefined();
         verify(otherTypeInitializer).withReturn();
         verifyNoMoreInteractions(otherTypeInitializer);
-        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 
@@ -317,7 +317,7 @@ public class ImplementationContextDefaultTest {
         verifyNoMoreInteractions(typeInitializer);
         verify(injectedCode, atLeast(1)).isDefined();
         verifyNoMoreInteractions(injectedCode);
-        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 
@@ -334,7 +334,7 @@ public class ImplementationContextDefaultTest {
         verify(entry).getSort();
         verify(entry).prepend(typeInitializer);
         verifyNoMoreInteractions(entry);
-        verify(otherEntry).apply(classVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(otherEntry).apply(classVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verify(typeInitializer, atLeast(1)).isDefined();
         verifyNoMoreInteractions(typeInitializer);
         verify(injectedCode, atLeast(1)).isDefined();
@@ -371,7 +371,7 @@ public class ImplementationContextDefaultTest {
         verify(otherTypeInitializer).expandWith(any(ByteCodeAppender.class));
         verify(thirdTypeInitializer).withReturn();
         verify(thirdTypeInitializer).isDefined();
-        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 
@@ -384,7 +384,7 @@ public class ImplementationContextDefaultTest {
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
-        verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(methodPool).target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(methodPool);
         verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);

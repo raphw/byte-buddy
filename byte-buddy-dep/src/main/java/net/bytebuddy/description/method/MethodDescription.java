@@ -894,24 +894,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             this.defaultValue = defaultValue;
         }
 
-        /**
-         * Creates a latent method description of a type initializer ({@code &lt;clinit&gt;}) for a given type.
-         *
-         * @param declaringType The type that for which a type initializer should be created.
-         * @return A method description of the type initializer of the given type.
-         */
-        public static MethodDescription typeInitializerOf(TypeDescription declaringType) {
-            return new Latent(declaringType,
-                    MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME,
-                    TYPE_INITIALIZER_MODIFIER,
-                    Collections.<GenericTypeDescription>emptyList(),
-                    TypeDescription.VOID,
-                    Collections.<ParameterDescription.Token>emptyList(),
-                    Collections.<GenericTypeDescription>emptyList(),
-                    Collections.<AnnotationDescription>emptyList(),
-                    MethodDescription.NO_DEFAULT_VALUE);
-        }
-
         @Override
         public GenericTypeDescription getReturnType() {
             return returnType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
@@ -955,6 +937,60 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public GenericTypeList getTypeVariables() {
             return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
+        }
+
+        public static class TypeInitializer extends MethodDescription.AbstractMethodDescription {
+
+            private final TypeDescription typeDescription;
+
+            public TypeInitializer(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public GenericTypeDescription getReturnType() {
+                return TypeDescription.VOID;
+            }
+
+            @Override
+            public ParameterList getParameters() {
+                return new ParameterList.Empty();
+            }
+
+            @Override
+            public GenericTypeList getExceptionTypes() {
+                return new GenericTypeList.Empty();
+            }
+
+            @Override
+            public Object getDefaultValue() {
+                return NO_DEFAULT_VALUE;
+            }
+
+            @Override
+            public GenericTypeList getTypeVariables() {
+                return new GenericTypeList.Empty();
+            }
+
+            @Override
+            public AnnotationList getDeclaredAnnotations() {
+                return new AnnotationList.Empty();
+            }
+
+            @Override
+            public TypeDescription getDeclaringType() {
+                return typeDescription;
+            }
+
+            @Override
+            public int getModifiers() {
+                return TYPE_INITIALIZER_MODIFIER;
+            }
+
+            @Override
+            public String getInternalName() {
+                return MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME;
+            }
         }
     }
 

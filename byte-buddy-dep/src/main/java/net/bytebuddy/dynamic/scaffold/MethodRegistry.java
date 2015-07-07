@@ -12,7 +12,6 @@ import net.bytebuddy.matcher.LatentMethodMatcher;
 
 import java.util.*;
 
-import static net.bytebuddy.description.method.MethodDescription.Latent.typeInitializerOf;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -416,9 +415,8 @@ public interface MethodRegistry {
                 }
             }
             MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
-            ElementMatcher<? super MethodDescription> instrumented = not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType));
-            List<MethodDescription> methodDescriptions = join(typeInitializerOf(instrumentedType), finding.getInvokableMethods().filter(instrumented));
-            for (MethodDescription methodDescription : methodDescriptions) {
+            List<MethodDescription> relevant = finding.getInvokableMethods().filter(not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType)));
+            for (MethodDescription methodDescription : join(new MethodDescription.Latent.TypeInitializer(instrumentedType), relevant)) {
                 for (Entry entry : entries) {
                     if (entry.resolve(instrumentedType).matches(methodDescription)) {
                         implementations.put(methodDescription, entry);

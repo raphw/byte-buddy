@@ -374,7 +374,7 @@ public interface InstrumentedType extends TypeDescription {
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
-                    typeInitializer,
+                    typeInitializer.expandWith(byteCodeAppender),
                     loadedTypeInitializer);
         }
 
