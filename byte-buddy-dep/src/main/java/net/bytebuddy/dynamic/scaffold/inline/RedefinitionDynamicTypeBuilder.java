@@ -77,7 +77,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 levelType,
-                joinUniqueRaw(interfaceTypes, levelType.getInterfaces().asRawTypes()),
+                joinUniqueRaw(interfaceTypes, levelType.getInterfaces()),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
@@ -123,7 +123,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              NamingStrategy namingStrategy,
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                              TypeDescription levelType,
-                                             List<TypeDescription> interfaceTypes,
+                                             List<GenericTypeDescription> interfaceTypes,
                                              int modifiers,
                                              TypeAttributeAppender attributeAppender,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -162,7 +162,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  TypeDescription levelType,
-                                                 List<TypeDescription> interfaceTypes,
+                                                 List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -198,7 +198,10 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
     @Override
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
-                        .UnnamedType.Default(targetType.getSuperType().asRawType(), interfaceTypes, modifiers, classFileVersion)),
+                        .UnnamedType.Default(targetType.getSuperType() == null ? null : targetType.getSuperType().asRawType(),
+                        interfaceTypes,
+                        modifiers,
+                        classFileVersion)),
                         modifiers,
                         targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
                         targetType.getSuperType(),

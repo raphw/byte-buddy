@@ -17,7 +17,6 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 
-import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -85,7 +84,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 levelType,
-                joinUniqueRaw(interfaceTypes, levelType.getInterfaces().asRawTypes()),
+                joinUniqueRaw(interfaceTypes, levelType.getInterfaces()),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
@@ -133,7 +132,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        NamingStrategy namingStrategy,
                                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                        TypeDescription levelType,
-                                       List<TypeDescription> interfaceTypes,
+                                       List<GenericTypeDescription> interfaceTypes,
                                        int modifiers,
                                        TypeAttributeAppender attributeAppender,
                                        ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -174,7 +173,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  TypeDescription levelType,
-                                                 List<TypeDescription> interfaceTypes,
+                                                 List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,

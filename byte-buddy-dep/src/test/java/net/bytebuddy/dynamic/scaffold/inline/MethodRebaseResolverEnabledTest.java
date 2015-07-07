@@ -25,6 +25,7 @@ import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 public class MethodRebaseResolverEnabledTest {
@@ -69,9 +70,11 @@ public class MethodRebaseResolverEnabledTest {
         when(constructor.getParameters()).thenReturn(constructorParameterList);
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
-        when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(placeholderType.asRawType()).thenReturn(placeholderType); // REFACTOR
+        when(placeholderType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(placeholderType);
     }
 
     @Test
@@ -100,7 +103,7 @@ public class MethodRebaseResolverEnabledTest {
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getAdditionalArguments(), is((StackManipulation) NullConstant.INSTANCE));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
-        assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
         assertThat(resolution.getResolvedMethod().getParameters().asTypeList(),
                 is((GenericTypeList) new GenericTypeList.Explicit(Arrays.asList(parameterType, placeholderType))));
         assertThat(resolution.getResolvedMethod().isSynthetic(), is(true));

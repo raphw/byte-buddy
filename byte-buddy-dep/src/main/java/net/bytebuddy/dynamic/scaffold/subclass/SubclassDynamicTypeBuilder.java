@@ -18,6 +18,7 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -78,7 +79,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 superType,
-                interfaceTypes,
+                new ArrayList<GenericTypeDescription>(interfaceTypes),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
@@ -125,7 +126,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          NamingStrategy namingStrategy,
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                          TypeDescription superType,
-                                         List<TypeDescription> interfaceTypes,
+                                         List<GenericTypeDescription> interfaceTypes,
                                          int modifiers,
                                          TypeAttributeAppender attributeAppender,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -164,7 +165,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  TypeDescription targetType,
-                                                 List<TypeDescription> interfaceTypes,
+                                                 List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,

@@ -433,7 +433,9 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return superType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+            return superType == null
+                    ? null
+                    : superType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override

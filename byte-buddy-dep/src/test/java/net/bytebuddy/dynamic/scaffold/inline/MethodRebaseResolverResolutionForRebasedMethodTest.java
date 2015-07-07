@@ -49,6 +49,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     private Implementation.Context implementationContext;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
@@ -62,7 +63,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Collections.singletonList(parameterType));
         when(methodDescription.getParameters()).thenReturn(parameterList);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType); // REFACTOR
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType); // REFACTOR
     }
 
     @Test

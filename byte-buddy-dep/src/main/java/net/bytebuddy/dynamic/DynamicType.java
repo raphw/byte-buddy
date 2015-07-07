@@ -1159,7 +1159,7 @@ public interface DynamicType {
             /**
              * The interface types to implement as specified for this builder.
              */
-            protected final List<TypeDescription> interfaceTypes;
+            protected final List<GenericTypeDescription> interfaceTypes;
 
             /**
              * The modifiers specified for this builder.
@@ -1252,7 +1252,7 @@ public interface DynamicType {
                                    NamingStrategy namingStrategy,
                                    AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                    TypeDescription targetType,
-                                   List<TypeDescription> interfaceTypes,
+                                   List<GenericTypeDescription> interfaceTypes,
                                    int modifiers,
                                    TypeAttributeAppender attributeAppender,
                                    ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -1769,7 +1769,7 @@ public interface DynamicType {
                                                       NamingStrategy namingStrategy,
                                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                       TypeDescription targetType,
-                                                      List<TypeDescription> interfaceTypes,
+                                                      List<GenericTypeDescription> interfaceTypes,
                                                       int modifiers,
                                                       TypeAttributeAppender attributeAppender,
                                                       ElementMatcher<? super MethodDescription> ignoredMethods,
