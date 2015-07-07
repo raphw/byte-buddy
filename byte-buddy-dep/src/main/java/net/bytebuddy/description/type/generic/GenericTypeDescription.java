@@ -9,11 +9,14 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaMethod;
 import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.reflect.*;
 import java.util.*;
+
+import static net.bytebuddy.matcher.ElementMatchers.is;
 
 public interface GenericTypeDescription extends NamedElement {
 
@@ -344,12 +347,12 @@ public interface GenericTypeDescription extends NamedElement {
 
             public static class ForDetachment extends ComponentTypeResolving {
 
-                private final TypeDescription declaringType;
+                private final ElementMatcher<? super TypeDescription> typeMatcher;
 
                 private final Map<String, GenericTypeDescription> detachedVariables;
 
-                public ForDetachment(TypeDescription declaringType) {
-                    this.declaringType = declaringType;
+                public ForDetachment(ElementMatcher<? super TypeDescription> typeMatcher) {
+                    this.typeMatcher = typeMatcher;
                     detachedVariables = new HashMap<String, GenericTypeDescription>();
                 }
 
@@ -369,7 +372,7 @@ public interface GenericTypeDescription extends NamedElement {
 
                 @Override
                 protected TypeDescription onComponentType(TypeDescription typeDescription) {
-                    return declaringType.equals(typeDescription)
+                    return typeMatcher.matches(typeDescription)
                             ? TargetType.DESCRIPTION
                             : typeDescription;
                 }
@@ -782,7 +785,8 @@ public interface GenericTypeDescription extends NamedElement {
             List<FieldDescription> resolved = new ArrayList<FieldDescription>(declaredFields.size());
             Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariable.bind(this);
             for (FieldDescription fieldDescription : declaredFields) {
-                resolved.add(new FieldDescription.Latent(fieldDescription.getDeclaringType(), fieldDescription.asToken().accept(visitor)));
+                TypeDescription declaringType = fieldDescription.getDeclaringType();
+                resolved.add(new FieldDescription.Latent(declaringType, fieldDescription.asToken(is(declaringType)).accept(visitor)));
             }
             return new FieldList.Explicit(resolved);
         }
@@ -793,7 +797,8 @@ public interface GenericTypeDescription extends NamedElement {
             List<MethodDescription> resolved = new ArrayList<MethodDescription>(declaredMethods.size());
             Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariable.bind(this);
             for (MethodDescription methodDescription : declaredMethods) {
-                resolved.add(new MethodDescription.Latent(methodDescription.getDeclaringType(), methodDescription.asToken().accept(visitor)));
+                TypeDescription declaringType = methodDescription.getDeclaringType();
+                resolved.add(new MethodDescription.Latent(declaringType, methodDescription.asToken(is(declaringType)).accept(visitor)));
             }
             return new MethodList.Explicit(resolved);
         }

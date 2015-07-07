@@ -4,6 +4,7 @@ import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.Constructor;
@@ -18,7 +19,7 @@ import java.util.List;
  */
 public interface MethodList extends FilterableList<MethodDescription, MethodList> {
 
-    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList();
+    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     abstract class AbstractBase extends FilterableList.AbstractBase<MethodDescription, MethodList> implements MethodList {
 
@@ -28,10 +29,10 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             List<MethodDescription.Token> tokens = new ArrayList<MethodDescription.Token>(size());
             for (MethodDescription fieldDescription : this) {
-                tokens.add(fieldDescription.asToken());
+                tokens.add(fieldDescription.asToken(targetTypeMatcher));
             }
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(tokens);
         }}
@@ -156,7 +157,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
     class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(Collections.<MethodDescription.Token>emptyList());
         }
     }

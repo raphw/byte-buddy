@@ -10,6 +10,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaMethod;
 
 import java.lang.annotation.Annotation;
@@ -69,7 +70,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     int getOffset();
 
-    Token asToken();
+    Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
      * A base implementation of a method parameter description.
@@ -111,8 +112,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public Token asToken() {
-            return new Token(getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(getDeclaringMethod().getDeclaringType())),
+        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+            return new Token(getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
                     getDeclaredAnnotations(),
                     isNamed()
                             ? getName()

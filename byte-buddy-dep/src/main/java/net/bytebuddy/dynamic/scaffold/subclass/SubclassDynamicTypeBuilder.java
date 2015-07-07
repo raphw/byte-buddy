@@ -216,8 +216,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                 LoadedTypeInitializer.NoOp.INSTANCE)),
                         methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
                         new InstrumentableMatcher(ignoredMethods))
-                .compile(new SubclassImplementationTarget.Factory(bridgeMethodResolverFactory,
-                        SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE));
+                .compile(new SubclassImplementationTarget.Factory(bridgeMethodResolverFactory, SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE));
         return TypeWriter.Default.<T>forCreation(compiledMethodRegistry,
                 fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
                 auxiliaryTypeNamingStrategy,

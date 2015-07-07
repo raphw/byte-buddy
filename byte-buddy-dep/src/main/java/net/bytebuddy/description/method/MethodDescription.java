@@ -10,6 +10,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.description.type.generic.TypeVariableSource;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
@@ -20,7 +21,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -209,7 +209,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     boolean isDefaultValue(Object value);
 
-    Token asToken();
+    Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
      * An abstract base implementation of a method description.
@@ -500,13 +500,13 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public Token asToken() {
-            GenericTypeDescription.Visitor<GenericTypeDescription> visitor = new GenericTypeDescription.Visitor.Substitutor.ForDetachment(getDeclaringType());
+        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+            GenericTypeDescription.Visitor<GenericTypeDescription> visitor = new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher);
             return new Token(getInternalName(),
                     getModifiers(),
                     getTypeVariables().accept(visitor),
                     getReturnType().accept(visitor),
-                    getParameters().asTokens(),
+                    getParameters().asTokens(targetTypeMatcher),
                     getExceptionTypes().accept(visitor),
                     getDeclaredAnnotations(),
                     getDefaultValue());
@@ -1047,7 +1047,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             if (!returnType.asRawType().equals(token.returnType.asRawType())) return false;
             if (parameterTokens.size() != token.parameterTokens.size()) return false;
             for (int index = 0; index < parameterTokens.size(); index++) {
-                if (parameterTokens.get(index).getType().asRawType().equals(token.parameterTokens.get(index).getType().asRawType())) return false;
+                if (!parameterTokens.get(index).getType().asRawType().equals(token.parameterTokens.get(index).getType().asRawType())) return false;
             }
             return true;
         }

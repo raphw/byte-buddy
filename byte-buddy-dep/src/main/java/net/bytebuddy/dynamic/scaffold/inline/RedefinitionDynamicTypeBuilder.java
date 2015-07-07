@@ -18,11 +18,9 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
 
 /**
@@ -90,8 +88,8 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                levelType.getDeclaredFields().asTokenList(),
-                levelType.getDeclaredMethods().asTokenList(),
+                levelType.getDeclaredFields().asTokenList(is(levelType)),
+                levelType.getDeclaredMethods().asTokenList(is(levelType)),
                 classFileLocator);
     }
 
@@ -202,7 +200,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
                         .UnnamedType.Default(targetType.getSuperType().asRawType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetType)),
+                        targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
                         targetType.getSuperType(),
                         interfaceTypes,
                         fieldTokens,

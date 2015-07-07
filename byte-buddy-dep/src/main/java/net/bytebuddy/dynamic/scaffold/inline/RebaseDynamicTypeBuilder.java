@@ -20,6 +20,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
 
 /**
@@ -95,8 +96,8 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                levelType.getDeclaredFields().asTokenList(),
-                levelType.getDeclaredMethods().asTokenList(),
+                levelType.getDeclaredFields().asTokenList(is(levelType)),
+                levelType.getDeclaredMethods().asTokenList(is(levelType)),
                 classFileLocator,
                 methodNameTransformer);
     }
@@ -212,7 +213,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
                         .UnnamedType.Default(targetType.getSuperType().asRawType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetType)),
+                        targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
                         targetType.getSuperType(),
                         interfaceTypes,
                         fieldTokens,

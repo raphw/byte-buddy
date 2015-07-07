@@ -6,6 +6,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.Field;
@@ -20,7 +21,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
 
     GenericTypeDescription getType();
 
-    Token asToken();
+    Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
      * An abstract base implementation of a field description.
@@ -60,10 +61,10 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public FieldDescription.Token asToken() {
+        public FieldDescription.Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new FieldDescription.Token(getName(),
                     getModifiers(),
-                    getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(getDeclaringType())),
+                    getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
                     getDeclaredAnnotations());
         }
 

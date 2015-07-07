@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.JavaMethod;
 
@@ -23,7 +24,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
     GenericTypeList asTypeList();
 
-    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens();
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
@@ -48,10 +49,10 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens() {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
             for (ParameterDescription parameterDescription : this) {
-                tokens.add(parameterDescription.asToken());
+                tokens.add(parameterDescription.asToken(targetTypeMatcher));
             }
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(tokens);
         }
@@ -353,7 +354,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens() {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
         }
     }
