@@ -402,7 +402,7 @@ public interface MethodRegistry {
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodLookupEngine methodLookupEngine,
                                                LatentMethodMatcher methodFilter) {
-            Map<MethodDescription, Entry> implementations = new HashMap<MethodDescription, Entry>();
+            LinkedHashMap<MethodDescription, Entry> implementations = new LinkedHashMap<MethodDescription, Entry>();
             Set<Handler> handlers = new HashSet<Handler>(entries.size());
             int helperMethodIndex = instrumentedType.getDeclaredMethods().size();
             for (Entry entry : entries) {
@@ -426,10 +426,7 @@ public interface MethodRegistry {
                     }
                 }
             }
-            return new Prepared(implementations,
-                    instrumentedType.getLoadedTypeInitializer(),
-                    instrumentedType.getTypeInitializer(),
-                    finding);
+            return new Prepared(implementations, instrumentedType.getLoadedTypeInitializer(), instrumentedType.getTypeInitializer(), finding);
         }
 
         @Override
@@ -543,9 +540,9 @@ public interface MethodRegistry {
         protected static class Prepared implements MethodRegistry.Prepared {
 
             /**
-             * A map of all method descriptions mapped to their handling entires.
+             * A map of all method descriptions mapped to their handling entries.
              */
-            private final Map<MethodDescription, Entry> implementations;
+            private final LinkedHashMap<MethodDescription, Entry> implementations;
 
             /**
              * The loaded type initializer of the instrumented type.
@@ -553,7 +550,7 @@ public interface MethodRegistry {
             private final LoadedTypeInitializer loadedTypeInitializer;
 
             /**
-             * The type intiailizer of the instrumented type.
+             * The type initializer of the instrumented type.
              */
             private final InstrumentedType.TypeInitializer typeInitializer;
 
@@ -565,15 +562,15 @@ public interface MethodRegistry {
             /**
              * Creates a prepared version of a default method registry.
              *
-             * @param implementations       A map of all method descriptions mapped to their handling entires.
+             * @param implementations       A map of all method descriptions mapped to their handling entries.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
-             * @param typeInitializer       The type intiailizer of the instrumented type.
+             * @param typeInitializer       The type initializer of the instrumented type.
              * @param finding               The analyzed instrumented type.
              */
-            public Prepared(Map<MethodDescription, Entry> implementations,
-                            LoadedTypeInitializer loadedTypeInitializer,
-                            InstrumentedType.TypeInitializer typeInitializer,
-                            MethodLookupEngine.Finding finding) {
+            protected Prepared(LinkedHashMap<MethodDescription, Entry> implementations,
+                               LoadedTypeInitializer loadedTypeInitializer,
+                               InstrumentedType.TypeInitializer typeInitializer,
+                               MethodLookupEngine.Finding finding) {
                 this.implementations = implementations;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
@@ -604,7 +601,7 @@ public interface MethodRegistry {
             public MethodRegistry.Compiled compile(Implementation.Target.Factory implementationTargetFactory) {
                 Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>(implementations.size());
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(implementations.size());
-                Map<MethodDescription, TypeWriter.MethodPool.Entry> entries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>(implementations.size());
+                LinkedHashMap<MethodDescription, TypeWriter.MethodPool.Entry> entries = new LinkedHashMap<MethodDescription, TypeWriter.MethodPool.Entry>(implementations.size());
                 Implementation.Target implementationTarget = implementationTargetFactory.make(finding, getInstrumentedMethods());
                 for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) {
                     Handler.Compiled cachedEntry = compilationCache.get(entry.getValue().getHandler());
@@ -676,7 +673,7 @@ public interface MethodRegistry {
             /**
              * A map of all method descriptions mapped to their handling entries.
              */
-            private final Map<MethodDescription, Entry> implementations;
+            private final LinkedHashMap<MethodDescription, Entry> implementations;
 
             /**
              * Creates a new compiled version of a default method registry.
@@ -686,10 +683,10 @@ public interface MethodRegistry {
              * @param typeInitializer       The type initializer of the instrumented type.
              * @param implementations       A map of all method descriptions mapped to their handling entries.
              */
-            public Compiled(TypeDescription instrumentedType,
-                            LoadedTypeInitializer loadedTypeInitializer,
-                            InstrumentedType.TypeInitializer typeInitializer,
-                            Map<MethodDescription, Entry> implementations) {
+            protected Compiled(TypeDescription instrumentedType,
+                               LoadedTypeInitializer loadedTypeInitializer,
+                               InstrumentedType.TypeInitializer typeInitializer,
+                               LinkedHashMap<MethodDescription, Entry> implementations) {
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
