@@ -1413,7 +1413,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public String getName() {
-            return packageDescription.getName();
+            return packageDescription.getName() + "." + PackageDescription.PACKAGE_CLASS_NAME;
         }
     }
 }

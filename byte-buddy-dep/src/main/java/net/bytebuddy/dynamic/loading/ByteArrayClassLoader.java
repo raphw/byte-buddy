@@ -365,6 +365,10 @@ public class ByteArrayClassLoader extends ClassLoader {
         public Class<?> run() throws ClassNotFoundException {
             byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
             if (javaType != null) {
+                int packageIndex = name.lastIndexOf('.');
+                if (packageIndex != -1 && getPackage(name.substring(0, packageIndex)) == null) {
+                    definePackage(name.substring(0, packageIndex), null, null, null, null, null, null, null);
+                }
                 return defineClass(name, javaType, FROM_BEGINNING, javaType.length, protectionDomain);
             }
             throw new ClassNotFoundException(name);

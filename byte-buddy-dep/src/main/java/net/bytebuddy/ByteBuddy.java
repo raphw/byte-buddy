@@ -491,6 +491,13 @@ public class ByteBuddy {
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
+    /**
+     * Creates a new Java package. A Java package is represented as a Java type with name <i>package-info</i>. The explicit creation of a
+     * package can be useful for adding annotations to this package.
+     *
+     * @param name The name of the package.
+     * @return A dynamic type that represents the created package.
+     */
     public DynamicType.Builder<?> makePackage(String name) {
         return new SubclassDynamicTypeBuilder<Class<?>>(classFileVersion,
                 new NamingStrategy.Fixed(isValidIdentifier(name) + "." + PackageDescription.PACKAGE_CLASS_NAME),
@@ -510,10 +517,26 @@ public class ByteBuddy {
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
+    /**
+     * Rebases the given the package. A Java package is represented as a type named <i>package-info</i>. The explicit creation of a
+     * package can be useful for adding annotations to this package.
+     *
+     * @param aPackage         The package to rebase.
+     * @param classFileLocator A class file locator for locating the given packages class file.
+     * @return A dynamic type that represents the created package.
+     */
     public DynamicType.Builder<?> rebase(Package aPackage, ClassFileLocator classFileLocator) {
         return rebase(new PackageDescription.ForLoadedPackage(aPackage), classFileLocator);
     }
 
+    /**
+     * Rebases the given the package. A Java package is represented as a type named <i>package-info</i>. The explicit creation of a
+     * package can be useful for adding annotations to this package.
+     *
+     * @param packageDescription         The description of the package to rebase.
+     * @param classFileLocator A class file locator for locating the given packages class file.
+     * @return A dynamic type that represents the created package.
+     */
     public DynamicType.Builder<?> rebase(PackageDescription packageDescription, ClassFileLocator classFileLocator) {
         return rebase(new TypeDescription.ForPackageDescription(packageDescription), classFileLocator);
     }

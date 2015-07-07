@@ -509,9 +509,7 @@ public interface MethodLookupEngine {
                 methodBucket.pushClass(currentType.asRawType());
                 interfaces.addAll(currentType.getInterfaces().asRawTypes());
             }
-            Map<TypeDescription, Set<MethodDescription>> defaultMethods = apply(methodBucket,
-                    interfaces,
-                    defaultMethodRelevantInterfaces);
+            Map<TypeDescription, Set<MethodDescription>> defaultMethods = apply(methodBucket, interfaces, defaultMethodRelevantInterfaces);
             methodBucket.pushInterfaces(interfaces);
             return new Finding.Default(methodBucket.getTypeOfInterest(),
                     methodBucket.extractInvokableMethods(),
