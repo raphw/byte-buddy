@@ -46,6 +46,11 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
         return mask;
     }
 
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
+    }
+
     /**
      * Checks if the current state describes a varargs methods.
      *

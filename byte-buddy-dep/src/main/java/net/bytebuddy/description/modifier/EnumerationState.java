@@ -15,7 +15,7 @@ public enum EnumerationState implements ModifierContributor.ForType, ModifierCon
     /**
      * Modifier for marking a type as a non-enumeration. (This is the default modifier.)
      */
-    NON_ENUMERATION(EMPTY_MASK);
+    PLAIN(EMPTY_MASK);
 
     /**
      * The mask of the modifier contributor.
@@ -38,12 +38,17 @@ public enum EnumerationState implements ModifierContributor.ForType, ModifierCon
      * @return The corresponding synthetic state.
      */
     public static EnumerationState is(boolean enumeration) {
-        return enumeration ? ENUMERATION : NON_ENUMERATION;
+        return enumeration ? ENUMERATION : PLAIN;
     }
 
     @Override
     public int getMask() {
         return mask;
+    }
+
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
     }
 
     /**

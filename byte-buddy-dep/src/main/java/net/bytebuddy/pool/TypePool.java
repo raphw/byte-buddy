@@ -18,7 +18,6 @@ import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;

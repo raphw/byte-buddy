@@ -12,24 +12,24 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class SyntheticStateTest extends AbstractModifierContributorTest {
+public class ProvisioningStateTest extends AbstractModifierContributorTest {
 
-    public SyntheticStateTest(ModifierContributor modifierContributor, int expectedModifier, boolean defaultModifier) {
+    public ProvisioningStateTest(ModifierContributor modifierContributor, int expectedModifier, boolean defaultModifier) {
         super(modifierContributor, expectedModifier, defaultModifier);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {SyntheticState.is(false), 0, true},
-                {SyntheticState.PLAIN, 0, true},
-                {SyntheticState.is(true), Opcodes.ACC_SYNTHETIC, false},
-                {SyntheticState.SYNTHETIC, Opcodes.ACC_SYNTHETIC, false}
+                {ProvisioningState.is(false), 0, true},
+                {ProvisioningState.PLAIN, 0, true},
+                {ProvisioningState.is(true), Opcodes.ACC_MANDATED, false},
+                {ProvisioningState.MANDATED, Opcodes.ACC_MANDATED, false}
         });
     }
 
     @Test
     public void testState() throws Exception {
-        assertThat(((SyntheticState) modifierContributor).isSynthetic(), is(expectedModifier != 0));
+        assertThat(((ProvisioningState) modifierContributor).isMandated(), is(expectedModifier != 0));
     }
 }

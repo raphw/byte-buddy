@@ -63,6 +63,11 @@ public enum MethodManifestation implements ModifierContributor.ForMethod {
         return mask;
     }
 
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
+    }
+
     /**
      * Returns {@code true} if this instance represents a {@code native} method.
      *

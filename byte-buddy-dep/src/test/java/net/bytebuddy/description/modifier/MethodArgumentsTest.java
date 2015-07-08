@@ -14,17 +14,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class MethodArgumentsTest extends AbstractModifierContributorTest {
 
-    public MethodArgumentsTest(ModifierContributor modifierContributor, int expectedModifier) {
-        super(modifierContributor, expectedModifier);
+    public MethodArgumentsTest(ModifierContributor modifierContributor, int expectedModifier, boolean defaultModifier) {
+        super(modifierContributor, expectedModifier, defaultModifier);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {MethodArguments.PLAIN, 0},
-                {MethodArguments.isVarargs(false), 0},
-                {MethodArguments.VARARGS, Opcodes.ACC_VARARGS},
-                {MethodArguments.isVarargs(true), Opcodes.ACC_VARARGS},
+                {MethodArguments.PLAIN, 0, true},
+                {MethodArguments.isVarargs(false), 0, true},
+                {MethodArguments.VARARGS, Opcodes.ACC_VARARGS, false},
+                {MethodArguments.isVarargs(true), Opcodes.ACC_VARARGS, false},
         });
     }
 

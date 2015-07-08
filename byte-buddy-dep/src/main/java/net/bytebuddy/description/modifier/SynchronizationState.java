@@ -46,6 +46,11 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
         return mask;
     }
 
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
+    }
+
     /**
      * Checks if the current state describes the synchronized state.
      *

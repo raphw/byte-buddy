@@ -24,6 +24,13 @@ public interface ModifierContributor {
     int getMask();
 
     /**
+     * Determines if this is the default modifier.
+     *
+     * @return {@code true} if this contributor represents the default modifier.
+     */
+    boolean isDefault();
+
+    /**
      * A marker interface for modifiers that can be applied to methods.
      */
     interface ForMethod extends ModifierContributor {
@@ -44,6 +51,9 @@ public interface ModifierContributor {
         /* marker interface */
     }
 
+    /**
+     * A marker interface for modifiers that can be applied to method parameters.
+     */
     interface ForParameter extends ModifierContributor {
         /* marker interface */
     }

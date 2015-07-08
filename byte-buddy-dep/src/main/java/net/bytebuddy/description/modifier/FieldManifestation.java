@@ -41,6 +41,11 @@ public enum FieldManifestation implements ModifierContributor.ForField {
         return mask;
     }
 
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
+    }
+
     /**
      * Returns {@code true} if this manifestation represents a {@code final} type.
      *

@@ -48,6 +48,11 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
         return mask;
     }
 
+    @Override
+    public boolean isDefault() {
+        return this == MEMBER;
+    }
+
     /**
      * Checks if the current state describes a {@code static} member.
      *

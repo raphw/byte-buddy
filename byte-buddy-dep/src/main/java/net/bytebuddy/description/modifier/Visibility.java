@@ -46,6 +46,11 @@ public enum Visibility implements ModifierContributor.ForType, ModifierContribut
         return mask;
     }
 
+    @Override
+    public boolean isDefault() {
+        return this == PACKAGE_PRIVATE;
+    }
+
     /**
      * Returns {@code true} if this instance describes {@code public} visibility.
      *

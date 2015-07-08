@@ -11,14 +11,14 @@ public enum SyntheticState implements ModifierContributor.ForType,
         ModifierContributor.ForParameter {
 
     /**
-     * Modifier for marking a type member as synthetic.
-     */
-    SYNTHETIC(Opcodes.ACC_SYNTHETIC),
-
-    /**
      * Modifier for not marking a type member as synthetic. (This is the default modifier.)
      */
-    NON_SYNTHETIC(EMPTY_MASK);
+    PLAIN(EMPTY_MASK),
+
+    /**
+     * Modifier for marking a type member as synthetic.
+     */
+    SYNTHETIC(Opcodes.ACC_SYNTHETIC);
 
     /**
      * The mask of the modifier contributor.
@@ -41,12 +41,17 @@ public enum SyntheticState implements ModifierContributor.ForType,
      * @return The corresponding synthetic state.
      */
     public static SyntheticState is(boolean synthetic) {
-        return synthetic ? SYNTHETIC : NON_SYNTHETIC;
+        return synthetic ? SYNTHETIC : PLAIN;
     }
 
     @Override
     public int getMask() {
         return mask;
+    }
+
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
     }
 
     /**

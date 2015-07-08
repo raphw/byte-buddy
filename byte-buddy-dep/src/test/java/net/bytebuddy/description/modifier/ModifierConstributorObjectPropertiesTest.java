@@ -12,6 +12,8 @@ public class ModifierConstributorObjectPropertiesTest {
         ObjectPropertyAssertion.of(MethodArguments.class).apply();
         ObjectPropertyAssertion.of(MethodManifestation.class).apply();
         ObjectPropertyAssertion.of(Ownership.class).apply();
+        ObjectPropertyAssertion.of(ParameterManifestation.class).apply();
+        ObjectPropertyAssertion.of(ProvisioningState.class).apply();
         ObjectPropertyAssertion.of(SynchronizationState.class).apply();
         ObjectPropertyAssertion.of(SyntheticState.class).apply();
         ObjectPropertyAssertion.of(TypeManifestation.class).apply();

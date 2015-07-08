@@ -14,17 +14,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class OwnershipTest extends AbstractModifierContributorTest {
 
-    public OwnershipTest(ModifierContributor modifierContributor, int expectedModifier) {
-        super(modifierContributor, expectedModifier);
+    public OwnershipTest(ModifierContributor modifierContributor, int expectedModifier, boolean defaultModifier) {
+        super(modifierContributor, expectedModifier, defaultModifier);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Ownership.MEMBER, 0},
-                {Ownership.isStatic(false), 0},
-                {Ownership.STATIC, Opcodes.ACC_STATIC},
-                {Ownership.isStatic(true), Opcodes.ACC_STATIC},
+                {Ownership.MEMBER, 0, true},
+                {Ownership.isStatic(false), 0, true},
+                {Ownership.STATIC, Opcodes.ACC_STATIC, false},
+                {Ownership.isStatic(true), Opcodes.ACC_STATIC, false},
         });
     }
 

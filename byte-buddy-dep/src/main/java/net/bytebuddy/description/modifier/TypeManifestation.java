@@ -51,6 +51,11 @@ public enum TypeManifestation implements ModifierContributor.ForType {
         return mask;
     }
 
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
+    }
+
     /**
      * Returns {@code true} if a type represents a {@code final} type.
      *
