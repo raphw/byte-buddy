@@ -882,7 +882,7 @@ public interface GenericTypeDescription extends NamedElement {
                             bindings.put(typeVariables.get(index), parameters.get(index));
                         }
                         typeDescription = typeDescription.getOwnerType();
-                    } while (typeDescription != null);
+                    } while (typeDescription != null && typeDescription.getSort().isParameterized());
                     return bindings.isEmpty()
                             ? NoOp.INSTANCE
                             : new ForTypeVariableBinding(bindings);
@@ -906,7 +906,7 @@ public interface GenericTypeDescription extends NamedElement {
                 public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
                     GenericTypeDescription substitution = bindings.get(genericTypeDescription);
                     if (substitution == null) {
-                        throw new IllegalArgumentException("Cannot substitute " + genericTypeDescription + " with " + bindings);
+                        throw new IllegalArgumentException("Cannot substitute " + genericTypeDescription + " using " + bindings);
                     }
                     return substitution;
                 }
@@ -1386,26 +1386,12 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public FieldList getDeclaredFields() {
-            FieldList declaredFields = asRawType().getDeclaredFields();
-            List<FieldDescription> resolved = new ArrayList<FieldDescription>(declaredFields.size());
-            Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariableBinding.bind(this);
-            for (FieldDescription fieldDescription : declaredFields) {
-                TypeDescription declaringType = fieldDescription.getDeclaringType();
-                resolved.add(new FieldDescription.Latent(declaringType, fieldDescription.asToken(is(declaringType)).accept(visitor)));
-            }
-            return new FieldList.Explicit(resolved);
+            return new FieldList.TypeSubstituting(asRawType().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
         public MethodList getDeclaredMethods() {
-            MethodList declaredMethods = asRawType().getDeclaredMethods();
-            List<MethodDescription> resolved = new ArrayList<MethodDescription>(declaredMethods.size());
-            Visitor<GenericTypeDescription> visitor = Visitor.Substitutor.ForTypeVariableBinding.bind(this);
-            for (MethodDescription methodDescription : declaredMethods) {
-                TypeDescription declaringType = methodDescription.getDeclaringType();
-                resolved.add(new MethodDescription.Latent(declaringType, methodDescription.asToken(is(declaringType)).accept(visitor)));
-            }
-            return new MethodList.Explicit(resolved);
+            return new MethodList.TypeSubstituting(asRawType().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override

@@ -31,12 +31,12 @@ public class GenericTypeDescriptionTest {
     @Test
     public void testZeroArityReturnsInstance() throws Exception {
         GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.PARAMETERIZED);
         assertThat(GenericTypeDescription.ForGenericArray.Latent.of(genericTypeDescription, 0), is(genericTypeDescription));
     }
 
     @Test
-    public void testNonGenericType() throws Exception {
+    public void testNonGenericArrayType() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.asRawType()).thenReturn(typeDescription);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);

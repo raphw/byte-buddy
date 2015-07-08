@@ -542,6 +542,63 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
     }
 
+    class TypeSubstituting extends AbstractParameterDescription {
+
+        private final ParameterDescription parameterDescription;
+
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        public TypeSubstituting(ParameterDescription parameterDescription, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.parameterDescription = parameterDescription;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public GenericTypeDescription getType() {
+            return parameterDescription.getType().accept(visitor);
+        }
+
+        @Override
+        public MethodDescription getDeclaringMethod() {
+            return parameterDescription.getDeclaringMethod();
+        }
+
+        @Override
+        public int getIndex() {
+            return parameterDescription.getIndex();
+        }
+
+        @Override
+        public boolean isNamed() {
+            return parameterDescription.isNamed();
+        }
+
+        @Override
+        public boolean hasModifiers() {
+            return parameterDescription.hasModifiers();
+        }
+
+        @Override
+        public int getOffset() {
+            return parameterDescription.getOffset();
+        }
+
+        @Override
+        public String getName() {
+            return parameterDescription.getName();
+        }
+
+        @Override
+        public int getModifiers() {
+            return parameterDescription.getModifiers();
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return parameterDescription.getDeclaredAnnotations();
+        }
+    }
+
     class Token implements ByteCodeElement.Token<Token> {
 
         public static final String NO_NAME = null;

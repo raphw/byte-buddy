@@ -993,6 +993,63 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
     }
 
+    class TypeSubstituting extends AbstractMethodDescription {
+
+        private final MethodDescription methodDescription;
+
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        public TypeSubstituting(MethodDescription methodDescription, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.methodDescription = methodDescription;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public GenericTypeDescription getReturnType() {
+            return methodDescription.getReturnType().accept(visitor);
+        }
+
+        @Override
+        public ParameterList getParameters() {
+            return new ParameterList.Substituted(methodDescription.getParameters(), visitor);
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypes() {
+            return methodDescription.getExceptionTypes().accept(visitor);
+        }
+
+        @Override
+        public Object getDefaultValue() {
+            return methodDescription.getDefaultValue();
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return methodDescription.getTypeVariables();
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return methodDescription.getDeclaredAnnotations();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return methodDescription.getDeclaringType();
+        }
+
+        @Override
+        public int getModifiers() {
+            return methodDescription.getModifiers();
+        }
+
+        @Override
+        public String getInternalName() {
+            return methodDescription.getInternalName();
+        }
+    }
+
     class Token implements ByteCodeElement.Token<Token> {
 
         private final String internalName;

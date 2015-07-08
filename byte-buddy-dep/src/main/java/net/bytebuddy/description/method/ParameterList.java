@@ -338,6 +338,28 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
     }
 
+    class Substituted extends AbstractBase {
+
+        private final List<? extends ParameterDescription> parameterDescriptions;
+
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        public Substituted(List<? extends ParameterDescription> parameterDescriptions, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.parameterDescriptions = parameterDescriptions;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public ParameterDescription get(int index) {
+            return new ParameterDescription.TypeSubstituting(parameterDescriptions.get(index), visitor);
+        }
+
+        @Override
+        public int size() {
+            return parameterDescriptions.size();
+        }
+    }
+
     /**
      * An empty list of parameters.
      */

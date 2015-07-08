@@ -2,6 +2,7 @@ package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -123,6 +124,28 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         @Override
         public int size() {
             return tokens.size();
+        }
+    }
+
+    class TypeSubstituting extends AbstractBase {
+
+        private final List<? extends FieldDescription> fieldDescriptions;
+
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        public TypeSubstituting(List<? extends FieldDescription> fieldDescriptions, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.fieldDescriptions = fieldDescriptions;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public FieldDescription get(int index) {
+            return new FieldDescription.TypeSubstituting(fieldDescriptions.get(index), visitor);
+        }
+
+        @Override
+        public int size() {
+            return fieldDescriptions.size();
         }
     }
 

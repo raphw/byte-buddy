@@ -227,6 +227,43 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
     }
 
+    class TypeSubstituting extends AbstractFieldDescription {
+
+        private final FieldDescription fieldDescription;
+
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        public TypeSubstituting(FieldDescription fieldDescription, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.fieldDescription = fieldDescription;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public GenericTypeDescription getType() {
+            return fieldDescription.getType().accept(visitor);
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return fieldDescription.getDeclaredAnnotations();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return fieldDescription.getDeclaringType();
+        }
+
+        @Override
+        public int getModifiers() {
+            return fieldDescription.getModifiers();
+        }
+
+        @Override
+        public String getName() {
+            return fieldDescription.getName();
+        }
+    }
+
     class Token implements ByteCodeElement.Token<Token> {
 
         private final String name;

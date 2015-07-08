@@ -1,7 +1,6 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -148,6 +147,28 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         @Override
         public int size() {
             return tokens.size();
+        }
+    }
+
+    class TypeSubstituting extends AbstractBase {
+
+        private final List<? extends MethodDescription> methodDescriptions;
+
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        public TypeSubstituting(List<? extends MethodDescription> methodDescriptions, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.methodDescriptions = methodDescriptions;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public MethodDescription get(int index) {
+            return new MethodDescription.TypeSubstituting(methodDescriptions.get(index), visitor);
+        }
+
+        @Override
+        public int size() {
+            return methodDescriptions.size();
         }
     }
 

@@ -11,6 +11,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -360,8 +362,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.STRING));
         assertThat(genericTypeDescription.getUpperBounds().getOnly().getStackSize(), is(StackSize.SINGLE));
         assertThat(genericTypeDescription.getTypeName(), is(SingleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
-        assertThat(genericTypeDescription.getVariableSource(),
-                is((TypeVariableSource) new TypeDescription.ForLoadedType(SingleUpperBoundTypeVariableType.class)));
+        assertThat(genericTypeDescription.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(SingleUpperBoundTypeVariableType.class)));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
     }
@@ -377,8 +378,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getUpperBounds().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(genericTypeDescription.getUpperBounds().get(2), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(genericTypeDescription.getTypeName(), is(MultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
-        assertThat(genericTypeDescription.getVariableSource(),
-                is((TypeVariableSource) new TypeDescription.ForLoadedType(MultipleUpperBoundTypeVariableType.class)));
+        assertThat(genericTypeDescription.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(MultipleUpperBoundTypeVariableType.class)));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
     }
@@ -392,10 +392,8 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getUpperBounds().size(), is(2));
         assertThat(genericTypeDescription.getUpperBounds().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(genericTypeDescription.getUpperBounds().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
-        assertThat(genericTypeDescription.getTypeName(),
-                is(InterfaceOnlyMultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
-        assertThat(genericTypeDescription.getVariableSource(),
-                is((TypeVariableSource) new TypeDescription.ForLoadedType(InterfaceOnlyMultipleUpperBoundTypeVariableType.class)));
+        assertThat(genericTypeDescription.getTypeName(), is(InterfaceOnlyMultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(InterfaceOnlyMultipleUpperBoundTypeVariableType.class)));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
     }
@@ -409,8 +407,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
         assertThat(genericTypeDescription.getUpperBounds().getOnly(), is((GenericTypeDescription) TypeDescription.OBJECT));
         assertThat(genericTypeDescription.getTypeName(), is(ShadowingTypeVariableType.class.getDeclaredMethod(FOO).getGenericReturnType().toString()));
-        assertThat(genericTypeDescription.getVariableSource(),
-                is((TypeVariableSource) new MethodDescription.ForLoadedMethod(ShadowingTypeVariableType.class.getDeclaredMethod(FOO))));
+        assertThat(genericTypeDescription.getVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(ShadowingTypeVariableType.class.getDeclaredMethod(FOO))));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().size(), is(1));
         assertThat(genericTypeDescription.getVariableSource().getTypeVariables().getOnly(), is(genericTypeDescription));
     }
@@ -540,21 +537,63 @@ public abstract class AbstractGenericTypeDescriptionTest {
     }
 
     @Test
-    public void testParameterizedTypeHierarchyResolution() throws Exception {
-        GenericTypeDescription genericTypeDescription = describe(Resolution.class.getDeclaredField(FOO));
+    public void testParameterizedTypeSuperTypeResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(TypeResolution.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(genericTypeDescription.getParameters().size(), is(1));
         GenericTypeDescription superType = genericTypeDescription.getSuperType();
-        assertThat(superType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Resolution.Base.class)));
+        assertThat(superType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
         assertThat(superType.getParameters().size(), is(2));
         assertThat(superType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(superType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(superType.getDeclaredFields().size(), is(1));
+        GenericTypeDescription fieldType = superType.getDeclaredFields().getOnly().getType();
+        assertThat(fieldType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(fieldType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
+        assertThat(fieldType.getParameters().size(), is(2));
+        assertThat(fieldType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(fieldType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(superType.getDeclaredMethods().filter(isConstructor()).size(), is(1));
+        assertThat(superType.getDeclaredMethods().filter(isMethod()).size(), is(1));
+        GenericTypeDescription methodReturnType = superType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType();
+        assertThat(methodReturnType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(methodReturnType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
+        assertThat(methodReturnType.getParameters().size(), is(2));
+        assertThat(methodReturnType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodReturnType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        GenericTypeDescription methodParameterType = superType.getDeclaredMethods().filter(isMethod()).getOnly().getParameters().asTypeList().getOnly();
+        assertThat(methodParameterType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(methodParameterType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
+        assertThat(methodParameterType.getParameters().size(), is(2));
+        assertThat(methodParameterType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodParameterType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+    }
+
+    @Test
+    public void testParameterizedTypeInterfaceResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(TypeResolution.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(1));
         assertThat(genericTypeDescription.getInterfaces().size(), is(1));
         GenericTypeDescription interfaceType = genericTypeDescription.getInterfaces().getOnly();
-        assertThat(interfaceType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Resolution.BaseInterface.class)));
+        assertThat(interfaceType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
         assertThat(interfaceType.getParameters().size(), is(2));
         assertThat(interfaceType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(interfaceType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(interfaceType.getDeclaredMethods().filter(isConstructor()).size(), is(0));
+        assertThat(interfaceType.getDeclaredMethods().filter(isMethod()).size(), is(1));
+        GenericTypeDescription methodReturnType = interfaceType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType();
+        assertThat(methodReturnType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(methodReturnType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
+        assertThat(methodReturnType.getParameters().size(), is(2));
+        assertThat(methodReturnType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodReturnType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        GenericTypeDescription methodParameterType = interfaceType.getDeclaredMethods().filter(isMethod()).getOnly().getParameters().asTypeList().getOnly();
+        assertThat(methodParameterType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(methodParameterType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
+        assertThat(methodParameterType.getParameters().size(), is(2));
+        assertThat(methodParameterType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodParameterType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
     }
 
     @SuppressWarnings("unused")
@@ -716,20 +755,31 @@ public abstract class AbstractGenericTypeDescriptionTest {
     }
 
     @SuppressWarnings("unused")
-    public static class Resolution<T> {
+    public static class TypeResolution<T> {
 
-        private Resolution<Foo>.Inner<Bar> foo;
+        private TypeResolution<Foo>.Inner<Bar> foo;
 
         public class Inner<S> extends Base<T, S> implements BaseInterface<T, S> {
             /* empty */
         }
 
-        public static class Base<V, W> {
+        @SuppressWarnings("unchecked")
+        public class Raw<S> extends Base implements BaseInterface {
             /* empty */
         }
 
-        public static interface BaseInterface<V, W> {
-            /* empty */
+        public static class Base<V, W> {
+
+            Qux<V, W> qux;
+
+            public Qux<V, W> qux(Qux<V, W> qux) {
+                return null;
+            }
+        }
+
+        public interface BaseInterface<V, W> {
+
+            Qux<V, W> qux(Qux<V, W> qux);
         }
     }
 
@@ -740,6 +790,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
 
     @SuppressWarnings("unused")
     public interface Bar {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public interface Qux<T, U> {
         /* empty */
     }
 }

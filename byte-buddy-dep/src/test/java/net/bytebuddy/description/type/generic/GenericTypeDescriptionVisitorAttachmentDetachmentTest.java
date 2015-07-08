@@ -82,7 +82,7 @@ public class GenericTypeDescriptionVisitorAttachmentDetachmentTest {
     public void testDetachedNoSource() throws Exception {
         GenericTypeDescription original = GenericTypeDescription.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
         GenericTypeDescription detached = original.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
-        detached.getParameters().get(0).getUpperBounds();
+        detached.getParameters().get(0).getVariableSource();
     }
 
     @Test
