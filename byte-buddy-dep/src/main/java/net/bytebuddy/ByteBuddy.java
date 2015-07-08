@@ -1460,7 +1460,7 @@ public class ByteBuddy {
          * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
          * {@code enum} values should be handed as {@link net.bytebuddy.description.enumeration.EnumerationDescription}
          * instances, annotations as {@link AnnotationDescription} instances and
-         * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
+         * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their actual form or as their wrapper types.
          *
          * @param value A non-loaded value that the annotation property should set as a default.
          * @return A configuration which defines the given default value for all matched methods.

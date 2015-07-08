@@ -46,7 +46,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         @Override
         public String getGenericSignature() {
             GenericTypeDescription fieldType = getType();
-            return fieldType.getSort().isRawType()
+            return fieldType.getSort().isNonGeneric()
                     ? null
                     : fieldType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(new SignatureWriter())).toString();
         }

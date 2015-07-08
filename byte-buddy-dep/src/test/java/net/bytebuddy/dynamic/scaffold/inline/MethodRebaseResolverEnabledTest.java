@@ -16,7 +16,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,7 +69,7 @@ public class MethodRebaseResolverEnabledTest {
         when(constructor.getParameters()).thenReturn(constructorParameterList);
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
-        when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(placeholderType.asRawType()).thenReturn(placeholderType); // REFACTOR

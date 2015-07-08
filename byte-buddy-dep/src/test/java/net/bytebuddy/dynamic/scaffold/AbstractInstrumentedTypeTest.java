@@ -82,7 +82,7 @@ public abstract class AbstractInstrumentedTypeTest {
         instrumentedType = instrumentedType.withField(BAR, TypeDescription.ArrayProjection.of(instrumentedType, 1), Opcodes.ACC_PUBLIC);
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getType().getSort(), is(GenericTypeDescription.Sort.RAW));
+        assertThat(fieldDescription.getType().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(fieldDescription.getType().asRawType().isArray(), is(true));
         assertThat(fieldDescription.getType().asRawType().getComponentType(), sameInstance((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
@@ -269,7 +269,7 @@ public abstract class AbstractInstrumentedTypeTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         TypeDescription other = mock(TypeDescription.class);
         when(other.getInternalName()).thenReturn(instrumentedType.getInternalName());
-        when(other.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(other.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(other.asRawType()).thenReturn(other);
         assertThat(instrumentedType, equalTo(other));
         verify(other, atLeast(1)).getInternalName();

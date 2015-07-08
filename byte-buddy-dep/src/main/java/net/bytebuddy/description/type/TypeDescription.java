@@ -25,7 +25,8 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
- * Implementations of this interface represent a Java type, i.e. a class or interface.
+ * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
+ * represent non-generic types of sort {@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}.
  */
 public interface TypeDescription extends GenericTypeDescription, TypeVariableSource, Iterable<GenericTypeDescription> {
 
@@ -59,6 +60,9 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      */
     int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
 
+    /**
+     * A list of interfaces that are implicitly implemented by any array type.
+     */
     GenericTypeList ARRAY_INTERFACES = new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class);
 
     /**
@@ -139,11 +143,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      */
     boolean isArray();
 
-    /**
-     * Returns the component type of this type.
-     *
-     * @return The component type of this array or {@code null} if this type description does not represent an array.
-     */
     @Override
     TypeDescription getComponentType();
 
@@ -286,7 +285,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public Sort getSort() {
-            return Sort.RAW;
+            return Sort.NON_GENERIC;
         }
 
         @Override
@@ -296,12 +295,27 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeList getUpperBounds() {
-            return new GenericTypeList.Empty();
+            throw new IllegalStateException("A non-generic type does not imply upper type bounds: " + this);
         }
 
         @Override
         public GenericTypeList getLowerBounds() {
+            throw new IllegalStateException("A non-generic type does not imply lower type bounds: " + this);
+        }
+
+        @Override
+        public GenericTypeList getParameters() {
             return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public String getSymbol() {
+            throw new IllegalStateException("A non-generic type does not imply a symbol: " + this);
+        }
+
+        @Override
+        public GenericTypeDescription getOwnerType() {
+            return null;
         }
 
         @Override
@@ -403,10 +417,10 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 generic = true;
             }
             superType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
-            generic = generic || !superType.getSort().isRawType();
+            generic = generic || !superType.getSort().isNonGeneric();
             for (GenericTypeDescription interfaceType : getInterfaces()) {
                 interfaceType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
-                generic = generic || !interfaceType.getSort().isRawType();
+                generic = generic || !interfaceType.getSort().isNonGeneric();
             }
             return generic
                     ? signatureWriter.toString()
@@ -514,23 +528,8 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeList getParameters() {
-            return new GenericTypeList.Empty();
-        }
-
-        @Override
-        public String getSymbol() {
-            return null;
-        }
-
-        @Override
         public String getTypeName() {
             return getName();
-        }
-
-        @Override
-        public GenericTypeDescription getOwnerType() {
-            return null;
         }
 
         @Override
@@ -561,7 +560,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public <T> T accept(GenericTypeDescription.Visitor<T> visitor) {
-            return visitor.onRawType(this);
+            return visitor.onNonGenericType(this);
         }
 
         @Override
@@ -572,7 +571,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public boolean equals(Object other) {
             return other == this || other instanceof GenericTypeDescription
-                    && ((GenericTypeDescription) other).getSort().isRawType()
+                    && ((GenericTypeDescription) other).getSort().isNonGeneric()
                     && getInternalName().equals(((GenericTypeDescription) other).asRawType().getInternalName());
         }
 

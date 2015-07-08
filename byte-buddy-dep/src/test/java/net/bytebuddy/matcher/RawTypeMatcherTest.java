@@ -8,7 +8,6 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
@@ -36,7 +35,7 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
     @Test
     public void testMatch() throws Exception {
         when(elementMatcher.matches(typeDescriptions)).thenReturn(true);
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(true));
         verify(genericTypeDescription).getSort();
         verify(genericTypeDescription).asRawType();
@@ -59,7 +58,7 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
     @Test
     public void testNoMatch() throws Exception {
         when(elementMatcher.matches(typeDescriptions)).thenReturn(false);
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(false));
         verify(genericTypeDescription).getSort();
         verify(genericTypeDescription).asRawType();

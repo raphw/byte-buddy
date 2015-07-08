@@ -88,7 +88,7 @@ public class ByteArrayClassLoader extends ClassLoader {
      * Loads a given set of class descriptions and their binary representations.
      *
      * @param classLoader        The parent class loader.
-     * @param types              The raw types to load.
+     * @param types              The unloaded types to be loaded.
      * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
      *                           protection domain.
      * @param persistenceHandler The persistence handler of the created class loader.

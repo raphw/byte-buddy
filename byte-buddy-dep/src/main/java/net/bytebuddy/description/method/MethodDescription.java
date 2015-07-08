@@ -21,7 +21,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -303,14 +302,14 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
             for (GenericTypeDescription parameterType : getParameters().asTypeList()) {
                 parameterType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitParameterType()));
-                generic = generic || !parameterType.getSort().isRawType();
+                generic = generic || !parameterType.getSort().isNonGeneric();
             }
             GenericTypeDescription returnType = getReturnType();
             returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
-            generic = generic || !returnType.getSort().isRawType();
+            generic = generic || !returnType.getSort().isNonGeneric();
             for (GenericTypeDescription exceptionType : getExceptionTypes()) {
                 exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
-                generic = generic || !exceptionType.getSort().isRawType();
+                generic = generic || !exceptionType.getSort().isNonGeneric();
             }
             return generic
                     ? signatureWriter.toString()

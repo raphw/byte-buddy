@@ -69,7 +69,7 @@ public final class ByteBuddyCommons {
     /**
      * A set of all generic type sorts that can possibly define an extendable type.
      */
-    private static final Set<GenericTypeDescription.Sort> EXTENDABLE_TYPES = EnumSet.of(GenericTypeDescription.Sort.RAW,
+    private static final Set<GenericTypeDescription.Sort> EXTENDABLE_TYPES = EnumSet.of(GenericTypeDescription.Sort.NON_GENERIC,
             GenericTypeDescription.Sort.PARAMETERIZED);
 
     /**

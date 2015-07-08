@@ -3759,7 +3759,7 @@ public interface TypePool {
 
                 @Override
                 public Sort getSort() {
-                    return Sort.RAW;
+                    return Sort.NON_GENERIC;
                 }
 
                 @Override
@@ -3778,7 +3778,7 @@ public interface TypePool {
 
                 @Override
                 public Sort getSort() {
-                    return Sort.RAW;
+                    return Sort.NON_GENERIC;
                 }
 
                 @Override

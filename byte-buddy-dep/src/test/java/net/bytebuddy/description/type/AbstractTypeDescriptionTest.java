@@ -58,6 +58,27 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     protected abstract TypeDescription describe(Class<?> type);
 
     @Test
+    public void testGenericTypeProperties() throws Exception {
+        assertThat(describe(Object.class).getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(describe(Object.class).getParameters().size(), is(0));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoUpperBounds() throws Exception {
+        describe(Object.class).getUpperBounds();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoLowerBounds() throws Exception {
+        describe(Object.class).getLowerBounds();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoSymbol() throws Exception {
+        describe(Object.class).getSymbol();
+    }
+
+    @Test
     public void testPrecondition() throws Exception {
         assertThat(describe(SampleClass.class), not(equalTo(describe(SampleInterface.class))));
         assertThat(describe(SampleClass.class), not(equalTo(describe(SampleAnnotation.class))));
@@ -182,7 +203,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         TypeDescription identical = describe(SampleClass.class);
         assertThat(identical, equalTo(identical));
         TypeDescription equalFirst = mock(TypeDescription.class);
-        when(equalFirst.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(equalFirst.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(equalFirst.asRawType()).thenReturn(equalFirst);
         when(equalFirst.getInternalName()).thenReturn(Type.getInternalName(SampleClass.class));
         assertThat(describe(SampleClass.class), equalTo(equalFirst));

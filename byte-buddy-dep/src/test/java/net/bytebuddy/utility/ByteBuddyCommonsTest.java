@@ -270,7 +270,7 @@ public class ByteBuddyCommonsTest {
     @Test
     public void testIsActualTypeOrVoidForRawType() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         assertThat(isActualTypeOrVoid(typeDescription), sameInstance(typeDescription));
     }
 
@@ -305,7 +305,7 @@ public class ByteBuddyCommonsTest {
     @Test
     public void testCollectionIsActualTypeOrVoid() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         Collection<GenericTypeDescription> typeDescriptions = Collections.singleton(typeDescription);
         assertThat(isActualTypeOrVoid(typeDescriptions), sameInstance(typeDescriptions));
@@ -321,7 +321,7 @@ public class ByteBuddyCommonsTest {
     @Test
     public void testIsActualTypeForRawType() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
     }
@@ -329,7 +329,7 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testIsActualTypeForRawVoidThrowsException() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
     }
@@ -369,7 +369,7 @@ public class ByteBuddyCommonsTest {
     @Test
     public void testCollectionIsActualType() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         Collection<GenericTypeDescription> typeDescriptions = Collections.singleton(typeDescription);
         assertThat(isActualType(typeDescriptions), sameInstance(typeDescriptions));
@@ -378,7 +378,7 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testCollectionIsActualTypeThrowsException() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.RAW);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         isActualType(Collections.singleton(typeDescription));
     }

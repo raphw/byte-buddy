@@ -201,7 +201,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             public GenericTypeList asTypeList() {
                 List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new GenericTypeDescription.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType[index]));
+                    types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index]));
                 }
                 return new GenericTypeList.Explicit(types);
             }
@@ -253,7 +253,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             public GenericTypeList asTypeList() {
                 List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new GenericTypeDescription.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType[index]));
+                    types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index]));
                 }
                 return new GenericTypeList.Explicit(types);
             }

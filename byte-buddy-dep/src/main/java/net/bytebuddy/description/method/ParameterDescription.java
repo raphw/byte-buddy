@@ -333,7 +333,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
             @Override
             public GenericTypeDescription getType() {
-                return new TypeDescription.LazyProjection.OfLegacyVmMethodParameter(method, index, parameterType);
+                return new TypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType);
             }
 
             @Override
@@ -405,7 +405,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
             @Override
             public GenericTypeDescription getType() {
-                return new TypeDescription.LazyProjection.OfLegacyVmConstructorParameter(constructor, index, parameterType);
+                return new TypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType);
             }
 
             @Override
