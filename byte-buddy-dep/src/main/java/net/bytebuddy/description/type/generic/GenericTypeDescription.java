@@ -1684,6 +1684,21 @@ public interface GenericTypeDescription extends NamedElement {
             public String getSourceCodeName() {
                 return rawType.getSourceCodeName();
             }
+
+            @Override
+            public int hashCode() {
+                return rawType.hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return rawType.equals(other);
+            }
+
+            @Override
+            public String toString() {
+                return rawType.toString();
+            }
         }
     }
 
