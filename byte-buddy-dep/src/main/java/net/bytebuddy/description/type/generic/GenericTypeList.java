@@ -247,6 +247,25 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         }
     }
 
+    class PotentiallyRaw extends AbstractBase {
+
+        private final List<? extends GenericTypeDescription> typeDescriptions;
+
+        public PotentiallyRaw(List<? extends GenericTypeDescription> typeDescriptions) {
+            this.typeDescriptions = typeDescriptions;
+        }
+
+        @Override
+        public GenericTypeDescription get(int index) {
+            return GenericTypeDescription.ForParameterizedType.Raw.resolve(typeDescriptions.get(index));
+        }
+
+        @Override
+        public int size() {
+            return typeDescriptions.size();
+        }
+    }
+
     abstract class LazyProjection extends AbstractBase {
 
         public static class OfInterfaces extends LazyProjection {

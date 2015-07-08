@@ -16,8 +16,6 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import java.lang.reflect.*;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
-
 /**
  * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
  * a specialization of a generic type.
@@ -1575,6 +1573,51 @@ public interface GenericTypeDescription extends NamedElement {
             @Override
             public GenericTypeDescription getOwnerType() {
                 return ownerType;
+            }
+        }
+
+        public static class Raw extends ForParameterizedType {
+
+            public static GenericTypeDescription resolve(GenericTypeDescription typeDescription) {
+                return typeDescription != null && typeDescription.getSort().isNonGeneric() && !typeDescription.asRawType().getTypeVariables().isEmpty()
+                        ? new Raw(typeDescription.asRawType())
+                        : typeDescription;
+            }
+
+            private final TypeDescription rawType;
+
+            protected Raw(TypeDescription rawType) {
+                this.rawType = rawType;
+            }
+
+            @Override
+            public Sort getSort() {
+                return Sort.NON_GENERIC;
+            }
+
+            @Override
+            public FieldList getDeclaredFields() {
+                return new FieldList.TypeSubstituting(rawType.getDeclaredFields(), new Visitor.Substitutor.ForTypeVariableErasure());
+            }
+
+            @Override
+            public MethodList getDeclaredMethods() {
+                return new MethodList.TypeSubstituting(rawType.getDeclaredMethods(), new Visitor.Substitutor.ForTypeVariableErasure());
+            }
+
+            @Override
+            public TypeDescription asRawType() {
+                return rawType;
+            }
+
+            @Override
+            public GenericTypeList getParameters() {
+                return new GenericTypeList.Empty();
+            }
+
+            @Override
+            public GenericTypeDescription getOwnerType() {
+                return rawType.getOwnerType();
             }
         }
     }

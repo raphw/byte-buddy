@@ -432,14 +432,14 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public GenericTypeDescription getSuperType() {
+        protected GenericTypeDescription getDeclaredSuperType() {
             return superType == null
                     ? null
                     : superType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
-        public GenericTypeList getInterfaces() {
+        protected List<? extends GenericTypeDescription> getDeclaredInterfaces() {
             return GenericTypeList.ForDetachedTypes.attach(this, interfaceTypes);
         }
 

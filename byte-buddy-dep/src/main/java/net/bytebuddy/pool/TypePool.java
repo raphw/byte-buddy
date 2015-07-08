@@ -2682,14 +2682,14 @@ public interface TypePool {
         }
 
         @Override
-        public GenericTypeDescription getSuperType() {
+        protected GenericTypeDescription getDeclaredSuperType() {
             return superTypeDescriptor == null || isInterface()
                     ? null
                     : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, this);
         }
 
         @Override
-        public GenericTypeList getInterfaces() {
+        protected List<? extends GenericTypeDescription> getDeclaredInterfaces() {
             return signatureResolution.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, this);
         }
 

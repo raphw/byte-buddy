@@ -284,6 +284,20 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
         @Override
+        public GenericTypeDescription getSuperType() {
+            return GenericTypeDescription.ForParameterizedType.Raw.resolve(getDeclaredSuperType());
+        }
+
+        protected abstract GenericTypeDescription getDeclaredSuperType();
+
+        @Override
+        public GenericTypeList getInterfaces() {
+            return new GenericTypeList.PotentiallyRaw(getDeclaredInterfaces());
+        }
+
+        protected abstract List<? extends GenericTypeDescription> getDeclaredInterfaces();
+
+        @Override
         public Sort getSort() {
             return Sort.NON_GENERIC;
         }
@@ -853,14 +867,14 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getSuperType() {
+        protected GenericTypeDescription getDeclaredSuperType() {
             return type.getSuperclass() == null
                     ? null
                     : new LazyProjection.OfLoadedSuperType(type);
         }
 
         @Override
-        public GenericTypeList getInterfaces() {
+        protected List<? extends GenericTypeDescription> getDeclaredInterfaces() {
             return isArray()
                     ? ARRAY_INTERFACES
                     : new GenericTypeList.LazyProjection.OfInterfaces(type);
@@ -1091,12 +1105,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getSuperType() {
-            return new ForLoadedType(Object.class);
+        protected GenericTypeDescription getDeclaredSuperType() {
+            return TypeDescription.OBJECT;
         }
 
         @Override
-        public GenericTypeList getInterfaces() {
+        protected List<? extends GenericTypeDescription> getDeclaredInterfaces() {
             return ARRAY_INTERFACES;
         }
 
@@ -1248,13 +1262,13 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getSuperType() {
+        protected GenericTypeDescription getDeclaredSuperType() {
             return superType;
         }
 
         @Override
-        public GenericTypeList getInterfaces() {
-            return new GenericTypeList.Explicit(interfaces);
+        protected List<? extends GenericTypeDescription> getDeclaredInterfaces() {
+            return interfaces;
         }
 
         @Override
@@ -1341,13 +1355,13 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getSuperType() {
+        protected GenericTypeDescription getDeclaredSuperType() {
             return TypeDescription.OBJECT;
         }
 
         @Override
-        public GenericTypeList getInterfaces() {
-            return new GenericTypeList.Empty();
+        protected List<? extends GenericTypeDescription> getDeclaredInterfaces() {
+            return Collections.emptyList();
         }
 
         @Override
