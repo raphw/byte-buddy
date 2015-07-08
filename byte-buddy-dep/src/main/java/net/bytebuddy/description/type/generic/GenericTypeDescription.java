@@ -874,7 +874,7 @@ public interface GenericTypeDescription extends NamedElement {
                         GenericTypeList parameters = typeDescription.getParameters();
                         GenericTypeList typeVariables = typeDescription.asRawType().getTypeVariables();
                         if (parameters.size() != typeVariables.size()) {
-                            return new ForTypeVariableErasure();
+                            return Visitor.Erasing.INSTANCE;
                         }
                         for (int index = 0; index < typeVariables.size(); index++) {
                             bindings.put(typeVariables.get(index), parameters.get(index));
@@ -910,8 +910,13 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                public TypeDescription onSimpleType(TypeDescription typeDescription) {
+                public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
                     return typeDescription;
+                }
+
+                @Override
+                protected TypeDescription onSimpleType(TypeDescription typeDescription) {
+                    throw new UnsupportedOperationException();
                 }
 
                 @Override
@@ -934,33 +939,35 @@ public interface GenericTypeDescription extends NamedElement {
                             '}';
                 }
             }
+        }
 
-            public static class ForTypeVariableErasure extends Substitutor {
+        enum Erasing implements Visitor<GenericTypeDescription> {
 
-                @Override
-                protected TypeDescription onSimpleType(TypeDescription typeDescription) {
-                    return typeDescription;
-                }
+            INSTANCE;
 
-                @Override
-                public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
-                    return genericTypeDescription.asRawType();
-                }
+            @Override
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription.asRawType();
+            }
 
-                @Override
-                public boolean equals(Object other) {
-                    return other != null && other.getClass() == getClass();
-                }
+            @Override
+            public GenericTypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
+                throw new IllegalStateException("A raw type does not imply an erasure: " + genericTypeDescription);
+            }
 
-                @Override
-                public int hashCode() {
-                    return 31;
-                }
+            @Override
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription.asRawType();
+            }
 
-                @Override
-                public String toString() {
-                    return "GenericTypeDescription.Visitor.Substitutor.ForTypeVariableErasure{}";
-                }
+            @Override
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                return genericTypeDescription.asRawType();
+            }
+
+            @Override
+            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
+                return typeDescription;
             }
         }
     }
@@ -1374,12 +1381,12 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return asRawType().getSuperType().accept(Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return GenericTypeDescription.ForParameterizedType.Raw.resolve(asRawType().getDeclaredSuperType(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
         public GenericTypeList getInterfaces() {
-            return asRawType().getInterfaces().accept(Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return new GenericTypeList.PotentiallyRaw(asRawType().getDeclaredInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
@@ -1576,12 +1583,15 @@ public interface GenericTypeDescription extends NamedElement {
             }
         }
 
-        public static class Raw extends ForParameterizedType {
+        public static class Raw implements GenericTypeDescription {
 
-            public static GenericTypeDescription resolve(GenericTypeDescription typeDescription) {
-                return typeDescription != null && typeDescription.getSort().isNonGeneric() && !typeDescription.asRawType().getTypeVariables().isEmpty()
+            public static GenericTypeDescription resolve(GenericTypeDescription typeDescription, Visitor<? extends GenericTypeDescription> transformer) {
+                if (typeDescription == null) {
+                    return null;
+                }
+                return typeDescription.getParameters().size() != typeDescription.asRawType().getTypeVariables().size()
                         ? new Raw(typeDescription.asRawType())
-                        : typeDescription;
+                        : typeDescription.accept(transformer);
             }
 
             private final TypeDescription rawType;
@@ -1591,18 +1601,13 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public Sort getSort() {
-                return Sort.NON_GENERIC;
-            }
-
-            @Override
             public FieldList getDeclaredFields() {
-                return new FieldList.TypeSubstituting(rawType.getDeclaredFields(), new Visitor.Substitutor.ForTypeVariableErasure());
+                return new FieldList.TypeSubstituting(rawType.getDeclaredFields(), Visitor.Erasing.INSTANCE);
             }
 
             @Override
             public MethodList getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(rawType.getDeclaredMethods(), new Visitor.Substitutor.ForTypeVariableErasure());
+                return new MethodList.TypeSubstituting(rawType.getDeclaredMethods(), Visitor.Erasing.INSTANCE);
             }
 
             @Override
@@ -1611,13 +1616,73 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
+            public Sort getSort() {
+                return rawType.getSort();
+            }
+
+            @Override
             public GenericTypeList getParameters() {
-                return new GenericTypeList.Empty();
+                return rawType.getParameters();
             }
 
             @Override
             public GenericTypeDescription getOwnerType() {
                 return rawType.getOwnerType();
+            }
+
+            @Override
+            public <T> T accept(Visitor<T> visitor) {
+                return rawType.accept(visitor);
+            }
+
+            @Override
+            public String getTypeName() {
+                return rawType.getTypeName();
+            }
+
+            @Override
+            public GenericTypeDescription getSuperType() {
+                return rawType.getSuperType();
+            }
+
+            @Override
+            public GenericTypeList getInterfaces() {
+                return rawType.getInterfaces();
+            }
+
+            @Override
+            public GenericTypeList getUpperBounds() {
+                return rawType.getUpperBounds();
+            }
+
+            @Override
+            public GenericTypeList getLowerBounds() {
+                return rawType.getLowerBounds();
+            }
+
+            @Override
+            public GenericTypeDescription getComponentType() {
+                return rawType.getComponentType();
+            }
+
+            @Override
+            public TypeVariableSource getVariableSource() {
+                return rawType.getVariableSource();
+            }
+
+            @Override
+            public String getSymbol() {
+                return rawType.getSymbol();
+            }
+
+            @Override
+            public StackSize getStackSize() {
+                return rawType.getStackSize();
+            }
+
+            @Override
+            public String getSourceCodeName() {
+                return rawType.getSourceCodeName();
             }
         }
     }

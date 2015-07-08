@@ -251,13 +251,17 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
         private final List<? extends GenericTypeDescription> typeDescriptions;
 
-        public PotentiallyRaw(List<? extends GenericTypeDescription> typeDescriptions) {
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer;
+
+        public PotentiallyRaw(List<? extends GenericTypeDescription> typeDescriptions,
+                              GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer) {
             this.typeDescriptions = typeDescriptions;
+            this.transformer = transformer;
         }
 
         @Override
         public GenericTypeDescription get(int index) {
-            return GenericTypeDescription.ForParameterizedType.Raw.resolve(typeDescriptions.get(index));
+            return GenericTypeDescription.ForParameterizedType.Raw.resolve(typeDescriptions.get(index), transformer);
         }
 
         @Override
