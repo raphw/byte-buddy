@@ -10,11 +10,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.isMethod;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -728,6 +725,102 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(superInterfaceType.getParameters().get(1).getParameters().getOnly().asRawType().represents(String.class), is(true));
     }
 
+    @Test
+    public void testShadowedTypeSuperTypeResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(TypeResolution.class.getDeclaredField(FOO + BAR));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(2));
+        GenericTypeDescription superType = genericTypeDescription.getSuperType();
+        assertThat(superType.getParameters().size(), is(2));
+        assertThat(superType.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(superType.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+    }
+
+    @Test
+    public void testShadowedTypeInterfaceTypeResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(TypeResolution.class.getDeclaredField(FOO + BAR));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(2));
+        GenericTypeDescription interfaceType = genericTypeDescription.getInterfaces().getOnly();
+        assertThat(interfaceType.getParameters().size(), is(2));
+        assertThat(interfaceType.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(interfaceType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(interfaceType.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(interfaceType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+    }
+
+    @Test
+    public void testMethodTypeVariableIsRetained() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(2));
+        assertThat(genericTypeDescription.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(genericTypeDescription.getParameters().get(0).asRawType().represents(Number.class), is(true));
+        assertThat(genericTypeDescription.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(genericTypeDescription.getParameters().get(1).asRawType().represents(Integer.class), is(true));
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("foo")).getOnly();
+        assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
+        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+    }
+
+    @Test
+    public void testShadowedMethodTypeVariableIsRetained() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(2));
+        assertThat(genericTypeDescription.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(genericTypeDescription.getParameters().get(0).asRawType().represents(Number.class), is(true));
+        assertThat(genericTypeDescription.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(genericTypeDescription.getParameters().get(1).asRawType().represents(Integer.class), is(true));
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("bar")).getOnly();
+        assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(methodDescription.getReturnType().getSymbol(), is("T"));
+        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+    }
+
+    @Test
+    public void testMethodTypeVariableWithExtensionIsRetained() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(2));
+        assertThat(genericTypeDescription.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(genericTypeDescription.getParameters().get(0).asRawType().represents(Number.class), is(true));
+        assertThat(genericTypeDescription.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(genericTypeDescription.getParameters().get(1).asRawType().represents(Integer.class), is(true));
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("qux")).getOnly();
+        assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
+        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+        assertThat(methodDescription.getReturnType().getUpperBounds().size(), is(1));
+        assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().asRawType().represents(Number.class), is(true));
+    }
+
+    @Test
+    public void testMethodTypeVariableErasedBound() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(BAR)).getSuperType();
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("foo")).getOnly();
+        assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
+        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+    }
+
+    @Test
+    public void testMethodTypeVariableWithExtensionErasedBound() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(BAR)).getSuperType();
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("qux")).getOnly();
+        assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
+        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+        assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().asRawType().represents(Object.class), is(true));
+    }
+
     @SuppressWarnings("unused")
     public static class SimpleParameterizedType {
 
@@ -897,6 +990,8 @@ public abstract class AbstractGenericTypeDescriptionTest {
 
         private TypeResolution<Foo>.NestedPartiallyRaw<Bar> baz;
 
+        private TypeResolution<Foo>.Shadowed<Bar, Foo> foobar;
+
         public class Inner<S> extends Base<T, S> implements BaseInterface<T, S> {
             /* empty */
         }
@@ -913,6 +1008,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
 
         @SuppressWarnings("unchecked")
         public class NestedPartiallyRaw<S> extends NestedIntermediate {
+            /* empty */
+        }
+
+        @SuppressWarnings("all")
+        public class Shadowed<T, S> extends Base<T, S> implements BaseInterface<T, S> {
             /* empty */
         }
 
@@ -936,6 +1036,33 @@ public abstract class AbstractGenericTypeDescriptionTest {
         public interface BaseInterface<V, W> {
 
             Qux<V, W> qux(Qux<V, W> qux);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class MemberVariable<U, T extends U> {
+
+        public MemberVariable<Number, Integer> foo;
+
+        public Raw bar;
+
+        public <S> S foo() {
+            return null;
+        }
+
+        @SuppressWarnings("all")
+        public <T> T bar() {
+            return null;
+        }
+
+        @SuppressWarnings("all")
+        public <S extends U> S qux() {
+            return null;
+        }
+
+        @SuppressWarnings("unchecked")
+        public static class Raw extends MemberVariable {
+            /* empty */
         }
     }
 
