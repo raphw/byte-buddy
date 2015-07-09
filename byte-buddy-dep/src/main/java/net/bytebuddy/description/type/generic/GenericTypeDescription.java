@@ -877,9 +877,7 @@ public interface GenericTypeDescription extends NamedElement {
                         }
                         typeDescription = typeDescription.getOwnerType();
                     } while (typeDescription != null && typeDescription.getSort().isParameterized());
-                    return bindings.isEmpty()
-                            ? NoOp.INSTANCE
-                            : new ForTypeVariableBinding(bindings);
+                    return new ForTypeVariableBinding(bindings);
                 }
 
                 /**
