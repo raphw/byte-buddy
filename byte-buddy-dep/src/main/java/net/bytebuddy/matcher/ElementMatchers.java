@@ -396,6 +396,16 @@ public final class ElementMatchers {
         return new NameMatcher<T>(new StringMatcher(nonNull(name), StringMatcher.Mode.EQUALS_FULLY));
     }
 
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> hasMethodName(String internalName) {
+        if (MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(internalName)) {
+            return isConstructor();
+        } else if (MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME.equals(internalName)) {
+            return isTypeInitializer();
+        } else {
+            return named(internalName);
+        }
+    }
+
     /**
      * Matches a {@link NamedElement} for its name. The name's
      * capitalization is ignored.

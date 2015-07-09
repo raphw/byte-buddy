@@ -894,6 +894,11 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
+        public GenericTypeList getTypeVariables() {
+            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
+        }
+
+        @Override
         public GenericTypeDescription getReturnType() {
             return returnType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
@@ -931,11 +936,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public Object getDefaultValue() {
             return defaultValue;
-        }
-
-        @Override
-        public GenericTypeList getTypeVariables() {
-            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
         }
 
         public static class TypeInitializer extends MethodDescription.AbstractMethodDescription {
@@ -1005,6 +1005,11 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
+        public GenericTypeList getTypeVariables() {
+            return methodDescription.getTypeVariables().accept(visitor);
+        }
+
+        @Override
         public GenericTypeDescription getReturnType() {
             return methodDescription.getReturnType().accept(visitor);
         }
@@ -1022,11 +1027,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public Object getDefaultValue() {
             return methodDescription.getDefaultValue();
-        }
-
-        @Override
-        public GenericTypeList getTypeVariables() {
-            return methodDescription.getTypeVariables();
         }
 
         @Override

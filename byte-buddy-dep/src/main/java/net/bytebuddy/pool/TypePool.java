@@ -2949,11 +2949,7 @@ public interface TypePool {
 
                 @Override
                 public MethodDescription getEnclosingMethod(TypePool typePool) {
-                    return getEnclosingType(typePool).getDeclaredMethods()
-                            .filter((MethodDescription.CONSTRUCTOR_INTERNAL_NAME.equals(methodName)
-                                    ? isConstructor()
-                                    : ElementMatchers.<MethodDescription>named(methodName))
-                                    .<MethodDescription>and(hasDescriptor(methodDescriptor))).getOnly();
+                    return getEnclosingType(typePool).getDeclaredMethods().filter(hasMethodName(methodName).and(hasDescriptor(methodDescriptor))).getOnly();
                 }
 
                 @Override
