@@ -21,6 +21,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -1006,22 +1007,22 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public GenericTypeList getTypeVariables() {
-            return methodDescription.getTypeVariables().accept(visitor);
+            return methodDescription.getTypeVariables().accept(new VariableRetainingDelegator());
         }
 
         @Override
         public GenericTypeDescription getReturnType() {
-            return methodDescription.getReturnType().accept(visitor);
+            return methodDescription.getReturnType().accept(new VariableRetainingDelegator());
         }
 
         @Override
         public ParameterList getParameters() {
-            return new ParameterList.Substituted(methodDescription.getParameters(), visitor);
+            return new ParameterList.Substituted(methodDescription.getParameters(), new VariableRetainingDelegator());
         }
 
         @Override
         public GenericTypeList getExceptionTypes() {
-            return methodDescription.getExceptionTypes().accept(visitor);
+            return methodDescription.getExceptionTypes().accept(new VariableRetainingDelegator());
         }
 
         @Override
@@ -1047,6 +1048,75 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public String getInternalName() {
             return methodDescription.getInternalName();
+        }
+
+        protected class VariableRetainingDelegator extends GenericTypeDescription.Visitor.Substitutor {
+
+            @Override
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
+                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(genericTypeDescription.getParameters().size());
+                for (GenericTypeDescription parameter : genericTypeDescription.getParameters()) {
+                    if (parameter.getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(genericTypeDescription)) {
+                        return visitor.onTypeVariable(genericTypeDescription);
+                    } else if (parameter.getSort().isWildcard()) {
+                        GenericTypeList bounds = parameter.getLowerBounds();
+                        bounds = bounds.isEmpty() ? parameter.getUpperBounds() : bounds;
+                        if (bounds.getOnly().getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(genericTypeDescription)) {
+                            return visitor.onTypeVariable(genericTypeDescription);
+                        }
+                    }
+                    parameters.add(parameter.accept(this));
+                }
+                GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
+                return new GenericTypeDescription.ForParameterizedType.Latent(genericTypeDescription.asRawType(),
+                        parameters,
+                        ownerType == null
+                                ? null
+                                : ownerType.accept(this));
+            }
+
+            @Override
+            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
+                return visitor.onNonGenericType(typeDescription);
+            }
+
+            @Override
+            protected TypeDescription onSimpleType(TypeDescription typeDescription) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
+                if (methodDescription.getTypeVariables().contains(genericTypeDescription)) {
+                    return new RetainedVariable(genericTypeDescription);
+                } else {
+                    return visitor.onTypeVariable(genericTypeDescription);
+                }
+            }
+
+            protected class RetainedVariable extends GenericTypeDescription.ForTypeVariable {
+
+                private final GenericTypeDescription typeVariable;
+
+                protected RetainedVariable(GenericTypeDescription typeVariable) {
+                    this.typeVariable = typeVariable;
+                }
+
+                @Override
+                public GenericTypeList getUpperBounds() {
+                    return typeVariable.getUpperBounds().accept(VariableRetainingDelegator.this);
+                }
+
+                @Override
+                public TypeVariableSource getVariableSource() {
+                    return TypeSubstituting.this;
+                }
+
+                @Override
+                public String getSymbol() {
+                    return typeVariable.getSymbol();
+                }
+            }
         }
     }
 

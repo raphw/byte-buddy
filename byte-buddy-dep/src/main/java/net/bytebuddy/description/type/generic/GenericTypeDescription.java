@@ -968,7 +968,6 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
-                GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
                 List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(genericTypeDescription.getParameters().size());
                 for (GenericTypeDescription parameter : genericTypeDescription.getParameters()) {
                     if (parameter.getSort().isTypeVariable()) {
@@ -982,6 +981,7 @@ public interface GenericTypeDescription extends NamedElement {
                     }
                     parameters.add(parameter.accept(this));
                 }
+                GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
                 return new GenericTypeDescription.ForParameterizedType.Latent(genericTypeDescription.asRawType(),
                         parameters,
                         ownerType == null
@@ -1493,7 +1493,7 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public int hashCode() {
             int result = 1;
-            for (GenericTypeDescription genericTypeDescription : getLowerBounds()) {
+            for (GenericTypeDescription genericTypeDescription : getParameters()) {
                 result = 31 * result + genericTypeDescription.hashCode();
             }
             GenericTypeDescription ownerType = getOwnerType();
