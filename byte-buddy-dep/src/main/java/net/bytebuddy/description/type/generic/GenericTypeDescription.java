@@ -1667,7 +1667,10 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public GenericTypeDescription getSuperType() {
-                return typeDescription.getDeclaredSuperType().accept(Visitor.TypeVariableErasing.INSTANCE);
+                GenericTypeDescription superType = typeDescription.getDeclaredSuperType();
+                return superType == null
+                        ? null
+                        : superType.accept(Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
