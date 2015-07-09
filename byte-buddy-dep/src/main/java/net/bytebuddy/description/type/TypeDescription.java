@@ -150,6 +150,9 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     @Override
     TypeDescription getComponentType();
 
+    @Override
+    TypeDescription getOwnerType();
+
     /**
      * Checks if the type described by this entity is a primitive type.
      *
@@ -328,7 +331,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public GenericTypeDescription getOwnerType() {
+        public TypeDescription getOwnerType() {
             MethodDescription enclosingMethod = getEnclosingMethod();
             return enclosingMethod == null
                     ? getEnclosingType()

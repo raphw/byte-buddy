@@ -1148,8 +1148,6 @@ public interface GenericTypeDescription extends NamedElement {
             public static GenericTypeDescription of(GenericTypeDescription componentType, int arity) {
                 if (arity < 0) {
                     throw new IllegalArgumentException("Arrays cannot have a negative arity");
-                } else if (componentType.getSort().isNonGeneric()) {
-                    return TypeDescription.ArrayProjection.of(componentType.asRawType(), arity);
                 }
                 while (componentType.getSort().isGenericArray()) {
                     componentType = componentType.getComponentType();
@@ -1170,6 +1168,12 @@ public interface GenericTypeDescription extends NamedElement {
              */
             private final int arity;
 
+            /**
+             * Creates a latent representation of a generic array type.
+             *
+             * @param componentType The component type.
+             * @param arity         The arity of this array.
+             */
             protected Latent(GenericTypeDescription componentType, int arity) {
                 this.componentType = componentType;
                 this.arity = arity;
@@ -1180,6 +1184,14 @@ public interface GenericTypeDescription extends NamedElement {
                 return arity == 1
                         ? componentType
                         : new Latent(componentType, arity - 1);
+            }
+
+            @Override
+            public Sort getSort() {
+                // This instance can equally represent a raw generic array.
+                return getComponentType().getSort().isNonGeneric()
+                        ? Sort.NON_GENERIC
+                        : Sort.GENERIC_ARRAY;
             }
         }
     }
@@ -1688,7 +1700,10 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public GenericTypeDescription getOwnerType() {
-                return resolve(typeDescription.getOwnerType(), Visitor.TypeVariableErasing.INSTANCE);
+                TypeDescription ownerType = typeDescription.getOwnerType();
+                return ownerType == null
+                        ? null
+                        : new Raw(ownerType);
             }
 
             @Override
@@ -1728,7 +1743,10 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public GenericTypeDescription getComponentType() {
-                return typeDescription.getComponentType();
+                TypeDescription componentType = typeDescription.getComponentType();
+                return componentType == null
+                        ? null
+                        : new Raw(componentType);
             }
 
             @Override
