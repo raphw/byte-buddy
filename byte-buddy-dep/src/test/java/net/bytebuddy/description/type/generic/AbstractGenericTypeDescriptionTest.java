@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.isMethod;
@@ -643,6 +644,90 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(methodParameterType.getParameters().size(), is(0));
     }
 
+    @Test
+    public void testParameterizedTypePartiallyRawSuperTypeResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(TypeResolution.class.getDeclaredField(QUX));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(1));
+        GenericTypeDescription superType = genericTypeDescription.getSuperType();
+        assertThat(superType.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Intermediate.class)));
+        GenericTypeDescription superSuperType = superType.getSuperType();
+        assertThat(superSuperType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(superSuperType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
+        assertThat(superSuperType.getParameters().size(), is(2));
+        assertThat(superSuperType.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superSuperType.getParameters().get(0).asRawType().represents(List.class), is(true));
+        assertThat(superSuperType.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superSuperType.getParameters().get(1).asRawType().represents(List.class), is(true));
+    }
+
+    @Test
+    public void testParameterizedTypePartiallyRawInterfaceTypeResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(TypeResolution.class.getDeclaredField(QUX));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(1));
+        GenericTypeDescription superType = genericTypeDescription.getSuperType();
+        assertThat(superType.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Intermediate.class)));
+        GenericTypeDescription superInterfaceType = superType.getInterfaces().getOnly();
+        assertThat(superInterfaceType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(superInterfaceType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
+        assertThat(superInterfaceType.getParameters().size(), is(2));
+        assertThat(superInterfaceType.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superInterfaceType.getParameters().get(0).asRawType().represents(List.class), is(true));
+        assertThat(superInterfaceType.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superInterfaceType.getParameters().get(1).asRawType().represents(List.class), is(true));
+    }
+
+    @Test
+    public void testParameterizedTypeNestedPartiallyRawSuperTypeResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(TypeResolution.class.getDeclaredField(BAZ));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(1));
+        GenericTypeDescription superType = genericTypeDescription.getSuperType();
+        assertThat(superType.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.NestedIntermediate.class)));
+        GenericTypeDescription superSuperType = superType.getSuperType();
+        assertThat(superSuperType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(superSuperType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
+        assertThat(superSuperType.getParameters().size(), is(2));
+        assertThat(superSuperType.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(superSuperType.getParameters().get(0).asRawType().represents(List.class), is(true));
+        assertThat(superSuperType.getParameters().get(0).getParameters().size(), is(1));
+        assertThat(superSuperType.getParameters().get(0).getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superSuperType.getParameters().get(0).getParameters().getOnly().asRawType().represents(List.class), is(true));
+        assertThat(superSuperType.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(superSuperType.getParameters().get(1).asRawType().represents(List.class), is(true));
+        assertThat(superSuperType.getParameters().get(1).getParameters().size(), is(1));
+        assertThat(superSuperType.getParameters().get(1).getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superSuperType.getParameters().get(1).getParameters().getOnly().asRawType().represents(String.class), is(true));
+    }
+
+    @Test
+    public void testParameterizedTypeNestedPartiallyRawInterfaceTypeResolution() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(TypeResolution.class.getDeclaredField(BAZ));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getParameters().size(), is(1));
+        GenericTypeDescription superType = genericTypeDescription.getSuperType();
+        assertThat(superType.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.NestedIntermediate.class)));
+        GenericTypeDescription superInterfaceType = superType.getInterfaces().getOnly();
+        assertThat(superInterfaceType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(superInterfaceType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
+        assertThat(superInterfaceType.getParameters().size(), is(2));
+        assertThat(superInterfaceType.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(superInterfaceType.getParameters().get(0).asRawType().represents(List.class), is(true));
+        assertThat(superInterfaceType.getParameters().get(0).getParameters().size(), is(1));
+        assertThat(superInterfaceType.getParameters().get(0).getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superInterfaceType.getParameters().get(0).getParameters().getOnly().asRawType().represents(List.class), is(true));
+        assertThat(superInterfaceType.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(superInterfaceType.getParameters().get(1).asRawType().represents(List.class), is(true));
+        assertThat(superInterfaceType.getParameters().get(1).getParameters().size(), is(1));
+        assertThat(superInterfaceType.getParameters().get(1).getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(superInterfaceType.getParameters().get(1).getParameters().getOnly().asRawType().represents(String.class), is(true));
+    }
+
     @SuppressWarnings("unused")
     public static class SimpleParameterizedType {
 
@@ -808,12 +893,34 @@ public abstract class AbstractGenericTypeDescriptionTest {
 
         private TypeResolution<Foo>.Raw<Bar> bar;
 
+        private TypeResolution<Foo>.PartiallyRaw<Bar> qux;
+
+        private TypeResolution<Foo>.NestedPartiallyRaw<Bar> baz;
+
         public class Inner<S> extends Base<T, S> implements BaseInterface<T, S> {
             /* empty */
         }
 
         @SuppressWarnings("unchecked")
         public class Raw<S> extends Base implements BaseInterface {
+            /* empty */
+        }
+
+        @SuppressWarnings("unchecked")
+        public class PartiallyRaw<S> extends Intermediate {
+            /* empty */
+        }
+
+        @SuppressWarnings("unchecked")
+        public class NestedPartiallyRaw<S> extends NestedIntermediate {
+            /* empty */
+        }
+
+        public static class Intermediate<V, W> extends Base<List<V>, List<? extends W>> implements BaseInterface<List<V>, List<? extends W>> {
+            /* empty */
+        }
+
+        public static class NestedIntermediate<V, W> extends Base<List<List<V>>, List<String>> implements BaseInterface<List<List<V>>, List<String>> {
             /* empty */
         }
 

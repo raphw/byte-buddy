@@ -12,9 +12,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class GenericTypeDescriptionVisitorAttachmentDetachmentTest {
+public class GenericTypeDescriptionVisitorForDetachmentTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo";
 
     @Test
     public void testDetachment() throws Exception {
@@ -50,34 +50,6 @@ public class GenericTypeDescriptionVisitorAttachmentDetachmentTest {
         assertThat(detached.getOwnerType().getParameters().getOnly(), sameInstance(detached.getParameters().get(0)));
     }
 
-    @Test
-    public void testAttachment() throws Exception {
-        GenericTypeDescription original = GenericTypeDescription.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
-        GenericTypeDescription detached = original.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
-        TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
-        GenericTypeDescription attached = detached.accept(new GenericTypeDescription.Visitor.Substitutor.ForAttachment(target, target));
-        assertThat(attached.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
-        assertThat(attached.asRawType(), sameInstance(target));
-        assertThat(attached.getParameters().size(), is(4));
-        assertThat(attached.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.VARIABLE));
-        assertThat(attached.getParameters().get(0).getSymbol(), is("T"));
-        assertThat(attached.getParameters().get(0), is(target.getTypeVariables().filter(named("T")).getOnly()));
-        assertThat(attached.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        assertThat(attached.getParameters().get(1).asRawType().represents(String.class), is(true));
-        assertThat(attached.getParameters().get(2).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        assertThat(attached.getParameters().get(2).asRawType().represents(Object.class), is(true));
-        assertThat(attached.getParameters().get(3).getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
-        assertThat(attached.getParameters().get(3).asRawType().represents(List.class), is(true));
-        assertThat(attached.getParameters().get(3).getParameters().size(), is(1));
-        assertThat(attached.getParameters().get(3).getParameters().getOnly(), is(target.getTypeVariables().filter(named("S")).getOnly()));
-        assertThat(attached.getOwnerType(), notNullValue(GenericTypeDescription.class));
-        assertThat(attached.getOwnerType().getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
-        assertThat(attached.getOwnerType().getParameters().size(), is(1));
-        assertThat(attached.getOwnerType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
-        assertThat(attached.getOwnerType().getParameters().getOnly().getSymbol(), is("T"));
-        assertThat(attached.getOwnerType().getParameters().getOnly(), is(target.getTypeVariables().filter(named("T")).getOnly()));
-    }
-
     @Test(expected = IllegalStateException.class)
     public void testDetachedNoSource() throws Exception {
         GenericTypeDescription original = GenericTypeDescription.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
@@ -87,7 +59,6 @@ public class GenericTypeDescriptionVisitorAttachmentDetachmentTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(GenericTypeDescription.Visitor.Substitutor.ForAttachment.class).apply();
         ObjectPropertyAssertion.of(GenericTypeDescription.Visitor.Substitutor.ForDetachment.class).applyMutable();
     }
 

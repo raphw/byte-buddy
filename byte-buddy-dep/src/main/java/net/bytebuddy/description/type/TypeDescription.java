@@ -329,7 +329,10 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeDescription getOwnerType() {
-            return null;
+            MethodDescription enclosingMethod = getEnclosingMethod();
+            return enclosingMethod == null
+                    ? getEnclosingType()
+                    : enclosingMethod.getDeclaringType();
         }
 
         @Override

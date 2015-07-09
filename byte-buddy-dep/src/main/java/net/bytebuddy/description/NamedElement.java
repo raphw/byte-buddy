@@ -10,8 +10,17 @@ public interface NamedElement {
      */
     String EMPTY_NAME = "";
 
+    /**
+     * Returns the name of this element as it is found in the source code. If no such name exists,
+     * an empty string is returned.
+     *
+     * @return The name of this element as given in a Java program's source code.
+     */
     String getSourceCodeName();
 
+    /**
+     * A named element with a name that has a particular meaning to the Java runtime.
+     */
     interface WithRuntimeName extends NamedElement {
 
         /**
@@ -29,6 +38,9 @@ public interface NamedElement {
         String getInternalName();
     }
 
+    /**
+     * A named element with a generic type name.
+     */
     interface WithGenericName extends WithRuntimeName {
 
         String toGenericString();
