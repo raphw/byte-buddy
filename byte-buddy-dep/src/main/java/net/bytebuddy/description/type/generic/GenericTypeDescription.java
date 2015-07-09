@@ -1189,7 +1189,7 @@ public interface GenericTypeDescription extends NamedElement {
             @Override
             public Sort getSort() {
                 // This instance can equally represent a raw generic array.
-                return getComponentType().getSort().isNonGeneric()
+                return componentType.getSort().isNonGeneric()
                         ? Sort.NON_GENERIC
                         : Sort.GENERIC_ARRAY;
             }
