@@ -13,6 +13,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
+
 /**
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
  * {@code equal(Object)} and {@code hashCode()} implementations.
@@ -20,6 +22,8 @@ import java.util.List;
 public interface FieldDescription extends ByteCodeElement, NamedElement.WithGenericName {
 
     GenericTypeDescription getType();
+
+    Token asToken();
 
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
@@ -58,6 +62,11 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
                     || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType())));
+        }
+
+        @Override
+        public FieldDescription.Token asToken() {
+            return asToken(none());
         }
 
         @Override

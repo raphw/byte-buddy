@@ -16,8 +16,6 @@ import static org.mockito.Mockito.*;
 
 public class TypeProxyInvocationFactoryDefaultTest {
 
-    private static final String FOO = "foo";
-
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
@@ -31,11 +29,14 @@ public class TypeProxyInvocationFactoryDefaultTest {
     private MethodDescription methodDescription;
 
     @Mock
+    private MethodDescription.Token methodToken;
+
+    @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Before
     public void setUp() throws Exception {
-        when(methodDescription.getUniqueSignature()).thenReturn(FOO);
+        when(methodDescription.asToken()).thenReturn(methodToken);
     }
 
     @Test
@@ -50,10 +51,10 @@ public class TypeProxyInvocationFactoryDefaultTest {
 
     @Test
     public void testDefaultMethod() throws Exception {
-        when(implementationTarget.invokeDefault(typeDescription, FOO)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(typeDescription, methodToken)).thenReturn(specialMethodInvocation);
         assertThat(TypeProxy.InvocationFactory.Default.DEFAULT_METHOD.invoke(implementationTarget, typeDescription, methodDescription),
                 is(specialMethodInvocation));
-        verify(implementationTarget).invokeDefault(typeDescription, FOO);
+        verify(implementationTarget).invokeDefault(typeDescription, methodToken);
         verifyNoMoreInteractions(implementationTarget);
     }
 }

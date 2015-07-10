@@ -402,7 +402,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
-                    return implementationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
+                    return implementationTarget.invokeDefault(proxiedType, instrumentedMethod.asToken());
                 }
             };
 

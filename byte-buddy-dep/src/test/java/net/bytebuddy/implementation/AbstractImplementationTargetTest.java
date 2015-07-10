@@ -50,7 +50,11 @@ public abstract class AbstractImplementationTargetTest {
     @Mock
     protected MethodDescription invokableMethod, defaultMethod;
 
+    @Mock
+    private MethodDescription.Token invokableToken, defaultToken;
+
     protected Implementation.Target implementationTarget;
+
 
     @Before
     @SuppressWarnings("unchecked")
@@ -71,11 +75,12 @@ public abstract class AbstractImplementationTargetTest {
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(invokableMethod.getInternalName()).thenReturn(FOO);
         when(invokableMethod.getDescriptor()).thenReturn(QUX);
+        when(invokableMethod.asToken()).thenReturn(invokableToken);
         when(defaultMethod.getInternalName()).thenReturn(QUXBAZ);
         when(defaultMethod.getDescriptor()).thenReturn(FOOBAZ);
-        when(defaultMethod.getUniqueSignature()).thenReturn(FOOQUX);
         when(defaultMethod.getDeclaringType()).thenReturn(defaultType);
         when(defaultMethod.getReturnType()).thenReturn(returnType);
+        when(defaultMethod.asToken()).thenReturn(defaultToken);
         when(defaultType.isInterface()).thenReturn(true);
         when(defaultMethod.isSpecializableFor(defaultType)).thenReturn(true);
         when(defaultType.getInternalName()).thenReturn(BAZBAR);
@@ -86,7 +91,7 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testDefaultMethodInvocation() throws Exception {
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeDefault(defaultType, FOOQUX);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeDefault(defaultType, defaultToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is(defaultMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(defaultType));
@@ -102,7 +107,7 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testIllegalDefaultMethod() throws Exception {
-        assertThat(implementationTarget.invokeDefault(defaultType, FOOBAZ).isValid(), is(false));
+        assertThat(implementationTarget.invokeDefault(defaultType, mock(MethodDescription.Token.class)).isValid(), is(false));
     }
 
     @Test

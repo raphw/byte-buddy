@@ -2044,8 +2044,7 @@ public class MethodCall implements Implementation {
                 if (!methodDescription.isDefaultMethod()) {
                     throw new IllegalStateException("Not a default method: " + methodDescription);
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription
-                        .getDeclaringType(), methodDescription.getUniqueSignature());
+                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType(), methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
                 }

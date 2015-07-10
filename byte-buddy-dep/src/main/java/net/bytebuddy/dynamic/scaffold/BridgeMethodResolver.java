@@ -14,7 +14,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * distinction is made such that the Java compiler needs to include bridge methods where the method with the more
  * specific return type is called from the method with the less specific return type when a method is
  * overridden to return a more specific value. This resolution is important when auxiliary types are called since
- * an accessor required for {@code Foo#qux} on some type {@code Bar} with an overriden method {@code qux} that was
+ * an accessor required for {@code Foo#qux} on some type {@code Bar} with an overridden method {@code qux} that was
  * defined with a more specific return type would call the bridge method internally and not the intended method.
  * This can be problematic if the following chain is the result of an instrumentation:
  * <ol>
@@ -84,17 +84,14 @@ public interface BridgeMethodResolver {
      */
     class Simple implements BridgeMethodResolver {
 
-        /**
-         * A map of all bridges mapped by their unique signature.
-         */
-        private final Map<String, BridgeTarget> bridges;
+        private final Map<MethodDescription.Token, BridgeTarget> bridges;
 
         /**
          * Creates a new simple bridge method resolver.
          *
          * @param bridges A map of all bridges mapped by their unique signature.
          */
-        protected Simple(Map<String, BridgeTarget> bridges) {
+        protected Simple(Map<MethodDescription.Token, BridgeTarget> bridges) {
             this.bridges = bridges;
         }
 
@@ -107,9 +104,9 @@ public interface BridgeMethodResolver {
          */
         public static BridgeMethodResolver of(MethodList methodList, ConflictHandler conflictHandler) {
             MethodList bridgeMethods = methodList.filter(isBridge());
-            HashMap<String, BridgeTarget> bridges = new HashMap<String, BridgeTarget>(bridgeMethods.size());
+            HashMap<MethodDescription.Token, BridgeTarget> bridges = new HashMap<MethodDescription.Token, BridgeTarget>(bridgeMethods.size());
             for (MethodDescription bridgeMethod : bridgeMethods) {
-                bridges.put(bridgeMethod.getUniqueSignature(), findBridgeTargetFor(bridgeMethod, conflictHandler));
+                bridges.put(bridgeMethod.asToken(), findBridgeTargetFor(bridgeMethod, conflictHandler));
             }
             return new Simple(bridges);
         }
@@ -138,7 +135,7 @@ public interface BridgeMethodResolver {
 
         @Override
         public MethodDescription resolve(MethodDescription methodDescription) {
-            BridgeTarget bridgeTarget = bridges.get(methodDescription.getUniqueSignature());
+            BridgeTarget bridgeTarget = bridges.get(methodDescription.asToken());
             if (bridgeTarget == null) { // The given method is not a bridge method.
                 return methodDescription;
             } else if (bridgeTarget.isResolved()) { // There is a definite target for the given bridge method.
@@ -259,7 +256,7 @@ public interface BridgeMethodResolver {
                 },
 
                 /**
-                 * A strategy that calls the unresolved bridge method when its target resolution is ambigous.
+                 * A strategy that calls the unresolved bridge method when its target resolution is ambiguous.
                  */
                 CALL_BRIDGE {
                     @Override

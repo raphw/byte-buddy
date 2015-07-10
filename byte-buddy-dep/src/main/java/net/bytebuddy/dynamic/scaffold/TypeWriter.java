@@ -30,10 +30,7 @@ import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -1368,14 +1365,8 @@ public interface TypeWriter<T> {
                  */
                 private final Implementation.Context.ExtractableView implementationContext;
 
-                /**
-                 * A mutable map of all declared fields of the instrumented type by their names.
-                 */
                 private final Map<String, FieldDescription> declaredFields;
 
-                /**
-                 * A mutable map of all declarable methods of the instrumented type by their unique signatures.
-                 */
                 private final Map<String, MethodDescription> declarableMethods;
 
                 /**
@@ -1397,11 +1388,11 @@ public interface TypeWriter<T> {
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
                     declaredFields = new HashMap<String, FieldDescription>(fieldDescriptions.size());
                     for (FieldDescription fieldDescription : fieldDescriptions) {
-                        declaredFields.put(fieldDescription.getInternalName(), fieldDescription);
+                        declaredFields.put(fieldDescription.getName(), fieldDescription);
                     }
                     declarableMethods = new HashMap<String, MethodDescription>(instrumentedMethods.size());
                     for (MethodDescription methodDescription : instrumentedMethods) {
-                        declarableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+                        declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
                     }
                     injectedCode = Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE;
                 }

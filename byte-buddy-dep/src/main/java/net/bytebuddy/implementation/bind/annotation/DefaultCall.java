@@ -144,14 +144,13 @@ public @interface DefaultCall {
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
                                                                       MethodDescription source) {
-                    String uniqueSignature = source.getUniqueSignature();
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
                     for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asRawTypes()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                             }
-                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, uniqueSignature);
+                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asToken());
                         }
                     }
                     return specialMethodInvocation != null
@@ -191,7 +190,7 @@ public @interface DefaultCall {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
-                    return implementationTarget.invokeDefault(typeDescription, source.getUniqueSignature());
+                    return implementationTarget.invokeDefault(typeDescription, source.asToken());
                 }
 
                 @Override

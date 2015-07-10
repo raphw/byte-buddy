@@ -26,7 +26,10 @@ public class ImplementationTargetMethodLookupDefaultTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private Map<String, MethodDescription> invokableMethods;
+    private MethodDescription.Token methodToken;
+
+    @Mock
+    private Map<MethodDescription.Token, MethodDescription> invokableMethods;
 
     @Mock
     private BridgeMethodResolver bridgeMethodResolver;
@@ -42,15 +45,15 @@ public class ImplementationTargetMethodLookupDefaultTest {
 
     @Test
     public void testMostSpecificLookup() throws Exception {
-        when(methodDescription.getUniqueSignature()).thenReturn(FOO);
-        when(invokableMethods.get(FOO)).thenReturn(methodDescription);
+        when(methodDescription.asToken()).thenReturn(methodToken);
+        when(invokableMethods.get(methodToken)).thenReturn(methodDescription);
         when(bridgeMethodResolver.resolve(methodDescription)).thenReturn(methodDescription);
-        when(invokableMethods.get(FOO)).thenReturn(methodDescription);
+        when(invokableMethods.get(methodToken)).thenReturn(methodDescription);
         assertThat(Implementation.Target.MethodLookup.Default.MOST_SPECIFIC.resolve(methodDescription, invokableMethods, bridgeMethodResolver),
                 is(methodDescription));
-        verify(methodDescription).getUniqueSignature();
+        verify(methodDescription).asToken();
         verifyNoMoreInteractions(methodDescription);
-        verify(invokableMethods).get(FOO);
+        verify(invokableMethods).get(methodToken);
         verifyNoMoreInteractions(invokableMethods);
         verify(bridgeMethodResolver).resolve(methodDescription);
         verifyNoMoreInteractions(bridgeMethodResolver);

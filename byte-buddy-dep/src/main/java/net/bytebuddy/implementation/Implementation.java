@@ -271,14 +271,12 @@ public interface Implementation {
         /**
          * Creates a special method invocation for invoking a default method.
          *
-         * @param targetType            The interface on which the default method is to be invoked.
-         * @param uniqueMethodSignature The unique method signature as defined by
-         *                              {@link MethodDescription#getUniqueSignature()}
-         *                              of the method that is to be invoked.
+         * @param targetType  The interface on which the default method is to be invoked.
+         * @param methodToken A token that uniquely describes the method to invoke.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
-        SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature);
+        SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken);
 
         /**
          * A strategy for looking up a method.
@@ -289,12 +287,11 @@ public interface Implementation {
              * Resolves the target method that is actually invoked.
              *
              * @param methodDescription    The method that is to be invoked specially.
-             * @param invokableMethods     A map of all invokable methods on the instrumented type.
              * @param bridgeMethodResolver The bridge method resolver for this type.
              * @return The target method that is actually invoked.
              */
             MethodDescription resolve(MethodDescription methodDescription,
-                                      Map<String, MethodDescription> invokableMethods,
+                                      Map<MethodDescription.Token, MethodDescription> invokableMethods,
                                       BridgeMethodResolver bridgeMethodResolver);
 
             /**
@@ -308,7 +305,7 @@ public interface Implementation {
                 EXACT {
                     @Override
                     public MethodDescription resolve(MethodDescription methodDescription,
-                                                     Map<String, MethodDescription> invokableMethods,
+                                                     Map<MethodDescription.Token, MethodDescription> invokableMethods,
                                                      BridgeMethodResolver bridgeMethodResolver) {
                         return methodDescription;
                     }
@@ -321,9 +318,9 @@ public interface Implementation {
                 MOST_SPECIFIC {
                     @Override
                     public MethodDescription resolve(MethodDescription methodDescription,
-                                                     Map<String, MethodDescription> invokableMethods,
+                                                     Map<MethodDescription.Token, MethodDescription> invokableMethods,
                                                      BridgeMethodResolver bridgeMethodResolver) {
-                        MethodDescription mostSpecificMethod = invokableMethods.get(methodDescription.getUniqueSignature());
+                        MethodDescription mostSpecificMethod = invokableMethods.get(methodDescription.asToken());
                         if (mostSpecificMethod == null) {
                             throw new IllegalArgumentException("Cannot invoke: " + methodDescription);
                         }
@@ -363,15 +360,9 @@ public interface Implementation {
              */
             protected final TypeDescription typeDescription;
 
-            /**
-             * A map of invokable methods by their unique signature.
-             */
-            protected final Map<String, MethodDescription> invokableMethods;
+            protected final Map<MethodDescription.Token, MethodDescription> invokableMethods;
 
-            /**
-             * A map of default methods by their unique signature.
-             */
-            protected final Map<TypeDescription, Map<String, MethodDescription>> defaultMethods;
+            protected final Map<TypeDescription, Map<MethodDescription.Token, MethodDescription>> defaultMethods;
 
             /**
              * A bridge method resolver for the given instrumented type.
@@ -389,15 +380,15 @@ public interface Implementation {
             protected AbstractBase(MethodLookupEngine.Finding finding, BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                 bridgeMethodResolver = bridgeMethodResolverFactory.make(finding.getInvokableMethods());
                 typeDescription = finding.getTypeDescription();
-                invokableMethods = new HashMap<String, MethodDescription>(finding.getInvokableMethods().size());
+                invokableMethods = new HashMap<MethodDescription.Token, MethodDescription>(finding.getInvokableMethods().size());
                 for (MethodDescription methodDescription : finding.getInvokableMethods()) {
-                    invokableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+                    invokableMethods.put(methodDescription.asToken(), methodDescription);
                 }
-                defaultMethods = new HashMap<TypeDescription, Map<String, MethodDescription>>(finding.getInvokableDefaultMethods().size());
+                defaultMethods = new HashMap<TypeDescription, Map<MethodDescription.Token, MethodDescription>>(finding.getInvokableDefaultMethods().size());
                 for (Map.Entry<TypeDescription, Set<MethodDescription>> entry : finding.getInvokableDefaultMethods().entrySet()) {
-                    Map<String, MethodDescription> defaultMethods = new HashMap<String, MethodDescription>(entry.getValue().size());
+                    Map<MethodDescription.Token, MethodDescription> defaultMethods = new HashMap<MethodDescription.Token, MethodDescription>(entry.getValue().size());
                     for (MethodDescription methodDescription : entry.getValue()) {
-                        defaultMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+                        defaultMethods.put(methodDescription.asToken(), methodDescription);
                     }
                     this.defaultMethods.put(entry.getKey(), defaultMethods);
                 }
@@ -422,10 +413,10 @@ public interface Implementation {
             protected abstract Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription);
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature) {
-                Map<String, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
+            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken) {
+                Map<MethodDescription.Token, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
                 if (defaultMethods != null) {
-                    MethodDescription defaultMethod = defaultMethods.get(uniqueMethodSignature);
+                    MethodDescription defaultMethod = defaultMethods.get(methodToken);
                     if (defaultMethod != null) {
                         return SpecialMethodInvocation.Simple.of(defaultMethod, targetType);
                     }

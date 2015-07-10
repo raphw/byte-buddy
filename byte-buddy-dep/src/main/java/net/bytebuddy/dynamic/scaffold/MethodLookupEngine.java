@@ -581,15 +581,9 @@ public interface MethodLookupEngine {
          */
         protected static class MethodBucket {
 
-            /**
-             * A map of class methods by their unique signature, represented as strings.
-             */
-            private final Map<String, MethodDescription> classMethods;
+            private final Map<MethodDescription.Token, MethodDescription> classMethods;
 
-            /**
-             * A map of interface methods by their unique signature, represented as strings.
-             */
-            private final Map<String, MethodDescription> interfaceMethods;
+            private final Map<MethodDescription.Token, MethodDescription> interfaceMethods;
 
             /**
              * A marker pool of types that were already pushed into this bucket.
@@ -616,8 +610,8 @@ public interface MethodLookupEngine {
              */
             protected MethodBucket(TypeDescription typeOfInterest) {
                 this.typeOfInterest = typeOfInterest;
-                classMethods = new HashMap<String, MethodDescription>();
-                interfaceMethods = new HashMap<String, MethodDescription>();
+                classMethods = new HashMap<MethodDescription.Token, MethodDescription>();
+                interfaceMethods = new HashMap<MethodDescription.Token, MethodDescription>();
                 processedTypes = new HashSet<TypeDescription>();
                 virtualMethodMatcher = isMethod().<MethodDescription>and(not(isPrivate()
                         .<MethodDescription>or(isStatic())
@@ -647,9 +641,9 @@ public interface MethodLookupEngine {
             private void pushClass(TypeDescription typeDescription, ElementMatcher<? super MethodDescription> methodMatcher) {
                 if (processedTypes.add(typeDescription)) {
                     for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(methodMatcher)) {
-                        String uniqueSignature = methodDescription.getUniqueSignature();
-                        MethodDescription overridingMethod = classMethods.get(uniqueSignature);
-                        classMethods.put(uniqueSignature, overridingMethod == null
+                        MethodDescription.Token methodToken = methodDescription.asToken();
+                        MethodDescription overridingMethod = classMethods.get(methodToken);
+                        classMethods.put(methodToken, overridingMethod == null
                                 ? methodDescription
                                 : OverriddenClassMethod.of(overridingMethod, methodDescription));
                     }
@@ -692,7 +686,7 @@ public interface MethodLookupEngine {
              */
             private void pushInterfaces(Collection<? extends TypeDescription> typeDescriptions,
                                         DefaultMethodLookup defaultMethodLookup) {
-                Set<String> processedMethods = new HashSet<String>(classMethods.keySet());
+                Set<MethodDescription.Token> processedMethods = new HashSet<MethodDescription.Token>(classMethods.keySet());
                 for (TypeDescription interfaceTypeDescription : typeDescriptions) {
                     pushInterface(interfaceTypeDescription, processedMethods, defaultMethodLookup);
                 }
@@ -735,24 +729,23 @@ public interface MethodLookupEngine {
              * {@link MethodLookupEngine.Default.MethodBucket#processedTypes}.
              *
              * @param typeDescription             The interface type to process.
-             * @param processedMethodsInHierarchy A set of unique method signatures that were already processed.
              * @param defaultMethodLookup         A processor for performing a lookup of default methods.
              */
             private void pushInterface(TypeDescription typeDescription,
-                                       Set<String> processedMethodsInHierarchy,
+                                       Set<MethodDescription.Token> processedMethodsInHierarchy,
                                        DefaultMethodLookup defaultMethodLookup) {
-                Set<String> locallyProcessedMethods = new HashSet<String>(processedMethodsInHierarchy);
+                Set<MethodDescription.Token> locallyProcessedMethods = new HashSet<MethodDescription.Token>(processedMethodsInHierarchy);
                 if (processedTypes.add(typeDescription)) {
                     defaultMethodLookup.begin(typeDescription);
                     for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(virtualMethodMatcher)) {
-                        String uniqueSignature = methodDescription.getUniqueSignature();
-                        if (locallyProcessedMethods.add(uniqueSignature)) {
-                            MethodDescription conflictingMethod = interfaceMethods.get(uniqueSignature);
+                        MethodDescription.Token methodToken = methodDescription.asToken();
+                        if (locallyProcessedMethods.add(methodToken)) {
+                            MethodDescription conflictingMethod = interfaceMethods.get(methodToken);
                             MethodDescription resolvedMethod = methodDescription;
                             if (conflictingMethod != null && !conflictingMethod.getDeclaringType().isAssignableFrom(typeDescription)) {
                                 resolvedMethod = ConflictingInterfaceMethod.of(typeOfInterest, conflictingMethod, methodDescription);
                             }
-                            interfaceMethods.put(uniqueSignature, resolvedMethod);
+                            interfaceMethods.put(methodToken, resolvedMethod);
                         }
                         defaultMethodLookup.register(methodDescription);
                     }
@@ -893,7 +886,7 @@ public interface MethodLookupEngine {
                      * A mapping of interfaces to all methods that are declared on a given interface where
                      * the methods are not necessarily default methods.
                      */
-                    private final Map<TypeDescription, Set<String>> methodDeclarations;
+                    private final Map<TypeDescription, Set<MethodDescription.Token>> methodDeclarations;
 
                     /**
                      * Creates a new mutable canonical implementation of a default method lookup.
@@ -904,18 +897,18 @@ public interface MethodLookupEngine {
                     protected Enabled(Collection<? extends TypeDescription> declaredInterfaceTypes) {
                         this.declaredInterfaceTypes = declaredInterfaceTypes;
                         defaultMethods = new HashMap<TypeDescription, Set<MethodDescription>>();
-                        methodDeclarations = new HashMap<TypeDescription, Set<String>>();
+                        methodDeclarations = new HashMap<TypeDescription, Set<MethodDescription.Token>>();
                     }
 
                     @Override
                     public void begin(TypeDescription typeDescription) {
                         defaultMethods.put(typeDescription, new HashSet<MethodDescription>());
-                        methodDeclarations.put(typeDescription, new HashSet<String>());
+                        methodDeclarations.put(typeDescription, new HashSet<MethodDescription.Token>());
                     }
 
                     @Override
                     public void register(MethodDescription methodDescription) {
-                        methodDeclarations.get(methodDescription.getDeclaringType()).add(methodDescription.getUniqueSignature());
+                        methodDeclarations.get(methodDescription.getDeclaringType()).add(methodDescription.asToken());
                         if (methodDescription.isDefaultMethod()) {
                             defaultMethods.get(methodDescription.getDeclaringType()).add(methodDescription);
                         }
@@ -923,11 +916,11 @@ public interface MethodLookupEngine {
 
                     @Override
                     public void complete(TypeDescription typeDescription) {
-                        Set<String> methodDeclarations = this.methodDeclarations.get(typeDescription);
+                        Set<MethodDescription.Token> methodDeclarations = this.methodDeclarations.get(typeDescription);
                         Set<MethodDescription> defaultMethods = this.defaultMethods.get(typeDescription);
                         for (TypeDescription interfaceType : typeDescription.getInterfaces().asRawTypes()) {
                             for (MethodDescription methodDescription : this.defaultMethods.get(interfaceType)) {
-                                if (!methodDeclarations.contains(methodDescription.getUniqueSignature())) {
+                                if (!methodDeclarations.contains(methodDescription.asToken())) {
                                     defaultMethods.add(methodDescription);
                                 }
                             }

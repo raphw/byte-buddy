@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
@@ -60,8 +61,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     ParameterList getParameters();
 
     GenericTypeList getExceptionTypes();
-
-    String getUniqueSignature();
 
     /**
      * Returns this method modifier but adjusts its state of being abstract.
@@ -209,6 +208,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     boolean isDefaultValue(Object value);
 
+    Token asToken();
+
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
@@ -227,11 +228,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 | Modifier.FINAL
                 | Modifier.SYNCHRONIZED
                 | Modifier.NATIVE;
-
-        @Override
-        public String getUniqueSignature() {
-            return getInternalName() + getDescriptor();
-        }
 
         @Override
         public int getStackSize() {
@@ -497,6 +493,11 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
             return visitor.onMethod(this);
+        }
+
+        @Override
+        public Token asToken() {
+            return asToken(none());
         }
 
         @Override

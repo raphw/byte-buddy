@@ -12,6 +12,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.utility.ByteBuddyCommons.isImplementable;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 import static net.bytebuddy.utility.ByteBuddyCommons.toList;
@@ -223,16 +224,16 @@ public class DefaultMethodCall implements Implementation {
          * given method.
          */
         private StackManipulation locateDefault(MethodDescription methodDescription) {
-            String uniqueMethodSignature = methodDescription.getUniqueSignature();
+            MethodDescription.Token methodToken = methodDescription.asToken();
             SpecialMethodInvocation specialMethodInvocation = SpecialMethodInvocation.Illegal.INSTANCE;
             for (TypeDescription typeDescription : prioritizedInterfaces) {
-                specialMethodInvocation = implementationTarget.invokeDefault(typeDescription, uniqueMethodSignature);
+                specialMethodInvocation = implementationTarget.invokeDefault(typeDescription, methodToken);
                 if (specialMethodInvocation.isValid()) {
                     return specialMethodInvocation;
                 }
             }
             for (TypeDescription typeDescription : nonPrioritizedInterfaces) {
-                SpecialMethodInvocation other = implementationTarget.invokeDefault(typeDescription, uniqueMethodSignature);
+                SpecialMethodInvocation other = implementationTarget.invokeDefault(typeDescription, methodToken);
                 if (specialMethodInvocation.isValid() && other.isValid()) {
                     throw new IllegalStateException(methodDescription + " has an ambiguous default method with "
                             + other.getMethodDescription() + " and " + specialMethodInvocation.getMethodDescription());

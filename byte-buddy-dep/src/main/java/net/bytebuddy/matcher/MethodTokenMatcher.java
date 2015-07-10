@@ -14,6 +14,6 @@ public class MethodTokenMatcher<T extends MethodDescription> extends ElementMatc
 
     @Override
     public boolean matches(T target) {
-        return matcher.matches(target.asToken(none()));
+        return matcher.matches(target.asToken());
     }
 }

@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
+
 /**
  * Description of the parameter of a Java method or constructor.
  */
@@ -70,6 +72,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     int getOffset();
 
+    Token asToken();
+
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
@@ -109,6 +113,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                 offset += parameterType.get(i).getStackSize().getSize();
             }
             return offset;
+        }
+
+        @Override
+        public Token asToken() {
+            return asToken(none());
         }
 
         @Override
