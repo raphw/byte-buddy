@@ -39,7 +39,9 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         when(methodDescription.getReturnType()).thenReturn(returnType);
         ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, parameterTypes);
         when(methodDescription.getParameters()).thenReturn(parameterList);
-        when(methodDescription.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+        TypeDescription declaringType = mock(TypeDescription.class);
+        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(resolution.getResolvedMethod()).thenReturn(methodDescription);
         return new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, targetType);
     }
@@ -48,7 +50,9 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
     public void testIsValid() throws Exception {
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
-        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(mock(TypeDescription.class),
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(typeDescription,
                 FOO,
                 Opcodes.ACC_STATIC,
                 Collections.<GenericTypeDescription>emptyList(),
@@ -66,7 +70,9 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
     public void testIsInvalid() throws Exception {
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Illegal.INSTANCE);
-        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(mock(TypeDescription.class),
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(typeDescription,
                 FOO,
                 Opcodes.ACC_PUBLIC,
                 Collections.<GenericTypeDescription>emptyList(),

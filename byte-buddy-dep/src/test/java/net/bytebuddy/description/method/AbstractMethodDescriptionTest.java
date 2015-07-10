@@ -135,11 +135,11 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testMethodDeclaringType() throws Exception {
-        assertThat(describe(firstMethod).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(firstMethod.getDeclaringClass())));
-        assertThat(describe(secondMethod).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(secondMethod.getDeclaringClass())));
-        assertThat(describe(thirdMethod).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(thirdMethod.getDeclaringClass())));
-        assertThat(describe(firstConstructor).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(firstConstructor.getDeclaringClass())));
-        assertThat(describe(secondConstructor).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(secondConstructor.getDeclaringClass())));
+        assertThat(describe(firstMethod).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(firstMethod.getDeclaringClass())));
+        assertThat(describe(secondMethod).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(secondMethod.getDeclaringClass())));
+        assertThat(describe(thirdMethod).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(thirdMethod.getDeclaringClass())));
+        assertThat(describe(firstConstructor).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(firstConstructor.getDeclaringClass())));
+        assertThat(describe(secondConstructor).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(secondConstructor.getDeclaringClass())));
     }
 
     @Test
@@ -575,6 +575,7 @@ public abstract class AbstractMethodDescriptionTest {
 
     }
 
+    @SuppressWarnings("unused")
     private static abstract class Sample {
 
         Sample(final Void argument) {
@@ -605,6 +606,7 @@ public abstract class AbstractMethodDescriptionTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static abstract class PublicType {
 
         public PublicType() {
@@ -634,6 +636,7 @@ public abstract class AbstractMethodDescriptionTest {
         }
     }
 
+    @SuppressWarnings("unused")
     static abstract class PackagePrivateType {
 
         public PackagePrivateType() {
@@ -663,6 +666,7 @@ public abstract class AbstractMethodDescriptionTest {
         }
     }
 
+    @SuppressWarnings("unused")
     static class GenericMethod<T extends Exception> {
 
         T foo(T t) throws T {

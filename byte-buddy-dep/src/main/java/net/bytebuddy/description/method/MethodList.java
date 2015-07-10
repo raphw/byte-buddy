@@ -152,18 +152,23 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
 
     class TypeSubstituting extends AbstractBase {
 
+        private final GenericTypeDescription declaringType;
+
         private final List<? extends MethodDescription> methodDescriptions;
 
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
-        public TypeSubstituting(List<? extends MethodDescription> methodDescriptions, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        public TypeSubstituting(GenericTypeDescription declaringType,
+                                List<? extends MethodDescription> methodDescriptions,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringType = declaringType;
             this.methodDescriptions = methodDescriptions;
             this.visitor = visitor;
         }
 
         @Override
         public MethodDescription get(int index) {
-            return new MethodDescription.TypeSubstituting(methodDescriptions.get(index), visitor);
+            return new MethodDescription.TypeSubstituting(declaringType, methodDescriptions.get(index), visitor);
         }
 
         @Override

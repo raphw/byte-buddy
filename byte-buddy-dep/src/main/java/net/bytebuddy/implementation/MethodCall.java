@@ -648,7 +648,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType()), Duplication.SINGLE);
+                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType().asRawType()), Duplication.SINGLE);
             }
 
             @Override
@@ -699,7 +699,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                if (methodDescription.isStatic() || !methodDescription.getDeclaringType().isInstance(target)) {
+                if (methodDescription.isStatic() || !methodDescription.getDeclaringType().asRawType().isInstance(target)) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + target);
                 }
                 return FieldAccess.forField(instrumentedType.getDeclaredFields()
@@ -2044,7 +2044,7 @@ public class MethodCall implements Implementation {
                 if (!methodDescription.isDefaultMethod()) {
                     throw new IllegalStateException("Not a default method: " + methodDescription);
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType(), methodDescription.asToken());
+                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asRawType(), methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
                 }
@@ -2094,7 +2094,7 @@ public class MethodCall implements Implementation {
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
                 StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType()
+                        ? invokedMethod.getDeclaringType().asRawType()
                         : invokedMethod.getReturnType().asRawType(), interceptedMethod.getReturnType().asRawType(), dynamicallyTyped);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + interceptedMethod);
@@ -2126,7 +2126,7 @@ public class MethodCall implements Implementation {
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
                 return Removal.pop(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType()
+                        ? invokedMethod.getDeclaringType().asRawType()
                         : invokedMethod.getReturnType().asRawType());
             }
 

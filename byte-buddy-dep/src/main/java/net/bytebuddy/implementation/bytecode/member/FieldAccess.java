@@ -191,7 +191,7 @@ public enum FieldAccess {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitFieldInsn(getOpcode(),
-                        fieldDescription.getDeclaringType().getInternalName(),
+                        fieldDescription.getDeclaringType().asRawType().getInternalName(),
                         fieldDescription.getInternalName(),
                         fieldDescription.getDescriptor());
                 return resolveSize(fieldDescription.getType().getStackSize());

@@ -129,18 +129,23 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
 
     class TypeSubstituting extends AbstractBase {
 
+        private final GenericTypeDescription declaringType;
+
         private final List<? extends FieldDescription> fieldDescriptions;
 
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
-        public TypeSubstituting(List<? extends FieldDescription> fieldDescriptions, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        public TypeSubstituting(GenericTypeDescription declaringType,
+                                List<? extends FieldDescription> fieldDescriptions,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringType = declaringType;
             this.fieldDescriptions = fieldDescriptions;
             this.visitor = visitor;
         }
 
         @Override
         public FieldDescription get(int index) {
-            return new FieldDescription.TypeSubstituting(fieldDescriptions.get(index), visitor);
+            return new FieldDescription.TypeSubstituting(declaringType, fieldDescriptions.get(index), visitor);
         }
 
         @Override

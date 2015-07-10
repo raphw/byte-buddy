@@ -2,6 +2,7 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -12,7 +13,7 @@ import static org.mockito.Mockito.*;
 public class DeclaringTypeMatcherTest extends AbstractElementMatcherTest<DeclaringTypeMatcher<?>> {
 
     @Mock
-    private ElementMatcher<? super TypeDescription> typeMatcher;
+    private ElementMatcher<? super GenericTypeDescription> typeMatcher;
 
     @Mock
     private DeclaredByType declaredByType;

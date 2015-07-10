@@ -32,7 +32,9 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
         for (TypeDescription parameterType : parameterTypes) {
             tokens.add(new ParameterDescription.Token(parameterType));
         }
-        return new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(mock(TypeDescription.class),
+        TypeDescription declaringType = mock(TypeDescription.class);
+        when(declaringType.asRawType()).thenReturn(declaringType);
+        return new Implementation.SpecialMethodInvocation.Simple(new MethodDescription.Latent(declaringType,
                 name,
                 Opcodes.ACC_PUBLIC,
                 Collections.<GenericTypeDescription>emptyList(),

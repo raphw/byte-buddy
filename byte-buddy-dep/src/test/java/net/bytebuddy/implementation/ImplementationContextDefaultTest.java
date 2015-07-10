@@ -97,7 +97,8 @@ public class ImplementationContextDefaultTest {
 
     @Mock
     private TypeDescription firstSpecialType, secondSpecialType, firstSpecialReturnType, secondSpecialReturnType,
-            firstSpecialParameterType, secondSpecialParameterType, firstSpecialExceptionType, secondSpecialExceptionType;
+            firstSpecialParameterType, secondSpecialParameterType, firstSpecialExceptionType, secondSpecialExceptionType,
+            firstDeclaringType, secondDeclaringType;
 
     @Mock
     private FieldDescription firstField, secondField;
@@ -193,6 +194,12 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialParameterType.asRawType()).thenReturn(secondSpecialParameterType); // REFACTOR
         when(firstSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstSpecialParameterType);
         when(secondSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondSpecialParameterType);
+        when(firstFieldDeclaringType.asRawType()).thenReturn(firstFieldDeclaringType);
+        when(secondFieldDeclaringType.asRawType()).thenReturn(secondFieldDeclaringType);
+        when(firstSpecialMethod.getDeclaringType()).thenReturn(firstSpecialType);
+        when(firstSpecialType.asRawType()).thenReturn(firstSpecialType);
+        when(secondSpecialMethod.getDeclaringType()).thenReturn(secondSpecialType);
+        when(secondSpecialType.asRawType()).thenReturn(secondSpecialType);
     }
 
     @Test
@@ -609,7 +616,7 @@ public class ImplementationContextDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyCustom();
+        ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyBasic();
         ObjectPropertyAssertion.of(Implementation.Context.Default.FieldCacheEntry.class).apply();
         ObjectPropertyAssertion.of(Implementation.Context.Default.AccessorMethodDelegation.class).apply();
         ObjectPropertyAssertion.of(Implementation.Context.Default.FieldSetterDelegation.class).apply();

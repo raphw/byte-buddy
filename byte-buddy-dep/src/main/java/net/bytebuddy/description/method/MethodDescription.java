@@ -290,7 +290,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         public String getName() {
             return isMethod()
                     ? getInternalName()
-                    : getDeclaringType().getName();
+                    : getDeclaringType().asRawType().getName();
         }
 
         @Override
@@ -349,11 +349,11 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return getDeclaringType().isVisibleTo(typeDescription)
+            return getDeclaringType().asRawType().isVisibleTo(typeDescription)
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType())
-                    || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType())));
+                    || (isProtected() && getDeclaringType().asRawType().isAssignableFrom(typeDescription))
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asRawType())));
         }
 
         @Override
@@ -363,7 +363,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public boolean isDefaultMethod() {
-            return !isAbstract() && !isBridge() && getDeclaringType().isInterface();
+            return !isAbstract() && !isBridge() && getDeclaringType().asRawType().isInterface();
         }
 
         @Override
@@ -373,7 +373,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             } else if (isPrivate() || isConstructor()) {
                 return getDeclaringType().equals(targetType);
             } else {
-                return !isAbstract() && getDeclaringType().isAssignableFrom(targetType);
+                return !isAbstract() && getDeclaringType().asRawType().isAssignableFrom(targetType);
             }
         }
 
@@ -387,7 +387,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             return !isStatic()
                     && !isTypeInitializer()
                     && isVisibleTo(typeDescription)
-                    && getDeclaringType().isAssignableFrom(typeDescription);
+                    && getDeclaringType().asRawType().isAssignableFrom(typeDescription);
         }
 
         @Override
@@ -395,7 +395,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             TypeDescription returnType = getReturnType().asRawType();
             if ((isMethod() && (!isStatic()
                     || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(returnType) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(returnType))))
-                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType()))) {
+                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType().asRawType()))) {
                 return false;
             }
             TypeList parameterTypes = getParameters().asTypeList().asRawTypes();
@@ -506,7 +506,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public TypeVariableSource getEnclosingSource() {
-            return getDeclaringType();
+            return getDeclaringType().asRawType();
         }
 
         @Override
@@ -1169,6 +1169,11 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                 return TypeSubstituting.this;
             }
 
+            @Override
+            public String toString() {
+                return "MethodDescription.TypeSubstituting.VariableRetainingDelegator{methodDescription=" + TypeSubstituting.this + '}';
+            }
+
             /**
              * A retained type variable that is declared by the method.
              */
@@ -1394,11 +1399,13 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         public String toString() {
             return "MethodDescription.Token{" +
                     "internalName='" + internalName + '\'' +
-                    ", returnType=" + returnType +
                     ", modifiers=" + modifiers +
+                    ", typeVariables=" + typeVariables +
+                    ", returnType=" + returnType +
                     ", parameterTokens=" + parameterTokens +
                     ", exceptionTypes=" + exceptionTypes +
                     ", annotations=" + annotations +
+                    ", defaultValue=" + defaultValue +
                     '}';
         }
     }

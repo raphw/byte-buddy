@@ -520,7 +520,7 @@ public interface JavaInstance {
          */
         public static MethodHandle of(MethodDescription methodDescription) {
             return new MethodHandle(HandleType.of(methodDescription),
-                    methodDescription.getDeclaringType(),
+                    methodDescription.getDeclaringType().asRawType(),
                     methodDescription.getInternalName(),
                     methodDescription.getReturnType().asRawType(),
                     methodDescription.getParameters().asTypeList().asRawTypes());
@@ -574,7 +574,7 @@ public interface JavaInstance {
          */
         public static MethodHandle ofGetter(FieldDescription fieldDescription) {
             return new MethodHandle(HandleType.ofGetter(fieldDescription),
-                    fieldDescription.getDeclaringType(),
+                    fieldDescription.getDeclaringType().asRawType(),
                     fieldDescription.getInternalName(),
                     fieldDescription.getType().asRawType(),
                     Collections.<TypeDescription>emptyList());
@@ -598,7 +598,7 @@ public interface JavaInstance {
          */
         public static MethodHandle ofSetter(FieldDescription fieldDescription) {
             return new MethodHandle(HandleType.ofSetter(fieldDescription),
-                    fieldDescription.getDeclaringType(),
+                    fieldDescription.getDeclaringType().asRawType(),
                     fieldDescription.getInternalName(),
                     TypeDescription.VOID,
                     Collections.singletonList(fieldDescription.getType().asRawType()));
@@ -779,7 +779,7 @@ public interface JavaInstance {
                     return INVOKE_SPECIAL;
                 } else if (methodDescription.isConstructor()) {
                     return INVOKE_SPECIAL_CONSTRUCTOR;
-                } else if (methodDescription.getDeclaringType().isInterface()) {
+                } else if (methodDescription.getDeclaringType().asRawType().isInterface()) {
                     return INVOKE_INTERFACE;
                 } else {
                     return INVOKE_VIRTUAL;

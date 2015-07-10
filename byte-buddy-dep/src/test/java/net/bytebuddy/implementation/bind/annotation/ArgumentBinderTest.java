@@ -144,7 +144,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         ObjectPropertyAssertion.of(Argument.Binder.class).apply();
         ObjectPropertyAssertion.of(Argument.BindingMechanic.class).apply();
         ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.class).apply();
-        ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.class).applyCustom();
+        ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.class).applyBasic();
 
     }
 

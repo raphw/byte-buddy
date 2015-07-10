@@ -77,7 +77,7 @@ public enum MethodInvocation {
             return SPECIAL_CONSTRUCTOR.new Invocation(methodDescription); // Check this property second, constructors might be private
         } else if (methodDescription.isPrivate() || methodDescription.isDefaultMethod()) {
             return SPECIAL.new Invocation(methodDescription);
-        } else if (methodDescription.getDeclaringType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
+        } else if (methodDescription.getDeclaringType().asRawType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
             return INTERFACE.new Invocation(methodDescription);
         } else {
             return VIRTUAL.new Invocation(methodDescription);
@@ -193,7 +193,7 @@ public enum MethodInvocation {
          * @param methodDescription The method to be invoked.
          */
         protected Invocation(MethodDescription methodDescription) {
-            this(methodDescription, methodDescription.getDeclaringType());
+            this(methodDescription, methodDescription.getDeclaringType().asRawType());
         }
 
         /**
@@ -359,7 +359,7 @@ public enum MethodInvocation {
             methodVisitor.visitInvokeDynamicInsn(methodName,
                     methodDescriptor,
                     new Handle(handle,
-                            bootstrapMethod.getDeclaringType().getInternalName(),
+                            bootstrapMethod.getDeclaringType().asRawType().getInternalName(),
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor()),
                     arguments.toArray(new Object[arguments.size()]));

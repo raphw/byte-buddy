@@ -59,7 +59,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(fieldDescription.getType(), is((GenericTypeDescription) fieldType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
-        assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getDeclaringType(), sameInstance((GenericTypeDescription) instrumentedType));
     }
 
     @Test
@@ -72,7 +72,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(fieldDescription.getType(), sameInstance((GenericTypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
-        assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getDeclaringType(), sameInstance((GenericTypeDescription) instrumentedType));
     }
 
     @Test
@@ -87,7 +87,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(fieldDescription.getType().asRawType().getComponentType(), sameInstance((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
-        assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getDeclaringType(), sameInstance((GenericTypeDescription) instrumentedType));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -134,7 +134,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(methodDescription.getExceptionTypes(), is(Collections.<GenericTypeDescription>singletonList(exceptionType)));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
-        assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getDeclaringType(), sameInstance((GenericTypeDescription) instrumentedType));
     }
 
     @Test
@@ -154,7 +154,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
-        assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getDeclaringType(), sameInstance((GenericTypeDescription) instrumentedType));
     }
 
     @Test
@@ -176,7 +176,7 @@ public abstract class AbstractInstrumentedTypeTest {
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
-        assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(methodDescription.getDeclaringType(), sameInstance((GenericTypeDescription) instrumentedType));
     }
 
     @Test(expected = IllegalArgumentException.class)

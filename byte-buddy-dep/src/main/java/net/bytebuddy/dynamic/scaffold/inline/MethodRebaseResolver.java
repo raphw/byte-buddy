@@ -378,7 +378,7 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public TypeDescription getDeclaringType() {
+                public GenericTypeDescription getDeclaringType() {
                     return methodDescription.getDeclaringType();
                 }
 
@@ -487,7 +487,7 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public TypeDescription getDeclaringType() {
+                public GenericTypeDescription getDeclaringType() {
                     return methodDescription.getDeclaringType();
                 }
 

@@ -68,8 +68,8 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testFieldDeclaringType() throws Exception {
-        assertThat(describe(first).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(first.getDeclaringClass())));
-        assertThat(describe(second).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(second.getDeclaringClass())));
+        assertThat(describe(first).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(first.getDeclaringClass())));
+        assertThat(describe(second).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(second.getDeclaringClass())));
     }
 
     @Test
@@ -185,17 +185,20 @@ public abstract class AbstractFieldDescriptionTest {
 
     }
 
+    @SuppressWarnings("unused")
     protected static class FirstSample {
 
         private Void first;
     }
 
+    @SuppressWarnings("unused")
     protected static class SecondSample {
 
         @SampleAnnotation
         int second;
     }
 
+    @SuppressWarnings("unused")
     public static class PublicType {
 
         public Void publicField;
@@ -207,6 +210,7 @@ public abstract class AbstractFieldDescriptionTest {
         private Void privateField;
     }
 
+    @SuppressWarnings("unused")
     static class PackagePrivateType {
 
         public Void publicField;
@@ -218,6 +222,7 @@ public abstract class AbstractFieldDescriptionTest {
         private Void privateField;
     }
 
+    @SuppressWarnings("unused")
     static class GenericField {
 
         List<String> foo;

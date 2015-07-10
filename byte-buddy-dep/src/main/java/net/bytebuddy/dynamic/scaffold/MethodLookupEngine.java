@@ -262,7 +262,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return methodChain.get(MOST_SPECIFIC).getDeclaringType();
         }
 
@@ -286,7 +286,7 @@ public interface MethodLookupEngine {
             for (MethodDescription methodDescription : methodChain) {
                 if (methodDescription.isSpecializableFor(targetType)) {
                     return true;
-                } else if (methodDescription.getDeclaringType().isAssignableFrom(targetType)) {
+                } else if (methodDescription.getDeclaringType().asRawType().isAssignableFrom(targetType)) {
                     return false;
                 }
             }
@@ -368,7 +368,7 @@ public interface MethodLookupEngine {
                 List<MethodDescription> known = ((ConflictingInterfaceMethod) conflictingMethod).methodDescriptions;
                 methodDescriptions = new ArrayList<MethodDescription>(known.size() + 1);
                 for (MethodDescription methodDescription : known) {
-                    if (!methodDescription.getDeclaringType().isAssignableFrom(discoveredMethod.getDeclaringType())) {
+                    if (!methodDescription.getDeclaringType().asRawType().isAssignableFrom(discoveredMethod.getDeclaringType().asRawType())) {
                         methodDescriptions.add(methodDescription);
                     }
                 }
@@ -448,7 +448,7 @@ public interface MethodLookupEngine {
         public boolean isSpecializableFor(TypeDescription targetType) {
             MethodDescription invokableMethod = null;
             for (MethodDescription methodDescription : methodDescriptions) {
-                if (!methodDescription.isAbstract() && methodDescription.getDeclaringType().isAssignableFrom(targetType)) {
+                if (!methodDescription.isAbstract() && methodDescription.getDeclaringType().asRawType().isAssignableFrom(targetType)) {
                     if (invokableMethod == null) {
                         invokableMethod = methodDescription;
                     } else {
@@ -742,7 +742,7 @@ public interface MethodLookupEngine {
                         if (locallyProcessedMethods.add(methodToken)) {
                             MethodDescription conflictingMethod = interfaceMethods.get(methodToken);
                             MethodDescription resolvedMethod = methodDescription;
-                            if (conflictingMethod != null && !conflictingMethod.getDeclaringType().isAssignableFrom(typeDescription)) {
+                            if (conflictingMethod != null && !conflictingMethod.getDeclaringType().asRawType().isAssignableFrom(typeDescription)) {
                                 resolvedMethod = ConflictingInterfaceMethod.of(typeOfInterest, conflictingMethod, methodDescription);
                             }
                             interfaceMethods.put(methodToken, resolvedMethod);
@@ -908,9 +908,9 @@ public interface MethodLookupEngine {
 
                     @Override
                     public void register(MethodDescription methodDescription) {
-                        methodDeclarations.get(methodDescription.getDeclaringType()).add(methodDescription.asToken());
+                        methodDeclarations.get(methodDescription.getDeclaringType().asRawType()).add(methodDescription.asToken());
                         if (methodDescription.isDefaultMethod()) {
-                            defaultMethods.get(methodDescription.getDeclaringType()).add(methodDescription);
+                            defaultMethods.get(methodDescription.getDeclaringType().asRawType()).add(methodDescription);
                         }
                     }
 

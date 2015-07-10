@@ -33,6 +33,10 @@ public class MethodLookupEngineConflictingInterfaceMethodTest {
 
     @Before
     public void setUp() throws Exception {
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(firstType.asRawType()).thenReturn(firstType);
+        when(secondType.asRawType()).thenReturn(secondType);
+        when(thirdType.asRawType()).thenReturn(thirdType);
         when(first.getDeclaringType()).thenReturn(firstType);
         when(second.getDeclaringType()).thenReturn(secondType);
         when(third.getDeclaringType()).thenReturn(thirdType);

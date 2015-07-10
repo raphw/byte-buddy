@@ -45,6 +45,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Override
     @Before
     public void setUp() throws Exception {
+        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAR);
         when(targetRebaseMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);

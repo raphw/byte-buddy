@@ -21,45 +21,50 @@ public class DeclaringTypeResolverTest extends AbstractAmbiguityResolverTest {
         super.setUp();
         when(leftMethod.getDeclaringType()).thenReturn(leftType);
         when(rightMethod.getDeclaringType()).thenReturn(rightType);
+        when(leftType.asRawType()).thenReturn(leftType);
+        when(rightType.asRawType()).thenReturn(rightType);
     }
 
     @Test
     public void testEquals() throws Exception {
         when(leftType.isAssignableFrom(rightType)).thenReturn(true);
-        assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, left),
-                is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
-        verifyZeroInteractions(leftType); // equals is not counted by Mockito
+        assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, left), is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
+        verify(leftType, times(2)).asRawType();
+        verifyNoMoreInteractions(leftType);
     }
 
     @Test
     public void testLeftAssignable() throws Exception {
         when(leftType.isAssignableFrom(rightType)).thenReturn(true);
-        assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right),
-                is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
+        assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
         verify(leftType).isAssignableFrom(rightType);
+        verify(leftType).asRawType();
         verifyNoMoreInteractions(leftType);
-        verifyZeroInteractions(rightType);
+        verify(rightType).asRawType();
+        verifyNoMoreInteractions(rightType);
     }
 
     @Test
     public void testRightAssignable() throws Exception {
         when(leftType.isAssignableTo(rightType)).thenReturn(true);
-        assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right),
-                is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
+        assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
         verify(leftType).isAssignableFrom(rightType);
         verify(leftType).isAssignableTo(rightType);
+        verify(leftType).asRawType();
         verifyNoMoreInteractions(leftType);
-        verifyZeroInteractions(rightType);
+        verify(rightType).asRawType();
+        verifyNoMoreInteractions(rightType);
     }
 
     @Test
     public void testNonAssignable() throws Exception {
-        assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right),
-                is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
+        assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
         verify(leftType).isAssignableFrom(rightType);
         verify(leftType).isAssignableTo(rightType);
+        verify(leftType).asRawType();
         verifyNoMoreInteractions(leftType);
-        verifyZeroInteractions(rightType);
+        verify(rightType).asRawType();
+        verifyNoMoreInteractions(rightType);
     }
 
     @Test

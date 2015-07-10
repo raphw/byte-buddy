@@ -2478,7 +2478,7 @@ public class ByteBuddy {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                TypeDescription instrumentedType = instrumentedMethod.getDeclaringType();
+                TypeDescription instrumentedType = instrumentedMethod.getDeclaringType().asRawType();
                 MethodDescription enumConstructor = instrumentedType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(String.class, int.class)))
                         .getOnly();

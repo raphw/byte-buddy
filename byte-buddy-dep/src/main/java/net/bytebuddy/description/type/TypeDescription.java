@@ -153,6 +153,9 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     @Override
     TypeDescription getOwnerType();
 
+    @Override
+    TypeDescription getDeclaringType();
+
     /**
      * Checks if the type described by this entity is a primitive type.
      *
@@ -335,7 +338,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             MethodDescription enclosingMethod = getEnclosingMethod();
             return enclosingMethod == null
                     ? getEnclosingType()
-                    : enclosingMethod.getDeclaringType();
+                    : enclosingMethod.getDeclaringType().asRawType();
         }
 
         @Override

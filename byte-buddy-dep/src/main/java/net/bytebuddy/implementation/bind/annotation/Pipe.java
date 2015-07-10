@@ -190,7 +190,7 @@ public @interface Pipe {
             } else if (source.isStatic()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType(),
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType().asRawType(),
                     source,
                     assigner,
                     annotation.loadSilent().serializableProxy(),
@@ -440,7 +440,7 @@ public @interface Pipe {
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                        StackManipulation thisReference = MethodVariableAccess.forType(instrumentedMethod.getDeclaringType()).loadOffset(0);
+                        StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadOffset(0);
                         FieldList fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                         int index = 0;
@@ -571,7 +571,7 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadOffset(1),
-                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType(), Assigner.DYNAMICALLY_TYPED),
+                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType().asRawType(), Assigner.DYNAMICALLY_TYPED),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
                                 assigner.assign(redirectedMethod.getReturnType().asRawType(),

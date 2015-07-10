@@ -31,19 +31,21 @@ public abstract class AbstractSpecialMethodInvocationTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription returnType, parameterType, targetType;
+    private TypeDescription returnType, parameterType, targetType, otherType;
 
     private TypeList parameterTypes;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
+        when(targetType.asRawType()).thenReturn(targetType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         parameterTypes = new TypeList.Explicit(Collections.singletonList(parameterType));
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType); // REFACTOR
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType); // REFACTOR
+        when(otherType.asRawType()).thenReturn(otherType);
     }
 
     protected abstract Implementation.SpecialMethodInvocation make(String name,
@@ -60,6 +62,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
         Implementation.SpecialMethodInvocation equal = mock(Implementation.SpecialMethodInvocation.class);
         when(equal.getTypeDescription()).thenReturn(targetType);
         MethodDescription equalMethod = mock(MethodDescription.class);
+        when(equalMethod.getDeclaringType()).thenReturn(otherType);
         when(equal.getMethodDescription()).thenReturn(equalMethod);
         when(equalMethod.getInternalName()).thenReturn(FOO);
         when(equalMethod.getReturnType()).thenReturn(returnType);
@@ -73,6 +76,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
         Implementation.SpecialMethodInvocation equalButName = mock(Implementation.SpecialMethodInvocation.class);
         when(equalButName.getTypeDescription()).thenReturn(targetType);
         MethodDescription equalMethodButName = mock(MethodDescription.class);
+        when(equalMethodButName.getDeclaringType()).thenReturn(otherType);
         when(equalButName.getMethodDescription()).thenReturn(equalMethodButName);
         when(equalMethodButName.getInternalName()).thenReturn(BAR);
         when(equalMethodButName.getReturnType()).thenReturn(returnType);
@@ -82,6 +86,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
         Implementation.SpecialMethodInvocation equalButReturn = mock(Implementation.SpecialMethodInvocation.class);
         when(equalButName.getTypeDescription()).thenReturn(targetType);
         MethodDescription equalMethodButReturn = mock(MethodDescription.class);
+        when(equalMethodButReturn.getDeclaringType()).thenReturn(otherType);
         when(equalButName.getMethodDescription()).thenReturn(equalMethodButReturn);
         when(equalMethodButReturn.getInternalName()).thenReturn(FOO);
         when(equalMethodButReturn.getReturnType()).thenReturn(mock(TypeDescription.class));
@@ -91,6 +96,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
         Implementation.SpecialMethodInvocation equalButParameter = mock(Implementation.SpecialMethodInvocation.class);
         when(equalButParameter.getTypeDescription()).thenReturn(targetType);
         MethodDescription equalMethodButParameter = mock(MethodDescription.class);
+        when(equalMethodButParameter.getDeclaringType()).thenReturn(otherType);
         when(equalButParameter.getMethodDescription()).thenReturn(equalMethodButParameter);
         when(equalMethodButParameter.getInternalName()).thenReturn(FOO);
         when(equalMethodButParameter.getReturnType()).thenReturn(returnType);

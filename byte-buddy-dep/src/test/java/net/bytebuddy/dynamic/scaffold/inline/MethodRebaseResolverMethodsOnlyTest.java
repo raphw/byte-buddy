@@ -36,7 +36,7 @@ public class MethodRebaseResolverMethodsOnlyTest {
     private MethodDescription method, constructor, other;
 
     @Mock
-    private TypeDescription returnType, parameterType;
+    private TypeDescription returnType, parameterType, declaringType;
 
     @Mock
     private MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
@@ -60,6 +60,8 @@ public class MethodRebaseResolverMethodsOnlyTest {
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
         when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
+        when(method.getDeclaringType()).thenReturn(declaringType);
+        when(declaringType.asRawType()).thenReturn(declaringType);
     }
 
     @Test

@@ -57,7 +57,7 @@ public class GenericTypeDescriptionVisitorForDetachmentTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(GenericTypeDescription.Visitor.Substitutor.ForDetachment.class).applyCustom();
+        ObjectPropertyAssertion.of(GenericTypeDescription.Visitor.Substitutor.ForDetachment.class).applyBasic();
     }
 
     @SuppressWarnings("unused")

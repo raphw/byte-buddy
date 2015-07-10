@@ -1047,7 +1047,7 @@ public class InvokeDynamic implements Implementation {
                 public List<TypeDescription> getParameterTypes() {
                     return methodDescription.isStatic()
                             ? methodDescription.getParameters().asTypeList().asRawTypes()
-                            : new TypeList.Explicit(join(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asRawTypes()));
+                            : new TypeList.Explicit(join(methodDescription.getDeclaringType().asRawType(), methodDescription.getParameters().asTypeList().asRawTypes()));
                 }
 
                 @Override
@@ -1118,7 +1118,7 @@ public class InvokeDynamic implements Implementation {
                     return new Resolved.Simple(MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             instrumentedMethod.isStatic()
                                     ? instrumentedMethod.getParameters().asTypeList().asRawTypes()
-                                    : join(instrumentedMethod.getDeclaringType(), instrumentedMethod.getParameters().asTypeList().asRawTypes()));
+                                    : join(instrumentedMethod.getDeclaringType().asRawType(), instrumentedMethod.getParameters().asTypeList().asRawTypes()));
                 }
 
                 @Override
@@ -3005,7 +3005,7 @@ public class InvokeDynamic implements Implementation {
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
                 return Removal.pop(interceptedMethod.isConstructor()
-                        ? interceptedMethod.getDeclaringType()
+                        ? interceptedMethod.getDeclaringType().asRawType()
                         : interceptedMethod.getReturnType().asRawType());
             }
 

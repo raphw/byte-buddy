@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -242,7 +243,7 @@ public class MethodLookupEngineDefaultTest {
                 + 1));
         MethodDescription conflictMethod = finding.getInvokableMethods().filter(named(FOO)).getOnly();
         assertEquals(MethodLookupEngine.ConflictingInterfaceMethod.class, conflictMethod.getClass());
-        assertThat(conflictMethod.getDeclaringType(), is(conflictingInterfaceClass));
+        assertThat(conflictMethod.getDeclaringType(), is((GenericTypeDescription) conflictingInterfaceClass));
         assertThat(finding.getInvokableDefaultMethods().size(), is(2));
         assertThat(finding.getInvokableDefaultMethods().get(new TypeDescription.ForLoadedType(SingleMethodInterface.class)).size(), is(0));
         assertThat(finding.getInvokableDefaultMethods().get(new TypeDescription.ForLoadedType(ConflictingSingleMethodInterface.class)).size(), is(0));
@@ -398,8 +399,8 @@ public class MethodLookupEngineDefaultTest {
             public void apply(TypeDescription mock) {
                 when(mock.getDeclaredMethods()).thenReturn(new MethodList.Empty());
             }
-        }).applyCustom();
-        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Enabled.class).applyCustom();
+        }).applyBasic();
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Enabled.class).applyBasic();
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Disabled.class).apply();
     }
 

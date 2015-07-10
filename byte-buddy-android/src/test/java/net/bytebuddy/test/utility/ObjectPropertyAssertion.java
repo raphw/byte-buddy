@@ -190,7 +190,7 @@ public class ObjectPropertyAssertion<T> {
         } while ((currentType = currentType.getSuperclass()) != Object.class);
     }
 
-    public void applyMutable() throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    public void applyBasic() throws IllegalAccessException, InvocationTargetException, InstantiationException {
         for (Constructor<?> constructor : type.getDeclaredConstructors()) {
             if (constructor.isSynthetic() && skipSynthetic) {
                 continue;

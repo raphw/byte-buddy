@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -22,7 +23,10 @@ public class MethodLookupEngineOverriddenClassMethodTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription firstType, secondType;
+    private GenericTypeDescription firstType, secondType;
+
+    @Mock
+    private TypeDescription firstRawType, secondRawType;
 
     @Mock
     private MethodDescription first, second;
@@ -31,6 +35,8 @@ public class MethodLookupEngineOverriddenClassMethodTest {
     public void setUp() throws Exception {
         when(first.getDeclaringType()).thenReturn(firstType);
         when(second.getDeclaringType()).thenReturn(secondType);
+        when(firstType.asRawType()).thenReturn(firstRawType);
+        when(secondType.asRawType()).thenReturn(secondRawType);
         when(first.getModifiers()).thenReturn(MODIFIERS);
     }
 
@@ -43,10 +49,10 @@ public class MethodLookupEngineOverriddenClassMethodTest {
 
     @Test
     public void testOverridenMethodIsSpecializableCascades() throws Exception {
-        when(second.isSpecializableFor(firstType)).thenReturn(true);
+        when(second.isSpecializableFor(firstRawType)).thenReturn(true);
         MethodDescription overriddenClassMethod = MethodLookupEngine.OverriddenClassMethod.of(first, second);
-        assertThat(overriddenClassMethod.isSpecializableFor(firstType), is(true));
-        verify(first).isSpecializableFor(firstType);
-        verify(second).isSpecializableFor(firstType);
+        assertThat(overriddenClassMethod.isSpecializableFor(firstRawType), is(true));
+        verify(first).isSpecializableFor(firstRawType);
+        verify(second).isSpecializableFor(firstRawType);
     }
 }

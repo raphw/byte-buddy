@@ -46,6 +46,6 @@ public class FieldDescriptionTokenTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldDescription.Token.class).applyCustom();
+        ObjectPropertyAssertion.of(FieldDescription.Token.class).applyBasic();
     }
 }

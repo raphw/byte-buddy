@@ -66,6 +66,7 @@ public class MethodInvocationTest {
 
     @Before
     public void setUp() throws Exception {
+        when(declaringType.asRawType()).thenReturn(declaringType);
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.getStackSize()).thenReturn(ARGUMENT_STACK_SIZE);

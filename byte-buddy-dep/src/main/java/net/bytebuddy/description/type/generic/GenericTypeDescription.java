@@ -653,7 +653,7 @@ public interface GenericTypeDescription extends NamedElement {
                  * @return A substitutor that attaches visited types to the given field's type context.
                  */
                 public static ForAttachment of(FieldDescription fieldDescription) {
-                    return new ForAttachment(fieldDescription.getDeclaringType(), fieldDescription.getDeclaringType());
+                    return new ForAttachment(fieldDescription.getDeclaringType().asRawType(), fieldDescription.getDeclaringType().asRawType());
                 }
 
                 /**
@@ -663,7 +663,7 @@ public interface GenericTypeDescription extends NamedElement {
                  * @return A substitutor that attaches visited types to the given method's type context.
                  */
                 public static ForAttachment of(MethodDescription methodDescription) {
-                    return new ForAttachment(methodDescription.getDeclaringType(), methodDescription);
+                    return new ForAttachment(methodDescription.getDeclaringType().asRawType(), methodDescription);
                 }
 
                 /**
@@ -673,7 +673,7 @@ public interface GenericTypeDescription extends NamedElement {
                  * @return A substitutor that attaches visited types to the given parameter's type context.
                  */
                 public static ForAttachment of(ParameterDescription parameterDescription) {
-                    return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType(), parameterDescription.getDeclaringMethod());
+                    return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType().asRawType(), parameterDescription.getDeclaringMethod());
                 }
 
                 /**
@@ -1437,12 +1437,12 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public FieldList getDeclaredFields() {
-            return new FieldList.TypeSubstituting(asRawType().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return new FieldList.TypeSubstituting(this, asRawType().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
         public MethodList getDeclaredMethods() {
-            return new MethodList.TypeSubstituting(asRawType().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return new MethodList.TypeSubstituting(this, asRawType().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
@@ -1690,12 +1690,12 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public FieldList getDeclaredFields() {
-                return new FieldList.TypeSubstituting(typeDescription.getDeclaredFields(), Visitor.TypeVariableErasing.INSTANCE);
+                return new FieldList.TypeSubstituting(this, typeDescription.getDeclaredFields(), Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public MethodList getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(typeDescription.getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
+                return new MethodList.TypeSubstituting(this, typeDescription.getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override

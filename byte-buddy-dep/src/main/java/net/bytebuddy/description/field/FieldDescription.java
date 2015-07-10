@@ -76,11 +76,11 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return getDeclaringType().isVisibleTo(typeDescription)
+            return getDeclaringType().asRawType().isVisibleTo(typeDescription)
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType())
-                    || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType())));
+                    || (isProtected() && getDeclaringType().asRawType().isAssignableFrom(typeDescription))
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asRawType())));
         }
 
         @Override
@@ -260,6 +260,8 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      */
     class TypeSubstituting extends AbstractFieldDescription {
 
+        private final GenericTypeDescription declaringType;
+
         /**
          * The represented field.
          */
@@ -273,10 +275,14 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         /**
          * Creates a field description with a substituted field type.
          *
+         * @param declaringType
          * @param fieldDescription The represented field.
          * @param visitor          A visitor that is applied to the field type.
          */
-        public TypeSubstituting(FieldDescription fieldDescription, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        public TypeSubstituting(GenericTypeDescription declaringType,
+                                FieldDescription fieldDescription,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringType = declaringType;
             this.fieldDescription = fieldDescription;
             this.visitor = visitor;
         }
@@ -292,7 +298,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return fieldDescription.getDeclaringType();
         }
 

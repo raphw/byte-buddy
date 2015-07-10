@@ -197,7 +197,7 @@ public @interface Morph {
                         : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source);
             }
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType(),
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType().asRawType(),
                     implementationTarget.getTypeDescription(),
                     specialMethodInvocation,
                     assigner,

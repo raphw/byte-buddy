@@ -39,6 +39,9 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     private StackManipulation stackManipulation;
 
     @Mock
+    private GenericTypeDescription genericTypeDescription;
+
+    @Mock
     private TypeDescription typeDescription, returnType, parameterType, placeholderType, otherPlaceHolderType;
 
     @Mock
@@ -50,6 +53,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
+        when(genericTypeDescription.asRawType()).thenReturn(typeDescription);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
@@ -72,7 +76,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     public void testPreservation() throws Exception {
         MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedConstructor.of(methodDescription, placeholderType);
         assertThat(resolution.isRebased(), is(true));
-        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
+        assertThat(resolution.getResolvedMethod().getDeclaringType(), is((GenericTypeDescription) typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));

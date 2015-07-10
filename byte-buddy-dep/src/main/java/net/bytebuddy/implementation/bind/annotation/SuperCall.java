@@ -77,9 +77,9 @@ public @interface SuperCall {
                     Implementation.Target.MethodLookup.Default.EXACT);
             if (!specialMethodInvocation.isValid()
                     && source.isDefaultMethod()
-                    && implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(source.getDeclaringType())
+                    && implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(source.getDeclaringType().asRawType())
                     && annotation.loadSilent().fallbackToDefault()) {
-                specialMethodInvocation = implementationTarget.invokeDefault(source.getDeclaringType(), source.asToken());
+                specialMethodInvocation = implementationTarget.invokeDefault(source.getDeclaringType().asRawType(), source.asToken());
             }
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy()))

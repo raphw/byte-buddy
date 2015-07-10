@@ -109,7 +109,7 @@ public class ClassFileLocatorAgentBasedTest {
                 return Collections.<Class<?>>singletonList(otherIterator.next());
             }
         }).apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ExtractionClassFileTransformer.class).applyCustom();
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ExtractionClassFileTransformer.class).applyBasic();
     }
 
 

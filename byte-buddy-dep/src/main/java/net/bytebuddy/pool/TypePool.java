@@ -3624,7 +3624,7 @@ public interface TypePool {
 
                         @Override
                         public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
-                            return new TokenizedGenericType(typePool, fieldTypeToken, fieldTypeDescriptor, definingField.getDeclaringType());
+                            return new TokenizedGenericType(typePool, fieldTypeToken, fieldTypeDescriptor, definingField.getDeclaringType().asRawType());
                         }
                     }
                 }
@@ -4079,7 +4079,7 @@ public interface TypePool {
 
             @Override
             public Object getValue(MethodDescription methodDescription) {
-                if (!methodDescription.getDeclaringType().getDescriptor().equals(descriptor)) {
+                if (!methodDescription.getDeclaringType().asRawType().getDescriptor().equals(descriptor)) {
                     throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
                 }
                 AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());

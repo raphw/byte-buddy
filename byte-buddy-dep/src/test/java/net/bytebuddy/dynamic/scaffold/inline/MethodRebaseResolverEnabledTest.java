@@ -38,7 +38,7 @@ public class MethodRebaseResolverEnabledTest {
     private MethodDescription method, constructor, other;
 
     @Mock
-    private TypeDescription placeholderType, returnType, parameterType;
+    private TypeDescription placeholderType, returnType, parameterType, declaringType;
 
     @Mock
     private DynamicType dynamicType;
@@ -51,6 +51,10 @@ public class MethodRebaseResolverEnabledTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
+        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(method.getDeclaringType()).thenReturn(declaringType);
+        when(constructor.getDeclaringType()).thenReturn(declaringType);
+        when(other.getDeclaringType()).thenReturn(declaringType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
         Set<MethodDescription> methodDescriptions = new HashSet<MethodDescription>();

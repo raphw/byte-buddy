@@ -43,7 +43,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected Implementation.Target implementationTarget;
 
     @Mock
-    protected TypeDescription instrumentedType;
+    protected TypeDescription instrumentedType, sourceDeclaringType, targetDeclaringType;
 
     @Mock
     protected Assigner assigner;
@@ -73,6 +73,9 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
 
     @Before
     public void setUp() throws Exception {
+        when(sourceDeclaringType.asRawType()).thenReturn(sourceDeclaringType);
+        when(targetDeclaringType.asRawType()).thenReturn(targetDeclaringType);
+        when(source.getDeclaringType()).thenReturn(sourceDeclaringType);
         annotation = mock(annotationType);
         doReturn(annotationType).when(annotation).annotationType();
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);

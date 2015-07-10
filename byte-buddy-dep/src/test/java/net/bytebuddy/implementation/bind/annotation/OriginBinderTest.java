@@ -86,7 +86,9 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testMethodHandleBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
         when(target.getType()).thenReturn(targetType);
-        when(source.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(source.getDeclaringType()).thenReturn(typeDescription);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));

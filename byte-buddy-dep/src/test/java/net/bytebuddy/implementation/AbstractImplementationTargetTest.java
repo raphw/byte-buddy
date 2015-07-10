@@ -59,6 +59,7 @@ public abstract class AbstractImplementationTargetTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
+        when(methodType.asRawType()).thenReturn(methodType);
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
         when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(invokableMethod)));
         when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultType, Collections.singleton(defaultMethod)));
@@ -82,6 +83,7 @@ public abstract class AbstractImplementationTargetTest {
         when(defaultMethod.getReturnType()).thenReturn(returnType);
         when(defaultMethod.asToken()).thenReturn(defaultToken);
         when(defaultType.isInterface()).thenReturn(true);
+        when(defaultType.asRawType()).thenReturn(defaultType);
         when(defaultMethod.isSpecializableFor(defaultType)).thenReturn(true);
         when(defaultType.getInternalName()).thenReturn(BAZBAR);
         implementationTarget = makeImplementationTarget();
@@ -115,6 +117,7 @@ public abstract class AbstractImplementationTargetTest {
         MethodDescription methodDescription = mock(MethodDescription.class);
         when(methodDescription.getReturnType()).thenReturn(returnType);
         TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         assertThat(implementationTarget.invokeSuper(methodDescription, methodLookup).isValid(), is(false));
     }

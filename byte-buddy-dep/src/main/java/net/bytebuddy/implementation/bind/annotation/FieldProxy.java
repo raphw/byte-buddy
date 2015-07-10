@@ -311,7 +311,7 @@ public @interface FieldProxy {
             GETTER {
                 @Override
                 protected TypeDescription proxyType(MethodDescription getterMethod, MethodDescription setterMethod) {
-                    return getterMethod.getDeclaringType();
+                    return getterMethod.getDeclaringType().asRawType();
                 }
 
                 @Override
@@ -328,7 +328,7 @@ public @interface FieldProxy {
             SETTER {
                 @Override
                 protected TypeDescription proxyType(MethodDescription getterMethod, MethodDescription setterMethod) {
-                    return setterMethod.getDeclaringType();
+                    return setterMethod.getDeclaringType().asRawType();
                 }
 
                 @Override

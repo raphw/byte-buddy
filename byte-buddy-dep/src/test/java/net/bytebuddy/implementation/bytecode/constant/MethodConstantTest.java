@@ -60,6 +60,7 @@ public class MethodConstantTest {
 
     @Before
     public void setUp() throws Exception {
+        when(declaringType.asRawType()).thenReturn(declaringType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getParameters()).thenReturn(parameterList);

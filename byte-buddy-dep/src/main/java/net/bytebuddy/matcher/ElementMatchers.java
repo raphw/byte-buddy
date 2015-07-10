@@ -542,7 +542,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super GenericTypeDescription> matcher) {
         return new DeclaringTypeMatcher<T>(nonNull(matcher));
     }
 

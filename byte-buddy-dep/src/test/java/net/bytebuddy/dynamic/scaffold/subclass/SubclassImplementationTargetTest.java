@@ -49,18 +49,20 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(superMethodConstructor)));
         when(superType.getInternalName()).thenReturn(BAR);
         when(superType.asRawType()).thenReturn(superType);
-        when(superMethod.getDeclaringType()).thenReturn(superType);
+        when(superType.asRawType()).thenReturn(superType);
         when(superType.getStackSize()).thenReturn(StackSize.ZERO);
         when(superMethod.getReturnType()).thenReturn(returnType);
         when(superMethod.getInternalName()).thenReturn(BAZ);
         when(superMethod.getDescriptor()).thenReturn(FOOBAR);
         when(superMethod.getParameters()).thenReturn(parameterList);
+        when(superMethod.getDeclaringType()).thenReturn(superType);
         when(superMethodConstructor.isConstructor()).thenReturn(true);
         when(superMethodConstructor.getParameters()).thenReturn(parameterList);
         when(superMethodConstructor.getReturnType()).thenReturn(returnType);
         when(superMethodConstructor.isSpecializableFor(superType)).thenReturn(true);
         when(superMethodConstructor.getInternalName()).thenReturn(QUXBAZ);
         when(superMethodConstructor.getDescriptor()).thenReturn(BAZBAR);
+        when(superMethodConstructor.getDeclaringType()).thenReturn(superType);
         super.setUp();
     }
 
