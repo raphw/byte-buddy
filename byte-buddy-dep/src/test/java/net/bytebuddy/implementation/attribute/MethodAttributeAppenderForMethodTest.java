@@ -39,19 +39,19 @@ public class MethodAttributeAppenderForMethodTest extends AbstractMethodAttribut
 
     @Test
     public void testMethodMakeReturnsSameInstance() throws Exception {
-        assertThat(new MethodAttributeAppender.ForMethod(method).make(mock(TypeDescription.class)),
-                is((MethodAttributeAppender) new MethodAttributeAppender.ForMethod(method)));
+        assertThat(new MethodAttributeAppender.ForMethod(method, valueFilter).make(mock(TypeDescription.class)),
+                is((MethodAttributeAppender) new MethodAttributeAppender.ForMethod(method, valueFilter)));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMethodIllegalApplicationThrowsException() throws Exception {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
-        new MethodAttributeAppender.ForMethod(method).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForMethod(method, valueFilter).apply(methodVisitor, methodDescription);
     }
 
     @Test
     public void testLoadedMethodAttributeAppender() throws Exception {
-        MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForMethod(method);
+        MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForMethod(method, valueFilter);
         methodAttributeAppender.apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);
@@ -62,19 +62,19 @@ public class MethodAttributeAppenderForMethodTest extends AbstractMethodAttribut
 
     @Test
     public void testConstructorMakeReturnsSameInstance() throws Exception {
-        assertThat(new MethodAttributeAppender.ForMethod(constructor).make(mock(TypeDescription.class)),
-                is((MethodAttributeAppender) new MethodAttributeAppender.ForMethod(constructor)));
+        assertThat(new MethodAttributeAppender.ForMethod(constructor, valueFilter).make(mock(TypeDescription.class)),
+                is((MethodAttributeAppender) new MethodAttributeAppender.ForMethod(constructor, valueFilter)));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalConstructorApplicationThrowsException() throws Exception {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
-        new MethodAttributeAppender.ForMethod(constructor).apply(methodVisitor, methodDescription);
+        new MethodAttributeAppender.ForMethod(constructor, valueFilter).apply(methodVisitor, methodDescription);
     }
 
     @Test
     public void testLoadedFieldAttributeAppender() throws Exception {
-        MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForMethod(constructor);
+        MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForMethod(constructor, valueFilter);
         methodAttributeAppender.apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);

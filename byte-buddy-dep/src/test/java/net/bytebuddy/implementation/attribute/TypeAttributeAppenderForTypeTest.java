@@ -13,7 +13,7 @@ public class TypeAttributeAppenderForTypeTest extends AbstractTypeAttributeAppen
 
     @Test
     public void testTypeAnnotation() throws Exception {
-        TypeAttributeAppender fieldAttributeAppender = new TypeAttributeAppender.ForType(FooBar.class);
+        TypeAttributeAppender fieldAttributeAppender = new TypeAttributeAppender.ForType(FooBar.class, valueFilter);
         fieldAttributeAppender.apply(classVisitor, typeDescription);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(classVisitor);

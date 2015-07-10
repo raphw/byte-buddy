@@ -640,10 +640,7 @@ public interface TypeWriter<T> {
                         throw new IllegalStateException("Cannot set " + annotationValue + " as default for " + methodDescription);
                     }
                     AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotationDefault();
-                    AnnotationAppender.Default.apply(annotationVisitor,
-                            methodDescription.getReturnType(),
-                            AnnotationAppender.NO_NAME,
-                            annotationValue);
+                    AnnotationAppender.Default.apply(annotationVisitor, methodDescription.getReturnType(), AnnotationAppender.NO_NAME, annotationValue);
                     annotationVisitor.visitEnd();
                 }
 

@@ -4,15 +4,11 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.*;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
-
-import static net.bytebuddy.matcher.ElementMatchers.none;
-import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * Annotation appenders are capable of writing annotations to a specified target.
@@ -28,14 +24,11 @@ public interface AnnotationAppender {
      * Terminally writes the given annotation to the specified target.
      *
      * @param annotation           The annotation to be written.
-     * @param defaultProperties    A matcher to identify default valued properties which should not be written.
      * @param annotationVisibility Determines the annotation visibility for the given annotation.
      * @return Usually {@code this} or any other annotation appender capable of writing another annotation to
      * the specified target.
      */
-    AnnotationAppender append(AnnotationDescription annotation,
-                              ElementMatcher<? super MethodDescription> defaultProperties,
-                              AnnotationVisibility annotationVisibility);
+    AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility);
 
     /**
      * Determines if an annotation should be written to a specified target and if the annotation should be marked
@@ -320,6 +313,68 @@ public interface AnnotationAppender {
     }
 
     /**
+     * A value filter allows to skip values while writing an annotation value such that these missing values are represented
+     * by the annotation type's default value instead.
+     */
+    interface ValueFilter {
+
+        /**
+         * Checks if the given annotation value should be written as the value of the provided annotation property.
+         *
+         * @param annotationDescription The annotation value that is being written.
+         * @param methodDescription     The annotation method of which a value is being written.
+         * @return {@code true} if the value should be written to the annotation.
+         */
+        boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription methodDescription);
+
+        /**
+         * A value filter that skips all annotation values that represent the default value of the annotation. Note that it is not possible
+         * at runtime to determine if a value is actually representing the default value of an annotation or only has the same value as the
+         * default value. Therefore, this value filter skips any value that equals an annotation property's default value even if it was
+         * explicitly defined.
+         */
+        enum SkipDefaults implements ValueFilter {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription methodDescription) {
+                Object defaultValue = methodDescription.getDefaultValue();
+                return defaultValue != null && defaultValue.equals(annotationDescription.getValue(methodDescription));
+            }
+
+            @Override
+            public String toString() {
+                return "AnnotationAppender.ValueFilter.SkipDefaults." + name();
+            }
+        }
+
+        /**
+         * A value filter that does not skip any values.
+         */
+        enum AppendDefaults implements ValueFilter {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription methodDescription) {
+                return true;
+            }
+
+            @Override
+            public String toString() {
+                return "AnnotationAppender.ValueFilter.AppendDefaults." + name();
+            }
+        }
+    }
+
+    /**
      * A default implementation for an annotation appender that writes annotations to a given byte consumer
      * represented by an ASM {@link org.objectweb.asm.AnnotationVisitor}.
      */
@@ -331,12 +386,19 @@ public interface AnnotationAppender {
         private final Target target;
 
         /**
+         * The value filter to apply for discovering which values of an annotation should be written.
+         */
+        private final ValueFilter valueFilter;
+
+        /**
          * Creates a default annotation appender.
          *
-         * @param target The target to which annotations are written to.
+         * @param target      The target to which annotations are written to.
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
-        public Default(Target target) {
+        public Default(Target target, ValueFilter valueFilter) {
             this.target = target;
+            this.valueFilter = valueFilter;
         }
 
         /**
@@ -344,13 +406,13 @@ public interface AnnotationAppender {
          *
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param annotation        The annotation to be written.
-         * @param defaultProperties A matcher to identify default valued properties which should not be written.
+         * @param valueFilter       The value filter to apply for discovering which values of an annotation should be written.
          */
-        private static void handle(AnnotationVisitor annotationVisitor,
-                                   AnnotationDescription annotation,
-                                   ElementMatcher<? super MethodDescription> defaultProperties) {
-            for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods().filter(not(defaultProperties))) {
-                apply(annotationVisitor, methodDescription.getReturnType(), methodDescription.getName(), annotation.getValue(methodDescription));
+        private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation, ValueFilter valueFilter) {
+            for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
+                if (valueFilter.isRelevant(annotation, methodDescription)) {
+                    apply(annotationVisitor, methodDescription.getReturnType(), methodDescription.getName(), annotation.getValue(methodDescription));
+                }
             }
             annotationVisitor.visitEnd();
         }
@@ -365,7 +427,7 @@ public interface AnnotationAppender {
          */
         public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
             if (valueType.isAnnotation()) {
-                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, none());
+                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, ValueFilter.AppendDefaults.INSTANCE);
             } else if (valueType.isEnum()) {
                 annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((EnumerationDescription) value).getValue());
             } else if (valueType.isAssignableFrom(Class.class)) {
@@ -384,11 +446,9 @@ public interface AnnotationAppender {
         }
 
         @Override
-        public AnnotationAppender append(AnnotationDescription annotation,
-                                         ElementMatcher<? super MethodDescription> defaultProperties,
-                                         AnnotationVisibility annotationVisibility) {
+        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility) {
             if (!annotationVisibility.isSuppressed()) {
-                doAppend(annotation, defaultProperties, annotationVisibility.isVisible());
+                doAppend(annotation, annotationVisibility.isVisible());
             }
             return this;
         }
@@ -396,30 +456,28 @@ public interface AnnotationAppender {
         /**
          * Tries to append a given annotation by reflectively reading an annotation.
          *
-         * @param annotation        The annotation to be written.
-         * @param defaultProperties A matcher to identify default valued properties which should not be written.
-         * @param visible           {@code true} if this annotation should be treated as visible at runtime.
+         * @param annotation The annotation to be written.
+         * @param visible    {@code true} if this annotation should be treated as visible at runtime.
          */
-        private void doAppend(AnnotationDescription annotation,
-                              ElementMatcher<? super MethodDescription> defaultProperties,
-                              boolean visible) {
-            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, defaultProperties);
+        private void doAppend(AnnotationDescription annotation, boolean visible) {
+            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, valueFilter);
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && target.equals(((Default) other).target);
+                    && target.equals(((Default) other).target)
+                    && valueFilter.equals(((Default) other).valueFilter);
         }
 
         @Override
         public int hashCode() {
-            return target.hashCode();
+            return target.hashCode() + 31 * valueFilter.hashCode();
         }
 
         @Override
         public String toString() {
-            return "AnnotationAppender.Default{target=" + target + '}';
+            return "AnnotationAppender.Default{target=" + target + ", valueFilter=" + valueFilter + '}';
         }
     }
 }

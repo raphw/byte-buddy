@@ -14,6 +14,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
@@ -728,8 +729,8 @@ public interface DynamicType {
             /**
              * Defines a default annotation value to set for any matched method.
              *
-             * @param value The value that the annotation property should set as a default.
-             * @param type  The type of the annotation property.
+             * @param value            The value that the annotation property should set as a default.
+             * @param type             The type of the annotation property.
              * @param modifierResolver The modifier resolver to apply to the instrumented method.
              * @return A builder which defines the given default value for all matched methods.
              */
@@ -752,7 +753,7 @@ public interface DynamicType {
              * instances, annotations as {@link AnnotationDescription} instances and
              * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
              *
-             * @param value A non-loaded value that the annotation property should set as a default.
+             * @param value            A non-loaded value that the annotation property should set as a default.
              * @param modifierResolver The modifier resolver to apply to the instrumented method.
              * @return A builder which defines the given default value for all matched methods.
              */
@@ -1568,7 +1569,8 @@ public interface DynamicType {
 
             @Override
             public Builder<S> annotateType(Collection<? extends AnnotationDescription> annotations) {
-                return attribute(new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations))));
+                return attribute(new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations)),
+                        AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
             }
 
             @Override
@@ -2569,7 +2571,8 @@ public interface DynamicType {
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new FieldAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations))));
+                    return attribute(new FieldAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations)),
+                            AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
                 }
 
                 @Override
@@ -2952,7 +2955,8 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation((nonNull(new ArrayList<AnnotationDescription>(annotations)))));
+                    return attribute(new MethodAttributeAppender.ForAnnotation((nonNull(new ArrayList<AnnotationDescription>(annotations))),
+                            AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
                 }
 
                 @Override
@@ -2972,7 +2976,8 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, nonNull(new ArrayList<AnnotationDescription>(annotations))));
+                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, nonNull(new ArrayList<AnnotationDescription>(annotations)),
+                            AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
                 }
 
                 @Override

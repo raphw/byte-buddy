@@ -1,9 +1,12 @@
 package net.bytebuddy.implementation.attribute;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.asm.Type;
 
 import java.lang.reflect.Field;
@@ -27,13 +30,13 @@ public class FieldAttributeAppenderForFieldTest extends AbstractFieldAttributeAp
 
     @Test
     public void testMakeReturnsSameInstance() throws Exception {
-        assertThat(new FieldAttributeAppender.ForField(field).make(mock(TypeDescription.class)),
-                is((FieldAttributeAppender) new FieldAttributeAppender.ForField(field)));
+        FieldAttributeAppender.Factory factory = new FieldAttributeAppender.ForField(field, valueFilter);
+        assertThat(factory.make(mock(TypeDescription.class)), is((FieldAttributeAppender) factory));
     }
 
     @Test
     public void testLoadedFieldAttributeAppender() throws Exception {
-        FieldAttributeAppender fieldAttributeAppender = new FieldAttributeAppender.ForField(field);
+        FieldAttributeAppender fieldAttributeAppender = new FieldAttributeAppender.ForField(field, valueFilter);
         fieldAttributeAppender.apply(fieldVisitor, fieldDescription);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(fieldVisitor);

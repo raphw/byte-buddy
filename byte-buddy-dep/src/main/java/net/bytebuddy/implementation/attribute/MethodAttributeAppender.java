@@ -1,18 +1,17 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.MethodVisitor;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
-
-import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.MethodVisitor}.
@@ -59,24 +58,33 @@ public interface MethodAttributeAppender {
      * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
      * method that is being created. This includes method and parameter annotations.
      */
-    enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
+    class ForInstrumentedMethod implements MethodAttributeAppender, Factory {
 
         /**
-         * The singleton instance.
+         * The value filter to apply for discovering which values of an annotation should be written.
          */
-        INSTANCE;
+        private final AnnotationAppender.ValueFilter valueFilter;
+
+        /**
+         * Creates a new appender for appending the instrumented method's annotation to the created method.
+         *
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
+         */
+        public ForInstrumentedMethod(AnnotationAppender.ValueFilter valueFilter) {
+            this.valueFilter = valueFilter;
+        }
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
+            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor), valueFilter);
             for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
-                methodAppender.append(annotation, none(), AnnotationAppender.AnnotationVisibility.of(annotation));
+                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
             int index = 0;
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++));
+                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++), valueFilter);
                 for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
-                    parameterAppender.append(annotation, none(), AnnotationAppender.AnnotationVisibility.of(annotation));
+                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
                 }
             }
         }
@@ -87,8 +95,21 @@ public interface MethodAttributeAppender {
         }
 
         @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && valueFilter.equals(((ForInstrumentedMethod) other).valueFilter);
+        }
+
+        @Override
+        public int hashCode() {
+            return valueFilter.hashCode();
+        }
+
+        @Override
         public String toString() {
-            return "MethodAttributeAppender.ForInstrumentedMethod." + name();
+            return "MethodAttributeAppender.ForInstrumentedMethod{" +
+                    "valueFilter=" + valueFilter +
+                    '}';
         }
     }
 
@@ -166,67 +187,66 @@ public interface MethodAttributeAppender {
         private final List<? extends AnnotationDescription> annotations;
 
         /**
-         * A matcher to identify default properties.
-         */
-        private final ElementMatcher<? super MethodDescription> defaultProperties;
-
-        /**
          * The target to which the annotations are written to.
          */
         private final Target target;
 
+        /**
+         * The value filter to apply for discovering which values of an annotation should be written.
+         */
+        private final AnnotationAppender.ValueFilter valueFilter;
 
         /**
-         * Create a new annotation appender for a method.
+         * Creates a new appender for appending an annotation to a method parameter.
          *
-         * @param annotations The annotations to append to the target method.
+         * @param parameterIndex The index of the parameter to which the annotations should be written.
+         * @param valueFilter    The value filter to apply for discovering which values of an annotation should be written.
+         * @param annotation     The annotations that should be written.
          */
-        public ForAnnotation(List<? extends AnnotationDescription> annotations) {
-            this(annotations, none());
+        public ForAnnotation(int parameterIndex, AnnotationAppender.ValueFilter valueFilter, Annotation... annotation) {
+            this(parameterIndex, new AnnotationList.ForLoadedAnnotation(annotation), valueFilter);
         }
 
         /**
-         * Create a new annotation appender for a method parameter.
+         * Creates a new appender for appending an annotation to a method parameter.
          *
-         * @param parameterIndex The index of the target parameter.
-         * @param annotations    The annotations to append to the target method parameter.
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
+         * @param annotation  The annotations that should be written.
          */
-        public ForAnnotation(int parameterIndex, List<? extends AnnotationDescription> annotations) {
-            this(parameterIndex, annotations, none());
+        public ForAnnotation(AnnotationAppender.ValueFilter valueFilter, Annotation... annotation) {
+            this(new AnnotationList.ForLoadedAnnotation(annotation), valueFilter);
         }
 
         /**
-         * Create a new annotation appender for a method.
+         * Creates a new appender for appending an annotation to a method.
          *
-         * @param annotations       The annotations to append to the target method.
-         * @param defaultProperties A matcher to identify default properties.
+         * @param parameterIndex The index of the parameter to which the annotations should be written.
+         * @param annotations    The annotations that should be written.
+         * @param valueFilter    The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForAnnotation(List<? extends AnnotationDescription> annotations, ElementMatcher<? super MethodDescription> defaultProperties) {
+        public ForAnnotation(int parameterIndex, List<? extends AnnotationDescription> annotations, AnnotationAppender.ValueFilter valueFilter) {
             this.annotations = annotations;
-            this.defaultProperties = defaultProperties;
-            target = Target.OnMethod.INSTANCE;
-        }
-
-        /**
-         * Create a new annotation appender for a method parameter.
-         *
-         * @param parameterIndex    The index of the target parameter.
-         * @param annotations       The annotations to append to the target method parameter.
-         * @param defaultProperties A matcher to identify default properties.
-         */
-        public ForAnnotation(int parameterIndex,
-                             List<? extends AnnotationDescription> annotations,
-                             ElementMatcher<? super MethodDescription> defaultProperties) {
-            this.annotations = annotations;
-            this.defaultProperties = defaultProperties;
             target = new Target.OnMethodParameter(parameterIndex);
+            this.valueFilter = valueFilter;
+        }
+
+        /**
+         * Creates a new appender for appending an annotation to a method.
+         *
+         * @param annotations The annotations that should be written.
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
+         */
+        public ForAnnotation(List<? extends AnnotationDescription> annotations, AnnotationAppender.ValueFilter valueFilter) {
+            this.annotations = annotations;
+            target = Target.OnMethod.INSTANCE;
+            this.valueFilter = valueFilter;
         }
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender appender = new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
+            AnnotationAppender appender = new AnnotationAppender.Default(target.make(methodVisitor, methodDescription), valueFilter);
             for (AnnotationDescription annotation : this.annotations) {
-                appender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
+                appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
@@ -239,20 +259,20 @@ public interface MethodAttributeAppender {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && annotations.equals(((ForAnnotation) other).annotations)
-                    && defaultProperties.equals(((ForAnnotation) other).defaultProperties)
+                    && valueFilter.equals(((ForAnnotation) other).valueFilter)
                     && target.equals(((ForAnnotation) other).target);
         }
 
         @Override
         public int hashCode() {
-            return 31 * (31 * annotations.hashCode() + defaultProperties.hashCode()) + target.hashCode();
+            return 31 * (31 * annotations.hashCode() + valueFilter.hashCode()) + target.hashCode();
         }
 
         @Override
         public String toString() {
             return "MethodAttributeAppender.ForAnnotation{" +
                     "annotations=" + annotations +
-                    ", defaultProperties=" + defaultProperties +
+                    ", valueFilter=" + valueFilter +
                     ", target=" + target +
                     '}';
         }
@@ -354,66 +374,39 @@ public interface MethodAttributeAppender {
         private final MethodDescription methodDescription;
 
         /**
-         * A matcher to identify default properties.
+         * The value filter to apply for discovering which values of an annotation should be written.
          */
-        private final ElementMatcher<? super MethodDescription> defaultProperties;
+        private final AnnotationAppender.ValueFilter valueFilter;
 
         /**
-         * Creates a method attribute appender that copies the annotations of the given constructor.
+         * Creates an that copies the annotations of a given constructor to its target.
          *
-         * @param constructor The constructor to copy the attributes from.
+         * @param constructor The constructor of which the annotations should be copied.
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForMethod(Constructor<?> constructor) {
-            this(new MethodDescription.ForLoadedConstructor(constructor));
+        public ForMethod(Constructor<?> constructor, AnnotationAppender.ValueFilter valueFilter) {
+            this(new MethodDescription.ForLoadedConstructor(constructor), valueFilter);
         }
 
         /**
-         * Creates a method attribute appender that copies the annotations of the given method.
+         * Creates an that copies the annotations of a given method to its target.
          *
-         * @param method The method to copy the attributes from.
+         * @param method      The method of which the annotations should be copied.
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForMethod(Method method) {
-            this(new MethodDescription.ForLoadedMethod(method));
+        public ForMethod(Method method, AnnotationAppender.ValueFilter valueFilter) {
+            this(new MethodDescription.ForLoadedMethod(method), valueFilter);
         }
 
         /**
-         * Creates a method attribute appender that copies the annotations of the given method description.
+         * Creates an that copies the annotations of a given method description to its target.
          *
-         * @param methodDescription The method description to copy the attributes from.
+         * @param methodDescription The method description of which the annotations should be copied.
+         * @param valueFilter       The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForMethod(MethodDescription methodDescription) {
-            this(methodDescription, none());
-        }
-
-        /**
-         * Creates a method attribute appender that copies the annotations of the given constructor.
-         *
-         * @param constructor       The constructor to copy the attributes from.
-         * @param defaultProperties A matcher to identify default properties.
-         */
-        public ForMethod(Constructor<?> constructor, ElementMatcher<? super MethodDescription> defaultProperties) {
-            this(new MethodDescription.ForLoadedConstructor(constructor), defaultProperties);
-        }
-
-        /**
-         * Creates a method attribute appender that copies the annotations of the given method.
-         *
-         * @param method            The method to copy the attributes from.
-         * @param defaultProperties A matcher to identify default properties.
-         */
-        public ForMethod(Method method, ElementMatcher<? super MethodDescription> defaultProperties) {
-            this(new MethodDescription.ForLoadedMethod(method), defaultProperties);
-        }
-
-        /**
-         * Creates a method attribute appender that copies the annotations of the given method description.
-         *
-         * @param methodDescription The method description to copy the attributes from.
-         * @param defaultProperties A matcher to identify default properties.
-         */
-        public ForMethod(MethodDescription methodDescription, ElementMatcher<? super MethodDescription> defaultProperties) {
+        public ForMethod(MethodDescription methodDescription, AnnotationAppender.ValueFilter valueFilter) {
             this.methodDescription = methodDescription;
-            this.defaultProperties = defaultProperties;
+            this.valueFilter = valueFilter;
         }
 
         @Override
@@ -421,15 +414,15 @@ public interface MethodAttributeAppender {
             if (this.methodDescription.getParameters().size() > methodDescription.getParameters().size()) {
                 throw new IllegalArgumentException(this.methodDescription + " has more parameters than the instrumented method " + methodDescription);
             }
-            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
+            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor), valueFilter);
             for (AnnotationDescription annotation : this.methodDescription.getDeclaredAnnotations()) {
-                methodAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
+                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
             int index = 0;
             for (ParameterDescription parameterDescription : this.methodDescription.getParameters()) {
-                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++));
+                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++), valueFilter);
                 for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
-                    parameterAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
+                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
                 }
             }
         }
@@ -443,19 +436,19 @@ public interface MethodAttributeAppender {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && methodDescription.equals(((ForMethod) other).methodDescription)
-                    && defaultProperties.equals(((ForMethod) other).defaultProperties);
+                    && valueFilter.equals(((ForMethod) other).valueFilter);
         }
 
         @Override
         public int hashCode() {
-            return 31 * methodDescription.hashCode() + defaultProperties.hashCode();
+            return 31 * methodDescription.hashCode() + valueFilter.hashCode();
         }
 
         @Override
         public String toString() {
             return "MethodAttributeAppender.ForMethod{" +
                     "methodDescription=" + methodDescription +
-                    ", defaultProperties=" + defaultProperties +
+                    ", valueFilter=" + valueFilter +
                     '}';
         }
     }

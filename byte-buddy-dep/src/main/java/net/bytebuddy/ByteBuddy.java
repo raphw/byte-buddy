@@ -20,6 +20,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
@@ -948,7 +949,7 @@ public class ByteBuddy {
                 classVisitorWrapperChain,
                 methodRegistry,
                 modifiers,
-                new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations))),
+                new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations)), AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
@@ -1551,7 +1552,8 @@ public class ByteBuddy {
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(Collection<? extends AnnotationDescription> annotations) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations))));
+            return attribute(new MethodAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations)),
+                    AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
         }
 
         /**
@@ -1593,7 +1595,8 @@ public class ByteBuddy {
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
-            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new ArrayList<AnnotationDescription>(nonNull(annotations))));
+            return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new ArrayList<AnnotationDescription>(nonNull(annotations)),
+                    AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
         }
 
         @Override

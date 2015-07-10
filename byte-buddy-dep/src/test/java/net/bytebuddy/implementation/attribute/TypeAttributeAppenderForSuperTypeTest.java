@@ -19,7 +19,7 @@ public class TypeAttributeAppenderForSuperTypeTest extends AbstractTypeAttribute
         when(typeDescription.getSupertype()).thenReturn(superType);
         when(superType.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
-        TypeAttributeAppender.ForSuperType.INSTANCE.apply(classVisitor, typeDescription);
+        new TypeAttributeAppender.ForSuperType(valueFilter).apply(classVisitor, typeDescription);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(classVisitor);

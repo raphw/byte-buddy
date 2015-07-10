@@ -2,16 +2,12 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.FieldVisitor;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
-
-import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.FieldVisitor}.
@@ -127,35 +123,26 @@ public interface FieldAttributeAppender {
         private final List<? extends AnnotationDescription> annotations;
 
         /**
-         * A matcher to identify default properties.
+         * The value filter to apply for discovering which values of an annotation should be written.
          */
-        private final ElementMatcher<? super MethodDescription> defaultProperties;
-
-        /**
-         * Creates a new field annotation appender.
-         *
-         * @param annotations The annotations to be appended to the field.
-         */
-        public ForAnnotation(List<? extends AnnotationDescription> annotations) {
-            this(annotations, none());
-        }
+        private final AnnotationAppender.ValueFilter valueFilter;
 
         /**
          * Creates a new annotation attribute appender for explicit annotation values. All values, including default values, are copied.
          *
-         * @param annotations       The annotations to be appended to the field.
-         * @param defaultProperties A matcher to identify default properties.
+         * @param annotations The annotations to be appended to the field.
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForAnnotation(List<? extends AnnotationDescription> annotations, ElementMatcher<? super MethodDescription> defaultProperties) {
+        public ForAnnotation(List<? extends AnnotationDescription> annotations, AnnotationAppender.ValueFilter valueFilter) {
             this.annotations = annotations;
-            this.defaultProperties = defaultProperties;
+            this.valueFilter = valueFilter;
         }
 
         @Override
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor), valueFilter);
             for (AnnotationDescription annotation : annotations) {
-                annotationAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
+                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
@@ -168,19 +155,19 @@ public interface FieldAttributeAppender {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && annotations.equals(((ForAnnotation) other).annotations)
-                    && defaultProperties.equals(((ForAnnotation) other).defaultProperties);
+                    && valueFilter.equals(((ForAnnotation) other).valueFilter);
         }
 
         @Override
         public int hashCode() {
-            return annotations.hashCode() + 31 * defaultProperties.hashCode();
+            return annotations.hashCode() + 31 * valueFilter.hashCode();
         }
 
         @Override
         public String toString() {
             return "FieldAttributeAppender.ForAnnotation{" +
                     "annotations=" + annotations +
-                    "defaultProperties=" + defaultProperties +
+                    "valueFilter=" + valueFilter +
                     '}';
         }
     }
@@ -197,54 +184,36 @@ public interface FieldAttributeAppender {
         private final FieldDescription fieldDescription;
 
         /**
-         * A matcher to identify default properties.
+         * The value filter to apply for discovering which values of an annotation should be written.
          */
-        private final ElementMatcher<? super MethodDescription> defaultProperties;
+        private final AnnotationAppender.ValueFilter valueFilter;
 
         /**
          * Creates a new field attribute appender that appends all annotations that are found on a field.
          *
-         * @param field The field from which the annotations to append are read.
+         * @param field       The field from which the annotations to append are read.
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForField(Field field) {
-            this(new FieldDescription.ForLoadedField(field));
+        public ForField(Field field, AnnotationAppender.ValueFilter valueFilter) {
+            this(new FieldDescription.ForLoadedField(field), valueFilter);
         }
 
         /**
          * Creates a new field attribute appender that appends all annotations that are found on a field.
          *
          * @param fieldDescription The field from which the annotations to append are read.
+         * @param valueFilter      The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForField(FieldDescription fieldDescription) {
-            this(fieldDescription, none());
-        }
-
-        /**
-         * Creates a new field attribute appender that appends all annotations that are found on a field.
-         *
-         * @param field             The field from which the annotations to append are read.
-         * @param defaultProperties A matcher to identify default properties.
-         */
-        public ForField(Field field, ElementMatcher<? super MethodDescription> defaultProperties) {
-            this(new FieldDescription.ForLoadedField(field), defaultProperties);
-        }
-
-        /**
-         * Creates a new field attribute appender that appends all annotations that are found on a field.
-         *
-         * @param fieldDescription  The field from which the annotations to append are read.
-         * @param defaultProperties A matcher to identify default properties.
-         */
-        public ForField(FieldDescription fieldDescription, ElementMatcher<? super MethodDescription> defaultProperties) {
+        public ForField(FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter) {
             this.fieldDescription = fieldDescription;
-            this.defaultProperties = defaultProperties;
+            this.valueFilter = valueFilter;
         }
 
         @Override
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor), valueFilter);
             for (AnnotationDescription annotation : this.fieldDescription.getDeclaredAnnotations()) {
-                annotationAppender.append(annotation, defaultProperties, AnnotationAppender.AnnotationVisibility.of(annotation));
+                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
@@ -257,19 +226,19 @@ public interface FieldAttributeAppender {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && fieldDescription.equals(((ForField) other).fieldDescription)
-                    && defaultProperties.equals(((ForField) other).defaultProperties);
+                    && valueFilter.equals(((ForField) other).valueFilter);
         }
 
         @Override
         public int hashCode() {
-            return fieldDescription.hashCode() + 31 * defaultProperties.hashCode();
+            return fieldDescription.hashCode() + 31 * valueFilter.hashCode();
         }
 
         @Override
         public String toString() {
             return "FieldAttributeAppender.ForField{" +
                     "fieldDescription=" + fieldDescription +
-                    ", defaultProperties=" + defaultProperties +
+                    ", valueFilter=" + valueFilter +
                     '}';
         }
     }

@@ -1,11 +1,14 @@
 package net.bytebuddy.implementation.attribute;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.asm.Type;
 
 import java.util.Collections;
@@ -18,16 +21,18 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
 
     @Test
     public void testMakeReturnsSameInstance() throws Exception {
-        assertThat(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.make(mock(TypeDescription.class)),
-                is((MethodAttributeAppender) MethodAttributeAppender.ForInstrumentedMethod.INSTANCE));
+        MethodAttributeAppender.Factory factory = new MethodAttributeAppender.ForInstrumentedMethod(valueFilter);
+        assertThat(factory.make(mock(TypeDescription.class)), is((MethodAttributeAppender) factory));
     }
 
     @Test
     public void testMethodAnnotations() throws Exception {
+        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
-        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.apply(methodVisitor, methodDescription);
+        MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForInstrumentedMethod(valueFilter);
+        methodAttributeAppender.apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
@@ -38,12 +43,14 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
 
     @Test
     public void testMethodParameterAnnotations() throws Exception {
+        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         ParameterDescription parameterDescription = mock(ParameterDescription.class);
         when(parameterDescription.getDeclaredAnnotations())
                 .thenReturn(new AnnotationList.ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));
-        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.apply(methodVisitor, methodDescription);
+        MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForInstrumentedMethod(valueFilter);
+        methodAttributeAppender.apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(0, Type.getDescriptor(Baz.class), true);
         verify(methodVisitor).visitParameterAnnotation(0, Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
