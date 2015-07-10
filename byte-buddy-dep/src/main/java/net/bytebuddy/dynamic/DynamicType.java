@@ -692,6 +692,13 @@ public interface DynamicType {
              */
             MethodAnnotationTarget<S> intercept(Implementation implementation);
 
+            /**
+             * Intercepts the currently selected method by a given implementation.
+             *
+             * @param implementation   An implementation to apply to the currently selected method.
+             * @param modifierResolver The modifier resolver to apply to the instrumented method.
+             * @return A builder which will intercept the currently selected methods by the given implementation.
+             */
             MethodAnnotationTarget<S> intercept(Implementation implementation, ModifierResolver modifierResolver);
 
             /**
@@ -701,6 +708,12 @@ public interface DynamicType {
              */
             MethodAnnotationTarget<S> withoutCode();
 
+            /**
+             * Implements the currently selected methods as {@code abstract} methods.
+             *
+             * @param modifierResolver The modifier resolver to apply to the instrumented method.
+             * @return A builder which will implement the currently selected methods as {@code abstract} methods.
+             */
             MethodAnnotationTarget<S> withoutCode(ModifierResolver modifierResolver);
 
             /**
@@ -712,6 +725,14 @@ public interface DynamicType {
              */
             MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type);
 
+            /**
+             * Defines a default annotation value to set for any matched method.
+             *
+             * @param value The value that the annotation property should set as a default.
+             * @param type  The type of the annotation property.
+             * @param modifierResolver The modifier resolver to apply to the instrumented method.
+             * @return A builder which defines the given default value for all matched methods.
+             */
             MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type, ModifierResolver modifierResolver);
 
             /**
@@ -725,6 +746,16 @@ public interface DynamicType {
              */
             MethodAnnotationTarget<S> withDefaultValue(Object value);
 
+            /**
+             * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
+             * {@code enum} values should be handed as {@link net.bytebuddy.description.enumeration.EnumerationDescription}
+             * instances, annotations as {@link AnnotationDescription} instances and
+             * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
+             *
+             * @param value A non-loaded value that the annotation property should set as a default.
+             * @param modifierResolver The modifier resolver to apply to the instrumented method.
+             * @return A builder which defines the given default value for all matched methods.
+             */
             MethodAnnotationTarget<S> withDefaultValue(Object value, ModifierResolver modifierResolver);
         }
 

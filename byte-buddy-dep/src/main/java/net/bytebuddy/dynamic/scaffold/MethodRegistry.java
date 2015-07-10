@@ -164,7 +164,7 @@ public interface MethodRegistry {
             /**
              * Creates a new handler for implementing a method with byte code.
              *
-             * @param implementation      The implementation to apply.
+             * @param implementation   The implementation to apply.
              * @param modifierResolver The transformer to apply to the modifier of this method.
              */
             public ForImplementation(Implementation implementation, ModifierResolver modifierResolver) {
@@ -220,7 +220,7 @@ public interface MethodRegistry {
                 /**
                  * Creates a new compiled handler for a method implementation.
                  *
-                 * @param byteCodeAppender    The byte code appender to apply.
+                 * @param byteCodeAppender The byte code appender to apply.
                  * @param modifierResolver The transformer to apply to the modifier of this method.
                  */
                 protected Compiled(ByteCodeAppender byteCodeAppender, ModifierResolver modifierResolver) {
@@ -263,7 +263,8 @@ public interface MethodRegistry {
             /**
              * Represents the given value as an annotation default value handler after validating its suitability.
              *
-             * @param annotationValue The annotation value to represent.
+             * @param annotationValue  The annotation value to represent.
+             * @param modifierResolver The transformer to apply to the modifier of this method.
              * @return A handler for setting the given value as a default value for instrumented methods.
              */
             public static Handler of(Object annotationValue, ModifierResolver modifierResolver) {
@@ -287,7 +288,7 @@ public interface MethodRegistry {
             /**
              * Creates a handler for defining a default annotation value for a method.
              *
-             * @param annotationValue     The annotation value to set as a default value.
+             * @param annotationValue  The annotation value to set as a default value.
              * @param modifierResolver The transformer to apply to the modifier of this method.
              */
             protected ForAnnotationValue(Object annotationValue, ModifierResolver modifierResolver) {
