@@ -299,7 +299,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
 
         @Override
         public GenericTypeDescription getDeclaringType() {
-            return fieldDescription.getDeclaringType();
+            return declaringType;
         }
 
         @Override

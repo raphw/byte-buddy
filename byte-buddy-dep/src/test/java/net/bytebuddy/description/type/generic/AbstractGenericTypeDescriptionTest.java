@@ -14,6 +14,7 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractGenericTypeDescriptionTest {
@@ -546,6 +547,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(superType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(superType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(superType.getDeclaredFields().size(), is(1));
+        assertThat(superType.getDeclaredFields().getOnly().getDeclaringType(), is(superType));
         GenericTypeDescription fieldType = superType.getDeclaredFields().getOnly().getType();
         assertThat(fieldType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(fieldType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
@@ -554,6 +556,8 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(fieldType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(superType.getDeclaredMethods().filter(isConstructor()).size(), is(1));
         assertThat(superType.getDeclaredMethods().filter(isMethod()).size(), is(1));
+        assertThat(superType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType(), is((superType)));
+        assertThat(superType.getDeclaredMethods().filter(isConstructor()).getOnly().getDeclaringType(), sameInstance((superType)));
         GenericTypeDescription methodReturnType = superType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType();
         assertThat(methodReturnType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(methodReturnType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
@@ -566,6 +570,10 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(methodParameterType.getParameters().size(), is(2));
         assertThat(methodParameterType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodParameterType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(superType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType().getDeclaredMethods().filter(isMethod()).getOnly().getReturnType(),
+                is(superType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType()));
+        assertThat(superType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType().getDeclaredMethods().filter(isMethod()).getOnly().getParameters().getOnly().getType(),
+                is(superType.getDeclaredMethods().filter(isMethod()).getOnly().getParameters().getOnly().getType()));
     }
 
     @Test
@@ -580,9 +588,10 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(interfaceType.getParameters().size(), is(2));
         assertThat(interfaceType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(interfaceType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(interfaceType.getDeclaredFields().size(), is(0));
         assertThat(interfaceType.getDeclaredMethods().filter(isConstructor()).size(), is(0));
         assertThat(interfaceType.getDeclaredMethods().filter(isMethod()).size(), is(1));
-        assertThat(interfaceType.getDeclaredFields().size(), is(0));
+        assertThat(interfaceType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType(), sameInstance((interfaceType)));
         GenericTypeDescription methodReturnType = interfaceType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType();
         assertThat(methodReturnType.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(methodReturnType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
@@ -595,6 +604,10 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(methodParameterType.getParameters().size(), is(2));
         assertThat(methodParameterType.getParameters().get(0), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodParameterType.getParameters().get(1), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(interfaceType.getDeclaredMethods().getOnly().getDeclaringType().getDeclaredMethods().getOnly().getReturnType(),
+                is(interfaceType.getDeclaredMethods().getOnly().getReturnType()));
+        assertThat(interfaceType.getDeclaredMethods().getOnly().getDeclaringType().getDeclaredMethods().getOnly().getParameters().getOnly().getType(),
+                is(interfaceType.getDeclaredMethods().getOnly().getParameters().getOnly().getType()));
     }
 
     @Test
@@ -607,6 +620,8 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(superType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
         assertThat(superType.getParameters().size(), is(0));
         assertThat(superType.getDeclaredFields().size(), is(1));
+        assertThat(superType.getDeclaredFields().getOnly().getDeclaringType().getDeclaredFields().getOnly().getType(),
+                is(superType.getDeclaredFields().getOnly().getType()));
         GenericTypeDescription fieldType = superType.getDeclaredFields().getOnly().getType();
         assertThat(fieldType.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(fieldType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
@@ -619,6 +634,10 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(methodParameterType.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(methodParameterType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
         assertThat(methodParameterType.getParameters().size(), is(0));
+        assertThat(superType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType().getDeclaredMethods().filter(isMethod()).getOnly().getReturnType(),
+                is(superType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType()));
+        assertThat(superType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType().getDeclaredMethods().filter(isMethod()).getOnly().getParameters().getOnly().getType(),
+                is(superType.getDeclaredMethods().filter(isMethod()).getOnly().getParameters().getOnly().getType()));
     }
 
     @Test
@@ -639,6 +658,10 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(methodParameterType.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(methodParameterType.asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
         assertThat(methodParameterType.getParameters().size(), is(0));
+        assertThat(interfaceType.getDeclaredMethods().getOnly().getDeclaringType().getDeclaredMethods().getOnly().getReturnType(),
+                is(interfaceType.getDeclaredMethods().getOnly().getReturnType()));
+        assertThat(interfaceType.getDeclaredMethods().getOnly().getDeclaringType().getDeclaredMethods().getOnly().getParameters().getOnly().getType(),
+                is(interfaceType.getDeclaredMethods().getOnly().getParameters().getOnly().getType()));
     }
 
     @Test
