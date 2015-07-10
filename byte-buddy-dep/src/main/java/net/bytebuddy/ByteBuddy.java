@@ -10,6 +10,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
@@ -2163,7 +2164,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation)),
+                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation), ModifierResolver.Simple.INSTANCE),
                     MethodAttributeAppender.NoOp.INSTANCE);
         }
 
@@ -2183,7 +2184,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    MethodRegistry.Handler.ForAbstractMethod.INSTANCE,
+                    new MethodRegistry.Handler.ForAbstractMethod(ModifierResolver.Simple.INSTANCE),
                     MethodAttributeAppender.NoOp.INSTANCE);
         }
 
@@ -2208,7 +2209,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    MethodRegistry.Handler.ForAnnotationValue.of(value),
+                    MethodRegistry.Handler.ForAnnotationValue.of(value, ModifierResolver.Simple.INSTANCE),
                     MethodAttributeAppender.NoOp.INSTANCE);
         }
 

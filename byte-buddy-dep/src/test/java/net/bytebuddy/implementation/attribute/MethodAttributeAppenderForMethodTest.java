@@ -84,6 +84,7 @@ public class MethodAttributeAppenderForMethodTest extends AbstractMethodAttribut
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         final Iterator<Method> methods = Arrays.asList(MethodSample.class.getDeclaredMethod(FOO),
                 MethodSample.class.getDeclaredMethod(FOO, Void.class),

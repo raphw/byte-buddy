@@ -298,6 +298,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         }).apply();
     }
 
+    @SuppressWarnings("unused")
     public enum SimpleEnum {
         FIRST,
         SECOND
@@ -308,6 +309,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         void bar(Void arg);
     }
 
+    @SuppressWarnings("unused")
     public static class DefaultConstructor {
 
         public DefaultConstructor() {
@@ -330,6 +332,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         }
     }
 
+    @SuppressWarnings("unused")
     public static class PackagePrivateArgumentType {
 
         public void foo(Argument argument) {
@@ -341,6 +344,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         }
     }
 
+    @SuppressWarnings("unused")
     public static class PrivateMethod {
 
         private void foo() {

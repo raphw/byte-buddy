@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -81,12 +82,21 @@ public interface MethodRegistry {
         /**
          * A handler for defining an abstract or native method.
          */
-        enum ForAbstractMethod implements Handler, Compiled {
+        class ForAbstractMethod implements Handler, Compiled {
 
             /**
-             * The singleton instance.
+             * The transformer to apply to the modifier of this method.
              */
-            INSTANCE;
+            private final ModifierResolver modifierResolver;
+
+            /**
+             * Creates a new handler for defining an abstract method.
+             *
+             * @param modifierResolver The transformer to apply to the modifier of this method.
+             */
+            public ForAbstractMethod(ModifierResolver modifierResolver) {
+                this.modifierResolver = modifierResolver;
+            }
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
@@ -100,12 +110,25 @@ public interface MethodRegistry {
 
             @Override
             public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
-                return new TypeWriter.MethodPool.Entry.ForAbstractMethod(attributeAppender);
+                return new TypeWriter.MethodPool.Entry.ForAbstractMethod(attributeAppender, modifierResolver);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && modifierResolver.equals(((ForAbstractMethod) other).modifierResolver);
+            }
+
+            @Override
+            public int hashCode() {
+                return modifierResolver.hashCode();
             }
 
             @Override
             public String toString() {
-                return "MethodRegistry.Handler.ForAbstractMethod." + name();
+                return "MethodRegistry.Handler.ForAbstractMethod{" +
+                        "modifierResolver=" + modifierResolver +
+                        '}';
             }
         }
 
@@ -134,12 +157,19 @@ public interface MethodRegistry {
             private final Implementation implementation;
 
             /**
+             * The transformer to apply to the modifier of this method.
+             */
+            private final ModifierResolver modifierResolver;
+
+            /**
              * Creates a new handler for implementing a method with byte code.
              *
-             * @param implementation The implementation to apply.
+             * @param implementation      The implementation to apply.
+             * @param modifierResolver The transformer to apply to the modifier of this method.
              */
-            public ForImplementation(Implementation implementation) {
+            public ForImplementation(Implementation implementation, ModifierResolver modifierResolver) {
                 this.implementation = implementation;
+                this.modifierResolver = modifierResolver;
             }
 
             @Override
@@ -149,24 +179,26 @@ public interface MethodRegistry {
 
             @Override
             public Compiled compile(Implementation.Target implementationTarget) {
-                return new Compiled(implementation.appender(implementationTarget));
+                return new Compiled(implementation.appender(implementationTarget), modifierResolver);
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && implementation.equals(((ForImplementation) other).implementation);
+                        && implementation.equals(((ForImplementation) other).implementation)
+                        && modifierResolver.equals(((ForImplementation) other).modifierResolver);
             }
 
             @Override
             public int hashCode() {
-                return implementation.hashCode();
+                return implementation.hashCode() + 31 * modifierResolver.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodRegistry.Handler.ForImplementation{" +
                         "implementation=" + implementation +
+                        ", modifierResolver=" + modifierResolver +
                         '}';
             }
 
@@ -181,34 +213,43 @@ public interface MethodRegistry {
                 private final ByteCodeAppender byteCodeAppender;
 
                 /**
+                 * The transformer to apply to the modifier of this method.
+                 */
+                private final ModifierResolver modifierResolver;
+
+                /**
                  * Creates a new compiled handler for a method implementation.
                  *
-                 * @param byteCodeAppender The byte code appender to apply.
+                 * @param byteCodeAppender    The byte code appender to apply.
+                 * @param modifierResolver The transformer to apply to the modifier of this method.
                  */
-                protected Compiled(ByteCodeAppender byteCodeAppender) {
+                protected Compiled(ByteCodeAppender byteCodeAppender, ModifierResolver modifierResolver) {
                     this.byteCodeAppender = byteCodeAppender;
+                    this.modifierResolver = modifierResolver;
                 }
 
                 @Override
                 public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
-                    return new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, attributeAppender);
+                    return new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, attributeAppender, modifierResolver);
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && byteCodeAppender.equals(((Compiled) other).byteCodeAppender);
+                            && byteCodeAppender.equals(((Compiled) other).byteCodeAppender)
+                            && modifierResolver.equals(((Compiled) other).modifierResolver);
                 }
 
                 @Override
                 public int hashCode() {
-                    return byteCodeAppender.hashCode();
+                    return byteCodeAppender.hashCode() + 31 * modifierResolver.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "MethodRegistry.Handler.ForImplementation.Compiled{" +
                             "byteCodeAppender=" + byteCodeAppender +
+                            ", modifierResolver=" + modifierResolver +
                             '}';
                 }
             }
@@ -220,31 +261,38 @@ public interface MethodRegistry {
         class ForAnnotationValue implements Handler, Compiled {
 
             /**
-             * The annotation value to set as a default value.
-             */
-            private final Object annotationValue;
-
-            /**
-             * Creates a handler for defining a default annotation value for a method.
-             *
-             * @param annotationValue The annotation value to set as a default value.
-             */
-            protected ForAnnotationValue(Object annotationValue) {
-                this.annotationValue = annotationValue;
-            }
-
-            /**
              * Represents the given value as an annotation default value handler after validating its suitability.
              *
              * @param annotationValue The annotation value to represent.
              * @return A handler for setting the given value as a default value for instrumented methods.
              */
-            public static Handler of(Object annotationValue) {
+            public static Handler of(Object annotationValue, ModifierResolver modifierResolver) {
                 TypeDescription typeDescription = new TypeDescription.ForLoadedType(annotationValue.getClass());
                 if (!typeDescription.isAnnotationValue() && !typeDescription.isPrimitiveWrapper()) {
                     throw new IllegalArgumentException("Does not describe an annotation value: " + annotationValue);
                 }
-                return new ForAnnotationValue(annotationValue);
+                return new ForAnnotationValue(annotationValue, modifierResolver);
+            }
+
+            /**
+             * The annotation value to set as a default value.
+             */
+            private final Object annotationValue;
+
+            /**
+             * The transformer to apply to the modifier of this method.
+             */
+            private final ModifierResolver modifierResolver;
+
+            /**
+             * Creates a handler for defining a default annotation value for a method.
+             *
+             * @param annotationValue     The annotation value to set as a default value.
+             * @param modifierResolver The transformer to apply to the modifier of this method.
+             */
+            protected ForAnnotationValue(Object annotationValue, ModifierResolver modifierResolver) {
+                this.annotationValue = annotationValue;
+                this.modifierResolver = modifierResolver;
             }
 
             @Override
@@ -259,24 +307,26 @@ public interface MethodRegistry {
 
             @Override
             public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
-                return new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(annotationValue, attributeAppender);
+                return new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(annotationValue, attributeAppender, modifierResolver);
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && annotationValue.equals(((ForAnnotationValue) other).annotationValue);
+                        && annotationValue.equals(((ForAnnotationValue) other).annotationValue)
+                        && modifierResolver.equals(((ForAnnotationValue) other).modifierResolver);
             }
 
             @Override
             public int hashCode() {
-                return annotationValue.hashCode();
+                return annotationValue.hashCode() + 31 * modifierResolver.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodRegistry.Handler.ForAnnotationValue{" +
                         "annotationValue=" + annotationValue +
+                        ", modifierResolver=" + modifierResolver +
                         '}';
             }
         }
@@ -416,8 +466,7 @@ public interface MethodRegistry {
                 }
             }
             MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
-            ElementMatcher<? super MethodDescription> instrumented = (ElementMatcher<? super MethodDescription>) not(anyOf(implementations.keySet()))
-                    .and(methodFilter.resolve(instrumentedType));
+            ElementMatcher<? super MethodDescription> instrumented = not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType));
             List<MethodDescription> methodDescriptions = join(typeInitializerOf(instrumentedType), finding.getInvokableMethods().filter(instrumented));
             for (MethodDescription methodDescription : methodDescriptions) {
                 for (Entry entry : entries) {
@@ -544,7 +593,7 @@ public interface MethodRegistry {
         protected static class Prepared implements MethodRegistry.Prepared {
 
             /**
-             * A map of all method descriptions mapped to their handling entires.
+             * A map of all method descriptions mapped to their handling entries.
              */
             private final Map<MethodDescription, Entry> implementations;
 
@@ -554,7 +603,7 @@ public interface MethodRegistry {
             private final LoadedTypeInitializer loadedTypeInitializer;
 
             /**
-             * The type intiailizer of the instrumented type.
+             * The type initializer of the instrumented type.
              */
             private final InstrumentedType.TypeInitializer typeInitializer;
 
@@ -566,9 +615,9 @@ public interface MethodRegistry {
             /**
              * Creates a prepared version of a default method registry.
              *
-             * @param implementations       A map of all method descriptions mapped to their handling entires.
+             * @param implementations       A map of all method descriptions mapped to their handling entries.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
-             * @param typeInitializer       The type intiailizer of the instrumented type.
+             * @param typeInitializer       The type initializer of the instrumented type.
              * @param finding               The analyzed instrumented type.
              */
             public Prepared(Map<MethodDescription, Entry> implementations,

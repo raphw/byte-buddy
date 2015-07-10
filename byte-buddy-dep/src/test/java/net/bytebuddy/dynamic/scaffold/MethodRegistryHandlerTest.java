@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -45,6 +46,9 @@ public class MethodRegistryHandlerTest {
     @Mock
     private MethodDescription methodDescription;
 
+    @Mock
+    private ModifierResolver modifierResolver;
+
     @Before
     public void setUp() throws Exception {
         when(implementation.prepare(instrumentedType)).thenReturn(preparedInstrumentedType);
@@ -52,25 +56,29 @@ public class MethodRegistryHandlerTest {
 
     @Test
     public void testHandlerForAbstractMethod() throws Exception {
-        assertThat(MethodRegistry.Handler.ForAbstractMethod.INSTANCE.prepare(instrumentedType), is(instrumentedType));
-        TypeWriter.MethodPool.Entry entry = MethodRegistry.Handler.ForAbstractMethod.INSTANCE.compile(implementationTarget).assemble(attributeAppender);
+        MethodRegistry.Handler handler = new MethodRegistry.Handler.ForAbstractMethod(modifierResolver);
+        assertThat(handler.prepare(instrumentedType), is(instrumentedType));
+        TypeWriter.MethodPool.Entry entry = handler.compile(implementationTarget).assemble(attributeAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
+        assertThat(entry.getModifierResolver(), is(modifierResolver));
     }
 
     @Test
     public void testHandlerForImplementation() throws Exception {
-        MethodRegistry.Handler handler = new MethodRegistry.Handler.ForImplementation(implementation);
+        MethodRegistry.Handler handler = new MethodRegistry.Handler.ForImplementation(implementation, modifierResolver);
         assertThat(handler.prepare(instrumentedType), is(preparedInstrumentedType));
         TypeWriter.MethodPool.Entry entry = handler.compile(implementationTarget).assemble(attributeAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT));
+        assertThat(entry.getModifierResolver(), is(modifierResolver));
     }
 
     @Test
     public void testHandlerForAnnotationValue() throws Exception {
-        MethodRegistry.Handler handler = new MethodRegistry.Handler.ForAnnotationValue(annotationValue);
+        MethodRegistry.Handler handler = new MethodRegistry.Handler.ForAnnotationValue(annotationValue, modifierResolver);
         assertThat(handler.prepare(instrumentedType), is(instrumentedType));
         TypeWriter.MethodPool.Entry entry = handler.compile(implementationTarget).assemble(attributeAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
+        assertThat(entry.getModifierResolver(), is(modifierResolver));
     }
 
     @Test

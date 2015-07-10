@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -237,6 +238,13 @@ public interface TypeWriter<T> {
             Sort getSort();
 
             /**
+             * Returns this entry's modifier transformer.
+             *
+             * @return The modifier transformer of this entry.
+             */
+            ModifierResolver getModifierResolver();
+
+            /**
              * Prepends the given method appender to this entry.
              *
              * @param byteCodeAppender The byte code appender to prepend.
@@ -367,6 +375,11 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public ModifierResolver getModifierResolver() {
+                    throw new IllegalStateException("Cannot transform modifier for method that should be skipped");
+                }
+
+                @Override
                 public Sort getSort() {
                     return Sort.SKIP;
                 }
@@ -378,7 +391,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.MethodPool.Entry.Skip." + name();
+                    return "TypeWriter.MethodPool.Entry.ForSkippedMethod." + name();
                 }
             }
 
@@ -389,7 +402,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, MethodDescription methodDescription) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(methodDescription.getAdjustedModifiers(getSort().isImplemented()),
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(getModifierResolver().transform(methodDescription, getSort().isImplemented()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
@@ -422,14 +435,43 @@ public interface TypeWriter<T> {
                 private final MethodAttributeAppender methodAttributeAppender;
 
                 /**
+                 * The modifier resolver to apply to the implemented method.
+                 */
+                private final ModifierResolver modifierResolver;
+
+                /**
+                 * Creates a new entry for a method that defines a method as byte code. This constructor defines a reatining
+                 * modifier resolver and a non-operational method attribute appender.
+                 *
+                 * @param byteCodeAppender The byte code appender to apply.
+                 */
+                public ForImplementation(ByteCodeAppender byteCodeAppender) {
+                    this(byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE, ModifierResolver.Simple.INSTANCE);
+                }
+
+                /**
                  * Creates a new entry for a method that defines a method as byte code.
                  *
                  * @param byteCodeAppender        The byte code appender to apply.
                  * @param methodAttributeAppender The method attribute appender to apply.
+                 * @param modifierResolver        The modifier resolver to apply to the implemented method.
                  */
-                public ForImplementation(ByteCodeAppender byteCodeAppender, MethodAttributeAppender methodAttributeAppender) {
+                public ForImplementation(ByteCodeAppender byteCodeAppender,
+                                         MethodAttributeAppender methodAttributeAppender,
+                                         ModifierResolver modifierResolver) {
                     this.byteCodeAppender = byteCodeAppender;
                     this.methodAttributeAppender = methodAttributeAppender;
+                    this.modifierResolver = modifierResolver;
+                }
+
+                @Override
+                public Sort getSort() {
+                    return Sort.IMPLEMENT;
+                }
+
+                @Override
+                public ModifierResolver getModifierResolver() {
+                    return modifierResolver;
                 }
 
                 @Override
@@ -447,24 +489,22 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Entry prepend(ByteCodeAppender byteCodeAppender) {
-                    return new ForImplementation(new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender), methodAttributeAppender);
-                }
-
-                @Override
-                public Sort getSort() {
-                    return Sort.IMPLEMENT;
+                    return new ForImplementation(new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender),
+                            methodAttributeAppender,
+                            modifierResolver);
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && byteCodeAppender.equals(((ForImplementation) other).byteCodeAppender)
-                            && methodAttributeAppender.equals(((ForImplementation) other).methodAttributeAppender);
+                            && methodAttributeAppender.equals(((ForImplementation) other).methodAttributeAppender)
+                            && modifierResolver.equals(((ForImplementation) other).modifierResolver);
                 }
 
                 @Override
                 public int hashCode() {
-                    return 31 * byteCodeAppender.hashCode() + methodAttributeAppender.hashCode();
+                    return 31 * (31 * byteCodeAppender.hashCode() + methodAttributeAppender.hashCode()) + modifierResolver.hashCode();
                 }
 
                 @Override
@@ -472,6 +512,7 @@ public interface TypeWriter<T> {
                     return "TypeWriter.MethodPool.Entry.ForImplementation{" +
                             "byteCodeAppender=" + byteCodeAppender +
                             ", methodAttributeAppender=" + methodAttributeAppender +
+                            ", modifierResolver=" + modifierResolver +
                             '}';
                 }
             }
@@ -487,17 +528,29 @@ public interface TypeWriter<T> {
                 private final MethodAttributeAppender methodAttributeAppender;
 
                 /**
+                 * The modifier resolver to apply to the method that is being created.
+                 */
+                private final ModifierResolver modifierResolver;
+
+                /**
                  * Creates a new entry for a method that is defines but does not append byte code, i.e. is native or abstract.
                  *
                  * @param methodAttributeAppender The method attribute appender to apply.
+                 * @param modifierResolver        The modifier resolver to apply to the method that is being created.
                  */
-                public ForAbstractMethod(MethodAttributeAppender methodAttributeAppender) {
+                public ForAbstractMethod(MethodAttributeAppender methodAttributeAppender, ModifierResolver modifierResolver) {
                     this.methodAttributeAppender = methodAttributeAppender;
+                    this.modifierResolver = modifierResolver;
                 }
 
                 @Override
                 public Sort getSort() {
                     return Sort.DEFINE;
+                }
+
+                @Override
+                public ModifierResolver getModifierResolver() {
+                    return modifierResolver;
                 }
 
                 @Override
@@ -518,18 +571,20 @@ public interface TypeWriter<T> {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && methodAttributeAppender.equals(((ForAbstractMethod) other).methodAttributeAppender);
+                            && methodAttributeAppender.equals(((ForAbstractMethod) other).methodAttributeAppender)
+                            && modifierResolver.equals(((ForAbstractMethod) other).modifierResolver);
                 }
 
                 @Override
                 public int hashCode() {
-                    return methodAttributeAppender.hashCode();
+                    return methodAttributeAppender.hashCode() + 31 * modifierResolver.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "TypeWriter.MethodPool.Entry.ForAbstractMethod{" +
                             "methodAttributeAppender=" + methodAttributeAppender +
+                            ", modifierResolver=" + modifierResolver +
                             '}';
                 }
             }
@@ -550,19 +605,33 @@ public interface TypeWriter<T> {
                 private final MethodAttributeAppender methodAttributeAppender;
 
                 /**
+                 * The modifier resolver to apply to the method that is being created.
+                 */
+                private final ModifierResolver modifierResolver;
+
+                /**
                  * Creates a new entry for defining a method with a default annotation value.
                  *
                  * @param annotationValue         The annotation value to define.
                  * @param methodAttributeAppender The method attribute appender to apply.
+                 * @param modifierResolver        The modifier resolver to apply to the method that is being created.
                  */
-                public ForAnnotationDefaultValue(Object annotationValue, MethodAttributeAppender methodAttributeAppender) {
+                public ForAnnotationDefaultValue(Object annotationValue,
+                                                 MethodAttributeAppender methodAttributeAppender,
+                                                 ModifierResolver modifierResolver) {
                     this.annotationValue = annotationValue;
                     this.methodAttributeAppender = methodAttributeAppender;
+                    this.modifierResolver = modifierResolver;
                 }
 
                 @Override
                 public Sort getSort() {
                     return Sort.DEFINE;
+                }
+
+                @Override
+                public ModifierResolver getModifierResolver() {
+                    return modifierResolver;
                 }
 
                 @Override
@@ -595,7 +664,9 @@ public interface TypeWriter<T> {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     ForAnnotationDefaultValue that = (ForAnnotationDefaultValue) other;
-                    return annotationValue.equals(that.annotationValue) && methodAttributeAppender.equals(that.methodAttributeAppender);
+                    return annotationValue.equals(that.annotationValue)
+                            && methodAttributeAppender.equals(that.methodAttributeAppender)
+                            && modifierResolver.equals(that.modifierResolver);
 
                 }
 
@@ -603,6 +674,7 @@ public interface TypeWriter<T> {
                 public int hashCode() {
                     int result = annotationValue.hashCode();
                     result = 31 * result + methodAttributeAppender.hashCode();
+                    result = 31 * result + modifierResolver.hashCode();
                     return result;
                 }
 
@@ -611,6 +683,7 @@ public interface TypeWriter<T> {
                     return "TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue{" +
                             "annotationValue=" + annotationValue +
                             ", methodAttributeAppender=" + methodAttributeAppender +
+                            ", modifierResolver=" + modifierResolver +
                             '}';
                 }
             }
@@ -1456,8 +1529,7 @@ public interface TypeWriter<T> {
                                 methodDescription.getGenericSignature(),
                                 methodDescription.getExceptionTypes().toInternalNames());
                     }
-                    MethodVisitor methodVisitor = super.visitMethod(
-                            methodDescription.getAdjustedModifiers(entry.getSort().isImplemented()),
+                    MethodVisitor methodVisitor = super.visitMethod(entry.getModifierResolver().transform(methodDescription, entry.getSort().isImplemented()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),

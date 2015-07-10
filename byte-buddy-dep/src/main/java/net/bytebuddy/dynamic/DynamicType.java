@@ -692,12 +692,16 @@ public interface DynamicType {
              */
             MethodAnnotationTarget<S> intercept(Implementation implementation);
 
+            MethodAnnotationTarget<S> intercept(Implementation implementation, ModifierResolver modifierResolver);
+
             /**
              * Implements the currently selected methods as {@code abstract} methods.
              *
              * @return A builder which will implement the currently selected methods as {@code abstract} methods.
              */
             MethodAnnotationTarget<S> withoutCode();
+
+            MethodAnnotationTarget<S> withoutCode(ModifierResolver modifierResolver);
 
             /**
              * Defines a default annotation value to set for any matched method.
@@ -707,6 +711,8 @@ public interface DynamicType {
              * @return A builder which defines the given default value for all matched methods.
              */
             MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type);
+
+            MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type, ModifierResolver modifierResolver);
 
             /**
              * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
@@ -718,6 +724,8 @@ public interface DynamicType {
              * @return A builder which defines the given default value for all matched methods.
              */
             MethodAnnotationTarget<S> withDefaultValue(Object value);
+
+            MethodAnnotationTarget<S> withDefaultValue(Object value, ModifierResolver modifierResolver);
         }
 
         /**
@@ -2599,38 +2607,60 @@ public interface DynamicType {
                  * @param methodMatcher The latent method matcher that identifies this interception.
                  * @param methodTokens  A list of all method tokens that were previously defined.
                  */
-                protected DefaultMatchedMethodInterception(LatentMethodMatcher methodMatcher,
-                                                           List<MethodToken> methodTokens) {
+                protected DefaultMatchedMethodInterception(LatentMethodMatcher methodMatcher, List<MethodToken> methodTokens) {
                     this.methodMatcher = methodMatcher;
                     this.methodTokens = methodTokens;
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Implementation implementation) {
+                    return intercept(implementation, ModifierResolver.Simple.INSTANCE);
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> intercept(Implementation implementation, ModifierResolver modifierResolver) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             methodMatcher,
-                            new MethodRegistry.Handler.ForImplementation(nonNull(implementation)),
+                            new MethodRegistry.Handler.ForImplementation(nonNull(implementation), nonNull(modifierResolver)),
                             defaultMethodAttributeAppenderFactory);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
+                    return withoutCode(ModifierResolver.Simple.INSTANCE);
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withoutCode(ModifierResolver modifierResolver) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             methodMatcher,
-                            MethodRegistry.Handler.ForAbstractMethod.INSTANCE,
+                            new MethodRegistry.Handler.ForAbstractMethod(nonNull(modifierResolver)),
                             defaultMethodAttributeAppenderFactory);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
-                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.describe(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
+                    return withDefaultValue(value, type, ModifierResolver.Simple.INSTANCE);
+                }
+
+
+                @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type, ModifierResolver modifierResolver) {
+                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.describe(nonNull(value),
+                                    new TypeDescription.ForLoadedType(nonNull(type))),
+                            nonNull(modifierResolver));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
+                    return withDefaultValue(value, ModifierResolver.Simple.INSTANCE);
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, ModifierResolver modifierResolver) {
                     return new DefaultMethodAnnotationTarget(methodTokens,
                             methodMatcher,
-                            MethodRegistry.Handler.ForAnnotationValue.of(value),
+                            MethodRegistry.Handler.ForAnnotationValue.of(value, nonNull(modifierResolver)),
                             MethodAttributeAppender.NoOp.INSTANCE);
                 }
 
@@ -2724,8 +2754,18 @@ public interface DynamicType {
                 }
 
                 @Override
+                public MethodAnnotationTarget<S> intercept(Implementation implementation, ModifierResolver modifierResolver) {
+                    return materialize(methodToken).intercept(implementation, modifierResolver);
+                }
+
+                @Override
                 public MethodAnnotationTarget<S> withoutCode() {
                     return materialize(methodToken).withoutCode();
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withoutCode(ModifierResolver modifierResolver) {
+                    return materialize(methodToken).withoutCode(modifierResolver);
                 }
 
                 @Override
@@ -2734,8 +2774,18 @@ public interface DynamicType {
                 }
 
                 @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type, ModifierResolver modifierResolver) {
+                    return materialize(methodToken).withDefaultValue(value, type, modifierResolver);
+                }
+
+                @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
                     return materialize(methodToken).withDefaultValue(value);
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, ModifierResolver modifierResolver) {
+                    return materialize(methodToken).withDefaultValue(value, modifierResolver);
                 }
 
                 /**
@@ -2961,7 +3011,12 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Implementation implementation) {
-                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).intercept(nonNull(implementation));
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).intercept(implementation);
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> intercept(Implementation implementation, ModifierResolver modifierResolver) {
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).intercept(implementation, modifierResolver);
                 }
 
                 @Override
@@ -2970,13 +3025,28 @@ public interface DynamicType {
                 }
 
                 @Override
+                public MethodAnnotationTarget<S> withoutCode(ModifierResolver modifierResolver) {
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withoutCode(modifierResolver);
+                }
+
+                @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
                     return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withDefaultValue(value, type);
                 }
 
                 @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type, ModifierResolver modifierResolver) {
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withDefaultValue(value, type, modifierResolver);
+                }
+
+                @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
                     return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withDefaultValue(value);
+                }
+
+                @Override
+                public MethodAnnotationTarget<S> withDefaultValue(Object value, ModifierResolver modifierResolver) {
+                    return materialize().method(isDeclaredBy(anyOf(additionalInterfaceTypes))).withDefaultValue(value, modifierResolver);
                 }
 
                 @Override

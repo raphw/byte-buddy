@@ -5,10 +5,12 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,13 +62,16 @@ public class TypeWriterMethodPoolEntryTest {
     @Mock
     private ParameterDescription parameterDescription;
 
+    @Mock
+    private ModifierResolver modifierResolver;
+
     @Before
     public void setUp() throws Exception {
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(BAR);
         when(methodDescription.getGenericSignature()).thenReturn(QUX);
         when(methodDescription.getExceptionTypes()).thenReturn(exceptionTypes);
-        when(methodDescription.getAdjustedModifiers(anyBoolean())).thenReturn(MODIFIERS);
+        when(modifierResolver.transform(eq(methodDescription), anyBoolean())).thenReturn(MODIFIERS);
         when(exceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ});
         when(classVisitor.visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ})).thenReturn(methodVisitor);
         when(methodDescription.getParameters())
@@ -106,7 +111,7 @@ public class TypeWriterMethodPoolEntryTest {
 
     @Test
     public void testDefinedMethod() throws Exception {
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender, modifierResolver);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
         entry.apply(classVisitor, implementationContext, methodDescription);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -122,7 +127,7 @@ public class TypeWriterMethodPoolEntryTest {
     public void testDefinedMethodHeadOnly() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender, modifierResolver);
         entry.applyHead(methodVisitor, methodDescription);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -133,7 +138,7 @@ public class TypeWriterMethodPoolEntryTest {
     public void testDefinedMethodBodyOnly() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender, modifierResolver);
         entry.applyBody(methodVisitor, implementationContext, methodDescription);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -144,7 +149,7 @@ public class TypeWriterMethodPoolEntryTest {
     public void testDefinedMethodWithParameters() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender, modifierResolver);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
         entry.apply(classVisitor, implementationContext, methodDescription);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -159,14 +164,14 @@ public class TypeWriterMethodPoolEntryTest {
 
     @Test(expected = IllegalStateException.class)
     public void testDefinedMethodPrepended() throws Exception {
-        new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender).prepend(otherAppender);
+        new TypeWriter.MethodPool.Entry.ForAbstractMethod(methodAttributeAppender, modifierResolver).prepend(otherAppender);
     }
 
     @Test
     public void testDefaultValueMethod() throws Exception {
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.STRING);
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender, modifierResolver);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
         entry.apply(classVisitor, implementationContext, methodDescription);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -188,7 +193,7 @@ public class TypeWriterMethodPoolEntryTest {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender, modifierResolver);
         entry.applyHead(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotationDefault();
         verifyNoMoreInteractions(methodVisitor);
@@ -203,7 +208,7 @@ public class TypeWriterMethodPoolEntryTest {
     public void testDefaultValueMethodBodyOnly() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender, modifierResolver);
         entry.applyBody(methodVisitor, implementationContext, methodDescription);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -217,7 +222,7 @@ public class TypeWriterMethodPoolEntryTest {
         when(parameterDescription.isNamed()).thenReturn(true);
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.STRING);
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender, modifierResolver);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINE));
         entry.apply(classVisitor, implementationContext, methodDescription);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -236,20 +241,19 @@ public class TypeWriterMethodPoolEntryTest {
 
     @Test(expected = IllegalStateException.class)
     public void testDefaultValueMethodPrepended() throws Exception {
-        new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender).prepend(otherAppender);
+        new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender, modifierResolver).prepend(otherAppender);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNoDefaultValue() throws Exception {
         when(methodDescription.isDefaultValue(FOO)).thenReturn(false);
-        new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender)
+        new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(FOO, methodAttributeAppender, modifierResolver)
                 .apply(classVisitor, implementationContext, methodDescription);
     }
 
     @Test
     public void testImplementedMethod() throws Exception {
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry
-                .ForImplementation(byteCodeAppender, methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, methodAttributeAppender, modifierResolver);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT));
         entry.apply(classVisitor, implementationContext, methodDescription);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -269,8 +273,7 @@ public class TypeWriterMethodPoolEntryTest {
     public void testImplementedMethodHeadOnly() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry
-                .ForImplementation(byteCodeAppender, methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, methodAttributeAppender, modifierResolver);
         entry.applyHead(methodVisitor, methodDescription);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -282,8 +285,7 @@ public class TypeWriterMethodPoolEntryTest {
     public void testImplementedMethodBodyOnly() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry
-                .ForImplementation(byteCodeAppender, methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, methodAttributeAppender, modifierResolver);
         entry.applyBody(methodVisitor, implementationContext, methodDescription);
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitMaxs(ONE, TWO);
@@ -298,8 +300,7 @@ public class TypeWriterMethodPoolEntryTest {
     public void testImplementedMethodWithParameters() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry
-                .ForImplementation(byteCodeAppender, methodAttributeAppender);
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, methodAttributeAppender, modifierResolver);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT));
         entry.apply(classVisitor, implementationContext, methodDescription);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -318,8 +319,7 @@ public class TypeWriterMethodPoolEntryTest {
 
     @Test
     public void testImplementedMethodPrepended() throws Exception {
-        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry
-                .ForImplementation(byteCodeAppender, methodAttributeAppender)
+        TypeWriter.MethodPool.Entry entry = new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, methodAttributeAppender, modifierResolver)
                 .prepend(otherAppender);
         assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT));
         entry.apply(classVisitor, implementationContext, methodDescription);
@@ -336,5 +336,13 @@ public class TypeWriterMethodPoolEntryTest {
         verifyNoMoreInteractions(byteCodeAppender);
         verify(otherAppender).apply(methodVisitor, implementationContext, methodDescription);
         verifyNoMoreInteractions(otherAppender);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Entry.ForAbstractMethod.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Entry.ForImplementation.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Entry.ForSkippedMethod.class).apply();
     }
 }

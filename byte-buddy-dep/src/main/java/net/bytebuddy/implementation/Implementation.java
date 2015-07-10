@@ -5,11 +5,11 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
-import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -832,7 +832,7 @@ public interface Implementation {
                 if (initializerEntry.getSort().isImplemented() && typeInitializer.isDefined()) {
                     initializerEntry = initializerEntry.prepend(typeInitializer);
                 } else if (typeInitializer.isDefined()) {
-                    initializerEntry = new TypeWriter.MethodPool.Entry.ForImplementation(typeInitializer.withReturn(), MethodAttributeAppender.NoOp.INSTANCE);
+                    initializerEntry = new TypeWriter.MethodPool.Entry.ForImplementation(typeInitializer.withReturn());
                 }
                 initializerEntry.apply(classVisitor, this, typeInitializerMethod);
                 for (Map.Entry<MethodDescription, TypeWriter.MethodPool.Entry> entry : accessorMethodEntries.entrySet()) {
@@ -943,6 +943,11 @@ public interface Implementation {
                 @Override
                 public Sort getSort() {
                     return Sort.IMPLEMENT;
+                }
+
+                @Override
+                public ModifierResolver getModifierResolver() {
+                    return ModifierResolver.Simple.INSTANCE;
                 }
 
                 @Override

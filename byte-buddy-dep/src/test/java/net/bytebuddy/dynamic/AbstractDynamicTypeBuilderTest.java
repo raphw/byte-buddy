@@ -1,8 +1,10 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
@@ -11,6 +13,7 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -20,12 +23,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
 
 public abstract class AbstractDynamicTypeBuilderTest {
@@ -199,6 +204,22 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .getLoaded();
         Method method = type.getDeclaredMethod(FOO);
         assertThat(method.invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testModifierTransformation() throws Exception {
+        ModifierResolver modifierResolver = mock(ModifierResolver.class);
+        MethodDescription toString = TypeDescription.OBJECT.getDeclaredMethods().filter(named("toString")).getOnly();
+        when(modifierResolver.transform(toString, true)).thenReturn(Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC);
+        Class<?> type = createPlain()
+                .method(named(TO_STRING))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE), modifierResolver)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.newInstance().toString(), is(FOO));
+        assertThat(type.getDeclaredMethod(TO_STRING).getModifiers(), is(Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC));
+        verify(modifierResolver).transform(toString, true);
     }
 
     public static class Foo {
