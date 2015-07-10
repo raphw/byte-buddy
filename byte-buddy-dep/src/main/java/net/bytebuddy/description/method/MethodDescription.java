@@ -754,7 +754,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return new TypeDescription.ForLoadedType(method.getDeclaringClass());
         }
 
@@ -860,10 +860,10 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         /**
          * The type that is declaring this method.
          */
-        private final TypeDescription declaringType;
+        private final GenericTypeDescription declaringType;
 
         /**
-         * the internal name of this method.
+         * The internal name of this method.
          */
         private final String internalName;
 
@@ -872,6 +872,9 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          */
         private final int modifiers;
 
+        /**
+         * The type variables of the described method.
+         */
         private final List<? extends GenericTypeDescription> typeVariables;
 
         /**
@@ -879,6 +882,9 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          */
         private final GenericTypeDescription returnType;
 
+        /**
+         * The parameter tokens describing this method.
+         */
         private final List<? extends ParameterDescription.Token> parameterTokens;
 
         /**
@@ -886,11 +892,23 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          */
         private final List<? extends GenericTypeDescription> exceptionTypes;
 
+        /**
+         * The annotations of this method.
+         */
         private final List<? extends AnnotationDescription> declaredAnnotations;
 
+        /**
+         * The default value of this method or {@code null} if no default annotation value is defined.
+         */
         private final Object defaultValue;
 
-        public Latent(TypeDescription declaringType, Token token) {
+        /**
+         * Creates a new latent method description. All provided types are attached to this instance before they are returned.
+         *
+         * @param declaringType The declaring type of the method.
+         * @param token         A token representing the method's shape.
+         */
+        public Latent(GenericTypeDescription declaringType, Token token) {
             this(declaringType,
                     token.getInternalName(),
                     token.getModifiers(),
@@ -902,7 +920,20 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     token.getDefaultValue());
         }
 
-        public Latent(TypeDescription declaringType,
+        /**
+         * Creates a new latent method description. All provided types are attached to this instance before they are returned.
+         *
+         * @param declaringType       The type that is declaring this method.
+         * @param internalName        The internal name of this method.
+         * @param modifiers           The modifiers of this method.
+         * @param typeVariables       The type variables of the described method.
+         * @param returnType          The return type of this method.
+         * @param parameterTokens     The parameter tokens describing this method.
+         * @param exceptionTypes      This method's exception types.
+         * @param declaredAnnotations The annotations of this method.
+         * @param defaultValue        The default value of this method or {@code null} if no default annotation value is defined.
+         */
+        public Latent(GenericTypeDescription declaringType,
                       String internalName,
                       int modifiers,
                       List<? extends GenericTypeDescription> typeVariables,
@@ -953,7 +984,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return declaringType;
         }
 
@@ -967,11 +998,22 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             return defaultValue;
         }
 
+        /**
+         * A method description that represents the type initializer.
+         */
         public static class TypeInitializer extends MethodDescription.AbstractMethodDescription {
 
-            private final TypeDescription typeDescription;
+            /**
+             * The type for which the type initializer should be represented.
+             */
+            private final GenericTypeDescription typeDescription;
 
-            public TypeInitializer(TypeDescription typeDescription) {
+            /**
+             * Creates a new method description representing the type initializer.
+             *
+             * @param typeDescription The type for which the type initializer should be represented.
+             */
+            public TypeInitializer(GenericTypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
             }
 
@@ -1006,7 +1048,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
 
             @Override
-            public TypeDescription getDeclaringType() {
+            public GenericTypeDescription getDeclaringType() {
                 return typeDescription;
             }
 
@@ -1045,6 +1087,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         /**
          * Creates a method description with substituted method types.
          *
+         * @param declaringType     The type that is declaring the substituted method.
          * @param methodDescription The represented method description.
          * @param visitor           A visitor that is applied to the method type.
          */
@@ -1376,20 +1419,21 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             if (this == other) return true;
             if (!(other instanceof Token)) return false;
             Token token = (Token) other;
-            if (!internalName.equals(token.internalName)) return false;
-            if (!returnType.asRawType().equals(token.returnType.asRawType())) return false;
-            if (parameterTokens.size() != token.parameterTokens.size()) return false;
-            for (int index = 0; index < parameterTokens.size(); index++) {
-                if (!parameterTokens.get(index).getType().asRawType().equals(token.parameterTokens.get(index).getType().asRawType())) return false;
+            if (!getInternalName().equals(token.getInternalName())) return false;
+            if (!getReturnType().asRawType().equals(token.getReturnType().asRawType())) return false;
+            List<ParameterDescription.Token> tokens = getParameterTokens(), otherTokens = getParameterTokens();
+            if (tokens.size() != otherTokens.size()) return false;
+            for (int index = 0; index < tokens.size(); index++) {
+                if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
             }
             return true;
         }
 
         @Override
         public int hashCode() {
-            int result = internalName.hashCode();
-            result = 31 * result + returnType.asRawType().hashCode();
-            for (ParameterDescription.Token parameterToken : parameterTokens) {
+            int result = getInternalName().hashCode();
+            result = 31 * result + getReturnType().asRawType().hashCode();
+            for (ParameterDescription.Token parameterToken : getParameterTokens()) {
                 result = 31 * result + parameterToken.getType().asRawType().hashCode();
             }
             return result;

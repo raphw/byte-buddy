@@ -166,7 +166,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return new TypeDescription.ForLoadedType(field.getDeclaringClass());
         }
 
@@ -188,14 +188,19 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
     class Latent extends AbstractFieldDescription {
 
         /**
+         * The type for which this field is defined.
+         */
+        private final GenericTypeDescription declaringType;
+
+        /**
          * The name of the field.
          */
         private final String fieldName;
 
         /**
-         * The type for which this field is defined.
+         * The field's modifiers.
          */
-        private final TypeDescription declaringType;
+        private final int modifiers;
 
         /**
          * The type of the field.
@@ -203,13 +208,17 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         private final GenericTypeDescription fieldType;
 
         /**
-         * The field's modifiers.
+         * The annotations of this field.
          */
-        private final int modifiers;
-
         private final List<? extends AnnotationDescription> declaredAnnotations;
 
-        public Latent(TypeDescription declaringType, FieldDescription.Token token) {
+        /**
+         * Creates a new latent field description. All provided types are attached to this instance before they are returned.
+         *
+         * @param declaringType The declaring type of the field.
+         * @param token         A token representing the field's shape.
+         */
+        public Latent(GenericTypeDescription declaringType, FieldDescription.Token token) {
             this(declaringType,
                     token.getName(),
                     token.getType(),
@@ -217,7 +226,16 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
                     token.getAnnotations());
         }
 
-        public Latent(TypeDescription declaringType,
+        /**
+         * Creates a new latent field description. All provided types are attached to this instance before they are returned.
+         *
+         * @param declaringType       The declaring type of the field.
+         * @param fieldName           The name of the field.
+         * @param fieldType           The field's modifiers.
+         * @param modifiers           The type of the field.
+         * @param declaredAnnotations The annotations of this field.
+         */
+        public Latent(GenericTypeDescription declaringType,
                       String fieldName,
                       GenericTypeDescription fieldType,
                       int modifiers,
@@ -245,7 +263,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return declaringType;
         }
 
@@ -275,7 +293,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         /**
          * Creates a field description with a substituted field type.
          *
-         * @param declaringType
+         * @param declaringType    The declaring type of the field.
          * @param fieldDescription The represented field.
          * @param visitor          A visitor that is applied to the field type.
          */

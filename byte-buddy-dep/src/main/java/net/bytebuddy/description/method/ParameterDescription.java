@@ -478,10 +478,19 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          */
         private final GenericTypeDescription parameterType;
 
+        /**
+         * The annotations of the parameter.
+         */
         private final List<? extends AnnotationDescription> declaredAnnotations;
 
+        /**
+         * The name of the parameter or {@code null} if no name is explicitly defined.
+         */
         private final String name;
 
+        /**
+         * The modifiers of the parameter or {@code null} if no modifiers are explicitly defined.
+         */
         private final Integer modifiers;
 
         /**
@@ -494,6 +503,14 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          */
         private final int offset;
 
+        /**
+         * Creates a latent parameter description. All provided types are attached to this instance before they are returned.
+         *
+         * @param declaringMethod The method that is declaring the parameter.
+         * @param token           The token describing the shape of the parameter.
+         * @param index           The index of the parameter.
+         * @param offset          The parameter's offset in the local method variables array.
+         */
         public Latent(MethodDescription declaringMethod, Token token, int index, int offset) {
             this(declaringMethod,
                     token.getType(),
@@ -504,6 +521,17 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                     offset);
         }
 
+        /**
+         * Creates a latent parameter description. All provided types are attached to this instance before they are returned.
+         *
+         * @param declaringMethod     The method that is declaring the parameter.
+         * @param parameterType       The parameter's type.
+         * @param declaredAnnotations The annotations of the parameter.
+         * @param name                The name of the parameter or {@code null} if no name is explicitly defined.
+         * @param modifiers           The modifiers of the parameter or {@code null} if no modifiers are explicitly defined.
+         * @param index               The index of the parameter.
+         * @param offset              The parameter's offset in the local method variables array.
+         */
         public Latent(MethodDescription declaringMethod,
                       GenericTypeDescription parameterType,
                       List<? extends AnnotationDescription> declaredAnnotations,
@@ -656,12 +684,28 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
     }
 
+    /**
+     * A token that describes the shape of a method parameter. A parameter token is equal to another parameter token if
+     * their explicit names are explicitly defined and equal or if the token is of the same identity.
+     */
     class Token implements ByteCodeElement.Token<Token> {
 
+        /**
+         * Indicator for a method parameter without an explicit name.
+         */
         public static final String NO_NAME = null;
 
+        /**
+         * Indicator for a method parameter without explicit modifiers.
+         */
         public static final Integer NO_MODIFIERS = null;
 
+        /**
+         * Transforms a list of types into a list of parameters without annotations, an explicit name or modifiers.
+         *
+         * @param typeDescriptions The types of the parameters.
+         * @return A list of parameters representing the provided types.
+         */
         public static List<Token> asList(List<? extends GenericTypeDescription> typeDescriptions) {
             List<Token> tokens = new ArrayList<Token>(typeDescriptions.size());
             for (GenericTypeDescription typeDescription : typeDescriptions) {
@@ -670,22 +714,53 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             return tokens;
         }
 
+        /**
+         * The type of the represented parameter.
+         */
         private final GenericTypeDescription typeDescription;
 
+        /**
+         * A list of parameter annotations.
+         */
         private final List<? extends AnnotationDescription> annotationDescriptions;
 
+        /**
+         * The name of the parameter or {@code null} if no explicit name is defined.
+         */
         private final String name;
 
+        /**
+         * The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         */
         private final Integer modifiers;
 
+        /**
+         * Creates a new parameter token without an explicit name, an explicit modifier or annotations.
+         *
+         * @param typeDescription The type of the represented parameter.
+         */
         public Token(GenericTypeDescription typeDescription) {
             this(typeDescription, Collections.<AnnotationDescription>emptyList());
         }
 
+        /**
+         * Creates a new parameter token without an explicit name or an explicit modifier.
+         *
+         * @param typeDescription        The type of the represented parameter.
+         * @param annotationDescriptions The annotations of the parameter.
+         */
         public Token(GenericTypeDescription typeDescription, List<? extends AnnotationDescription> annotationDescriptions) {
             this(typeDescription, annotationDescriptions, NO_NAME, NO_MODIFIERS);
         }
 
+        /**
+         * Creates a new parameter token.
+         *
+         * @param typeDescription        The type of the represented parameter.
+         * @param annotationDescriptions The annotations of the parameter.
+         * @param name                   The name of the parameter or {@code null} if no explicit name is defined.
+         * @param modifiers              The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         */
         public Token(GenericTypeDescription typeDescription,
                      List<? extends AnnotationDescription> annotationDescriptions,
                      String name,
@@ -696,18 +771,38 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             this.modifiers = modifiers;
         }
 
+        /**
+         * Returns the type of the represented method parameter.
+         *
+         * @return The type of the represented method parameter.
+         */
         public GenericTypeDescription getType() {
             return typeDescription;
         }
 
+        /**
+         * Returns the annotations of the represented method parameter.
+         *
+         * @return The annotations of the represented method parameter.
+         */
         public AnnotationList getAnnotations() {
             return new AnnotationList.Explicit(annotationDescriptions);
         }
 
+        /**
+         * Returns the name of the represented method parameter.
+         *
+         * @return The name of the parameter or {@code null} if no explicit name is defined.
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * Returns the modifiers of the represented method parameter.
+         *
+         * @return The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         */
         public Integer getModifiers() {
             return modifiers;
         }
@@ -724,8 +819,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         public boolean equals(Object other) {
             if (this == other) return true;
             if (!(other instanceof Token)) return false;
-            Token token = (Token) other;
-            return !(name != null ? !name.equals(token.name) : token.name != null);
+            String name = getName();
+            return name != null && name.equals(((Token) other).getName());
 
         }
 
