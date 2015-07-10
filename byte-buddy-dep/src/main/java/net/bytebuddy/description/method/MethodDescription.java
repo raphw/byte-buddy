@@ -1053,22 +1053,22 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         protected class VariableRetainingDelegator extends GenericTypeDescription.Visitor.Substitutor {
 
             @Override
-            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
-                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(genericTypeDescription.getParameters().size());
-                for (GenericTypeDescription parameter : genericTypeDescription.getParameters()) {
-                    if (parameter.getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(genericTypeDescription)) {
-                        return visitor.onTypeVariable(genericTypeDescription);
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
+                for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
+                    if (parameter.getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(parameter)) {
+                        return visitor.onParameterizedType(parameterizedType);
                     } else if (parameter.getSort().isWildcard()) {
                         GenericTypeList bounds = parameter.getLowerBounds();
                         bounds = bounds.isEmpty() ? parameter.getUpperBounds() : bounds;
-                        if (bounds.getOnly().getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(genericTypeDescription)) {
-                            return visitor.onTypeVariable(genericTypeDescription);
+                        if (bounds.getOnly().getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(parameter)) {
+                            return visitor.onParameterizedType(parameterizedType);
                         }
                     }
                     parameters.add(parameter.accept(this));
                 }
-                GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
-                return new GenericTypeDescription.ForParameterizedType.Latent(genericTypeDescription.asRawType(),
+                GenericTypeDescription ownerType = parameterizedType.getOwnerType();
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType(),
                         parameters,
                         ownerType == null
                                 ? null
@@ -1086,12 +1086,10 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
 
             @Override
-            public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
-                if (methodDescription.getTypeVariables().contains(genericTypeDescription)) {
-                    return new RetainedVariable(genericTypeDescription);
-                } else {
-                    return visitor.onTypeVariable(genericTypeDescription);
-                }
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                return methodDescription.getTypeVariables().contains(typeVariable)
+                        ? new RetainedVariable(typeVariable)
+                        : visitor.onTypeVariable(typeVariable);
             }
 
             protected class RetainedVariable extends GenericTypeDescription.ForTypeVariable {

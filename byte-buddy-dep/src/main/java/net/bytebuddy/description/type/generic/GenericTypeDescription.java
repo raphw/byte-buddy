@@ -355,36 +355,36 @@ public interface GenericTypeDescription extends NamedElement {
         /**
          * Visits a generic array type ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}).
          *
-         * @param genericTypeDescription The generic array type.
+         * @param genericArray The generic array type.
          * @return The visitor's return value.
          */
-        T onGenericArray(GenericTypeDescription genericTypeDescription);
+        T onGenericArray(GenericTypeDescription genericArray);
 
         /**
          * Visits a wildcard type ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD}).
          *
-         * @param genericTypeDescription The generic array type.
+         * @param wildcardType The generic array type.
          * @return The visitor's return value.
          */
-        T onWildcardType(GenericTypeDescription genericTypeDescription);
+        T onWildcardType(GenericTypeDescription wildcardType);
 
         /**
          * Visits a parameterized type ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}).
          *
-         * @param genericTypeDescription The generic array type.
+         * @param parameterizedType The generic array type.
          * @return The visitor's return value.
          */
-        T onParameterizedType(GenericTypeDescription genericTypeDescription);
+        T onParameterizedType(GenericTypeDescription parameterizedType);
 
         /**
          * Visits a type variable ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#VARIABLE},
          * {@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#VARIABLE_DETACHED},
          * {@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#VARIABLE_SYMBOLIC}).
          *
-         * @param genericTypeDescription The generic array type.
+         * @param typeVariable The generic array type.
          * @return The visitor's return value.
          */
-        T onTypeVariable(GenericTypeDescription genericTypeDescription);
+        T onTypeVariable(GenericTypeDescription typeVariable);
 
         /**
          * Visits a non-generic type ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}).
@@ -405,23 +405,23 @@ public interface GenericTypeDescription extends NamedElement {
             INSTANCE;
 
             @Override
-            public GenericTypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription;
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericArray) {
+                return genericArray;
             }
 
             @Override
-            public GenericTypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription;
+            public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
+                return wildcardType;
             }
 
             @Override
-            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription;
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                return parameterizedType;
             }
 
             @Override
-            public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription;
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                return typeVariable;
             }
 
             @Override
@@ -460,19 +460,19 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public SignatureVisitor onGenericArray(GenericTypeDescription genericTypeDescription) {
-                genericTypeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
+            public SignatureVisitor onGenericArray(GenericTypeDescription genericArray) {
+                genericArray.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
                 return signatureVisitor;
             }
 
             @Override
-            public SignatureVisitor onWildcardType(GenericTypeDescription genericTypeDescription) {
-                throw new IllegalStateException("Unexpected wildcard: " + genericTypeDescription);
+            public SignatureVisitor onWildcardType(GenericTypeDescription wildcardType) {
+                throw new IllegalStateException("Unexpected wildcard: " + wildcardType);
             }
 
             @Override
-            public SignatureVisitor onParameterizedType(GenericTypeDescription genericTypeDescription) {
-                onOwnableType(genericTypeDescription);
+            public SignatureVisitor onParameterizedType(GenericTypeDescription parameterizedType) {
+                onOwnableType(parameterizedType);
                 signatureVisitor.visitEnd();
                 return signatureVisitor;
             }
@@ -496,8 +496,8 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public SignatureVisitor onTypeVariable(GenericTypeDescription genericTypeDescription) {
-                signatureVisitor.visitTypeVariable(genericTypeDescription.getSymbol());
+            public SignatureVisitor onTypeVariable(GenericTypeDescription typeVariable) {
+                signatureVisitor.visitTypeVariable(typeVariable.getSymbol());
                 return signatureVisitor;
             }
 
@@ -545,9 +545,9 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                public SignatureVisitor onWildcardType(GenericTypeDescription genericTypeDescription) {
-                    GenericTypeList upperBounds = genericTypeDescription.getUpperBounds();
-                    GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds();
+                public SignatureVisitor onWildcardType(GenericTypeDescription wildcardType) {
+                    GenericTypeList upperBounds = wildcardType.getUpperBounds();
+                    GenericTypeList lowerBounds = wildcardType.getLowerBounds();
                     if (lowerBounds.isEmpty() && upperBounds.getOnly().asRawType().represents(Object.class)) {
                         signatureVisitor.visitTypeArgument();
                     } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
@@ -559,20 +559,20 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                public SignatureVisitor onGenericArray(GenericTypeDescription genericTypeDescription) {
-                    genericTypeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                public SignatureVisitor onGenericArray(GenericTypeDescription genericArray) {
+                    genericArray.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                     return signatureVisitor;
                 }
 
                 @Override
-                public SignatureVisitor onParameterizedType(GenericTypeDescription genericTypeDescription) {
-                    genericTypeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                public SignatureVisitor onParameterizedType(GenericTypeDescription parameterizedType) {
+                    parameterizedType.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                     return signatureVisitor;
                 }
 
                 @Override
-                public SignatureVisitor onTypeVariable(GenericTypeDescription genericTypeDescription) {
-                    genericTypeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                public SignatureVisitor onTypeVariable(GenericTypeDescription typeVariable) {
+                    typeVariable.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                     return signatureVisitor;
                 }
 
@@ -596,13 +596,13 @@ public interface GenericTypeDescription extends NamedElement {
         abstract class Substitutor implements Visitor<GenericTypeDescription> {
 
             @Override
-            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
-                GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
-                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(genericTypeDescription.getParameters().size());
-                for (GenericTypeDescription parameter : genericTypeDescription.getParameters()) {
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                GenericTypeDescription ownerType = parameterizedType.getOwnerType();
+                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
+                for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
                     parameters.add(parameter.accept(this));
                 }
-                return new GenericTypeDescription.ForParameterizedType.Latent(genericTypeDescription.asRawType().accept(this).asRawType(),
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType().accept(this).asRawType(),
                         parameters,
                         ownerType == null
                                 ? null
@@ -610,15 +610,15 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public GenericTypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
-                return GenericTypeDescription.ForGenericArray.Latent.of(genericTypeDescription.getComponentType().accept(this), 1);
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericArray) {
+                return GenericTypeDescription.ForGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
             }
 
             @Override
-            public GenericTypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
-                GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds();
+            public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
+                GenericTypeList lowerBounds = wildcardType.getLowerBounds();
                 return lowerBounds.isEmpty()
-                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(genericTypeDescription.getUpperBounds().getOnly().accept(this))
+                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcardType.getUpperBounds().getOnly().accept(this))
                         : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
             }
 
@@ -895,10 +895,10 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
-                    GenericTypeDescription substitution = bindings.get(genericTypeDescription);
+                public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                    GenericTypeDescription substitution = bindings.get(typeVariable);
                     return substitution == null
-                            ? genericTypeDescription.asRawType() // Fallback: Never happens for well-defined generic types.
+                            ? typeVariable.asRawType() // Fallback: Never happens for well-defined generic types.
                             : substitution;
                 }
 
@@ -953,36 +953,36 @@ public interface GenericTypeDescription extends NamedElement {
             INSTANCE;
 
             @Override
-            public GenericTypeDescription onGenericArray(GenericTypeDescription genericTypeDescription) {
-                return ForGenericArray.Latent.of(genericTypeDescription.getComponentType().accept(this), 1);
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericArray) {
+                return ForGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
             }
 
             @Override
-            public GenericTypeDescription onWildcardType(GenericTypeDescription genericTypeDescription) {
+            public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
                 // Wildcards which are used within parameterized types are taken care of by the calling method.
-                GenericTypeList lowerBounds = genericTypeDescription.getLowerBounds();
+                GenericTypeList lowerBounds = wildcardType.getLowerBounds();
                 return lowerBounds.isEmpty()
-                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(genericTypeDescription.getUpperBounds().getOnly().accept(this))
+                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcardType.getUpperBounds().getOnly().accept(this))
                         : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
             }
 
             @Override
-            public GenericTypeDescription onParameterizedType(GenericTypeDescription genericTypeDescription) {
-                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(genericTypeDescription.getParameters().size());
-                for (GenericTypeDescription parameter : genericTypeDescription.getParameters()) {
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
+                for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
                     if (parameter.getSort().isTypeVariable()) {
-                        return genericTypeDescription.asRawType();
+                        return parameterizedType.asRawType();
                     } else if (parameter.getSort().isWildcard()) {
                         GenericTypeList bounds = parameter.getLowerBounds();
                         bounds = bounds.isEmpty() ? parameter.getUpperBounds() : bounds;
                         if (bounds.getOnly().getSort().isTypeVariable()) {
-                            return genericTypeDescription.asRawType();
+                            return parameterizedType.asRawType();
                         }
                     }
                     parameters.add(parameter.accept(this));
                 }
-                GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
-                return new GenericTypeDescription.ForParameterizedType.Latent(genericTypeDescription.asRawType(),
+                GenericTypeDescription ownerType = parameterizedType.getOwnerType();
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType(),
                         parameters,
                         ownerType == null
                                 ? null
@@ -990,8 +990,8 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
-                return genericTypeDescription.asRawType();
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                return typeVariable.asRawType();
             }
 
             @Override
