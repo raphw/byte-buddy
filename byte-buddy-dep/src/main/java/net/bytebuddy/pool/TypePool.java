@@ -17,7 +17,6 @@ import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
@@ -3550,12 +3549,12 @@ public interface TypePool {
 
                         @Override
                         public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
-                            return TokenizedGenericType.TokenList.of(typePool, interfaceTypeTokens, interfaceTypeDescriptors, definingType);
+                            return new TokenizedGenericType.TokenList(typePool, interfaceTypeTokens, interfaceTypeDescriptors, definingType);
                         }
 
                         @Override
                         public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
-                            return TokenizedGenericType.TypeVariableList.of(typePool, typeVariableTokens, typeVariableSource);
+                            return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource);
                         }
                     }
                 }
@@ -3595,17 +3594,17 @@ public interface TypePool {
 
                         @Override
                         public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                            return TokenizedGenericType.TokenList.of(typePool, parameterTypeTokens, parameterTypeDescriptors, definingMethod);
+                            return new TokenizedGenericType.TokenList(typePool, parameterTypeTokens, parameterTypeDescriptors, definingMethod);
                         }
 
                         @Override
                         public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                            return TokenizedGenericType.TokenList.of(typePool, exceptionTypeTokens, exceptionTypeDescriptors, definingMethod);
+                            return new TokenizedGenericType.TokenList(typePool, exceptionTypeTokens, exceptionTypeDescriptors, definingMethod);
                         }
 
                         @Override
                         public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
-                            return TokenizedGenericType.TypeVariableList.of(typePool, typeVariableTokens, typeVariableSource);
+                            return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource);
                         }
                     }
                 }
@@ -4620,8 +4619,18 @@ public interface TypePool {
             }
         }
 
+        /**
+         * A representation of a generic type that is described by a {@link GenericTypeToken}.
+         */
         private static class TokenizedGenericType extends GenericTypeDescription.LazyProjection {
 
+            /**
+             * Transforms a descriptor into a type description
+             *
+             * @param typePool   The type pool to use for locating a type.
+             * @param descriptor The descriptor to interpret.
+             * @return A description of the type represented by the descriptor.
+             */
             protected static TypeDescription toRawType(TypePool typePool, String descriptor) {
                 Type type = Type.getType(descriptor);
                 return typePool.describe(type.getSort() == Type.ARRAY
@@ -4629,15 +4638,38 @@ public interface TypePool {
                         : type.getClassName()).resolve();
             }
 
+            /**
+             * The type pool to use for locating referenced types.
+             */
             private final TypePool typePool;
 
+            /**
+             * The token that describes the represented generic type.
+             */
             private final GenericTypeToken genericTypeToken;
 
+            /**
+             * A descriptor of the generic type's raw type.
+             */
             private final String rawTypeDescriptor;
 
+            /**
+             * The closest type variable source of this generic type's declaration context.
+             */
             private final TypeVariableSource typeVariableSource;
 
-            protected TokenizedGenericType(TypePool typePool, GenericTypeToken genericTypeToken, String rawTypeDescriptor, TypeVariableSource typeVariableSource) {
+            /**
+             * Creates a new tokenized generic type.
+             *
+             * @param typePool           The type pool to use for locating referenced types.
+             * @param genericTypeToken   The token that describes the represented generic type.
+             * @param rawTypeDescriptor  A descriptor of the generic type's raw type.
+             * @param typeVariableSource The closest type variable source of this generic type's declaration context.
+             */
+            protected TokenizedGenericType(TypePool typePool,
+                                           GenericTypeToken genericTypeToken,
+                                           String rawTypeDescriptor,
+                                           TypeVariableSource typeVariableSource) {
                 this.typePool = typePool;
                 this.genericTypeToken = genericTypeToken;
                 this.rawTypeDescriptor = rawTypeDescriptor;
@@ -4659,25 +4691,39 @@ public interface TypePool {
                 return toRawType(typePool, rawTypeDescriptor);
             }
 
+            /**
+             * A tokenized list of generic types.
+             */
             protected static class TokenList extends GenericTypeList.AbstractBase {
 
+                /**
+                 * The type pool to use for locating types.
+                 */
                 private final TypePool typePool;
 
+                /**
+                 * Type tokens that describe the represented generic types.
+                 */
                 private final List<GenericTypeToken> genericTypeTokens;
 
+                /**
+                 * A list of the generic types' raw types.
+                 */
                 private final List<String> rawTypeDescriptors;
 
+                /**
+                 * The closest type variable source of this generic type's declaration context.
+                 */
                 private final TypeVariableSource typeVariableSource;
 
-                protected static GenericTypeList of(TypePool typePool,
-                                                    List<GenericTypeToken> genericTypeTokens,
-                                                    List<String> rawTypeDescriptors,
-                                                    TypeVariableSource typeVariableSource) {
-                    return rawTypeDescriptors.isEmpty()
-                            ? new GenericTypeList.Empty()
-                            : new TokenList(typePool, genericTypeTokens, rawTypeDescriptors, typeVariableSource);
-                }
-
+                /**
+                 * Creates a list of tokenized generic types.
+                 *
+                 * @param typePool           The type pool to use for locating type descriptions.
+                 * @param genericTypeTokens  A list of tokens describing the represented generic types.
+                 * @param rawTypeDescriptors A list of the generic types' raw types.
+                 * @param typeVariableSource The closest type variable source of this generic type's declaration context.
+                 */
                 private TokenList(TypePool typePool,
                                   List<GenericTypeToken> genericTypeTokens,
                                   List<String> rawTypeDescriptors,
@@ -4704,25 +4750,34 @@ public interface TypePool {
                 }
             }
 
+            /**
+             * A list of tokenized type variables.
+             */
             protected static class TypeVariableList extends GenericTypeList.AbstractBase {
 
-                protected static GenericTypeList of(TypePool typePool,
-                                                    List<GenericTypeToken> typeVariables,
-                                                    TypeVariableSource typeVariableSource) {
-                    return typeVariables.isEmpty()
-                            ? new GenericTypeList.Empty()
-                            : new TypeVariableList(typePool, typeVariables, typeVariableSource);
-                }
-
+                /**
+                 * The type pool to use for locating types.
+                 */
                 private final TypePool typePool;
 
+                /**
+                 * Type tokens that describe the represented type variables.
+                 */
                 private final List<GenericTypeToken> typeVariables;
 
+                /**
+                 * The type variable source of the represented type variables.
+                 */
                 private final TypeVariableSource typeVariableSource;
 
-                private TypeVariableList(TypePool typePool,
-                                         List<GenericTypeToken> typeVariables,
-                                         TypeVariableSource typeVariableSource) {
+                /**
+                 * Creates a list of type variables.
+                 *
+                 * @param typePool           The type pool to use for locating types.
+                 * @param typeVariables      Type tokens that describe the represented generic types.
+                 * @param typeVariableSource The type variable source of the represented type variables.
+                 */
+                protected TypeVariableList(TypePool typePool, List<GenericTypeToken> typeVariables, TypeVariableSource typeVariableSource) {
                     this.typePool = typePool;
                     this.typeVariables = typeVariables;
                     this.typeVariableSource = typeVariableSource;
@@ -4737,23 +4792,29 @@ public interface TypePool {
                 public int size() {
                     return typeVariables.size();
                 }
-
-                @Override
-                public TypeList asRawTypes() {
-                    List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>();
-                    for (GenericTypeDescription typeVariable : this) {
-                        typeDescriptions.add(typeVariable.asRawType());
-                    }
-                    return new TypeList.Explicit(typeDescriptions);
-                }
             }
 
+            /**
+             * A lazy description of a non-well-defined described generic type.
+             */
             protected static class Defective extends GenericTypeDescription.LazyProjection {
 
+                /**
+                 * The type pool to use for locating types.
+                 */
                 private final TypePool typePool;
 
+                /**
+                 * The descriptor of the raw type.
+                 */
                 private final String rawTypeDescriptor;
 
+                /**
+                 * Creates a lazy description of a non-well-defined described generic type.
+                 *
+                 * @param typePool          The type pool to use for locating types.
+                 * @param rawTypeDescriptor The descriptor of the raw type.
+                 */
                 protected Defective(TypePool typePool, String rawTypeDescriptor) {
                     this.typePool = typePool;
                     this.rawTypeDescriptor = rawTypeDescriptor;
@@ -4761,7 +4822,7 @@ public interface TypePool {
 
                 @Override
                 protected GenericTypeDescription resolve() {
-                    throw new MalformedParameterizedTypeException();
+                    throw new MalformedParameterizedTypeException(); // TODO
                 }
 
                 @Override
@@ -4769,13 +4830,28 @@ public interface TypePool {
                     return toRawType(typePool, rawTypeDescriptor);
                 }
 
+                /**
+                 * A tokenized list of non-well-defined generic types.
+                 */
                 protected static class TokenList extends GenericTypeList.AbstractBase {
 
+                    /**
+                     * The type pool to use for locating types.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * A list of descriptors of the list's raw types.
+                     */
                     private final List<String> rawTypeDescriptors;
 
-                    private TokenList(TypePool typePool, List<String> rawTypeDescriptors) {
+                    /**
+                     * Creates a new tokenized list of generic types.
+                     *
+                     * @param typePool           The type pool to use for locating types.
+                     * @param rawTypeDescriptors A list of descriptors of the list's raw types.
+                     */
+                    protected TokenList(TypePool typePool, List<String> rawTypeDescriptors) {
                         this.typePool = typePool;
                         this.rawTypeDescriptors = rawTypeDescriptors;
                     }
