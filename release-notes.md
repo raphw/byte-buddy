@@ -159,3 +159,8 @@ Corrected incorrect deployment of version 0.6.7 which does not use a dependency 
 - Added additional `ClassFileLocator`s for locating jar files in folders and jar files.
 - Added explicit check for invalid access of instance fields from static methods in field accessing interceptors.
 - Added the `@StubValue` and `@FieldValue` annotations.
+- 
+### 10. July 2015: version 0.6.12
+
+- Added API for altering a method's modifiers when intercepting it.
+- Added API for allowing to filter default values when writing annotations.
