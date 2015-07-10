@@ -28,7 +28,7 @@ public class MethodVariableAccessOtherTest {
             public void apply(MethodDescription mock) {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
             }
-        }).applyMutable();
+        }).applyCustom();
         ObjectPropertyAssertion.of(MethodVariableAccess.TypeCastingHandler.NoOp.class).apply();
     }
 }

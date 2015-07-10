@@ -13,7 +13,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import java.security.acl.Owner;
 import java.util.Collections;
 
 public class TypeWriterDefaultTest {
@@ -209,8 +208,8 @@ public class TypeWriterDefaultTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyMutable();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyMutable();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyCustom();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyCustom();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.class).apply();
     }
 }

@@ -21,10 +21,29 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  */
 public interface FieldDescription extends ByteCodeElement, NamedElement.WithGenericName {
 
+    /**
+     * Returns the type of the described field.
+     *
+     * @return The type of the described field.
+     */
     GenericTypeDescription getType();
 
+    /**
+     * Transforms this field description into a token. For the resulting token, all type variables within the scope
+     * of this field's type are detached from their declaration context.
+     *
+     * @return A token representing this field.
+     */
     Token asToken();
 
+    /**
+     * Transforms this field description into a token. For the resulting token, all type variables within the scope
+     * of this field's type are detached from their declaration context.
+     *
+     * @param targetTypeMatcher A matcher that is applied to the field type for replacing any matched
+     *                          type by {@link net.bytebuddy.dynamic.TargetType}.
+     * @return A token representing this field.
+     */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
@@ -236,12 +255,27 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
     }
 
+    /**
+     * A field description that represents a given field but with a substituted field type.
+     */
     class TypeSubstituting extends AbstractFieldDescription {
 
+        /**
+         * The represented field.
+         */
         private final FieldDescription fieldDescription;
 
+        /**
+         * A visitor that is applied to the field type.
+         */
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
+        /**
+         * Creates a field description with a substituted field type.
+         *
+         * @param fieldDescription The represented field.
+         * @param visitor          A visitor that is applied to the field type.
+         */
         public TypeSubstituting(FieldDescription fieldDescription, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             this.fieldDescription = fieldDescription;
             this.visitor = visitor;
@@ -273,16 +307,40 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
     }
 
+    /**
+     * A token that represents a field's shape. A field token is equal to another token when the other field
+     * tokens's name is equal to this token.
+     */
     class Token implements ByteCodeElement.Token<Token> {
 
+        /**
+         * The name of the represented field.
+         */
         private final String name;
 
+        /**
+         * The modifiers of the represented field.
+         */
         private final int modifiers;
 
+        /**
+         * The type of the represented field.
+         */
         private final GenericTypeDescription type;
 
+        /**
+         * The annotations of the represented field.
+         */
         private final List<? extends AnnotationDescription> annotations;
 
+        /**
+         * Creates a new field token.
+         *
+         * @param name        The name of the represented field.
+         * @param modifiers   The modifiers of the represented field.
+         * @param type        The type of the represented field.
+         * @param annotations The annotations of the represented field.
+         */
         public Token(String name,
                      int modifiers,
                      GenericTypeDescription type,
@@ -293,18 +351,38 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
             this.annotations = annotations;
         }
 
+        /**
+         * Returns the name of the represented field.
+         *
+         * @return The name of the represented field.
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * Returns the type of the represented field.
+         *
+         * @return The type of the represented field.
+         */
         public GenericTypeDescription getType() {
             return type;
         }
 
+        /**
+         * Returns the modifiers of the represented field.
+         *
+         * @return The modifiers of the represented field.
+         */
         public int getModifiers() {
             return modifiers;
         }
 
+        /**
+         * Returns the annotations of the represented field.
+         *
+         * @return The annotations of the represented field.
+         */
         public AnnotationList getAnnotations() {
             return new AnnotationList.Explicit(annotations);
         }

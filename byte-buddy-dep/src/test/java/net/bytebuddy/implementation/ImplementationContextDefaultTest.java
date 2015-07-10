@@ -609,7 +609,7 @@ public class ImplementationContextDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyMutable();
+        ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyCustom();
         ObjectPropertyAssertion.of(Implementation.Context.Default.FieldCacheEntry.class).apply();
         ObjectPropertyAssertion.of(Implementation.Context.Default.AccessorMethodDelegation.class).apply();
         ObjectPropertyAssertion.of(Implementation.Context.Default.FieldSetterDelegation.class).apply();

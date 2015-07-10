@@ -49,8 +49,16 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
+    /**
+     * Represents a non-defined default value of an annotation property.
+     */
     Object NO_DEFAULT_VALUE = null;
 
+    /**
+     * Returns the return type of the described method.
+     *
+     * @return The return type of the described method.
+     */
     GenericTypeDescription getReturnType();
 
     /**
@@ -60,6 +68,11 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     ParameterList getParameters();
 
+    /**
+     * Returns the exception types of the described method.
+     *
+     * @return The exception types of the described method.
+     */
     GenericTypeList getExceptionTypes();
 
     /**
@@ -208,8 +221,22 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     boolean isDefaultValue(Object value);
 
+    /**
+     * Transforms this method description into a token. For the resulting token, all type variables within the scope
+     * of this method's types are detached from their declaration context.
+     *
+     * @return A token representing this method.
+     */
     Token asToken();
 
+    /**
+     * Transforms this method description into a token. For the resulting token, all type variables within the scope
+     * of this method's types are detached from their declaration context.
+     *
+     * @param targetTypeMatcher A matcher that is applied to the method's types for replacing any matched
+     *                          type by {@link net.bytebuddy.dynamic.TargetType}.
+     * @return A token representing this method.
+     */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
@@ -627,7 +654,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return new TypeDescription.ForLoadedType(constructor.getDeclaringClass());
         }
 
@@ -995,13 +1022,36 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
     }
 
+    /**
+     * A method description that represents a given method but with substituted method types.
+     */
     class TypeSubstituting extends AbstractMethodDescription {
 
+        /**
+         * The type that declares this type-substituted method.
+         */
+        private final GenericTypeDescription declaringType;
+
+        /**
+         * The represented method description.
+         */
         private final MethodDescription methodDescription;
 
+        /**
+         * A visitor that is applied to the method type.
+         */
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
-        public TypeSubstituting(MethodDescription methodDescription, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        /**
+         * Creates a method description with substituted method types.
+         *
+         * @param methodDescription The represented method description.
+         * @param visitor           A visitor that is applied to the method type.
+         */
+        public TypeSubstituting(GenericTypeDescription declaringType,
+                                MethodDescription methodDescription,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringType = declaringType;
             this.methodDescription = methodDescription;
             this.visitor = visitor;
         }
@@ -1018,7 +1068,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public ParameterList getParameters() {
-            return new ParameterList.Substituted(methodDescription.getParameters(), new VariableRetainingDelegator());
+            return new ParameterList.Substituted(this, methodDescription.getParameters(), new VariableRetainingDelegator());
         }
 
         @Override
@@ -1037,8 +1087,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
-            return methodDescription.getDeclaringType();
+        public GenericTypeDescription getDeclaringType() {
+            return declaringType;
         }
 
         @Override
@@ -1051,6 +1101,12 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             return methodDescription.getInternalName();
         }
 
+        /**
+         * A visitor that only escalates to the actual visitor if a non-generic type is discovered or if a type variable
+         * that is not declared by the represented method is discovered. This way, a method's type variables are never bound
+         * by the supplied visitor as non-generic types never reference a method's type variables and since a type variable
+         * that is not declared by the represented method can never reference a type variable of the represented method.
+         */
         protected class VariableRetainingDelegator extends GenericTypeDescription.Visitor.Substitutor {
 
             @Override
@@ -1093,10 +1149,41 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                         : visitor.onTypeVariable(typeVariable);
             }
 
+            @Override
+            public int hashCode() {
+                return TypeSubstituting.this.hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return other != null && other.getClass() == this.getClass()
+                        && TypeSubstituting.this.equals(((VariableRetainingDelegator) other).getOuter());
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private Object getOuter() {
+                return TypeSubstituting.this;
+            }
+
+            /**
+             * A retained type variable that is declared by the method.
+             */
             protected class RetainedVariable extends GenericTypeDescription.ForTypeVariable {
 
+                /**
+                 * The type variable this retained variable represents.
+                 */
                 private final GenericTypeDescription typeVariable;
 
+                /**
+                 * Creates a new retained type variable.
+                 *
+                 * @param typeVariable The type variable this retained variable represents.
+                 */
                 protected RetainedVariable(GenericTypeDescription typeVariable) {
                     this.typeVariable = typeVariable;
                 }
@@ -1119,24 +1206,64 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
     }
 
+    /**
+     * A token that represents a method's shape. A method token is equal to another token when the name, the raw return type
+     * and the raw parameter types are equal to those of another method token.
+     */
     class Token implements ByteCodeElement.Token<Token> {
 
+        /**
+         * The internal name of the represented method.
+         */
         private final String internalName;
 
+        /**
+         * The modifiers of the represented method.
+         */
         private final int modifiers;
 
+        /**
+         * The type variables of the the represented method.
+         */
         private final List<GenericTypeDescription> typeVariables;
 
+        /**
+         * The return type of the represented method.
+         */
         private final GenericTypeDescription returnType;
 
+        /**
+         * The parameter tokens of the represented method.
+         */
         private final List<? extends ParameterDescription.Token> parameterTokens;
 
+        /**
+         * The exception types of the represented method.
+         */
         private final List<? extends GenericTypeDescription> exceptionTypes;
 
+        /**
+         * The annotations of the represented method.
+         */
         private final List<? extends AnnotationDescription> annotations;
 
+        /**
+         * The default value of the represented method or {@code null} if no such value exists.
+         */
         private final Object defaultValue;
 
+        /**
+         * Creates a new token for a method description.
+         *
+         * @param internalName    The internal name of the represented method.
+         * @param modifiers       The modifiers of the represented method.
+         * @param typeVariables   The type variables of the the represented method.
+         * @param returnType      The return type of the represented method.
+         * @param parameterTokens The parameter tokens of the represented method.
+         * @param exceptionTypes  The exception types of the represented method.
+         * @param annotations     The annotations of the represented method.
+         * @param defaultValue    The default value of the represented method or {@code null} if no such value exists.
+         */
         public Token(String internalName,
                      int modifiers,
                      List<GenericTypeDescription> typeVariables,
@@ -1155,34 +1282,74 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             this.defaultValue = defaultValue;
         }
 
+        /**
+         * Returns the internal name of the represented method.
+         *
+         * @return The internal name of the represented method.
+         */
         public String getInternalName() {
             return internalName;
         }
 
+        /**
+         * Returns the modifiers of the represented method.
+         *
+         * @return The modifiers of the represented method.
+         */
         public int getModifiers() {
             return modifiers;
         }
 
+        /**
+         * Returns the type variables of the the represented method.
+         *
+         * @return The type variables of the the represented method.
+         */
         public GenericTypeList getTypeVariables() {
             return new GenericTypeList.Explicit(typeVariables);
         }
 
+        /**
+         * Returns the return type of the represented method.
+         *
+         * @return The return type of the represented method.
+         */
         public GenericTypeDescription getReturnType() {
             return returnType;
         }
 
+        /**
+         * Returns the parameter tokens of the represented method.
+         *
+         * @return The parameter tokens of the represented method.
+         */
         public TokenList<ParameterDescription.Token> getParameterTokens() {
             return new TokenList<ParameterDescription.Token>(parameterTokens);
         }
 
+        /**
+         * Returns the exception types of the represented method.
+         *
+         * @return The exception types of the represented method.
+         */
         public GenericTypeList getExceptionTypes() {
             return new GenericTypeList.Explicit(exceptionTypes);
         }
 
+        /**
+         * Returns the annotations of the represented method.
+         *
+         * @return The annotations of the represented method.
+         */
         public AnnotationList getAnnotations() {
             return new AnnotationList.Explicit(annotations);
         }
 
+        /**
+         * Returns the default value of the represented method.
+         *
+         * @return The default value of the represented method or {@code null} if no such value exists.
+         */
         public Object getDefaultValue() {
             return defaultValue;
         }

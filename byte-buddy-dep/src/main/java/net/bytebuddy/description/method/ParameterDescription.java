@@ -33,6 +33,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     String NAME_PREFIX = "arg";
 
+    /**
+     * Returns the type of this parameter.
+     *
+     * @return The type of this parameter.
+     */
     GenericTypeDescription getType();
 
     /**
@@ -72,8 +77,22 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     int getOffset();
 
+    /**
+     * Transforms this parameter description into a token. For the resulting token, all type variables within the scope
+     * of this parameter's type are detached from their declaration context.
+     *
+     * @return A token representing this parameter.
+     */
     Token asToken();
 
+    /**
+     * Transforms this parameter description into a token. For the resulting token, all type variables within the scope
+     * of this parameter's type are detached from their declaration context.
+     *
+     * @param targetTypeMatcher A matcher that is applied to the parameter type for replacing any matched
+     *                          type by {@link net.bytebuddy.dynamic.TargetType}.
+     * @return A token representing this parameter.
+     */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
@@ -551,13 +570,42 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
     }
 
+    /**
+     * <p>
+     * A parameter description that represents a given parameter but with a substituted parameter type.
+     * </p>
+     * <p>
+     * <b>Note</b>: The supplied visitor must assure to not substitute
+     * </p>
+     */
     class TypeSubstituting extends AbstractParameterDescription {
 
+        /**
+         * The method that declares this type-substituted parameter.
+         */
+        private final MethodDescription declaringMethod;
+
+        /**
+         * The represented parameter.
+         */
         private final ParameterDescription parameterDescription;
 
+        /**
+         * A visitor that is applied to the parameter type.
+         */
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
-        public TypeSubstituting(ParameterDescription parameterDescription, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        /**
+         * Creates a new type substituting parameter
+         *
+         * @param declaringMethod      The method that declares this type-substituted parameter.
+         * @param parameterDescription The represented parameter.
+         * @param visitor              A visitor that is applied to the parameter type.
+         */
+        public TypeSubstituting(MethodDescription declaringMethod,
+                                ParameterDescription parameterDescription,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringMethod = declaringMethod;
             this.parameterDescription = parameterDescription;
             this.visitor = visitor;
         }
@@ -569,7 +617,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public MethodDescription getDeclaringMethod() {
-            return parameterDescription.getDeclaringMethod();
+            return declaringMethod;
         }
 
         @Override

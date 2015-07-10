@@ -202,7 +202,7 @@ public class AgentBuilderDefaultTest {
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class).applyMutable();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class).applyCustom();
         final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, AgentBuilderDefaultTest.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override

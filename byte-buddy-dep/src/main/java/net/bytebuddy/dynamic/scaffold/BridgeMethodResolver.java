@@ -84,6 +84,9 @@ public interface BridgeMethodResolver {
      */
     class Simple implements BridgeMethodResolver {
 
+        /**
+         * A mapping of method shapes represented as tokens to their bridge method target.
+         */
         private final Map<MethodDescription.Token, BridgeTarget> bridges;
 
         /**

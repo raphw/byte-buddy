@@ -56,20 +56,20 @@ public class TypePoolDefaultComponentTypeLocatorTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(TypePool.Default.ComponentTypeLocator.Illegal.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).applyMutable();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).applyCustom();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).create(new ObjectPropertyAssertion.Creator<String>() {
             @Override
             public String create() {
                 return "(LFoo;)LBar;";
             }
-        }).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.ParameterBag.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodCollector.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodParameterCollector.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.OnFieldCollector.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.ArrayLookup.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.AnnotationLookup.class).applyMutable();
+        }).applyCustom();
+        ObjectPropertyAssertion.of(TypePool.Default.ParameterBag.class).applyCustom();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodCollector.class).applyCustom();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodParameterCollector.class).applyCustom();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.class).applyCustom();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.OnFieldCollector.class).applyCustom();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.class).applyCustom();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.ArrayLookup.class).applyCustom();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.AnnotationLookup.class).applyCustom();
     }
 }

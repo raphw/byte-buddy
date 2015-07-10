@@ -398,8 +398,8 @@ public class MethodLookupEngineDefaultTest {
             public void apply(TypeDescription mock) {
                 when(mock.getDeclaredMethods()).thenReturn(new MethodList.Empty());
             }
-        }).applyMutable();
-        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Enabled.class).applyMutable();
+        }).applyCustom();
+        ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Enabled.class).applyCustom();
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.MethodBucket.DefaultMethodLookup.Disabled.class).apply();
     }
 

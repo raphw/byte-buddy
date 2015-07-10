@@ -1,6 +1,5 @@
 package net.bytebuddy.description.type.generic;
 
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -8,7 +7,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -59,7 +57,7 @@ public class GenericTypeDescriptionVisitorForDetachmentTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(GenericTypeDescription.Visitor.Substitutor.ForDetachment.class).applyMutable();
+        ObjectPropertyAssertion.of(GenericTypeDescription.Visitor.Substitutor.ForDetachment.class).applyCustom();
     }
 
     @SuppressWarnings("unused")

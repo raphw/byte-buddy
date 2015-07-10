@@ -340,18 +340,23 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
     class Substituted extends AbstractBase {
 
+        private final MethodDescription declaringMethod;
+
         private final List<? extends ParameterDescription> parameterDescriptions;
 
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
-        public Substituted(List<? extends ParameterDescription> parameterDescriptions, GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        public Substituted(MethodDescription declaringMethod,
+                           List<? extends ParameterDescription> parameterDescriptions,
+                           GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringMethod = declaringMethod;
             this.parameterDescriptions = parameterDescriptions;
             this.visitor = visitor;
         }
 
         @Override
         public ParameterDescription get(int index) {
-            return new ParameterDescription.TypeSubstituting(parameterDescriptions.get(index), visitor);
+            return new ParameterDescription.TypeSubstituting(declaringMethod, parameterDescriptions.get(index), visitor);
         }
 
         @Override

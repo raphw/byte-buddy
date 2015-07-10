@@ -111,7 +111,7 @@ public class AndroidClassLoadingStrategyTest {
             public File create() {
                 return folder;
             }
-        }).applyMutable();
+        }).applyCustom();
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.class).apply();
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Conversion.class).create(new ObjectPropertyAssertion.Creator<DexFile>() {
             @Override

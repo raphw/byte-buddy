@@ -7,8 +7,8 @@ public class ByteArrayClassLoaderObjectPropertiesTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ByteArrayClassLoader.class).applyMutable();
-        ObjectPropertyAssertion.of(ByteArrayClassLoader.ChildFirst.class).applyMutable();
+        ObjectPropertyAssertion.of(ByteArrayClassLoader.class).applyCustom();
+        ObjectPropertyAssertion.of(ByteArrayClassLoader.ChildFirst.class).applyCustom();
         ObjectPropertyAssertion.of(ByteArrayClassLoader.PersistenceHandler.class).apply();
     }
 }
