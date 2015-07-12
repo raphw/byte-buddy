@@ -399,6 +399,16 @@ public class ByteBuddyCommonsTest {
     }
 
     @Test
+    public void testJoinUnique() throws Exception {
+        assertThat(joinUnique(Arrays.asList(FOO, BAR), QUX), is(Arrays.asList(FOO, BAR, QUX)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testJoinUniqueDuplicate() throws Exception {
+        joinUnique(Arrays.asList(FOO, BAR), FOO);
+    }
+
+    @Test
     public void testUniqueRaw() throws Exception {
         TypeDescription first = mock(TypeDescription.class), second = mock(TypeDescription.class);
         when(first.asRawType()).thenReturn(first);
@@ -562,6 +572,11 @@ public class ByteBuddyCommonsTest {
         } catch (InvocationTargetException e) {
             assertEquals(UnsupportedOperationException.class, e.getCause().getClass());
         }
+    }
+
+    @Test
+    public void testTypeIsFinal() throws Exception {
+        assertThat(Modifier.isFinal(ByteBuddyCommons.class.getModifiers()), is(true));
     }
 
     private static class ArrayIterable implements Iterable<String> {

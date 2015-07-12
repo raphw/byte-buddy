@@ -12,10 +12,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.none;
-import static net.bytebuddy.utility.ByteBuddyCommons.isImplementable;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-import static net.bytebuddy.utility.ByteBuddyCommons.toList;
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * This {@link Implementation} invokes a default method for the methods it instruments.

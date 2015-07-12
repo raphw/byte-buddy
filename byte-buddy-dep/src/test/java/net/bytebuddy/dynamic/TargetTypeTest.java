@@ -27,4 +27,9 @@ public class TargetTypeTest {
             assertEquals(UnsupportedOperationException.class, e.getCause().getClass());
         }
     }
+
+    @Test
+    public void testTypeIsFinal() throws Exception {
+        assertThat(Modifier.isFinal(ByteBuddyCommons.class.getModifiers()), is(true));
+    }
 }

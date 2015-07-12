@@ -99,7 +99,6 @@ public @interface Super {
             protected StackManipulation proxyFor(TypeDescription parameterType,
                                                  Implementation.Target implementationTarget,
                                                  AnnotationDescription.Loadable<Super> annotation) {
-                // TODO: Reconsider target type!
                 return new TypeProxy.ForSuperMethodByConstructor(parameterType,
                         implementationTarget,
                         Arrays.asList(annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class)),

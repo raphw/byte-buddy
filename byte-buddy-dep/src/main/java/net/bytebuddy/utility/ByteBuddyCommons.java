@@ -1,6 +1,5 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -76,7 +75,7 @@ public final class ByteBuddyCommons {
      * This utility class is not supposed to be instantiated.
      */
     private ByteBuddyCommons() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("This type describes a utility and is not supposed to be instantiated");
     }
 
     /**
@@ -327,6 +326,14 @@ public final class ByteBuddyCommons {
         return result;
     }
 
+    /**
+     * Appends the given element to the list only if the element is not yet contained in the given list.
+     *
+     * @param list    The list of elements.
+     * @param element The element to append.
+     * @param <T>     The type of the list.
+     * @return A list with the appended element.
+     */
     public static <T> List<T> joinUnique(List<? extends T> list, T element) {
         List<T> result = new ArrayList<T>(list.size() + 1);
         for (T listElement : list) {
@@ -337,18 +344,6 @@ public final class ByteBuddyCommons {
         }
         result.add(element);
         return result;
-
-    }
-
-    public static <T extends Collection<? extends AnnotationDescription>> T uniqueAnnotation(T annotationDescriptions) {
-        Map<TypeDescription, AnnotationDescription> annotations = new HashMap<TypeDescription, AnnotationDescription>(annotationDescriptions.size());
-        for (AnnotationDescription annotationDescription : annotationDescriptions) {
-            AnnotationDescription conflictingAnnotation = annotations.put(annotationDescription.getAnnotationType(), annotationDescription);
-            if (conflictingAnnotation != null) {
-                throw new IllegalArgumentException("Duplicate annotations: " + annotationDescription + " and " + conflictingAnnotation);
-            }
-        }
-        return annotationDescriptions;
 
     }
 
@@ -484,13 +479,6 @@ public final class ByteBuddyCommons {
         }
         if ((modifiers & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
             throw new IllegalArgumentException("Illegal modifiers: " + Arrays.asList(modifierContributor));
-        }
-        return modifiers;
-    }
-
-    public static int isLegalModifiers(int mask, int modifiers) {
-        if ((modifiers & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
-            throw new IllegalArgumentException("Illegal modifiers: " + modifiers);
         }
         return modifiers;
     }

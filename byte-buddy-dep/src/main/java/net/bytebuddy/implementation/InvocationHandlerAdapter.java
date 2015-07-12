@@ -41,6 +41,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      */
     private static final String PREFIX = "invocationHandler";
 
+    /**
+     * A type description of the {@link InvocationHandler}.
+     */
     private static final TypeDescription INVOCATION_HANDLER_TYPE = new TypeDescription.ForLoadedType(InvocationHandler.class);
 
     /**
