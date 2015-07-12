@@ -1627,7 +1627,7 @@ public interface DynamicType {
                         resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)),
                         Collections.<GenericTypeDescription>emptyList(),
                         nonNull(returnType),
-                        ParameterDescription.Token.asList(isActualType(parameterTypes)),
+                        new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
                         Collections.<TypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));
@@ -1669,7 +1669,7 @@ public interface DynamicType {
                         modifiers,
                         Collections.<GenericTypeDescription>emptyList(),
                         nonNull(returnType),
-                        ParameterDescription.Token.asList(isActualType(parameterTypes)),
+                        new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
                         Collections.<TypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));
@@ -1706,7 +1706,7 @@ public interface DynamicType {
                         modifiers,
                         Collections.<GenericTypeDescription>emptyList(),
                         TypeDescription.VOID,
-                        ParameterDescription.Token.asList(isActualType(parameterTypes)),
+                        new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
                         Collections.<TypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));

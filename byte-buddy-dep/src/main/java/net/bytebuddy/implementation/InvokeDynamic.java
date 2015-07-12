@@ -1601,7 +1601,7 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
-                            .withField(name, typeDescription, FIELD_MODIFIER)
+                            .withField(new FieldDescription.Token(name, FIELD_MODIFIER, typeDescription))
                             .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(name, value));
                 }
 
@@ -1673,7 +1673,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(fieldName, fieldType, FIELD_MODIFIER);
+                    return instrumentedType.withField(new FieldDescription.Token(fieldName, FIELD_MODIFIER, fieldType));
                 }
 
                 @Override

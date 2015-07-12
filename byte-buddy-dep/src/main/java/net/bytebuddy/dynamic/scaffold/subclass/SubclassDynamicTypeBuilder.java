@@ -234,12 +234,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @return The instrumented type with the constructor strategy applied onto.
      */
     private InstrumentedType applyConstructorStrategy(InstrumentedType instrumentedType) {
-        for (MethodDescription methodDescription : constructorStrategy.extractConstructors(instrumentedType)) {
-            instrumentedType = instrumentedType.withMethod(methodDescription.getInternalName(),
-                    methodDescription.getReturnType(),
-                    methodDescription.getParameters().asTypeList(),
-                    methodDescription.getExceptionTypes(),
-                    methodDescription.getModifiers());
+        for (MethodDescription.Token methodToken : constructorStrategy.extractConstructors(instrumentedType)) {
+            instrumentedType = instrumentedType.withMethod(methodToken);
         }
         return instrumentedType;
     }

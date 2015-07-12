@@ -17,6 +17,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -714,20 +715,6 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         public static final Integer NO_MODIFIERS = null;
 
         /**
-         * Transforms a list of types into a list of parameters without annotations, an explicit name or modifiers.
-         *
-         * @param typeDescriptions The types of the parameters.
-         * @return A list of parameters representing the provided types.
-         */
-        public static List<Token> asList(List<? extends GenericTypeDescription> typeDescriptions) {
-            List<Token> tokens = new ArrayList<Token>(typeDescriptions.size());
-            for (GenericTypeDescription typeDescription : typeDescriptions) {
-                tokens.add(new Token(typeDescription));
-            }
-            return tokens;
-        }
-
-        /**
          * The type of the represented parameter.
          */
         private final GenericTypeDescription typeDescription;
@@ -850,6 +837,25 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                     ", name='" + name + '\'' +
                     ", modifiers=" + modifiers +
                     '}';
+        }
+
+        public static class TypeList extends AbstractList<Token> {
+
+            private final List<? extends GenericTypeDescription> typeDescriptions;
+
+            public TypeList(List<? extends GenericTypeDescription> typeDescriptions) {
+                this.typeDescriptions = typeDescriptions;
+            }
+
+            @Override
+            public Token get(int index) {
+                return new Token(typeDescriptions.get(index));
+            }
+
+            @Override
+            public int size() {
+                return typeDescriptions.size();
+            }
         }
     }
 }

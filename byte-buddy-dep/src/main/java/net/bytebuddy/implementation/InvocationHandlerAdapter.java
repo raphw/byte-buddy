@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -39,6 +40,8 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * The prefix for field that are created for storing the instrumented value.
      */
     private static final String PREFIX = "invocationHandler";
+
+    private static final TypeDescription INVOCATION_HANDLER_TYPE = new TypeDescription.ForLoadedType(InvocationHandler.class);
 
     /**
      * The name of the field for storing an invocation handler.
@@ -158,7 +161,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                                           MethodDescription instrumentedMethod,
                                           TypeDescription instrumentedType,
                                           StackManipulation preparingManipulation) {
-        TypeDescription invocationHandlerType = new TypeDescription.ForLoadedType(InvocationHandler.class);
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 preparingManipulation,
                 FieldAccess.forField(instrumentedType.getDeclaredFields()
@@ -168,7 +170,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         ? MethodConstant.forMethod(instrumentedMethod).cached()
                         : MethodConstant.forMethod(instrumentedMethod),
                 ArrayFactory.forType(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
-                MethodInvocation.invoke(invocationHandlerType.getDeclaredMethods().getOnly()),
+                MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().getOnly()),
                 assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType().asRawType(), Assigner.DYNAMICALLY_TYPED),
                 MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
         ).apply(methodVisitor, implementationContext);
@@ -250,7 +252,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
-                    .withField(fieldName, new TypeDescription.ForLoadedType(InvocationHandler.class), Opcodes.ACC_STATIC)
+                    .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_STATIC, INVOCATION_HANDLER_TYPE))
                     .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, invocationHandler));
         }
 
@@ -372,9 +374,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType.withField(fieldName,
-                    new TypeDescription.ForLoadedType(InvocationHandler.class),
-                    Opcodes.ACC_PUBLIC);
+            return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PUBLIC, INVOCATION_HANDLER_TYPE));
         }
 
         @Override

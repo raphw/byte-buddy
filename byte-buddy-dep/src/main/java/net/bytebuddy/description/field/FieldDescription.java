@@ -11,6 +11,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
@@ -357,6 +358,10 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
          */
         private final List<? extends AnnotationDescription> annotations;
 
+        public Token(String name, int modifiers, GenericTypeDescription type) {
+            this(name, modifiers, type, Collections.<AnnotationDescription>emptyList());
+        }
+
         /**
          * Creates a new field token.
          *
@@ -365,10 +370,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
          * @param type        The type of the represented field.
          * @param annotations The annotations of the represented field.
          */
-        public Token(String name,
-                     int modifiers,
-                     GenericTypeDescription type,
-                     List<? extends AnnotationDescription> annotations) {
+        public Token(String name, int modifiers, GenericTypeDescription type, List<? extends AnnotationDescription> annotations) {
             this.name = name;
             this.modifiers = modifiers;
             this.type = type;

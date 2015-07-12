@@ -22,6 +22,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -534,7 +535,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
                     getModifiers(),
                     getTypeVariables().accept(visitor),
                     getReturnType().accept(visitor),
-                    getParameters().asTokens(targetTypeMatcher),
+                    getParameters().asTokenList(targetTypeMatcher),
                     getExceptionTypes().accept(visitor),
                     getDeclaredAnnotations(),
                     getDefaultValue());
@@ -1299,6 +1300,17 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          * The default value of the represented method or {@code null} if no such value exists.
          */
         private final Object defaultValue;
+
+        public Token(String internalName, int modifiers, GenericTypeDescription returnType, List<? extends GenericTypeDescription> parameterTypes) {
+            this(internalName,
+                    modifiers,
+                    Collections.<GenericTypeDescription>emptyList(),
+                    returnType,
+                    new ParameterDescription.Token.TypeList(parameterTypes),
+                    Collections.<GenericTypeDescription>emptyList(),
+                    Collections.<AnnotationDescription>emptyList(),
+                    NO_DEFAULT_VALUE);
+        }
 
         /**
          * Creates a new token for a method description.

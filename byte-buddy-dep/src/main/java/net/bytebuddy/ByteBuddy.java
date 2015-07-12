@@ -533,8 +533,8 @@ public class ByteBuddy {
      * Rebases the given the package. A Java package is represented as a type named <i>package-info</i>. The explicit creation of a
      * package can be useful for adding annotations to this package.
      *
-     * @param packageDescription         The description of the package to rebase.
-     * @param classFileLocator A class file locator for locating the given packages class file.
+     * @param packageDescription The description of the package to rebase.
+     * @param classFileLocator   A class file locator for locating the given packages class file.
      * @return A dynamic type that represents the created package.
      */
     public DynamicType.Builder<?> rebase(PackageDescription packageDescription, ClassFileLocator classFileLocator) {
@@ -2369,10 +2369,12 @@ public class ByteBuddy {
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             for (String value : values) {
-                instrumentedType = instrumentedType.withField(value, instrumentedType, ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM);
+                instrumentedType = instrumentedType.withField(new FieldDescription.Token(value, ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM, instrumentedType));
             }
             return instrumentedType
-                    .withField(ENUM_VALUES, TypeDescription.ArrayProjection.of(instrumentedType, 1), ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC)
+                    .withField(new FieldDescription.Token(ENUM_VALUES,
+                            ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC,
+                            TypeDescription.ArrayProjection.of(instrumentedType, 1)))
                     .withInitializer(new InitializationAppender(values));
         }
 

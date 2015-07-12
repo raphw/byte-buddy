@@ -1,6 +1,7 @@
 package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -12,14 +13,23 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
+
 /**
  * Implementations represent a list of field descriptions.
  */
 public interface FieldList extends FilterableList<FieldDescription, FieldList> {
 
+    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList();
+
     ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     abstract class AbstractBase extends FilterableList.AbstractBase<FieldDescription, FieldList> implements FieldList {
+
+        @Override
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
+            return asTokenList(none());
+        }
 
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
@@ -158,6 +168,11 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
      * An implementation of an empty field list.
      */
     class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
+
+        @Override
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
+            return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.<FieldDescription.Token>emptyList());
+        }
 
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {

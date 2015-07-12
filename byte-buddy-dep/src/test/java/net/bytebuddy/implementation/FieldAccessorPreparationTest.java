@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -29,14 +30,13 @@ public class FieldAccessorPreparationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(instrumentedType.withField(any(String.class), any(TypeDescription.class), anyInt()))
-                .thenReturn(instrumentedType);
+        when(instrumentedType.withField(any(FieldDescription.Token.class))).thenReturn(instrumentedType);
     }
 
     @Test
     public void testPreparationDefineField() throws Exception {
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE).prepare(instrumentedType), is(instrumentedType));
-        verify(instrumentedType).withField(FOO, new TypeDescription.ForLoadedType(TYPE), NO_MODIFIERS);
+        verify(instrumentedType).withField(new FieldDescription.Token(FOO, NO_MODIFIERS, new TypeDescription.ForLoadedType(TYPE)));
         verifyNoMoreInteractions(instrumentedType);
     }
 

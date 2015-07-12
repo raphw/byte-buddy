@@ -676,9 +676,9 @@ public @interface FieldProxy {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(AccessorProxy.FIELD_NAME,
-                        this.instrumentedType,
-                        Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
+                return instrumentedType.withField(new FieldDescription.Token(AccessorProxy.FIELD_NAME,
+                        Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE,
+                        this.instrumentedType));
             }
 
             @Override

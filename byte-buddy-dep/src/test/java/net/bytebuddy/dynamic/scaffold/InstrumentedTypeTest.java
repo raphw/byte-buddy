@@ -1,11 +1,14 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -27,7 +30,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.*;
 
-public abstract class AbstractInstrumentedTypeTest {
+public class InstrumentedTypeTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -40,9 +43,18 @@ public abstract class AbstractInstrumentedTypeTest {
     @Mock
     private Implementation.Context implementationContext;
 
-    protected abstract InstrumentedType makePlainInstrumentedType();
-
-    // TODO: Make non-abstract!
+    protected static InstrumentedType makePlainInstrumentedType() {
+        return new InstrumentedType.Default(FOO + "." + BAZ,
+                Opcodes.ACC_PUBLIC,
+                Collections.<GenericTypeDescription>emptyList(),
+                TypeDescription.OBJECT,
+                Collections.<GenericTypeDescription>singletonList(new TypeDescription.ForLoadedType(Serializable.class)),
+                Collections.<FieldDescription.Token>emptyList(),
+                Collections.<MethodDescription.Token>emptyList(),
+                Collections.<AnnotationDescription>emptyList(),
+                InstrumentedType.TypeInitializer.None.INSTANCE,
+                LoadedTypeInitializer.NoOp.INSTANCE);
+    }
 
     @Test
     @SuppressWarnings("unchecked")
@@ -53,7 +65,7 @@ public abstract class AbstractInstrumentedTypeTest {
         when(fieldType.getName()).thenReturn(FOO);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withField(BAR, fieldType, Opcodes.ACC_PUBLIC);
+        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType(), is((GenericTypeDescription) fieldType));
@@ -66,7 +78,7 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithFieldOfInstrumentedType() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withField(BAR, instrumentedType, Opcodes.ACC_PUBLIC);
+        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, instrumentedType));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType(), sameInstance((GenericTypeDescription) instrumentedType));
@@ -79,7 +91,7 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithFieldOfInstrumentedTypeAsArray() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withField(BAR, TypeDescription.ArrayProjection.of(instrumentedType, 1), Opcodes.ACC_PUBLIC);
+        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, TypeDescription.ArrayProjection.of(instrumentedType, 1)));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
@@ -98,8 +110,8 @@ public abstract class AbstractInstrumentedTypeTest {
         when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType); // REFACTOR
         when(fieldType.getName()).thenReturn(FOO);
         makePlainInstrumentedType()
-                .withField(BAR, fieldType, Opcodes.ACC_PUBLIC)
-                .withField(BAR, fieldType, Opcodes.ACC_PUBLIC);
+                .withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType))
+                .withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType));
     }
 
     @Test
@@ -111,27 +123,21 @@ public abstract class AbstractInstrumentedTypeTest {
         TypeDescription parameterType = mock(TypeDescription.class);
         when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
         when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
-        TypeDescription exceptionType = mock(TypeDescription.class);
-        when(exceptionType.asRawType()).thenReturn(exceptionType); // REFACTOR
-        when(exceptionType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(exceptionType);
         when(returnType.getName()).thenReturn(FOO);
         when(parameterType.getName()).thenReturn(QUX);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(exceptionType.getName()).thenReturn(BAZ);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withMethod(BAR,
+        instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
+                Opcodes.ACC_PUBLIC,
                 returnType,
-                Collections.singletonList(parameterType),
-                Collections.singletonList(exceptionType),
-                Opcodes.ACC_PUBLIC);
+                Collections.singletonList(parameterType)));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType(), is((GenericTypeDescription) returnType));
         assertThat(methodDescription.getParameters().size(), is(1));
         assertThat(methodDescription.getParameters().asTypeList(), is(Collections.<GenericTypeDescription>singletonList(parameterType)));
-        assertThat(methodDescription.getExceptionTypes().size(), is(1));
-        assertThat(methodDescription.getExceptionTypes(), is(Collections.<GenericTypeDescription>singletonList(exceptionType)));
+        assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
         assertThat(methodDescription.getDeclaringType(), sameInstance((GenericTypeDescription) instrumentedType));
@@ -141,11 +147,10 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithMethodOfInstrumentedType() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withMethod(BAR,
+        instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
+                Opcodes.ACC_PUBLIC,
                 instrumentedType,
-                Collections.singletonList(instrumentedType),
-                Collections.<TypeDescription>emptyList(),
-                Opcodes.ACC_PUBLIC);
+                Collections.singletonList(instrumentedType)));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType(), sameInstance((GenericTypeDescription) instrumentedType));
@@ -161,11 +166,10 @@ public abstract class AbstractInstrumentedTypeTest {
     public void testWithMethodOfInstrumentedTypeAsArray() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withMethod(BAR,
+        instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
+                Opcodes.ACC_PUBLIC,
                 TypeDescription.ArrayProjection.of(instrumentedType, 1),
-                Collections.singletonList(TypeDescription.ArrayProjection.of(instrumentedType, 1)),
-                Collections.<TypeDescription>emptyList(),
-                Opcodes.ACC_PUBLIC);
+                Collections.singletonList(TypeDescription.ArrayProjection.of(instrumentedType, 1))));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asRawType().isArray(), is(true));
@@ -187,8 +191,8 @@ public abstract class AbstractInstrumentedTypeTest {
         when(returnType.getName()).thenReturn(FOO);
         when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
         makePlainInstrumentedType()
-                .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC)
-                .withMethod(BAR, returnType, Collections.<TypeDescription>emptyList(), Collections.<TypeDescription>emptyList(), Opcodes.ACC_PUBLIC);
+                .withMethod(new MethodDescription.Token(BAR, Opcodes.ACC_PUBLIC, returnType, Collections.<TypeDescription>emptyList()))
+                .withMethod(new MethodDescription.Token(BAR, Opcodes.ACC_PUBLIC, returnType, Collections.<TypeDescription>emptyList()));
     }
 
     @Test
@@ -291,14 +295,12 @@ public abstract class AbstractInstrumentedTypeTest {
     @Test
     public void testIsAssignableTo() {
         assertThat(makePlainInstrumentedType().isAssignableTo(Object.class), is(true));
+        assertThat(makePlainInstrumentedType().isAssignableTo(makePlainInstrumentedType()), is(true));
         assertThat(makePlainInstrumentedType().isAssignableTo(Serializable.class), is(true));
         assertThat(makePlainInstrumentedType().isAssignableTo(Integer.class), is(false));
-        TypeDescription objectTypeDescription = new TypeDescription.ForLoadedType(Object.class);
-        assertThat(makePlainInstrumentedType().isAssignableTo(objectTypeDescription), is(true));
-        TypeDescription serializableTypeDescription = new TypeDescription.ForLoadedType(Serializable.class);
-        assertThat(makePlainInstrumentedType().isAssignableTo(serializableTypeDescription), is(true));
-        TypeDescription integerTypeDescription = new TypeDescription.ForLoadedType(Integer.class);
-        assertThat(makePlainInstrumentedType().isAssignableTo(integerTypeDescription), is(false));
+        assertThat(makePlainInstrumentedType().isAssignableTo(TypeDescription.OBJECT), is(true));
+        assertThat(makePlainInstrumentedType().isAssignableTo(new TypeDescription.ForLoadedType(Serializable.class)), is(true));
+        assertThat(makePlainInstrumentedType().isAssignableTo(new TypeDescription.ForLoadedType(Integer.class)), is(false));
     }
 
     @Test
@@ -309,7 +311,7 @@ public abstract class AbstractInstrumentedTypeTest {
     }
 
     @Test
-    public void testSupertype() {
+    public void testSuperType() {
         assertThat(makePlainInstrumentedType().getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Object.class)));
         assertThat(makePlainInstrumentedType().getSuperType(), not(is((GenericTypeDescription) new TypeDescription.ForLoadedType(Integer.class))));
         assertThat(makePlainInstrumentedType().getSuperType(), not(is((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
@@ -317,12 +319,8 @@ public abstract class AbstractInstrumentedTypeTest {
 
     @Test
     public void testInterfaces() {
-        GenericTypeList interfaces = makePlainInstrumentedType().getInterfaces();
-        assertThat(interfaces.size(), is(1));
-        assertThat(interfaces.get(0), is(is((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
-        TypeList rawInterfaces = interfaces.asRawTypes();
-        assertThat(rawInterfaces.size(), is(1));
-        assertThat(rawInterfaces.get(0), is(is((TypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
+        assertThat(makePlainInstrumentedType().getInterfaces().size(), is(1));
+        assertThat(makePlainInstrumentedType().getInterfaces().getOnly(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class)));
     }
 
     @Test
@@ -332,7 +330,7 @@ public abstract class AbstractInstrumentedTypeTest {
 
     @Test
     public void testSimpleName() {
-        assertThat(makePlainInstrumentedType().getSimpleName(), is(BAR));
+        assertThat(makePlainInstrumentedType().getSimpleName(), is(BAZ));
     }
 
     @Test

@@ -878,7 +878,7 @@ public abstract class FieldAccessor implements Implementation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(name, typeDescription, modifiers);
+                    return instrumentedType.withField(new FieldDescription.Token(name, modifiers, typeDescription));
                 }
 
                 @Override

@@ -709,7 +709,7 @@ public class MethodCall implements Implementation {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(fieldName, new TypeDescription.ForLoadedType(target.getClass()), FIELD_MODIFIERS)
+                        .withField(new FieldDescription.Token(fieldName, FIELD_MODIFIERS, new TypeDescription.ForLoadedType(target.getClass())))
                         .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, target));
             }
 
@@ -779,7 +779,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(fieldName, fieldType, FIELD_MODIFIERS);
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, FIELD_MODIFIERS, fieldType));
             }
 
             @Override
@@ -1098,9 +1098,8 @@ public class MethodCall implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(fieldName,
-                        new TypeDescription.ForLoadedType(value.getClass()),
-                        FIELD_MODIFIER)
+                return instrumentedType
+                        .withField(new FieldDescription.Token(fieldName, FIELD_MODIFIER, new TypeDescription.ForLoadedType(value.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField<Object>(fieldName, value, true));
             }
 
@@ -1177,7 +1176,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(fieldName, fieldType, MODIFIERS);
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, MODIFIERS, fieldType));
             }
 
             @Override

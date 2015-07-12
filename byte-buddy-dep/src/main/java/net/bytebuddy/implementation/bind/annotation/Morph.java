@@ -532,9 +532,9 @@ public @interface Morph {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(RedirectionProxy.FIELD_NAME,
-                            this.instrumentedType,
-                            Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
+                    return instrumentedType.withField(new FieldDescription.Token(RedirectionProxy.FIELD_NAME,
+                            Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE,
+                            this.instrumentedType));
                 }
 
                 @Override

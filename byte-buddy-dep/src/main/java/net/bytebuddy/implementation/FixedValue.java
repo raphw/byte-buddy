@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -425,7 +426,7 @@ public abstract class FixedValue implements Implementation {
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
-                    .withField(fieldName, fieldType, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC)
+                    .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC, fieldType))
                     .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, fixedValue));
         }
 

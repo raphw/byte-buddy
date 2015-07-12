@@ -20,6 +20,7 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.utility.ByteBuddyCommons.joinUnique;
 
 /**
@@ -31,30 +32,18 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param name      The internal name of the new field.
-     * @param fieldType A description of the type of the new field.
-     * @param modifiers The modifier of the new field.
+     * @param fieldToken A token that represents the field's shape.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
-    InstrumentedType withField(String name,
-                               GenericTypeDescription fieldType,
-                               int modifiers);
+    InstrumentedType withField(FieldDescription.Token fieldToken);
 
     /**
      * Creates a new instrumented type that includes a new method or constructor.
      *
-     * @param internalName   The internal name of the new field.
-     * @param returnType     A description of the return type of the new field.
-     * @param parameterTypes A list of descriptions of the parameter types.
-     * @param exceptionTypes A list of descriptions of the exception types that are declared by this method.
-     * @param modifiers      The modifier of the new field.
-     * @return A new instrumented type that is equal to this instrumented type but with the additional field.
+     * @param methodToken A token that represents the method's shape.
+     * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
-    InstrumentedType withMethod(String internalName,
-                                GenericTypeDescription returnType,
-                                List<? extends GenericTypeDescription> parameterTypes,
-                                List<? extends GenericTypeDescription> exceptionTypes,
-                                int modifiers);
+    InstrumentedType withMethod(MethodDescription.Token methodToken);
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -310,15 +299,13 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withField(String name,
-                                          GenericTypeDescription fieldType,
-                                          int modifiers) {
+        public InstrumentedType withField(FieldDescription.Token fieldToken) {
             return new Default(this.name,
                     this.modifiers,
                     typeVariables,
                     superType,
                     interfaceTypes,
-                    joinUnique(fieldTokens, new FieldDescription.Token(name, modifiers, fieldType, Collections.<AnnotationDescription>emptyList())),
+                    joinUnique(fieldTokens, fieldToken.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(this)))),
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
@@ -326,25 +313,14 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withMethod(String internalName,
-                                           GenericTypeDescription returnType,
-                                           List<? extends GenericTypeDescription> parameterTypes,
-                                           List<? extends GenericTypeDescription> exceptionTypes,
-                                           int modifiers) {
+        public InstrumentedType withMethod(MethodDescription.Token methodToken) {
             return new Default(name,
                     this.modifiers,
                     typeVariables,
                     superType,
                     interfaceTypes,
                     fieldTokens,
-                    joinUnique(methodTokens, new MethodDescription.Token(internalName,
-                            modifiers,
-                            Collections.<GenericTypeDescription>emptyList(),
-                            returnType,
-                            ParameterDescription.Token.asList(parameterTypes),
-                            exceptionTypes,
-                            Collections.<AnnotationDescription>emptyList(),
-                            MethodDescription.NO_DEFAULT_VALUE)),
+                    joinUnique(methodTokens, methodToken.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(this)))),
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer);

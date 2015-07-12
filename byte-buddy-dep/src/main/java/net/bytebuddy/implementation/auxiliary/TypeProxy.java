@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.type.TypeDescription;
@@ -740,7 +741,9 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType.withField(INSTANCE_FIELD, TypeProxy.this.implementationTarget.getTypeDescription(), Opcodes.ACC_SYNTHETIC);
+            return instrumentedType.withField(new FieldDescription.Token(INSTANCE_FIELD,
+                    Opcodes.ACC_SYNTHETIC,
+                    TypeProxy.this.implementationTarget.getTypeDescription()));
         }
 
         @Override

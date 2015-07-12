@@ -13,10 +13,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
+
 /**
  * Implementations represent a list of method descriptions.
  */
 public interface MethodList extends FilterableList<MethodDescription, MethodList> {
+
+    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList();
 
     ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
@@ -25,6 +29,11 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         @Override
         protected MethodList wrap(List<MethodDescription> values) {
             return new Explicit(values);
+        }
+
+        @Override
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
+            return asTokenList(none());
         }
 
         @Override
@@ -181,6 +190,11 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
      * An implementation of an empty method list.
      */
     class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
+
+        @Override
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
+            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(Collections.<MethodDescription.Token>emptyList());
+        }
 
         @Override
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {

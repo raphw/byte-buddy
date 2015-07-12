@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
+
 /**
  * Represents a list of parameters of a method or a constructor.
  */
@@ -22,7 +24,9 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
 
     GenericTypeList asTypeList();
 
-    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens(ElementMatcher<? super TypeDescription> targetTypeMatcher);
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList();
+
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
@@ -47,7 +51,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList() {
+            return asTokenList(none());
+        }
+
+        @Override
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
             for (ParameterDescription parameterDescription : this) {
                 tokens.add(parameterDescription.asToken(targetTypeMatcher));
@@ -383,7 +392,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokens(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList() {
+            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
+        }
+
+        @Override
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
         }
     }

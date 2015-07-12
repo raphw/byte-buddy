@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -214,7 +215,7 @@ public class Forwarding implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
-                return instrumentedType.withField(fieldName, fieldType, Opcodes.ACC_PRIVATE);
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PRIVATE, fieldType));
             }
 
             @Override
@@ -240,7 +241,7 @@ public class Forwarding implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
-                return instrumentedType.withField(fieldName, fieldType, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, fieldType));
             }
 
             @Override
@@ -276,7 +277,7 @@ public class Forwarding implements Implementation {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
                 return instrumentedType
-                        .withField(fieldName, fieldType, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC)
+                        .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, fieldType))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField<Object>(fieldName, target, true));
             }
 
