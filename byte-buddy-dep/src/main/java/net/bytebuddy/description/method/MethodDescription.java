@@ -1421,7 +1421,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             Token token = (Token) other;
             if (!getInternalName().equals(token.getInternalName())) return false;
             if (!getReturnType().asRawType().equals(token.getReturnType().asRawType())) return false;
-            List<ParameterDescription.Token> tokens = getParameterTokens(), otherTokens = getParameterTokens();
+            List<ParameterDescription.Token> tokens = getParameterTokens(), otherTokens = token.getParameterTokens();
             if (tokens.size() != otherTokens.size()) return false;
             for (int index = 0; index < tokens.size(); index++) {
                 if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
