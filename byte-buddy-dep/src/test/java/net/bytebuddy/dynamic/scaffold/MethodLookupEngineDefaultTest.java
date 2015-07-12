@@ -15,6 +15,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.util.List;
 import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 public class MethodLookupEngineDefaultTest {
 
-    private static final String TO_STRING = "toString", FOO = "foo", PREFIX = "net.bytebuddy.test.precompiled.";
+    private static final String TO_STRING = "toString", FOO = "foo", BAR = "bar", PREFIX = "net.bytebuddy.test.precompiled.";
 
     private static final String SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_CLASS = PREFIX + "SingleDefaultMethodAbstractOverridingClass",
             SINGLE_DEFAULT_METHOD_ABSTRACT_OVERRIDING_INTERFACE = PREFIX + "SingleDefaultMethodAbstractOverridingInterface",
@@ -391,6 +392,45 @@ public class MethodLookupEngineDefaultTest {
     }
 
     @Test
+    public void testResolvedGenericType() throws Exception {
+        MethodLookupEngine.Finding finding = methodLookupEngine.process(new TypeDescription.ForLoadedType(GenericType.Resolved.class));
+        assertThat(finding.getInvokableMethods().filter(named(FOO)).size(), is(1));
+        GenericTypeDescription foo = finding.getInvokableMethods().filter(named(FOO)).getOnly().getReturnType();
+        assertThat(foo.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(foo.asRawType().represents(List.class), is(true));
+        assertThat(foo.getParameters().size(), is(1));
+        assertThat(foo.getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(foo.getParameters().getOnly().asRawType().represents(String.class), is(true));
+        assertThat(finding.getInvokableMethods().filter(named(BAR)).size(), is(1));
+        GenericTypeDescription bar = finding.getInvokableMethods().filter(named(BAR)).getOnly().getReturnType();
+        assertThat(bar.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(bar.asRawType().represents(List.class), is(true));
+        assertThat(bar.getParameters().size(), is(1));
+        assertThat(bar.getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(bar.getParameters().getOnly().asRawType().represents(String.class), is(true));
+    }
+
+    @Test
+    public void testUnresolvedGenericType() throws Exception {
+        TypeDescription unresolvedType = new TypeDescription.ForLoadedType(GenericType.Unresolved.class);
+        MethodLookupEngine.Finding finding = methodLookupEngine.process(unresolvedType);
+        assertThat(finding.getInvokableMethods().filter(named(FOO)).size(), is(1));
+        GenericTypeDescription foo = finding.getInvokableMethods().filter(named(FOO)).getOnly().getReturnType();
+        assertThat(foo.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(foo.asRawType().represents(List.class), is(true));
+        assertThat(foo.getParameters().size(), is(1));
+        assertThat(foo.getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(foo.getParameters().getOnly(), is(unresolvedType.getTypeVariables().getOnly()));
+        assertThat(finding.getInvokableMethods().filter(named(BAR)).size(), is(1));
+        GenericTypeDescription bar = finding.getInvokableMethods().filter(named(BAR)).getOnly().getReturnType();
+        assertThat(bar.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(bar.asRawType().represents(List.class), is(true));
+        assertThat(bar.getParameters().size(), is(1));
+        assertThat(bar.getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(bar.getParameters().getOnly(), is(unresolvedType.getTypeVariables().getOnly()));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.class).apply();
         ObjectPropertyAssertion.of(MethodLookupEngine.Default.Factory.class).apply();
@@ -481,5 +521,23 @@ public class MethodLookupEngineDefaultTest {
 
     private static abstract class ConflictingInterfaceClass implements SingleMethodInterface, ConflictingSingleMethodInterface {
         /* empty */
+    }
+
+    public static abstract class GenericType<T> {
+
+        abstract List<T> foo();
+
+        interface GenericInterfaceType<S> {
+
+            List<S> bar();
+        }
+
+        static abstract class Resolved extends GenericType<String> implements GenericInterfaceType<String> {
+            /* empty */
+        }
+
+        static abstract class Unresolved<S> extends GenericType<S> implements GenericInterfaceType<S> {
+            /* empty */
+        }
     }
 }
