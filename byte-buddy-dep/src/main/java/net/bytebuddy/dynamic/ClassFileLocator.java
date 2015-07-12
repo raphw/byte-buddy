@@ -226,54 +226,6 @@ public interface ClassFileLocator {
         }
     }
 
-    class ForJarFile implements ClassFileLocator {
-
-        private final JarFile jarFile;
-
-        public ForJarFile(JarFile jarFile) {
-            this.jarFile = jarFile;
-        }
-
-        @Override
-        public Resolution locate(String typeName) throws IOException {
-            ZipEntry zipEntry = jarFile.getEntry(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
-            if (zipEntry == null) {
-                return Resolution.Illegal.INSTANCE;
-            } else {
-                InputStream inputStream = jarFile.getInputStream(zipEntry);
-                try {
-                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
-                } finally {
-                    inputStream.close();
-                }
-            }
-        }
-    }
-
-    class ForFolder implements ClassFileLocator {
-
-        private final File folder;
-
-        public ForFolder(File folder) {
-            this.folder = folder;
-        }
-
-        @Override
-        public Resolution locate(String typeName) throws IOException {
-            File file = new File(folder, typeName.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
-            if (file.exists()) {
-                InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-                try {
-                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
-                } finally {
-                    inputStream.close();
-                }
-            } else {
-                return Resolution.Illegal.INSTANCE;
-            }
-        }
-    }
-
     /**
      * A Java agent that allows the location of class files by emulating a retransformation. Note that this class file
      * locator causes a class to be loaded in order to look up its class file. Also, this locator does deliberately not
