@@ -101,12 +101,12 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         public boolean equals(Object other) {
             return other == this || other instanceof FieldDescription
                     && getName().equals(((FieldDescription) other).getName())
-                    && getDeclaringType().equals(((FieldDescription) other).getDeclaringType());
+                    && getDeclaringType().asRawType().equals(((FieldDescription) other).getDeclaringType().asRawType());
         }
 
         @Override
         public int hashCode() {
-            return getDeclaringType().hashCode() + 31 * getName().hashCode();
+            return getDeclaringType().asRawType().hashCode() + 31 * getName().hashCode();
         }
 
         @Override
@@ -116,7 +116,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
             stringBuilder.append(getType().getSourceCodeName()).append(" ");
-            stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+            stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
 
@@ -127,7 +127,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
             stringBuilder.append(getType().asRawType().getSourceCodeName()).append(" ");
-            stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+            stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
     }

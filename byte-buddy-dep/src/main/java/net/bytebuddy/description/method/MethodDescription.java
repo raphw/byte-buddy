@@ -545,14 +545,14 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
-                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
+                    && getDeclaringType().asRawType().equals(((MethodDescription) other).getDeclaringType().asRawType())
                     && getReturnType().asRawType().equals(((MethodDescription) other).getReturnType().asRawType())
                     && getParameters().asTypeList().asRawTypes().equals(((MethodDescription) other).getParameters().asTypeList().asRawTypes());
         }
 
         @Override
         public int hashCode() {
-            int hashCode = getDeclaringType().hashCode();
+            int hashCode = getDeclaringType().asRawType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
             hashCode = 31 * hashCode + getReturnType().asRawType().hashCode();
             return 31 * hashCode + getParameters().asTypeList().asRawTypes().hashCode();
@@ -567,7 +567,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
             if (isMethod()) {
                 stringBuilder.append(getReturnType().getSourceCodeName()).append(" ");
-                stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+                stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
@@ -605,7 +605,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
             if (isMethod()) {
                 stringBuilder.append(getReturnType().asRawType().getSourceCodeName()).append(" ");
-                stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+                stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;

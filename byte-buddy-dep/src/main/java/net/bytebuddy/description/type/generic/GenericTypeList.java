@@ -247,21 +247,21 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         }
     }
 
-    class PotentiallyRaw extends AbstractBase {
+    class OfUntransformedType extends AbstractBase {
 
         private final List<? extends GenericTypeDescription> typeDescriptions;
 
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer;
 
-        public PotentiallyRaw(List<? extends GenericTypeDescription> typeDescriptions,
-                              GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer) {
+        public OfUntransformedType(List<? extends GenericTypeDescription> typeDescriptions,
+                                   GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer) {
             this.typeDescriptions = typeDescriptions;
             this.transformer = transformer;
         }
 
         @Override
         public GenericTypeDescription get(int index) {
-            return GenericTypeDescription.ForParameterizedType.Raw.resolve(typeDescriptions.get(index), transformer);
+            return new GenericTypeDescription.LazyProjection.OfUntransformedType(typeDescriptions.get(index), transformer);
         }
 
         @Override
@@ -282,7 +282,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
             @Override
             public GenericTypeDescription get(int index) {
-                return GenericTypeDescription.Sort.describe(type.getGenericInterfaces()[index]);
+                return new TypeProjection(type, index, type.getInterfaces()[index]);
             }
 
             @Override
@@ -293,6 +293,31 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
             @Override
             public TypeList asRawTypes() {
                 return new TypeList.ForLoadedType(type.getInterfaces());
+            }
+
+            private static class TypeProjection extends GenericTypeDescription.LazyProjection {
+
+                private final Class<?> type;
+
+                private final int index;
+
+                private final Class<?> rawType;
+
+                public TypeProjection(Class<?> type, int index, Class<?> rawType) {
+                    this.type = type;
+                    this.index = index;
+                    this.rawType = rawType;
+                }
+
+                @Override
+                protected GenericTypeDescription resolve() {
+                    return GenericTypeDescription.Sort.describe(type.getGenericInterfaces()[index]);
+                }
+
+                @Override
+                public TypeDescription asRawType() {
+                    return new TypeDescription.ForLoadedType(rawType);
+                }
             }
         }
 
@@ -306,7 +331,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
             @Override
             public GenericTypeDescription get(int index) {
-                return GenericTypeDescription.Sort.describe(constructor.getGenericExceptionTypes()[index]);
+                return new TypeProjection(constructor, index, constructor.getExceptionTypes()[index]);
             }
 
             @Override
@@ -317,6 +342,31 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
             @Override
             public TypeList asRawTypes() {
                 return new TypeList.ForLoadedType(constructor.getExceptionTypes());
+            }
+
+            private static class TypeProjection extends GenericTypeDescription.LazyProjection {
+
+                private final Constructor<?> constructor;
+
+                private final int index;
+
+                private final Class<?> rawType;
+
+                public TypeProjection(Constructor<?> constructor, int index, Class<?> rawType) {
+                    this.constructor = constructor;
+                    this.index = index;
+                    this.rawType = rawType;
+                }
+
+                @Override
+                protected GenericTypeDescription resolve() {
+                    return GenericTypeDescription.Sort.describe(constructor.getGenericExceptionTypes()[index]);
+                }
+
+                @Override
+                public TypeDescription asRawType() {
+                    return new TypeDescription.ForLoadedType(rawType);
+                }
             }
         }
 
@@ -330,7 +380,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
             @Override
             public GenericTypeDescription get(int index) {
-                return GenericTypeDescription.Sort.describe(method.getGenericExceptionTypes()[index]);
+                return new TypeProjection(method, index, method.getExceptionTypes()[index]);
             }
 
             @Override
@@ -341,6 +391,31 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
             @Override
             public TypeList asRawTypes() {
                 return new TypeList.ForLoadedType(method.getExceptionTypes());
+            }
+
+            private static class TypeProjection extends GenericTypeDescription.LazyProjection {
+
+                private final Method method;
+
+                private final int index;
+
+                private final Class<?> rawType;
+
+                public TypeProjection(Method method, int index, Class<?> rawType) {
+                    this.method = method;
+                    this.index = index;
+                    this.rawType = rawType;
+                }
+
+                @Override
+                protected GenericTypeDescription resolve() {
+                    return GenericTypeDescription.Sort.describe(method.getGenericExceptionTypes()[index]);
+                }
+
+                @Override
+                public TypeDescription asRawType() {
+                    return new TypeDescription.ForLoadedType(rawType);
+                }
             }
         }
     }

@@ -12,7 +12,7 @@ import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
@@ -20,10 +20,12 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -321,13 +323,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 Collections.singletonMap(SampleClass.class.getName(), ClassFileExtraction.extract(SampleClass.class)),
                 null,
-                ByteArrayClassLoader.PersistenceHandler.LATENT);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         Class<?> otherSampleClass = classLoader.loadClass(SampleClass.class.getName());
         assertThat(describe(SampleClass.class).isAssignableFrom(describe(otherSampleClass)), is(true));
         assertThat(describe(SampleClass.class).isAssignableTo(describe(otherSampleClass)), is(true));
         assertThat(describe(Object.class).isAssignableFrom(describe(otherSampleClass)), is(true));
         assertThat(describe(otherSampleClass).isAssignableTo(describe(Object.class)), is(true));
-
     }
 
     @Test
@@ -437,8 +438,83 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     }
 
     @Test
+    public void testMalformedTypeHasLegalErasure() throws Exception {
+        TypeDescription malformed = new TypeDescription.ForLoadedType(Callable.class);
+        TypeDescription typeDescription = describe(SignatureMalformer.malform(MalformedBase.class));
+        assertThat(typeDescription.getSuperType().asRawType(), is(TypeDescription.OBJECT));
+        assertThat(typeDescription.getInterfaces().asRawTypes().size(), is(1));
+        assertThat(typeDescription.getInterfaces().asRawTypes().getOnly(), is(malformed));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getType().asRawType(), is(malformed));
+        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().asRawType(), is(malformed));
+    }
+
+    @Test(expected = GenericSignatureFormatError.class)
+    public void testMalformedTypeSignature() throws Exception {
+        TypeDescription typeDescription = describe(SignatureMalformer.malform(MalformedBase.class));
+        assertThat(typeDescription.getInterfaces().size(), is(1));
+        typeDescription.getInterfaces().getOnly().getSort();
+    }
+
+    @Test(expected = GenericSignatureFormatError.class)
+    public void testMalformedFieldSignature() throws Exception {
+        TypeDescription typeDescription = describe(SignatureMalformer.malform(MalformedBase.class));
+        assertThat(typeDescription.getDeclaredFields().size(), is(1));
+        typeDescription.getDeclaredFields().getOnly().getType().getSort();
+    }
+
+    @Test(expected = GenericSignatureFormatError.class)
+    public void testMalformedMethodSignature() throws Exception {
+        TypeDescription typeDescription = describe(SignatureMalformer.malform(MalformedBase.class));
+        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).size(), is(1));
+        typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().getSort();
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.AbstractTypeDescription.SuperTypeIterator.class).applyBasic();
+    }
+
+    private static class SignatureMalformer extends ClassVisitor {
+
+        public static Class<?> malform(Class<?> type) throws Exception {
+            ClassReader classReader = new ClassReader(type.getName());
+            ClassWriter classWriter = new ClassWriter(classReader, 0);
+            classReader.accept(new SignatureMalformer(classWriter), 0);
+            ClassLoader classLoader = new ByteArrayClassLoader(null,
+                    Collections.singletonMap(type.getName(), classWriter.toByteArray()),
+                    null,
+                    ByteArrayClassLoader.PersistenceHandler.MANIFEST);
+            return classLoader.loadClass(type.getName());
+        }
+
+        private static final String FOO = "foo";
+
+        public SignatureMalformer(ClassVisitor classVisitor) {
+            super(Opcodes.ASM5, classVisitor);
+        }
+
+        @Override
+        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+            super.visit(version, access, name, FOO, superName, interfaces);
+        }
+
+        @Override
+        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+            return super.visitField(access, name, desc, FOO, value);
+        }
+
+        @Override
+        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            return super.visitMethod(access, name, desc, FOO, exceptions);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public abstract static class MalformedBase<T> implements Callable<T> {
+
+        Callable<T> foo;
+
+        abstract Callable<T> foo();
     }
 
     protected interface SampleInterface {

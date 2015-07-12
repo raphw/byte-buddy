@@ -25,6 +25,7 @@ import org.objectweb.asm.signature.SignatureVisitor;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
+import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.MalformedParameterizedTypeException;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -1638,7 +1639,7 @@ public interface TypePool {
                                     ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
                                     : ForSignature.extract(genericSignature, new OfType());
                         } catch (RuntimeException ignored) {
-                            return LazyTypeDescription.GenericTypeToken.Resolution.Defective.INSTANCE;
+                            return LazyTypeDescription.GenericTypeToken.Resolution.Malformed.INSTANCE;
                         }
                     }
 
@@ -1691,7 +1692,7 @@ public interface TypePool {
                                     ? LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE
                                     : ForSignature.extract(genericSignature, new OfMethod());
                         } catch (RuntimeException ignored) {
-                            return LazyTypeDescription.GenericTypeToken.Resolution.Defective.INSTANCE;
+                            return LazyTypeDescription.GenericTypeToken.Resolution.Malformed.INSTANCE;
                         }
                     }
 
@@ -1767,7 +1768,7 @@ public interface TypePool {
                                 signatureReader.acceptType(new GenericTypeExtractor(visitor));
                                 return visitor.resolve();
                             } catch (RuntimeException ignored) {
-                                return LazyTypeDescription.GenericTypeToken.Resolution.Defective.INSTANCE;
+                                return LazyTypeDescription.GenericTypeToken.Resolution.Malformed.INSTANCE;
                             }
                         }
                     }
@@ -3668,38 +3669,38 @@ public interface TypePool {
                     }
                 }
 
-                enum Defective implements ForType, ForMethod, ForField {
+                enum Malformed implements ForType, ForMethod, ForField {
 
                     INSTANCE;
 
                     @Override
                     public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
-                        return new TokenizedGenericType.Defective(typePool, fieldTypeDescriptor);
+                        return new TokenizedGenericType.Malformed(typePool, fieldTypeDescriptor);
                     }
 
                     @Override
                     public GenericTypeDescription resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
-                        return new TokenizedGenericType.Defective(typePool, returnTypeDescriptor);
+                        return new TokenizedGenericType.Malformed(typePool, returnTypeDescriptor);
                     }
 
                     @Override
                     public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                        return new TokenizedGenericType.Defective.TokenList(typePool, parameterTypeDescriptors);
+                        return new TokenizedGenericType.Malformed.TokenList(typePool, parameterTypeDescriptors);
                     }
 
                     @Override
                     public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                        return new TokenizedGenericType.Defective.TokenList(typePool, exceptionTypeDescriptors);
+                        return new TokenizedGenericType.Malformed.TokenList(typePool, exceptionTypeDescriptors);
                     }
 
                     @Override
                     public GenericTypeDescription resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
-                        return new TokenizedGenericType.Defective(typePool, superTypeDescriptor);
+                        return new TokenizedGenericType.Malformed(typePool, superTypeDescriptor);
                     }
 
                     @Override
                     public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
-                        return new TokenizedGenericType.Defective.TokenList(typePool, interfaceTypeDescriptors);
+                        return new TokenizedGenericType.Malformed.TokenList(typePool, interfaceTypeDescriptors);
                     }
 
                     @Override
@@ -4797,7 +4798,7 @@ public interface TypePool {
             /**
              * A lazy description of a non-well-defined described generic type.
              */
-            protected static class Defective extends GenericTypeDescription.LazyProjection {
+            protected static class Malformed extends GenericTypeDescription.LazyProjection {
 
                 /**
                  * The type pool to use for locating types.
@@ -4815,14 +4816,14 @@ public interface TypePool {
                  * @param typePool          The type pool to use for locating types.
                  * @param rawTypeDescriptor The descriptor of the raw type.
                  */
-                protected Defective(TypePool typePool, String rawTypeDescriptor) {
+                protected Malformed(TypePool typePool, String rawTypeDescriptor) {
                     this.typePool = typePool;
                     this.rawTypeDescriptor = rawTypeDescriptor;
                 }
 
                 @Override
                 protected GenericTypeDescription resolve() {
-                    throw new MalformedParameterizedTypeException(); // TODO
+                    throw new GenericSignatureFormatError("Signature Parse error: illegal type signature");
                 }
 
                 @Override
@@ -4858,7 +4859,7 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeDescription get(int index) {
-                        return new TokenizedGenericType.Defective(typePool, rawTypeDescriptors.get(index));
+                        return new Malformed(typePool, rawTypeDescriptors.get(index));
                     }
 
                     @Override

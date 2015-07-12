@@ -295,12 +295,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return GenericTypeDescription.ForParameterizedType.Raw.resolve(getDeclaredSuperType(), GenericTypeDescription.Visitor.NoOp.INSTANCE);
+            return LazyProjection.OfUntransformedType.of(getDeclaredSuperType(), GenericTypeDescription.Visitor.NoOp.INSTANCE);
         }
 
         @Override
         public GenericTypeList getInterfaces() {
-            return new GenericTypeList.PotentiallyRaw(getDeclaredInterfaces(), GenericTypeDescription.Visitor.NoOp.INSTANCE);
+            return new GenericTypeList.OfUntransformedType(getDeclaredInterfaces(), GenericTypeDescription.Visitor.NoOp.INSTANCE);
         }
 
         @Override

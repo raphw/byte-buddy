@@ -114,6 +114,7 @@ public class ImplementationContextDefaultTest {
         firstSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(firstSpecialExceptionType));
         secondSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
+        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(methodPool.target(any(MethodDescription.class))).thenReturn(entry);
         when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(firstDynamicType);
