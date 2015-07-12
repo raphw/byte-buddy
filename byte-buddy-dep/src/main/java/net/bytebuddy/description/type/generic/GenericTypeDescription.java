@@ -1427,12 +1427,12 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return LazyProjection.OfUntransformedType.of(asRawType().getDeclaredSuperType(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return LazyProjection.OfPotentiallyRawType.of(asRawType().getSuperType(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
         public GenericTypeList getInterfaces() {
-            return new GenericTypeList.OfUntransformedType(asRawType().getDeclaredInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return new GenericTypeList.OfPotentiallyRawType(asRawType().getInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
@@ -1652,7 +1652,7 @@ public interface GenericTypeDescription extends NamedElement {
              * @param transformer     A transformer to apply to a non-raw types.
              * @return Either a raw type, i
              */
-            public static GenericTypeDescription resolve(GenericTypeDescription typeDescription, Visitor<? extends GenericTypeDescription> transformer) {
+            public static GenericTypeDescription check(GenericTypeDescription typeDescription, Visitor<? extends GenericTypeDescription> transformer) {
                 if (typeDescription == null) {
                     return null;
                 }
@@ -1677,7 +1677,7 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public GenericTypeDescription getSuperType() {
-                GenericTypeDescription superType = typeDescription.getDeclaredSuperType();
+                GenericTypeDescription superType = typeDescription.getSuperType();
                 return superType == null
                         ? null
                         : superType.accept(Visitor.TypeVariableErasing.INSTANCE);
@@ -1685,7 +1685,7 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public GenericTypeList getInterfaces() {
-                return typeDescription.getDeclaredInterfaces().accept(Visitor.TypeVariableErasing.INSTANCE);
+                return typeDescription.getInterfaces().accept(Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
@@ -2067,27 +2067,27 @@ public interface GenericTypeDescription extends NamedElement {
             return resolve().toString();
         }
         
-        public static class OfUntransformedType extends LazyProjection {
+        public static class OfPotentiallyRawType extends LazyProjection {
 
             public static GenericTypeDescription of(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
                 if (unresolvedType == null) {
                     return null;
                 }
-                return new OfUntransformedType(unresolvedType, transformer);
+                return new OfPotentiallyRawType(unresolvedType, transformer);
             }
 
             private final GenericTypeDescription unresolvedType;
             
             private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer;
 
-            public OfUntransformedType(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
+            public OfPotentiallyRawType(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
                 this.unresolvedType = unresolvedType;
                 this.transformer = transformer;
             }
 
             @Override
             protected GenericTypeDescription resolve() {
-                return GenericTypeDescription.ForParameterizedType.Raw.resolve(unresolvedType, transformer);
+                return GenericTypeDescription.ForParameterizedType.Raw.check(unresolvedType, transformer);
             }
 
             @Override

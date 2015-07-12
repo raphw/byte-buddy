@@ -247,21 +247,21 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         }
     }
 
-    class OfUntransformedType extends AbstractBase {
+    class OfPotentiallyRawType extends AbstractBase {
 
         private final List<? extends GenericTypeDescription> typeDescriptions;
 
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer;
 
-        public OfUntransformedType(List<? extends GenericTypeDescription> typeDescriptions,
-                                   GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer) {
+        public OfPotentiallyRawType(List<? extends GenericTypeDescription> typeDescriptions,
+                                    GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer) {
             this.typeDescriptions = typeDescriptions;
             this.transformer = transformer;
         }
 
         @Override
         public GenericTypeDescription get(int index) {
-            return new GenericTypeDescription.LazyProjection.OfUntransformedType(typeDescriptions.get(index), transformer);
+            return new GenericTypeDescription.LazyProjection.OfPotentiallyRawType(typeDescriptions.get(index), transformer);
         }
 
         @Override

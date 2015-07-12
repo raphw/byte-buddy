@@ -3145,14 +3145,14 @@ public interface TypePool {
         }
 
         @Override
-        public GenericTypeDescription getDeclaredSuperType() {
+        protected GenericTypeDescription getDeclaredSuperType() {
             return superTypeDescriptor == null || isInterface()
                     ? null
                     : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, this);
         }
 
         @Override
-        public GenericTypeList getDeclaredInterfaces() {
+        protected GenericTypeList getDeclaredInterfaces() {
             return signatureResolution.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, this);
         }
 
@@ -4388,7 +4388,7 @@ public interface TypePool {
 
                     @Override
                     public String toString() {
-                        return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Raw." + none();
+                        return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Raw." + name();
                     }
                 }
 
@@ -4439,7 +4439,7 @@ public interface TypePool {
 
                     @Override
                     public String toString() {
-                        return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Malformed." + none();
+                        return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Malformed." + name();
                     }
                 }
             }
