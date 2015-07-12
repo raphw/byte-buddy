@@ -26,7 +26,8 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
     String getDescriptor();
 
     /**
-     * Returns the generic signature of this byte code element.
+     * Returns the generic signature of this byte code element. If this element does not reference generic types
+     * or references malformed generic types, {@code null} is returned as a signature.
      *
      * @return The generic signature or {@code null} if this element is not generic.
      */
