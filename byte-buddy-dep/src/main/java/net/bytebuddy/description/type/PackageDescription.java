@@ -10,8 +10,14 @@ import org.objectweb.asm.Opcodes;
  */
 public interface PackageDescription extends NamedElement.WithRuntimeName, AnnotatedCodeElement {
 
+    /**
+     * The name of a Java class representing a package description.
+     */
     String PACKAGE_CLASS_NAME = "package-info";
 
+    /**
+     * The modifiers of a Java class representing a package description.
+     */
     int PACKAGE_MODIFIERS = Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_SYNTHETIC;
 
     /**

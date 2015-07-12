@@ -43,6 +43,11 @@ public interface NamedElement {
      */
     interface WithGenericName extends WithRuntimeName {
 
+        /**
+         * Returns a generic string of this byte code element.
+         *
+         * @return A generic string of this byte code element.
+         */
         String toGenericString();
     }
 }
