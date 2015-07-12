@@ -17,7 +17,7 @@ public interface TypeVariableSource extends ByteCodeElement {
     GenericTypeList getTypeVariables();
 
     /**
-     * Returns the enclosing source of type variables that are valid in the scope of this type variable source
+     * Returns the enclosing source of type variables that are valid in the scope of this type variable source.
      *
      * @return The enclosing source or {@code null} if no such source exists.
      */
