@@ -1,17 +1,15 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.StreamDrainer;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
