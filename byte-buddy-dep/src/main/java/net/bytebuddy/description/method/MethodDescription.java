@@ -1306,6 +1306,14 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          */
         private final Object defaultValue;
 
+        /**
+         * Creates a new method token with simple values.
+         *
+         * @param internalName   The internal name of the represented method.
+         * @param modifiers      The modifiers of the represented method.
+         * @param returnType     The return type of the represented method.
+         * @param parameterTypes The parameter types of this method.
+         */
         public Token(String internalName, int modifiers, GenericTypeDescription returnType, List<? extends GenericTypeDescription> parameterTypes) {
             this(internalName,
                     modifiers,
