@@ -13,6 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.io.Serializable;
 import java.util.Collections;
 
 public class TypeWriterDefaultTest {
@@ -200,6 +201,39 @@ public class TypeWriterDefaultTest {
         new ByteBuddy()
                 .makeAnnotation()
                 .defineMethod(FOO, String.class, Collections.<Class<?>>singletonList(Void.class), Visibility.PUBLIC)
+                .withoutCode()
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageDescriptionWithModifiers() throws Exception {
+        new ByteBuddy()
+                .makePackage(FOO)
+                .modifiers(Visibility.PRIVATE)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageDescriptionWithInterfaces() throws Exception {
+        new ByteBuddy()
+                .makePackage(FOO)
+                .implement(Serializable.class)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageDescriptionWithField() throws Exception {
+        new ByteBuddy()
+                .makePackage(FOO)
+                .defineField(FOO, Void.class)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageDescriptionWithMethod() throws Exception {
+        new ByteBuddy()
+                .makePackage(FOO)
+                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList())
                 .withoutCode()
                 .make();
     }

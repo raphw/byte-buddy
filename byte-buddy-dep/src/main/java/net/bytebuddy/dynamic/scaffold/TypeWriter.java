@@ -30,7 +30,10 @@ import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -1036,7 +1039,10 @@ public interface TypeWriter<T> {
                  */
                 JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, true, true, true),
 
-                PACKAGE_CLASS("package definition", false, true, false, false, true, false, false, false);
+                /**
+                 * Constraints for a package type, i.e. a class named {@code package-info}.
+                 */
+                PACKAGE_CLASS("package definition", false, false, false, false, false, false, false, false);
 
                 /**
                  * A name to represent the type being validated within an error message.
@@ -1078,6 +1084,9 @@ public interface TypeWriter<T> {
                  */
                 private final boolean allowsDefaultValue;
 
+                /**
+                 * Determines if a sort allows the type a shape that does not resemble a package description.
+                 */
                 private final boolean allowsNonPackage;
 
                 /**
@@ -1091,6 +1100,7 @@ public interface TypeWriter<T> {
                  * @param allowsAbstract        Determines if a sort allows abstract methods.
                  * @param allowsNonAbstract     Determines if a sort allows non-abstract methods.
                  * @param allowsDefaultValue    Determines if a sort allows the definition of annotation default values.
+                 * @param allowsNonPackage      Determines if a sort allows the type a shape that does not resemble a package description.
                  */
                 Constraint(String sortName,
                            boolean allowsConstructor,
@@ -1167,6 +1177,12 @@ public interface TypeWriter<T> {
                     }
                 }
 
+                /**
+                 * Asserts if the type can legally represent a package description.
+                 *
+                 * @param modifier   The modifier that is to be written to the type.
+                 * @param interfaces The interfaces that are to be appended to the type.
+                 */
                 protected void assertPackage(int modifier, String[] interfaces) {
                     if (!allowsNonPackage && modifier != PackageDescription.PACKAGE_MODIFIERS) {
                         throw new IllegalStateException("Cannot alter modifier for " + sortName);
@@ -1365,8 +1381,14 @@ public interface TypeWriter<T> {
                  */
                 private final Implementation.Context.ExtractableView implementationContext;
 
+                /**
+                 * A mapping of fields to write by their names.
+                 */
                 private final Map<String, FieldDescription> declaredFields;
 
+                /**
+                 * A mapping of methods to write by a concatenation of internal name and descriptor.
+                 */
                 private final Map<String, MethodDescription> declarableMethods;
 
                 /**
@@ -1671,7 +1693,6 @@ public interface TypeWriter<T> {
                      * Creates a new type initializer injection.
                      */
                     private TypeInitializerInjection() {
-                        // TODO: Check!
                         injectorProxyMethod = new MethodDescription.Latent(instrumentedType,
                                 String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, RandomString.make()),
                                 TYPE_INITIALIZER_PROXY_MODIFIERS,
