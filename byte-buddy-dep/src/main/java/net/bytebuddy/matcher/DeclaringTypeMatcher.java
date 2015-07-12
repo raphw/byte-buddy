@@ -1,7 +1,6 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.DeclaredByType;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
