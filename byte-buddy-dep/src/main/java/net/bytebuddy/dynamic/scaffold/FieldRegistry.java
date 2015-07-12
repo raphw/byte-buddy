@@ -93,17 +93,45 @@ public interface FieldRegistry {
          */
         String getFieldName();
 
-        class Simple implements LatentFieldMatcher {
+        /**
+         * A simple matcher for a field description based on the a field token.
+         */
+        class ForToken implements LatentFieldMatcher {
 
+            /**
+             * The field token to match.
+             */
             private final FieldDescription.Token fieldToken;
 
-            public Simple(FieldDescription.Token fieldToken) {
+            /**
+             * Creates a new simple matcher.
+             * @param fieldToken The field token to match.
+             */
+            public ForToken(FieldDescription.Token fieldToken) {
                 this.fieldToken = fieldToken;
             }
 
             @Override
             public String getFieldName() {
                 return fieldToken.getName();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fieldToken.equals(((ForToken) other).fieldToken);
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldToken.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FieldRegistry.LatentFieldMatcher.ForToken{" +
+                        "fieldToken=" + fieldToken +
+                        '}';
             }
         }
     }

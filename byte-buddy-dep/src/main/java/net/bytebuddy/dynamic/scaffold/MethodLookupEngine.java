@@ -578,8 +578,14 @@ public interface MethodLookupEngine {
          */
         protected static class MethodBucket {
 
+            /**
+             * A mapping of previously discovered class methods mapped by their token.
+             */
             private final Map<MethodDescription.Token, MethodDescription> classMethods;
 
+            /**
+             * A mapping of previously discovered interface methods mapped by their token.
+             */
             private final Map<MethodDescription.Token, MethodDescription> interfaceMethods;
 
             /**
@@ -725,8 +731,9 @@ public interface MethodLookupEngine {
              * again since it was already marked as processed by adding it to
              * {@link MethodLookupEngine.Default.MethodBucket#processedTypes}.
              *
-             * @param typeDescription     The interface type to process.
-             * @param defaultMethodLookup A processor for performing a lookup of default methods.
+             * @param typeDescription             The interface type to process.
+             * @param processedMethodsInHierarchy Tokens of all methods within the type hierarchy that were already processed.
+             * @param defaultMethodLookup         A processor for performing a lookup of default methods.
              */
             private void pushInterface(GenericTypeDescription typeDescription,
                                        Set<MethodDescription.Token> processedMethodsInHierarchy,

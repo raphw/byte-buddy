@@ -199,40 +199,105 @@ public interface InstrumentedType extends TypeDescription {
         }
     }
 
+    /**
+     * A default implementation of an instrumented type.
+     */
     class Default extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
 
+        /**
+         * The binary name of the instrumented type.
+         */
         private final String name;
 
+        /**
+         * The modifiers of the instrumented type.
+         */
         private final int modifiers;
 
+        /**
+         * A list of type variables of the instrumented type.
+         */
         private final List<? extends GenericTypeDescription> typeVariables;
 
+        /**
+         * The generic super type of the instrumented type.
+         */
         private final GenericTypeDescription superType;
 
+        /**
+         * A list of interfaces of the instrumented type.
+         */
         private final List<? extends GenericTypeDescription> interfaceTypes;
 
+        /**
+         * A list of field tokens describing the fields of the instrumented type.
+         */
         private final List<? extends FieldDescription.Token> fieldTokens;
 
+        /**
+         * A list of method tokens describing the methods of the instrumented type.
+         */
         private final List<? extends MethodDescription.Token> methodTokens;
 
+        /**
+         * A list of annotations of the annotated type.
+         */
         private final List<? extends AnnotationDescription> annotationDescriptions;
 
+        /**
+         * The type initializer of the instrumented type.
+         */
         private final TypeInitializer typeInitializer;
 
+        /**
+         * The loaded type initializer of the instrumented type.
+         */
         private final LoadedTypeInitializer loadedTypeInitializer;
 
+        /**
+         * The declaring type of the instrumented type or {@code null} if no such type exists.
+         */
         private final TypeDescription declaringType;
 
+        /**
+         * The enclosing method of the instrumented type or {@code null} if no such type exists.
+         */
         private final MethodDescription enclosingMethod;
 
+        /**
+         * The enclosing type of the instrumented type or {@code null} if no such type exists.
+         */
         private final TypeDescription enclosingType;
 
+        /**
+         * {@code true} if this type is a member class.
+         */
         private final boolean memberClass;
 
+        /**
+         * {@code true} if this type is a anonymous class.
+         */
         private final boolean anonymousClass;
 
+        /**
+         * {@code true} if this type is a local class.
+         */
         private final boolean localClass;
 
+        /**
+         * Creates a new instrumented type with default values for any properties that only exist for types that are declared within another type.
+         *
+         * @param name                   The binary name of the instrumented type.
+         * @param modifiers              The modifiers of the instrumented type.
+         * @param typeVariables          A list of type variables of the instrumented type.
+         * @param superType              The generic super type of the instrumented type.
+         * @param interfaceTypes         A list of interfaces of the instrumented type.
+         * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
+         * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
+         * @param annotationDescriptions A list of annotations of the annotated type.
+         * @param typeInitializer        The type initializer of the instrumented type.
+         * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
+         */
         public Default(String name,
                        int modifiers,
                        List<? extends GenericTypeDescription> typeVariables,
@@ -261,6 +326,26 @@ public interface InstrumentedType extends TypeDescription {
                     false);
         }
 
+        /**
+         * Creates a new instrumented type.
+         *
+         * @param name                   The binary name of the instrumented type.
+         * @param modifiers              The modifiers of the instrumented type.
+         * @param typeVariables          A list of type variables of the instrumented type.
+         * @param superType              The generic super type of the instrumented type.
+         * @param interfaceTypes         A list of interfaces of the instrumented type.
+         * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
+         * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
+         * @param annotationDescriptions A list of annotations of the annotated type.
+         * @param typeInitializer        The type initializer of the instrumented type.
+         * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
+         * @param declaringType          The declaring type of the instrumented type or {@code null} if no such type exists.
+         * @param enclosingMethod        The enclosing method of the instrumented type or {@code null} if no such type exists.
+         * @param enclosingType          The enclosing type of the instrumented type or {@code null} if no such type exists.
+         * @param memberClass            {@code true} if this type is a member class.
+         * @param anonymousClass         {@code true} if this type is a anonymous class.
+         * @param localClass             {@code true} if this type is a local class.
+         */
         public Default(String name,
                        int modifiers,
                        List<? extends GenericTypeDescription> typeVariables,
