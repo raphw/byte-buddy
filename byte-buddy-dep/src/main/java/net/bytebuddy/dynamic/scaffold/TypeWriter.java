@@ -108,6 +108,9 @@ public interface TypeWriter<T> {
                  */
                 INSTANCE;
 
+                /**
+                 * The default value indicating a field without a default value.
+                 */
                 private static final Object NO_DEFAULT_VALUE = null;
 
                 @Override
