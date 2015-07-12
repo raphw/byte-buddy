@@ -2464,10 +2464,6 @@ public interface TypePool {
                 /**
                  * The descriptor of the field type.
                  */
-
-                /**
-                 * The generic signature of the field or {@code null} if it is not generic.
-                 */
                 private final String descriptor;
 
                 /**
