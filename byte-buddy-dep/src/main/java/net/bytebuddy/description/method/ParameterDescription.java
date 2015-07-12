@@ -521,6 +521,19 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                     offset);
         }
 
+        public Latent(MethodDescription declaringMethod,
+                      GenericTypeDescription parameterType,
+                      int index,
+                      int offset) {
+            this(declaringMethod,
+                    parameterType,
+                    Collections.<AnnotationDescription>emptyList(),
+                    Token.NO_NAME,
+                    Token.NO_MODIFIERS,
+                    index,
+                    offset);
+        }
+
         /**
          * Creates a latent parameter description. All provided types are attached to this instance before they are returned.
          *

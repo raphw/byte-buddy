@@ -86,8 +86,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         }
         when(sourceType.getStackSize()).thenReturn(StackSize.ZERO);
         typeDescriptions.add(sourceIndex, sourceType);
-        ParameterList parameterList = ParameterList.Explicit.latent(source, typeDescriptions);
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, typeDescriptions));
         when(source.isStatic()).thenReturn(false);
         when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(annotations));

@@ -354,7 +354,7 @@ public interface MethodRebaseResolver {
 
                 @Override
                 public ParameterList getParameters() {
-                    return ParameterList.Explicit.latent(this, methodDescription.getParameters().asTypeList().asRawTypes());
+                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
                 @Override
@@ -463,7 +463,7 @@ public interface MethodRebaseResolver {
 
                 @Override
                 public ParameterList getParameters() {
-                    return ParameterList.Explicit.latent(this, join(methodDescription.getParameters().asTypeList().asRawTypes(), placeholderType));
+                    return new ParameterList.Explicit.ForTypes(this, join(methodDescription.getParameters().asTypeList().asRawTypes(), placeholderType));
                 }
 
                 @Override

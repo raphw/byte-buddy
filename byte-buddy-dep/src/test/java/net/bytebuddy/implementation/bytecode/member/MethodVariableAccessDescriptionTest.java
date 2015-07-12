@@ -53,8 +53,8 @@ public class MethodVariableAccessDescriptionTest {
         when(firstParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstParameterType);
         when(secondParameterType.asRawType()).thenReturn(secondParameterType); // REFACTOR
         when(secondParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondParameterType);
-        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstParameterType, secondParameterType));
-        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription,
+                Arrays.asList(firstParameterType, secondParameterType)));
     }
 
     @After

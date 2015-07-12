@@ -59,8 +59,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
-        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Collections.singletonList(parameterType));
-        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
         when(typeDescription.getInternalName()).thenReturn(BAR);
@@ -80,7 +79,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
-        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(),
+        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(resolution.getResolvedMethod(),
                 Arrays.asList(parameterType, placeholderType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));

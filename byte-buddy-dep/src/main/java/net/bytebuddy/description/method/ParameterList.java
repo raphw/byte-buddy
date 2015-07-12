@@ -1,11 +1,9 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
-import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.JavaMethod;
@@ -279,28 +277,6 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             this.parameterDescriptions = Collections.unmodifiableList(parameterDescriptions);
         }
 
-        /**
-         * Creates a list of method parameters from a list of type descriptions.
-         *
-         * @param declaringMethod The method for which this latent list should be created.
-         * @param parameterTypes  A list of the parameter types.
-         * @return A list describing these parameters.
-         */
-        public static ParameterList latent(MethodDescription declaringMethod, List<? extends GenericTypeDescription> parameterTypes) {
-            List<ParameterDescription> parameterDescriptions = new ArrayList<ParameterDescription>(parameterTypes.size());
-            int index = 0, offset = declaringMethod.isStatic()
-                    ? StackSize.ZERO.getSize()
-                    : StackSize.SINGLE.getSize();
-            for (GenericTypeDescription parameterType : parameterTypes) {
-                parameterDescriptions.add(new ParameterDescription.Latent(declaringMethod,
-                        new ParameterDescription.Token(parameterType, Collections.<AnnotationDescription>emptyList()),
-                        index++,
-                        offset));
-                offset += parameterType.getStackSize().getSize();
-            }
-            return new Explicit(parameterDescriptions); // TODO: Refactor!
-        }
-
         @Override
         public ParameterDescription get(int index) {
             return parameterDescriptions.get(index);
@@ -309,6 +285,32 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         @Override
         public int size() {
             return parameterDescriptions.size();
+        }
+
+        public static class ForTypes extends ParameterList.AbstractBase {
+
+            private final MethodDescription methodDescription;
+
+            private final List<? extends GenericTypeDescription> typeDescriptions;
+
+            public ForTypes(MethodDescription methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
+                this.methodDescription = methodDescription;
+                this.typeDescriptions = typeDescriptions;
+            }
+
+            @Override
+            public ParameterDescription get(int index) {
+                int offset = methodDescription.isStatic() ? 0 : 1;
+                for (GenericTypeDescription typeDescription : typeDescriptions.subList(0, index)) {
+                    offset += typeDescription.getStackSize().getSize();
+                }
+                return new ParameterDescription.Latent(methodDescription, typeDescriptions.get(index), index, offset);
+            }
+
+            @Override
+            public int size() {
+                return typeDescriptions.size();
+            }
         }
     }
 

@@ -150,8 +150,8 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        ParameterList firstSpecialMethodParameters = ParameterList.Explicit.latent(firstSpecialMethod, Collections.singletonList(firstSpecialParameterType));
-        when(firstSpecialMethod.getParameters()).thenReturn(firstSpecialMethodParameters);
+        when(firstSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(firstSpecialMethod,
+                Collections.singletonList(firstSpecialParameterType)));
         when(secondSpecialInvocation.getMethodDescription()).thenReturn(secondSpecialMethod);
         when(secondSpecialInvocation.getTypeDescription()).thenReturn(secondSpecialType);
         when(secondSpecialMethod.getInternalName()).thenReturn(BAR);
@@ -166,8 +166,8 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondSpecialReturnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        ParameterList secondSpecialMethodParameters = ParameterList.Explicit.latent(secondSpecialMethod, Collections.singletonList(secondSpecialParameterType));
-        when(secondSpecialMethod.getParameters()).thenReturn(secondSpecialMethodParameters);
+        when(secondSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(secondSpecialMethod,
+                Collections.singletonList(secondSpecialParameterType)));
         when(firstFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(firstFieldType.asRawType()).thenReturn(firstFieldType); // REFACTOR
         when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType); // REFACTOR
@@ -405,7 +405,7 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
-        assertThat(firstMethodDescription.getParameters(), is(ParameterList.Explicit.latent(firstMethodDescription,
+        assertThat(firstMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstMethodDescription,
                 Collections.singletonList(firstSpecialParameterType))));
         assertThat(firstMethodDescription.getReturnType(), is((GenericTypeDescription) firstSpecialReturnType));
         assertThat(firstMethodDescription.getInternalName(), startsWith(FOO));
@@ -414,7 +414,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         when(secondSpecialMethod.isStatic()).thenReturn(true);
         MethodDescription secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
-        assertThat(secondMethodDescription.getParameters(), is(ParameterList.Explicit.latent(secondMethodDescription,
+        assertThat(secondMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondMethodDescription,
                 Collections.singletonList(secondSpecialParameterType))));
         assertThat(secondMethodDescription.getReturnType(), is((GenericTypeDescription) secondSpecialReturnType));
         assertThat(secondMethodDescription.getInternalName(), startsWith(BAR));
@@ -549,7 +549,7 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstFieldSetter = implementationContext.registerSetterFor(firstField);
-        assertThat(firstFieldSetter.getParameters(), is(ParameterList.Explicit.latent(firstFieldSetter, Collections.singletonList(firstFieldType))));
+        assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter, Collections.singletonList(firstFieldType))));
         assertThat(firstFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
@@ -557,7 +557,8 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldSetter = implementationContext.registerSetterFor(secondField);
-        assertThat(secondFieldSetter.getParameters(), is(ParameterList.Explicit.latent(secondFieldSetter, Collections.singletonList(secondFieldType))));
+        assertThat(secondFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondFieldSetter,
+                Collections.singletonList(secondFieldType))));
         assertThat(secondFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));

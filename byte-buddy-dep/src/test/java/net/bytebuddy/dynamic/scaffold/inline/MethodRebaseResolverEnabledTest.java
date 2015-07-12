@@ -64,13 +64,11 @@ public class MethodRebaseResolverEnabledTest {
         when(dynamicType.getTypeDescription()).thenReturn(placeholderType);
         when(method.getInternalName()).thenReturn(FOO);
         when(method.getReturnType()).thenReturn(returnType);
-        ParameterList methodParameterList = ParameterList.Explicit.latent(method, Collections.singletonList(parameterType));
-        when(method.getParameters()).thenReturn(methodParameterList);
+        when(method.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(method, Collections.singletonList(parameterType)));
         when(constructor.isConstructor()).thenReturn(true);
         when(constructor.getInternalName()).thenReturn(FOO);
         when(constructor.getReturnType()).thenReturn(returnType);
-        ParameterList constructorParameterList = ParameterList.Explicit.latent(method, Collections.singletonList(parameterType));
-        when(constructor.getParameters()).thenReturn(constructorParameterList);
+        when(constructor.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(method, Collections.singletonList(parameterType)));
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
         when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);

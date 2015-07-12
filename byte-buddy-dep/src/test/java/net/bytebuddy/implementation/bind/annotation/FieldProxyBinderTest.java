@@ -155,8 +155,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, Collections.singletonList(fieldType)));
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
@@ -175,8 +174,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, Collections.singletonList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
@@ -195,8 +193,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, Collections.singletonList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
@@ -216,8 +213,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, Collections.singletonList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);

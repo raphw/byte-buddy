@@ -53,8 +53,7 @@ public class MethodRebaseResolverMethodsOnlyTest {
         methodRebaseResolver = new MethodRebaseResolver.MethodsOnly(methodDescriptions, methodNameTransformer);
         when(method.getInternalName()).thenReturn(FOO);
         when(method.getReturnType()).thenReturn(returnType);
-        ParameterList methodParameterList = ParameterList.Explicit.latent(method, Collections.singletonList(parameterType));
-        when(method.getParameters()).thenReturn(methodParameterList);
+        when(method.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(method, Collections.singletonList(parameterType)));
         when(constructor.isConstructor()).thenReturn(true);
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
         when(returnType.asRawType()).thenReturn(returnType); // REFACTOR

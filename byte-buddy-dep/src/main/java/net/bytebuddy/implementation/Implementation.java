@@ -925,7 +925,7 @@ public interface Implementation {
 
                 @Override
                 public ParameterList getParameters() {
-                    return ParameterList.Explicit.latent(this, methodDescription.getParameters().asTypeList().asRawTypes());
+                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
                 @Override
@@ -1049,7 +1049,7 @@ public interface Implementation {
 
                 @Override
                 public ParameterList getParameters() {
-                    return ParameterList.Explicit.latent(this, Collections.singletonList(fieldDescription.getType().asRawType()));
+                    return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asRawType()));
                 }
 
                 @Override

@@ -37,8 +37,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         MethodDescription methodDescription = mock(MethodDescription.class);
         when(methodDescription.getInternalName()).thenReturn(name);
         when(methodDescription.getReturnType()).thenReturn(returnType);
-        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, parameterTypes);
-        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, parameterTypes));
         TypeDescription declaringType = mock(TypeDescription.class);
         when(declaringType.asRawType()).thenReturn(declaringType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
