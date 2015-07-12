@@ -2369,12 +2369,14 @@ public class ByteBuddy {
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             for (String value : values) {
-                instrumentedType = instrumentedType.withField(new FieldDescription.Token(value, ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM, instrumentedType));
+                instrumentedType = instrumentedType.withField(new FieldDescription.Token(value,
+                        ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM,
+                        TargetType.DESCRIPTION));
             }
             return instrumentedType
                     .withField(new FieldDescription.Token(ENUM_VALUES,
                             ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC,
-                            TypeDescription.ArrayProjection.of(instrumentedType, 1)))
+                            TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1)))
                     .withInitializer(new InitializationAppender(values));
         }
 

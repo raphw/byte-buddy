@@ -78,7 +78,7 @@ public class InstrumentedTypeTest {
     public void testWithFieldOfInstrumentedType() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, instrumentedType));
+        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, TargetType.DESCRIPTION));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType(), sameInstance((GenericTypeDescription) instrumentedType));
@@ -91,7 +91,8 @@ public class InstrumentedTypeTest {
     public void testWithFieldOfInstrumentedTypeAsArray() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, TypeDescription.ArrayProjection.of(instrumentedType, 1)));
+        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC,
+                TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1)));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
@@ -149,8 +150,8 @@ public class InstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                instrumentedType,
-                Collections.singletonList(instrumentedType)));
+                TargetType.DESCRIPTION,
+                Collections.singletonList(TargetType.DESCRIPTION)));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType(), sameInstance((GenericTypeDescription) instrumentedType));
@@ -168,8 +169,8 @@ public class InstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                TypeDescription.ArrayProjection.of(instrumentedType, 1),
-                Collections.singletonList(TypeDescription.ArrayProjection.of(instrumentedType, 1))));
+                TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1),
+                Collections.singletonList(TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1))));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asRawType().isArray(), is(true));

@@ -6,7 +6,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -17,10 +16,8 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.utility.ByteBuddyCommons.joinUnique;
 
 /**
@@ -32,7 +29,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param fieldToken A token that represents the field's shape.
+     * @param fieldToken A token that represents the field's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
     InstrumentedType withField(FieldDescription.Token fieldToken);
@@ -40,7 +37,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new method or constructor.
      *
-     * @param methodToken A token that represents the method's shape.
+     * @param methodToken A token that represents the method's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
     InstrumentedType withMethod(MethodDescription.Token methodToken);
@@ -305,7 +302,7 @@ public interface InstrumentedType extends TypeDescription {
                     typeVariables,
                     superType,
                     interfaceTypes,
-                    joinUnique(fieldTokens, fieldToken.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(this)))),
+                    joinUnique(fieldTokens, fieldToken),
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
@@ -320,7 +317,7 @@ public interface InstrumentedType extends TypeDescription {
                     superType,
                     interfaceTypes,
                     fieldTokens,
-                    joinUnique(methodTokens, methodToken.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(this)))),
+                    joinUnique(methodTokens, methodToken),
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer);
