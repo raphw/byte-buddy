@@ -19,6 +19,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -312,33 +313,37 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public String getGenericSignature() {
-            SignatureWriter signatureWriter = new SignatureWriter();
-            boolean generic = false;
-            for (GenericTypeDescription typeVariable : getTypeVariables()) {
-                signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
-                boolean classBound = true;
-                for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
-                    upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(classBound
-                            ? signatureWriter.visitClassBound()
-                            : signatureWriter.visitInterfaceBound()));
-                    classBound = false;
+            try {
+                SignatureWriter signatureWriter = new SignatureWriter();
+                boolean generic = false;
+                for (GenericTypeDescription typeVariable : getTypeVariables()) {
+                    signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
+                    boolean classBound = true;
+                    for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
+                        upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(classBound
+                                ? signatureWriter.visitClassBound()
+                                : signatureWriter.visitInterfaceBound()));
+                        classBound = false;
+                    }
+                    generic = true;
                 }
-                generic = true;
+                for (GenericTypeDescription parameterType : getParameters().asTypeList()) {
+                    parameterType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitParameterType()));
+                    generic = generic || !parameterType.getSort().isNonGeneric();
+                }
+                GenericTypeDescription returnType = getReturnType();
+                returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
+                generic = generic || !returnType.getSort().isNonGeneric();
+                for (GenericTypeDescription exceptionType : getExceptionTypes()) {
+                    exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
+                    generic = generic || !exceptionType.getSort().isNonGeneric();
+                }
+                return generic
+                        ? signatureWriter.toString()
+                        : NON_GENERIC_SIGNATURE;
+            } catch (GenericSignatureFormatError ignored) {
+                return NON_GENERIC_SIGNATURE;
             }
-            for (GenericTypeDescription parameterType : getParameters().asTypeList()) {
-                parameterType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitParameterType()));
-                generic = generic || !parameterType.getSort().isNonGeneric();
-            }
-            GenericTypeDescription returnType = getReturnType();
-            returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
-            generic = generic || !returnType.getSort().isNonGeneric();
-            for (GenericTypeDescription exceptionType : getExceptionTypes()) {
-                exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
-                generic = generic || !exceptionType.getSort().isNonGeneric();
-            }
-            return generic
-                    ? signatureWriter.toString()
-                    : null;
         }
 
         @Override

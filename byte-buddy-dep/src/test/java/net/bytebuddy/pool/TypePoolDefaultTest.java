@@ -39,5 +39,15 @@ public class TypePoolDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.Default.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForPrimitiveType.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForRawType.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable.Formal.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForGenericArray.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForUnboundWildcard.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForLowerBoundWildcard.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForUpperBoundWildcard.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForParameterizedType.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForParameterizedType.Nested.class).apply();
     }
 }

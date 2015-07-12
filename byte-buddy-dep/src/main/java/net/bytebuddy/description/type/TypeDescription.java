@@ -18,6 +18,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -424,30 +425,34 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public String getGenericSignature() {
-            GenericTypeDescription superType = getSuperType();
-            if (superType == null) {
-                return null;
-            }
-            SignatureWriter signatureWriter = new SignatureWriter();
-            boolean generic = false;
-            for (GenericTypeDescription typeVariable : getTypeVariables()) {
-                signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
-                for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
-                    upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(upperBound.asRawType().isInterface()
-                            ? signatureWriter.visitInterfaceBound()
-                            : signatureWriter.visitClassBound()));
+            try {
+                GenericTypeDescription superType = getSuperType();
+                if (superType == null) {
+                    return NON_GENERIC_SIGNATURE;
                 }
-                generic = true;
+                SignatureWriter signatureWriter = new SignatureWriter();
+                boolean generic = false;
+                for (GenericTypeDescription typeVariable : getTypeVariables()) {
+                    signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
+                    for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
+                        upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(upperBound.asRawType().isInterface()
+                                ? signatureWriter.visitInterfaceBound()
+                                : signatureWriter.visitClassBound()));
+                    }
+                    generic = true;
+                }
+                superType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
+                generic = generic || !superType.getSort().isNonGeneric();
+                for (GenericTypeDescription interfaceType : getInterfaces()) {
+                    interfaceType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
+                    generic = generic || !interfaceType.getSort().isNonGeneric();
+                }
+                return generic
+                        ? signatureWriter.toString()
+                        : NON_GENERIC_SIGNATURE;
+            } catch (GenericSignatureFormatError ignored) {
+                return NON_GENERIC_SIGNATURE;
             }
-            superType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
-            generic = generic || !superType.getSort().isNonGeneric();
-            for (GenericTypeDescription interfaceType : getInterfaces()) {
-                interfaceType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
-                generic = generic || !interfaceType.getSort().isNonGeneric();
-            }
-            return generic
-                    ? signatureWriter.toString()
-                    : null;
         }
 
         @Override

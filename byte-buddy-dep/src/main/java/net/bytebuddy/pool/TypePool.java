@@ -1417,7 +1417,7 @@ public interface TypePool {
 
             @Override
             public void register(LazyTypeDescription.GenericTypeToken componentTypeToken) {
-                genericTypeRegistrant.register(new LazyTypeDescription.GenericTypeToken.ForArray(componentTypeToken));
+                genericTypeRegistrant.register(new LazyTypeDescription.GenericTypeToken.ForGenericArray(componentTypeToken));
             }
 
             @Override
@@ -3511,10 +3511,25 @@ public interface TypePool {
             }
         }
 
+        /**
+         * A token reprepresenting a generic type.
+         */
         protected interface GenericTypeToken {
 
+            /**
+             * Returns the sort of the generic type this token represents.
+             *
+             * @return The sort of the generic type this token represents.
+             */
             Sort getSort();
 
+            /**
+             * Transforms this token into a generic type reprsentation.
+             *
+             * @param typePool           The type pool to be used for locating the underlaying raw types.
+             * @param typeVariableSource The type variable source.
+             * @return A description of the represented generic type.
+             */
             GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource);
 
             interface Resolution {
@@ -3645,12 +3660,12 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                        return LazyTypeList.of(typePool, parameterTypeDescriptors).asGenericTypes();
+                        return new LazyTypeList(typePool, parameterTypeDescriptors).asGenericTypes();
                     }
 
                     @Override
                     public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                        return LazyTypeList.of(typePool, exceptionTypeDescriptors).asGenericTypes();
+                        return new LazyTypeList(typePool, exceptionTypeDescriptors).asGenericTypes();
                     }
 
                     @Override
@@ -3660,7 +3675,7 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
-                        return LazyTypeList.of(typePool, interfaceTypeDescriptors).asGenericTypes();
+                        return new LazyTypeList(typePool, interfaceTypeDescriptors).asGenericTypes();
                     }
 
                     @Override
@@ -3705,23 +3720,67 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
-                        throw new MalformedParameterizedTypeException();
+                        throw new GenericSignatureFormatError("Signature Parse error: malformed type signature");
                     }
                 }
             }
 
+            /**
+             * A generic type token that represents a primitive type.
+             */
             enum ForPrimitiveType implements GenericTypeToken {
 
+                /**
+                 * The generic type token describing the {@code boolean} type.
+                 */
                 BOOLEAN(boolean.class),
+
+                /**
+                 * The generic type token describing the {@code byte} type.
+                 */
                 BYTE(byte.class),
+
+                /**
+                 * The generic type token describing the {@code short} type.
+                 */
                 SHORT(short.class),
+
+                /**
+                 * The generic type token describing the {@code char} type.
+                 */
                 CHAR(char.class),
+
+                /**
+                 * The generic type token describing the {@code int} type.
+                 */
                 INTEGER(int.class),
+
+                /**
+                 * The generic type token describing the {@code long} type.
+                 */
                 LONG(long.class),
+
+                /**
+                 * The generic type token describing the {@code float} type.
+                 */
                 FLOAT(float.class),
+
+                /**
+                 * The generic type token describing the {@code double} type.
+                 */
                 DOUBLE(double.class),
+
+                /**
+                 * The generic type token describing the {@code void} type.
+                 */
                 VOID(void.class);
 
+                /**
+                 * Resolves a generic type token of a primitive type.
+                 *
+                 * @param descriptor The descriptor of the primitive type.
+                 * @return The corresponding generic type token.
+                 */
                 public static GenericTypeToken of(char descriptor) {
                     switch (descriptor) {
                         case 'V':
@@ -3747,8 +3806,16 @@ public interface TypePool {
                     }
                 }
 
+                /**
+                 * A description of this primitive type token.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * Creates a new primitive type token.
+                 *
+                 * @param type The loaded type representing this primitive.
+                 */
                 ForPrimitiveType(Class<?> type) {
                     typeDescription = new TypeDescription.ForLoadedType(type);
                 }
@@ -3762,12 +3829,28 @@ public interface TypePool {
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return typeDescription;
                 }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForPrimitiveType." + name();
+                }
             }
 
+            /**
+             * A generic type token that represents a non-generic type.
+             */
             class ForRawType implements GenericTypeToken {
 
+                /**
+                 * The name of the represented type.
+                 */
                 private final String name;
 
+                /**
+                 * Creates a new type token that represents a non-generic type.
+                 *
+                 * @param name The name of the represented type.
+                 */
                 public ForRawType(String name) {
                     this.name = name;
                 }
@@ -3781,12 +3864,40 @@ public interface TypePool {
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return typePool.describe(name).resolve();
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass()) && name.equals(((ForRawType) other).name);
+                }
+
+                @Override
+                public int hashCode() {
+                    return name.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForRawType{" +
+                            "name='" + name + '\'' +
+                            '}';
+                }
             }
 
+            /**
+             * A generic type token that represents a type variable.
+             */
             class ForTypeVariable implements GenericTypeToken {
 
+                /**
+                 * This type variable's nominal symbol.
+                 */
                 private final String symbol;
 
+                /**
+                 * Creates a generic type token that represents a type variable.
+                 *
+                 * @param symbol This type variable's nominal symbol.
+                 */
                 public ForTypeVariable(String symbol) {
                     this.symbol = symbol;
                 }
@@ -3806,12 +3917,44 @@ public interface TypePool {
                     }
                 }
 
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass()) && symbol.equals(((ForTypeVariable) other).symbol);
+                }
+
+                @Override
+                public int hashCode() {
+                    return symbol.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable{" +
+                            "symbol='" + symbol + '\'' +
+                            '}';
+                }
+
+                /**
+                 * A generic type token that represent a formal type variable, i.e. a type variable including its upper bounds.
+                 */
                 public static class Formal implements GenericTypeToken {
 
+                    /**
+                     * This type variable's nominal symbol.
+                     */
                     private final String symbol;
 
+                    /**
+                     * A list of tokens that represent this type variable's upper bounds.
+                     */
                     private final List<GenericTypeToken> bounds;
 
+                    /**
+                     * Creates generic type token that represent a formal type variable.
+                     *
+                     * @param symbol This type variable's nominal symbol.
+                     * @param bounds A list of tokens that represent this type variable's upper bounds.
+                     */
                     public Formal(String symbol, List<GenericTypeToken> bounds) {
                         this.symbol = symbol;
                         this.bounds = bounds;
@@ -3827,12 +3970,47 @@ public interface TypePool {
                         return new LazyTypeVariable(typePool, typeVariableSource);
                     }
 
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && symbol.equals(((Formal) other).symbol)
+                                && bounds.equals(((Formal) other).bounds);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return symbol.hashCode() + 31 * bounds.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable.Formal{" +
+                                "symbol='" + symbol + '\'' +
+                                "bounds='" + bounds + '\'' +
+                                '}';
+                    }
+
+                    /**
+                     * A type description that represents a type variable with bounds that are resolved lazily.
+                     */
                     protected class LazyTypeVariable extends GenericTypeDescription.ForTypeVariable {
 
+                        /**
+                         * The type pool to use for locating type descriptions.
+                         */
                         private final TypePool typePool;
 
+                        /**
+                         * The type variable source to use for locating type variables.
+                         */
                         private final TypeVariableSource typeVariableSource;
 
+                        /**
+                         * Creates a lazy type description of a type variables.
+                         *
+                         * @param typePool           The type pool to use for locating type descriptions.
+                         * @param typeVariableSource The type variable source to use for locating type variables.
+                         */
                         protected LazyTypeVariable(TypePool typePool, TypeVariableSource typeVariableSource) {
                             this.typePool = typePool;
                             this.typeVariableSource = typeVariableSource;
@@ -3860,11 +4038,22 @@ public interface TypePool {
                 }
             }
 
-            class ForArray implements GenericTypeToken {
+            /**
+             * A generic type token that represents a generic array.
+             */
+            class ForGenericArray implements GenericTypeToken {
 
+                /**
+                 * The array's component type.
+                 */
                 private final GenericTypeToken componentTypeToken;
 
-                public ForArray(GenericTypeToken componentTypeToken) {
+                /**
+                 * Creates a generic type token that represents a generic array.
+                 *
+                 * @param componentTypeToken The array's component type.
+                 */
+                public ForGenericArray(GenericTypeToken componentTypeToken) {
                     this.componentTypeToken = componentTypeToken;
                 }
 
@@ -3877,12 +4066,41 @@ public interface TypePool {
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return GenericTypeDescription.ForGenericArray.Latent.of(componentTypeToken.toGenericType(typePool, typeVariableSource), 1);
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && componentTypeToken.equals(((ForGenericArray) other).componentTypeToken);
+                }
+
+                @Override
+                public int hashCode() {
+                    return componentTypeToken.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForGenericArray{" +
+                            "componentTypeToken='" + componentTypeToken + '\'' +
+                            '}';
+                }
             }
 
+            /**
+             * A generic type token for a wildcard that is bound below.
+             */
             class ForLowerBoundWildcard implements GenericTypeToken {
 
+                /**
+                 * A token that represents the wildcard's lower bound.
+                 */
                 private final GenericTypeToken baseType;
 
+                /**
+                 * Creates a generic type token for a wildcard that is bound below.
+                 *
+                 * @param baseType A token that represents the wildcard's lower bound.
+                 */
                 public ForLowerBoundWildcard(GenericTypeToken baseType) {
                     this.baseType = baseType;
                 }
@@ -3896,12 +4114,41 @@ public interface TypePool {
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return GenericTypeDescription.ForWildcardType.Latent.boundedBelow(baseType.toGenericType(typePool, typeVariableSource));
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && baseType.equals(((ForLowerBoundWildcard) other).baseType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return baseType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForLowerBoundWildcard{" +
+                            "baseType=" + baseType +
+                            '}';
+                }
             }
 
+            /**
+             * A generic type token for a wildcard that is bound above.
+             */
             class ForUpperBoundWildcard implements GenericTypeToken {
 
+                /**
+                 * A token that represents the wildcard's upper bound.
+                 */
                 private final GenericTypeToken baseType;
 
+                /**
+                 * Creates a generic type token for a wildcard that is bound above.
+                 *
+                 * @param baseType A token that represents the wildcard's upper bound.
+                 */
                 public ForUpperBoundWildcard(GenericTypeToken baseType) {
                     this.baseType = baseType;
                 }
@@ -3915,10 +4162,34 @@ public interface TypePool {
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return GenericTypeDescription.ForWildcardType.Latent.boundedAbove(baseType.toGenericType(typePool, typeVariableSource));
                 }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && baseType.equals(((ForUpperBoundWildcard) other).baseType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return baseType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForUpperBoundWildcard{" +
+                            "baseType=" + baseType +
+                            '}';
+                }
             }
 
+            /**
+             * A generic type token that represents an unbound wildcard.
+             */
             enum ForUnboundWildcard implements GenericTypeToken {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -3930,14 +4201,34 @@ public interface TypePool {
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return GenericTypeDescription.ForWildcardType.Latent.unbounded();
                 }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForUnboundWildcard." + name();
+                }
             }
 
+            /**
+             * A generic type token that represents a parameterized type.
+             */
             class ForParameterizedType implements GenericTypeToken {
 
+                /**
+                 * The name of the parameterized type's raw type.
+                 */
                 private final String name;
 
+                /**
+                 * A list of tokens that represent the parameters of the represented type.
+                 */
                 private final List<GenericTypeToken> parameters;
 
+                /**
+                 * Creates a type token that represents a parameterized type.
+                 *
+                 * @param name       The name of the parameterized type's raw type.
+                 * @param parameters A list of tokens that represent the parameters of the represented type.
+                 */
                 public ForParameterizedType(String name, List<GenericTypeToken> parameters) {
                     this.name = name;
                     this.parameters = parameters;
@@ -3953,12 +4244,47 @@ public interface TypePool {
                     return new LazyParameterizedType(typePool, typeVariableSource);
                 }
 
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && name.equals(((ForParameterizedType) other).name)
+                            && parameters.equals(((ForParameterizedType) other).parameters);
+                }
+
+                @Override
+                public int hashCode() {
+                    return name.hashCode() + 31 * parameters.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForParameterizedType{" +
+                            "name='" + name + '\'' +
+                            "parameters=" + parameters +
+                            '}';
+                }
+
+                /**
+                 * A generic type description that represents a parameterized type <b>without</b> an enclosing generic owner type.
+                 */
                 protected class LazyParameterizedType extends GenericTypeDescription.ForParameterizedType {
 
+                    /**
+                     * The type pool that is used for locating a generic type.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * The type variable source to use for resolving type variables.
+                     */
                     private final TypeVariableSource typeVariableSource;
 
+                    /**
+                     * Creates a new description of a parameterized type.
+                     *
+                     * @param typePool           The type pool that is used for locating a generic type.
+                     * @param typeVariableSource The type variable source to use for resolving type variables.
+                     */
                     public LazyParameterizedType(TypePool typePool, TypeVariableSource typeVariableSource) {
                         this.typePool = typePool;
                         this.typeVariableSource = typeVariableSource;
@@ -3984,14 +4310,33 @@ public interface TypePool {
                     }
                 }
 
+                /**
+                 * A generic type token to describe a parameterized type description with a generic owner type.
+                 */
                 public static class Nested implements GenericTypeToken {
 
+                    /**
+                     * The name of the parameterized type's raw type.
+                     */
                     private final String name;
 
+                    /**
+                     * A list of tokens that represent the parameters of the represented type.
+                     */
                     private final List<GenericTypeToken> parameters;
 
+                    /**
+                     * A token that describes the described parameterized type's owner type.
+                     */
                     private final GenericTypeToken ownerType;
 
+                    /**
+                     * Creates a type token that represents a parameterized type.
+                     *
+                     * @param name       The name of the parameterized type's raw type.
+                     * @param parameters A list of tokens that represent the parameters of the represented type.
+                     * @param ownerType  A token that describes the described parameterized type's owner type.
+                     */
                     public Nested(String name, List<GenericTypeToken> parameters, GenericTypeToken ownerType) {
                         this.name = name;
                         this.parameters = parameters;
@@ -4008,12 +4353,49 @@ public interface TypePool {
                         return new LazyParameterizedType(typePool, typeVariableSource);
                     }
 
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && name.equals(((Nested) other).name)
+                                && ownerType.equals(((Nested) other).ownerType)
+                                && parameters.equals(((Nested) other).parameters);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return name.hashCode() + 31 * parameters.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.LazyTypeDescription.GenericTypeToken.ForParameterizedType.Nested{" +
+                                "name='" + name + '\'' +
+                                "parameters=" + parameters +
+                                "ownerType=" + ownerType +
+                                '}';
+                    }
+
+                    /**
+                     * A lazy description of a parameterized type with an owner type.
+                     */
                     protected class LazyParameterizedType extends GenericTypeDescription.ForParameterizedType {
 
+                        /**
+                         * The type pool to use for locating raw types.
+                         */
                         private final TypePool typePool;
 
+                        /**
+                         * The type variable source for locating generic types.
+                         */
                         private final TypeVariableSource typeVariableSource;
 
+                        /**
+                         * Creates a lazy description of a parameterized type with an owner type.
+                         *
+                         * @param typePool           The type pool to use for locating raw types.
+                         * @param typeVariableSource The type variable source for locating generic types.
+                         */
                         public LazyParameterizedType(TypePool typePool, TypeVariableSource typeVariableSource) {
                             this.typePool = typePool;
                             this.typeVariableSource = typeVariableSource;
@@ -4292,12 +4674,24 @@ public interface TypePool {
              */
             private final String internalName;
 
+            /**
+             * The descriptor of the return type.
+             */
             private final String returnTypeDescriptor;
 
+            /**
+             * The generic type token of this method.
+             */
             private final GenericTypeToken.Resolution.ForMethod signatureResolution;
 
+            /**
+             * A list of type descriptions of this method's parameters.
+             */
             private final List<String> parameterTypeDescriptors;
 
+            /**
+             * A list of type descriptions of this method's exception types.
+             */
             private final List<String> exceptionTypeDescriptors;
 
             /**
@@ -4332,6 +4726,7 @@ public interface TypePool {
              * @param modifiers                 The modifiers of the represented method.
              * @param internalName              The internal name of this method.
              * @param methodDescriptor          The method descriptor of this method.
+             * @param signatureResolution       The generic type token of this method.
              * @param exceptionTypeInternalName The internal names of the exceptions that are declared by this
              *                                  method or {@code null} if no exceptions are declared by this
              *                                  method.
@@ -4548,16 +4943,22 @@ public interface TypePool {
          */
         private static class LazyTypeList extends TypeList.AbstractBase {
 
+            /**
+             * The type pool to use for locating types.
+             */
             private final TypePool typePool;
 
+            /**
+             * A list of type descriptors that this list represents.
+             */
             private final List<String> descriptors;
 
-            protected static TypeList of(TypePool typePool, List<String> descriptors) {
-                return descriptors.isEmpty()
-                        ? new TypeList.Empty()
-                        : new LazyTypeList(typePool, descriptors);
-            }
-
+            /**
+             * Creates a list of lazy type descriptions.
+             *
+             * @param typePool    The type pool to use for locating types.
+             * @param descriptors A list of type descriptors that this list represents.
+             */
             private LazyTypeList(TypePool typePool, List<String> descriptors) {
                 this.typePool = typePool;
                 this.descriptors = descriptors;
@@ -4601,6 +5002,9 @@ public interface TypePool {
                 return new Generified();
             }
 
+            /**
+             * A representation of the lazy type list as generic types.
+             */
             private class Generified extends GenericTypeList.AbstractBase {
 
                 @Override
@@ -4626,7 +5030,7 @@ public interface TypePool {
         private static class TokenizedGenericType extends GenericTypeDescription.LazyProjection {
 
             /**
-             * Transforms a descriptor into a type description
+             * Creates a type description from a descriptor by looking up the corresponding type.
              *
              * @param typePool   The type pool to use for locating a type.
              * @param descriptor The descriptor to interpret.
@@ -4747,7 +5151,7 @@ public interface TypePool {
 
                 @Override
                 public TypeList asRawTypes() {
-                    return LazyTypeList.of(typePool, rawTypeDescriptors);
+                    return new LazyTypeList(typePool, rawTypeDescriptors);
                 }
             }
 
@@ -4823,7 +5227,7 @@ public interface TypePool {
 
                 @Override
                 protected GenericTypeDescription resolve() {
-                    throw new GenericSignatureFormatError("Signature Parse error: illegal type signature");
+                    throw new GenericSignatureFormatError("Signature Parse error: malformed type signature");
                 }
 
                 @Override
@@ -4869,7 +5273,7 @@ public interface TypePool {
 
                     @Override
                     public TypeList asRawTypes() {
-                        return LazyTypeList.of(typePool, rawTypeDescriptors);
+                        return new LazyTypeList(typePool, rawTypeDescriptors);
                     }
                 }
 

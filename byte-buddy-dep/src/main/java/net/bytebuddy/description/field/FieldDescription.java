@@ -10,6 +10,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.List;
@@ -70,9 +71,13 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         @Override
         public String getGenericSignature() {
             GenericTypeDescription fieldType = getType();
-            return fieldType.getSort().isNonGeneric()
-                    ? null
-                    : fieldType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(new SignatureWriter())).toString();
+            try {
+                return fieldType.getSort().isNonGeneric()
+                        ? NON_GENERIC_SIGNATURE
+                        : fieldType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(new SignatureWriter())).toString();
+            } catch (GenericSignatureFormatError ignored) {
+                return NON_GENERIC_SIGNATURE;
+            }
         }
 
         @Override

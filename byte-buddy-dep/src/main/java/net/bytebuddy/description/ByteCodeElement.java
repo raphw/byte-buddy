@@ -14,6 +14,11 @@ import java.util.List;
 public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierReviewable, DeclaredByType, AnnotatedCodeElement {
 
     /**
+     * The generic type signature of a non-generic byte code element.
+     */
+    String NON_GENERIC_SIGNATURE = null;
+
+    /**
      * Returns the descriptor of this byte code element.
      *
      * @return The descriptor of this byte code element.

@@ -446,6 +446,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(typeDescription.getInterfaces().asRawTypes().getOnly(), is(malformed));
         assertThat(typeDescription.getDeclaredFields().getOnly().getType().asRawType(), is(malformed));
         assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().asRawType(), is(malformed));
+        assertThat(typeDescription.getGenericSignature(), nullValue(String.class));
+        assertThat(typeDescription.getGenericSignature(), nullValue(String.class));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getGenericSignature(), nullValue(String.class));
+        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getGenericSignature(), nullValue(String.class));
     }
 
     @Test(expected = GenericSignatureFormatError.class)
