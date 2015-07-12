@@ -1405,16 +1405,6 @@ public interface TypePool {
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    return other != null && getClass().equals(other.getClass());
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31;
-                }
-
-                @Override
                 public String toString() {
                     return "TypePool.Default.GenericTypeRegistrant.RejectingSignatureVisitor{}";
                 }
@@ -1497,23 +1487,6 @@ public interface TypePool {
             @Override
             public void visitEnd() {
                 genericTypeRegistrant.register(incompleteToken.toToken());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                if (!super.equals(other)) return false;
-                GenericTypeExtractor that = (GenericTypeExtractor) other;
-                return genericTypeRegistrant.equals(that.genericTypeRegistrant) && incompleteToken.equals(that.incompleteToken);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + genericTypeRegistrant.hashCode();
-                result = 31 * result + incompleteToken.hashCode();
-                return result;
             }
 
             @Override
@@ -1624,25 +1597,6 @@ public interface TypePool {
                         }
 
                         @Override
-                        public int hashCode() {
-                            return AbstractBase.this.hashCode();
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return other != null && getClass() != other.getClass() && (AbstractBase.this.equals(((ForDirectBound) other).getOuter()));
-                        }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private Object getOuter() {
-                            return AbstractBase.this;
-                        }
-
-                        @Override
                         public String toString() {
                             return "TypePool.Default.GenericTypeExtractor.IncompleteToken.AbstractBase.ForDirectBound{outer=" + AbstractBase.this + '}';
                         }
@@ -1659,25 +1613,6 @@ public interface TypePool {
                         }
 
                         @Override
-                        public int hashCode() {
-                            return AbstractBase.this.hashCode();
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return other != null && getClass() != other.getClass() && (AbstractBase.this.equals(((ForUpperBound) other).getOuter()));
-                        }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private Object getOuter() {
-                            return AbstractBase.this;
-                        }
-
-                        @Override
                         public String toString() {
                             return "TypePool.Default.GenericTypeExtractor.IncompleteToken.AbstractBase.ForUpperBound{outer=" + AbstractBase.this + '}';
                         }
@@ -1691,20 +1626,6 @@ public interface TypePool {
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             parameters.add(new LazyTypeDescription.GenericTypeToken.ForLowerBoundWildcard(token));
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return other != null && getClass() != other.getClass() && (AbstractBase.this.equals(((ForLowerBound) other).getOuter()));
-                        }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private Object getOuter() {
-                            return AbstractBase.this;
                         }
 
                         @Override
@@ -1826,13 +1747,14 @@ public interface TypePool {
 
                     @Override
                     public int hashCode() {
-                        return internalName.hashCode();
+                        return internalName.hashCode() + 31 * outerTypeToken.hashCode();
                     }
 
                     @Override
                     public String toString() {
                         return "TypePool.Default.GenericTypeExtractor.IncompleteToken.ForInnerClass{" +
                                 "internalName='" + internalName + '\'' +
+                                "outerTypeToken=" + outerTypeToken +
                                 '}';
                     }
                 }
@@ -1847,18 +1769,38 @@ public interface TypePool {
                     extends RejectingSignatureVisitor
                     implements GenericTypeRegistrant {
 
+                /**
+                 * Applies an extraction of a generic signature given the supplied visitor.
+                 *
+                 * @param genericSignature The generic signature to interpret.
+                 * @param visitor          The visitor to apply.
+                 * @param <S>              The type of the generated resolution.
+                 * @return The resolution of the supplied signature.
+                 */
                 protected static <S extends LazyTypeDescription.GenericTypeToken.Resolution> S extract(String genericSignature, ForSignature<S> visitor) {
                     SignatureReader signatureReader = new SignatureReader(genericSignature);
                     signatureReader.accept(visitor);
                     return visitor.resolve();
                 }
 
+                /**
+                 * The name of the currently constructed type.
+                 */
+                protected String currentTypeParameter;
+
+                /**
+                 * The bounds of the currently constructed type.
+                 */
+                protected List<LazyTypeDescription.GenericTypeToken> currentBounds;
+
+                /**
+                 * The resolved type variable tokens.
+                 */
                 protected final List<LazyTypeDescription.GenericTypeToken> typeVariableTokens;
 
-                private String currentTypeParameter;
-
-                private List<LazyTypeDescription.GenericTypeToken> currentBounds;
-
+                /**
+                 * Creates a new signature visitor.
+                 */
                 public ForSignature() {
                     typeVariableTokens = new LinkedList<LazyTypeDescription.GenericTypeToken>();
                 }
@@ -1885,16 +1827,33 @@ public interface TypePool {
                     currentBounds.add(token);
                 }
 
+                /**
+                 * Collects the currently constructed type.
+                 */
                 protected void collectTypeParameter() {
                     if (currentTypeParameter != null) {
                         typeVariableTokens.add(new LazyTypeDescription.GenericTypeToken.ForTypeVariable.Formal(currentTypeParameter, currentBounds));
                     }
                 }
 
+                /**
+                 * Completes the current resolution.
+                 *
+                 * @return The resolved generic signature.
+                 */
                 public abstract T resolve();
 
+                /**
+                 * A parser for a generic type signature.
+                 */
                 protected static class OfType extends ForSignature<LazyTypeDescription.GenericTypeToken.Resolution.ForType> {
 
+                    /**
+                     * Extracts a generic type resolution of a type signature.
+                     *
+                     * @param genericSignature The signature to interpret.
+                     * @return The interpreted type signature.
+                     */
                     public static LazyTypeDescription.GenericTypeToken.Resolution.ForType extract(String genericSignature) {
                         try {
                             return genericSignature == null
@@ -1905,10 +1864,19 @@ public interface TypePool {
                         }
                     }
 
+                    /**
+                     * The super type's generic siagnature.
+                     */
                     private LazyTypeDescription.GenericTypeToken superTypeToken;
 
+                    /**
+                     * The interface type's generic signatures.
+                     */
                     private final List<LazyTypeDescription.GenericTypeToken> interfaceTypeTokens;
 
+                    /**
+                     * Creates a new parser for a type signature.
+                     */
                     protected OfType() {
                         interfaceTypeTokens = new LinkedList<LazyTypeDescription.GenericTypeToken>();
                     }
@@ -1929,25 +1897,103 @@ public interface TypePool {
                         return new LazyTypeDescription.GenericTypeToken.Resolution.ForType.Tokenized(superTypeToken, interfaceTypeTokens, typeVariableTokens);
                     }
 
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.GenericTypeExtractor.ForSignature.OfType{" +
+                                "currentTypeParameter='" + currentTypeParameter + '\'' +
+                                ", currentBounds=" + currentBounds +
+                                ", typeVariableTokens=" + typeVariableTokens +
+                                ", superTypeToken=" + superTypeToken +
+                                ", interfaceTypeTokens=" + interfaceTypeTokens +
+                                '}';
+                    }
+
+                    /**
+                     * A registrant for the super type.
+                     */
                     protected class SuperTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             superTypeToken = token;
                         }
+
+                        @Override
+                        public int hashCode() {
+                            return OfType.this.hashCode();
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return other != null
+                                    && getClass() == other.getClass()
+                                    && OfType.this.equals(((SuperTypeRegistrant) other).getOuter());
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private OfType getOuter() {
+                            return OfType.this;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfType.SuperTypeRegistrant{outer=" + OfType.this + '}';
+                        }
                     }
 
+                    /**
+                     * A registrant for the interface types.
+                     */
                     protected class InterfaceTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             interfaceTypeTokens.add(token);
                         }
+
+                        @Override
+                        public int hashCode() {
+                            return OfType.this.hashCode();
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return other != null
+                                    && getClass() == other.getClass()
+                                    && OfType.this.equals(((InterfaceTypeRegistrant) other).getOuter());
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private OfType getOuter() {
+                            return OfType.this;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfType.InterfaceTypeRegistrant{outer=" + OfType.this + '}';
+                        }
                     }
                 }
 
+                /**
+                 * A parser for a generic method signature.
+                 */
                 protected static class OfMethod extends ForSignature<LazyTypeDescription.GenericTypeToken.Resolution.ForMethod> {
 
+                    /**
+                     * Extracts a generic method resolution of a method signature.
+                     *
+                     * @param genericSignature The signature to interpret.
+                     * @return The interpreted method signature.
+                     */
                     public static LazyTypeDescription.GenericTypeToken.Resolution.ForMethod extract(String genericSignature) {
                         try {
                             return genericSignature == null
@@ -1958,12 +2004,24 @@ public interface TypePool {
                         }
                     }
 
+                    /**
+                     * The generic return type.
+                     */
                     private LazyTypeDescription.GenericTypeToken returnTypeToken;
 
+                    /**
+                     * The generic parameter types.
+                     */
                     private final List<LazyTypeDescription.GenericTypeToken> parameterTypeTokens;
 
+                    /**
+                     * The generic exception types.
+                     */
                     private final List<LazyTypeDescription.GenericTypeToken> exceptionTypeTokens;
 
+                    /**
+                     * Creates a parser for a generic method signature.
+                     */
                     public OfMethod() {
                         parameterTypeTokens = new LinkedList<LazyTypeDescription.GenericTypeToken>();
                         exceptionTypeTokens = new LinkedList<LazyTypeDescription.GenericTypeToken>();
@@ -1982,7 +2040,7 @@ public interface TypePool {
 
                     @Override
                     public SignatureVisitor visitExceptionType() {
-                        return new GenericTypeExtractor(new InterfaceTypeRegistrant());
+                        return new GenericTypeExtractor(new ExceptionTypeRegistrant());
                     }
 
                     @Override
@@ -1993,33 +2051,141 @@ public interface TypePool {
                                 typeVariableTokens);
                     }
 
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod{" +
+                                "currentTypeParameter='" + currentTypeParameter + '\'' +
+                                ", currentBounds=" + currentBounds +
+                                ", typeVariableTokens=" + typeVariableTokens +
+                                ", returnTypeToken=" + returnTypeToken +
+                                ", parameterTypeTokens=" + parameterTypeTokens +
+                                ", exceptionTypeTokens=" + exceptionTypeTokens +
+                                '}';
+                    }
+
+                    /**
+                     * A registrant for a parameter type.
+                     */
                     protected class ParameterTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             parameterTypeTokens.add(token);
                         }
+
+                        @Override
+                        public int hashCode() {
+                            return OfMethod.this.hashCode();
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return other != null
+                                    && getClass() == other.getClass()
+                                    && OfMethod.this.equals(((ParameterTypeRegistrant) other).getOuter());
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private OfMethod getOuter() {
+                            return OfMethod.this;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ParameterTypeRegistrant{outer=" + OfMethod.this + '}';
+                        }
                     }
 
+                    /**
+                     * A registrant for a return type.
+                     */
                     protected class ReturnTypeTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             returnTypeToken = token;
                         }
+
+                        @Override
+                        public int hashCode() {
+                            return OfMethod.this.hashCode();
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return other != null
+                                    && getClass() == other.getClass()
+                                    && OfMethod.this.equals(((ReturnTypeTypeRegistrant) other).getOuter());
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private OfMethod getOuter() {
+                            return OfMethod.this;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ReturnTypeTypeRegistrant{outer=" + OfMethod.this + '}';
+                        }
                     }
 
-                    protected class InterfaceTypeRegistrant implements GenericTypeRegistrant {
+                    /**
+                     * A registrant for an exception type.
+                     */
+                    protected class ExceptionTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             exceptionTypeTokens.add(token);
                         }
+
+                        @Override
+                        public int hashCode() {
+                            return OfMethod.this.hashCode();
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return other != null
+                                    && getClass() == other.getClass()
+                                    && OfMethod.this.equals(((ExceptionTypeRegistrant) other).getOuter());
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private OfMethod getOuter() {
+                            return OfMethod.this;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ExceptionTypeRegistrant{outer=" + OfMethod.this + '}';
+                        }
                     }
                 }
 
+                /**
+                 * A parser for a generic field signature.
+                 */
                 protected static class OfField implements GenericTypeRegistrant {
 
+                    /**
+                     * Extracts a generic field resolution of a field signature.
+                     *
+                     * @param genericSignature The signature to interpret.
+                     * @return The interpreted field signature.
+                     */
                     public static LazyTypeDescription.GenericTypeToken.Resolution.ForField extract(String genericSignature) {
                         if (genericSignature == null) {
                             return LazyTypeDescription.GenericTypeToken.Resolution.Raw.INSTANCE;
@@ -2035,6 +2201,9 @@ public interface TypePool {
                         }
                     }
 
+                    /**
+                     * The generic field type.
+                     */
                     private LazyTypeDescription.GenericTypeToken fieldTypeToken;
 
                     @Override
@@ -2042,8 +2211,20 @@ public interface TypePool {
                         fieldTypeToken = token;
                     }
 
+                    /**
+                     * Completes the current resolution.
+                     *
+                     * @return The resolved generic signature.
+                     */
                     protected LazyTypeDescription.GenericTypeToken.Resolution.ForField resolve() {
                         return new LazyTypeDescription.GenericTypeToken.Resolution.ForField.Tokenized(fieldTypeToken);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.GenericTypeExtractor.ForSignature.OfField{" +
+                                "fieldTypeToken=" + fieldTypeToken +
+                                '}';
                     }
                 }
             }
