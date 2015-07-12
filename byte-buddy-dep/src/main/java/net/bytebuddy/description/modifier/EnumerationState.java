@@ -8,14 +8,14 @@ import org.objectweb.asm.Opcodes;
 public enum EnumerationState implements ModifierContributor.ForType, ModifierContributor.ForField {
 
     /**
-     * Modifier for marking a type as an enumeration.
-     */
-    ENUMERATION(Opcodes.ACC_ENUM),
-
-    /**
      * Modifier for marking a type as a non-enumeration. (This is the default modifier.)
      */
-    PLAIN(EMPTY_MASK);
+    PLAIN(EMPTY_MASK),
+
+    /**
+     * Modifier for marking a type as an enumeration.
+     */
+    ENUMERATION(Opcodes.ACC_ENUM);
 
     /**
      * The mask of the modifier contributor.
@@ -44,6 +44,11 @@ public enum EnumerationState implements ModifierContributor.ForType, ModifierCon
     @Override
     public int getMask() {
         return mask;
+    }
+
+    @Override
+    public int getRange() {
+        return Opcodes.ACC_ENUM;
     }
 
     @Override

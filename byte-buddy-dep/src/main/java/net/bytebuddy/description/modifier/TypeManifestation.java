@@ -52,6 +52,11 @@ public enum TypeManifestation implements ModifierContributor.ForType {
     }
 
     @Override
+    public int getRange() {
+        return Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION;
+    }
+
+    @Override
     public boolean isDefault() {
         return this == PLAIN;
     }

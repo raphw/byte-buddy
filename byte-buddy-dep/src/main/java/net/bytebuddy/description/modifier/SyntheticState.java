@@ -50,6 +50,11 @@ public enum SyntheticState implements ModifierContributor.ForType,
     }
 
     @Override
+    public int getRange() {
+        return Opcodes.ACC_SYNTHETIC;
+    }
+
+    @Override
     public boolean isDefault() {
         return this == PLAIN;
     }

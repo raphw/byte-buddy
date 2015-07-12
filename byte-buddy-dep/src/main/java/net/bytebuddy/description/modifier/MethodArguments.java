@@ -47,6 +47,11 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
     }
 
     @Override
+    public int getRange() {
+        return Opcodes.ACC_VARARGS;
+    }
+
+    @Override
     public boolean isDefault() {
         return this == PLAIN;
     }

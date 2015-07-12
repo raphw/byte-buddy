@@ -49,6 +49,11 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
     }
 
     @Override
+    public int getRange() {
+        return Opcodes.ACC_STATIC;
+    }
+
+    @Override
     public boolean isDefault() {
         return this == MEMBER;
     }

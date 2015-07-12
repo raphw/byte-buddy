@@ -29,9 +29,4 @@ public abstract class AbstractModifierContributorTest {
     public void testDefaultModifier() throws Exception {
         assertThat(modifierContributor.isDefault(), is(defaultModifier));
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(EnumerationState.class).apply();
-    }
 }

@@ -64,6 +64,11 @@ public enum MethodManifestation implements ModifierContributor.ForMethod {
     }
 
     @Override
+    public int getRange() {
+        return Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_FINAL | Opcodes.ACC_BRIDGE;
+    }
+
+    @Override
     public boolean isDefault() {
         return this == PLAIN;
     }

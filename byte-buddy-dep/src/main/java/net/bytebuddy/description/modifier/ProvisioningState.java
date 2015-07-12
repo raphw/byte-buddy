@@ -47,6 +47,11 @@ public enum ProvisioningState implements ModifierContributor.ForParameter {
     }
 
     @Override
+    public int getRange() {
+        return Opcodes.ACC_MANDATED;
+    }
+
+    @Override
     public boolean isDefault() {
         return this == PLAIN;
     }

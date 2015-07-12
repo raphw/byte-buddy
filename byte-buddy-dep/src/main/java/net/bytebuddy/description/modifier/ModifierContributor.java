@@ -24,6 +24,13 @@ public interface ModifierContributor {
     int getMask();
 
     /**
+     * Returns the entire range of modifiers that address this contributor's property.
+     *
+     * @return The range of this contributor's property.
+     */
+    int getRange();
+
+    /**
      * Determines if this is the default modifier.
      *
      * @return {@code true} if this contributor represents the default modifier.

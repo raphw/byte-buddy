@@ -42,6 +42,11 @@ public enum FieldManifestation implements ModifierContributor.ForField {
     }
 
     @Override
+    public int getRange() {
+        return Opcodes.ACC_FINAL | Opcodes.ACC_VOLATILE;
+    }
+
+    @Override
     public boolean isDefault() {
         return this == PLAIN;
     }

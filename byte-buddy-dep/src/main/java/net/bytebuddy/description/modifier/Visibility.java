@@ -47,6 +47,11 @@ public enum Visibility implements ModifierContributor.ForType, ModifierContribut
     }
 
     @Override
+    public int getRange() {
+        return Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE;
+    }
+
+    @Override
     public boolean isDefault() {
         return this == PACKAGE_PRIVATE;
     }
