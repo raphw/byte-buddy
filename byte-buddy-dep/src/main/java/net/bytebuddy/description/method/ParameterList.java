@@ -313,12 +313,27 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             return parameterDescriptions.size();
         }
 
+        /**
+         * A parameter list representing parameters without meta data or annotations.
+         */
         public static class ForTypes extends ParameterList.AbstractBase {
 
+            /**
+             * The method description that declares the parameters.
+             */
             private final MethodDescription methodDescription;
 
+            /**
+             * A list of detached types representing the parameters.
+             */
             private final List<? extends GenericTypeDescription> typeDescriptions;
 
+            /**
+             * Creates a new parameter type list.
+             *
+             * @param methodDescription The method description that declares the parameters.
+             * @param typeDescriptions  A list of detached types representing the parameters.
+             */
             public ForTypes(MethodDescription methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
                 this.methodDescription = methodDescription;
                 this.typeDescriptions = typeDescriptions;

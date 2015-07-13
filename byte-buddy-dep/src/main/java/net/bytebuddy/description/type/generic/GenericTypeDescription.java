@@ -2067,8 +2067,18 @@ public interface GenericTypeDescription extends NamedElement {
             return resolve().toString();
         }
 
+        /**
+         * A lazy projection of potentially raw types.
+         */
         public static class OfPotentiallyRawType extends LazyProjection {
 
+            /**
+             * Creates a generic type description, either as a raw type or as a bound parameterized type.
+             *
+             * @param unresolvedType The unresolved type.
+             * @param transformer    A transformer to apply to a non-raw type.
+             * @return A lazy projection of the provided unresolved type.
+             */
             public static GenericTypeDescription of(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
                 if (unresolvedType == null) {
                     return null;
@@ -2076,10 +2086,22 @@ public interface GenericTypeDescription extends NamedElement {
                 return new OfPotentiallyRawType(unresolvedType, transformer);
             }
 
+            /**
+             * The unresolved type to resolve.
+             */
             private final GenericTypeDescription unresolvedType;
 
+            /**
+             * The transformer to apply to non-raw types.
+             */
             private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer;
 
+            /**
+             * Creates a new lazy projection of a potentially raw type.
+             *
+             * @param unresolvedType The unresolved type to resolve.
+             * @param transformer    The transformer to apply to non-raw types.
+             */
             public OfPotentiallyRawType(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
                 this.unresolvedType = unresolvedType;
                 this.transformer = transformer;
