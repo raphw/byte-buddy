@@ -537,14 +537,14 @@ public interface NamingStrategy {
             class ForGivenType implements BaseNameResolver {
 
                 /**
-                 * The type description which represents the resolved name.
+                 * The type description which representedBy the resolved name.
                  */
                 private final TypeDescription typeDescription;
 
                 /**
                  * Creates a new base name resolver that resolves a using the name of a given type.
                  *
-                 * @param typeDescription The type description which represents the resolved name.
+                 * @param typeDescription The type description which representedBy the resolved name.
                  */
                 public ForGivenType(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;

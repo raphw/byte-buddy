@@ -110,7 +110,7 @@ public interface MethodAttributeAppender {
         class Compound implements Factory {
 
             /**
-             * The factories this compound factory represents in their application order.
+             * The factories this compound factory representedBy in their application order.
              */
             private final Factory[] factory;
 
@@ -234,7 +234,7 @@ public interface MethodAttributeAppender {
              *                          attribute appender are written to.
              * @param methodDescription The description of the method for which the given method visitor creates an
              *                          instrumentation for.
-             * @return The target of the annotation appender this target represents.
+             * @return The target of the annotation appender this target representedBy.
              */
             AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription);
 
@@ -417,7 +417,7 @@ public interface MethodAttributeAppender {
     class Compound implements MethodAttributeAppender {
 
         /**
-         * The method attribute appenders this compound appender represents in their application order.
+         * The method attribute appenders this compound appender representedBy in their application order.
          */
         private final MethodAttributeAppender[] methodAttributeAppender;
 

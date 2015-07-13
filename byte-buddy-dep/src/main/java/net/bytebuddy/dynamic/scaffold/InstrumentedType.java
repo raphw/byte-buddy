@@ -29,7 +29,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param fieldToken A token that represents the field's shape. This token must represent types in their detached state.
+     * @param fieldToken A token that representedBy the field's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
     InstrumentedType withField(FieldDescription.Token fieldToken);
@@ -37,7 +37,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new method or constructor.
      *
-     * @param methodToken A token that represents the method's shape. This token must represent types in their detached state.
+     * @param methodToken A token that representedBy the method's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
     InstrumentedType withMethod(MethodDescription.Token methodToken);

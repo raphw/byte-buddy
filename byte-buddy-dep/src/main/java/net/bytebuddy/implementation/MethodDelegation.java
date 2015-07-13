@@ -586,7 +586,7 @@ public class MethodDelegation implements Implementation {
      * semantics as the target method's return value is not longer considered what might change the binding target.
      *
      * @param implementation The implementation to apply after the delegation.
-     * @return An implementation that represents this chained implementation application.
+     * @return An implementation that representedBy this chained implementation application.
      */
     public Implementation andThen(Implementation implementation) {
         return new Compound(new MethodDelegation(implementationDelegate,

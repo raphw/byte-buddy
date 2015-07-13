@@ -111,7 +111,7 @@ public interface DynamicType {
      * Checks if a dynamic type requires some form of explicit type initialization, either for itself or for one
      * of its auxiliary types, if any. This is the case when this dynamic type was defined to delegate method calls
      * to a specific instance which is stored in a field of the created type. If this class serialized, it could not
-     * be used without its loaded type initializers since the field value represents a specific runtime context.
+     * be used without its loaded type initializers since the field value representedBy a specific runtime context.
      *
      * @return {@code true} if this type requires explicit type initialization.
      */
@@ -1740,7 +1740,7 @@ public interface DynamicType {
             }
 
             /**
-             * Creates a new immutable type builder which represents the given arguments.
+             * Creates a new immutable type builder which representedBy the given arguments.
              *
              * @param classFileVersion                      The class file version for the created dynamic type.
              * @param namingStrategy                        The naming strategy for naming the dynamic type.
@@ -1763,7 +1763,7 @@ public interface DynamicType {
              *                                              dynamic type.
              * @param methodTokens                          A list of method representations that were added explicitly to this
              *                                              dynamic type.
-             * @return A dynamic type builder that represents the given arguments.
+             * @return A dynamic type builder that representedBy the given arguments.
              */
             protected abstract Builder<S> materialize(ClassFileVersion classFileVersion,
                                                       NamingStrategy namingStrategy,
@@ -2451,7 +2451,7 @@ public interface DynamicType {
                  * Materializes the given method definition and returns an instance for defining an implementation.
                  *
                  * @param methodToken The method token to define on the currently constructed type.
-                 * @return A subclass matched method interception that represents the materialized method.
+                 * @return A subclass matched method interception that representedBy the materialized method.
                  */
                 private DefaultMatchedMethodInterception materialize(MethodDescription.Token methodToken) {
                     return new DefaultMatchedMethodInterception(new LatentMethodMatcher.ForToken(methodToken), join(methodTokens, methodToken));

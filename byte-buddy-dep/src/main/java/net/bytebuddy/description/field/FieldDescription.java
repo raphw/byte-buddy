@@ -280,7 +280,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
     }
 
     /**
-     * A field description that represents a given field but with a substituted field type.
+     * A field description that representedBy a given field but with a substituted field type.
      */
     class TypeSubstituting extends AbstractFieldDescription {
 
@@ -341,7 +341,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
     }
 
     /**
-     * A token that represents a field's shape. A field token is equal to another token when the other field
+     * A token that representedBy a field's shape. A field token is equal to another token when the other field
      * tokens's name is equal to this token.
      */
     class Token implements ByteCodeElement.Token<Token> {

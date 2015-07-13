@@ -171,7 +171,7 @@ public enum SuperMethodCall implements Implementation {
             };
 
             /**
-             * Creates a stack manipulation that represents this handler's behavior.
+             * Creates a stack manipulation that representedBy this handler's behavior.
              *
              * @param methodDescription The method for which this handler is supposed to create a stack
              *                          manipulation for.

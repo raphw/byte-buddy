@@ -78,7 +78,7 @@ public interface Implementation {
     interface SpecialMethodInvocation extends StackManipulation {
 
         /**
-         * Returns the method that represents this special method invocation. This method can be different even for
+         * Returns the method that representedBy this special method invocation. This method can be different even for
          * equal special method invocations, dependant on the method that was used to request such an invocation by the
          * means of a {@link Implementation.Target}.
          *
@@ -152,10 +152,10 @@ public interface Implementation {
             /**
              * Creates a new legal special method invocation.
              *
-             * @param methodDescription The method that represents the special method invocation.
+             * @param methodDescription The method that representedBy the special method invocation.
              * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
              *                          invocation.
-             * @param stackManipulation The stack manipulation that represents this special method invocation.
+             * @param stackManipulation The stack manipulation that representedBy this special method invocation.
              */
             protected Simple(MethodDescription methodDescription,
                              TypeDescription typeDescription,
@@ -168,7 +168,7 @@ public interface Implementation {
             /**
              * Creates a special method invocation for a given invocation target.
              *
-             * @param methodDescription The method that represents the special method invocation.
+             * @param methodDescription The method that representedBy the special method invocation.
              * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
              *                          invocation.
              * @return A special method invocation representing a legal invocation if the method can be invoked
@@ -452,7 +452,7 @@ public interface Implementation {
     }
 
     /**
-     * The context for an implementation application. An implementation context represents a mutable data structure
+     * The context for an implementation application. An implementation context representedBy a mutable data structure
      * where any registration is irrevocable. Calling methods on an implementation context should be considered equally
      * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an implementation context and a
      * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type.
@@ -584,7 +584,7 @@ public interface Implementation {
             private static final Object NO_DEFAULT_VALUE = null;
 
             /**
-             * The instrumented type that this instance represents.
+             * The instrumented type that this instance representedBy.
              */
             private final TypeDescription instrumentedType;
 
@@ -619,7 +619,7 @@ public interface Implementation {
             private final Map<FieldDescription, MethodDescription> registeredSetters;
 
             /**
-             * A map of accessor methods to a method pool entry that represents their implementation.
+             * A map of accessor methods to a method pool entry that representedBy their implementation.
              */
             private final Map<MethodDescription, TypeWriter.MethodPool.Entry> accessorMethodEntries;
 
@@ -884,7 +884,7 @@ public interface Implementation {
                  * Returns a stack manipulation where the represented value is stored in the given field.
                  *
                  * @param fieldDescription A static field in which the value is to be stored.
-                 * @return A stack manipulation that represents this storage.
+                 * @return A stack manipulation that representedBy this storage.
                  */
                 public StackManipulation storeIn(FieldDescription fieldDescription) {
                     return new Compound(this, FieldAccess.forField(fieldDescription).putter());
@@ -1208,14 +1208,14 @@ public interface Implementation {
             protected static class AccessorMethodDelegation extends AbstractDelegationEntry {
 
                 /**
-                 * The stack manipulation that represents the requested special method invocation.
+                 * The stack manipulation that representedBy the requested special method invocation.
                  */
                 private final StackManipulation accessorMethodInvocation;
 
                 /**
                  * Creates a new accessor method delegation.
                  *
-                 * @param accessorMethodInvocation The stack manipulation that represents the requested special method
+                 * @param accessorMethodInvocation The stack manipulation that representedBy the requested special method
                  *                                 invocation.
                  */
                 protected AccessorMethodDelegation(StackManipulation accessorMethodInvocation) {

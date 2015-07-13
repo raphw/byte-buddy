@@ -33,7 +33,7 @@ import java.util.concurrent.Callable;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 
 /**
- * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
+ * A method call proxy representedBy a class that is compiled against a particular method which can then be called whenever
  * either its {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method is called where the method
  * call proxy implements both interfaces.
  * <p>&nbsp;</p>
@@ -97,7 +97,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * Creates a linked hash map of field names to their types where each field represents a parameter of the method.
+     * Creates a linked hash map of field names to their types where each field representedBy a parameter of the method.
      *
      * @param methodDescription The method to extract into fields.
      * @return A map of fields in the order they need to be loaded onto the operand stack for invoking the original

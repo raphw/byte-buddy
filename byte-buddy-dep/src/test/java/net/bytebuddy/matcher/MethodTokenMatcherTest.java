@@ -22,7 +22,7 @@ public class MethodTokenMatcherTest extends AbstractElementMatcherTest<MethodTok
 
     @SuppressWarnings("unchecked")
     public MethodTokenMatcherTest() {
-        super((Class<MethodTokenMatcher<?>>) (Object) MethodTokenMatcher.class, "represents");
+        super((Class<MethodTokenMatcher<?>>) (Object) MethodTokenMatcher.class, "representedBy");
     }
 
     @Before

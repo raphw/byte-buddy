@@ -3,7 +3,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.method.MethodDescription;
 
 /**
- * An element matcher that matches the matched method's method token.
+ * An element matcher that matches the matched method's token.
  *
  * @param <T> The type of the matched entity.
  */
@@ -41,6 +41,6 @@ public class MethodTokenMatcher<T extends MethodDescription> extends ElementMatc
 
     @Override
     public String toString() {
-        return "represents(" + matcher + ')';
+        return "representedBy(" + matcher + ')';
     }
 }

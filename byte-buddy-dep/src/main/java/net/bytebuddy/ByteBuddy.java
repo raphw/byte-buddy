@@ -54,7 +54,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * {@code ByteBuddy} instances are configurable factories for creating new Java types at a JVM's runtime.
  * Such types are represented by {@link net.bytebuddy.dynamic.DynamicType}s which can be saved to disk or loaded into
  * the Java virtual machine. Each instance of {@code ByteBuddy} is immutable where any of the factory methods returns
- * a new instance that represents the altered configuration.
+ * a new instance that representedBy the altered configuration.
  * <p>&nbsp;</p>
  * Note that any configuration defines not to implement any synthetic methods or the default finalizer method
  * {@link Object#finalize()}. This behavior can be altered by
@@ -345,7 +345,7 @@ public class ByteBuddy {
      * strategy.
      *
      * @param superType The type or interface to be extended or implemented by the dynamic type.
-     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @param <T>       The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that extends or implements the given loaded type.
      */
     public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
@@ -357,7 +357,7 @@ public class ByteBuddy {
      *
      * @param superType           The type or interface to be extended or implemented by the dynamic type.
      * @param constructorStrategy The constructor strategy to apply.
-     * @param <T>                 The most specific known type that the created dynamic type represents.
+     * @param <T>                 The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that extends or implements the given loaded type.
      */
     public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
@@ -370,7 +370,7 @@ public class ByteBuddy {
      * strategy.
      *
      * @param superType The type or interface to be extended or implemented by the dynamic type.
-     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @param <T>       The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDescription superType) {
@@ -382,7 +382,7 @@ public class ByteBuddy {
      *
      * @param superType           The type or interface to be extended or implemented by the dynamic type.
      * @param constructorStrategy The constructor strategy to apply.
-     * @param <T>                 The most specific known type that the created dynamic type represents.
+     * @param <T>                 The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
@@ -423,7 +423,7 @@ public class ByteBuddy {
      * Creates a dynamic type builder for an interface that extends the given interface.
      *
      * @param type The interface to extend.
-     * @param <T>  The most specific known type that the created dynamic type represents.
+     * @param <T>  The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interface.
      */
@@ -496,7 +496,7 @@ public class ByteBuddy {
      * package can be useful for adding annotations to this package.
      *
      * @param name The name of the package.
-     * @return A dynamic type that represents the created package.
+     * @return A dynamic type that representedBy the created package.
      */
     public DynamicType.Builder<?> makePackage(String name) {
         return new SubclassDynamicTypeBuilder<Class<?>>(classFileVersion,
@@ -523,7 +523,7 @@ public class ByteBuddy {
      *
      * @param aPackage         The package to rebase.
      * @param classFileLocator A class file locator for locating the given packages class file.
-     * @return A dynamic type that represents the created package.
+     * @return A dynamic type that representedBy the created package.
      */
     public DynamicType.Builder<?> rebase(Package aPackage, ClassFileLocator classFileLocator) {
         return rebase(new PackageDescription.ForLoadedPackage(aPackage), classFileLocator);
@@ -535,7 +535,7 @@ public class ByteBuddy {
      *
      * @param packageDescription The description of the package to rebase.
      * @param classFileLocator   A class file locator for locating the given packages class file.
-     * @return A dynamic type that represents the created package.
+     * @return A dynamic type that representedBy the created package.
      */
     public DynamicType.Builder<?> rebase(PackageDescription packageDescription, ClassFileLocator classFileLocator) {
         return rebase(new TypeDescription.ForPackageDescription(packageDescription), classFileLocator);
@@ -636,7 +636,7 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType The type to redefine.
-     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @param <T>       The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
@@ -654,8 +654,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType        The type to redefine.
-     * @param classFileLocator A locator for finding a class file that represents a type.
-     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @param classFileLocator A locator for finding a class file that representedBy a type.
+     * @param <T>              The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> levelType, ClassFileLocator classFileLocator) {
@@ -673,8 +673,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType        The type to redefine.
-     * @param classFileLocator A locator for finding a class file that represents a type.
-     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @param classFileLocator A locator for finding a class file that representedBy a type.
+     * @param <T>              The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType, ClassFileLocator classFileLocator) {
@@ -712,7 +712,7 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType The type which is to be rebased.
-     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @param <T>       The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
@@ -732,8 +732,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType        The type which is to be rebased.
-     * @param classFileLocator A locator for finding a class file that represents a type.
-     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @param classFileLocator A locator for finding a class file that representedBy a type.
+     * @param <T>              The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType, ClassFileLocator classFileLocator) {
@@ -753,9 +753,9 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType             The type which is to be rebased.
-     * @param classFileLocator      A locator for finding a class file that represents a type.
+     * @param classFileLocator      A locator for finding a class file that representedBy a type.
      * @param methodNameTransformer The method name transformer that is used for rebasing methods.
-     * @param <T>                   The most specific known type that the created dynamic type represents.
+     * @param <T>                   The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
@@ -777,8 +777,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType        The type which is to be rebased.
-     * @param classFileLocator A locator for finding a class file that represents a type.
-     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @param classFileLocator A locator for finding a class file that representedBy a type.
+     * @param <T>              The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType, ClassFileLocator classFileLocator) {
@@ -798,9 +798,9 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType             The type which is to be rebased.
-     * @param classFileLocator      A locator for finding a class file that represents a type.
+     * @param classFileLocator      A locator for finding a class file that representedBy a type.
      * @param methodNameTransformer The method name transformer that is used for rebasing methods.
-     * @param <T>                   The most specific known type that the created dynamic type represents.
+     * @param <T>                   The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
@@ -829,7 +829,7 @@ public class ByteBuddy {
      * Defines a new class file version for this configuration.
      *
      * @param classFileVersion The class file version to define for this configuration.
-     * @return A new configuration that represents this configuration with the given class file version.
+     * @return A new configuration that representedBy this configuration with the given class file version.
      */
     public ByteBuddy withClassFileVersion(ClassFileVersion classFileVersion) {
         return new ByteBuddy(nonNull(classFileVersion),
@@ -851,7 +851,7 @@ public class ByteBuddy {
      * Defines a new naming strategy for this configuration.
      *
      * @param namingStrategy The unbound naming strategy to apply to the current configuration.
-     * @return A new configuration that represents this configuration with the given unbound naming strategy.
+     * @return A new configuration that representedBy this configuration with the given unbound naming strategy.
      */
     public ByteBuddy withNamingStrategy(NamingStrategy.Unbound namingStrategy) {
         return new ByteBuddy(classFileVersion,
@@ -873,7 +873,7 @@ public class ByteBuddy {
      * Defines a new naming strategy for this configuration.
      *
      * @param namingStrategy The naming strategy to apply to the current configuration.
-     * @return A new configuration that represents this configuration with the given naming strategy.
+     * @return A new configuration that representedBy this configuration with the given naming strategy.
      */
     public ByteBuddy withNamingStrategy(NamingStrategy namingStrategy) {
         return withNamingStrategy(new NamingStrategy.Unbound.Unified(nonNull(namingStrategy)));
@@ -906,7 +906,7 @@ public class ByteBuddy {
      * contributes which might currently be implicit.
      *
      * @param modifierContributor The modifier contributors to define explicitly for this configuration.
-     * @return A new configuration that represents this configuration with the given modifier contributors.
+     * @return A new configuration that representedBy this configuration with the given modifier contributors.
      */
     public ByteBuddy withModifiers(ModifierContributor.ForType... modifierContributor) {
         return new ByteBuddy(classFileVersion,
@@ -929,7 +929,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param typeAttributeAppender The type attribute appender to define for this configuration.
-     * @return A new configuration that represents this configuration with the given type attribute appender.
+     * @return A new configuration that representedBy this configuration with the given type attribute appender.
      */
     public ByteBuddy withAttribute(TypeAttributeAppender typeAttributeAppender) {
         return new ByteBuddy(classFileVersion,
@@ -952,7 +952,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param annotation The type annotations to define for this configuration.
-     * @return A new configuration that represents this configuration with the given annotations as its new
+     * @return A new configuration that representedBy this configuration with the given annotations as its new
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(Annotation... annotation) {
@@ -964,7 +964,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param annotations The type annotations to define for this configuration.
-     * @return A new configuration that represents this configuration with the given annotations as its new
+     * @return A new configuration that representedBy this configuration with the given annotations as its new
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(Iterable<? extends Annotation> annotations) {
@@ -976,7 +976,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param annotation The type annotations to define for this configuration.
-     * @return A new configuration that represents this configuration with the given annotations as its new
+     * @return A new configuration that representedBy this configuration with the given annotations as its new
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(AnnotationDescription... annotation) {
@@ -988,7 +988,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param annotations The type annotations to define for this configuration.
-     * @return A new configuration that represents this configuration with the given annotations as its new
+     * @return A new configuration that representedBy this configuration with the given annotations as its new
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(Collection<? extends AnnotationDescription> annotations) {
@@ -1072,7 +1072,7 @@ public class ByteBuddy {
      * method's visibility.
      *
      * @param ignoredMethods The methods to always be ignored for any instrumentation.
-     * @return A new configuration that represents this configuration with the given method matcher defining methods
+     * @return A new configuration that representedBy this configuration with the given method matcher defining methods
      * that are to be ignored for any instrumentation.
      */
     public ByteBuddy withIgnoredMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
@@ -1099,7 +1099,7 @@ public class ByteBuddy {
      *
      * @param bridgeMethodResolverFactory The bridge method resolver factory to be applied to any implementation
      *                                    process.
-     * @return A new configuration that represents this configuration with the given bridge method resolver factory
+     * @return A new configuration that representedBy this configuration with the given bridge method resolver factory
      * to be applied on any configuration.
      */
     public ByteBuddy withBridgeMethodResolver(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
@@ -1553,7 +1553,7 @@ public class ByteBuddy {
          *
          * @param attributeAppenderFactory The method attribute appender factory to apply to the currently
          *                                 selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * attribute appender factory applied to the current method selection.
          */
         public MethodAnnotationTarget attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
@@ -1579,7 +1579,7 @@ public class ByteBuddy {
          * Defines an method annotation for the currently selected methods.
          *
          * @param annotation The annotations to defined for the currently selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(Annotation... annotation) {
@@ -1590,7 +1590,7 @@ public class ByteBuddy {
          * Defines an method annotation for the currently selected methods.
          *
          * @param annotation The annotations to defined for the currently selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(AnnotationDescription... annotation) {
@@ -1601,7 +1601,7 @@ public class ByteBuddy {
          * Defines an method annotation for the currently selected methods.
          *
          * @param annotations The annotations to defined for the currently selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(Collection<? extends AnnotationDescription> annotations) {
@@ -1615,7 +1615,7 @@ public class ByteBuddy {
          *                       with the first parameter index by {@code 0}.
          * @param annotation     The annotations to defined for the currently selected methods' parameters
          *                       ath the given index.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, Annotation... annotation) {
@@ -1629,7 +1629,7 @@ public class ByteBuddy {
          *                       with the first parameter index by {@code 0}.
          * @param annotation     The annotations to defined for the currently selected methods' parameters
          *                       ath the given index.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, AnnotationDescription... annotation) {
@@ -1643,7 +1643,7 @@ public class ByteBuddy {
          *                       with the first parameter index by {@code 0}.
          * @param annotations    The annotations to defined for the currently selected methods' parameters
          *                       ath the given index.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
@@ -2214,7 +2214,7 @@ public class ByteBuddy {
     public class MatchedMethodInterception implements MethodInterceptable {
 
         /**
-         * A method matcher that represents the current method selection.
+         * A method matcher that representedBy the current method selection.
          */
         protected final LatentMethodMatcher methodMatcher;
 

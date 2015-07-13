@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A field registry represents an extendable collection of fields which are identified by their names that are mapped
+ * A field registry representedBy an extendable collection of fields which are identified by their names that are mapped
  * to a given {@link net.bytebuddy.implementation.attribute.FieldAttributeAppender}. Fields
  * can be uniquely identified by their name for a given type since fields are never inherited.
  * <p>&nbsp;</p>

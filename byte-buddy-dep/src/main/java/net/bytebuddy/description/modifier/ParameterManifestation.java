@@ -57,9 +57,9 @@ public enum ParameterManifestation implements ModifierContributor.ForParameter {
     }
 
     /**
-     * Checks if this instance represents a final state.
+     * Checks if this instance representedBy a final state.
      *
-     * @return {@code true} if this instance represents a final state.
+     * @return {@code true} if this instance representedBy a final state.
      */
     public boolean isFinal() {
         return this == FINAL;

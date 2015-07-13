@@ -174,7 +174,7 @@ public interface TypeAttributeAppender {
     class Compound implements TypeAttributeAppender {
 
         /**
-         * The type attribute appenders this compound appender represents in their application order.
+         * The type attribute appenders this compound appender representedBy in their application order.
          */
         private final TypeAttributeAppender[] typeAttributeAppender;
 

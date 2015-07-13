@@ -24,31 +24,31 @@ public final class ByteBuddyCommons {
     public static final int GENERAL_MODIFIER_MASK = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED;
 
     /**
-     * A mask for modifiers that represents types.
+     * A mask for modifiers that representedBy types.
      */
     public static final int TYPE_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | GENERAL_MODIFIER_MASK
             | Modifier.ABSTRACT | Modifier.FINAL | Modifier.INTERFACE | Modifier.STRICT | Opcodes.ACC_ANNOTATION
             | Opcodes.ACC_ENUM | Opcodes.ACC_STRICT | Opcodes.ACC_SUPER;
 
     /**
-     * A mask for modifiers that represents type members.
+     * A mask for modifiers that representedBy type members.
      */
     public static final int MEMBER_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
             | Modifier.FINAL | Modifier.SYNCHRONIZED | Modifier.STATIC;
 
     /**
-     * A mask for modifiers that represents fields.
+     * A mask for modifiers that representedBy fields.
      */
     public static final int FIELD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.TRANSIENT | Modifier.VOLATILE;
 
     /**
-     * A mask for modifiers that represents methods and constructors.
+     * A mask for modifiers that representedBy methods and constructors.
      */
     public static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
             | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
 
     /**
-     * A mask for modifiers that represents method parameters.
+     * A mask for modifiers that representedBy method parameters.
      */
     public static final int PARAMETER_MODIFIER_MASK = Modifier.FINAL | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
 
@@ -212,7 +212,7 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that a type represents an actual type, i.e. not a wildcard and not {@code void}.
+     * Validates that a type representedBy an actual type, i.e. not a wildcard and not {@code void}.
      *
      * @param typeDescription The type to validate.
      * @param <T>             The actual type of the argument.
@@ -226,7 +226,7 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that a collection of types represents an actual type, i.e. not a wildcard and not {@code void}.
+     * Validates that a collection of types representedBy an actual type, i.e. not a wildcard and not {@code void}.
      *
      * @param typeDescriptions The types to validate.
      * @param <T>              The actual type of the argument.
@@ -240,7 +240,7 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that a type represents an actual type or {@code void}, i.e. not a wildcard.
+     * Validates that a type representedBy an actual type or {@code void}, i.e. not a wildcard.
      *
      * @param typeDescription The type to validate.
      * @param <T>             The actual type of the argument.
@@ -254,7 +254,7 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that a collection of types represents an actual type or {@code void}, i.e. not a wildcard.
+     * Validates that a collection of types representedBy an actual type or {@code void}, i.e. not a wildcard.
      *
      * @param typeDescriptions The types to validate.
      * @param <T>              The actual type of the argument.
@@ -396,7 +396,7 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that a string represents a valid Java identifier, i.e. is not a Java keyword and is built up
+     * Validates that a string representedBy a valid Java identifier, i.e. is not a Java keyword and is built up
      * by Java identifier compatible characters.
      *
      * @param identifier The identifier to validate.

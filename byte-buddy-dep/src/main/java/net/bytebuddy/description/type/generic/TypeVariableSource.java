@@ -5,7 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 
 /**
- * A type variable source represents a byte code element that can declare type variables.
+ * A type variable source representedBy a byte code element that can declare type variables.
  */
 public interface TypeVariableSource extends ByteCodeElement {
 

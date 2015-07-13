@@ -172,14 +172,14 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
         DOUBLE(7);
 
         /**
-         * A score representing the specifity where a higher score represents a less specific type.
+         * A score representing the specifity where a higher score representedBy a less specific type.
          */
         private final int score;
 
         /**
          * Creates a new primitive type precedence.
          *
-         * @param score A score representing the specifity where a higher score represents a less specific type.
+         * @param score A score representing the specifity where a higher score representedBy a less specific type.
          */
         PrimitiveTypePrecedence(int score) {
             this.score = score;

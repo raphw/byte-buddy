@@ -792,7 +792,7 @@ public @interface FieldProxy {
             protected abstract LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType);
 
             /**
-             * A resolution represents the result of a field location.
+             * A resolution representedBy the result of a field location.
              */
             protected abstract static class Resolution {
 

@@ -57,9 +57,9 @@ public enum ProvisioningState implements ModifierContributor.ForParameter {
     }
 
     /**
-     * Checks if this instance represents a mandated parameter or not.
+     * Checks if this instance representedBy a mandated parameter or not.
      *
-     * @return {@code true} if this instance represents a mandated parameter.
+     * @return {@code true} if this instance representedBy a mandated parameter.
      */
     public boolean isMandated() {
         return this == MANDATED;

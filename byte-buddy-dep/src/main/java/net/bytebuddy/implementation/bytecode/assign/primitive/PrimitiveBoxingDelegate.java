@@ -126,7 +126,7 @@ public enum PrimitiveBoxingDelegate {
      * @param targetType       The type that is target of the assignment operation.
      * @param chainedAssigner  The assigner that is to be used to perform the chained assignment.
      * @param dynamicallyTyped If {@code true}, unsafe cast operations are allowed for performing an assignment.
-     * @return A stack manipulation that represents the described assignment operation.
+     * @return A stack manipulation that representedBy the described assignment operation.
      */
     public StackManipulation assignBoxedTo(TypeDescription targetType, Assigner chainedAssigner, boolean dynamicallyTyped) {
         return new BoxingStackManipulation(chainedAssigner.assign(wrapperType, targetType, dynamicallyTyped));

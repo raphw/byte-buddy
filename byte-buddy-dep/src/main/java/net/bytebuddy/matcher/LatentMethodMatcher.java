@@ -4,7 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
-import static net.bytebuddy.matcher.ElementMatchers.represents;
+import static net.bytebuddy.matcher.ElementMatchers.representedBy;
 
 /**
  * A method matcher that is resolved by handing over the instrumented type before the matcher is applied to a method.
@@ -83,7 +83,7 @@ public interface LatentMethodMatcher {
 
         @Override
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-            return represents(methodToken.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
+            return representedBy(methodToken.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
         }
 
         @Override

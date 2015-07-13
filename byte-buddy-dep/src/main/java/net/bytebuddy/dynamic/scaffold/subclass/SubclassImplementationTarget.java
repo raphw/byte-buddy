@@ -92,7 +92,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     /**
-     * Responsible for identifying the origin type that an implementation target represents when
+     * Responsible for identifying the origin type that an implementation target representedBy when
      * {@link Implementation.Target#getOriginType()} is invoked.
      */
     public enum OriginTypeIdentifier {

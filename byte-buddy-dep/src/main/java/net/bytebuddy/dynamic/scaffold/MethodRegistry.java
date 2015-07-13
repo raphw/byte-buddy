@@ -452,7 +452,7 @@ public interface MethodRegistry {
         protected static class Entry implements LatentMethodMatcher {
 
             /**
-             * The latent method matcher that this entry represents.
+             * The latent method matcher that this entry representedBy.
              */
             private final LatentMethodMatcher methodMatcher;
 
@@ -469,7 +469,7 @@ public interface MethodRegistry {
             /**
              * Creates a new entry.
              *
-             * @param methodMatcher            The latent method matcher that this entry represents.
+             * @param methodMatcher            The latent method matcher that this entry representedBy.
              * @param handler                  The handler to apply to all matched entries.
              * @param attributeAppenderFactory A method attribute appender factory to apply to all entries.
              */

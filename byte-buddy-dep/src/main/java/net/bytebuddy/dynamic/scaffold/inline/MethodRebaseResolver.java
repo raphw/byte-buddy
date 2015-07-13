@@ -27,7 +27,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
  * A method rebase resolver is responsible for mapping methods of an instrumented type to an alternative signature.
  * This way a method can exist in two versions within a class:
  * <ol>
- * <li>The rebased method which represents the original implementation as it is present in a class file.</li>
+ * <li>The rebased method which representedBy the original implementation as it is present in a class file.</li>
  * <li>An overriden method which implements user code which is still able to invoke the original, rebased method.</li>
  * </ol>
  */
@@ -213,16 +213,16 @@ public interface MethodRebaseResolver {
     interface Resolution {
 
         /**
-         * Checks if this resolution represents a rebased method.
+         * Checks if this resolution representedBy a rebased method.
          *
          * @return {@code true} if this resolution requires to rebase a method.
          */
         boolean isRebased();
 
         /**
-         * Returns the resolved method if this resolution represents a rebased method or the original method.
+         * Returns the resolved method if this resolution representedBy a rebased method or the original method.
          *
-         * @return The resolved method if this resolution represents a rebased method or the original method.
+         * @return The resolved method if this resolution representedBy a rebased method or the original method.
          */
         MethodDescription getResolvedMethod();
 

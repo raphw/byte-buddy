@@ -893,7 +893,7 @@ public interface TypeWriter<T> {
          * Creates the instrumented type.
          *
          * @param implementationContext The implementation context to use.
-         * @return A byte array that represents the instrumented type.
+         * @return A byte array that representedBy the instrumented type.
          */
         protected abstract byte[] create(Implementation.Context.ExtractableView implementationContext);
 
@@ -1396,7 +1396,7 @@ public interface TypeWriter<T> {
 
                 /**
                  * A mutable reference for code that is to be injected into the actual type initializer, if any.
-                 * Usually, this represents an invocation of the actual type initializer that is found in the class
+                 * Usually, this representedBy an invocation of the actual type initializer that is found in the class
                  * file which is relocated into a static method.
                  */
                 private Implementation.Context.ExtractableView.InjectedCode injectedCode;
@@ -1683,7 +1683,7 @@ public interface TypeWriter<T> {
                     private static final int TYPE_INITIALIZER_PROXY_MODIFIERS = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
                     /**
-                     * A prefix for the name of the method that represents the original type initializer.
+                     * A prefix for the name of the method that representedBy the original type initializer.
                      */
                     private static final String TYPE_INITIALIZER_PROXY_PREFIX = "originalTypeInitializer";
 

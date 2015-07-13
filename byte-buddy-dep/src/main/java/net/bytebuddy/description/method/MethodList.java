@@ -87,7 +87,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         /**
-         * Creates a method list that represents the given constructors and methods in their given order. The
+         * Creates a method list that representedBy the given constructors and methods in their given order. The
          * constructors are assigned the indices before the methods.
          *
          * @param constructor The constructors to be represented by the method list.
@@ -98,7 +98,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         /**
-         * Creates a method list that represents the given constructors and methods in their given order. The
+         * Creates a method list that representedBy the given constructors and methods in their given order. The
          * constructors are assigned the indices before the methods.
          *
          * @param constructors The constructors to be represented by the method list.

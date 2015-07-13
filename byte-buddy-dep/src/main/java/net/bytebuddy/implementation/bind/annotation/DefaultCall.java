@@ -31,7 +31,7 @@ public @interface DefaultCall {
     /**
      * If this parameter is not explicitly set, a parameter with the
      * {@link net.bytebuddy.implementation.bind.annotation.DefaultCall} is only bound to a
-     * source method if this source method directly represents an unambiguous, invokable default method. On the other
+     * source method if this source method directly representedBy an unambiguous, invokable default method. On the other
      * hand, if a method is not defined unambiguously by an interface, not setting this parameter will exclude
      * the target method with the annotated parameter from a binding to the source method.
      * <p>&nbsp;</p>
@@ -132,7 +132,7 @@ public @interface DefaultCall {
 
             /**
              * An implicit default method locator that only permits the invocation of a default method if the source
-             * method itself represents a method that was defined on a default method interface.
+             * method itself representedBy a method that was defined on a default method interface.
              */
             enum Implicit implements DefaultMethodLocator {
 

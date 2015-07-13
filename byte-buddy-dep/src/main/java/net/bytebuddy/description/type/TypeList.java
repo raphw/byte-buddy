@@ -71,7 +71,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     class ForLoadedType extends AbstractBase {
 
         /**
-         * The loaded types this type list represents.
+         * The loaded types this type list representedBy.
          */
         private final List<? extends Class<?>> types;
 
@@ -130,7 +130,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     class Explicit extends AbstractBase {
 
         /**
-         * The list of type descriptions this list represents.
+         * The list of type descriptions this list representedBy.
          */
         private final List<? extends TypeDescription> typeDescriptions;
 

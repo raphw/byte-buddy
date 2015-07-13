@@ -37,7 +37,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new URLClassLoader(new URL[0], null /* null represents the bootstrap class loader */);
+        classLoader = new URLClassLoader(new URL[0], null /* null representedBy the bootstrap class loader */);
         classInjector = new ClassInjector.UsingReflection(classLoader);
     }
 

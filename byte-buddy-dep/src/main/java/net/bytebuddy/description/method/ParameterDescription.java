@@ -621,7 +621,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
     /**
      * <p>
-     * A parameter description that represents a given parameter but with a substituted parameter type.
+     * A parameter description that representedBy a given parameter but with a substituted parameter type.
      * </p>
      * <p>
      * <b>Note</b>: The supplied visitor must assure to not substitute

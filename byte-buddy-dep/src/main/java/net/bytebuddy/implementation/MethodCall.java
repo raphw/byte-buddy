@@ -586,7 +586,7 @@ public class MethodCall implements Implementation {
     protected interface TargetHandler {
 
         /**
-         * Creates a stack manipulation that represents the method's invocation.
+         * Creates a stack manipulation that representedBy the method's invocation.
          *
          * @param methodDescription The method to be invoked.
          * @param instrumentedType  The instrumented type.
@@ -1973,7 +1973,7 @@ public class MethodCall implements Implementation {
          *
          * @param methodDescription    The method to be invoked.
          * @param implementationTarget The implementation target of the instrumented instance.
-         * @return A stack manipulation that represents the method invocation.
+         * @return A stack manipulation that representedBy the method invocation.
          */
         StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget);
 
@@ -2141,7 +2141,7 @@ public class MethodCall implements Implementation {
      * an invocation method. Some methods can for example be invoked both virtually or as a super method invocation.
      * Similarly, interface methods can be invoked virtually or as an explicit invocation of a default method. If
      * no explicit invocation type is set, a method is always invoked virtually unless the method
-     * represents a static methods or a constructor.
+     * representedBy a static methods or a constructor.
      */
     public static class WithoutSpecifiedTarget extends MethodCall {
 

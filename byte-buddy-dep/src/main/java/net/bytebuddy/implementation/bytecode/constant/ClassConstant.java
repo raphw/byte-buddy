@@ -89,7 +89,7 @@ public enum ClassConstant implements StackManipulation {
 
     /**
      * Returns a stack manipulation that loads a {@link java.lang.Class} type onto the operand stack which
-     * represents the given type.
+     * representedBy the given type.
      *
      * @param typeDescription The type to load onto the operand stack.
      * @return The corresponding stack manipulation.
@@ -145,7 +145,7 @@ public enum ClassConstant implements StackManipulation {
         private final TypeDescription typeDescription;
 
         /**
-         * Creates a stack manipulation that represents loading a class constant onto the stack.
+         * Creates a stack manipulation that representedBy loading a class constant onto the stack.
          *
          * @param typeDescription A description of the class to load onto the stack.
          */
