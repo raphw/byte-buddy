@@ -47,9 +47,62 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
     AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes);
 
     /**
-     * Describes an array of loaded {@link java.lang.annotation.Annotation}s as an annotatoon list.
+     * An abstract base implementation of an annotation list.
      */
-    class ForLoadedAnnotation extends AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
+    abstract class AbstractBase extends FilterableList.AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
+
+        @Override
+        public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
+            for (AnnotationDescription annotation : this) {
+                if (annotation.getAnnotationType().represents(annotationType)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean isAnnotationPresent(TypeDescription annotationType) {
+            for (AnnotationDescription annotation : this) {
+                if (annotation.getAnnotationType().represents(annotation.getClass())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
+            for (AnnotationDescription annotation : this) {
+                if (annotation.getAnnotationType().represents(annotationType)) {
+                    return annotation.prepare(annotationType);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
+            List<AnnotationDescription> inherited = new LinkedList<AnnotationDescription>();
+            for (AnnotationDescription annotation : this) {
+                if (!ignoredTypes.contains(annotation.getAnnotationType())
+                        && annotation.getAnnotationType().getDeclaredAnnotations().isAnnotationPresent(Inherited.class)) {
+                    inherited.add(annotation);
+                }
+            }
+            return wrap(inherited);
+        }
+
+        @Override
+        protected AnnotationList wrap(List<AnnotationDescription> values) {
+            return new Explicit(values);
+        }
+    }
+
+    /**
+     * Describes an array of loaded {@link java.lang.annotation.Annotation}s as an annotation list.
+     */
+    class ForLoadedAnnotation extends AbstractBase {
 
         /**
          * The represented annotations.
@@ -97,59 +150,12 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         public int size() {
             return annotations.size();
         }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
-            for (Annotation annotation : annotations) {
-                if (annotation.annotationType().equals(annotationType)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public boolean isAnnotationPresent(TypeDescription annotationType) {
-            for (Annotation annotation : annotations) {
-                if (annotationType.represents(annotation.getClass())) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
-            for (Annotation annotation : annotations) {
-                if (annotation.annotationType().equals(annotationType)) {
-                    return AnnotationDescription.ForLoadedAnnotation.of(annotationType.cast(annotation));
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
-            List<Annotation> inherited = new LinkedList<Annotation>();
-            for (Annotation annotation : annotations) {
-                if (!ignoredTypes.contains(new TypeDescription.ForLoadedType(annotation.annotationType()))
-                        && annotation.annotationType().isAnnotationPresent(Inherited.class)) {
-                    inherited.add(annotation);
-                }
-            }
-            return new ForLoadedAnnotation(inherited);
-        }
-
-        @Override
-        protected AnnotationList wrap(List<AnnotationDescription> values) {
-            return new Explicit(values);
-        }
     }
 
     /**
      * Represents a list of explicitly provided annotation descriptions.
      */
-    class Explicit extends AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
+    class Explicit extends AbstractBase {
 
         /**
          * The list of represented annotation descriptions.
@@ -187,53 +193,6 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         @Override
         public int size() {
             return annotationDescriptions.size();
-        }
-
-        @Override
-        public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
-            for (AnnotationDescription annotationDescription : annotationDescriptions) {
-                if (annotationDescription.getAnnotationType().represents(annotationType)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public boolean isAnnotationPresent(TypeDescription annotationType) {
-            for (AnnotationDescription annotationDescription : annotationDescriptions) {
-                if (annotationDescription.getAnnotationType().equals(annotationType)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
-            for (AnnotationDescription annotationDescription : annotationDescriptions) {
-                if (annotationDescription.getAnnotationType().represents(annotationType)) {
-                    return annotationDescription.prepare(annotationType);
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
-            List<AnnotationDescription> inherited = new LinkedList<AnnotationDescription>();
-            for (AnnotationDescription annotation : annotationDescriptions) {
-                TypeDescription annotationType = annotation.getAnnotationType();
-                if (!ignoredTypes.contains(annotationType) && annotationType.getDeclaredAnnotations().isAnnotationPresent(Inherited.class)) {
-                    inherited.add(annotation);
-                }
-            }
-            return new Explicit(new ArrayList<AnnotationDescription>(inherited));
-        }
-
-        @Override
-        protected AnnotationList wrap(List<AnnotationDescription> values) {
-            return new Explicit(values);
         }
     }
 

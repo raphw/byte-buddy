@@ -5579,7 +5579,7 @@ public interface TypePool {
             /**
              * A lazy list of parameter descriptions for the enclosing method description.
              */
-            private class LazyParameterList extends ParameterList.AbstractBase implements ParameterList {
+            private class LazyParameterList extends ParameterList.AbstractBase {
 
                 @Override
                 public ParameterDescription get(int index) {
