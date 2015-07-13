@@ -18,7 +18,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.AbstractList;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -522,6 +521,14 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                     offset);
         }
 
+        /**
+         * Creates a new latent parameter descriptions for a parameter without explicit meta data or annotations.
+         *
+         * @param declaringMethod The method declaring this parameter.
+         * @param parameterType   The type of the parameter.
+         * @param index           The index of the parameter.
+         * @param offset          The offset of the parameter.
+         */
         public Latent(MethodDescription declaringMethod,
                       GenericTypeDescription parameterType,
                       int index,
@@ -638,7 +645,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
         /**
-         * Creates a new type substituting parameter
+         * Creates a new type substituting parameter.
          *
          * @param declaringMethod      The method that declares this type-substituted parameter.
          * @param parameterDescription The represented parameter.
@@ -839,10 +846,21 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                     '}';
         }
 
+        /**
+         * A list of types represented as a list of parameter tokens.
+         */
         public static class TypeList extends AbstractList<Token> {
 
+            /**
+             * The list of types to represent as parameter tokens.
+             */
             private final List<? extends GenericTypeDescription> typeDescriptions;
 
+            /**
+             * Creates a new list of types that represent parameters.
+             *
+             * @param typeDescriptions The types to represent.
+             */
             public TypeList(List<? extends GenericTypeDescription> typeDescriptions) {
                 this.typeDescriptions = typeDescriptions;
             }

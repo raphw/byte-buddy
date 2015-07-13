@@ -284,6 +284,9 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      */
     class TypeSubstituting extends AbstractFieldDescription {
 
+        /**
+         * The declaring type of the field.
+         */
         private final GenericTypeDescription declaringType;
 
         /**
@@ -363,6 +366,13 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
          */
         private final List<? extends AnnotationDescription> annotations;
 
+        /**
+         * Creates a new field token without annotations.
+         *
+         * @param name      The name of the represented field.
+         * @param modifiers The modifiers of the represented field.
+         * @param type      The type of the represented field.
+         */
         public Token(String name, int modifiers, GenericTypeDescription type) {
             this(name, modifiers, type, Collections.<AnnotationDescription>emptyList());
         }

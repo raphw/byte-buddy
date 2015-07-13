@@ -287,6 +287,7 @@ public interface Implementation {
              * Resolves the target method that is actually invoked.
              *
              * @param methodDescription    The method that is to be invoked specially.
+             * @param invokableMethods     A mapping of all invokable methods by their token.
              * @param bridgeMethodResolver The bridge method resolver for this type.
              * @return The target method that is actually invoked.
              */
@@ -360,8 +361,14 @@ public interface Implementation {
              */
             protected final TypeDescription typeDescription;
 
+            /**
+             * A mapping of all invokable method by their method token.
+             */
             protected final Map<MethodDescription.Token, MethodDescription> invokableMethods;
 
+            /**
+             * A mapping of all default methods by their method token.
+             */
             protected final Map<TypeDescription, Map<MethodDescription.Token, MethodDescription>> defaultMethods;
 
             /**
@@ -787,14 +794,33 @@ public interface Implementation {
                         '}';
             }
 
+            /**
+             * A description of a field that stores a cached value.
+             */
             protected static class CacheValueField extends FieldDescription.AbstractFieldDescription {
 
+                /**
+                 * The instrumented type.
+                 */
                 private final TypeDescription instrumentedType;
 
+                /**
+                 * The type of the cache's field.
+                 */
                 private final TypeDescription fieldType;
 
+                /**
+                 * The suffix to use for the cache field's name.
+                 */
                 private final String suffix;
 
+                /**
+                 * Creates a new cache value field.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @param fieldType        The type of the cache's field.
+                 * @param suffix           The suffix to use for the cache field's name.
+                 */
                 protected CacheValueField(TypeDescription instrumentedType, TypeDescription fieldType, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
@@ -904,14 +930,33 @@ public interface Implementation {
                 }
             }
 
+            /**
+             * A description of an accessor method to access another method from outside the instrumented type.
+             */
             protected static class AccessorMethod extends MethodDescription.AbstractMethodDescription {
 
+                /**
+                 * The instrumented type.
+                 */
                 private final TypeDescription instrumentedType;
 
+                /**
+                 * The method that is being accessed.
+                 */
                 private final MethodDescription methodDescription;
 
+                /**
+                 * The suffix to append to the accessor method's name.
+                 */
                 private final String suffix;
 
+                /**
+                 * Creates a new accessor method.
+                 *
+                 * @param instrumentedType  The instrumented type.
+                 * @param methodDescription The method that is being accessed.
+                 * @param suffix            The suffix to append to the accessor method's name.
+                 */
                 protected AccessorMethod(TypeDescription instrumentedType, MethodDescription methodDescription, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.methodDescription = methodDescription;
@@ -966,14 +1011,33 @@ public interface Implementation {
                 }
             }
 
+            /**
+             * A description of a field getter method.
+             */
             protected static class FieldGetter extends MethodDescription.AbstractMethodDescription {
 
+                /**
+                 * The instrumented type.
+                 */
                 private final TypeDescription instrumentedType;
 
+                /**
+                 * The field for which a getter is described.
+                 */
                 private final FieldDescription fieldDescription;
 
+                /**
+                 * The name suffix for the field getter method.
+                 */
                 private final String suffix;
 
+                /**
+                 * Creates a new field getter.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @param fieldDescription The field for which a getter is described.
+                 * @param suffix           The name suffix for the field getter method.
+                 */
                 protected FieldGetter(TypeDescription instrumentedType, FieldDescription fieldDescription, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.fieldDescription = fieldDescription;
@@ -1028,14 +1092,33 @@ public interface Implementation {
                 }
             }
 
+            /**
+             * A description of a field setter method.
+             */
             protected static class FieldSetter extends MethodDescription.AbstractMethodDescription {
 
+                /**
+                 * The instrumented type.
+                 */
                 private final TypeDescription instrumentedType;
 
+                /**
+                 * The field for which a setter is described.
+                 */
                 private final FieldDescription fieldDescription;
 
+                /**
+                 * The name suffix for the field setter method.
+                 */
                 private final String suffix;
 
+                /**
+                 * Creates a new field setter.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @param fieldDescription The field for which a setter is described.
+                 * @param suffix           The name suffix for the field setter method.
+                 */
                 protected FieldSetter(TypeDescription instrumentedType, FieldDescription fieldDescription, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.fieldDescription = fieldDescription;

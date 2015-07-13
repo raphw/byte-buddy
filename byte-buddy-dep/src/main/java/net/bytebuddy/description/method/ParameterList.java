@@ -22,10 +22,27 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  */
 public interface ParameterList extends FilterableList<ParameterDescription, ParameterList> {
 
+    /**
+     * Transforms this list of parameters into a list of the types of the represented parameters.
+     *
+     * @return A list of types representing the parameters of this list.
+     */
     GenericTypeList asTypeList();
 
+    /**
+     * Transforms the list of parameter descriptions into a list of detached tokens.
+     *
+     * @return The transformed token list.
+     */
     ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList();
 
+    /**
+     * Transforms the list of parameter descriptions into a list of detached tokens. All types that are matched by the provided
+     * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
+     *
+     * @param targetTypeMatcher A matcher that indicates type substitution.
+     * @return The transformed token list.
+     */
     ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
@@ -323,12 +340,27 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
     }
 
+    /**
+     * A list of parameter descriptions for a list of detached tokens. For the returned parameter, each token is attached to its parameter representation.
+     */
     class ForTokens extends AbstractBase {
 
+        /**
+         * The method that is declaring the represented token.
+         */
         private final MethodDescription declaringMethod;
 
+        /**
+         * The list of tokens to represent.
+         */
         private final List<? extends ParameterDescription.Token> tokens;
 
+        /**
+         * Creates a new parameter list for the provided tokens.
+         *
+         * @param declaringMethod The method that is declaring the represented token.
+         * @param tokens          The list of tokens to represent.
+         */
         public ForTokens(MethodDescription declaringMethod, List<? extends ParameterDescription.Token> tokens) {
             this.declaringMethod = declaringMethod;
             this.tokens = tokens;
@@ -349,17 +381,36 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
     }
 
-    class Substituted extends AbstractBase {
+    /**
+     * A list of parameter descriptions that yields {@link net.bytebuddy.description.method.ParameterDescription.TypeSubstituting}.
+     */
+    class TypeSubstituting extends AbstractBase {
 
+        /**
+         * The method that is declaring the transformed parameters.
+         */
         private final MethodDescription declaringMethod;
 
+        /**
+         * The untransformed parameters that are represented by this list.
+         */
         private final List<? extends ParameterDescription> parameterDescriptions;
 
+        /**
+         * The visitor to apply to the parameter types before returning them.
+         */
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
-        public Substituted(MethodDescription declaringMethod,
-                           List<? extends ParameterDescription> parameterDescriptions,
-                           GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        /**
+         * Creates a new type substituting parameter list.
+         *
+         * @param declaringMethod       The method that is declaring the transformed parameters.
+         * @param parameterDescriptions The untransformed parameters that are represented by this list.
+         * @param visitor               The visitor to apply to the parameter types before returning them.
+         */
+        public TypeSubstituting(MethodDescription declaringMethod,
+                                List<? extends ParameterDescription> parameterDescriptions,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             this.declaringMethod = declaringMethod;
             this.parameterDescriptions = parameterDescriptions;
             this.visitor = visitor;

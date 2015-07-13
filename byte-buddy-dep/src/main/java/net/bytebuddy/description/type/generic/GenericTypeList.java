@@ -261,7 +261,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
         @Override
         public GenericTypeDescription get(int index) {
-            return new GenericTypeDescription.LazyProjection.OfPotentiallyRawType(typeDescriptions.get(index), transformer);
+            return GenericTypeDescription.LazyProjection.OfPotentiallyRawType.of(typeDescriptions.get(index), transformer);
         }
 
         @Override

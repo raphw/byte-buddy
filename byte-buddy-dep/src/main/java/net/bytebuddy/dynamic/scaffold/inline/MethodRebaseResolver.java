@@ -292,6 +292,13 @@ public interface MethodRebaseResolver {
          */
         class ForRebasedMethod implements Resolution {
 
+            /**
+             * Resolves a rebasement for the provided method.
+             *
+             * @param methodDescription     The method to be rebased.
+             * @param methodNameTransformer The transformer to use for renaming the method.
+             * @return A resolution for rebasing the provided method.
+             */
             public static Resolution of(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
                 return new ForRebasedMethod(new RebasedMethod(methodDescription, methodNameTransformer));
             }
@@ -301,6 +308,11 @@ public interface MethodRebaseResolver {
              */
             private final MethodDescription methodDescription;
 
+            /**
+             * Creates a resolution for a rebased method.
+             *
+             * @param methodDescription The rebased method.
+             */
             protected ForRebasedMethod(MethodDescription methodDescription) {
                 this.methodDescription = methodDescription;
             }
@@ -336,13 +348,28 @@ public interface MethodRebaseResolver {
                 return "MethodRebaseResolver.Resolution.ForRebasedMethod{methodDescription=" + methodDescription + '}';
             }
 
+            /**
+             * A description of a rebased method.
+             */
             protected static class RebasedMethod extends MethodDescription.AbstractMethodDescription {
 
+                /**
+                 * The method that is being rebased.
+                 */
                 private final MethodDescription methodDescription;
 
+                /**
+                 * The transformer to use for renaming the method.
+                 */
                 private final MethodNameTransformer methodNameTransformer;
 
-                public RebasedMethod(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
+                /**
+                 * Creates a new rebased method.
+                 *
+                 * @param methodDescription     The method that is being rebased.
+                 * @param methodNameTransformer The transformer to use for renaming the method.
+                 */
+                protected RebasedMethod(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
                     this.methodDescription = methodDescription;
                     this.methodNameTransformer = methodNameTransformer;
                 }
@@ -401,6 +428,13 @@ public interface MethodRebaseResolver {
          */
         class ForRebasedConstructor implements Resolution {
 
+            /**
+             * Resolves a constructor rebasement.
+             *
+             * @param methodDescription The constructor to rebase.
+             * @param placeholderType   The placeholder type to use to distinguish the constructor's signature.
+             * @return A resolution of the provided constructor.
+             */
             public static Resolution of(MethodDescription methodDescription, TypeDescription placeholderType) {
                 return new ForRebasedConstructor(new RebasedConstructor(methodDescription, placeholderType));
             }
@@ -410,7 +444,12 @@ public interface MethodRebaseResolver {
              */
             private final MethodDescription methodDescription;
 
-            public ForRebasedConstructor(MethodDescription methodDescription) {
+            /**
+             * Creates a new resolution for a rebased constructor.
+             *
+             * @param methodDescription The rebased constructor.
+             */
+            protected ForRebasedConstructor(MethodDescription methodDescription) {
                 this.methodDescription = methodDescription;
             }
 
@@ -445,13 +484,28 @@ public interface MethodRebaseResolver {
                 return "MethodRebaseResolver.Resolution.ForRebasedConstructor{methodDescription=" + methodDescription + '}';
             }
 
+            /**
+             * An description of a rebased constructor.
+             */
             protected static class RebasedConstructor extends MethodDescription.AbstractMethodDescription {
 
+                /**
+                 * The constructor that is rebased.
+                 */
                 private final MethodDescription methodDescription;
 
+                /**
+                 * The placeholder type that is used to distinguish the constructor's signature.
+                 */
                 private final TypeDescription placeholderType;
 
-                public RebasedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
+                /**
+                 * Creates a new rebased constructor.
+                 *
+                 * @param methodDescription The constructor that is rebased.
+                 * @param placeholderType   The placeholder type that is used to distinguish the constructor's signature.
+                 */
+                protected RebasedConstructor(MethodDescription methodDescription, TypeDescription placeholderType) {
                     this.methodDescription = methodDescription;
                     this.placeholderType = placeholderType;
                 }

@@ -623,10 +623,21 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
         }
 
+        /**
+         * An iterator that iterates over a type's class hierarchy.
+         */
         protected static class SuperTypeIterator implements Iterator<GenericTypeDescription> {
 
+            /**
+             * The next type to represent.
+             */
             private GenericTypeDescription nextType;
 
+            /**
+             * Creates a new iterator.
+             *
+             * @param initialType The initial type of this iterator.
+             */
             protected SuperTypeIterator(TypeDescription initialType) {
                 nextType = initialType;
             }
@@ -1382,6 +1393,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         /**
          * Creates a new type description of a package description.
+         *
          * @param packageDescription The package to be described as a type.
          */
         public ForPackageDescription(PackageDescription packageDescription) {

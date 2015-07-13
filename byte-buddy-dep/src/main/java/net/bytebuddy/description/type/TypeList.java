@@ -29,10 +29,25 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
      */
     int getStackSize();
 
+    /**
+     * Represents this list of types into a list of generic types. Invoking this method does not transform types, i.e.
+     * no generic information is attached.
+     *
+     * @return This list of types represented as generic types.
+     */
     GenericTypeList asGenericTypes();
 
+    /**
+     * Transforms the types of this list by applying the supplied visitor.
+     *
+     * @param visitor The visitor to apply to each type.
+     * @return This type list with all types transformed by the supplied visitor.
+     */
     TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor);
 
+    /**
+     * An abstract base implementation of a type list.
+     */
     abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
 
         @Override

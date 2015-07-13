@@ -1,7 +1,6 @@
 package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -20,10 +19,25 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  */
 public interface FieldList extends FilterableList<FieldDescription, FieldList> {
 
+    /**
+     * Transforms the list of field descriptions into a list of detached tokens.
+     *
+     * @return The transformed token list.
+     */
     ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList();
 
+    /**
+     * Transforms the list of field descriptions into a list of detached tokens. All types that are matched by the provided
+     * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
+     *
+     * @param targetTypeMatcher A matcher that indicates type substitution.
+     * @return The transformed token list.
+     */
     ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
+    /**
+     * An abstract base implementation of a {@link FieldList}.
+     */
     abstract class AbstractBase extends FilterableList.AbstractBase<FieldDescription, FieldList> implements FieldList {
 
         @Override
@@ -115,12 +129,27 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         }
     }
 
+    /**
+     * A list of field descriptions for a list of detached tokens. For the returned fields, each token is attached to its field representation.
+     */
     class ForTokens extends AbstractBase {
 
+        /**
+         * The declaring type of the represented fields.
+         */
         private final TypeDescription declaringType;
 
+        /**
+         * A list of the represented fields' tokens.
+         */
         private final List<? extends FieldDescription.Token> tokens;
 
+        /**
+         * Creates a new field list from a list of field tokens.
+         *
+         * @param declaringType The declaring type of the represented fields.
+         * @param tokens        A list of the represented fields' tokens.
+         */
         public ForTokens(TypeDescription declaringType, List<? extends FieldDescription.Token> tokens) {
             this.declaringType = declaringType;
             this.tokens = tokens;
@@ -137,14 +166,33 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         }
     }
 
+    /**
+     * A list of field descriptions that yields {@link net.bytebuddy.description.field.FieldDescription.TypeSubstituting}.
+     */
     class TypeSubstituting extends AbstractBase {
 
+        /**
+         * The field's actual declaring type.
+         */
         private final GenericTypeDescription declaringType;
 
+        /**
+         * The field descriptions to be transformed.
+         */
         private final List<? extends FieldDescription> fieldDescriptions;
 
+        /**
+         * The visitor to apply to a field description.
+         */
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
 
+        /**
+         * Creates a new type substituting field list.
+         *
+         * @param declaringType     The field's actual declaring type.
+         * @param fieldDescriptions The field descriptions to be transformed.
+         * @param visitor           The visitor to apply to a field description.
+         */
         public TypeSubstituting(GenericTypeDescription declaringType,
                                 List<? extends FieldDescription> fieldDescriptions,
                                 GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {

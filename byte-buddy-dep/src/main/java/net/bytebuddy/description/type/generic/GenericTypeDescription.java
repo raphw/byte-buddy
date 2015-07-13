@@ -2066,7 +2066,7 @@ public interface GenericTypeDescription extends NamedElement {
         public String toString() {
             return resolve().toString();
         }
-        
+
         public static class OfPotentiallyRawType extends LazyProjection {
 
             public static GenericTypeDescription of(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {

@@ -1117,7 +1117,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
 
         @Override
         public ParameterList getParameters() {
-            return new ParameterList.Substituted(this, methodDescription.getParameters(), new VariableRetainingDelegator());
+            return new ParameterList.TypeSubstituting(this, methodDescription.getParameters(), new VariableRetainingDelegator());
         }
 
         @Override

@@ -3,8 +3,8 @@ package net.bytebuddy.description;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.matcher.FilterableList;
 
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,7 +61,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
          *
          * @param <S> The actual token type.
          */
-        class TokenList<S extends Token<S>> extends AbstractList<S> {
+        class TokenList<S extends Token<S>> extends FilterableList.AbstractBase<S, TokenList<S>> {
 
             /**
              * The tokens that this list represents.
@@ -89,6 +89,11 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
                     tokens.add(token.accept(visitor));
                 }
                 return new TokenList<S>(tokens);
+            }
+
+            @Override
+            protected TokenList<S> wrap(List<S> values) {
+                return new TokenList<S>(values);
             }
 
             @Override

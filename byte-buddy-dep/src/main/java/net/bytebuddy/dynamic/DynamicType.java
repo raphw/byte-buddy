@@ -2292,10 +2292,22 @@ public interface DynamicType {
              */
             protected class DefaultMatchedMethodInterception implements MatchedMethodInterception<S> {
 
+                /**
+                 * A matcher for the methods this interception targets.
+                 */
                 private final LatentMethodMatcher methodMatcher;
 
+                /**
+                 * The method tokens this interceptions defines for the dynamically created type.
+                 */
                 private final List<MethodDescription.Token> methodTokens;
 
+                /**
+                 * Creates a new default matched method interception.
+                 *
+                 * @param methodMatcher A matcher for the methods this interception targets.
+                 * @param methodTokens  The method tokens this interceptions defines for the dynamically created type.
+                 */
                 protected DefaultMatchedMethodInterception(LatentMethodMatcher methodMatcher, List<MethodDescription.Token> methodTokens) {
                     this.methodMatcher = methodMatcher;
                     this.methodTokens = methodTokens;
@@ -2483,6 +2495,9 @@ public interface DynamicType {
              */
             protected class DefaultMethodAnnotationTarget extends AbstractDelegatingBuilder<S> implements MethodAnnotationTarget<S> {
 
+                /**
+                 * A matcher for the methods this target intercepts.
+                 */
                 private final LatentMethodMatcher methodMatcher;
 
                 /**
@@ -2500,6 +2515,14 @@ public interface DynamicType {
                  */
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+                /**
+                 * Creates a new default method annotation target.
+                 *
+                 * @param methodMatcher            A matcher for the methods this target intercepts.
+                 * @param methodTokens             A list of all method tokens that were previously defined.
+                 * @param handler                  The handler to apply to any matched method.
+                 * @param attributeAppenderFactory The method attribute appender factory to be applied to the matched methods.
+                 */
                 protected DefaultMethodAnnotationTarget(LatentMethodMatcher methodMatcher,
                                                         List<MethodDescription.Token> methodTokens,
                                                         MethodRegistry.Handler handler,
