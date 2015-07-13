@@ -301,6 +301,14 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
              */
             protected static class LazyTypeVariable extends GenericTypeDescription.ForTypeVariable {
 
+                /**
+                 * Creates a lazy type variable representation.
+                 *
+                 * @param detachedVariable   The detached variable to represent.
+                 * @param typeVariableSource The type variable source of the type variable.
+                 * @param visitor            The visitor to be used for attaching the type variable's bounds.
+                 * @return A representation of the type variable with attached bounds.
+                 */
                 public static GenericTypeDescription of(GenericTypeDescription detachedVariable,
                                                         TypeVariableSource typeVariableSource,
                                                         GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
