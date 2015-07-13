@@ -14,10 +14,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * A list containing descriptions of generic types.
+ */
 public interface GenericTypeList extends FilterableList<GenericTypeDescription, GenericTypeList> {
 
+    /**
+     * Returns a list of the generic types' erasures.
+     *
+     * @return A list of the generic types' erasures.
+     */
     TypeList asRawTypes();
 
+    /**
+     * Transforms the generic types by applying the supplied visitor to each of them.
+     *
+     * @param visitor The visitor to apply to each type.
+     * @return A list of the types returned by the supplied visitor.
+     */
     GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
     /**
@@ -27,6 +41,9 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
      */
     int getStackSize();
 
+    /**
+     * An abstract base implementation of a generic type list.
+     */
     abstract class AbstractBase extends FilterableList.AbstractBase<GenericTypeDescription, GenericTypeList> implements GenericTypeList {
 
         @Override
@@ -101,15 +118,6 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         @Override
         public int size() {
             return types.size();
-        }
-
-        @Override
-        public TypeList asRawTypes() {
-            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(types.size());
-            for (GenericTypeDescription genericTypeDescription : this) {
-                typeDescriptions.add(genericTypeDescription.asRawType());
-            }
-            return new TypeList.Explicit(typeDescriptions);
         }
     }
 
