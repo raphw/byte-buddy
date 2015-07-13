@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.type.TypeDescription;
@@ -390,8 +391,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
-                    return implementationTarget.invokeSuper(instrumentedMethod,
-                            Implementation.Target.MethodLookup.Default.MOST_SPECIFIC);
+                    return implementationTarget.invokeSuper(instrumentedMethod, Implementation.Target.MethodLookup.Default.MOST_SPECIFIC);
                 }
             },
 
@@ -403,7 +403,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
-                    return implementationTarget.invokeDefault(proxiedType, instrumentedMethod.getUniqueSignature());
+                    return implementationTarget.invokeDefault(proxiedType, instrumentedMethod.asToken());
                 }
             };
 
@@ -741,9 +741,9 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType.withField(INSTANCE_FIELD,
-                    TypeProxy.this.implementationTarget.getTypeDescription(),
-                    Opcodes.ACC_SYNTHETIC);
+            return instrumentedType.withField(new FieldDescription.Token(INSTANCE_FIELD,
+                    Opcodes.ACC_SYNTHETIC,
+                    TypeProxy.this.implementationTarget.getTypeDescription()));
         }
 
         @Override
@@ -796,32 +796,16 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
              * @param instrumentedType The instrumented type that is proxied by the enclosing instrumentation.
              */
             protected Appender(TypeDescription instrumentedType) {
-                fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields()
-                        .filter((named(INSTANCE_FIELD))).getOnly()).getter();
+                fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).getter();
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor,
-                              Context implementationContext,
-                              MethodDescription instrumentedMethod) {
-                StackManipulation.Size stackSize = implement(instrumentedMethod,
-                        invocationFactory.invoke(implementationTarget, proxiedType, instrumentedMethod))
-                        .apply(methodVisitor, implementationContext);
-                return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-            }
-
-            /**
-             * Returns the actual implementation of a method based on the legality of the special method invocation.
-             *
-             * @param instrumentedMethod      The instrumented method.
-             * @param specialMethodInvocation The special method invocation to proxy by the implemented method.
-             * @return A stack manipulation that represents the invocation of the special method invocation.
-             */
-            private StackManipulation implement(MethodDescription instrumentedMethod,
-                                                Implementation.SpecialMethodInvocation specialMethodInvocation) {
-                return specialMethodInvocation.isValid()
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                SpecialMethodInvocation specialMethodInvocation = invocationFactory.invoke(implementationTarget, proxiedType, instrumentedMethod);
+                StackManipulation.Size size = (specialMethodInvocation.isValid()
                         ? new AccessorMethodInvocation(instrumentedMethod, specialMethodInvocation)
-                        : AbstractMethodErrorThrow.INSTANCE;
+                        : AbstractMethodErrorThrow.INSTANCE).apply(methodVisitor, implementationContext);
+                return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
             }
 
             /**
@@ -894,7 +878,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                             fieldLoadingInstruction,
                             MethodVariableAccess.forBridgeMethodInvocation(instrumentedMethod, proxyMethod),
                             MethodInvocation.invoke(proxyMethod),
-                            MethodReturn.returning(instrumentedMethod.getReturnType())
+                            MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                     ).apply(methodVisitor, implementationContext);
                 }
 

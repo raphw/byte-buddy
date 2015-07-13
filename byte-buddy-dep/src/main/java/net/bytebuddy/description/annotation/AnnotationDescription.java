@@ -90,7 +90,7 @@ public interface AnnotationDescription {
          *
          * @param classLoader The class loader for loading this value.
          * @return The loaded value of this annotation.
-         * @throws ClassNotFoundException If a type that represents a loaded value cannot be found.
+         * @throws ClassNotFoundException If a type that representedBy a loaded value cannot be found.
          */
         Loaded<S> load(ClassLoader classLoader) throws ClassNotFoundException;
 
@@ -155,7 +155,7 @@ public interface AnnotationDescription {
                 RESOLVED;
 
                 /**
-                 * Returns {@code true} if the related annotation value is defined, i.e. either represents
+                 * Returns {@code true} if the related annotation value is defined, i.e. either representedBy
                  * an actual value or an exceptional state.
                  *
                  * @return {@code true} if the related annotation value is defined.
@@ -165,7 +165,7 @@ public interface AnnotationDescription {
                 }
 
                 /**
-                 * Returns {@code true} if the related annotation value is resolved, i.e. represents an actual
+                 * Returns {@code true} if the related annotation value is resolved, i.e. representedBy an actual
                  * value.
                  *
                  * @return {@code true} if the related annotation value is resolved.
@@ -317,14 +317,14 @@ public interface AnnotationDescription {
             }
 
             /**
-             * The annotation description that this value represents.
+             * The annotation description that this value representedBy.
              */
             private final AnnotationDescription annotationDescription;
 
             /**
              * Creates a new annotation value for a given annotation description.
              *
-             * @param annotationDescription The annotation description that this value represents.
+             * @param annotationDescription The annotation description that this value representedBy.
              */
             public ForAnnotation(AnnotationDescription annotationDescription) {
                 this.annotationDescription = annotationDescription;
@@ -671,7 +671,7 @@ public interface AnnotationDescription {
              *
              * @param typeDescription The type to represent.
              * @param <V>             The represented type.
-             * @return An annotation value that represents the given type.
+             * @return An annotation value that representedBy the given type.
              */
             public static <V extends Class<V>> AnnotationValue<TypeDescription, V> of(TypeDescription typeDescription) {
                 return new ForType<V>(typeDescription);
@@ -683,7 +683,7 @@ public interface AnnotationDescription {
             private final TypeDescription typeDescription;
 
             /**
-             * Creates a new annotation value that represents a type.
+             * Creates a new annotation value that representedBy a type.
              *
              * @param typeDescription The represented type.
              */
@@ -1588,7 +1588,7 @@ public interface AnnotationDescription {
 
         @Override
         public Object getValue(MethodDescription methodDescription) {
-            if (!methodDescription.getDeclaringType().represents(annotation.annotationType())) {
+            if (!methodDescription.getDeclaringType().asRawType().represents(annotation.annotationType())) {
                 throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
             }
             try {
@@ -1602,7 +1602,7 @@ public interface AnnotationDescription {
                         method.setAccessible(true);
                     }
                 }
-                return describe(method.invoke(annotation), methodDescription.getReturnType());
+                return describe(method.invoke(annotation), methodDescription.getReturnType().asRawType());
             } catch (Exception e) {
                 throw new IllegalStateException("Cannot access annotation property " + methodDescription, e);
             }
@@ -1757,7 +1757,7 @@ public interface AnnotationDescription {
         /**
          * The annotation type.
          */
-        protected final TypeDescription annotationType;
+        private final TypeDescription annotationType;
 
         /**
          * A mapping of annotation properties to their annotation values.
@@ -1786,7 +1786,7 @@ public interface AnnotationDescription {
             MethodList methodDescriptions = annotationType.getDeclaredMethods().filter(named(nonNull(property)));
             if (methodDescriptions.isEmpty()) {
                 throw new IllegalArgumentException(annotationType + " does not define a property named " + property);
-            } else if (!methodDescriptions.getOnly().getReturnType().isAnnotationValue(value.resolve())) {
+            } else if (!methodDescriptions.getOnly().getReturnType().asRawType().isAnnotationValue(value.resolve())) {
                 throw new IllegalArgumentException(value + " cannot be assigned to " + property);
             }
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>(this.annotationValues.size() + 1);

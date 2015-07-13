@@ -5,9 +5,13 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.ModifierResolver;
@@ -52,7 +56,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * {@code ByteBuddy} instances are configurable factories for creating new Java types at a JVM's runtime.
  * Such types are represented by {@link net.bytebuddy.dynamic.DynamicType}s which can be saved to disk or loaded into
  * the Java virtual machine. Each instance of {@code ByteBuddy} is immutable where any of the factory methods returns
- * a new instance that represents the altered configuration.
+ * a new instance that representedBy the altered configuration.
  * <p>&nbsp;</p>
  * Note that any configuration defines not to implement any synthetic methods or the default finalizer method
  * {@link Object#finalize()}. This behavior can be altered by
@@ -343,7 +347,7 @@ public class ByteBuddy {
      * strategy.
      *
      * @param superType The type or interface to be extended or implemented by the dynamic type.
-     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @param <T>       The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that extends or implements the given loaded type.
      */
     public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
@@ -355,7 +359,7 @@ public class ByteBuddy {
      *
      * @param superType           The type or interface to be extended or implemented by the dynamic type.
      * @param constructorStrategy The constructor strategy to apply.
-     * @param <T>                 The most specific known type that the created dynamic type represents.
+     * @param <T>                 The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that extends or implements the given loaded type.
      */
     public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
@@ -368,7 +372,7 @@ public class ByteBuddy {
      * strategy.
      *
      * @param superType The type or interface to be extended or implemented by the dynamic type.
-     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @param <T>       The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDescription superType) {
@@ -380,7 +384,7 @@ public class ByteBuddy {
      *
      * @param superType           The type or interface to be extended or implemented by the dynamic type.
      * @param constructorStrategy The constructor strategy to apply.
-     * @param <T>                 The most specific known type that the created dynamic type represents.
+     * @param <T>                 The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
@@ -388,7 +392,7 @@ public class ByteBuddy {
         List<TypeDescription> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).isInterface()) {
             actualSuperType = TypeDescription.OBJECT;
-            interfaceTypes = joinUnique(superType, interfaceTypes);
+            interfaceTypes = joinUniqueRaw(interfaceTypes, Collections.singleton(superType));
         }
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 nonNull(namingStrategy.subclass(superType)),
@@ -421,7 +425,7 @@ public class ByteBuddy {
      * Creates a dynamic type builder for an interface that extends the given interface.
      *
      * @param type The interface to extend.
-     * @param <T>  The most specific known type that the created dynamic type represents.
+     * @param <T>  The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interface.
      */
@@ -490,6 +494,56 @@ public class ByteBuddy {
     }
 
     /**
+     * Creates a new Java package. A Java package is represented as a Java type with name <i>package-info</i>. The explicit creation of a
+     * package can be useful for adding annotations to this package.
+     *
+     * @param name The name of the package.
+     * @return A dynamic type that representedBy the created package.
+     */
+    public DynamicType.Builder<?> makePackage(String name) {
+        return new SubclassDynamicTypeBuilder<Class<?>>(classFileVersion,
+                new NamingStrategy.Fixed(isValidIdentifier(name) + "." + PackageDescription.PACKAGE_CLASS_NAME),
+                auxiliaryTypeNamingStrategy,
+                TypeDescription.OBJECT,
+                new TypeList.Empty(),
+                PackageDescription.PACKAGE_MODIFIERS,
+                typeAttributeAppender,
+                ignoredMethods,
+                bridgeMethodResolverFactory,
+                classVisitorWrapperChain,
+                new FieldRegistry.Default(),
+                methodRegistry,
+                methodLookupEngineFactory,
+                defaultFieldAttributeAppenderFactory,
+                defaultMethodAttributeAppenderFactory,
+                ConstructorStrategy.Default.NO_CONSTRUCTORS);
+    }
+
+    /**
+     * Rebases the given the package. A Java package is represented as a type named <i>package-info</i>. The explicit creation of a
+     * package can be useful for adding annotations to this package.
+     *
+     * @param aPackage         The package to rebase.
+     * @param classFileLocator A class file locator for locating the given packages class file.
+     * @return A dynamic type that representedBy the created package.
+     */
+    public DynamicType.Builder<?> rebase(Package aPackage, ClassFileLocator classFileLocator) {
+        return rebase(new PackageDescription.ForLoadedPackage(aPackage), classFileLocator);
+    }
+
+    /**
+     * Rebases the given the package. A Java package is represented as a type named <i>package-info</i>. The explicit creation of a
+     * package can be useful for adding annotations to this package.
+     *
+     * @param packageDescription The description of the package to rebase.
+     * @param classFileLocator   A class file locator for locating the given packages class file.
+     * @return A dynamic type that representedBy the created package.
+     */
+    public DynamicType.Builder<?> rebase(PackageDescription packageDescription, ClassFileLocator classFileLocator) {
+        return rebase(new TypeDescription.ForPackageDescription(packageDescription), classFileLocator);
+    }
+
+    /**
      * Creates a dynamic type builder for a new annotation type.
      *
      * @return A builder for a new annotation type.
@@ -531,7 +585,7 @@ public class ByteBuddy {
      * @return A builder for a new enumeration type with the given values.
      */
     @SuppressWarnings("unchecked")
-    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<String> values) {
+    public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<? extends String> values) {
         if (unique(nonNull(values)).size() == 0) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
@@ -584,7 +638,7 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType The type to redefine.
-     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @param <T>       The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
@@ -602,8 +656,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType        The type to redefine.
-     * @param classFileLocator A locator for finding a class file that represents a type.
-     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @param classFileLocator A locator for finding a class file that representedBy a type.
+     * @param <T>              The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> levelType, ClassFileLocator classFileLocator) {
@@ -621,8 +675,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType        The type to redefine.
-     * @param classFileLocator A locator for finding a class file that represents a type.
-     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @param classFileLocator A locator for finding a class file that representedBy a type.
+     * @param <T>              The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription levelType, ClassFileLocator classFileLocator) {
@@ -660,7 +714,7 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType The type which is to be rebased.
-     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @param <T>       The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
@@ -680,8 +734,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType        The type which is to be rebased.
-     * @param classFileLocator A locator for finding a class file that represents a type.
-     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @param classFileLocator A locator for finding a class file that representedBy a type.
+     * @param <T>              The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType, ClassFileLocator classFileLocator) {
@@ -701,9 +755,9 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType             The type which is to be rebased.
-     * @param classFileLocator      A locator for finding a class file that represents a type.
+     * @param classFileLocator      A locator for finding a class file that representedBy a type.
      * @param methodNameTransformer The method name transformer that is used for rebasing methods.
-     * @param <T>                   The most specific known type that the created dynamic type represents.
+     * @param <T>                   The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
@@ -725,8 +779,8 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType        The type which is to be rebased.
-     * @param classFileLocator A locator for finding a class file that represents a type.
-     * @param <T>              The most specific known type that the created dynamic type represents.
+     * @param classFileLocator A locator for finding a class file that representedBy a type.
+     * @param <T>              The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType, ClassFileLocator classFileLocator) {
@@ -746,16 +800,16 @@ public class ByteBuddy {
      * </p>
      *
      * @param levelType             The type which is to be rebased.
-     * @param classFileLocator      A locator for finding a class file that represents a type.
+     * @param classFileLocator      A locator for finding a class file that representedBy a type.
      * @param methodNameTransformer The method name transformer that is used for rebasing methods.
-     * @param <T>                   The most specific known type that the created dynamic type represents.
+     * @param <T>                   The most specific known type that the created dynamic type representedBy.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
                                              ClassFileLocator classFileLocator,
                                              MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         return new RebaseDynamicTypeBuilder<T>(classFileVersion,
-                nonNull(namingStrategy.rebase(levelType)),
+                nonNull(namingStrategy.rebase(isDefineable(levelType))),
                 auxiliaryTypeNamingStrategy,
                 levelType,
                 interfaceTypes,
@@ -777,7 +831,7 @@ public class ByteBuddy {
      * Defines a new class file version for this configuration.
      *
      * @param classFileVersion The class file version to define for this configuration.
-     * @return A new configuration that represents this configuration with the given class file version.
+     * @return A new configuration that representedBy this configuration with the given class file version.
      */
     public ByteBuddy withClassFileVersion(ClassFileVersion classFileVersion) {
         return new ByteBuddy(nonNull(classFileVersion),
@@ -799,7 +853,7 @@ public class ByteBuddy {
      * Defines a new naming strategy for this configuration.
      *
      * @param namingStrategy The unbound naming strategy to apply to the current configuration.
-     * @return A new configuration that represents this configuration with the given unbound naming strategy.
+     * @return A new configuration that representedBy this configuration with the given unbound naming strategy.
      */
     public ByteBuddy withNamingStrategy(NamingStrategy.Unbound namingStrategy) {
         return new ByteBuddy(classFileVersion,
@@ -821,7 +875,7 @@ public class ByteBuddy {
      * Defines a new naming strategy for this configuration.
      *
      * @param namingStrategy The naming strategy to apply to the current configuration.
-     * @return A new configuration that represents this configuration with the given naming strategy.
+     * @return A new configuration that representedBy this configuration with the given naming strategy.
      */
     public ByteBuddy withNamingStrategy(NamingStrategy namingStrategy) {
         return withNamingStrategy(new NamingStrategy.Unbound.Unified(nonNull(namingStrategy)));
@@ -854,7 +908,7 @@ public class ByteBuddy {
      * contributes which might currently be implicit.
      *
      * @param modifierContributor The modifier contributors to define explicitly for this configuration.
-     * @return A new configuration that represents this configuration with the given modifier contributors.
+     * @return A new configuration that representedBy this configuration with the given modifier contributors.
      */
     public ByteBuddy withModifiers(ModifierContributor.ForType... modifierContributor) {
         return new ByteBuddy(classFileVersion,
@@ -877,7 +931,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param typeAttributeAppender The type attribute appender to define for this configuration.
-     * @return A new configuration that represents this configuration with the given type attribute appender.
+     * @return A new configuration that representedBy this configuration with the given type attribute appender.
      */
     public ByteBuddy withAttribute(TypeAttributeAppender typeAttributeAppender) {
         return new ByteBuddy(classFileVersion,
@@ -900,7 +954,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param annotation The type annotations to define for this configuration.
-     * @return A new configuration that represents this configuration with the given annotations as its new
+     * @return A new configuration that representedBy this configuration with the given annotations as its new
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(Annotation... annotation) {
@@ -912,7 +966,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param annotations The type annotations to define for this configuration.
-     * @return A new configuration that represents this configuration with the given annotations as its new
+     * @return A new configuration that representedBy this configuration with the given annotations as its new
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(Iterable<? extends Annotation> annotations) {
@@ -924,7 +978,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param annotation The type annotations to define for this configuration.
-     * @return A new configuration that represents this configuration with the given annotations as its new
+     * @return A new configuration that representedBy this configuration with the given annotations as its new
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(AnnotationDescription... annotation) {
@@ -936,7 +990,7 @@ public class ByteBuddy {
      * attribute appender.
      *
      * @param annotations The type annotations to define for this configuration.
-     * @return A new configuration that represents this configuration with the given annotations as its new
+     * @return A new configuration that representedBy this configuration with the given annotations as its new
      * type attribute appender.
      */
     public ByteBuddy withTypeAnnotation(Collection<? extends AnnotationDescription> annotations) {
@@ -985,7 +1039,7 @@ public class ByteBuddy {
      * implement the given interfaces.
      */
     public OptionalMethodInterception withImplementing(TypeDescription... type) {
-        return withImplementing(Arrays.asList(nonNull(type)));
+        return withImplementing(Arrays.asList(type));
     }
 
     /**
@@ -999,7 +1053,7 @@ public class ByteBuddy {
         return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
-                joinUnique(interfaceTypes, toList(isInterface(types))),
+                joinUniqueRaw(interfaceTypes, toList(isImplementable(types))),
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
@@ -1009,7 +1063,7 @@ public class ByteBuddy {
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new ArrayList<TypeDescription>(types)))));
+                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new GenericTypeList.Explicit(toList(types)).asRawTypes()))));
     }
 
     /**
@@ -1020,7 +1074,7 @@ public class ByteBuddy {
      * method's visibility.
      *
      * @param ignoredMethods The methods to always be ignored for any instrumentation.
-     * @return A new configuration that represents this configuration with the given method matcher defining methods
+     * @return A new configuration that representedBy this configuration with the given method matcher defining methods
      * that are to be ignored for any instrumentation.
      */
     public ByteBuddy withIgnoredMethods(ElementMatcher<? super MethodDescription> ignoredMethods) {
@@ -1047,7 +1101,7 @@ public class ByteBuddy {
      *
      * @param bridgeMethodResolverFactory The bridge method resolver factory to be applied to any implementation
      *                                    process.
-     * @return A new configuration that represents this configuration with the given bridge method resolver factory
+     * @return A new configuration that representedBy this configuration with the given bridge method resolver factory
      * to be applied on any configuration.
      */
     public ByteBuddy withBridgeMethodResolver(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
@@ -1378,19 +1432,20 @@ public class ByteBuddy {
     public interface MethodInterceptable {
 
         /**
-         * Intercepts the given method with the given implementations.
+         * Intercepts the currently selected methods with the provided implementation. If this intercepted method is
+         * not yet declared by the current type, it might be added to the currently built type as a result of this
+         * interception. If the method is already declared by the current type, its byte code code might be copied
+         * into the body of a synthetic method in order to preserve the original code's invokeability.
          *
-         * @param implementation The implementation to apply to the selected methods.
-         * @return A method annotation target for this instance with the given implementation applied to the
-         * current selection.
+         * @param implementation The implementation to apply to the currently selected method.
+         * @return A configuration which will intercept the currently selected methods by the given implementation.
          */
         MethodAnnotationTarget intercept(Implementation implementation);
 
         /**
-         * Defines the currently selected methods as {@code abstract}.
+         * Implements the currently selected methods as {@code abstract} methods.
          *
-         * @return A method annotation target for this instance with implementing the currently selected methods
-         * as {@code abstract}.
+         * @return A configuration which will implement the currently selected methods as {@code abstract} methods.
          */
         MethodAnnotationTarget withoutCode();
 
@@ -1399,7 +1454,7 @@ public class ByteBuddy {
          *
          * @param value The value that the annotation property should set as a default.
          * @param type  The type of the annotation property.
-         * @return A builder which defines the given default value for all matched methods.
+         * @return A configuration which defines the given default value for all matched methods.
          */
         MethodAnnotationTarget withDefaultValue(Object value, Class<?> type);
 
@@ -1407,10 +1462,10 @@ public class ByteBuddy {
          * Defines a default annotation value to set for any matched method. The value is to be represented in a wrapper format,
          * {@code enum} values should be handed as {@link net.bytebuddy.description.enumeration.EnumerationDescription}
          * instances, annotations as {@link AnnotationDescription} instances and
-         * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
+         * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their actual form or as their wrapper types.
          *
          * @param value A non-loaded value that the annotation property should set as a default.
-         * @return A builder which defines the given default value for all matched methods.
+         * @return A configuration which defines the given default value for all matched methods.
          */
         MethodAnnotationTarget withDefaultValue(Object value);
     }
@@ -1500,7 +1555,7 @@ public class ByteBuddy {
          *
          * @param attributeAppenderFactory The method attribute appender factory to apply to the currently
          *                                 selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * attribute appender factory applied to the current method selection.
          */
         public MethodAnnotationTarget attribute(MethodAttributeAppender.Factory attributeAppenderFactory) {
@@ -1526,7 +1581,7 @@ public class ByteBuddy {
          * Defines an method annotation for the currently selected methods.
          *
          * @param annotation The annotations to defined for the currently selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(Annotation... annotation) {
@@ -1537,7 +1592,7 @@ public class ByteBuddy {
          * Defines an method annotation for the currently selected methods.
          *
          * @param annotation The annotations to defined for the currently selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(AnnotationDescription... annotation) {
@@ -1548,7 +1603,7 @@ public class ByteBuddy {
          * Defines an method annotation for the currently selected methods.
          *
          * @param annotations The annotations to defined for the currently selected methods.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods.
          */
         public MethodAnnotationTarget annotateMethod(Collection<? extends AnnotationDescription> annotations) {
@@ -1563,7 +1618,7 @@ public class ByteBuddy {
          *                       with the first parameter index by {@code 0}.
          * @param annotation     The annotations to defined for the currently selected methods' parameters
          *                       ath the given index.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, Annotation... annotation) {
@@ -1577,7 +1632,7 @@ public class ByteBuddy {
          *                       with the first parameter index by {@code 0}.
          * @param annotation     The annotations to defined for the currently selected methods' parameters
          *                       ath the given index.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, AnnotationDescription... annotation) {
@@ -1591,7 +1646,7 @@ public class ByteBuddy {
          *                       with the first parameter index by {@code 0}.
          * @param annotations    The annotations to defined for the currently selected methods' parameters
          *                       ath the given index.
-         * @return A method annotation target that represents the current configuration with the additional
+         * @return A method annotation target that representedBy the current configuration with the additional
          * annotations added to the currently selected methods' parameters at the given index.
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
@@ -2070,6 +2125,11 @@ public class ByteBuddy {
         }
 
         @Override
+        public DynamicType.Builder<?> makeInterface() {
+            return materialize().makeInterface();
+        }
+
+        @Override
         public <T> DynamicType.Builder<T> makeInterface(Class<T> type) {
             return materialize().makeInterface(type);
         }
@@ -2077,6 +2137,11 @@ public class ByteBuddy {
         @Override
         public DynamicType.Builder<?> makeInterface(Class<?>... type) {
             return materialize().makeInterface(type);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
+            return materialize().makeInterface(typeDescription);
         }
 
         @Override
@@ -2100,8 +2165,23 @@ public class ByteBuddy {
         }
 
         @Override
-        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<String> values) {
+        public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<? extends String> values) {
             return materialize().makeEnumeration(values);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makePackage(String name) {
+            return super.makePackage(name);
+        }
+
+        @Override
+        public DynamicType.Builder<?> rebase(Package aPackage, ClassFileLocator classFileLocator) {
+            return super.rebase(aPackage, classFileLocator);
+        }
+
+        @Override
+        public DynamicType.Builder<?> rebase(PackageDescription packageDescription, ClassFileLocator classFileLocator) {
+            return super.rebase(packageDescription, classFileLocator);
         }
 
         @Override
@@ -2138,7 +2218,7 @@ public class ByteBuddy {
     public class MatchedMethodInterception implements MethodInterceptable {
 
         /**
-         * A method matcher that represents the current method selection.
+         * A method matcher that representedBy the current method selection.
          */
         protected final LatentMethodMatcher methodMatcher;
 
@@ -2293,10 +2373,14 @@ public class ByteBuddy {
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             for (String value : values) {
-                instrumentedType = instrumentedType.withField(value, instrumentedType, ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM);
+                instrumentedType = instrumentedType.withField(new FieldDescription.Token(value,
+                        ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM,
+                        TargetType.DESCRIPTION));
             }
             return instrumentedType
-                    .withField(ENUM_VALUES, TypeDescription.ArrayProjection.of(instrumentedType, 1), ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC)
+                    .withField(new FieldDescription.Token(ENUM_VALUES,
+                            ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC,
+                            TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1)))
                     .withInitializer(new InitializationAppender(values));
         }
 
@@ -2345,16 +2429,19 @@ public class ByteBuddy {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
-                MethodDescription cloneArrayMethod = new MethodDescription.Latent(CLONE_METHOD_NAME,
-                        valuesField.getFieldType(),
-                        TypeDescription.OBJECT,
-                        Collections.<TypeDescription>emptyList(),
+                MethodDescription cloneArrayMethod = new MethodDescription.Latent(valuesField.getType().asRawType(),
+                        CLONE_METHOD_NAME,
                         Opcodes.ACC_PUBLIC,
-                        Collections.<TypeDescription>emptyList());
+                        Collections.<GenericTypeDescription>emptyList(),
+                        TypeDescription.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<GenericTypeDescription>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE);
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),
                         MethodInvocation.invoke(cloneArrayMethod),
-                        TypeCasting.to(valuesField.getFieldType()),
+                        TypeCasting.to(valuesField.getType().asRawType()),
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }
@@ -2399,7 +2486,7 @@ public class ByteBuddy {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                TypeDescription instrumentedType = instrumentedMethod.getDeclaringType();
+                TypeDescription instrumentedType = instrumentedMethod.getDeclaringType().asRawType();
                 MethodDescription enumConstructor = instrumentedType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(String.class, int.class)))
                         .getOnly();

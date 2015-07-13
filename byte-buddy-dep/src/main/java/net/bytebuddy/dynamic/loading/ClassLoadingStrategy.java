@@ -43,7 +43,8 @@ public interface ClassLoadingStrategy {
                 return ByteArrayClassLoader.load(classLoader,
                         types,
                         DEFAULT_PROTECTION_DOMAIN,
-                        ByteArrayClassLoader.PersistenceHandler.LATENT, PARENT_FIRST);
+                        ByteArrayClassLoader.PersistenceHandler.LATENT,
+                        PARENT_FIRST);
             }
 
             @Override

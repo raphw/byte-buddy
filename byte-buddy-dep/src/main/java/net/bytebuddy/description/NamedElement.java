@@ -11,29 +11,43 @@ public interface NamedElement {
     String EMPTY_NAME = "";
 
     /**
-     * Returns the internalName of this byte code element.
+     * Returns the name of this element as it is found in the source code. If no such name exists,
+     * an empty string is returned.
      *
-     * @return The internalName of this byte code element as visible from within a running Java application.
-     */
-    String getName();
-
-    /**
-     * Returns the internal internalName of this byte code element.
-     *
-     * @return The internal internalName of this byte code element as used within the Java class file format.
-     */
-    String getInternalName();
-
-    /**
-     * Returns the name of this byte code element as it is defined in Java source code. This means:
-     * <ul>
-     * <li>For type descriptions, the main distinction is the display of arrays whose actual names are blended
-     * with internal names when calling {@link ByteCodeElement#getName()}.</li>
-     * <li>For method descriptions, representations of constructors and the type initializer, return the
-     * empty string.</li>
-     * </ul>
-     *
-     * @return The name of this type as represented in Java source code.
+     * @return The name of this element as given in a Java program's source code.
      */
     String getSourceCodeName();
+
+    /**
+     * A named element with a name that has a particular meaning to the Java runtime.
+     */
+    interface WithRuntimeName extends NamedElement {
+
+        /**
+         * Returns the internalName of this byte code element.
+         *
+         * @return The internalName of this byte code element as visible from within a running Java application.
+         */
+        String getName();
+
+        /**
+         * Returns the internal internalName of this byte code element.
+         *
+         * @return The internal internalName of this byte code element as used within the Java class file format.
+         */
+        String getInternalName();
+    }
+
+    /**
+     * A named element with a generic type name.
+     */
+    interface WithGenericName extends WithRuntimeName {
+
+        /**
+         * Returns a generic string of this byte code element.
+         *
+         * @return A generic string of this byte code element.
+         */
+        String toGenericString();
+    }
 }

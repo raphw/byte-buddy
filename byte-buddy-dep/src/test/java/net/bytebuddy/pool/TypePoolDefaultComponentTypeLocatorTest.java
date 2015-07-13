@@ -32,12 +32,12 @@ public class TypePoolDefaultComponentTypeLocatorTest {
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(methodDescription)));
         when(methodDescription.getSourceCodeName()).thenReturn(FOO);
         TypeDescription returnType = mock(TypeDescription.class);
+        when(returnType.asRawType()).thenReturn(returnType);
         when(methodDescription.getReturnType()).thenReturn(returnType);
         TypeDescription componentType = mock(TypeDescription.class);
         when(returnType.getComponentType()).thenReturn(componentType);
         when(componentType.getName()).thenReturn(QUX);
-        assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR)
-                .bind(FOO).lookup(), is(QUX));
+        assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR).bind(FOO).lookup(), is(QUX));
     }
 
     @Test
@@ -56,20 +56,20 @@ public class TypePoolDefaultComponentTypeLocatorTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(TypePool.Default.ComponentTypeLocator.Illegal.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).applyMutable();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).create(new ObjectPropertyAssertion.Creator<String>() {
             @Override
             public String create() {
                 return "(LFoo;)LBar;";
             }
-        }).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.ParameterBag.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodCollector.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodParameterCollector.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.OnFieldCollector.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.ArrayLookup.class).applyMutable();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.AnnotationLookup.class).applyMutable();
+        }).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.ParameterBag.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodCollector.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodParameterCollector.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.OnFieldCollector.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.ArrayLookup.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.AnnotationLookup.class).applyBasic();
     }
 }

@@ -51,37 +51,47 @@ public enum TypeManifestation implements ModifierContributor.ForType {
         return mask;
     }
 
+    @Override
+    public int getRange() {
+        return Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION;
+    }
+
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
+    }
+
     /**
-     * Returns {@code true} if a type represents a {@code final} type.
+     * Returns {@code true} if a type representedBy a {@code final} type.
      *
-     * @return {@code true} if a type represents a {@code final} type.
+     * @return {@code true} if a type representedBy a {@code final} type.
      */
     public boolean isFinal() {
         return (mask & Opcodes.ACC_FINAL) != 0;
     }
 
     /**
-     * Returns {@code true} if a type represents an {@code abstract} type but not an interface type.
+     * Returns {@code true} if a type representedBy an {@code abstract} type but not an interface type.
      *
-     * @return {@code true} if a type represents an {@code abstract} type but not an interface type.
+     * @return {@code true} if a type representedBy an {@code abstract} type but not an interface type.
      */
     public boolean isAbstract() {
         return (mask & Opcodes.ACC_ABSTRACT) != 0 && !isInterface();
     }
 
     /**
-     * Returns {@code true} if a type represents an interface type.
+     * Returns {@code true} if a type representedBy an interface type.
      *
-     * @return {@code true} if a type represents an interface type.
+     * @return {@code true} if a type representedBy an interface type.
      */
     public boolean isInterface() {
         return (mask & Opcodes.ACC_INTERFACE) != 0;
     }
 
     /**
-     * Returns {@code true} if a type represents an annotation type.
+     * Returns {@code true} if a type representedBy an annotation type.
      *
-     * @return {@code true} if a type represents an annotation type.
+     * @return {@code true} if a type representedBy an annotation type.
      */
     public boolean isAnnotation() {
         return (mask & Opcodes.ACC_ANNOTATION) != 0;

@@ -26,6 +26,25 @@ public class TypePoolLazyObjectPropertiesTest {
     }
 
     @Test
+    public void testGenericTypeTokenObjectPropertiesTest() throws Exception {
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForPrimitiveType.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForRawType.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable.Formal.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForGenericArray.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForUnboundWildcard.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForLowerBoundWildcard.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForUpperBoundWildcard.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForParameterizedType.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForParameterizedType.Nested.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.Resolution.ForType.Tokenized.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.Resolution.ForMethod.Tokenized.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.Resolution.ForField.Tokenized.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Raw.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Malformed.class).apply();
+    }
+
+    @Test
     public void testDeclarationContextObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod.class).apply();

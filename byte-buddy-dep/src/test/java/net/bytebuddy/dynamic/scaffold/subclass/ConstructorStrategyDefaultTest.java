@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -13,6 +14,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,13 +40,18 @@ public class ConstructorStrategyDefaultTest {
     @Mock
     private MethodList methodList, filteredMethodList;
 
+    @Mock
+    private ByteCodeElement.Token.TokenList<MethodDescription.Token> filteredMethodTokenList;
+
     @Before
     public void setUp() throws Exception {
         when(methodRegistry.append(any(LatentMethodMatcher.class),
                 any(MethodRegistry.Handler.class),
                 any(MethodAttributeAppender.Factory.class))).thenReturn(methodRegistry);
-        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(methodList);
+        when(superType.asRawType()).thenReturn(superType);
+        when(filteredMethodList.asTokenList()).thenReturn(filteredMethodTokenList);
     }
 
     @Test
@@ -57,22 +65,24 @@ public class ConstructorStrategyDefaultTest {
     @Test
     public void testImitateSuperTypeStrategy() throws Exception {
         when(methodList.filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(instrumentedType), is(filteredMethodList));
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(instrumentedType),
+                is((List<MethodDescription.Token>) filteredMethodTokenList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test
     public void testImitateSuperTypePublicStrategy() throws Exception {
         when(methodList.filter(isPublic().and(isConstructor()))).thenReturn(filteredMethodList);
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.extractConstructors(instrumentedType), is(filteredMethodList));
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.extractConstructors(instrumentedType),
+                is((List<MethodDescription.Token>) filteredMethodTokenList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
     }
 
@@ -80,11 +90,12 @@ public class ConstructorStrategyDefaultTest {
     public void testDefaultConstructorStrategy() throws Exception {
         when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
         when(filteredMethodList.size()).thenReturn(1);
-        assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType), is(filteredMethodList));
+        assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType),
+                is((List<MethodDescription.Token>) filteredMethodTokenList));
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSupertype();
+        verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
     }
 

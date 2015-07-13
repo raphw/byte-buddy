@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 
 /**
  * An element matcher that matches a method's parameter types.
@@ -13,14 +13,14 @@ public class MethodParameterTypeMatcher<T extends ParameterList> extends Element
     /**
      * The matcher to apply to the parameter types.
      */
-    private final ElementMatcher<? super TypeList> parameterMatcher;
+    private final ElementMatcher<? super GenericTypeList> parameterMatcher;
 
     /**
      * Creates a new matcher for a method's parameter types.
      *
      * @param parameterMatcher The matcher to apply to the parameter types.
      */
-    public MethodParameterTypeMatcher(ElementMatcher<? super TypeList> parameterMatcher) {
+    public MethodParameterTypeMatcher(ElementMatcher<? super GenericTypeList> parameterMatcher) {
         this.parameterMatcher = parameterMatcher;
     }
 

@@ -120,7 +120,9 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
                 when(methodList.filter(any(ElementMatcher.class))).thenReturn(methodList);
                 when(methodList.size()).thenReturn(0);
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
-                when(mock.getReturnType()).thenReturn(Mockito.mock(TypeDescription.class));
+                TypeDescription returnType = Mockito.mock(TypeDescription.class);
+                when(returnType.asRawType()).thenReturn(returnType);
+                when(mock.getReturnType()).thenReturn(returnType);
                 when(mock.getSourceCodeName()).thenReturn(FOO);
             }
         };

@@ -2,8 +2,11 @@ package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericSignatureResolutionTest;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -376,12 +380,15 @@ public abstract class AbstractAnnotationDescriptionTest {
     private void assertValue(Annotation annotation, String methodName, Object rawValue, Object loadedValue) throws Exception {
         assertThat(describe(annotation).getValue(new MethodDescription
                 .ForLoadedMethod(annotation.annotationType().getDeclaredMethod(methodName))), is(rawValue));
-        assertThat(describe(annotation).getValue(new MethodDescription.Latent(methodName,
-                new TypeDescription.ForLoadedType(annotation.annotationType()),
-                new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
-                new TypeList.Empty(),
+        assertThat(describe(annotation).getValue(new MethodDescription.Latent(new TypeDescription.ForLoadedType(annotation.annotationType()),
+                methodName,
                 Opcodes.ACC_PUBLIC,
-                new TypeList.Empty())), is(rawValue));
+                Collections.<GenericTypeDescription>emptyList(),
+                new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
+                Collections.<ParameterDescription.Token>emptyList(),
+                Collections.<GenericTypeDescription>emptyList(),
+                Collections.<AnnotationDescription>emptyList(),
+                MethodDescription.NO_DEFAULT_VALUE)), is(rawValue));
         assertThat(annotation.annotationType().getDeclaredMethod(methodName)
                 .invoke(describe(annotation).prepare(annotation.annotationType()).load()), is(loadedValue));
     }

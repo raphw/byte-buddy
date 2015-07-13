@@ -4,13 +4,18 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,6 +32,9 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     @Mock
     private TypeDescription fieldType;
 
+    @Mock
+    private TypeDescription targetType;
+
     public FieldValueBinderTest() {
         super(FieldValue.class);
     }
@@ -35,7 +43,10 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(fieldDescription.getFieldType()).thenReturn(fieldType);
+        when(fieldDescription.getType()).thenReturn(fieldType);
+        when(fieldType.asRawType()).thenReturn(fieldType);
+        when(targetType.asRawType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
     }
 
     @Override

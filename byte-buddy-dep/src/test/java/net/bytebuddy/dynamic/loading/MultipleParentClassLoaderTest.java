@@ -137,8 +137,8 @@ public class MultipleParentClassLoaderTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MultipleParentClassLoader.class).applyMutable();
-        ObjectPropertyAssertion.of(MultipleParentClassLoader.CompoundEnumeration.class).applyMutable();
+        ObjectPropertyAssertion.of(MultipleParentClassLoader.class).applyBasic();
+        ObjectPropertyAssertion.of(MultipleParentClassLoader.CompoundEnumeration.class).applyBasic();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.Builder.class).apply();
     }
 

@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.TypeProxy;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -14,8 +13,7 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 import java.lang.annotation.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.returns;
@@ -104,14 +102,9 @@ public @interface Super {
             protected StackManipulation proxyFor(TypeDescription parameterType,
                                                  Implementation.Target implementationTarget,
                                                  AnnotationDescription.Loadable<Super> annotation) {
-                TypeDescription[] constructorParameters = annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class);
-                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(constructorParameters.length);
-                for (TypeDescription constructorParameter : constructorParameters) {
-                    typeDescriptions.add(TargetType.resolve(constructorParameter, implementationTarget.getTypeDescription()));
-                }
                 return new TypeProxy.ForSuperMethodByConstructor(parameterType,
                         implementationTarget,
-                        typeDescriptions,
+                        Arrays.asList(annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class)),
                         annotation.getValue(IGNORE_FINALIZER, Boolean.class),
                         annotation.getValue(SERIALIZABLE_PROXY, Boolean.class));
             }
@@ -215,12 +208,12 @@ public @interface Super {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(target.getTypeDescription())) {
+            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(target.getType().asRawType())) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
                         .getValue(STRATEGY, EnumerationDescription.class).load(Instantiation.class)
-                        .proxyFor(target.getTypeDescription(), implementationTarget, annotation));
+                        .proxyFor(target.getType().asRawType(), implementationTarget, annotation));
             }
         }
 

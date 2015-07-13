@@ -3,21 +3,25 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.is;
+import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
 
 /**
  * A dynamic type builder that redefines a given type, i.e. it replaces any redefined method with another implementation.
@@ -57,7 +61,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                           NamingStrategy namingStrategy,
                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                           TypeDescription levelType,
-                                          List<? extends TypeDescription> interfaceTypes,
+                                          List<TypeDescription> interfaceTypes,
                                           int modifiers,
                                           TypeAttributeAppender attributeAppender,
                                           ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -73,18 +77,19 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 levelType,
-                new ArrayList<TypeDescription>(interfaceTypes),
+                joinUniqueRaw(interfaceTypes, levelType.getInterfaces()),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
-                fieldRegistry, methodRegistry,
+                fieldRegistry,
+                methodRegistry,
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                Collections.<FieldToken>emptyList(),
-                Collections.<MethodToken>emptyList(),
+                levelType.getDeclaredFields().asTokenList(is(levelType)),
+                levelType.getDeclaredMethods().asTokenList(is(levelType)),
                 classFileLocator);
     }
 
@@ -118,7 +123,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              NamingStrategy namingStrategy,
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                              TypeDescription levelType,
-                                             List<? extends TypeDescription> interfaceTypes,
+                                             List<GenericTypeDescription> interfaceTypes,
                                              int modifiers,
                                              TypeAttributeAppender attributeAppender,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -129,20 +134,21 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              MethodLookupEngine.Factory methodLookupEngineFactory,
                                              FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                              MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                             List<FieldToken> fieldTokens,
-                                             List<MethodToken> methodTokens,
+                                             List<FieldDescription.Token> fieldTokens,
+                                             List<MethodDescription.Token> methodTokens,
                                              ClassFileLocator classFileLocator) {
         super(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 levelType,
-                new ArrayList<TypeDescription>(interfaceTypes),
+                interfaceTypes,
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
                 bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
-                fieldRegistry, methodRegistry,
+                fieldRegistry,
+                methodRegistry,
                 methodLookupEngineFactory,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
@@ -156,7 +162,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  TypeDescription levelType,
-                                                 List<TypeDescription> interfaceTypes,
+                                                 List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -167,8 +173,8 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  MethodLookupEngine.Factory methodLookupEngineFactory,
                                                  FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                                  MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                                 List<FieldToken> fieldTokens,
-                                                 List<MethodToken> methodTokens) {
+                                                 List<FieldDescription.Token> fieldTokens,
+                                                 List<MethodDescription.Token> methodTokens) {
         return new RedefinitionDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
@@ -191,11 +197,23 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(applyRecordedMembersTo(new InlineInstrumentedType(classFileVersion,
-                        targetType,
-                        interfaceTypes,
+        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
+                        .UnnamedType.Default(targetType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        namingStrategy)),
+                        targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
+                        targetType.getSuperType(),
+                        interfaceTypes,
+                        fieldTokens,
+                        methodTokens,
+                        targetType.getDeclaredAnnotations(),
+                        InstrumentedType.TypeInitializer.None.INSTANCE,
+                        LoadedTypeInitializer.NoOp.INSTANCE,
+                        targetType.getDeclaringType(),
+                        targetType.getEnclosingMethod(),
+                        targetType.getEnclosingType(),
+                        targetType.isMemberClass(),
+                        targetType.isAnonymousClass(),
+                        targetType.isLocalClass()),
                 methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
                 InliningImplementationMatcher.of(ignoredMethods, targetType))
                 .compile(new SubclassImplementationTarget.Factory(bridgeMethodResolverFactory, SubclassImplementationTarget.OriginTypeIdentifier.LEVEL_TYPE));

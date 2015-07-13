@@ -21,14 +21,14 @@ public enum StackSize {
     DOUBLE(2);
 
     /**
-     * The size of the stack this instance represents.
+     * The size of the stack this instance representedBy.
      */
     private final int size;
 
     /**
      * Creates a new stack size.
      *
-     * @param size The size of the stack this instance represents.
+     * @param size The size of the stack this instance representedBy.
      */
     StackSize(int size) {
         this.size = size;

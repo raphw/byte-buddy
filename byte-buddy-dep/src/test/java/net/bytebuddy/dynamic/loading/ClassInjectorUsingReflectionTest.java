@@ -37,7 +37,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new URLClassLoader(new URL[0], null /* null represents the bootstrap class loader */);
+        classLoader = new URLClassLoader(new URL[0], null /* null representedBy the bootstrap class loader */);
         classInjector = new ClassInjector.UsingReflection(classLoader);
     }
 
@@ -52,12 +52,12 @@ public class ClassInjectorUsingReflectionTest {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IllegalStateException.class)
     public void testFaultyReflectionStoreClassMethod() throws Exception {
         new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getFindLoadedClassMethod();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IllegalStateException.class)
     public void testFaultyReflectionStoreLoadByteArray() throws Exception {
         new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getLoadByteArrayMethod();
     }

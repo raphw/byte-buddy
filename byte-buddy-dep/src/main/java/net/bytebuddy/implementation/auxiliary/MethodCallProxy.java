@@ -33,7 +33,7 @@ import java.util.concurrent.Callable;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 
 /**
- * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
+ * A method call proxy representedBy a class that is compiled against a particular method which can then be called whenever
  * either its {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()} method is called where the method
  * call proxy implements both interfaces.
  * <p>&nbsp;</p>
@@ -97,7 +97,7 @@ public class MethodCallProxy implements AuxiliaryType {
     }
 
     /**
-     * Creates a linked hash map of field names to their types where each field represents a parameter of the method.
+     * Creates a linked hash map of field names to their types where each field representedBy a parameter of the method.
      *
      * @param methodDescription The method to extract into fields.
      * @return A map of fields in the order they need to be loaded onto the operand stack for invoking the original
@@ -108,10 +108,10 @@ public class MethodCallProxy implements AuxiliaryType {
         LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>((methodDescription.isStatic() ? 0 : 1) + parameters.size());
         int currentIndex = 0;
         if (!methodDescription.isStatic()) {
-            typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType());
+            typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType().asRawType());
         }
         for (ParameterDescription parameterDescription : parameters) {
-            typeDescriptions.put(fieldName(currentIndex++), parameterDescription.getTypeDescription());
+            typeDescriptions.put(fieldName(currentIndex++), parameterDescription.getType().asRawType());
         }
         return typeDescriptions;
     }
@@ -287,7 +287,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 for (FieldDescription fieldDescription : fieldList) {
                     fieldLoading[index] = new StackManipulation.Compound(
                             thisReference,
-                            MethodVariableAccess.forType(fieldDescription.getFieldType())
+                            MethodVariableAccess.forType(fieldDescription.getType().asRawType())
                                     .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
                             FieldAccess.forField(fieldDescription).putter()
                     );
@@ -409,8 +409,10 @@ public class MethodCallProxy implements AuxiliaryType {
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
                         new StackManipulation.Compound(fieldLoading),
                         MethodInvocation.invoke(accessorMethod),
-                        assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.DYNAMICALLY_TYPED),
-                        MethodReturn.returning(instrumentedMethod.getReturnType())
+                        assigner.assign(accessorMethod.getReturnType().asRawType(),
+                                instrumentedMethod.getReturnType().asRawType(),
+                                Assigner.DYNAMICALLY_TYPED),
+                        MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }

@@ -48,8 +48,8 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
                                                   MethodDelegationBinder.MethodBinding left,
                                                   int rightParameterIndex,
                                                   MethodDelegationBinder.MethodBinding right) {
-        TypeDescription leftParameterType = left.getTarget().getParameters().get(leftParameterIndex).getTypeDescription();
-        TypeDescription rightParameterType = right.getTarget().getParameters().get(rightParameterIndex).getTypeDescription();
+        TypeDescription leftParameterType = left.getTarget().getParameters().get(leftParameterIndex).getType().asRawType();
+        TypeDescription rightParameterType = right.getTarget().getParameters().get(rightParameterIndex).getType().asRawType();
         if (!leftParameterType.equals(rightParameterType)) {
             if (leftParameterType.isPrimitive() && rightParameterType.isPrimitive()) {
                 return PrimitiveTypePrecedence.forPrimitive(leftParameterType)
@@ -104,7 +104,7 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
             Integer rightParameterIndex = right.getTargetParameterIndex(parameterIndexToken);
             if (leftParameterIndex != null && rightParameterIndex != null) {
                 resolution = resolution.merge(
-                        resolveRivalBinding(sourceParameters.get(sourceParameterIndex).getTypeDescription(),
+                        resolveRivalBinding(sourceParameters.get(sourceParameterIndex).getType().asRawType(),
                                 leftParameterIndex,
                                 left,
                                 rightParameterIndex,
@@ -172,14 +172,14 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
         DOUBLE(7);
 
         /**
-         * A score representing the specifity where a higher score represents a less specific type.
+         * A score representing the specifity where a higher score representedBy a less specific type.
          */
         private final int score;
 
         /**
          * Creates a new primitive type precedence.
          *
-         * @param score A score representing the specifity where a higher score represents a less specific type.
+         * @param score A score representing the specifity where a higher score representedBy a less specific type.
          */
         PrimitiveTypePrecedence(int score) {
             this.score = score;

@@ -4,7 +4,7 @@ import net.bytebuddy.description.modifier.EnumerationState;
 import net.bytebuddy.description.modifier.SyntheticState;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -29,12 +29,12 @@ public class NamingStrategyUnnamedTypeDefaultTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription superType, interfaceType;
+    private GenericTypeDescription superType, interfaceType;
 
     @Mock
     private ClassFileVersion classFileVersion, other;
 
-    private List<TypeDescription> interfaceTypes;
+    private List<GenericTypeDescription> interfaceTypes;
 
     @Before
     public void setUp() throws Exception {
@@ -44,7 +44,7 @@ public class NamingStrategyUnnamedTypeDefaultTest {
     @Test
     public void testProperties() throws Exception {
         NamingStrategy.UnnamedType unnamedType = new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, MODIFIERS, classFileVersion);
-        assertThat(unnamedType.getDeclaredInterfaces(), is((Collection<TypeDescription>) interfaceTypes));
+        assertThat(unnamedType.getDeclaredInterfaces(), is((Collection<GenericTypeDescription>) interfaceTypes));
         assertThat(unnamedType.getClassFileVersion(), is(classFileVersion));
         assertThat(unnamedType.getSuperClass(), is(superType));
     }
@@ -66,7 +66,7 @@ public class NamingStrategyUnnamedTypeDefaultTest {
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_SYNTHETIC, classFileVersion).getSyntheticState(),
                 is(SyntheticState.SYNTHETIC));
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, 0, classFileVersion).getSyntheticState(),
-                is(SyntheticState.NON_SYNTHETIC));
+                is(SyntheticState.PLAIN));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class NamingStrategyUnnamedTypeDefaultTest {
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, Opcodes.ACC_ENUM, classFileVersion).getEnumerationState(),
                 is(EnumerationState.ENUMERATION));
         assertThat(new NamingStrategy.UnnamedType.Default(superType, interfaceTypes, 0, classFileVersion).getEnumerationState(),
-                is(EnumerationState.NON_ENUMERATION));
+                is(EnumerationState.PLAIN));
     }
 
     @Test

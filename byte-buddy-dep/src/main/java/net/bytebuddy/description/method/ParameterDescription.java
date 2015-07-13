@@ -1,23 +1,32 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaMethod;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.AbstractList;
+import java.util.Collections;
+import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * Description of the parameter of a Java method or constructor.
  */
-public interface ParameterDescription extends AnnotatedCodeElement, NamedElement, ModifierReviewable {
+public interface ParameterDescription extends AnnotatedCodeElement, NamedElement.WithRuntimeName, ModifierReviewable {
 
     /**
      * The prefix for names of an unnamed parameter.
@@ -25,11 +34,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     String NAME_PREFIX = "arg";
 
     /**
-     * Returns the parameter's type.
+     * Returns the type of this parameter.
      *
-     * @return The parameter's type.
+     * @return The type of this parameter.
      */
-    TypeDescription getTypeDescription();
+    GenericTypeDescription getType();
 
     /**
      * Returns the method that declares this parameter.
@@ -69,6 +78,24 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     int getOffset();
 
     /**
+     * Transforms this parameter description into a token. For the resulting token, all type variables within the scope
+     * of this parameter's type are detached from their declaration context.
+     *
+     * @return A token representing this parameter.
+     */
+    Token asToken();
+
+    /**
+     * Transforms this parameter description into a token. For the resulting token, all type variables within the scope
+     * of this parameter's type are detached from their declaration context.
+     *
+     * @param targetTypeMatcher A matcher that is applied to the parameter type for replacing any matched
+     *                          type by {@link net.bytebuddy.dynamic.TargetType}.
+     * @return A token representing this parameter.
+     */
+    Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
+
+    /**
      * A base implementation of a method parameter description.
      */
     abstract class AbstractParameterDescription extends AbstractModifierReviewable implements ParameterDescription {
@@ -97,7 +124,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public int getOffset() {
-            TypeList parameterType = getDeclaringMethod().getParameters().asTypeList();
+            TypeList parameterType = getDeclaringMethod().getParameters().asTypeList().asRawTypes();
             int offset = getDeclaringMethod().isStatic()
                     ? StackSize.ZERO.getSize()
                     : StackSize.SINGLE.getSize();
@@ -105,6 +132,23 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                 offset += parameterType.get(i).getStackSize().getSize();
             }
             return offset;
+        }
+
+        @Override
+        public Token asToken() {
+            return asToken(none());
+        }
+
+        @Override
+        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+            return new Token(getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
+                    getDeclaredAnnotations(),
+                    isNamed()
+                            ? getName()
+                            : Token.NO_NAME,
+                    hasModifiers()
+                            ? (Integer) getModifiers()
+                            : Token.NO_MODIFIERS);
         }
 
         @Override
@@ -131,8 +175,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
                 stringBuilder.append(' ');
             }
             stringBuilder.append(isVarArgs()
-                    ? getTypeDescription().getName().replaceFirst("\\[\\]$", "...")
-                    : getTypeDescription().getName());
+                    ? getType().asRawType().getName().replaceFirst("\\[\\]$", "...")
+                    : getType().asRawType().getName());
             return stringBuilder.append(' ').append(getName()).toString();
         }
     }
@@ -226,8 +270,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public TypeDescription getTypeDescription() {
-            return new TypeDescription.ForLoadedType((Class<?>) GET_TYPE.invoke(parameter));
+        public GenericTypeDescription getType() {
+            return new GenericTypeDescription.LazyProjection.OfLoadedParameter(parameter);
         }
 
         @Override
@@ -316,8 +360,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public TypeDescription getTypeDescription() {
-                return new TypeDescription.ForLoadedType(parameterType);
+            public GenericTypeDescription getType() {
+                return new TypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType);
             }
 
             @Override
@@ -388,8 +432,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public TypeDescription getTypeDescription() {
-                return new TypeDescription.ForLoadedType(parameterType);
+            public GenericTypeDescription getType() {
+                return new TypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType);
             }
 
             @Override
@@ -432,7 +476,22 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         /**
          * The type of the parameter.
          */
-        private final TypeDescription parameterType;
+        private final GenericTypeDescription parameterType;
+
+        /**
+         * The annotations of the parameter.
+         */
+        private final List<? extends AnnotationDescription> declaredAnnotations;
+
+        /**
+         * The name of the parameter or {@code null} if no name is explicitly defined.
+         */
+        private final String name;
+
+        /**
+         * The modifiers of the parameter or {@code null} if no modifiers are explicitly defined.
+         */
+        private final Integer modifiers;
 
         /**
          * The index of the parameter.
@@ -445,26 +504,74 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         private final int offset;
 
         /**
-         * Creates a latent description of a parameter.
+         * Creates a latent parameter description. All provided types are attached to this instance before they are returned.
          *
          * @param declaringMethod The method that is declaring the parameter.
-         * @param parameterType   The type of the parameter.
+         * @param token           The token describing the shape of the parameter.
          * @param index           The index of the parameter.
          * @param offset          The parameter's offset in the local method variables array.
          */
+        public Latent(MethodDescription declaringMethod, Token token, int index, int offset) {
+            this(declaringMethod,
+                    token.getType(),
+                    token.getAnnotations(),
+                    token.getName(),
+                    token.getModifiers(),
+                    index,
+                    offset);
+        }
+
+        /**
+         * Creates a new latent parameter descriptions for a parameter without explicit meta data or annotations.
+         *
+         * @param declaringMethod The method declaring this parameter.
+         * @param parameterType   The type of the parameter.
+         * @param index           The index of the parameter.
+         * @param offset          The offset of the parameter.
+         */
         public Latent(MethodDescription declaringMethod,
-                      TypeDescription parameterType,
+                      GenericTypeDescription parameterType,
+                      int index,
+                      int offset) {
+            this(declaringMethod,
+                    parameterType,
+                    Collections.<AnnotationDescription>emptyList(),
+                    Token.NO_NAME,
+                    Token.NO_MODIFIERS,
+                    index,
+                    offset);
+        }
+
+        /**
+         * Creates a latent parameter description. All provided types are attached to this instance before they are returned.
+         *
+         * @param declaringMethod     The method that is declaring the parameter.
+         * @param parameterType       The parameter's type.
+         * @param declaredAnnotations The annotations of the parameter.
+         * @param name                The name of the parameter or {@code null} if no name is explicitly defined.
+         * @param modifiers           The modifiers of the parameter or {@code null} if no modifiers are explicitly defined.
+         * @param index               The index of the parameter.
+         * @param offset              The parameter's offset in the local method variables array.
+         */
+        public Latent(MethodDescription declaringMethod,
+                      GenericTypeDescription parameterType,
+                      List<? extends AnnotationDescription> declaredAnnotations,
+                      String name,
+                      Integer modifiers,
                       int index,
                       int offset) {
             this.declaringMethod = declaringMethod;
             this.parameterType = parameterType;
+            this.declaredAnnotations = declaredAnnotations;
+            this.name = name;
+            this.modifiers = modifiers;
             this.index = index;
             this.offset = offset;
         }
 
         @Override
-        public TypeDescription getTypeDescription() {
-            return parameterType;
+        public GenericTypeDescription getType() {
+            return parameterType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
@@ -484,17 +591,289 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
 
         @Override
         public boolean isNamed() {
-            return false;
+            return name != null;
         }
 
         @Override
         public boolean hasModifiers() {
-            return false;
+            return modifiers != null;
+        }
+
+        @Override
+        public String getName() {
+            return isNamed()
+                    ? name
+                    : super.getName();
+        }
+
+        @Override
+        public int getModifiers() {
+            return hasModifiers()
+                    ? modifiers
+                    : super.getModifiers();
         }
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Empty();
+            return new AnnotationList.Explicit(declaredAnnotations);
+        }
+    }
+
+    /**
+     * <p>
+     * A parameter description that representedBy a given parameter but with a substituted parameter type.
+     * </p>
+     * <p>
+     * <b>Note</b>: The supplied visitor must assure to not substitute
+     * </p>
+     */
+    class TypeSubstituting extends AbstractParameterDescription {
+
+        /**
+         * The method that declares this type-substituted parameter.
+         */
+        private final MethodDescription declaringMethod;
+
+        /**
+         * The represented parameter.
+         */
+        private final ParameterDescription parameterDescription;
+
+        /**
+         * A visitor that is applied to the parameter type.
+         */
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        /**
+         * Creates a new type substituting parameter.
+         *
+         * @param declaringMethod      The method that declares this type-substituted parameter.
+         * @param parameterDescription The represented parameter.
+         * @param visitor              A visitor that is applied to the parameter type.
+         */
+        public TypeSubstituting(MethodDescription declaringMethod,
+                                ParameterDescription parameterDescription,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringMethod = declaringMethod;
+            this.parameterDescription = parameterDescription;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public GenericTypeDescription getType() {
+            return parameterDescription.getType().accept(visitor);
+        }
+
+        @Override
+        public MethodDescription getDeclaringMethod() {
+            return declaringMethod;
+        }
+
+        @Override
+        public int getIndex() {
+            return parameterDescription.getIndex();
+        }
+
+        @Override
+        public boolean isNamed() {
+            return parameterDescription.isNamed();
+        }
+
+        @Override
+        public boolean hasModifiers() {
+            return parameterDescription.hasModifiers();
+        }
+
+        @Override
+        public int getOffset() {
+            return parameterDescription.getOffset();
+        }
+
+        @Override
+        public String getName() {
+            return parameterDescription.getName();
+        }
+
+        @Override
+        public int getModifiers() {
+            return parameterDescription.getModifiers();
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return parameterDescription.getDeclaredAnnotations();
+        }
+    }
+
+    /**
+     * A token that describes the shape of a method parameter. A parameter token is equal to another parameter token if
+     * their explicit names are explicitly defined and equal or if the token is of the same identity.
+     */
+    class Token implements ByteCodeElement.Token<Token> {
+
+        /**
+         * Indicator for a method parameter without an explicit name.
+         */
+        public static final String NO_NAME = null;
+
+        /**
+         * Indicator for a method parameter without explicit modifiers.
+         */
+        public static final Integer NO_MODIFIERS = null;
+
+        /**
+         * The type of the represented parameter.
+         */
+        private final GenericTypeDescription typeDescription;
+
+        /**
+         * A list of parameter annotations.
+         */
+        private final List<? extends AnnotationDescription> annotationDescriptions;
+
+        /**
+         * The name of the parameter or {@code null} if no explicit name is defined.
+         */
+        private final String name;
+
+        /**
+         * The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         */
+        private final Integer modifiers;
+
+        /**
+         * Creates a new parameter token without an explicit name, an explicit modifier or annotations.
+         *
+         * @param typeDescription The type of the represented parameter.
+         */
+        public Token(GenericTypeDescription typeDescription) {
+            this(typeDescription, Collections.<AnnotationDescription>emptyList());
+        }
+
+        /**
+         * Creates a new parameter token without an explicit name or an explicit modifier.
+         *
+         * @param typeDescription        The type of the represented parameter.
+         * @param annotationDescriptions The annotations of the parameter.
+         */
+        public Token(GenericTypeDescription typeDescription, List<? extends AnnotationDescription> annotationDescriptions) {
+            this(typeDescription, annotationDescriptions, NO_NAME, NO_MODIFIERS);
+        }
+
+        /**
+         * Creates a new parameter token.
+         *
+         * @param typeDescription        The type of the represented parameter.
+         * @param annotationDescriptions The annotations of the parameter.
+         * @param name                   The name of the parameter or {@code null} if no explicit name is defined.
+         * @param modifiers              The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         */
+        public Token(GenericTypeDescription typeDescription,
+                     List<? extends AnnotationDescription> annotationDescriptions,
+                     String name,
+                     Integer modifiers) {
+            this.typeDescription = typeDescription;
+            this.annotationDescriptions = annotationDescriptions;
+            this.name = name;
+            this.modifiers = modifiers;
+        }
+
+        /**
+         * Returns the type of the represented method parameter.
+         *
+         * @return The type of the represented method parameter.
+         */
+        public GenericTypeDescription getType() {
+            return typeDescription;
+        }
+
+        /**
+         * Returns the annotations of the represented method parameter.
+         *
+         * @return The annotations of the represented method parameter.
+         */
+        public AnnotationList getAnnotations() {
+            return new AnnotationList.Explicit(annotationDescriptions);
+        }
+
+        /**
+         * Returns the name of the represented method parameter.
+         *
+         * @return The name of the parameter or {@code null} if no explicit name is defined.
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns the modifiers of the represented method parameter.
+         *
+         * @return The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         */
+        public Integer getModifiers() {
+            return modifiers;
+        }
+
+        @Override
+        public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return new Token(getType().accept(visitor),
+                    getAnnotations(),
+                    getName(),
+                    getModifiers());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof Token)) return false;
+            String name = getName();
+            return name != null && name.equals(((Token) other).getName());
+
+        }
+
+        @Override
+        public int hashCode() {
+            return name != null ? name.hashCode() : 0;
+        }
+
+        @Override
+        public String toString() {
+            return "ParameterDescription.Token{" +
+                    "typeDescription=" + typeDescription +
+                    ", annotationDescriptions=" + annotationDescriptions +
+                    ", name='" + name + '\'' +
+                    ", modifiers=" + modifiers +
+                    '}';
+        }
+
+        /**
+         * A list of types represented as a list of parameter tokens.
+         */
+        public static class TypeList extends AbstractList<Token> {
+
+            /**
+             * The list of types to represent as parameter tokens.
+             */
+            private final List<? extends GenericTypeDescription> typeDescriptions;
+
+            /**
+             * Creates a new list of types that represent parameters.
+             *
+             * @param typeDescriptions The types to represent.
+             */
+            public TypeList(List<? extends GenericTypeDescription> typeDescriptions) {
+                this.typeDescriptions = typeDescriptions;
+            }
+
+            @Override
+            public Token get(int index) {
+                return new Token(typeDescriptions.get(index));
+            }
+
+            @Override
+            public int size() {
+                return typeDescriptions.size();
+            }
         }
     }
 }

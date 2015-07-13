@@ -12,9 +12,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.isInterface;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-import static net.bytebuddy.utility.ByteBuddyCommons.toList;
+import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * This {@link Implementation} invokes a default method for the methods it instruments.
@@ -48,10 +46,7 @@ public class DefaultMethodCall implements Implementation {
      *                              be called.
      */
     protected DefaultMethodCall(List<TypeDescription> prioritizedInterfaces) {
-        for (TypeDescription typeDescription : prioritizedInterfaces) {
-            isInterface(typeDescription);
-        }
-        this.prioritizedInterfaces = prioritizedInterfaces;
+        this.prioritizedInterfaces = isImplementable(prioritizedInterfaces);
     }
 
     /**
@@ -146,7 +141,7 @@ public class DefaultMethodCall implements Implementation {
      */
     private List<TypeDescription> filterRelevant(TypeDescription typeDescription) {
         List<TypeDescription> filtered = new ArrayList<TypeDescription>(prioritizedInterfaces.size());
-        Set<TypeDescription> relevant = new HashSet<TypeDescription>(typeDescription.getInterfaces());
+        Set<TypeDescription> relevant = new HashSet<TypeDescription>(typeDescription.getInterfaces().asRawTypes());
         for (TypeDescription prioritizedInterface : prioritizedInterfaces) {
             if (relevant.remove(prioritizedInterface)) {
                 filtered.add(prioritizedInterface);
@@ -200,7 +195,7 @@ public class DefaultMethodCall implements Implementation {
         protected Appender(Target implementationTarget, List<TypeDescription> prioritizedInterfaces) {
             this.implementationTarget = implementationTarget;
             this.prioritizedInterfaces = prioritizedInterfaces;
-            this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(implementationTarget.getTypeDescription().getInterfaces());
+            this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(implementationTarget.getTypeDescription().getInterfaces().asRawTypes());
             nonPrioritizedInterfaces.removeAll(prioritizedInterfaces);
         }
 
@@ -213,7 +208,7 @@ public class DefaultMethodCall implements Implementation {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                     defaultMethodInvocation,
-                    MethodReturn.returning(instrumentedMethod.getReturnType())
+                    MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
@@ -226,16 +221,16 @@ public class DefaultMethodCall implements Implementation {
          * given method.
          */
         private StackManipulation locateDefault(MethodDescription methodDescription) {
-            String uniqueMethodSignature = methodDescription.getUniqueSignature();
+            MethodDescription.Token methodToken = methodDescription.asToken();
             SpecialMethodInvocation specialMethodInvocation = SpecialMethodInvocation.Illegal.INSTANCE;
             for (TypeDescription typeDescription : prioritizedInterfaces) {
-                specialMethodInvocation = implementationTarget.invokeDefault(typeDescription, uniqueMethodSignature);
+                specialMethodInvocation = implementationTarget.invokeDefault(typeDescription, methodToken);
                 if (specialMethodInvocation.isValid()) {
                     return specialMethodInvocation;
                 }
             }
             for (TypeDescription typeDescription : nonPrioritizedInterfaces) {
-                SpecialMethodInvocation other = implementationTarget.invokeDefault(typeDescription, uniqueMethodSignature);
+                SpecialMethodInvocation other = implementationTarget.invokeDefault(typeDescription, methodToken);
                 if (specialMethodInvocation.isValid() && other.isValid()) {
                     throw new IllegalStateException(methodDescription + " has an ambiguous default method with "
                             + other.getMethodDescription() + " and " + specialMethodInvocation.getMethodDescription());

@@ -1,9 +1,13 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
@@ -74,7 +78,7 @@ public interface Implementation {
     interface SpecialMethodInvocation extends StackManipulation {
 
         /**
-         * Returns the method that represents this special method invocation. This method can be different even for
+         * Returns the method that representedBy this special method invocation. This method can be different even for
          * equal special method invocations, dependant on the method that was used to request such an invocation by the
          * means of a {@link Implementation.Target}.
          *
@@ -148,10 +152,10 @@ public interface Implementation {
             /**
              * Creates a new legal special method invocation.
              *
-             * @param methodDescription The method that represents the special method invocation.
+             * @param methodDescription The method that representedBy the special method invocation.
              * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
              *                          invocation.
-             * @param stackManipulation The stack manipulation that represents this special method invocation.
+             * @param stackManipulation The stack manipulation that representedBy this special method invocation.
              */
             protected Simple(MethodDescription methodDescription,
                              TypeDescription typeDescription,
@@ -164,7 +168,7 @@ public interface Implementation {
             /**
              * Creates a special method invocation for a given invocation target.
              *
-             * @param methodDescription The method that represents the special method invocation.
+             * @param methodDescription The method that representedBy the special method invocation.
              * @param typeDescription   The type on which the method should be invoked on by an {@code INVOKESPECIAL}
              *                          invocation.
              * @return A special method invocation representing a legal invocation if the method can be invoked
@@ -206,15 +210,15 @@ public interface Implementation {
                 return isValid() == specialMethodInvocation.isValid()
                         && typeDescription.equals(specialMethodInvocation.getTypeDescription())
                         && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
-                        && methodDescription.getParameters().asTypeList().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList())
-                        && methodDescription.getReturnType().equals(specialMethodInvocation.getMethodDescription().getReturnType());
+                        && methodDescription.getParameters().asTypeList().asRawTypes().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList().asRawTypes())
+                        && methodDescription.getReturnType().asRawType().equals(specialMethodInvocation.getMethodDescription().getReturnType().asRawType());
             }
 
             @Override
             public int hashCode() {
                 int result = methodDescription.getInternalName().hashCode();
-                result = 31 * result + methodDescription.getParameters().asTypeList().hashCode();
-                result = 31 * result + methodDescription.getReturnType().hashCode();
+                result = 31 * result + methodDescription.getParameters().asTypeList().asRawTypes().hashCode();
+                result = 31 * result + methodDescription.getReturnType().asRawType().hashCode();
                 result = 31 * result + typeDescription.hashCode();
                 return result;
             }
@@ -267,14 +271,12 @@ public interface Implementation {
         /**
          * Creates a special method invocation for invoking a default method.
          *
-         * @param targetType            The interface on which the default method is to be invoked.
-         * @param uniqueMethodSignature The unique method signature as defined by
-         *                              {@link MethodDescription#getUniqueSignature()}
-         *                              of the method that is to be invoked.
+         * @param targetType  The interface on which the default method is to be invoked.
+         * @param methodToken A token that uniquely describes the method to invoke.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
-        SpecialMethodInvocation invokeDefault(TypeDescription targetType, String uniqueMethodSignature);
+        SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken);
 
         /**
          * A strategy for looking up a method.
@@ -285,12 +287,12 @@ public interface Implementation {
              * Resolves the target method that is actually invoked.
              *
              * @param methodDescription    The method that is to be invoked specially.
-             * @param invokableMethods     A map of all invokable methods on the instrumented type.
+             * @param invokableMethods     A mapping of all invokable methods by their token.
              * @param bridgeMethodResolver The bridge method resolver for this type.
              * @return The target method that is actually invoked.
              */
             MethodDescription resolve(MethodDescription methodDescription,
-                                      Map<String, MethodDescription> invokableMethods,
+                                      Map<MethodDescription.Token, MethodDescription> invokableMethods,
                                       BridgeMethodResolver bridgeMethodResolver);
 
             /**
@@ -304,7 +306,7 @@ public interface Implementation {
                 EXACT {
                     @Override
                     public MethodDescription resolve(MethodDescription methodDescription,
-                                                     Map<String, MethodDescription> invokableMethods,
+                                                     Map<MethodDescription.Token, MethodDescription> invokableMethods,
                                                      BridgeMethodResolver bridgeMethodResolver) {
                         return methodDescription;
                     }
@@ -317,9 +319,13 @@ public interface Implementation {
                 MOST_SPECIFIC {
                     @Override
                     public MethodDescription resolve(MethodDescription methodDescription,
-                                                     Map<String, MethodDescription> invokableMethods,
+                                                     Map<MethodDescription.Token, MethodDescription> invokableMethods,
                                                      BridgeMethodResolver bridgeMethodResolver) {
-                        return bridgeMethodResolver.resolve(invokableMethods.get(methodDescription.getUniqueSignature()));
+                        MethodDescription mostSpecificMethod = invokableMethods.get(methodDescription.asToken());
+                        if (mostSpecificMethod == null) {
+                            throw new IllegalArgumentException("Cannot invoke: " + methodDescription);
+                        }
+                        return bridgeMethodResolver.resolve(mostSpecificMethod);
                     }
                 };
 
@@ -356,14 +362,14 @@ public interface Implementation {
             protected final TypeDescription typeDescription;
 
             /**
-             * A map of invokable methods by their unique signature.
+             * A mapping of all invokable method by their method token.
              */
-            protected final Map<String, MethodDescription> invokableMethods;
+            protected final Map<MethodDescription.Token, MethodDescription> invokableMethods;
 
             /**
-             * A map of default methods by their unique signature.
+             * A mapping of all default methods by their method token.
              */
-            protected final Map<TypeDescription, Map<String, MethodDescription>> defaultMethods;
+            protected final Map<TypeDescription, Map<MethodDescription.Token, MethodDescription>> defaultMethods;
 
             /**
              * A bridge method resolver for the given instrumented type.
@@ -378,19 +384,18 @@ public interface Implementation {
              * @param bridgeMethodResolverFactory A factory for creating a
              *                                    {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver}.
              */
-            protected AbstractBase(MethodLookupEngine.Finding finding,
-                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
+            protected AbstractBase(MethodLookupEngine.Finding finding, BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
                 bridgeMethodResolver = bridgeMethodResolverFactory.make(finding.getInvokableMethods());
                 typeDescription = finding.getTypeDescription();
-                invokableMethods = new HashMap<String, MethodDescription>(finding.getInvokableMethods().size());
+                invokableMethods = new HashMap<MethodDescription.Token, MethodDescription>(finding.getInvokableMethods().size());
                 for (MethodDescription methodDescription : finding.getInvokableMethods()) {
-                    invokableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+                    invokableMethods.put(methodDescription.asToken(), methodDescription);
                 }
-                defaultMethods = new HashMap<TypeDescription, Map<String, MethodDescription>>(finding.getInvokableDefaultMethods().size());
+                defaultMethods = new HashMap<TypeDescription, Map<MethodDescription.Token, MethodDescription>>(finding.getInvokableDefaultMethods().size());
                 for (Map.Entry<TypeDescription, Set<MethodDescription>> entry : finding.getInvokableDefaultMethods().entrySet()) {
-                    Map<String, MethodDescription> defaultMethods = new HashMap<String, MethodDescription>(entry.getValue().size());
+                    Map<MethodDescription.Token, MethodDescription> defaultMethods = new HashMap<MethodDescription.Token, MethodDescription>(entry.getValue().size());
                     for (MethodDescription methodDescription : entry.getValue()) {
-                        defaultMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+                        defaultMethods.put(methodDescription.asToken(), methodDescription);
                     }
                     this.defaultMethods.put(entry.getKey(), defaultMethods);
                 }
@@ -402,8 +407,7 @@ public interface Implementation {
             }
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription,
-                                                                      MethodLookup methodLookup) {
+            public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription, MethodLookup methodLookup) {
                 return invokeSuper(methodLookup.resolve(methodDescription, invokableMethods, bridgeMethodResolver));
             }
 
@@ -416,11 +420,10 @@ public interface Implementation {
             protected abstract Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription);
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType,
-                                                                        String uniqueMethodSignature) {
-                Map<String, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
+            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken) {
+                Map<MethodDescription.Token, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
                 if (defaultMethods != null) {
-                    MethodDescription defaultMethod = defaultMethods.get(uniqueMethodSignature);
+                    MethodDescription defaultMethod = defaultMethods.get(methodToken);
                     if (defaultMethod != null) {
                         return SpecialMethodInvocation.Simple.of(defaultMethod, targetType);
                     }
@@ -449,7 +452,7 @@ public interface Implementation {
     }
 
     /**
-     * The context for an implementation application. An implementation context represents a mutable data structure
+     * The context for an implementation application. An implementation context representedBy a mutable data structure
      * where any registration is irrevocable. Calling methods on an implementation context should be considered equally
      * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an implementation context and a
      * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type.
@@ -581,7 +584,7 @@ public interface Implementation {
             private static final Object NO_DEFAULT_VALUE = null;
 
             /**
-             * The instrumented type that this instance represents.
+             * The instrumented type that this instance representedBy.
              */
             private final TypeDescription instrumentedType;
 
@@ -616,7 +619,7 @@ public interface Implementation {
             private final Map<FieldDescription, MethodDescription> registeredSetters;
 
             /**
-             * A map of accessor methods to a method pool entry that represents their implementation.
+             * A map of accessor methods to a method pool entry that representedBy their implementation.
              */
             private final Map<MethodDescription, TypeWriter.MethodPool.Entry> accessorMethodEntries;
 
@@ -672,97 +675,33 @@ public interface Implementation {
             public MethodDescription registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
                 MethodDescription accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
                 if (accessorMethod == null) {
-                    String name = String.format("%s$%s$%s", specialMethodInvocation.getMethodDescription().getInternalName(),
-                            ACCESSOR_METHOD_SUFFIX,
-                            randomString.nextString());
-                    accessorMethod = new MethodDescription.Latent(name,
-                            instrumentedType,
-                            specialMethodInvocation.getMethodDescription().getReturnType(),
-                            specialMethodInvocation.getMethodDescription().getParameters().asTypeList(),
-                            resolveModifier(specialMethodInvocation.getMethodDescription().isStatic()),
-                            specialMethodInvocation.getMethodDescription().getExceptionTypes());
-                    registerAccessor(specialMethodInvocation, accessorMethod);
+                    accessorMethod = new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), randomString.nextString());
+                    registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
+                    accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
                 }
                 return accessorMethod;
-            }
-
-            /**
-             * Resolves the modifier for an accessor method.
-             *
-             * @param isStatic {@code true} if the accessor method is supposed to be static.
-             * @return The modifier for the method.
-             */
-            private int resolveModifier(boolean isStatic) {
-                return ACCESSOR_METHOD_MODIFIER | (isStatic ? Opcodes.ACC_STATIC : 0);
-            }
-
-            /**
-             * Registers a new accessor method.
-             *
-             * @param specialMethodInvocation The special method invocation that the accessor method should invoke.
-             * @param accessorMethod          The accessor method for this invocation.
-             */
-            private void registerAccessor(Implementation.SpecialMethodInvocation specialMethodInvocation, MethodDescription accessorMethod) {
-                registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
-                accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
             }
 
             @Override
             public MethodDescription registerGetterFor(FieldDescription fieldDescription) {
                 MethodDescription accessorMethod = registeredGetters.get(fieldDescription);
                 if (accessorMethod == null) {
-                    String name = String.format("%s$%s$%s", fieldDescription.getName(),
-                            ACCESSOR_METHOD_SUFFIX,
-                            randomString.nextString());
-                    accessorMethod = new MethodDescription.Latent(name,
-                            instrumentedType,
-                            fieldDescription.getFieldType(),
-                            Collections.<TypeDescription>emptyList(),
-                            resolveModifier(fieldDescription.isStatic()),
-                            Collections.<TypeDescription>emptyList());
-                    registerGetter(fieldDescription, accessorMethod);
+                    accessorMethod = new FieldGetter(instrumentedType, fieldDescription, randomString.nextString());
+                    registeredGetters.put(fieldDescription, accessorMethod);
+                    accessorMethodEntries.put(accessorMethod, new FieldGetterDelegation(fieldDescription));
                 }
                 return accessorMethod;
-            }
-
-            /**
-             * Registers a new getter method.
-             *
-             * @param fieldDescription The field to read.
-             * @param accessorMethod   The accessor method for this field.
-             */
-            private void registerGetter(FieldDescription fieldDescription, MethodDescription accessorMethod) {
-                registeredGetters.put(fieldDescription, accessorMethod);
-                accessorMethodEntries.put(accessorMethod, new FieldGetter(fieldDescription));
             }
 
             @Override
             public MethodDescription registerSetterFor(FieldDescription fieldDescription) {
                 MethodDescription accessorMethod = registeredSetters.get(fieldDescription);
                 if (accessorMethod == null) {
-                    String name = String.format("%s$%s$%s", fieldDescription.getName(),
-                            ACCESSOR_METHOD_SUFFIX,
-                            randomString.nextString());
-                    accessorMethod = new MethodDescription.Latent(name,
-                            instrumentedType,
-                            TypeDescription.VOID,
-                            Collections.singletonList(fieldDescription.getFieldType()),
-                            resolveModifier(fieldDescription.isStatic()),
-                            Collections.<TypeDescription>emptyList());
-                    registerSetter(fieldDescription, accessorMethod);
+                    accessorMethod = new FieldSetter(instrumentedType, fieldDescription, randomString.nextString());
+                    registeredSetters.put(fieldDescription, accessorMethod);
+                    accessorMethodEntries.put(accessorMethod, new FieldSetterDelegation(fieldDescription));
                 }
                 return accessorMethod;
-            }
-
-            /**
-             * Registers a new setter method.
-             *
-             * @param fieldDescription The field to write to.
-             * @param accessorMethod   The accessor method for this field.
-             */
-            private void registerSetter(FieldDescription fieldDescription, MethodDescription accessorMethod) {
-                registeredSetters.put(fieldDescription, accessorMethod);
-                accessorMethodEntries.put(accessorMethod, new FieldSetter(fieldDescription));
             }
 
             @Override
@@ -790,10 +729,7 @@ public interface Implementation {
                     return fieldCache;
                 }
                 validateFieldCacheAccessibility();
-                fieldCache = new FieldDescription.Latent(String.format("%s$%s", FIELD_CACHE_PREFIX, randomString.nextString()),
-                        instrumentedType,
-                        fieldType,
-                        FIELD_CACHE_MODIFIER);
+                fieldCache = new CacheValueField(instrumentedType, fieldType, randomString.nextString());
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
@@ -827,7 +763,7 @@ public interface Implementation {
                 if (injectedCode.isDefined()) {
                     typeInitializer = typeInitializer.expandWith(injectedCode.getByteCodeAppender());
                 }
-                MethodDescription typeInitializerMethod = MethodDescription.Latent.typeInitializerOf(instrumentedType);
+                MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
                 TypeWriter.MethodPool.Entry initializerEntry = methodPool.target(typeInitializerMethod);
                 if (initializerEntry.getSort().isImplemented() && typeInitializer.isDefined()) {
                     initializerEntry = initializerEntry.prepend(typeInitializer);
@@ -856,6 +792,65 @@ public interface Implementation {
                         ", randomString=" + randomString +
                         ", canRegisterFieldCache=" + canRegisterFieldCache +
                         '}';
+            }
+
+            /**
+             * A description of a field that stores a cached value.
+             */
+            protected static class CacheValueField extends FieldDescription.AbstractFieldDescription {
+
+                /**
+                 * The instrumented type.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
+                 * The type of the cache's field.
+                 */
+                private final TypeDescription fieldType;
+
+                /**
+                 * The suffix to use for the cache field's name.
+                 */
+                private final String suffix;
+
+                /**
+                 * Creates a new cache value field.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @param fieldType        The type of the cache's field.
+                 * @param suffix           The suffix to use for the cache field's name.
+                 */
+                protected CacheValueField(TypeDescription instrumentedType, TypeDescription fieldType, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.fieldType = fieldType;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public GenericTypeDescription getType() {
+                    return fieldType;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return FIELD_CACHE_MODIFIER;
+                }
+
+                @Override
+                public String getName() {
+                    return String.format("%s$%s", FIELD_CACHE_PREFIX, suffix);
+                }
             }
 
             /**
@@ -889,7 +884,7 @@ public interface Implementation {
                  * Returns a stack manipulation where the represented value is stored in the given field.
                  *
                  * @param fieldDescription A static field in which the value is to be stored.
-                 * @return A stack manipulation that represents this storage.
+                 * @return A stack manipulation that representedBy this storage.
                  */
                 public StackManipulation storeIn(FieldDescription fieldDescription) {
                     return new Compound(this, FieldAccess.forField(fieldDescription).putter());
@@ -936,6 +931,249 @@ public interface Implementation {
             }
 
             /**
+             * A description of an accessor method to access another method from outside the instrumented type.
+             */
+            protected static class AccessorMethod extends MethodDescription.AbstractMethodDescription {
+
+                /**
+                 * The instrumented type.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
+                 * The method that is being accessed.
+                 */
+                private final MethodDescription methodDescription;
+
+                /**
+                 * The suffix to append to the accessor method's name.
+                 */
+                private final String suffix;
+
+                /**
+                 * Creates a new accessor method.
+                 *
+                 * @param instrumentedType  The instrumented type.
+                 * @param methodDescription The method that is being accessed.
+                 * @param suffix            The suffix to append to the accessor method's name.
+                 */
+                protected AccessorMethod(TypeDescription instrumentedType, MethodDescription methodDescription, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.methodDescription = methodDescription;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return methodDescription.getReturnType().asRawType();
+                }
+
+                @Override
+                public ParameterList getParameters() {
+                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return methodDescription.getExceptionTypes().asRawTypes().asGenericTypes();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return methodDescription.isStatic()
+                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
+                            : ACCESSOR_METHOD_MODIFIER;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return String.format("%s$%s$%s", methodDescription.getInternalName(), ACCESSOR_METHOD_SUFFIX, suffix);
+                }
+            }
+
+            /**
+             * A description of a field getter method.
+             */
+            protected static class FieldGetter extends MethodDescription.AbstractMethodDescription {
+
+                /**
+                 * The instrumented type.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
+                 * The field for which a getter is described.
+                 */
+                private final FieldDescription fieldDescription;
+
+                /**
+                 * The name suffix for the field getter method.
+                 */
+                private final String suffix;
+
+                /**
+                 * Creates a new field getter.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @param fieldDescription The field for which a getter is described.
+                 * @param suffix           The name suffix for the field getter method.
+                 */
+                protected FieldGetter(TypeDescription instrumentedType, FieldDescription fieldDescription, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.fieldDescription = fieldDescription;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return fieldDescription.getType().asRawType();
+                }
+
+                @Override
+                public ParameterList getParameters() {
+                    return new ParameterList.Empty();
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return fieldDescription.isStatic()
+                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
+                            : ACCESSOR_METHOD_MODIFIER;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, suffix);
+                }
+            }
+
+            /**
+             * A description of a field setter method.
+             */
+            protected static class FieldSetter extends MethodDescription.AbstractMethodDescription {
+
+                /**
+                 * The instrumented type.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
+                 * The field for which a setter is described.
+                 */
+                private final FieldDescription fieldDescription;
+
+                /**
+                 * The name suffix for the field setter method.
+                 */
+                private final String suffix;
+
+                /**
+                 * Creates a new field setter.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @param fieldDescription The field for which a setter is described.
+                 * @param suffix           The name suffix for the field setter method.
+                 */
+                protected FieldSetter(TypeDescription instrumentedType, FieldDescription fieldDescription, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.fieldDescription = fieldDescription;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return TypeDescription.VOID;
+                }
+
+                @Override
+                public ParameterList getParameters() {
+                    return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asRawType()));
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return fieldDescription.isStatic()
+                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
+                            : ACCESSOR_METHOD_MODIFIER;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, suffix);
+                }
+            }
+
+            /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
             protected abstract static class AbstractDelegationEntry extends TypeWriter.MethodPool.Entry.AbstractDefiningEntry implements ByteCodeAppender {
@@ -975,14 +1213,14 @@ public interface Implementation {
             protected static class AccessorMethodDelegation extends AbstractDelegationEntry {
 
                 /**
-                 * The stack manipulation that represents the requested special method invocation.
+                 * The stack manipulation that representedBy the requested special method invocation.
                  */
                 private final StackManipulation accessorMethodInvocation;
 
                 /**
                  * Creates a new accessor method delegation.
                  *
-                 * @param accessorMethodInvocation The stack manipulation that represents the requested special method
+                 * @param accessorMethodInvocation The stack manipulation that representedBy the requested special method
                  *                                 invocation.
                  */
                 protected AccessorMethodDelegation(StackManipulation accessorMethodInvocation) {
@@ -996,7 +1234,7 @@ public interface Implementation {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             accessorMethodInvocation,
-                            MethodReturn.returning(instrumentedMethod.getReturnType())
+                            MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
@@ -1021,7 +1259,7 @@ public interface Implementation {
             /**
              * An implementation for a field getter.
              */
-            protected static class FieldGetter extends AbstractDelegationEntry {
+            protected static class FieldGetterDelegation extends AbstractDelegationEntry {
 
                 /**
                  * The field to read from.
@@ -1033,7 +1271,7 @@ public interface Implementation {
                  *
                  * @param fieldDescription The field to read.
                  */
-                protected FieldGetter(FieldDescription fieldDescription) {
+                protected FieldGetterDelegation(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
                 }
 
@@ -1044,7 +1282,7 @@ public interface Implementation {
                                     ? StackManipulation.LegalTrivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter(),
-                            MethodReturn.returning(fieldDescription.getFieldType())
+                            MethodReturn.returning(fieldDescription.getType().asRawType())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
@@ -1052,7 +1290,7 @@ public interface Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldDescription.equals(((FieldGetter) other).fieldDescription);
+                            && fieldDescription.equals(((FieldGetterDelegation) other).fieldDescription);
                 }
 
                 @Override
@@ -1062,7 +1300,7 @@ public interface Implementation {
 
                 @Override
                 public String toString() {
-                    return "Implementation.Context.Default.FieldGetter{" +
+                    return "Implementation.Context.Default.FieldGetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
                             '}';
                 }
@@ -1071,7 +1309,7 @@ public interface Implementation {
             /**
              * An implementation for a field setter.
              */
-            protected static class FieldSetter extends AbstractDelegationEntry {
+            protected static class FieldSetterDelegation extends AbstractDelegationEntry {
 
                 /**
                  * The field to write to.
@@ -1083,7 +1321,7 @@ public interface Implementation {
                  *
                  * @param fieldDescription The field to write to.
                  */
-                protected FieldSetter(FieldDescription fieldDescription) {
+                protected FieldSetterDelegation(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
                 }
 
@@ -1100,7 +1338,7 @@ public interface Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldDescription.equals(((FieldSetter) other).fieldDescription);
+                            && fieldDescription.equals(((FieldSetterDelegation) other).fieldDescription);
                 }
 
                 @Override
@@ -1110,7 +1348,7 @@ public interface Implementation {
 
                 @Override
                 public String toString() {
-                    return "Implementation.Context.Default.FieldSetter{" +
+                    return "Implementation.Context.Default.FieldSetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
                             '}';
                 }

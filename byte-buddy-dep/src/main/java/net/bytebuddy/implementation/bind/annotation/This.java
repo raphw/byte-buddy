@@ -62,19 +62,17 @@ public @interface This {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (target.getTypeDescription().isPrimitive()) {
-                throw new IllegalStateException(String.format("The %d. argument virtual %s is a primitive type " +
-                        "and can never be bound to an instance", target.getIndex(), target));
-            } else if (target.getTypeDescription().isArray()) {
-                throw new IllegalStateException(String.format("The %d. argument virtual %s is an array type " +
-                        "and can never be bound to an instance", target.getIndex(), target));
+            if (target.getType().asRawType().isPrimitive()) {
+                throw new IllegalStateException(target + " uses a primitive type with a @This annotation");
+            } else if (target.getType().asRawType().isArray()) {
+                throw new IllegalStateException(target + " uses an array type with a @This annotation");
             } else if (source.isStatic() && !annotation.loadSilent().optional()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
             StackManipulation assignment = source.isStatic()
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX),
-                    assigner.assign(implementationTarget.getTypeDescription(), target.getTypeDescription(), RuntimeType.Verifier.check(target)));
+                    assigner.assign(implementationTarget.getTypeDescription(), target.getType().asRawType(), RuntimeType.Verifier.check(target)));
             return assignment.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(assignment)
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

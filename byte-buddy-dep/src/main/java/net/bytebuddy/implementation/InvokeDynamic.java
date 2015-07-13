@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Removal;
@@ -755,7 +756,7 @@ public class InvokeDynamic implements Implementation {
     /**
      * Returns the invocation provider to be used for equals and hash code calculations.
      *
-     * @return The invocation provider that represents this instance.
+     * @return The invocation provider that representedBy this instance.
      */
     protected InvocationProvider getInvocationProvider() {
         return invocationProvider;
@@ -1034,7 +1035,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public TypeDescription getReturnType() {
-                    return methodDescription.getReturnType();
+                    return methodDescription.getReturnType().asRawType();
                 }
 
                 @Override
@@ -1045,8 +1046,8 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public List<TypeDescription> getParameterTypes() {
                     return methodDescription.isStatic()
-                            ? methodDescription.getParameters().asTypeList()
-                            : new TypeList.Explicit(join(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList()));
+                            ? methodDescription.getParameters().asTypeList().asRawTypes()
+                            : new TypeList.Explicit(join(methodDescription.getDeclaringType().asRawType(), methodDescription.getParameters().asTypeList().asRawTypes()));
                 }
 
                 @Override
@@ -1116,8 +1117,8 @@ public class InvokeDynamic implements Implementation {
                                         boolean dynamicallyTyped) {
                     return new Resolved.Simple(MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
                             instrumentedMethod.isStatic()
-                                    ? instrumentedMethod.getParameters().asTypeList()
-                                    : join(instrumentedMethod.getDeclaringType(), instrumentedMethod.getParameters().asTypeList()));
+                                    ? instrumentedMethod.getParameters().asTypeList().asRawTypes()
+                                    : join(instrumentedMethod.getDeclaringType().asRawType(), instrumentedMethod.getParameters().asTypeList().asRawTypes()));
                 }
 
                 @Override
@@ -1146,7 +1147,7 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameters().asTypeList());
+                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameters().asTypeList().asRawTypes());
                 }
 
                 @Override
@@ -1324,14 +1325,14 @@ public class InvokeDynamic implements Implementation {
                 protected class WrappingArgumentProvider implements ArgumentProvider {
 
                     /**
-                     * The stack manipulation that represents the loading of the primitive value.
+                     * The stack manipulation that representedBy the loading of the primitive value.
                      */
                     private final StackManipulation stackManipulation;
 
                     /**
                      * Creates a new wrapping argument provider.
                      *
-                     * @param stackManipulation The stack manipulation that represents the loading of the
+                     * @param stackManipulation The stack manipulation that representedBy the loading of the
                      *                          primitive value.
                      */
                     protected WrappingArgumentProvider(StackManipulation stackManipulation) {
@@ -1589,18 +1590,18 @@ public class InvokeDynamic implements Implementation {
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
-                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(), typeDescription, dynamicallyTyped);
+                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(), typeDescription, dynamicallyTyped);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + typeDescription);
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
-                            stackManipulation), fieldDescription.getFieldType());
+                            stackManipulation), fieldDescription.getType().asRawType());
                 }
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
-                            .withField(name, typeDescription, FIELD_MODIFIER)
+                            .withField(new FieldDescription.Token(name, FIELD_MODIFIER, typeDescription))
                             .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(name, value));
                 }
 
@@ -1672,7 +1673,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(fieldName, fieldType, FIELD_MODIFIER);
+                    return instrumentedType.withField(new FieldDescription.Token(fieldName, FIELD_MODIFIER, fieldType));
                 }
 
                 @Override
@@ -1723,14 +1724,14 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    TypeDescription currentType = instrumentedType;
+                    GenericTypeDescription currentType = instrumentedType;
                     FieldDescription fieldDescription = null;
                     do {
-                        FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName));
+                        FieldList fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
                         if (fieldList.size() != 0) {
                             fieldDescription = fieldList.getOnly();
                         }
-                        currentType = currentType.getSupertype();
+                        currentType = currentType.getSuperType();
                     }
                     while (currentType != null && (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)));
                     if (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)) {
@@ -1743,7 +1744,7 @@ public class InvokeDynamic implements Implementation {
                                     ? StackManipulation.LegalTrivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter()
-                    ), fieldDescription.getFieldType());
+                    ), fieldDescription.getType().asRawType());
                 }
 
                 @Override
@@ -1798,8 +1799,8 @@ public class InvokeDynamic implements Implementation {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getTypeDescription())
-                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getTypeDescription());
+                    return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getType().asRawType())
+                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getType().asRawType());
                 }
 
                 @Override
@@ -1861,14 +1862,14 @@ public class InvokeDynamic implements Implementation {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getTypeDescription(),
+                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType().asRawType(),
                             typeDescription,
                             dynamicallyTyped);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalArgumentException("Cannot assign " + parameters.get(index) + " to " + typeDescription);
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.forType(parameters.get(index)
-                            .getTypeDescription()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
+                            .getType().asRawType()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
                 }
 
                 @Override
@@ -2665,7 +2666,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public TypeDescription resolve(MethodDescription methodDescription) {
-                    return methodDescription.getReturnType();
+                    return methodDescription.getReturnType().asRawType();
                 }
 
                 @Override
@@ -2974,11 +2975,11 @@ public class InvokeDynamic implements Implementation {
                                              TypeDescription returnType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType(), dynamicallyTyped);
+                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType().asRawType(), dynamicallyTyped);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
                 }
-                return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType()));
+                return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType().asRawType()));
             }
 
             @Override
@@ -3004,8 +3005,8 @@ public class InvokeDynamic implements Implementation {
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
                 return Removal.pop(interceptedMethod.isConstructor()
-                        ? interceptedMethod.getDeclaringType()
-                        : interceptedMethod.getReturnType());
+                        ? interceptedMethod.getDeclaringType().asRawType()
+                        : interceptedMethod.getReturnType().asRawType());
             }
 
             @Override
@@ -3373,7 +3374,7 @@ public class InvokeDynamic implements Implementation {
         private final Object value;
 
         /**
-         * An argument provider that represents the argument with an implicit type.
+         * An argument provider that representedBy the argument with an implicit type.
          */
         private final InvocationProvider.ArgumentProvider argumentProvider;
 

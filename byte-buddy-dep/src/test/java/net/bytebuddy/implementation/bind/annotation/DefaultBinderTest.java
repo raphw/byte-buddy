@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -18,7 +19,10 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     private TypeDescription targetType;
 
     @Mock
-    private TypeList interfaces;
+    private GenericTypeList interfaces;
+
+    @Mock
+    private TypeList rawInterfaces;
 
     public DefaultBinderTest() {
         super(Default.class);
@@ -28,8 +32,10 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         when(instrumentedType.getInterfaces()).thenReturn(interfaces);
+        when(interfaces.asRawTypes()).thenReturn(rawInterfaces);
+        when(targetType.asRawType()).thenReturn(targetType);
     }
 
     @Override
@@ -41,7 +47,7 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     public void testAssignableBinding() throws Exception {
         when(targetType.isInterface()).thenReturn(true);
         when(stackManipulation.isValid()).thenReturn(true);
-        when(interfaces.contains(targetType)).thenReturn(true);
+        when(rawInterfaces.contains(targetType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Default.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));

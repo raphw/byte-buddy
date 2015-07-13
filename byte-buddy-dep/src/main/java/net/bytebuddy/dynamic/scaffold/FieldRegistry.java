@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A field registry represents an extendable collection of fields which are identified by their names that are mapped
+ * A field registry representedBy an extendable collection of fields which are identified by their names that are mapped
  * to a given {@link net.bytebuddy.implementation.attribute.FieldAttributeAppender}. Fields
  * can be uniquely identified by their name for a given type since fields are never inherited.
  * <p>&nbsp;</p>
@@ -92,6 +92,48 @@ public interface FieldRegistry {
          * @return The name of the field to be matched by this field matcher.
          */
         String getFieldName();
+
+        /**
+         * A simple matcher for a field description based on the a field token.
+         */
+        class ForToken implements LatentFieldMatcher {
+
+            /**
+             * The field token to match.
+             */
+            private final FieldDescription.Token fieldToken;
+
+            /**
+             * Creates a new simple matcher.
+             * @param fieldToken The field token to match.
+             */
+            public ForToken(FieldDescription.Token fieldToken) {
+                this.fieldToken = fieldToken;
+            }
+
+            @Override
+            public String getFieldName() {
+                return fieldToken.getName();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && fieldToken.equals(((ForToken) other).fieldToken);
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldToken.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FieldRegistry.LatentFieldMatcher.ForToken{" +
+                        "fieldToken=" + fieldToken +
+                        '}';
+            }
+        }
     }
 
     /**
@@ -134,8 +176,7 @@ public interface FieldRegistry {
         @Override
         public FieldRegistry.Prepared prepare(TypeDescription instrumentedType) {
             Map<String, TypeWriter.FieldPool.Entry> entries = new HashMap<String, TypeWriter.FieldPool.Entry>(this.entries.size());
-            Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders =
-                    new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>(this.entries.size());
+            Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>(this.entries.size());
             for (Map.Entry<String, Entry> entry : this.entries.entrySet()) {
                 FieldAttributeAppender attributeAppender = attributeAppenders.get(entry.getValue().getAttributeAppenderFactory());
                 if (attributeAppender == null) {

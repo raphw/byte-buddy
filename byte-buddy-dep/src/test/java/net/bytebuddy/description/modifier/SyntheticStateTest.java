@@ -14,17 +14,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class SyntheticStateTest extends AbstractModifierContributorTest {
 
-    public SyntheticStateTest(ModifierContributor modifierContributor, int expectedModifier) {
-        super(modifierContributor, expectedModifier);
+    public SyntheticStateTest(ModifierContributor modifierContributor, int expectedModifier, boolean defaultModifier) {
+        super(modifierContributor, expectedModifier, defaultModifier);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {SyntheticState.is(false), 0},
-                {SyntheticState.NON_SYNTHETIC, 0},
-                {SyntheticState.is(true), Opcodes.ACC_SYNTHETIC},
-                {SyntheticState.SYNTHETIC, Opcodes.ACC_SYNTHETIC}
+                {SyntheticState.is(false), 0, true},
+                {SyntheticState.PLAIN, 0, true},
+                {SyntheticState.is(true), Opcodes.ACC_SYNTHETIC, false},
+                {SyntheticState.SYNTHETIC, Opcodes.ACC_SYNTHETIC, false}
         });
     }
 

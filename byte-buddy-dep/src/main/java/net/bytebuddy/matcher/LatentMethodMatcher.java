@@ -2,6 +2,9 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+
+import static net.bytebuddy.matcher.ElementMatchers.representedBy;
 
 /**
  * A method matcher that is resolved by handing over the instrumented type before the matcher is applied to a method.
@@ -55,6 +58,49 @@ public interface LatentMethodMatcher {
         public String toString() {
             return "LatentMethodMatcher.Resolved{" +
                     "methodMatcher=" + methodMatcher +
+                    '}';
+        }
+    }
+
+    /**
+     * A latent method matcher that matches a token that is attached to the instrumented type before matching.
+     */
+    class ForToken implements LatentMethodMatcher {
+
+        /**
+         * The detached method token to match.
+         */
+        private final MethodDescription.Token methodToken;
+
+        /**
+         * Creates a new method matcher for a detached token.
+         *
+         * @param methodToken The detached method token to match.
+         */
+        public ForToken(MethodDescription.Token methodToken) {
+            this.methodToken = methodToken;
+        }
+
+        @Override
+        public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
+            return representedBy(methodToken.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodToken.equals(((ForToken) other).methodToken);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodToken.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "LatentMethodMatcher.ForToken{" +
+                    "methodToken=" + methodToken +
                     '}';
         }
     }

@@ -17,7 +17,7 @@ public class TypeCasting implements StackManipulation {
      * Creates a casting to the given, non-primitive type.
      *
      * @param typeDescription The type to which a value should be casted.
-     * @return A stack manipulation that represents the casting.
+     * @return A stack manipulation that representedBy the casting.
      */
     public static StackManipulation to(TypeDescription typeDescription) {
         if (typeDescription.isPrimitive()) {

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -591,7 +592,7 @@ public class MethodDelegation implements Implementation {
      * semantics as the target method's return value is not longer considered what might change the binding target.
      *
      * @param implementation The implementation to apply after the delegation.
-     * @return An implementation that represents this chained implementation application.
+     * @return An implementation that representedBy this chained implementation application.
      */
     public Implementation andThen(Implementation implementation) {
         return new Compound(new MethodDelegation(implementationDelegate,
@@ -769,9 +770,10 @@ public class MethodDelegation implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(fieldName,
-                        new TypeDescription.ForLoadedType(delegate.getClass()),
-                        Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC)
+                return instrumentedType
+                        .withField(new FieldDescription.Token(fieldName,
+                                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
+                                new TypeDescription.ForLoadedType(delegate.getClass())))
                         .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, delegate));
             }
 
@@ -836,7 +838,7 @@ public class MethodDelegation implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(fieldName, fieldType, Opcodes.ACC_PUBLIC);
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PUBLIC, fieldType));
             }
 
             @Override

@@ -18,10 +18,11 @@ public class FieldManifestationTest extends AbstractModifierContributorTest {
 
     public FieldManifestationTest(ModifierContributor modifierContributor,
                                   int expectedModifier,
+                                  boolean defaultModifier,
                                   boolean isFinal,
                                   boolean isVolatile,
                                   boolean isPlain) {
-        super(modifierContributor, expectedModifier);
+        super(modifierContributor, expectedModifier, defaultModifier);
         this.isFinal = isFinal;
         this.isVolatile = isVolatile;
         this.isPlain = isPlain;
@@ -30,9 +31,9 @@ public class FieldManifestationTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {FieldManifestation.PLAIN, 0, false, false, true},
-                {FieldManifestation.FINAL, Opcodes.ACC_FINAL, true, false, false},
-                {FieldManifestation.VOLATILE, Opcodes.ACC_VOLATILE, false, true, false},
+                {FieldManifestation.PLAIN, 0, true, false, false, true},
+                {FieldManifestation.FINAL, Opcodes.ACC_FINAL, false, true, false, false},
+                {FieldManifestation.VOLATILE, Opcodes.ACC_VOLATILE, false, false, true, false},
         });
     }
 

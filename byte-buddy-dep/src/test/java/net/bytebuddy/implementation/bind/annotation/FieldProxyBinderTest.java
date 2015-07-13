@@ -5,6 +5,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -44,8 +45,12 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(getterMethod.getDeclaringType()).thenReturn(getterType);
         when(setterMethod.getDeclaringType()).thenReturn(setterType);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit(Collections.singletonList(fieldDescription)));
-        when(fieldDescription.getFieldType()).thenReturn(fieldType);
+        when(fieldDescription.getType()).thenReturn(fieldType);
         when(fieldType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(fieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(fieldType.asRawType()).thenReturn(fieldType);
+        when(setterType.asRawType()).thenReturn(setterType);
+        when(getterType.asRawType()).thenReturn(getterType);
     }
 
     @Override
@@ -55,7 +60,9 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(mock(TypeDescription.class));
+        TypeDescription targetType = mock(TypeDescription.class);
+        when(targetType.asRawType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,
                 target,
@@ -65,7 +72,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testGetterForImplicitNamedFieldInHierarchy() throws Exception {
-        when(target.getTypeDescription()).thenReturn(getterType);
+        when(target.getType()).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -85,7 +92,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testGetterForExplicitNamedFieldInHierarchy() throws Exception {
-        when(target.getTypeDescription()).thenReturn(getterType);
+        when(target.getType()).thenReturn(getterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -104,7 +111,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testGetterForImplicitNamedFieldInNamedType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(getterType);
+        when(target.getType()).thenReturn(getterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
@@ -124,7 +131,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testGetterForExplicitNamedFieldInNamedType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(getterType);
+        when(target.getType()).thenReturn(getterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
@@ -143,13 +150,12 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testSetterForImplicitNamedFieldInHierarchy() throws Exception {
-        when(target.getTypeDescription()).thenReturn(setterType);
+        when(target.getType()).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, Collections.singletonList(fieldType)));
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
@@ -163,13 +169,12 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testSetterForExplicitNamedFieldInHierarchy() throws Exception {
-        when(target.getTypeDescription()).thenReturn(setterType);
+        when(target.getType()).thenReturn(setterType);
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, Collections.singletonList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
@@ -183,13 +188,12 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testSetterForImplicitNamedFieldInNamedType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(setterType);
+        when(target.getType()).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FieldProxy.BEAN_PROPERTY);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, Collections.singletonList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getSourceCodeName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
@@ -204,13 +208,12 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
 
     @Test
     public void testSetterForExplicitNamedFieldInNamedType() throws Exception {
-        when(target.getTypeDescription()).thenReturn(setterType);
+        when(target.getType()).thenReturn(setterType);
         doReturn(Foo.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(source.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        ParameterList parameterList = ParameterList.Explicit.latent(source, Collections.singletonList(fieldType));
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, Collections.singletonList(fieldType)));
         when(source.getName()).thenReturn("setFoo");
         when(source.getInternalName()).thenReturn("setFoo");
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);

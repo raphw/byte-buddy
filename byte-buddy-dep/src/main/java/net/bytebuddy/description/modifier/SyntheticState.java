@@ -5,17 +5,20 @@ import org.objectweb.asm.Opcodes;
 /**
  * Defines if a type or member is supposed to be marked as synthetic.
  */
-public enum SyntheticState implements ModifierContributor.ForType, ModifierContributor.ForMethod, ModifierContributor.ForField {
-
-    /**
-     * Modifier for marking a type member as synthetic.
-     */
-    SYNTHETIC(Opcodes.ACC_SYNTHETIC),
+public enum SyntheticState implements ModifierContributor.ForType,
+        ModifierContributor.ForMethod,
+        ModifierContributor.ForField,
+        ModifierContributor.ForParameter {
 
     /**
      * Modifier for not marking a type member as synthetic. (This is the default modifier.)
      */
-    NON_SYNTHETIC(EMPTY_MASK);
+    PLAIN(EMPTY_MASK),
+
+    /**
+     * Modifier for marking a type member as synthetic.
+     */
+    SYNTHETIC(Opcodes.ACC_SYNTHETIC);
 
     /**
      * The mask of the modifier contributor.
@@ -38,12 +41,22 @@ public enum SyntheticState implements ModifierContributor.ForType, ModifierContr
      * @return The corresponding synthetic state.
      */
     public static SyntheticState is(boolean synthetic) {
-        return synthetic ? SYNTHETIC : NON_SYNTHETIC;
+        return synthetic ? SYNTHETIC : PLAIN;
     }
 
     @Override
     public int getMask() {
         return mask;
+    }
+
+    @Override
+    public int getRange() {
+        return Opcodes.ACC_SYNTHETIC;
+    }
+
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
     }
 
     /**

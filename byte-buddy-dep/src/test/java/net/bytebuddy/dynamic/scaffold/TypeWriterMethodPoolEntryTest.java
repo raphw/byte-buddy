@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ModifierResolver;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -57,7 +58,10 @@ public class TypeWriterMethodPoolEntryTest {
     private ByteCodeAppender byteCodeAppender, otherAppender;
 
     @Mock
-    private TypeList exceptionTypes;
+    private GenericTypeList exceptionTypes;
+
+    @Mock
+    private TypeList rawExceptionTypes;
 
     @Mock
     private ParameterDescription parameterDescription;
@@ -72,7 +76,9 @@ public class TypeWriterMethodPoolEntryTest {
         when(methodDescription.getGenericSignature()).thenReturn(QUX);
         when(methodDescription.getExceptionTypes()).thenReturn(exceptionTypes);
         when(modifierResolver.transform(eq(methodDescription), anyBoolean())).thenReturn(MODIFIERS);
-        when(exceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ});
+        when(methodDescription.getAdjustedModifiers(anyBoolean())).thenReturn(MODIFIERS);
+        when(exceptionTypes.asRawTypes()).thenReturn(rawExceptionTypes);
+        when(rawExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ});
         when(classVisitor.visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ})).thenReturn(methodVisitor);
         when(methodDescription.getParameters())
                 .thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));

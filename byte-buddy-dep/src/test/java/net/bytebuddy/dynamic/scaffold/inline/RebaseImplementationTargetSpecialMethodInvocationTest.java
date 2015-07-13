@@ -1,14 +1,21 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.AbstractSpecialMethodInvocationTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -27,8 +34,14 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
                                                           TypeDescription targetType) {
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
-        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(
-                name, mock(TypeDescription.class), returnType, parameterTypes, Opcodes.ACC_PUBLIC, new TypeList.Empty()));
+        MethodDescription methodDescription = mock(MethodDescription.class);
+        when(methodDescription.getInternalName()).thenReturn(name);
+        when(methodDescription.getReturnType()).thenReturn(returnType);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, parameterTypes));
+        TypeDescription declaringType = mock(TypeDescription.class);
+        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(methodDescription.getDeclaringType()).thenReturn(declaringType);
+        when(resolution.getResolvedMethod()).thenReturn(methodDescription);
         return new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, targetType);
     }
 
@@ -36,10 +49,19 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
     public void testIsValid() throws Exception {
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
-        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(
-                FOO, mock(TypeDescription.class), mock(TypeDescription.class), new TypeList.Empty(), Opcodes.ACC_STATIC, new TypeList.Empty()));
-        Implementation.SpecialMethodInvocation specialMethodInvocation =
-                new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, mock(TypeDescription.class));
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(typeDescription,
+                FOO,
+                Opcodes.ACC_STATIC,
+                Collections.<GenericTypeDescription>emptyList(),
+                mock(GenericTypeDescription.class),
+                Collections.<ParameterDescription.Token>emptyList(),
+                Collections.<GenericTypeDescription>emptyList(),
+                Collections.<AnnotationDescription>emptyList(),
+                MethodDescription.NO_DEFAULT_VALUE));
+        Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution,
+                mock(TypeDescription.class));
         assertThat(specialMethodInvocation.isValid(), is(true));
     }
 
@@ -47,10 +69,19 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
     public void testIsInvalid() throws Exception {
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Illegal.INSTANCE);
-        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(
-                FOO, mock(TypeDescription.class), mock(TypeDescription.class), new TypeList.Empty(), Opcodes.ACC_PUBLIC, new TypeList.Empty()));
-        Implementation.SpecialMethodInvocation specialMethodInvocation =
-                new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, mock(TypeDescription.class));
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(resolution.getResolvedMethod()).thenReturn(new MethodDescription.Latent(typeDescription,
+                FOO,
+                Opcodes.ACC_PUBLIC,
+                Collections.<GenericTypeDescription>emptyList(),
+                mock(GenericTypeDescription.class),
+                Collections.<ParameterDescription.Token>emptyList(),
+                Collections.<GenericTypeDescription>emptyList(),
+                Collections.<AnnotationDescription>emptyList(),
+                MethodDescription.NO_DEFAULT_VALUE));
+        Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution,
+                mock(TypeDescription.class));
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 }

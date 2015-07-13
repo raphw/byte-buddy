@@ -1,9 +1,12 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,12 +30,48 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     int getStackSize();
 
     /**
+     * Represents this list of types into a list of generic types. Invoking this method does not transform types, i.e.
+     * no generic information is attached.
+     *
+     * @return This list of types represented as generic types.
+     */
+    GenericTypeList asGenericTypes();
+
+    /**
+     * Transforms the types of this list by applying the supplied visitor.
+     *
+     * @param visitor The visitor to apply to each type.
+     * @return This type list with all types transformed by the supplied visitor.
+     */
+    TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor);
+
+    /**
+     * An abstract base implementation of a type list.
+     */
+    abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
+
+        @Override
+        protected TypeList wrap(List<TypeDescription> values) {
+            return new Explicit(values);
+        }
+
+        @Override
+        public TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor) {
+            List<TypeDescription> visited = new ArrayList<TypeDescription>(size());
+            for (TypeDescription typeDescription : this) {
+                visited.add(typeDescription.accept(visitor));
+            }
+            return new Explicit(visited);
+        }
+    }
+
+    /**
      * Implementation of a type list for an array of loaded types.
      */
-    class ForLoadedType extends AbstractBase<TypeDescription, TypeList> implements TypeList {
+    class ForLoadedType extends AbstractBase {
 
         /**
-         * The loaded types this type list represents.
+         * The loaded types this type list representedBy.
          */
         private final List<? extends Class<?>> types;
 
@@ -80,18 +119,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         }
 
         @Override
-        protected TypeList wrap(List<TypeDescription> values) {
-            return new Explicit(values);
+        public GenericTypeList asGenericTypes() {
+            return new GenericTypeList.ForLoadedType(types);
         }
     }
 
     /**
      * A wrapper implementation of an explicit list of types.
      */
-    class Explicit extends AbstractBase<TypeDescription, TypeList> implements TypeList {
+    class Explicit extends AbstractBase {
 
         /**
-         * The list of type descriptions this list represents.
+         * The list of type descriptions this list representedBy.
          */
         private final List<? extends TypeDescription> typeDescriptions;
 
@@ -134,8 +173,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         }
 
         @Override
-        protected TypeList wrap(List<TypeDescription> values) {
-            return new Explicit(values);
+        public GenericTypeList asGenericTypes() {
+            return new GenericTypeList.Explicit(typeDescriptions);
         }
     }
 
@@ -152,6 +191,16 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         @Override
         public int getStackSize() {
             return 0;
+        }
+
+        @Override
+        public GenericTypeList asGenericTypes() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor) {
+            return this;
         }
     }
 }

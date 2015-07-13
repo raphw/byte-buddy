@@ -2,6 +2,7 @@ package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.packaging.VisibilityFieldTestHelper;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +11,7 @@ import org.mockito.asm.Type;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -18,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractFieldDescriptionTest {
 
-    private Field first, second;
+    private Field first, second, genericField;
 
     protected abstract FieldDescription describe(Field field);
 
@@ -26,6 +28,7 @@ public abstract class AbstractFieldDescriptionTest {
     public void setUp() throws Exception {
         first = FirstSample.class.getDeclaredField("first");
         second = SecondSample.class.getDeclaredField("second");
+        genericField = GenericField.class.getDeclaredField("foo");
     }
 
     @Test
@@ -39,8 +42,8 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testFieldType() throws Exception {
-        assertThat(describe(first).getFieldType(), is((TypeDescription) new TypeDescription.ForLoadedType(first.getType())));
-        assertThat(describe(second).getFieldType(), is((TypeDescription) new TypeDescription.ForLoadedType(second.getType())));
+        assertThat(describe(first).getType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(first.getType())));
+        assertThat(describe(second).getType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(second.getType())));
     }
 
     @Test
@@ -65,8 +68,8 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testFieldDeclaringType() throws Exception {
-        assertThat(describe(first).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(first.getDeclaringClass())));
-        assertThat(describe(second).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(second.getDeclaringClass())));
+        assertThat(describe(first).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(first.getDeclaringClass())));
+        assertThat(describe(second).getDeclaringType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(second.getDeclaringClass())));
     }
 
     @Test
@@ -170,22 +173,36 @@ public abstract class AbstractFieldDescriptionTest {
                 is((AnnotationList) new AnnotationList.ForLoadedAnnotation(second.getDeclaredAnnotations())));
     }
 
+    @Test
+    public void testGenericTypes() throws Exception {
+        assertThat(describe(genericField).getType(), is(GenericTypeDescription.Sort.describe(genericField.getGenericType())));
+        assertThat(describe(genericField).getType().asRawType(), is((TypeDescription) new TypeDescription.ForLoadedType(genericField.getType())));
+    }
+
+    @Test
+    public void testToGenericString() throws Exception {
+        assertThat(describe(genericField).toGenericString(), is(genericField.toGenericString()));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
 
     }
 
+    @SuppressWarnings("unused")
     protected static class FirstSample {
 
         private Void first;
     }
 
+    @SuppressWarnings("unused")
     protected static class SecondSample {
 
         @SampleAnnotation
         int second;
     }
 
+    @SuppressWarnings("unused")
     public static class PublicType {
 
         public Void publicField;
@@ -197,6 +214,7 @@ public abstract class AbstractFieldDescriptionTest {
         private Void privateField;
     }
 
+    @SuppressWarnings("unused")
     static class PackagePrivateType {
 
         public Void publicField;
@@ -206,6 +224,12 @@ public abstract class AbstractFieldDescriptionTest {
         Void packagePrivateField;
 
         private Void privateField;
+    }
+
+    @SuppressWarnings("unused")
+    static class GenericField {
+
+        List<String> foo;
     }
 
     public static class PackagePrivateFieldType {

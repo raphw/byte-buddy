@@ -274,12 +274,12 @@ public interface ClassInjector {
 
                 @Override
                 public Method getFindLoadedClassMethod() {
-                    throw new RuntimeException(MESSAGE, exception);
+                    throw new IllegalStateException(MESSAGE, exception);
                 }
 
                 @Override
                 public Method getLoadByteArrayMethod() {
-                    throw new RuntimeException(MESSAGE, exception);
+                    throw new IllegalStateException(MESSAGE, exception);
                 }
 
                 @Override

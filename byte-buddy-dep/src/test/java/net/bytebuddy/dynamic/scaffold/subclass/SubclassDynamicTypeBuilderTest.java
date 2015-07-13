@@ -1,13 +1,18 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import net.bytebuddy.test.utility.*;
 import org.hamcrest.core.Is;
 import org.junit.Before;
@@ -15,11 +20,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.ASMifier;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -181,6 +189,23 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         Enum bar = Enum.valueOf((Class) type, BAR);
         assertThat(bar.name(), is(BAR));
         assertThat(bar.ordinal(), is(1));
+    }
+
+    @Test
+    public void testPackageDefinition() throws Exception {
+        Class<?> packageType = new ByteBuddy()
+                .makePackage(FOO)
+                .annotateType(AnnotationDescription.Builder.forType(Foo.class).make())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(packageType.getSimpleName(), is(PackageDescription.PACKAGE_CLASS_NAME));
+        assertThat(packageType.getName(), is(FOO + "." + PackageDescription.PACKAGE_CLASS_NAME));
+        assertThat(packageType.getModifiers(), is(PackageDescription.PACKAGE_MODIFIERS));
+        assertThat(packageType.getDeclaredFields().length, is(0));
+        assertThat(packageType.getDeclaredMethods().length, is(0));
+        assertThat(packageType.getDeclaredAnnotations().length, is(1));
+        assertThat(packageType.getAnnotation(Foo.class), notNullValue(Foo.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -350,5 +375,10 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         private void foo() {
             /* empty */
         }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Foo {
+        /* empty */
     }
 }

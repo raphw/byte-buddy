@@ -14,18 +14,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class TypeManifestationTest extends AbstractModifierContributorTest {
 
-    public TypeManifestationTest(ModifierContributor modifierContributor, int expectedModifier) {
-        super(modifierContributor, expectedModifier);
+    public TypeManifestationTest(ModifierContributor modifierContributor, int expectedModifier, boolean defaultModifier) {
+        super(modifierContributor, expectedModifier, defaultModifier);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {TypeManifestation.PLAIN, 0},
-                {TypeManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT},
-                {TypeManifestation.FINAL, Opcodes.ACC_FINAL},
-                {TypeManifestation.INTERFACE, Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT},
-                {TypeManifestation.ANNOTATION, Opcodes.ACC_ANNOTATION | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT}
+                {TypeManifestation.PLAIN, 0, true},
+                {TypeManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT, false},
+                {TypeManifestation.FINAL, Opcodes.ACC_FINAL, false},
+                {TypeManifestation.INTERFACE, Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT, false},
+                {TypeManifestation.ANNOTATION, Opcodes.ACC_ANNOTATION | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT, false}
         });
     }
 

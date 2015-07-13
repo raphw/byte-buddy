@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.joinUnique;
+import static net.bytebuddy.utility.ByteBuddyCommons.filterUnique;
 
 /**
  * <p>
@@ -161,7 +161,7 @@ public class MultipleParentClassLoader extends ClassLoader {
         /**
          * The class loaders that were collected.
          */
-        private final List<ClassLoader> classLoaders;
+        private final List<? extends ClassLoader> classLoaders;
 
         /**
          * Creates a new builder without any class loaders.
@@ -175,7 +175,7 @@ public class MultipleParentClassLoader extends ClassLoader {
          *
          * @param classLoaders The class loaders that were collected until now.
          */
-        private Builder(List<ClassLoader> classLoaders) {
+        private Builder(List<? extends ClassLoader> classLoaders) {
             this.classLoaders = classLoaders;
         }
 
@@ -221,7 +221,7 @@ public class MultipleParentClassLoader extends ClassLoader {
          * @return A new builder instance with the additional class loaders.
          */
         public Builder append(List<? extends ClassLoader> classLoaders) {
-            return new Builder(joinUnique(this.classLoaders, classLoaders));
+            return new Builder(filterUnique(this.classLoaders, classLoaders));
         }
 
         /**

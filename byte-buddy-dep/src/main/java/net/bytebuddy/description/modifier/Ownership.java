@@ -48,10 +48,20 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
         return mask;
     }
 
+    @Override
+    public int getRange() {
+        return Opcodes.ACC_STATIC;
+    }
+
+    @Override
+    public boolean isDefault() {
+        return this == MEMBER;
+    }
+
     /**
      * Checks if the current state describes a {@code static} member.
      *
-     * @return {@code true} if this ownership representation represents a {@code static} member.
+     * @return {@code true} if this ownership representation representedBy a {@code static} member.
      */
     public boolean isStatic() {
         return this == STATIC;

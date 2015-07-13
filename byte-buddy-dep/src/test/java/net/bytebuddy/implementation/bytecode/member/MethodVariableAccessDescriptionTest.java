@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bytecode.member;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -42,13 +43,18 @@ public class MethodVariableAccessDescriptionTest {
     private Implementation.Context implementationContext;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(firstParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
-        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Arrays.asList(firstParameterType, secondParameterType));
-        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(firstParameterType.asRawType()).thenReturn(firstParameterType); // REFACTOR
+        when(firstParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstParameterType);
+        when(secondParameterType.asRawType()).thenReturn(secondParameterType); // REFACTOR
+        when(secondParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondParameterType);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription,
+                Arrays.asList(firstParameterType, secondParameterType)));
     }
 
     @After

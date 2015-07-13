@@ -45,9 +45,10 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
         super.setUp();
         when(source.getParameters()).thenReturn(sourceParameterList);
         when(sourceParameterList.get(anyInt())).thenReturn(sourceParameter);
-        when(sourceParameter.getTypeDescription()).thenReturn(sourceType);
+        when(sourceParameter.getType()).thenReturn(sourceType);
         when(leftMethod.getParameters()).thenReturn(leftParameterList);
         when(rightMethod.getParameters()).thenReturn(rightParameterList);
+        when(sourceType.asRawType()).thenReturn(sourceType);
     }
 
     private static class IndexTokenMatcher extends BaseMatcher<ArgumentTypeResolver.ParameterIndexToken> {
@@ -89,7 +90,7 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
         @Override
         public Integer answer(InvocationOnMock invocation) throws Throwable {
             assert invocation.getArguments().length == 1;
-            return indexMapping.get(invocation.getArguments()[0]);
+            return indexMapping.get((ArgumentTypeResolver.ParameterIndexToken) invocation.getArguments()[0]);
         }
     }
 }

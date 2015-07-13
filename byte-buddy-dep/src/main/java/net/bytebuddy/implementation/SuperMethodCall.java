@@ -111,8 +111,8 @@ public enum SuperMethodCall implements Implementation {
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
             StackManipulation superMethodCall = instrumentedMethod.isDefaultMethod()
-                    && implementationTarget.getTypeDescription().getInterfaces().contains(instrumentedMethod.getDeclaringType())
-                    ? implementationTarget.invokeDefault(instrumentedMethod.getDeclaringType(), instrumentedMethod.getUniqueSignature())
+                    && implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(instrumentedMethod.getDeclaringType().asRawType())
+                    ? implementationTarget.invokeDefault(instrumentedMethod.getDeclaringType().asRawType(), instrumentedMethod.asToken())
                     : implementationTarget.invokeSuper(instrumentedMethod, Target.MethodLookup.Default.EXACT);
             if (!superMethodCall.isValid()) {
                 throw new IllegalStateException("Cannot call super (or default) method of " + instrumentedMethod);
@@ -156,7 +156,7 @@ public enum SuperMethodCall implements Implementation {
             RETURNING {
                 @Override
                 protected StackManipulation of(MethodDescription methodDescription) {
-                    return MethodReturn.returning(methodDescription.getReturnType());
+                    return MethodReturn.returning(methodDescription.getReturnType().asRawType());
                 }
             },
 
@@ -166,12 +166,12 @@ public enum SuperMethodCall implements Implementation {
             DROPPING {
                 @Override
                 protected StackManipulation of(MethodDescription methodDescription) {
-                    return Removal.pop(methodDescription.getReturnType());
+                    return Removal.pop(methodDescription.getReturnType().asRawType());
                 }
             };
 
             /**
-             * Creates a stack manipulation that represents this handler's behavior.
+             * Creates a stack manipulation that representedBy this handler's behavior.
              *
              * @param methodDescription The method for which this handler is supposed to create a stack
              *                          manipulation for.

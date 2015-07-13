@@ -18,11 +18,12 @@ public class VisibilityTest extends AbstractModifierContributorTest {
 
     public VisibilityTest(ModifierContributor modifierContributor,
                           int expectedModifier,
+                          boolean defaultModifier,
                           boolean isPublic,
                           boolean isProtected,
                           boolean isPackagePrivate,
                           boolean isPrivate) {
-        super(modifierContributor, expectedModifier);
+        super(modifierContributor, expectedModifier, defaultModifier);
         this.isPublic = isPublic;
         this.isProtected = isProtected;
         this.isPackagePrivate = isPackagePrivate;
@@ -32,10 +33,10 @@ public class VisibilityTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Visibility.PUBLIC, Opcodes.ACC_PUBLIC, true, false, false, false},
-                {Visibility.PRIVATE, Opcodes.ACC_PRIVATE, false, false, false, true},
-                {Visibility.PROTECTED, Opcodes.ACC_PROTECTED, false, true, false, false},
-                {Visibility.PACKAGE_PRIVATE, 0, false, false, true, false}
+                {Visibility.PUBLIC, Opcodes.ACC_PUBLIC, false, true, false, false, false},
+                {Visibility.PROTECTED, Opcodes.ACC_PROTECTED, false, false, true, false, false},
+                {Visibility.PACKAGE_PRIVATE, 0, true, false, false, true, false},
+                {Visibility.PRIVATE, Opcodes.ACC_PRIVATE, false, false, false, false, true}
         });
     }
 

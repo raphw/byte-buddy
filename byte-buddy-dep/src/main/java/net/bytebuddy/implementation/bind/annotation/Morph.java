@@ -158,7 +158,7 @@ public @interface Morph {
         private static MethodDescription onlyMethod(TypeDescription typeDescription) {
             if (!typeDescription.isInterface()) {
                 throw new IllegalArgumentException(typeDescription + " is not an interface");
-            } else if (typeDescription.getInterfaces().size() > 0) {
+            } else if (!typeDescription.getInterfaces().isEmpty()) {
                 throw new IllegalArgumentException(typeDescription + " must not extend other interfaces");
             } else if (!typeDescription.isPublic()) {
                 throw new IllegalArgumentException(typeDescription + " is mot public");
@@ -168,9 +168,9 @@ public @interface Morph {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
             MethodDescription methodDescription = methodCandidates.getOnly();
-            if (!methodDescription.getReturnType().represents(Object.class)) {
+            if (!methodDescription.getReturnType().asRawType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getTypeDescription().represents(Object[].class)) {
+            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getType().asRawType().represents(Object[].class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single argument of type Object[]");
             }
             return methodDescription;
@@ -187,9 +187,8 @@ public @interface Morph {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getTypeDescription().equals(forwardingMethod.getDeclaringType())) {
-                throw new IllegalStateException(String.format("The installed type %s for the @Morph annotation does not " +
-                        "equal the annotated parameter type on %s", target.getTypeDescription(), target));
+            if (!target.getType().asRawType().equals(forwardingMethod.getDeclaringType())) {
+                throw new IllegalStateException("Illegal use of @Morph for " + target + " which was installed for " + forwardingMethod.getDeclaringType());
             }
             Implementation.SpecialMethodInvocation specialMethodInvocation;
             TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);
@@ -201,7 +200,7 @@ public @interface Morph {
                         : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source);
             }
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType(),
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType().asRawType(),
                     implementationTarget.getTypeDescription(),
                     specialMethodInvocation,
                     assigner,
@@ -254,7 +253,7 @@ public @interface Morph {
 
             /**
              * An implicit default method locator that only permits the invocation of a default method if the source
-             * method itself represents a method that was defined on a default method interface.
+             * method itself representedBy a method that was defined on a default method interface.
              */
             enum Implicit implements DefaultMethodLocator {
 
@@ -264,16 +263,14 @@ public @interface Morph {
                 INSTANCE;
 
                 @Override
-                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                                      MethodDescription source) {
-                    String uniqueSignature = source.getUniqueSignature();
+                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces()) {
+                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asRawTypes()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                             }
-                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, uniqueSignature);
+                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asToken());
                         }
                     }
                     return specialMethodInvocation != null
@@ -313,7 +310,7 @@ public @interface Morph {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
-                    return implementationTarget.invokeDefault(typeDescription, source.getUniqueSignature());
+                    return implementationTarget.invokeDefault(typeDescription, source.asToken());
                 }
 
                 @Override
@@ -538,9 +535,9 @@ public @interface Morph {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(RedirectionProxy.FIELD_NAME,
-                            this.instrumentedType,
-                            Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE);
+                    return instrumentedType.withField(new FieldDescription.Token(RedirectionProxy.FIELD_NAME,
+                            Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE,
+                            this.instrumentedType));
                 }
 
                 @Override
@@ -704,7 +701,7 @@ public @interface Morph {
                         StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadOffset(1);
                         StackManipulation[] parameterLoading = new StackManipulation[accessorMethod.getParameters().size()];
                         int index = 0;
-                        for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList()) {
+                        for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList().asRawTypes()) {
                             parameterLoading[index] = new StackManipulation.Compound(arrayReference,
                                     IntegerConstant.forValue(index),
                                     ArrayAccess.REFERENCE.load(),
@@ -721,7 +718,9 @@ public @interface Morph {
                                                 .getOnly()).getter()),
                                 new StackManipulation.Compound(parameterLoading),
                                 MethodInvocation.invoke(accessorMethod),
-                                assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.DYNAMICALLY_TYPED),
+                                assigner.assign(accessorMethod.getReturnType().asRawType(),
+                                        instrumentedMethod.getReturnType().asRawType(),
+                                        Assigner.DYNAMICALLY_TYPED),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

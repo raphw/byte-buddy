@@ -41,28 +41,38 @@ public enum FieldManifestation implements ModifierContributor.ForField {
         return mask;
     }
 
+    @Override
+    public int getRange() {
+        return Opcodes.ACC_FINAL | Opcodes.ACC_VOLATILE;
+    }
+
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
+    }
+
     /**
-     * Returns {@code true} if this manifestation represents a {@code final} type.
+     * Returns {@code true} if this manifestation representedBy a {@code final} type.
      *
-     * @return {@code true} if this manifestation represents a {@code final} type.
+     * @return {@code true} if this manifestation representedBy a {@code final} type.
      */
     public boolean isFinal() {
         return (mask & Opcodes.ACC_FINAL) != 0;
     }
 
     /**
-     * Returns {@code true} if this manifestation represents a {@code volatile} type.
+     * Returns {@code true} if this manifestation representedBy a {@code volatile} type.
      *
-     * @return {@code true} if this manifestation represents a {@code volatile} type.
+     * @return {@code true} if this manifestation representedBy a {@code volatile} type.
      */
     public boolean isVolatile() {
         return (mask & Opcodes.ACC_VOLATILE) != 0;
     }
 
     /**
-     * Returns {@code true} if this manifestation represents a field that is neither {@code final} or {@code volatile}.
+     * Returns {@code true} if this manifestation representedBy a field that is neither {@code final} or {@code volatile}.
      *
-     * @return {@code true} if this manifestation represents a field that is neither {@code final} or {@code volatile}.
+     * @return {@code true} if this manifestation representedBy a field that is neither {@code final} or {@code volatile}.
      */
     public boolean isPlain() {
         return !(isFinal() || isVolatile());

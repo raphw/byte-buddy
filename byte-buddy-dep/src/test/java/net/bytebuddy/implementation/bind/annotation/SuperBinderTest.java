@@ -28,10 +28,11 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         when(annotation.strategy()).thenReturn(instantiation);
         when(instantiation.proxyFor(targetType, implementationTarget, annotationDescription)).thenReturn(stackManipulation);
         when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);
+        when(targetType.asRawType()).thenReturn(targetType);
     }
 
     @Override

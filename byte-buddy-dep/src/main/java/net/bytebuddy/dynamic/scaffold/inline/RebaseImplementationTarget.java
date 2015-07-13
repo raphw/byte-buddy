@@ -46,7 +46,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     protected Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         return methodDescription.getDeclaringType().equals(typeDescription)
                 ? invokeSuper(methodRebaseResolver.resolve(methodDescription))
-                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSupertype());
+                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSuperType().asRawType());
     }
 
     /**
@@ -124,8 +124,8 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
             this.instrumentedType = instrumentedType;
             methodDescription = resolution.getResolvedMethod();
             stackManipulation = new Compound(resolution.getAdditionalArguments(), resolution.getResolvedMethod().isStatic()
-                    ? MethodInvocation.invoke(resolution.getResolvedMethod())
-                    : MethodInvocation.invoke(resolution.getResolvedMethod()).special(instrumentedType));
+                    ? MethodInvocation.invoke(methodDescription)
+                    : MethodInvocation.invoke(methodDescription).special(instrumentedType));
         }
 
         /**
@@ -170,15 +170,15 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
             return isValid() == specialMethodInvocation.isValid()
                     && instrumentedType.equals(specialMethodInvocation.getTypeDescription())
                     && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
-                    && methodDescription.getParameters().asTypeList().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList())
-                    && methodDescription.getReturnType().equals(specialMethodInvocation.getMethodDescription().getReturnType());
+                    && methodDescription.getParameters().asTypeList().asRawTypes().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList().asRawTypes())
+                    && methodDescription.getReturnType().asRawType().equals(specialMethodInvocation.getMethodDescription().getReturnType().asRawType());
         }
 
         @Override
         public int hashCode() {
             int result = methodDescription.getInternalName().hashCode();
-            result = 31 * result + methodDescription.getParameters().asTypeList().hashCode();
-            result = 31 * result + methodDescription.getReturnType().hashCode();
+            result = 31 * result + methodDescription.getParameters().asTypeList().asRawTypes().hashCode();
+            result = 31 * result + methodDescription.getReturnType().asRawType().hashCode();
             result = 31 * result + instrumentedType.hashCode();
             return result;
         }

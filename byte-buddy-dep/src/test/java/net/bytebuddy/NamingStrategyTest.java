@@ -1,8 +1,10 @@
 package net.bytebuddy;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -27,12 +29,21 @@ public class NamingStrategyTest {
     private NamingStrategy.SuffixingRandom.BaseNameResolver baseNameResolver;
 
     @Mock
-    private TypeDescription typeDescription;
+    private GenericTypeDescription genericSuperType;
+
+    @Mock
+    private TypeDescription rawSuperType;
+
+    @Before
+    public void setUp() throws Exception {
+        when(genericSuperType.asRawType()).thenReturn(rawSuperType);
+
+    }
 
     @Test
     public void testSuffixingRandomNonConflictingPackage() throws Exception {
-        when(unnamedType.getSuperClass()).thenReturn(typeDescription);
-        when(typeDescription.getName()).thenReturn(FOO);
+        when(unnamedType.getSuperClass()).thenReturn(genericSuperType);
+        when(rawSuperType.getName()).thenReturn(FOO);
         NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(BAR);
         assertThat(namingStrategy.name(unnamedType), startsWith(FOO + "$" + BAR + "$"));
         verify(unnamedType, atLeast(1)).getSuperClass();
@@ -52,9 +63,9 @@ public class NamingStrategyTest {
     @Test
     public void testBaseNameResolvers() throws Exception {
         assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue(FOO).resolve(unnamedType), is(FOO));
-        when(typeDescription.getName()).thenReturn(FOO);
-        assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType(typeDescription).resolve(unnamedType), is(FOO));
-        when(unnamedType.getSuperClass()).thenReturn(typeDescription);
+        when(rawSuperType.getName()).thenReturn(FOO);
+        assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType(rawSuperType).resolve(unnamedType), is(FOO));
+        when(unnamedType.getSuperClass()).thenReturn(genericSuperType);
         assertThat(NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType.INSTANCE.resolve(unnamedType), is(FOO));
     }
 

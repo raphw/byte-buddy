@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -13,10 +13,10 @@ import static org.mockito.Mockito.*;
 public class MethodReturnTypeMatcherTest extends AbstractElementMatcherTest<MethodReturnTypeMatcher<?>> {
 
     @Mock
-    private ElementMatcher<? super TypeDescription> typeMatcher;
+    private ElementMatcher<? super GenericTypeDescription> typeMatcher;
 
     @Mock
-    private TypeDescription returnType;
+    private GenericTypeDescription returnType;
 
     @Mock
     private MethodDescription methodDescription;

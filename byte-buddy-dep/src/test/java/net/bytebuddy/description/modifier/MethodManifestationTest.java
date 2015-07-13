@@ -14,19 +14,19 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class MethodManifestationTest extends AbstractModifierContributorTest {
 
-    public MethodManifestationTest(ModifierContributor modifierContributor, int expectedModifier) {
-        super(modifierContributor, expectedModifier);
+    public MethodManifestationTest(ModifierContributor modifierContributor, int expectedModifier, boolean defaultModifier) {
+        super(modifierContributor, expectedModifier, defaultModifier);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {MethodManifestation.PLAIN, 0},
-                {MethodManifestation.NATIVE, Opcodes.ACC_NATIVE},
-                {MethodManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT},
-                {MethodManifestation.FINAL, Opcodes.ACC_FINAL},
-                {MethodManifestation.FINAL_NATIVE, Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE},
-                {MethodManifestation.BRIDGE, Opcodes.ACC_BRIDGE}
+                {MethodManifestation.PLAIN, 0, true},
+                {MethodManifestation.NATIVE, Opcodes.ACC_NATIVE, false},
+                {MethodManifestation.ABSTRACT, Opcodes.ACC_ABSTRACT, false},
+                {MethodManifestation.FINAL, Opcodes.ACC_FINAL, false},
+                {MethodManifestation.FINAL_NATIVE, Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE, false},
+                {MethodManifestation.BRIDGE, Opcodes.ACC_BRIDGE, false}
         });
     }
 

@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -97,8 +98,8 @@ public @interface FieldValue {
                                 ? StackManipulation.LegalTrivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(resolution.getFieldDescription()).getter(),
-                        assigner.assign(resolution.getFieldDescription().getFieldType(),
-                                target.getTypeDescription(),
+                        assigner.assign(resolution.getFieldDescription().getType().asRawType(),
+                                target.getType().asRawType(),
                                 RuntimeType.Verifier.check(target))
                 );
                 return stackManipulation.isValid()
@@ -260,14 +261,12 @@ public @interface FieldValue {
 
                 @Override
                 protected Resolution resolve(String fieldName, boolean staticMethod) {
-                    TypeDescription currentType = instrumentedType;
-                    do {
+                    for (GenericTypeDescription currentType : instrumentedType) {
                         FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName));
                         if (!fieldList.isEmpty() && fieldList.getOnly().isVisibleTo(instrumentedType) && (!staticMethod || fieldList.getOnly().isStatic())) {
                             return new Resolution.Resolved(fieldList.getOnly());
                         }
-                        currentType = currentType.getSupertype();
-                    } while (currentType != null);
+                    }
                     return Resolution.Unresolved.INSTANCE;
                 }
 

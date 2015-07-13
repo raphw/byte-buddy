@@ -45,6 +45,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Override
     @Before
     public void setUp() throws Exception {
+        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAR);
         when(targetRebaseMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
@@ -58,9 +59,10 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(rebasedResolution.getAdditionalArguments()).thenReturn(additionalArguments);
         when(additionalArguments.isValid()).thenReturn(true);
         when(additionalArguments.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(QUX);
         when(superType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(superType.asRawType()).thenReturn(superType);
         when(superMethod.getDeclaringType()).thenReturn(superType);
         when(superMethod.getReturnType()).thenReturn(returnType);
         when(superMethod.getInternalName()).thenReturn(BAZ);
@@ -76,7 +78,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     }
 
     @Override
-    protected Implementation.Target makeimplementationTarget() {
+    protected Implementation.Target makeImplementationTarget() {
         return new RebaseImplementationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver);
     }
 

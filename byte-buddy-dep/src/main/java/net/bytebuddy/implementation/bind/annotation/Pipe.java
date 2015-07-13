@@ -155,7 +155,7 @@ public @interface Pipe {
         private static MethodDescription onlyMethod(TypeDescription typeDescription) {
             if (!typeDescription.isInterface()) {
                 throw new IllegalArgumentException(typeDescription + " is not an interface");
-            } else if (typeDescription.getInterfaces().size() > 0) {
+            } else if (!typeDescription.getInterfaces().isEmpty()) {
                 throw new IllegalArgumentException(typeDescription + " must not extend other interfaces");
             } else if (!typeDescription.isPublic()) {
                 throw new IllegalArgumentException(typeDescription + " is mot public");
@@ -165,9 +165,9 @@ public @interface Pipe {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
             MethodDescription methodDescription = methodCandidates.getOnly();
-            if (!methodDescription.getReturnType().represents(Object.class)) {
+            if (!methodDescription.getReturnType().asRawType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getTypeDescription().represents(Object.class)) {
+            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().getOnly().getType().asRawType().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single Object-typed argument");
             }
             return methodDescription;
@@ -184,13 +184,12 @@ public @interface Pipe {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getTypeDescription().equals(forwardingMethod.getDeclaringType())) {
-                throw new IllegalStateException(String.format("The installed type %s for the @Pipe annotation does not " +
-                        "equal the annotated parameter type on %s", target.getTypeDescription(), target));
+            if (!target.getType().asRawType().equals(forwardingMethod.getDeclaringType())) {
+                throw new IllegalStateException("Illegal use of @Pipe for " + target + " which was installed for " + forwardingMethod.getDeclaringType());
             } else if (source.isStatic()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType(),
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType().asRawType(),
                     source,
                     assigner,
                     annotation.loadSilent().serializableProxy(),
@@ -288,7 +287,7 @@ public @interface Pipe {
              * given method.
              */
             private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
-                TypeList parameterTypes = methodDescription.getParameters().asTypeList();
+                TypeList parameterTypes = methodDescription.getParameters().asTypeList().asRawTypes();
                 LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>(parameterTypes.size());
                 int currentIndex = 0;
                 for (TypeDescription parameterType : parameterTypes) {
@@ -440,14 +439,14 @@ public @interface Pipe {
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                        StackManipulation thisReference = MethodVariableAccess.forType(instrumentedMethod.getDeclaringType()).loadOffset(0);
+                        StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadOffset(0);
                         FieldList fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                         int index = 0;
                         for (FieldDescription fieldDescription : fieldList) {
                             fieldLoading[index] = new StackManipulation.Compound(
                                     thisReference,
-                                    MethodVariableAccess.forType(fieldDescription.getFieldType())
+                                    MethodVariableAccess.forType(fieldDescription.getType().asRawType())
                                             .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
                                     FieldAccess.forField(fieldDescription).putter()
                             );
@@ -571,10 +570,12 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadOffset(1),
-                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType(), Assigner.DYNAMICALLY_TYPED),
+                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType().asRawType(), Assigner.DYNAMICALLY_TYPED),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
-                                assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.DYNAMICALLY_TYPED),
+                                assigner.assign(redirectedMethod.getReturnType().asRawType(),
+                                        instrumentedMethod.getReturnType().asRawType(),
+                                        Assigner.DYNAMICALLY_TYPED),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

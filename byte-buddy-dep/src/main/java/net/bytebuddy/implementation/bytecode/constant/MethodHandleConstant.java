@@ -40,13 +40,13 @@ public class MethodHandleConstant implements StackManipulation {
      * Creates a method handle for a method.
      *
      * @param methodDescription The method for which a method handle is to be put onto the operand stack.
-     * @return A stack manipulation that represents the loading of the handle.
+     * @return A stack manipulation that representedBy the loading of the handle.
      */
     public static StackManipulation of(MethodDescription methodDescription) {
         return methodDescription.isTypeInitializer()
                 ? Illegal.INSTANCE
                 : new MethodHandleConstant(new Handle(tagFor(methodDescription),
-                methodDescription.getDeclaringType().getInternalName(),
+                methodDescription.getDeclaringType().asRawType().getInternalName(),
                 methodDescription.getInternalName(),
                 methodDescription.getDescriptor()));
     }
@@ -93,7 +93,7 @@ public class MethodHandleConstant implements StackManipulation {
      * Creates a method handle for a field getter.
      *
      * @param fieldDescription The field for which a get handle is to be put onto the operand stack.
-     * @return A stack manipulation that represents the loading of the handle.
+     * @return A stack manipulation that representedBy the loading of the handle.
      */
     public static StackManipulation ofGetter(FieldDescription fieldDescription) {
         return of(fieldDescription, fieldDescription.isStatic() ? Opcodes.H_GETSTATIC : Opcodes.H_GETFIELD);
@@ -103,7 +103,7 @@ public class MethodHandleConstant implements StackManipulation {
      * Creates a method handle for a field putter.
      *
      * @param fieldDescription The field for which a put handle is to be put onto the operand stack.
-     * @return A stack manipulation that represents the loading of the handle.
+     * @return A stack manipulation that representedBy the loading of the handle.
      */
     public static StackManipulation ofPutter(FieldDescription fieldDescription) {
         return of(fieldDescription, fieldDescription.isStatic() ? Opcodes.H_PUTSTATIC : Opcodes.H_PUTFIELD);
@@ -114,11 +114,11 @@ public class MethodHandleConstant implements StackManipulation {
      *
      * @param fieldDescription The field for which a handle is to be put onto the operand stack.
      * @param tag              The tag for this handle.
-     * @return A stack manipulation that represents the loading of the handle.
+     * @return A stack manipulation that representedBy the loading of the handle.
      */
     private static StackManipulation of(FieldDescription fieldDescription, int tag) {
         return new MethodHandleConstant(new Handle(tag,
-                fieldDescription.getDeclaringType().getInternalName(),
+                fieldDescription.getDeclaringType().asRawType().getInternalName(),
                 fieldDescription.getInternalName(),
                 fieldDescription.getDescriptor()));
     }

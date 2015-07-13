@@ -2,13 +2,16 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.ModifierReviewable;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.ModifierResolver;
@@ -106,6 +109,11 @@ public interface TypeWriter<T> {
                  */
                 INSTANCE;
 
+                /**
+                 * The default value indicating a field without a default value.
+                 */
+                private static final Object NO_DEFAULT_VALUE = null;
+
                 @Override
                 public FieldAttributeAppender getFieldAppender() {
                     return FieldAttributeAppender.NoOp.INSTANCE;
@@ -113,7 +121,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Object getDefaultValue() {
-                    return null;
+                    return NO_DEFAULT_VALUE;
                 }
 
                 @Override
@@ -122,7 +130,7 @@ public interface TypeWriter<T> {
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
-                            null).visitEnd();
+                            NO_DEFAULT_VALUE).visitEnd();
                 }
 
                 @Override
@@ -183,10 +191,8 @@ public interface TypeWriter<T> {
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other)
-                        return true;
-                    if (other == null || getClass() != other.getClass())
-                        return false;
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
                     Simple simple = (Simple) other;
                     return attributeAppender.equals(simple.attributeAppender)
                             && !(defaultValue != null ?
@@ -406,7 +412,7 @@ public interface TypeWriter<T> {
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
+                            methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     ParameterList parameterList = methodDescription.getParameters();
                     if (parameterList.hasExplicitMetaData()) {
                         for (ParameterDescription parameterDescription : parameterList) {
@@ -640,7 +646,10 @@ public interface TypeWriter<T> {
                         throw new IllegalStateException("Cannot set " + annotationValue + " as default for " + methodDescription);
                     }
                     AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotationDefault();
-                    AnnotationAppender.Default.apply(annotationVisitor, methodDescription.getReturnType(), AnnotationAppender.NO_NAME, annotationValue);
+                    AnnotationAppender.Default.apply(annotationVisitor,
+                            methodDescription.getReturnType().asRawType(),
+                            AnnotationAppender.NO_NAME,
+                            annotationValue);
                     annotationVisitor.visitEnd();
                 }
 
@@ -957,7 +966,7 @@ public interface TypeWriter<T> {
          * Creates the instrumented type.
          *
          * @param implementationContext The implementation context to use.
-         * @return A byte array that represents the instrumented type.
+         * @return A byte array that is represented by the instrumented type.
          */
         protected abstract byte[] create(Implementation.Context.ExtractableView implementationContext);
 
@@ -993,19 +1002,22 @@ public interface TypeWriter<T> {
             @Override
             public void visit(int version, int modifier, String name, String signature, String superName, String[] interfaces) {
                 ClassFileVersion classFileVersion = new ClassFileVersion(version);
-                if ((modifier & Opcodes.ACC_ANNOTATION) != 0) {
+                if (name.endsWith("/" + PackageDescription.PACKAGE_CLASS_NAME)) {
+                    constraint = Constraint.PACKAGE_CLASS;
+                } else if ((modifier & Opcodes.ACC_ANNOTATION) != ModifierReviewable.EMPTY_MASK) {
                     constraint = classFileVersion.isSupportsDefaultMethods()
                             ? Constraint.JAVA8_ANNOTATION
                             : Constraint.ANNOTATION;
-                } else if ((modifier & Opcodes.ACC_INTERFACE) != 0) {
+                } else if ((modifier & Opcodes.ACC_INTERFACE) != ModifierReviewable.EMPTY_MASK) {
                     constraint = classFileVersion.isSupportsDefaultMethods()
                             ? Constraint.JAVA8_INTERFACE
                             : Constraint.INTERFACE;
-                } else if ((modifier & Opcodes.ACC_ABSTRACT) != 0) {
+                } else if ((modifier & Opcodes.ACC_ABSTRACT) != ModifierReviewable.EMPTY_MASK) {
                     constraint = Constraint.ABSTRACT_CLASS;
                 } else {
                     constraint = Constraint.MANIFEST_CLASS;
                 }
+                constraint.assertPackage(modifier, interfaces);
                 super.visit(version, modifier, name, signature, superName, interfaces);
             }
 
@@ -1076,32 +1088,37 @@ public interface TypeWriter<T> {
                 /**
                  * Constraints for a non-abstract class.
                  */
-                MANIFEST_CLASS("non-abstract class", true, true, true, true, false, true, false),
+                MANIFEST_CLASS("non-abstract class", true, true, true, true, false, true, false, true),
 
                 /**
                  * Constraints for an abstract class.
                  */
-                ABSTRACT_CLASS("abstract class", true, true, true, true, true, true, false),
+                ABSTRACT_CLASS("abstract class", true, true, true, true, true, true, false, true),
 
                 /**
                  * Constrains for an interface type before Java 8.
                  */
-                INTERFACE("interface (Java 7-)", false, false, false, false, true, false, false),
+                INTERFACE("interface (Java 7-)", false, false, false, false, true, false, false, true),
 
                 /**
                  * Constrains for an interface type since Java 8.
                  */
-                JAVA8_INTERFACE("interface (Java 8+)", false, false, false, true, true, true, false),
+                JAVA8_INTERFACE("interface (Java 8+)", false, false, false, true, true, true, false, true),
 
                 /**
                  * Constrains for an annotation type before Java 8.
                  */
-                ANNOTATION("annotation (Java 7-)", false, false, false, false, true, false, true),
+                ANNOTATION("annotation (Java 7-)", false, false, false, false, true, false, true, true),
 
                 /**
                  * Constrains for an annotation type since Java 8.
                  */
-                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, true, true);
+                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, true, true, true),
+
+                /**
+                 * Constraints for a package type, i.e. a class named {@code package-info}.
+                 */
+                PACKAGE_CLASS("package definition", false, false, false, false, false, false, false, false);
 
                 /**
                  * A name to represent the type being validated within an error message.
@@ -1144,6 +1161,11 @@ public interface TypeWriter<T> {
                 private final boolean allowsDefaultValue;
 
                 /**
+                 * Determines if a sort allows the type a shape that does not resemble a package description.
+                 */
+                private final boolean allowsNonPackage;
+
+                /**
                  * Creates a new constraint.
                  *
                  * @param sortName              A name to represent the type being validated within an error message.
@@ -1154,6 +1176,7 @@ public interface TypeWriter<T> {
                  * @param allowsAbstract        Determines if a sort allows abstract methods.
                  * @param allowsNonAbstract     Determines if a sort allows non-abstract methods.
                  * @param allowsDefaultValue    Determines if a sort allows the definition of annotation default values.
+                 * @param allowsNonPackage      Determines if a sort allows the type a shape that does not resemble a package description.
                  */
                 Constraint(String sortName,
                            boolean allowsConstructor,
@@ -1162,7 +1185,8 @@ public interface TypeWriter<T> {
                            boolean allowsStaticMethods,
                            boolean allowsAbstract,
                            boolean allowsNonAbstract,
-                           boolean allowsDefaultValue) {
+                           boolean allowsDefaultValue,
+                           boolean allowsNonPackage) {
                     this.sortName = sortName;
                     this.allowsConstructor = allowsConstructor;
                     this.allowsNonPublic = allowsNonPublic;
@@ -1171,6 +1195,7 @@ public interface TypeWriter<T> {
                     this.allowsAbstract = allowsAbstract;
                     this.allowsNonAbstract = allowsNonAbstract;
                     this.allowsDefaultValue = allowsDefaultValue;
+                    this.allowsNonPackage = allowsNonPackage;
                 }
 
                 /**
@@ -1225,6 +1250,20 @@ public interface TypeWriter<T> {
                 protected void assertDefault(String name) {
                     if (!allowsDefaultValue) {
                         throw new IllegalStateException("Cannot define define default value on " + name + " for " + sortName);
+                    }
+                }
+
+                /**
+                 * Asserts if the type can legally represent a package description.
+                 *
+                 * @param modifier   The modifier that is to be written to the type.
+                 * @param interfaces The interfaces that are to be appended to the type.
+                 */
+                protected void assertPackage(int modifier, String[] interfaces) {
+                    if (!allowsNonPackage && modifier != PackageDescription.PACKAGE_MODIFIERS) {
+                        throw new IllegalStateException("Cannot alter modifier for " + sortName);
+                    } else if (!allowsNonPackage && interfaces != null) {
+                        throw new IllegalStateException("Cannot implement interface for " + sortName);
                     }
                 }
 
@@ -1419,18 +1458,18 @@ public interface TypeWriter<T> {
                 private final Implementation.Context.ExtractableView implementationContext;
 
                 /**
-                 * A mutable map of all declared fields of the instrumented type by their names.
+                 * A mapping of fields to write by their names.
                  */
                 private final Map<String, FieldDescription> declaredFields;
 
                 /**
-                 * A mutable map of all declarable methods of the instrumented type by their unique signatures.
+                 * A mapping of methods to write by a concatenation of internal name and descriptor.
                  */
                 private final Map<String, MethodDescription> declarableMethods;
 
                 /**
                  * A mutable reference for code that is to be injected into the actual type initializer, if any.
-                 * Usually, this represents an invocation of the actual type initializer that is found in the class
+                 * Usually, this representedBy an invocation of the actual type initializer that is found in the class
                  * file which is relocated into a static method.
                  */
                 private Implementation.Context.ExtractableView.InjectedCode injectedCode;
@@ -1447,11 +1486,11 @@ public interface TypeWriter<T> {
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
                     declaredFields = new HashMap<String, FieldDescription>(fieldDescriptions.size());
                     for (FieldDescription fieldDescription : fieldDescriptions) {
-                        declaredFields.put(fieldDescription.getInternalName(), fieldDescription);
+                        declaredFields.put(fieldDescription.getName(), fieldDescription);
                     }
                     declarableMethods = new HashMap<String, MethodDescription>(instrumentedMethods.size());
                     for (MethodDescription methodDescription : instrumentedMethods) {
-                        declarableMethods.put(methodDescription.getUniqueSignature(), methodDescription);
+                        declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
                     }
                     injectedCode = Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE;
                 }
@@ -1470,10 +1509,10 @@ public interface TypeWriter<T> {
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
-                            (instrumentedType.getSupertype() == NO_SUPER_CLASS ?
+                            (instrumentedType.getSuperType() == NO_SUPER_CLASS ?
                                     TypeDescription.OBJECT :
-                                    instrumentedType.getSupertype()).getInternalName(),
-                            instrumentedType.getInterfaces().toInternalNames());
+                                    instrumentedType.getSuperType().asRawType()).getInternalName(),
+                            instrumentedType.getInterfaces().asRawTypes().toInternalNames());
                     attributeAppender.apply(this, instrumentedType);
                 }
 
@@ -1500,7 +1539,7 @@ public interface TypeWriter<T> {
                                 injectedCode.getInjectorProxyMethod().getInternalName(),
                                 injectedCode.getInjectorProxyMethod().getDescriptor(),
                                 injectedCode.getInjectorProxyMethod().getGenericSignature(),
-                                injectedCode.getInjectorProxyMethod().getExceptionTypes().toInternalNames());
+                                injectedCode.getInjectorProxyMethod().getExceptionTypes().asRawTypes().toInternalNames());
                     }
                     MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                     return methodDescription == RETAIN_METHOD
@@ -1524,13 +1563,13 @@ public interface TypeWriter<T> {
                                 methodDescription.getInternalName(),
                                 methodDescription.getDescriptor(),
                                 methodDescription.getGenericSignature(),
-                                methodDescription.getExceptionTypes().toInternalNames());
+                                methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     }
                     MethodVisitor methodVisitor = super.visitMethod(entry.getModifierResolver().transform(methodDescription, entry.getSort().isImplemented()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().toInternalNames());
+                            methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     return abstractOrigin
                             ? new AttributeObtainingMethodVisitor(methodVisitor, entry, methodDescription)
                             : new CodePreservingMethodVisitor(methodVisitor, entry, methodDescription);
@@ -1617,7 +1656,7 @@ public interface TypeWriter<T> {
                                 resolution.getResolvedMethod().getInternalName(),
                                 resolution.getResolvedMethod().getDescriptor(),
                                 resolution.getResolvedMethod().getGenericSignature(),
-                                resolution.getResolvedMethod().getExceptionTypes().toInternalNames())
+                                resolution.getResolvedMethod().getExceptionTypes().asRawTypes().toInternalNames())
                                 : IGNORE_METHOD;
                         super.visitCode();
                     }
@@ -1716,7 +1755,7 @@ public interface TypeWriter<T> {
                     private static final int TYPE_INITIALIZER_PROXY_MODIFIERS = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
                     /**
-                     * A prefix for the name of the method that represents the original type initializer.
+                     * A prefix for the name of the method that representedBy the original type initializer.
                      */
                     private static final String TYPE_INITIALIZER_PROXY_PREFIX = "originalTypeInitializer";
 
@@ -1729,13 +1768,15 @@ public interface TypeWriter<T> {
                      * Creates a new type initializer injection.
                      */
                     private TypeInitializerInjection() {
-                        injectorProxyMethod = new MethodDescription.Latent(
+                        injectorProxyMethod = new MethodDescription.Latent(instrumentedType,
                                 String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, RandomString.make()),
-                                instrumentedType,
-                                TypeDescription.VOID,
-                                new TypeList.Empty(),
                                 TYPE_INITIALIZER_PROXY_MODIFIERS,
-                                Collections.<TypeDescription>emptyList());
+                                Collections.<GenericTypeDescription>emptyList(),
+                                TypeDescription.VOID,
+                                Collections.<ParameterDescription.Token>emptyList(),
+                                Collections.<GenericTypeDescription>emptyList(),
+                                Collections.<AnnotationDescription>emptyList(),
+                                MethodDescription.NO_DEFAULT_VALUE);
                     }
 
                     @Override
@@ -1822,10 +1863,10 @@ public interface TypeWriter<T> {
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
-                        (instrumentedType.getSupertype() == null
+                        (instrumentedType.getSuperType() == null
                                 ? TypeDescription.OBJECT
-                                : instrumentedType.getSupertype()).getInternalName(),
-                        instrumentedType.getInterfaces().toInternalNames());
+                                : instrumentedType.getSuperType().asRawType()).getInternalName(),
+                        instrumentedType.getInterfaces().asRawTypes().toInternalNames());
                 attributeAppender.apply(classVisitor, instrumentedType);
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, fieldDescription);

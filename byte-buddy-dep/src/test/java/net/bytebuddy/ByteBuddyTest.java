@@ -4,6 +4,7 @@ import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.Implementation;
@@ -76,6 +77,8 @@ public class ByteBuddyTest {
     public void setUp() throws Exception {
         when(modifierContributorForType.getMask()).thenReturn(MASK);
         when(typeDescription.isInterface()).thenReturn(true);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
     }
 
     @Test

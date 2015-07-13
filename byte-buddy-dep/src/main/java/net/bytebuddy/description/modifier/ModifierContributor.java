@@ -24,6 +24,20 @@ public interface ModifierContributor {
     int getMask();
 
     /**
+     * Returns the entire range of modifiers that address this contributor's property.
+     *
+     * @return The range of this contributor's property.
+     */
+    int getRange();
+
+    /**
+     * Determines if this is the default modifier.
+     *
+     * @return {@code true} if this contributor representedBy the default modifier.
+     */
+    boolean isDefault();
+
+    /**
      * A marker interface for modifiers that can be applied to methods.
      */
     interface ForMethod extends ModifierContributor {
@@ -41,6 +55,13 @@ public interface ModifierContributor {
      * A marker interface for modifiers that can be applied to types.
      */
     interface ForType extends ModifierContributor {
+        /* marker interface */
+    }
+
+    /**
+     * A marker interface for modifiers that can be applied to method parameters.
+     */
+    interface ForParameter extends ModifierContributor {
         /* marker interface */
     }
 }

@@ -1,32 +1,35 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
- * Implementations of this interface represent a Java type, i.e. a class or interface.
+ * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
+ * represent non-generic types of sort {@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}.
  */
-public interface TypeDescription extends ByteCodeElement {
+public interface TypeDescription extends GenericTypeDescription, TypeVariableSource, Iterable<GenericTypeDescription> {
 
     /**
      * A representation of the {@link java.lang.Object} type.
@@ -52,6 +55,16 @@ public interface TypeDescription extends ByteCodeElement {
      * A representation of the {@link java.lang.Enum} type.
      */
     TypeDescription ENUM = new ForLoadedType(Enum.class);
+
+    /**
+     * The modifiers of any array type.
+     */
+    int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
+
+    /**
+     * A list of interfaces that are implicitly implemented by any array type.
+     */
+    GenericTypeList ARRAY_INTERFACES = new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class);
 
     /**
      * Checks if {@code value} is an instance of the type represented by this instance.
@@ -117,55 +130,35 @@ public interface TypeDescription extends ByteCodeElement {
     boolean isAssignableTo(TypeDescription typeDescription);
 
     /**
-     * Checks if the type described by this instance represents {@code type}.
+     * Checks if the type described by this instance representedBy {@code type}.
      *
      * @param type The type of interest.
-     * @return {@code true} if the type described by this instance represents {@code type}.
+     * @return {@code true} if the type described by this instance representedBy {@code type}.
      */
     boolean represents(Class<?> type);
 
     /**
      * Checks if the type described by this entity is an array.
      *
-     * @return {@code true} if this type description represents an array.
+     * @return {@code true} if this type description representedBy an array.
      */
     boolean isArray();
 
-    /**
-     * Returns the component type of this type.
-     *
-     * @return The component type of this array or {@code null} if this type description does not represent an array.
-     */
+    @Override
     TypeDescription getComponentType();
+
+    @Override
+    TypeDescription getOwnerType();
+
+    @Override
+    TypeDescription getDeclaringType();
 
     /**
      * Checks if the type described by this entity is a primitive type.
      *
-     * @return {@code true} if this type description represents a primitive type.
+     * @return {@code true} if this type description representedBy a primitive type.
      */
     boolean isPrimitive();
-
-    /**
-     * Returns the component type of this type.
-     *
-     * @return The component type of this array or {@code null} if type does not have a super type as for the
-     * {@link java.lang.Object} type.
-     */
-    TypeDescription getSupertype();
-
-    /**
-     * Returns a list of interfaces that are implemented by this type.
-     *
-     * @return A list of interfaces that are implemented by this type.
-     */
-    TypeList getInterfaces();
-
-    /**
-     * Returns all interfaces that are implemented by this type, either directly or indirectly.
-     *
-     * @return A list of all interfaces of this type in random order.
-     */
-    TypeList getInheritedInterfaces();
 
     /**
      * Returns a description of the enclosing method of this type.
@@ -211,39 +204,25 @@ public interface TypeDescription extends ByteCodeElement {
     String getCanonicalName();
 
     /**
-     * Checks if this type description represents an anonymous type.
+     * Checks if this type description representedBy an anonymous type.
      *
-     * @return {@code true} if this type description represents an anonymous type.
+     * @return {@code true} if this type description representedBy an anonymous type.
      */
     boolean isAnonymousClass();
 
     /**
-     * Checks if this type description represents a local type.
+     * Checks if this type description representedBy a local type.
      *
-     * @return {@code true} if this type description represents a local type.
+     * @return {@code true} if this type description representedBy a local type.
      */
     boolean isLocalClass();
 
     /**
-     * Checks if this type description represents a member type.
+     * Checks if this type description representedBy a member type.
      *
-     * @return {@code true} if this type description represents a member type.
+     * @return {@code true} if this type description representedBy a member type.
      */
     boolean isMemberClass();
-
-    /**
-     * Returns a list of fields that are declared by this type.
-     *
-     * @return A list of fields that are declared by this type.
-     */
-    FieldList getDeclaredFields();
-
-    /**
-     * Returns a list of methods that are declared by this type.
-     *
-     * @return A list of methods that are declared by this type.
-     */
-    MethodList getDeclaredMethods();
 
     /**
      * Returns the package internalName of the type described by this instance.
@@ -251,13 +230,6 @@ public interface TypeDescription extends ByteCodeElement {
      * @return The package internalName of the type described by this instance.
      */
     PackageDescription getPackage();
-
-    /**
-     * Returns the size of the type described by this instance.
-     *
-     * @return The size of the type described by this instance.
-     */
-    StackSize getStackSize();
 
     /**
      * Returns the annotations that this type declares or inherits from super types.
@@ -284,10 +256,10 @@ public interface TypeDescription extends ByteCodeElement {
     boolean isConstantPool();
 
     /**
-     * Checks if this type represents a wrapper type for a primitive type. The {@link java.lang.Void} type is
+     * Checks if this type representedBy a wrapper type for a primitive type. The {@link java.lang.Void} type is
      * not considered to be a wrapper type.
      *
-     * @return {@code true} if this type represents a wrapper type.
+     * @return {@code true} if this type representedBy a wrapper type.
      */
     boolean isPrimitiveWrapper();
 
@@ -318,18 +290,66 @@ public interface TypeDescription extends ByteCodeElement {
      */
     abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
 
+        @Override
+        public GenericTypeDescription getSuperType() {
+            return LazyProjection.OfPotentiallyRawType.of(getDeclaredSuperType(), GenericTypeDescription.Visitor.NoOp.INSTANCE);
+        }
+
         /**
-         * Collects all interfaces for a given type description.
+         * Returns the declared super type in the form it is declared in the class file.
          *
-         * @param typeDescription An interface type to check for other interfaces.
-         * @param interfaces      A collection of already discovered interfaces.
+         * @return The declared super type.
          */
-        private static void collect(TypeDescription typeDescription, Set<TypeDescription> interfaces) {
-            if (interfaces.add(typeDescription)) {
-                for (TypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    collect(interfaceType, interfaces);
-                }
-            }
+        protected abstract GenericTypeDescription getDeclaredSuperType();
+
+        @Override
+        public GenericTypeList getInterfaces() {
+            return new GenericTypeList.OfPotentiallyRawType(getDeclaredInterfaces(), GenericTypeDescription.Visitor.NoOp.INSTANCE);
+        }
+
+        /**
+         * Returns the declared interface types in the form they are declared in the class file.
+         *
+         * @return The declared super type.
+         */
+        protected abstract GenericTypeList getDeclaredInterfaces();
+
+        @Override
+        public Sort getSort() {
+            return Sort.NON_GENERIC;
+        }
+
+        @Override
+        public TypeDescription asRawType() {
+            return this;
+        }
+
+        @Override
+        public GenericTypeList getUpperBounds() {
+            throw new IllegalStateException("A non-generic type does not imply upper type bounds: " + this);
+        }
+
+        @Override
+        public GenericTypeList getLowerBounds() {
+            throw new IllegalStateException("A non-generic type does not imply lower type bounds: " + this);
+        }
+
+        @Override
+        public GenericTypeList getParameters() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public String getSymbol() {
+            throw new IllegalStateException("A non-generic type does not imply a symbol: " + this);
+        }
+
+        @Override
+        public TypeDescription getOwnerType() {
+            MethodDescription enclosingMethod = getEnclosingMethod();
+            return enclosingMethod == null
+                    ? getEnclosingType()
+                    : enclosingMethod.getDeclaringType().asRawType();
         }
 
         @Override
@@ -415,7 +435,39 @@ public interface TypeDescription extends ByteCodeElement {
 
         @Override
         public String getGenericSignature() {
-            return null; // Currently, generics signatures supported poorly.
+            try {
+                GenericTypeDescription superType = getSuperType();
+                if (superType == null) {
+                    return NON_GENERIC_SIGNATURE;
+                }
+                SignatureWriter signatureWriter = new SignatureWriter();
+                boolean generic = false;
+                for (GenericTypeDescription typeVariable : getTypeVariables()) {
+                    signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
+                    for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
+                        upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(upperBound.asRawType().isInterface()
+                                ? signatureWriter.visitInterfaceBound()
+                                : signatureWriter.visitClassBound()));
+                    }
+                    generic = true;
+                }
+                superType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
+                generic = generic || !superType.getSort().isNonGeneric();
+                for (GenericTypeDescription interfaceType : getInterfaces()) {
+                    interfaceType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
+                    generic = generic || !interfaceType.getSort().isNonGeneric();
+                }
+                return generic
+                        ? signatureWriter.toString()
+                        : NON_GENERIC_SIGNATURE;
+            } catch (GenericSignatureFormatError ignored) {
+                return NON_GENERIC_SIGNATURE;
+            }
+        }
+
+        @Override
+        public TypeVariableSource getVariableSource() {
+            return null;
         }
 
         @Override
@@ -434,28 +486,16 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeList getInheritedInterfaces() {
-            Set<TypeDescription> interfaces = new HashSet<TypeDescription>();
-            TypeDescription current = this;
-            do {
-                for (TypeDescription interfaceType : current.getInterfaces()) {
-                    collect(interfaceType, interfaces);
-                }
-            } while ((current = current.getSupertype()) != null);
-            return new TypeList.Explicit(new ArrayList<TypeDescription>(interfaces));
-        }
-
-        @Override
         public AnnotationList getInheritedAnnotations() {
             AnnotationList declaredAnnotations = getDeclaredAnnotations();
-            if (getSupertype() == null) {
+            if (getSuperType() == null) {
                 return declaredAnnotations;
             } else {
                 Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>(declaredAnnotations.size());
                 for (AnnotationDescription annotationDescription : declaredAnnotations) {
                     annotationTypes.add(annotationDescription.getAnnotationType());
                 }
-                return new AnnotationList.Explicit(join(declaredAnnotations, getSupertype().getInheritedAnnotations().inherited(annotationTypes)));
+                return new AnnotationList.Explicit(join(declaredAnnotations, getSuperType().asRawType().getInheritedAnnotations().inherited(annotationTypes)));
             }
         }
 
@@ -539,19 +579,110 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
+        public String getTypeName() {
+            return getName();
+        }
+
+        @Override
+        public TypeVariableSource getEnclosingSource() {
+            MethodDescription enclosingMethod = getEnclosingMethod();
+            return enclosingMethod == null
+                    ? getEnclosingType()
+                    : enclosingMethod;
+        }
+
+        @Override
+        public GenericTypeDescription findVariable(String symbol) {
+            GenericTypeList typeVariables = getTypeVariables().filter(named(symbol));
+            if (typeVariables.isEmpty()) {
+                TypeVariableSource enclosingSource = getEnclosingSource();
+                return enclosingSource == null
+                        ? null
+                        : enclosingSource.findVariable(symbol);
+            } else {
+                return typeVariables.getOnly();
+            }
+        }
+
+        @Override
+        public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+            return visitor.onType(this);
+        }
+
+        @Override
+        public <T> T accept(GenericTypeDescription.Visitor<T> visitor) {
+            return visitor.onNonGenericType(this);
+        }
+
+        @Override
+        public Iterator<GenericTypeDescription> iterator() {
+            return new SuperTypeIterator(this);
+        }
+
+        @Override
         public boolean equals(Object other) {
-            return other == this || other instanceof TypeDescription
-                    && getName().equals(((TypeDescription) other).getName());
+            return other == this || other instanceof GenericTypeDescription
+                    && ((GenericTypeDescription) other).getSort().isNonGeneric()
+                    && getInternalName().equals(((GenericTypeDescription) other).asRawType().getInternalName());
         }
 
         @Override
         public int hashCode() {
-            return getName().hashCode();
+            return getInternalName().hashCode();
         }
 
         @Override
         public String toString() {
             return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
+        }
+
+        /**
+         * An iterator that iterates over a type's class hierarchy.
+         */
+        protected static class SuperTypeIterator implements Iterator<GenericTypeDescription> {
+
+            /**
+             * The next type to represent.
+             */
+            private GenericTypeDescription nextType;
+
+            /**
+             * Creates a new iterator.
+             *
+             * @param initialType The initial type of this iterator.
+             */
+            protected SuperTypeIterator(TypeDescription initialType) {
+                nextType = initialType;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return nextType != null;
+            }
+
+            @Override
+            public GenericTypeDescription next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException("End of type hierarchy");
+                }
+                try {
+                    return nextType;
+                } finally {
+                    nextType = nextType.getSuperType();
+                }
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("remove");
+            }
+
+            @Override
+            public String toString() {
+                return "TypeDescription.AbstractTypeDescription.SuperTypeIterator{" +
+                        "nextType=" + nextType +
+                        '}';
+            }
         }
 
         /**
@@ -579,13 +710,13 @@ public interface TypeDescription extends ByteCodeElement {
                     return true;
                 }
                 // The sub type has a super type and this super type is assignable to the super type.
-                TypeDescription targetTypeSuperType = targetType.getSupertype();
-                if (targetTypeSuperType != null && targetTypeSuperType.isAssignableTo(sourceType)) {
+                GenericTypeDescription targetTypeSuperType = targetType.getSuperType();
+                if (targetTypeSuperType != null && targetTypeSuperType.asRawType().isAssignableTo(sourceType)) {
                     return true;
                 }
                 // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
                 if (sourceType.isInterface()) {
-                    for (TypeDescription interfaceType : targetType.getInterfaces()) {
+                    for (TypeDescription interfaceType : targetType.getInterfaces().asRawTypes()) {
                         if (interfaceType.isAssignableTo(sourceType)) {
                             return true;
                         }
@@ -646,6 +777,11 @@ public interface TypeDescription extends ByteCodeElement {
             }
 
             @Override
+            public String getCanonicalName() {
+                return getName().replace('$', '.');
+            }
+
+            @Override
             public String getSimpleName() {
                 int simpleNameIndex = getInternalName().lastIndexOf('$');
                 simpleNameIndex = simpleNameIndex == -1 ? getInternalName().lastIndexOf('/') : simpleNameIndex;
@@ -660,12 +796,12 @@ public interface TypeDescription extends ByteCodeElement {
     }
 
     /**
-     * A type description implementation that represents a loaded type.
+     * A type description implementation that representedBy a loaded type.
      */
     class ForLoadedType extends AbstractTypeDescription {
 
         /**
-         * The loaded type this instance represents.
+         * The loaded type this instance representedBy.
          */
         private final Class<?> type;
 
@@ -779,18 +915,17 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getSupertype() {
-            Class<?> superType = type.getSuperclass();
-            return superType == null
+        public GenericTypeDescription getDeclaredSuperType() {
+            return type.getSuperclass() == null
                     ? null
-                    : new TypeDescription.ForLoadedType(superType);
+                    : new LazyProjection.OfLoadedSuperType(type);
         }
 
         @Override
-        public TypeList getInterfaces() {
+        public GenericTypeList getDeclaredInterfaces() {
             return isArray()
-                    ? new TypeList.ForLoadedType(Cloneable.class, Serializable.class)
-                    : new TypeList.ForLoadedType(type.getInterfaces());
+                    ? ARRAY_INTERFACES
+                    : new GenericTypeList.LazyProjection.OfInterfaces(type);
         }
 
         @Override
@@ -886,6 +1021,11 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.ForLoadedType(type.getTypeParameters());
+        }
+
+        @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(type.getDeclaredAnnotations());
         }
@@ -900,11 +1040,6 @@ public interface TypeDescription extends ByteCodeElement {
      * A projection for an array type based on an existing {@link TypeDescription}.
      */
     class ArrayProjection extends AbstractTypeDescription {
-
-        /**
-         * The modifiers of any array type.
-         */
-        private static final int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
 
         /**
          * The base component type which is itself not an array.
@@ -986,8 +1121,7 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public boolean isAssignableTo(TypeDescription typeDescription) {
             return typeDescription.represents(Object.class)
-                    || typeDescription.represents(Serializable.class)
-                    || typeDescription.represents(Cloneable.class)
+                    || ARRAY_INTERFACES.contains(typeDescription)
                     || isArrayAssignable(typeDescription, this);
         }
 
@@ -1019,13 +1153,13 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getSupertype() {
-            return new ForLoadedType(Object.class);
+        protected GenericTypeDescription getDeclaredSuperType() {
+            return TypeDescription.OBJECT;
         }
 
         @Override
-        public TypeList getInterfaces() {
-            return new TypeList.ForLoadedType(Cloneable.class, Serializable.class);
+        protected GenericTypeList getDeclaredInterfaces() {
+            return ARRAY_INTERFACES;
         }
 
         @Override
@@ -1128,6 +1262,11 @@ public interface TypeDescription extends ByteCodeElement {
         public int getModifiers() {
             return ARRAY_MODIFIERS;
         }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
+        }
     }
 
     /**
@@ -1148,12 +1287,12 @@ public interface TypeDescription extends ByteCodeElement {
         /**
          * The super type or {@code null} if no such type exists.
          */
-        private final TypeDescription superType;
+        private final GenericTypeDescription superType;
 
         /**
          * The interfaces that this type implements.
          */
-        private final List<? extends TypeDescription> interfaces;
+        private final List<? extends GenericTypeDescription> interfaces;
 
         /**
          * Creates a new latent type.
@@ -1163,7 +1302,7 @@ public interface TypeDescription extends ByteCodeElement {
          * @param superType  The super type or {@code null} if no such type exists.
          * @param interfaces The interfaces that this type implements.
          */
-        public Latent(String name, int modifiers, TypeDescription superType, List<? extends TypeDescription> interfaces) {
+        public Latent(String name, int modifiers, GenericTypeDescription superType, List<? extends GenericTypeDescription> interfaces) {
             this.name = name;
             this.modifiers = modifiers;
             this.superType = superType;
@@ -1171,13 +1310,13 @@ public interface TypeDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getSupertype() {
+        protected GenericTypeDescription getDeclaredSuperType() {
             return superType;
         }
 
         @Override
-        public TypeList getInterfaces() {
-            return new TypeList.Explicit(interfaces);
+        protected GenericTypeList getDeclaredInterfaces() {
+            return new GenericTypeList.Explicit(interfaces);
         }
 
         @Override
@@ -1247,6 +1386,106 @@ public interface TypeDescription extends ByteCodeElement {
         @Override
         public String getName() {
             return name;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
+        }
+    }
+
+    /**
+     * A type representation of a package description.
+     */
+    class ForPackageDescription extends AbstractTypeDescription.OfSimpleType {
+
+        /**
+         * The package to be described as a type.
+         */
+        private final PackageDescription packageDescription;
+
+        /**
+         * Creates a new type description of a package description.
+         *
+         * @param packageDescription The package to be described as a type.
+         */
+        public ForPackageDescription(PackageDescription packageDescription) {
+            this.packageDescription = packageDescription;
+        }
+
+        @Override
+        protected GenericTypeDescription getDeclaredSuperType() {
+            return TypeDescription.OBJECT;
+        }
+
+        @Override
+        protected GenericTypeList getDeclaredInterfaces() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public MethodDescription getEnclosingMethod() {
+            return null;
+        }
+
+        @Override
+        public TypeDescription getEnclosingType() {
+            return null;
+        }
+
+        @Override
+        public boolean isAnonymousClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isLocalClass() {
+            return false;
+        }
+
+        @Override
+        public boolean isMemberClass() {
+            return false;
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.Empty();
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            return new MethodList.Empty();
+        }
+
+        @Override
+        public PackageDescription getPackage() {
+            return packageDescription;
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return packageDescription.getDeclaredAnnotations();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return null;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public int getModifiers() {
+            return PackageDescription.PACKAGE_MODIFIERS;
+        }
+
+        @Override
+        public String getName() {
+            return packageDescription.getName() + "." + PackageDescription.PACKAGE_CLASS_NAME;
         }
     }
 }

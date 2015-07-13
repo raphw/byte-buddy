@@ -2,6 +2,7 @@ package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -16,18 +17,10 @@ public class FieldDescriptionLatentTest extends AbstractFieldDescriptionTest {
 
     @Override
     protected FieldDescription describe(Field field) {
-        return new FieldDescription.Latent(field.getName(),
-                new TypeDescription.ForLoadedType(field.getDeclaringClass()),
-                new TypeDescription.ForLoadedType(field.getType()),
-                field.getModifiers());
-    }
-
-    @Test
-    @Override
-    public void testAnnotations() throws Exception {
-        assertThat(new FieldDescription.Latent(FOO,
-                mock(TypeDescription.class),
-                mock(TypeDescription.class),
-                0).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
+        return new FieldDescription.Latent(new TypeDescription.ForLoadedType(field.getDeclaringClass()),
+                field.getName(),
+                field.getModifiers(),
+                GenericTypeDescription.Sort.describe(field.getGenericType()),
+                new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations()));
     }
 }

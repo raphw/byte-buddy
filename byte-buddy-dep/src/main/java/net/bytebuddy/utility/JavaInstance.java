@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.utility.ByteBuddyCommons.isActualType;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonVoid;
 
 /**
  * Returns a Java instance of an object that has a special meaning to the Java virtual machine and that is not
@@ -133,7 +133,7 @@ public interface JavaInstance {
          * @return A method type of the given return type and parameter types.
          */
         public static MethodType of(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
-            return new MethodType(nonNull(returnType), nonVoid(parameterTypes));
+            return new MethodType(nonNull(returnType), isActualType(parameterTypes));
         }
 
         /**
@@ -163,7 +163,7 @@ public interface JavaInstance {
          * @return The method type of the given method.
          */
         public static MethodType of(MethodDescription methodDescription) {
-            return new MethodType(methodDescription.getReturnType(), methodDescription.getParameters().asTypeList());
+            return new MethodType(methodDescription.getReturnType().asRawType(), methodDescription.getParameters().asTypeList().asRawTypes());
         }
 
         /**
@@ -183,7 +183,7 @@ public interface JavaInstance {
          * @return The type of a setter for the given field.
          */
         public static MethodType ofSetter(FieldDescription fieldDescription) {
-            return new MethodType(TypeDescription.VOID, Collections.singletonList(fieldDescription.getFieldType()));
+            return new MethodType(TypeDescription.VOID, Collections.singletonList(fieldDescription.getType().asRawType()));
         }
 
         /**
@@ -203,7 +203,7 @@ public interface JavaInstance {
          * @return The type of a getter for the given field.
          */
         public static MethodType ofGetter(FieldDescription fieldDescription) {
-            return new MethodType(fieldDescription.getFieldType(), Collections.<TypeDescription>emptyList());
+            return new MethodType(fieldDescription.getType().asRawType(), Collections.<TypeDescription>emptyList());
         }
 
         /**
@@ -300,7 +300,7 @@ public interface JavaInstance {
 
     /**
      * Represents a {@code java.lang.invoke.MethodHandle} object. Note that constant {@code MethodHandle}s cannot
-     * be represented within the constant pool of a Java class and can therefore not be represented as an instace of
+     * be represented within the constant pool of a Java class and can therefore not be represented as an instance of
      * this representation order.
      */
     class MethodHandle implements JavaInstance {
@@ -520,10 +520,10 @@ public interface JavaInstance {
          */
         public static MethodHandle of(MethodDescription methodDescription) {
             return new MethodHandle(HandleType.of(methodDescription),
-                    methodDescription.getDeclaringType(),
+                    methodDescription.getDeclaringType().asRawType(),
                     methodDescription.getInternalName(),
-                    methodDescription.getReturnType(),
-                    methodDescription.getParameters().asTypeList());
+                    methodDescription.getReturnType().asRawType(),
+                    methodDescription.getParameters().asTypeList().asRawTypes());
 
         }
 
@@ -552,8 +552,8 @@ public interface JavaInstance {
             return new MethodHandle(HandleType.ofSpecial(methodDescription),
                     typeDescription,
                     methodDescription.getInternalName(),
-                    methodDescription.getReturnType(),
-                    methodDescription.getParameters().asTypeList());
+                    methodDescription.getReturnType().asRawType(),
+                    methodDescription.getParameters().asTypeList().asRawTypes());
         }
 
         /**
@@ -574,9 +574,9 @@ public interface JavaInstance {
          */
         public static MethodHandle ofGetter(FieldDescription fieldDescription) {
             return new MethodHandle(HandleType.ofGetter(fieldDescription),
-                    fieldDescription.getDeclaringType(),
+                    fieldDescription.getDeclaringType().asRawType(),
                     fieldDescription.getInternalName(),
-                    fieldDescription.getFieldType(),
+                    fieldDescription.getType().asRawType(),
                     Collections.<TypeDescription>emptyList());
         }
 
@@ -598,10 +598,10 @@ public interface JavaInstance {
          */
         public static MethodHandle ofSetter(FieldDescription fieldDescription) {
             return new MethodHandle(HandleType.ofSetter(fieldDescription),
-                    fieldDescription.getDeclaringType(),
+                    fieldDescription.getDeclaringType().asRawType(),
                     fieldDescription.getInternalName(),
                     TypeDescription.VOID,
-                    Collections.singletonList(fieldDescription.getFieldType()));
+                    Collections.singletonList(fieldDescription.getType().asRawType()));
         }
 
         @Override
@@ -779,7 +779,7 @@ public interface JavaInstance {
                     return INVOKE_SPECIAL;
                 } else if (methodDescription.isConstructor()) {
                     return INVOKE_SPECIAL_CONSTRUCTOR;
-                } else if (methodDescription.getDeclaringType().isInterface()) {
+                } else if (methodDescription.getDeclaringType().asRawType().isInterface()) {
                     return INVOKE_INTERFACE;
                 } else {
                     return INVOKE_VIRTUAL;

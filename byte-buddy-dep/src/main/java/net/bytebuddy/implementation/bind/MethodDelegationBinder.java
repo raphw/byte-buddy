@@ -172,7 +172,7 @@ public interface MethodDelegationBinder {
             private final Object anonymousToken;
 
             /**
-             * The stack manipulation that represents the loading of the parameter binding onto the stack.
+             * The stack manipulation that representedBy the loading of the parameter binding onto the stack.
              */
             private final StackManipulation delegate;
 
@@ -238,7 +238,7 @@ public interface MethodDelegationBinder {
             private final T identificationToken;
 
             /**
-             * The stack manipulation that represents the loading of the parameter binding onto the stack.
+             * The stack manipulation that representedBy the loading of the parameter binding onto the stack.
              */
             private final StackManipulation delegate;
 
@@ -433,7 +433,7 @@ public interface MethodDelegationBinder {
             }
 
             /**
-             * Creates a binding that represents the bindings collected by this {@code Builder}.
+             * Creates a binding that representedBy the bindings collected by this {@code Builder}.
              *
              * @param terminatingManipulation A stack manipulation that is applied after the method invocation.
              * @return A binding representing the parameter bindings collected by this builder.
@@ -477,7 +477,7 @@ public interface MethodDelegationBinder {
             protected static class Build implements MethodBinding {
 
                 /**
-                 * The target method this binding represents.
+                 * The target method this binding representedBy.
                  */
                 private final MethodDescription target;
 
@@ -487,7 +487,7 @@ public interface MethodDelegationBinder {
                 private final Map<?, Integer> registeredTargetIndices;
 
                 /**
-                 * A stack manipulation that represents the actual method invocation.
+                 * A stack manipulation that representedBy the actual method invocation.
                  */
                 private final StackManipulation methodInvocation;
 
@@ -504,10 +504,10 @@ public interface MethodDelegationBinder {
                 /**
                  * Creates a new method binding.
                  *
-                 * @param target                       The target method this binding represents.
+                 * @param target                       The target method this binding representedBy.
                  * @param registeredTargetIndices      A map of identification tokens to the indices of their binding
                  *                                     parameters.
-                 * @param methodInvocation             A stack manipulation that represents the actual method invocation.
+                 * @param methodInvocation             A stack manipulation that representedBy the actual method invocation.
                  * @param parameterStackManipulations  A list of manipulations that each represent the loading of a
                  *                                     parameter value onto the operand stack.
                  * @param terminatingStackManipulation The stack manipulation that is applied after the method invocation.
@@ -921,8 +921,7 @@ public interface MethodDelegationBinder {
                             return right;
                         case AMBIGUOUS:
                         case UNKNOWN:
-                            throw new IllegalArgumentException(String.format("Could not resolve ambiguous delegation " +
-                                    "of %s: %s or %s", source, left, right));
+                            throw new IllegalArgumentException("Could not resolve ambiguous delegation of " + source + " to either " + left + " or " + right);
                         default:
                             throw new AssertionError();
                     }

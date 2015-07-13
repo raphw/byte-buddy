@@ -97,8 +97,8 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(fieldDescription.getFieldType(),
-                methodDescription.getReturnType(),
+        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(),
+                methodDescription.getReturnType().asRawType(),
                 dynamicallyTyped);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
@@ -127,8 +127,8 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getTypeDescription(),
-                fieldDescription.getFieldType(),
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType().asRawType(),
+                fieldDescription.getType().asRawType(),
                 dynamicallyTyped);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
@@ -140,7 +140,7 @@ public abstract class FieldAccessor implements Implementation {
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
-                        MethodVariableAccess.forType(fieldDescription.getFieldType())
+                        MethodVariableAccess.forType(fieldDescription.getType().asRawType())
                                 .loadOffset(methodDescription.getParameters().get(0).getOffset()),
                         stackManipulation,
                         FieldAccess.forField(fieldDescription).putter()
@@ -155,7 +155,7 @@ public abstract class FieldAccessor implements Implementation {
      * @param implementationContext The implementation context of the current implementation.
      * @param fieldDescription      The description of the field to access.
      * @param methodDescription     The method that is target of the implementation.
-     * @param fieldAccess           The manipulation that represents the field access.
+     * @param fieldAccess           The manipulation that representedBy the field access.
      * @return A suitable {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
      */
     private ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
@@ -172,7 +172,7 @@ public abstract class FieldAccessor implements Implementation {
                         ? StackManipulation.LegalTrivial.INSTANCE
                         : MethodVariableAccess.REFERENCE.loadOffset(0),
                 fieldAccess,
-                MethodReturn.returning(methodDescription.getReturnType())
+                MethodReturn.returning(methodDescription.getReturnType().asRawType())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), methodDescription.getStackSize());
     }
@@ -276,7 +276,7 @@ public abstract class FieldAccessor implements Implementation {
                     if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                         return fieldList.getOnly();
                     }
-                } while (!(currentType = currentType.getSupertype()).represents(Object.class));
+                } while (!(currentType = currentType.getSuperType().asRawType()).represents(Object.class));
                 throw new IllegalArgumentException("There is no field '" + name + " that is visible to " + instrumentedType);
             }
 
@@ -718,7 +718,7 @@ public abstract class FieldAccessor implements Implementation {
             return new ForNamedField(assigner,
                     dynamicallyTyped,
                     fieldName,
-                    PreparationHandler.FieldDefiner.of(fieldName, nonVoid(typeDescription), nonNull(modifier)),
+                    PreparationHandler.FieldDefiner.of(fieldName, isActualType(typeDescription), nonNull(modifier)),
                     FieldLocator.ForInstrumentedType.INSTANCE);
         }
 
@@ -879,7 +879,7 @@ public abstract class FieldAccessor implements Implementation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(name, TargetType.resolve(typeDescription, instrumentedType), modifiers);
+                    return instrumentedType.withField(new FieldDescription.Token(name, modifiers, typeDescription));
                 }
 
                 @Override

@@ -67,7 +67,7 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Shade the ASM dependency and define OSGI manifest -->
+                    <!-- Shade the ASM dependency. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-shade-plugin</artifactId>
@@ -93,6 +93,7 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- Create manifest file which is required for creating an OSGi bundle. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
@@ -103,6 +104,7 @@
                             </archive>
                         </configuration>
                     </plugin>
+                    <!-- Configure OSGi bundle. Due to interaction with the shade plugin, IDEs might identify the following configuration as illegal. -->
                     <plugin>
                         <groupId>org.apache.felix</groupId>
                         <artifactId>maven-bundle-plugin</artifactId>
@@ -117,7 +119,7 @@
                         </executions>
                         <configuration>
                             <instructions>
-                                <!-- Cannot use wildcards because of use of the Shade plugin which imports from 'byte-buddy-dep'. -->
+                                <!-- Cannot use wildcards because of use of the shade plugin which imports from 'byte-buddy-dep'. -->
                                 <Export-Package>
                                     net.bytebuddy,
                                     net.bytebuddy.agent.builder,
@@ -129,6 +131,7 @@
                                     net.bytebuddy.description.method,
                                     net.bytebuddy.description.modifier,
                                     net.bytebuddy.description.type,
+                                    net.bytebuddy.description.type.generic,
                                     net.bytebuddy.dynamic,
                                     net.bytebuddy.dynamic.loading,
                                     net.bytebuddy.dynamic.scaffold,
@@ -153,7 +156,7 @@
                             </instructions>
                         </configuration>
                     </plugin>
-                    <!-- Copy dependency version's javadoc artifact which is required for valid repository deployment -->
+                    <!-- Copy dependency version's javadoc artifact which is required for valid repository deployment. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
@@ -172,7 +175,7 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <!--Because the javadoc files are copied manually, they must be added as an artifact to the build process -->
+                    <!--Because the javadoc files are copied manually, they must be added as an artifact to the build process. -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>

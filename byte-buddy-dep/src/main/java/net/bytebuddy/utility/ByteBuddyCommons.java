@@ -2,6 +2,7 @@ package net.bytebuddy.utility;
 
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
@@ -23,28 +24,33 @@ public final class ByteBuddyCommons {
     public static final int GENERAL_MODIFIER_MASK = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_DEPRECATED;
 
     /**
-     * A mask for modifiers that represents types.
+     * A mask for modifiers that representedBy types.
      */
     public static final int TYPE_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | GENERAL_MODIFIER_MASK
             | Modifier.ABSTRACT | Modifier.FINAL | Modifier.INTERFACE | Modifier.STRICT | Opcodes.ACC_ANNOTATION
             | Opcodes.ACC_ENUM | Opcodes.ACC_STRICT | Opcodes.ACC_SUPER;
 
     /**
-     * A mask for modifiers that represents type members.
+     * A mask for modifiers that representedBy type members.
      */
     public static final int MEMBER_MODIFIER_MASK = VISIBILITY_MODIFIER_MASK | TYPE_MODIFIER_MASK
             | Modifier.FINAL | Modifier.SYNCHRONIZED | Modifier.STATIC;
 
     /**
-     * A mask for modifiers that represents fields.
+     * A mask for modifiers that representedBy fields.
      */
     public static final int FIELD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.TRANSIENT | Modifier.VOLATILE;
 
     /**
-     * A mask for modifiers that represents modifiers and constructors.
+     * A mask for modifiers that representedBy methods and constructors.
      */
     public static final int METHOD_MODIFIER_MASK = MEMBER_MODIFIER_MASK | Modifier.ABSTRACT | Modifier.SYNCHRONIZED
             | Modifier.NATIVE | Modifier.STRICT | Opcodes.ACC_BRIDGE | Opcodes.ACC_VARARGS;
+
+    /**
+     * A mask for modifiers that representedBy method parameters.
+     */
+    public static final int PARAMETER_MODIFIER_MASK = Modifier.FINAL | Opcodes.ACC_MANDATED | Opcodes.ACC_SYNTHETIC;
 
     /**
      * A collection of all keywords of the Java programming language.
@@ -63,10 +69,16 @@ public final class ByteBuddyCommons {
     );
 
     /**
+     * A set of all generic type sorts that can possibly define an extendable type.
+     */
+    private static final Set<GenericTypeDescription.Sort> EXTENDABLE_TYPES = EnumSet.of(GenericTypeDescription.Sort.NON_GENERIC,
+            GenericTypeDescription.Sort.PARAMETERIZED);
+
+    /**
      * This utility class is not supposed to be instantiated.
      */
     private ByteBuddyCommons() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("This type describes a utility and is not supposed to be instantiated");
     }
 
     /**
@@ -98,105 +110,178 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that a type description is not representing the {@code void} type.
+     * Validates that a type is an annotation type.
      *
-     * @param typeDescription The type description to validate.
+     * @param typeDescription The type to validate.
      * @param <T>             The type of the input value.
      * @return The input value.
      */
-    public static <T extends TypeDescription> T nonVoid(T typeDescription) {
-        if (nonNull(typeDescription).represents(void.class)) {
-            throw new IllegalArgumentException("Type must not be void");
+    public static <T extends TypeDescription> T isAnnotation(T typeDescription) {
+        if (!typeDescription.isAnnotation()) {
+            throw new IllegalArgumentException(typeDescription + " is not an annotation type");
         }
         return typeDescription;
     }
 
     /**
-     * Validates that type descriptions do not represent the {@code void} type.
-     *
-     * @param typeDescriptions The type descriptions to validate.
-     * @param <T>              The type of the input collection.
-     * @return The input value.
-     */
-    public static <T extends Iterable<? extends TypeDescription>> T nonVoid(T typeDescriptions) {
-        for (TypeDescription typeDescription : typeDescriptions) {
-            if (nonNull(typeDescription).represents(void.class)) {
-                throw new IllegalArgumentException("Type must not be void");
-            }
-        }
-        return typeDescriptions;
-    }
-
-    /**
-     * Validates if a type represents an interface.
+     * Validates that a type is a throwable type.
      *
      * @param typeDescription The type to validate.
-     * @param <T>             The type of the input.
+     * @param <T>             The type of the input value.
      * @return The input value.
      */
-    public static <T extends TypeDescription> T isInterface(T typeDescription) {
-        if (!nonNull(typeDescription).isInterface()) {
-            throw new IllegalArgumentException(typeDescription + " is not an interface type");
+    public static <T extends GenericTypeDescription> T isThrowable(T typeDescription) {
+        if (!isActualType(typeDescription).asRawType().isAssignableTo(Throwable.class)) {
+            throw new IllegalArgumentException("Cannot throw instances of: " + typeDescription);
         }
         return typeDescription;
     }
 
     /**
-     * Validates if an array of type only contains interfaces.
+     * Validates that a collection of types only contains throwable types.
      *
-     * @param typeDescription The types to validate.
-     * @param <T>             The component type of the input value.
-     * @return The input value.
-     */
-    public static <T extends TypeDescription> T[] isInterface(T[] typeDescription) {
-        for (TypeDescription aTypeDescription : typeDescription) {
-            isInterface(aTypeDescription);
-        }
-        return typeDescription;
-    }
-
-    /**
-     * Validates if a type is an annotation type.
-     *
-     * @param typeDescriptions The type to validate.
+     * @param typeDescriptions The types to validate.
      * @param <T>              The type of the input value.
      * @return The input value.
      */
-    public static <T extends TypeDescription> T isAnnotation(T typeDescriptions) {
-        if (!nonNull(typeDescriptions).isAnnotation()) {
-            throw new IllegalArgumentException(typeDescriptions + " is not an annotation type");
+    public static <T extends Collection<? extends GenericTypeDescription>> T isThrowable(T typeDescriptions) {
+        for (GenericTypeDescription typeDescription : typeDescriptions) {
+            isThrowable(typeDescription);
         }
         return typeDescriptions;
     }
 
     /**
-     * Validates if a list of type only contains interfaces.
+     * Validates that a type is defineable, i.e. is represented as byte code.
      *
-     * @param typeDescriptions The types to validate.
-     * @param <T>              The input list type.
+     * @param typeDescription The type to validate.
+     * @param <T>             The actual type of the validated instance.
      * @return The input value.
      */
-    public static <T extends Iterable<? extends TypeDescription>> T isInterface(T typeDescriptions) {
-        for (TypeDescription typeDescription : typeDescriptions) {
-            isInterface(typeDescription);
-        }
-        return typeDescriptions;
-    }
-
-    /**
-     * Validates that a type can be implemented, i.e. is not an array or a primitive.
-     *
-     * @param typeDescription The type to be validated.
-     * @param <T>             The input type.
-     * @return The input value.
-     */
-    public static <T extends TypeDescription> T isExtendable(T typeDescription) {
-        if (nonNull(typeDescription).isArray() || typeDescription.isPrimitive()) {
-            throw new IllegalArgumentException(typeDescription + " is not implementable");
-        } else if (typeDescription.isFinal()) {
-            throw new IllegalArgumentException("Cannot implement a final class such as " + typeDescription);
+    public static <T extends TypeDescription> T isDefineable(T typeDescription) {
+        if (typeDescription.isArray()) {
+            throw new IllegalArgumentException("Cannot explicitly define an array type: " + typeDescription);
+        } else if (typeDescription.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot explicitly define a primitive type: " + typeDescription);
         }
         return typeDescription;
+    }
+
+    /**
+     * Validates that a type is extendable, i.e. is not an array, a primitive type or a {@code final} type.
+     *
+     * @param typeDescription The type to validate.
+     * @param <T>             The actual type of the validated instance.
+     * @return The input value.
+     */
+    public static <T extends GenericTypeDescription> T isExtendable(T typeDescription) {
+        if (!EXTENDABLE_TYPES.contains(typeDescription.getSort())) {
+            throw new IllegalArgumentException("Cannot extend generic type: " + typeDescription);
+        } else if (isDefineable(typeDescription.asRawType()).isFinal()) {
+            throw new IllegalArgumentException("Cannot extend a final type: " + typeDescription);
+        }
+        return typeDescription;
+    }
+
+    /**
+     * Verifies that a type can be implemented.
+     *
+     * @param typeDescription The type to verify.
+     * @param <T>             The actual type of the input.
+     * @return The input value.
+     */
+    public static <T extends GenericTypeDescription> T isImplementable(T typeDescription) {
+        if (!isExtendable(typeDescription).asRawType().isInterface()) {
+            throw new IllegalArgumentException("Not an interface: " + typeDescription);
+        }
+        return typeDescription;
+    }
+
+    /**
+     * Verifies that a collection of types can be implemented.
+     *
+     * @param typeDescriptions The types to verify.
+     * @param <T>              The actual type of the input.
+     * @return The input value.
+     */
+    public static <T extends Collection<? extends GenericTypeDescription>> T isImplementable(T typeDescriptions) {
+        for (GenericTypeDescription typeDescription : typeDescriptions) {
+            isImplementable(typeDescription);
+        }
+        return typeDescriptions;
+    }
+
+    /**
+     * Validates that a type representedBy an actual type, i.e. not a wildcard and not {@code void}.
+     *
+     * @param typeDescription The type to validate.
+     * @param <T>             The actual type of the argument.
+     * @return The input value.
+     */
+    public static <T extends GenericTypeDescription> T isActualType(T typeDescription) {
+        if (isActualTypeOrVoid(typeDescription).asRawType().represents(void.class)) {
+            throw new IllegalArgumentException("The void non-type cannot be assigned a value");
+        }
+        return typeDescription;
+    }
+
+    /**
+     * Validates that a collection of types representedBy an actual type, i.e. not a wildcard and not {@code void}.
+     *
+     * @param typeDescriptions The types to validate.
+     * @param <T>              The actual type of the argument.
+     * @return The input value.
+     */
+    public static <T extends Collection<? extends GenericTypeDescription>> T isActualType(T typeDescriptions) {
+        for (GenericTypeDescription typeDescription : typeDescriptions) {
+            isActualType(typeDescription);
+        }
+        return typeDescriptions;
+    }
+
+    /**
+     * Validates that a type representedBy an actual type or {@code void}, i.e. not a wildcard.
+     *
+     * @param typeDescription The type to validate.
+     * @param <T>             The actual type of the argument.
+     * @return The input value.
+     */
+    public static <T extends GenericTypeDescription> T isActualTypeOrVoid(T typeDescription) {
+        if (typeDescription.getSort().isWildcard()) {
+            throw new IllegalArgumentException("Not a top-level type: " + typeDescription);
+        }
+        return typeDescription;
+    }
+
+    /**
+     * Validates that a collection of types representedBy an actual type or {@code void}, i.e. not a wildcard.
+     *
+     * @param typeDescriptions The types to validate.
+     * @param <T>              The actual type of the argument.
+     * @return The input value.
+     */
+    public static <T extends Collection<? extends GenericTypeDescription>> T isActualTypeOrVoid(T typeDescriptions) {
+        for (GenericTypeDescription typeDescription : typeDescriptions) {
+            isActualTypeOrVoid(typeDescription);
+        }
+        return typeDescriptions;
+    }
+
+    /**
+     * Validates that the given collection of elements is unique.
+     *
+     * @param elements The elements to validate for being unique.
+     * @param <T>      The actual type.
+     * @return The given value.
+     */
+    public static <T extends Collection<?>> T unique(T elements) {
+        Set<Object> found = new HashSet<Object>(elements.size());
+        for (Object element : elements) {
+            if (!found.add(element)) {
+                throw new IllegalArgumentException("Duplicate element: " + element);
+            }
+        }
+        return elements;
     }
 
     /**
@@ -245,57 +330,19 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Joins a list with an element only if the element is not yet contained in the list.
+     * Filters all values from the {@code right} list and only includes them in the result of the {@code left} list
+     * if they are not already present.
      *
-     * @param list    The list of elements to be joined together with the element.
-     * @param element The additional element to join to the end of the list.
-     * @param <T>     The most specific common type of the list and the element.
-     * @return The list joined with the element if not yet contained.
+     * @param left  The left list which is not filtered.
+     * @param right The right list of which only elements are added if they are not present in the left list or the right list.
+     * @param <T>   The type of the list.
+     * @return A list with the elements of the right lists filtered.
      */
-    public static <T> List<T> joinUnique(List<? extends T> list, T element) {
-        return list.contains(element)
-                ? new ArrayList<T>(list)
-                : join(list, element);
-    }
-
-    /**
-     * Joins a list with an element only if the element is not yet contained in the list.
-     *
-     * @param element The additional element to join to the beginning of the list.
-     * @param list    The list of elements to be joined together with the element.
-     * @param <T>     The most specific common type of the list and the element.
-     * @return The list joined with the element if not yet contained.
-     */
-    public static <T> List<T> joinUnique(T element, List<? extends T> list) {
-        if (list.contains(element)) {
-            List<T> result = new ArrayList<T>(list.size() + 1);
-            result.add(element);
-            for (T item : list) {
-                if (!item.equals(element)) {
-                    result.add(item);
-                }
-            }
-            return result;
-        } else {
-            return join(element, list);
-        }
-    }
-
-    /**
-     * Joins two lists with only adding the elements of the right list if they are not yet contained.
-     *
-     * @param leftList  The left list.
-     * @param rightList The right list.
-     * @param <T>       The most specific common type of both lists.
-     * @return A combination of both lists.
-     */
-    public static <T> List<T> joinUnique(List<? extends T> leftList, List<? extends T> rightList) {
-        List<T> result = new ArrayList<T>(leftList.size() + rightList.size());
-        result.addAll(leftList);
-        Set<T> addedElements = new HashSet<T>(leftList.size() + rightList.size());
-        addedElements.addAll(leftList);
-        for (T element : rightList) {
-            if (addedElements.add(element)) {
+    public static <T> List<T> filterUnique(List<? extends T> left, List<? extends T> right) {
+        List<T> result = new ArrayList<T>(left.size() + right.size());
+        result.addAll(left);
+        for (T element : right) {
+            if (!result.contains(element)) {
                 result.add(element);
             }
         }
@@ -303,7 +350,72 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that a string represents a valid Java identifier, i.e. is not a Java keyword and is built up
+     * Appends the given element to the list only if the element is not yet contained in the given list.
+     *
+     * @param list    The list of elements.
+     * @param element The element to append.
+     * @param <T>     The type of the list.
+     * @return A list with the appended element.
+     */
+    public static <T> List<T> joinUnique(List<? extends T> list, T element) {
+        List<T> result = new ArrayList<T>(list.size() + 1);
+        for (T listElement : list) {
+            if (listElement.equals(element)) {
+                throw new IllegalArgumentException("Conflicting elements: " + listElement + " and " + element);
+            }
+            result.add(listElement);
+        }
+        result.add(element);
+        return result;
+    }
+
+    /**
+     * Validates that a collection of generic type descriptions does not contain duplicate raw types.
+     *
+     * @param typeDescriptions The type descriptions to validate for being unique.
+     * @param <T>              The actual type of the argument.
+     * @return The input value.
+     */
+    public static <T extends Collection<? extends GenericTypeDescription>> T uniqueRaw(T typeDescriptions) {
+        Map<TypeDescription, GenericTypeDescription> types = new HashMap<TypeDescription, GenericTypeDescription>(typeDescriptions.size());
+        for (GenericTypeDescription typeDescription : typeDescriptions) {
+            GenericTypeDescription conflictingType = types.put(typeDescription.asRawType(), typeDescription);
+            if (conflictingType != null) {
+                throw new IllegalArgumentException("Duplicate types: " + typeDescription + " and " + conflictingType);
+            }
+        }
+        return typeDescriptions;
+    }
+
+    /**
+     * Joins two collections where the left collection must only contain unique elements. If two elements represent the same raw type
+     * but are not equal, an exception is thrown-
+     *
+     * @param left  The left collection.
+     * @param right The right collection.
+     * @param <T>   The element type.
+     * @return A joined list of both given lists.
+     */
+    public static <T extends GenericTypeDescription> List<T> joinUniqueRaw(Collection<? extends T> left, Collection<? extends T> right) {
+        List<T> result = new ArrayList<T>(left.size() + right.size());
+        Map<TypeDescription, GenericTypeDescription> types = new HashMap<TypeDescription, GenericTypeDescription>();
+        for (T typeDescription : left) {
+            types.put(typeDescription.asRawType(), typeDescription);
+            result.add(typeDescription);
+        }
+        for (T typeDescription : right) {
+            GenericTypeDescription conflictingType = types.put(typeDescription.asRawType(), typeDescription);
+            if (conflictingType != null && !conflictingType.equals(typeDescription)) {
+                throw new IllegalArgumentException("Conflicting raw types: " + conflictingType + " and " + typeDescription);
+            } else if (conflictingType == null) {
+                result.add(typeDescription);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Validates that a string representedBy a valid Java identifier, i.e. is not a Java keyword and is built up
      * by Java identifier compatible characters.
      *
      * @param identifier The identifier to validate.
@@ -379,51 +491,18 @@ public final class ByteBuddyCommons {
      * @return The modifier created by these modifiers.
      */
     public static int resolveModifierContributors(int mask, ModifierContributor... modifierContributor) {
-        int modifier = 0;
+        int modifiers = 0;
         Set<Class<?>> modifierContributorTypes = new HashSet<Class<?>>(modifierContributor.length);
         for (ModifierContributor contributor : modifierContributor) {
             if (!modifierContributorTypes.add(contributor.getClass())) {
                 throw new IllegalArgumentException(contributor + " is already registered with a different value");
             }
-            modifier |= contributor.getMask();
+            modifiers |= contributor.getMask();
         }
-        if ((modifier & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
-            throw new IllegalArgumentException("Illegal modifiers " + Arrays.asList(modifierContributor));
+        if ((modifiers & ~(mask | Opcodes.ACC_SYNTHETIC)) != 0) {
+            throw new IllegalArgumentException("Illegal modifiers: " + Arrays.asList(modifierContributor));
         }
-        return modifier;
-    }
-
-    /**
-     * Validates that there are no duplicates of the given item.
-     *
-     * @param items The collection to validate for uniqueness.
-     * @param <T>   The exact type of the collection to validate.
-     * @return The same collection that was given as an argument.
-     */
-    public static <T extends Collection<?>> T unique(T items) {
-        Set<Object> types = new HashSet<Object>(items.size());
-        for (Object item : items) {
-            if (!types.add(item)) {
-                throw new IllegalArgumentException("Non-unique item was found: " + item);
-            }
-        }
-        return items;
-    }
-
-    /**
-     * Checks if given types can all be thrown, i.e. extend the {@link java.lang.Throwable} base class.
-     *
-     * @param types The type to check.
-     * @param <T>   the exact given type.
-     * @return The given types.
-     */
-    public static <T extends Iterable<? extends TypeDescription>> T isThrowable(T types) {
-        for (TypeDescription typeDescription : types) {
-            if (!typeDescription.isAssignableTo(Throwable.class)) {
-                throw new IllegalArgumentException("Not a isThrowable type: " + typeDescription);
-            }
-        }
-        return types;
+        return modifiers;
     }
 
     /**

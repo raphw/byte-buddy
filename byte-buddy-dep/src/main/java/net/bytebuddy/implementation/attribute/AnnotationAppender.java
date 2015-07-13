@@ -93,21 +93,21 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Checks if this instance represents an annotation that is visible at runtime, i.e. if this instance is
+         * Checks if this instance representedBy an annotation that is visible at runtime, i.e. if this instance is
          * {@link AnnotationAppender.AnnotationVisibility#RUNTIME}.
          *
-         * @return {@code true} if this instance represents an annotation to be visible at runtime.
+         * @return {@code true} if this instance representedBy an annotation to be visible at runtime.
          */
         public boolean isVisible() {
             return visible;
         }
 
         /**
-         * Checks if this instance represents an annotation that is not to be embedded into Java byte code, i.e.
+         * Checks if this instance representedBy an annotation that is not to be embedded into Java byte code, i.e.
          * if this instance is
          * {@link AnnotationAppender.AnnotationVisibility#INVISIBLE}.
          *
-         * @return {@code true} if this instance represents an annotation to be suppressed from the byte code output.
+         * @return {@code true} if this instance representedBy an annotation to be suppressed from the byte code output.
          */
         public boolean isSuppressed() {
             return suppressed;
@@ -411,7 +411,7 @@ public interface AnnotationAppender {
         private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation, ValueFilter valueFilter) {
             for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
                 if (valueFilter.isRelevant(annotation, methodDescription)) {
-                    apply(annotationVisitor, methodDescription.getReturnType(), methodDescription.getName(), annotation.getValue(methodDescription));
+                    apply(annotationVisitor, methodDescription.getReturnType().asRawType(), methodDescription.getName(), annotation.getValue(methodDescription));
                 }
             }
             annotationVisitor.visitEnd();

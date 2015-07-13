@@ -5,7 +5,8 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
@@ -96,7 +97,8 @@ public class ImplementationContextDefaultTest {
 
     @Mock
     private TypeDescription firstSpecialType, secondSpecialType, firstSpecialReturnType, secondSpecialReturnType,
-            firstSpecialParameterType, secondSpecialParameterType, firstSpecialExceptionType, secondSpecialExceptionType;
+            firstSpecialParameterType, secondSpecialParameterType, firstSpecialExceptionType, secondSpecialExceptionType,
+            firstDeclaringType, secondDeclaringType;
 
     @Mock
     private FieldDescription firstField, secondField;
@@ -104,13 +106,15 @@ public class ImplementationContextDefaultTest {
     @Mock
     private TypeDescription firstFieldDeclaringType, secondFieldDeclaringType;
 
-    private TypeList firstSpecialExceptionTypes, secondSpecialExceptionTypes;
+    private GenericTypeList firstSpecialExceptionTypes, secondSpecialExceptionTypes;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        firstSpecialExceptionTypes = new TypeList.Explicit(Collections.singletonList(firstSpecialExceptionType));
-        secondSpecialExceptionTypes = new TypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
+        firstSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(firstSpecialExceptionType));
+        secondSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
+        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(methodPool.target(any(MethodDescription.class))).thenReturn(entry);
         when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(firstDynamicType);
@@ -139,13 +143,16 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialMethod.getInternalName()).thenReturn(FOO);
         when(firstSpecialMethod.getExceptionTypes()).thenReturn(firstSpecialExceptionTypes);
         when(firstSpecialParameterType.getDescriptor()).thenReturn(BAZ);
+        when(firstSpecialParameterType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(firstSpecialReturnType.getDescriptor()).thenReturn(QUX);
+        when(firstSpecialReturnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(firstSpecialExceptionType.getInternalName()).thenReturn(FOO);
+        when(firstSpecialExceptionType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(firstSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        ParameterList firstSpecialMethodParameters = ParameterList.Explicit.latent(firstSpecialMethod, Collections.singletonList(firstSpecialParameterType));
-        when(firstSpecialMethod.getParameters()).thenReturn(firstSpecialMethodParameters);
+        when(firstSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(firstSpecialMethod,
+                Collections.singletonList(firstSpecialParameterType)));
         when(secondSpecialInvocation.getMethodDescription()).thenReturn(secondSpecialMethod);
         when(secondSpecialInvocation.getTypeDescription()).thenReturn(secondSpecialType);
         when(secondSpecialMethod.getInternalName()).thenReturn(BAR);
@@ -154,23 +161,46 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialParameterType.getDescriptor()).thenReturn(BAR);
         when(secondSpecialReturnType.getDescriptor()).thenReturn(FOO);
         when(secondSpecialExceptionType.getInternalName()).thenReturn(BAZ);
+        when(secondSpecialExceptionType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(secondSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(secondSpecialParameterType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(secondSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(secondSpecialReturnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        ParameterList secondSpecialMethodParameters = ParameterList.Explicit.latent(secondSpecialMethod, Collections.singletonList(secondSpecialParameterType));
-        when(secondSpecialMethod.getParameters()).thenReturn(secondSpecialMethodParameters);
-        when(firstField.getFieldType()).thenReturn(firstFieldType);
+        when(secondSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(secondSpecialMethod,
+                Collections.singletonList(secondSpecialParameterType)));
+        when(firstFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(firstFieldType.asRawType()).thenReturn(firstFieldType); // REFACTOR
+        when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType); // REFACTOR
+        when(firstField.getType()).thenReturn(firstFieldType);
         when(firstField.getName()).thenReturn(FOO);
         when(firstField.getInternalName()).thenReturn(FOO);
         when(firstField.getDescriptor()).thenReturn(BAR);
         when(firstField.getDeclaringType()).thenReturn(firstFieldDeclaringType);
         when(firstFieldDeclaringType.getInternalName()).thenReturn(QUX);
-        when(secondField.getFieldType()).thenReturn(secondFieldType);
+        when(secondFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(secondFieldType.asRawType()).thenReturn(secondFieldType); // REFACTOR
+        when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType); // REFACTOR
+        when(secondField.getType()).thenReturn(secondFieldType);
         when(secondField.getName()).thenReturn(BAR);
         when(secondField.getInternalName()).thenReturn(BAR);
         when(secondField.getDescriptor()).thenReturn(FOO);
         when(secondField.getDeclaringType()).thenReturn(secondFieldDeclaringType);
         when(secondFieldDeclaringType.getInternalName()).thenReturn(BAZ);
+        when(firstSpecialReturnType.asRawType()).thenReturn(firstSpecialReturnType); // REFACTOR
+        when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType); // REFACTOR
+        when(firstSpecialExceptionType.asRawType()).thenReturn(firstSpecialExceptionType); // REFACTOR
+        when(secondSpecialExceptionType.asRawType()).thenReturn(secondSpecialExceptionType); // REFACTOR
+        when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType); // REFACTOR
+        when(secondSpecialParameterType.asRawType()).thenReturn(secondSpecialParameterType); // REFACTOR
+        when(firstSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstSpecialParameterType);
+        when(secondSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondSpecialParameterType);
+        when(firstFieldDeclaringType.asRawType()).thenReturn(firstFieldDeclaringType);
+        when(secondFieldDeclaringType.asRawType()).thenReturn(secondFieldDeclaringType);
+        when(firstSpecialMethod.getDeclaringType()).thenReturn(firstSpecialType);
+        when(firstSpecialType.asRawType()).thenReturn(firstSpecialType);
+        when(secondSpecialMethod.getDeclaringType()).thenReturn(secondSpecialType);
+        when(secondSpecialType.asRawType()).thenReturn(secondSpecialType);
     }
 
     @Test
@@ -183,7 +213,7 @@ public class ImplementationContextDefaultTest {
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
-        verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(methodPool).target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(methodPool);
         verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);
@@ -244,7 +274,7 @@ public class ImplementationContextDefaultTest {
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(entry).getSort();
-        verify(entry).apply(classVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(entry).apply(classVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(entry);
         verifyZeroInteractions(classVisitor);
         verify(typeInitializer, atLeast(1)).isDefined();
@@ -274,7 +304,7 @@ public class ImplementationContextDefaultTest {
         verify(otherTypeInitializer, atLeast(1)).isDefined();
         verify(otherTypeInitializer).withReturn();
         verifyNoMoreInteractions(otherTypeInitializer);
-        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 
@@ -295,7 +325,7 @@ public class ImplementationContextDefaultTest {
         verifyNoMoreInteractions(typeInitializer);
         verify(injectedCode, atLeast(1)).isDefined();
         verifyNoMoreInteractions(injectedCode);
-        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 
@@ -312,7 +342,7 @@ public class ImplementationContextDefaultTest {
         verify(entry).getSort();
         verify(entry).prepend(typeInitializer);
         verifyNoMoreInteractions(entry);
-        verify(otherEntry).apply(classVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(otherEntry).apply(classVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verify(typeInitializer, atLeast(1)).isDefined();
         verifyNoMoreInteractions(typeInitializer);
         verify(injectedCode, atLeast(1)).isDefined();
@@ -349,7 +379,7 @@ public class ImplementationContextDefaultTest {
         verify(otherTypeInitializer).expandWith(any(ByteCodeAppender.class));
         verify(thirdTypeInitializer).withReturn();
         verify(thirdTypeInitializer).isDefined();
-        verify(terminationAppender).apply(methodVisitor, implementationContext, MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(terminationAppender);
     }
 
@@ -362,7 +392,7 @@ public class ImplementationContextDefaultTest {
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
-        verify(methodPool).target(MethodDescription.Latent.typeInitializerOf(instrumentedType));
+        verify(methodPool).target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
         verifyNoMoreInteractions(methodPool);
         verify(injectedCode).isDefined();
         verifyNoMoreInteractions(injectedCode);
@@ -376,16 +406,18 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
-        assertThat(firstMethodDescription.getParameters(), is(ParameterList.Explicit.latent(firstMethodDescription, Collections.singletonList(firstSpecialParameterType))));
-        assertThat(firstMethodDescription.getReturnType(), is(firstSpecialReturnType));
+        assertThat(firstMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstMethodDescription,
+                Collections.singletonList(firstSpecialParameterType))));
+        assertThat(firstMethodDescription.getReturnType(), is((GenericTypeDescription) firstSpecialReturnType));
         assertThat(firstMethodDescription.getInternalName(), startsWith(FOO));
         assertThat(firstMethodDescription.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
         assertThat(firstMethodDescription.getExceptionTypes(), is(firstSpecialExceptionTypes));
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         when(secondSpecialMethod.isStatic()).thenReturn(true);
         MethodDescription secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
-        assertThat(secondMethodDescription.getParameters(), is(ParameterList.Explicit.latent(secondMethodDescription, Collections.singletonList(secondSpecialParameterType))));
-        assertThat(secondMethodDescription.getReturnType(), is(secondSpecialReturnType));
+        assertThat(secondMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondMethodDescription,
+                Collections.singletonList(secondSpecialParameterType))));
+        assertThat(secondMethodDescription.getReturnType(), is((GenericTypeDescription) secondSpecialReturnType));
         assertThat(secondMethodDescription.getInternalName(), startsWith(BAR));
         assertThat(secondMethodDescription.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
         assertThat(secondMethodDescription.getExceptionTypes(), is(secondSpecialExceptionTypes));
@@ -449,18 +481,18 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         MethodDescription firstFieldGetter = implementationContext.registerGetterFor(firstField);
         assertThat(firstFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty()));
-        assertThat(firstFieldGetter.getReturnType(), is(firstFieldType));
+        assertThat(firstFieldGetter.getReturnType(), is((GenericTypeDescription) firstFieldType));
         assertThat(firstFieldGetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldGetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
-        assertThat(firstFieldGetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(firstFieldGetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldGetter = implementationContext.registerGetterFor(secondField);
         assertThat(secondFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty()));
-        assertThat(secondFieldGetter.getReturnType(), is(secondFieldType));
+        assertThat(secondFieldGetter.getReturnType(), is((GenericTypeDescription) secondFieldType));
         assertThat(secondFieldGetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldGetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
-        assertThat(secondFieldGetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(secondFieldGetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         assertThat(implementationContext.registerGetterFor(secondField), is(secondFieldGetter));
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
@@ -518,19 +550,20 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstFieldSetter = implementationContext.registerSetterFor(firstField);
-        assertThat(firstFieldSetter.getParameters(), is(ParameterList.Explicit.latent(firstFieldSetter, Collections.singletonList(firstFieldType))));
-        assertThat(firstFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
+        assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter, Collections.singletonList(firstFieldType))));
+        assertThat(firstFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER));
-        assertThat(firstFieldSetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(firstFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldSetter = implementationContext.registerSetterFor(secondField);
-        assertThat(secondFieldSetter.getParameters(), is(ParameterList.Explicit.latent(secondFieldSetter, Collections.singletonList(secondFieldType))));
-        assertThat(secondFieldSetter.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
+        assertThat(secondFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondFieldSetter,
+                Collections.singletonList(secondFieldType))));
+        assertThat(secondFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldSetter.getModifiers(), is(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC));
-        assertThat(secondFieldSetter.getExceptionTypes(), is((TypeList) new TypeList.Empty()));
+        assertThat(secondFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         assertThat(implementationContext.registerSetterFor(secondField), is(secondFieldSetter));
         when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
@@ -585,10 +618,10 @@ public class ImplementationContextDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyMutable();
+        ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyBasic();
         ObjectPropertyAssertion.of(Implementation.Context.Default.FieldCacheEntry.class).apply();
         ObjectPropertyAssertion.of(Implementation.Context.Default.AccessorMethodDelegation.class).apply();
-        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldSetter.class).apply();
-        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldGetter.class).apply();
+        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldSetterDelegation.class).apply();
+        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldGetterDelegation.class).apply();
     }
 }

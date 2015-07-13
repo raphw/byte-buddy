@@ -1,7 +1,8 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -18,12 +19,13 @@ import static org.mockito.Mockito.*;
 
 public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultCall> {
 
-    private static final String FOO = "foo";
-
     private static final Class<?> NON_INTERFACE_TYPE = Object.class, INTERFACE_TYPE = Serializable.class, VOID_TYPE = void.class;
 
     @Mock
-    private TypeDescription targetParameterType, interface1, interface2;
+    private TypeDescription targetParameterType, firstInterface, secondInterface;
+
+    @Mock
+    private MethodDescription.Token methodToken;
 
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
@@ -36,9 +38,11 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getTypeDescription()).thenReturn(targetParameterType);
-        when(implementationTarget.invokeDefault(any(TypeDescription.class), any(String.class)))
-                .thenReturn(specialMethodInvocation);
+        when(target.getType()).thenReturn(targetParameterType);
+        when(targetParameterType.asRawType()).thenReturn(targetParameterType);
+        when(implementationTarget.invokeDefault(any(TypeDescription.class), eq(methodToken))).thenReturn(specialMethodInvocation);
+        when(firstInterface.asRawType()).thenReturn(firstInterface);
+        when(secondInterface.asRawType()).thenReturn(secondInterface);
     }
 
     @Override
@@ -51,14 +55,14 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true, false);
         doReturn(VOID_TYPE).when(annotation).targetType();
-        when(source.getUniqueSignature()).thenReturn(FOO);
-        when(source.isSpecializableFor(interface1)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Explicit(Arrays.asList(interface1, interface2)));
+        when(source.asToken()).thenReturn(methodToken);
+        when(source.isSpecializableFor(firstInterface)).thenReturn(true);
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Arrays.asList(firstInterface, secondInterface)));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(implementationTarget).getTypeDescription();
-        verify(implementationTarget).invokeDefault(interface1, FOO);
+        verify(implementationTarget).invokeDefault(firstInterface, methodToken);
         verifyNoMoreInteractions(implementationTarget);
     }
 
@@ -67,15 +71,15 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true, false);
         doReturn(VOID_TYPE).when(annotation).targetType();
-        when(source.getUniqueSignature()).thenReturn(FOO);
-        when(source.isSpecializableFor(interface1)).thenReturn(true);
-        when(source.isSpecializableFor(interface2)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Explicit(Arrays.asList(interface1, interface2)));
+        when(source.asToken()).thenReturn(methodToken);
+        when(source.isSpecializableFor(firstInterface)).thenReturn(true);
+        when(source.isSpecializableFor(secondInterface)).thenReturn(true);
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Arrays.asList(firstInterface, secondInterface)));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(implementationTarget).getTypeDescription();
-        verify(implementationTarget).invokeDefault(interface1, FOO);
+        verify(implementationTarget).invokeDefault(firstInterface, methodToken);
         verifyNoMoreInteractions(implementationTarget);
     }
 
@@ -84,11 +88,11 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         doReturn(INTERFACE_TYPE).when(annotation).targetType();
-        when(source.getUniqueSignature()).thenReturn(FOO);
+        when(source.asToken()).thenReturn(methodToken);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(implementationTarget).invokeDefault(new TypeDescription.ForLoadedType(INTERFACE_TYPE), FOO);
+        verify(implementationTarget).invokeDefault(new TypeDescription.ForLoadedType(INTERFACE_TYPE), methodToken);
         verifyNoMoreInteractions(implementationTarget);
     }
 

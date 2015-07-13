@@ -29,10 +29,13 @@ public class MethodInvocationOtherTest {
         ObjectPropertyAssertion.of(MethodInvocation.Invocation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
             public void apply(MethodDescription mock) {
-                when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+                TypeDescription declaringType = mock(TypeDescription.class);
+                when(declaringType.asRawType()).thenReturn(declaringType);
+                when(mock.getDeclaringType()).thenReturn(declaringType);
                 TypeDescription returnType = mock(TypeDescription.class);
                 when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
                 when(mock.getReturnType()).thenReturn(returnType);
+                when(returnType.asRawType()).thenReturn(returnType);
                 when(mock.getInternalName()).thenReturn(FOO);
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
             }

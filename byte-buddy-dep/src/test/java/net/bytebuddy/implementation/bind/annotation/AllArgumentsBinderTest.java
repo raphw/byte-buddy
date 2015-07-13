@@ -40,6 +40,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         super.setUp();
         when(firstSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(targetType.asRawType()).thenReturn(targetType);
     }
 
     @Override
@@ -65,19 +66,19 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     private void testLegalStrictBinding(boolean dynamicallyTyped, Annotation... targetAnnotation) throws Exception {
         when(annotation.value()).thenReturn(AllArguments.Assignment.STRICT);
         when(stackManipulation.isValid()).thenReturn(true);
-        when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(targetAnnotation));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
         verify(source, atLeast(1)).getParameters();
         verify(source, atLeast(1)).isStatic();
-        verify(target, atLeast(1)).getTypeDescription();
+        verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
         verify(assigner).assign(firstSourceType, componentType, dynamicallyTyped);
         verify(assigner).assign(secondSourceType, componentType, dynamicallyTyped);
@@ -89,19 +90,19 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(1);
         when(annotation.value()).thenReturn(AllArguments.Assignment.STRICT);
         when(stackManipulation.isValid()).thenReturn(false);
-        when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
         verify(source, atLeast(1)).getParameters();
         verify(source, atLeast(1)).isStatic();
-        verify(target, atLeast(1)).getTypeDescription();
+        verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
         verify(assigner).assign(firstSourceType, componentType, false);
         verifyNoMoreInteractions(assigner);
@@ -112,12 +113,12 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(1);
         when(annotation.value()).thenReturn(AllArguments.Assignment.SLACK);
         when(stackManipulation.isValid()).thenReturn(false);
-        when(sourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(componentType.getInternalName()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
@@ -134,7 +135,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         assertThat(parameterBinding.isValid(), is(true));
         verify(source, atLeast(1)).getParameters();
         verify(source, atLeast(1)).isStatic();
-        verify(target, atLeast(1)).getTypeDescription();
+        verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
         verify(assigner).assign(firstSourceType, componentType, false);
         verify(assigner).assign(secondSourceType, componentType, false);
@@ -146,7 +147,8 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(0);
         TypeDescription targetType = mock(TypeDescription.class);
         when(targetType.isArray()).thenReturn(false);
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
+        when(targetType.asRawType()).thenReturn(targetType);
         AllArguments.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

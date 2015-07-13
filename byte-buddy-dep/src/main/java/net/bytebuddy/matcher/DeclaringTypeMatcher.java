@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.description.type.DeclaredInType;
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.DeclaredByType;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
  * An element matcher that matches the declaring type of another element, only if this element is actually declared
@@ -9,25 +9,25 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T> The exact type of the element being matched.
  */
-public class DeclaringTypeMatcher<T extends DeclaredInType> extends ElementMatcher.Junction.AbstractBase<T> {
+public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The type matcher to be applied if the target element is declared in a type.
      */
-    private final ElementMatcher<? super TypeDescription> typeMatcher;
+    private final ElementMatcher<? super GenericTypeDescription> typeMatcher;
 
     /**
      * Creates a new matcher for the declaring type of an element.
      *
      * @param typeMatcher The type matcher to be applied if the target element is declared in a type.
      */
-    public DeclaringTypeMatcher(ElementMatcher<? super TypeDescription> typeMatcher) {
+    public DeclaringTypeMatcher(ElementMatcher<? super GenericTypeDescription> typeMatcher) {
         this.typeMatcher = typeMatcher;
     }
 
     @Override
     public boolean matches(T target) {
-        TypeDescription typeDescription = target.getDeclaringType();
+        GenericTypeDescription typeDescription = target.getDeclaringType();
         return typeDescription != null && typeMatcher.matches(typeDescription);
     }
 

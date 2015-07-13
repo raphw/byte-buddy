@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -90,6 +91,12 @@ public class ByteArrayClassLoaderTest {
     public void testNonSuccessfulHit() throws Exception {
         // Note: Will throw a class format error instead targeting not found exception targeting loader attempts.
         classLoader.loadClass(BAR);
+    }
+
+    @Test
+    public void testPackage() throws Exception {
+        assertThat(classLoader.loadClass(Foo.class.getName()).getPackage().getName(), is(Foo.class.getPackage().getName()));
+        assertThat(classLoader.loadClass(Foo.class.getName()).getPackage(), not(Foo.class.getPackage()));
     }
 
     private static class Foo {

@@ -1,8 +1,10 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 import net.bytebuddy.utility.JavaMethod;
 
@@ -13,17 +15,35 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
+
 /**
  * Represents a list of parameters of a method or a constructor.
  */
 public interface ParameterList extends FilterableList<ParameterDescription, ParameterList> {
 
     /**
-     * Transforms the list of parameters into a list of type descriptions.
+     * Transforms this list of parameters into a list of the types of the represented parameters.
      *
-     * @return A list of type descriptions.
+     * @return A list of types representing the parameters of this list.
      */
-    TypeList asTypeList();
+    GenericTypeList asTypeList();
+
+    /**
+     * Transforms the list of parameter descriptions into a list of detached tokens.
+     *
+     * @return The transformed token list.
+     */
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList();
+
+    /**
+     * Transforms the list of parameter descriptions into a list of detached tokens. All types that are matched by the provided
+     * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
+     *
+     * @param targetTypeMatcher A matcher that indicates type substitution.
+     * @return The transformed token list.
+     */
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
@@ -45,6 +65,34 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
                 }
             }
             return true;
+        }
+
+        @Override
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList() {
+            return asTokenList(none());
+        }
+
+        @Override
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
+            for (ParameterDescription parameterDescription : this) {
+                tokens.add(parameterDescription.asToken(targetTypeMatcher));
+            }
+            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(tokens);
+        }
+
+        @Override
+        public GenericTypeList asTypeList() {
+            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(size());
+            for (ParameterDescription parameterDescription : this) {
+                types.add(parameterDescription.getType());
+            }
+            return new GenericTypeList.Explicit(types);
+        }
+
+        @Override
+        protected ParameterList wrap(List<ParameterDescription> values) {
+            return new Explicit(values);
         }
     }
 
@@ -123,18 +171,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public TypeList asTypeList() {
-            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameter.length);
+        public GenericTypeList asTypeList() {
+            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameter.length);
             for (Object aParameter : parameter) {
-                Class<?> type = (Class<?>) ParameterDescription.ForLoadedParameter.GET_TYPE.invoke(aParameter);
-                typeDescriptions.add(new TypeDescription.ForLoadedType(type));
+                types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter(aParameter));
             }
-            return new TypeList.Explicit(typeDescriptions);
-        }
-
-        @Override
-        protected ParameterList wrap(List<ParameterDescription> values) {
-            return new Explicit(values);
+            return new GenericTypeList.Explicit(types);
         }
 
         /**
@@ -170,11 +212,6 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
 
             @Override
-            protected ParameterList wrap(List<ParameterDescription> values) {
-                return new Explicit(values);
-            }
-
-            @Override
             public ParameterDescription get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index], parameterAnnotation[index]);
             }
@@ -185,8 +222,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
 
             @Override
-            public TypeList asTypeList() {
-                return new TypeList.ForLoadedType(parameterType);
+            public GenericTypeList asTypeList() {
+                List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
+                for (int index = 0; index < parameterType.length; index++) {
+                    types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index]));
+                }
+                return new GenericTypeList.Explicit(types);
             }
         }
 
@@ -223,11 +264,6 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
 
             @Override
-            protected ParameterList wrap(List<ParameterDescription> values) {
-                return new Explicit(values);
-            }
-
-            @Override
             public ParameterDescription get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index], parameterAnnotation[index]);
             }
@@ -238,8 +274,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
 
             @Override
-            public TypeList asTypeList() {
-                return new TypeList.ForLoadedType(parameterType);
+            public GenericTypeList asTypeList() {
+                List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
+                for (int index = 0; index < parameterType.length; index++) {
+                    types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index]));
+                }
+                return new GenericTypeList.Explicit(types);
             }
         }
     }
@@ -263,28 +303,6 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             this.parameterDescriptions = Collections.unmodifiableList(parameterDescriptions);
         }
 
-        /**
-         * Creates a list of method parameters from a list of type descriptions.
-         *
-         * @param declaringMethod The method for which this latent list should be created.
-         * @param parameterTypes  A list of the parameter types.
-         * @return A list describing these parameters.
-         */
-        public static ParameterList latent(MethodDescription declaringMethod, List<? extends TypeDescription> parameterTypes) {
-            List<ParameterDescription> parameterDescriptions = new ArrayList<ParameterDescription>(parameterTypes.size());
-            int index = 0, offset = declaringMethod.isStatic()
-                    ? StackSize.ZERO.getSize()
-                    : StackSize.SINGLE.getSize();
-            for (TypeDescription parameterType : parameterTypes) {
-                parameterDescriptions.add(new ParameterDescription.Latent(declaringMethod,
-                        parameterType,
-                        index++,
-                        offset));
-                offset += parameterType.getStackSize().getSize();
-            }
-            return new Explicit(parameterDescriptions);
-        }
-
         @Override
         public ParameterDescription get(int index) {
             return parameterDescriptions.get(index);
@@ -295,18 +313,132 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             return parameterDescriptions.size();
         }
 
-        @Override
-        public TypeList asTypeList() {
-            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(parameterDescriptions.size());
-            for (ParameterDescription parameterDescription : parameterDescriptions) {
-                typeDescriptions.add(parameterDescription.getTypeDescription());
+        /**
+         * A parameter list representing parameters without meta data or annotations.
+         */
+        public static class ForTypes extends ParameterList.AbstractBase {
+
+            /**
+             * The method description that declares the parameters.
+             */
+            private final MethodDescription methodDescription;
+
+            /**
+             * A list of detached types representing the parameters.
+             */
+            private final List<? extends GenericTypeDescription> typeDescriptions;
+
+            /**
+             * Creates a new parameter type list.
+             *
+             * @param methodDescription The method description that declares the parameters.
+             * @param typeDescriptions  A list of detached types representing the parameters.
+             */
+            public ForTypes(MethodDescription methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
+                this.methodDescription = methodDescription;
+                this.typeDescriptions = typeDescriptions;
             }
-            return new TypeList.Explicit(typeDescriptions);
+
+            @Override
+            public ParameterDescription get(int index) {
+                int offset = methodDescription.isStatic() ? 0 : 1;
+                for (GenericTypeDescription typeDescription : typeDescriptions.subList(0, index)) {
+                    offset += typeDescription.getStackSize().getSize();
+                }
+                return new ParameterDescription.Latent(methodDescription, typeDescriptions.get(index), index, offset);
+            }
+
+            @Override
+            public int size() {
+                return typeDescriptions.size();
+            }
+        }
+    }
+
+    /**
+     * A list of parameter descriptions for a list of detached tokens. For the returned parameter, each token is attached to its parameter representation.
+     */
+    class ForTokens extends AbstractBase {
+
+        /**
+         * The method that is declaring the represented token.
+         */
+        private final MethodDescription declaringMethod;
+
+        /**
+         * The list of tokens to represent.
+         */
+        private final List<? extends ParameterDescription.Token> tokens;
+
+        /**
+         * Creates a new parameter list for the provided tokens.
+         *
+         * @param declaringMethod The method that is declaring the represented token.
+         * @param tokens          The list of tokens to represent.
+         */
+        public ForTokens(MethodDescription declaringMethod, List<? extends ParameterDescription.Token> tokens) {
+            this.declaringMethod = declaringMethod;
+            this.tokens = tokens;
         }
 
         @Override
-        protected ParameterList wrap(List<ParameterDescription> values) {
-            return new Explicit(values);
+        public ParameterDescription get(int index) {
+            int offset = declaringMethod.isStatic() ? 0 : 1;
+            for (ParameterDescription.Token token : tokens.subList(0, index)) {
+                offset += token.getType().getStackSize().getSize();
+            }
+            return new ParameterDescription.Latent(declaringMethod, tokens.get(index), index, offset);
+        }
+
+        @Override
+        public int size() {
+            return tokens.size();
+        }
+    }
+
+    /**
+     * A list of parameter descriptions that yields {@link net.bytebuddy.description.method.ParameterDescription.TypeSubstituting}.
+     */
+    class TypeSubstituting extends AbstractBase {
+
+        /**
+         * The method that is declaring the transformed parameters.
+         */
+        private final MethodDescription declaringMethod;
+
+        /**
+         * The untransformed parameters that are represented by this list.
+         */
+        private final List<? extends ParameterDescription> parameterDescriptions;
+
+        /**
+         * The visitor to apply to the parameter types before returning them.
+         */
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        /**
+         * Creates a new type substituting parameter list.
+         *
+         * @param declaringMethod       The method that is declaring the transformed parameters.
+         * @param parameterDescriptions The untransformed parameters that are represented by this list.
+         * @param visitor               The visitor to apply to the parameter types before returning them.
+         */
+        public TypeSubstituting(MethodDescription declaringMethod,
+                                List<? extends ParameterDescription> parameterDescriptions,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringMethod = declaringMethod;
+            this.parameterDescriptions = parameterDescriptions;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public ParameterDescription get(int index) {
+            return new ParameterDescription.TypeSubstituting(declaringMethod, parameterDescriptions.get(index), visitor);
+        }
+
+        @Override
+        public int size() {
+            return parameterDescriptions.size();
         }
     }
 
@@ -321,8 +453,18 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        public TypeList asTypeList() {
-            return new TypeList.Empty();
+        public GenericTypeList asTypeList() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList() {
+            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
+        }
+
+        @Override
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
         }
     }
 }

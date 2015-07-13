@@ -29,7 +29,7 @@ public class MethodDelegationBinderTest {
                 when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
                 return methodDescription;
             }
-        }).applyMutable();
+        }).applyBasic();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodBinding.Builder.Build.class).create(new ObjectPropertyAssertion.Creator<Map<?, ?>>() {
             @Override
             public Map<?, ?> create() {

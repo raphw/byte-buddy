@@ -77,7 +77,7 @@ public enum MethodInvocation {
             return SPECIAL_CONSTRUCTOR.new Invocation(methodDescription); // Check this property second, constructors might be private
         } else if (methodDescription.isPrivate() || methodDescription.isDefaultMethod()) {
             return SPECIAL.new Invocation(methodDescription);
-        } else if (methodDescription.getDeclaringType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
+        } else if (methodDescription.getDeclaringType().asRawType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
             return INTERFACE.new Invocation(methodDescription);
         } else {
             return VIRTUAL.new Invocation(methodDescription);
@@ -164,7 +164,7 @@ public enum MethodInvocation {
          * @param returnType The return type of the method to be bound.
          * @param methodType The parameter types of the method to be bound.
          * @param arguments  The arguments to be passed to the bootstrap method.
-         * @return A stack manipulation that represents the dynamic method invocation.
+         * @return A stack manipulation that representedBy the dynamic method invocation.
          */
         StackManipulation dynamic(String methodName,
                                   TypeDescription returnType,
@@ -193,7 +193,7 @@ public enum MethodInvocation {
          * @param methodDescription The method to be invoked.
          */
         protected Invocation(MethodDescription methodDescription) {
-            this(methodDescription, methodDescription.getDeclaringType());
+            this(methodDescription, methodDescription.getDeclaringType().asRawType());
         }
 
         /**
@@ -269,8 +269,8 @@ public enum MethodInvocation {
             Invocation that = (Invocation) other;
             return MethodInvocation.this.equals(((Invocation) other).getOuterInstance())
                     && methodDescription.getInternalName().equals(that.methodDescription.getInternalName())
-                    && methodDescription.getReturnType().equals(((Invocation) other).methodDescription.getReturnType())
-                    && methodDescription.getParameters().asTypeList().equals(((Invocation) other).methodDescription.getParameters().asTypeList())
+                    && methodDescription.getReturnType().asRawType().equals(((Invocation) other).methodDescription.getReturnType().asRawType())
+                    && methodDescription.getParameters().asTypeList().asRawTypes().equals(((Invocation) other).methodDescription.getParameters().asTypeList().asRawTypes())
                     && typeDescription.equals(that.typeDescription);
         }
 
@@ -279,8 +279,8 @@ public enum MethodInvocation {
             int result = typeDescription.hashCode();
             result = 31 * result + MethodInvocation.this.hashCode();
             result = 31 * result + methodDescription.getInternalName().hashCode();
-            result = 31 * result + methodDescription.getParameters().asTypeList().hashCode();
-            result = 31 * result + methodDescription.getReturnType().hashCode();
+            result = 31 * result + methodDescription.getParameters().asTypeList().asRawTypes().hashCode();
+            result = 31 * result + methodDescription.getReturnType().asRawType().hashCode();
             return result;
         }
 
@@ -359,7 +359,7 @@ public enum MethodInvocation {
             methodVisitor.visitInvokeDynamicInsn(methodName,
                     methodDescriptor,
                     new Handle(handle,
-                            bootstrapMethod.getDeclaringType().getInternalName(),
+                            bootstrapMethod.getDeclaringType().asRawType().getInternalName(),
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor()),
                     arguments.toArray(new Object[arguments.size()]));

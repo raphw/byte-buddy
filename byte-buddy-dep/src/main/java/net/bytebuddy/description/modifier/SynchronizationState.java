@@ -46,6 +46,16 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
         return mask;
     }
 
+    @Override
+    public int getRange() {
+        return Opcodes.ACC_SYNCHRONIZED;
+    }
+
+    @Override
+    public boolean isDefault() {
+        return this == PLAIN;
+    }
+
     /**
      * Checks if the current state describes the synchronized state.
      *

@@ -31,7 +31,7 @@ public @interface DefaultCall {
     /**
      * If this parameter is not explicitly set, a parameter with the
      * {@link net.bytebuddy.implementation.bind.annotation.DefaultCall} is only bound to a
-     * source method if this source method directly represents an unambiguous, invokable default method. On the other
+     * source method if this source method directly representedBy an unambiguous, invokable default method. On the other
      * hand, if a method is not defined unambiguously by an interface, not setting this parameter will exclude
      * the target method with the annotated parameter from a binding to the source method.
      * <p>&nbsp;</p>
@@ -95,7 +95,7 @@ public @interface DefaultCall {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            TypeDescription targetType = target.getTypeDescription();
+            TypeDescription targetType = target.getType().asRawType();
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A default method call proxy can only be assigned to Runnable or Callable types: " + target);
             }
@@ -132,7 +132,7 @@ public @interface DefaultCall {
 
             /**
              * An implicit default method locator that only permits the invocation of a default method if the source
-             * method itself represents a method that was defined on a default method interface.
+             * method itself representedBy a method that was defined on a default method interface.
              */
             enum Implicit implements DefaultMethodLocator {
 
@@ -144,14 +144,13 @@ public @interface DefaultCall {
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
                                                                       MethodDescription source) {
-                    String uniqueSignature = source.getUniqueSignature();
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces()) {
+                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asRawTypes()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                             }
-                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, uniqueSignature);
+                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asToken());
                         }
                     }
                     return specialMethodInvocation != null
@@ -191,7 +190,7 @@ public @interface DefaultCall {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
-                    return implementationTarget.invokeDefault(typeDescription, source.getUniqueSignature());
+                    return implementationTarget.invokeDefault(typeDescription, source.asToken());
                 }
 
                 @Override

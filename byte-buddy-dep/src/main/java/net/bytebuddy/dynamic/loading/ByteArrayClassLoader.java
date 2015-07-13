@@ -88,7 +88,7 @@ public class ByteArrayClassLoader extends ClassLoader {
      * Loads a given set of class descriptions and their binary representations.
      *
      * @param classLoader        The parent class loader.
-     * @param types              The raw types to load.
+     * @param types              The unloaded types to be loaded.
      * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
      *                           protection domain.
      * @param persistenceHandler The persistence handler of the created class loader.
@@ -146,7 +146,7 @@ public class ByteArrayClassLoader extends ClassLoader {
     }
 
     /**
-     * A persistence handler decides on weather the byte array that represents a loaded class is exposed by
+     * A persistence handler decides on weather the byte array that representedBy a loaded class is exposed by
      * the {@link java.lang.ClassLoader#getResourceAsStream(String)} method.
      */
     public enum PersistenceHandler {
@@ -195,23 +195,23 @@ public class ByteArrayClassLoader extends ClassLoader {
         private static final String CLASS_FILE_SUFFIX = ".class";
 
         /**
-         * {@code true} if this persistence handler represents manifest class file storage.
+         * {@code true} if this persistence handler representedBy manifest class file storage.
          */
         private final boolean manifest;
 
         /**
          * Creates a new persistence handler.
          *
-         * @param manifest {@code true} if this persistence handler represents manifest class file storage.
+         * @param manifest {@code true} if this persistence handler representedBy manifest class file storage.
          */
         PersistenceHandler(boolean manifest) {
             this.manifest = manifest;
         }
 
         /**
-         * Checks if this persistence handler represents manifest class file storage.
+         * Checks if this persistence handler representedBy manifest class file storage.
          *
-         * @return {@code true} if this persistence handler represents manifest class file storage.
+         * @return {@code true} if this persistence handler representedBy manifest class file storage.
          */
         public boolean isManifest() {
             return manifest;
@@ -305,10 +305,10 @@ public class ByteArrayClassLoader extends ClassLoader {
         }
 
         /**
-         * Checks if a resource name represents a class file of a class that was loaded by this class loader.
+         * Checks if a resource name representedBy a class file of a class that was loaded by this class loader.
          *
          * @param resourceName The resource name of the class to be exposed as its class file.
-         * @return {@code true} if this class represents a class that was already loaded by this class loader.
+         * @return {@code true} if this class representedBy a class that was already loaded by this class loader.
          */
         private boolean isSelfDefined(String resourceName) {
             if (!resourceName.endsWith(CLASS_FILE_SUFFIX)) {
@@ -365,6 +365,10 @@ public class ByteArrayClassLoader extends ClassLoader {
         public Class<?> run() throws ClassNotFoundException {
             byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
             if (javaType != null) {
+                int packageIndex = name.lastIndexOf('.');
+                if (packageIndex != -1 && getPackage(name.substring(0, packageIndex)) == null) {
+                    definePackage(name.substring(0, packageIndex), null, null, null, null, null, null, null);
+                }
                 return defineClass(name, javaType, FROM_BEGINNING, javaType.length, protectionDomain);
             }
             throw new ClassNotFoundException(name);

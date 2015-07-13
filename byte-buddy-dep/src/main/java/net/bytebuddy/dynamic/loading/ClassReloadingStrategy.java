@@ -297,9 +297,9 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                                       Map<Class<?>, ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException;
 
         /**
-         * Returns {@code true} if this engine represents {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION}.
+         * Returns {@code true} if this engine representedBy {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION}.
          *
-         * @return {@code true} if this engine represents {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION}.
+         * @return {@code true} if this engine representedBy {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION}.
          */
         public boolean isRedefinition() {
             return redefinition;

@@ -58,7 +58,7 @@ public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
 
     @Test
     public void testEmptyValue() throws Exception {
-        when(target.getTypeDescription()).thenReturn(typeDescription);
+        when(target.getType()).thenReturn(typeDescription);
         TargetMethodAnnotationDrivenBinder.ParameterBinding<?> binding = Empty.Binder
                 .INSTANCE.bind(annotationDescription,
                         source,

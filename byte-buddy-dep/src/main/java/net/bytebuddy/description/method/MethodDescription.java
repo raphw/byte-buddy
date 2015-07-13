@@ -1,29 +1,40 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.generic.TypeVariableSource;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface MethodDescription extends ByteCodeElement {
+public interface MethodDescription extends TypeVariableSource, NamedElement.WithGenericName {
 
     /**
      * The internal name of a Java constructor.
@@ -41,11 +52,16 @@ public interface MethodDescription extends ByteCodeElement {
     int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
     /**
-     * Returns a description of the return type of the method described by this instance.
-     *
-     * @return A description of the return type of the method described by this instance.
+     * Represents a non-defined default value of an annotation property.
      */
-    TypeDescription getReturnType();
+    Object NO_DEFAULT_VALUE = null;
+
+    /**
+     * Returns the return type of the described method.
+     *
+     * @return The return type of the described method.
+     */
+    GenericTypeDescription getReturnType();
 
     /**
      * Returns a list of this method's parameters.
@@ -55,11 +71,11 @@ public interface MethodDescription extends ByteCodeElement {
     ParameterList getParameters();
 
     /**
-     * Returns a description of the exception types of the method described by this instance.
+     * Returns the exception types of the described method.
      *
-     * @return A description of the exception types of the method described by this instance.
+     * @return The exception types of the described method.
      */
-    TypeList getExceptionTypes();
+    GenericTypeList getExceptionTypes();
 
     /**
      * Returns this method modifier but adjusts its state of being abstract.
@@ -70,46 +86,46 @@ public interface MethodDescription extends ByteCodeElement {
     int getAdjustedModifiers(boolean nonAbstract);
 
     /**
-     * Checks if this method description represents a constructor.
+     * Checks if this method description representedBy a constructor.
      *
-     * @return {@code true} if this method description represents a constructor.
+     * @return {@code true} if this method description representedBy a constructor.
      */
     boolean isConstructor();
 
     /**
-     * Checks if this method description represents a method, i.e. not a constructor or a type initializer.
+     * Checks if this method description representedBy a method, i.e. not a constructor or a type initializer.
      *
-     * @return {@code true} if this method description represents a method.
+     * @return {@code true} if this method description representedBy a method.
      */
     boolean isMethod();
 
     /**
      * Checks if this method is a type initializer.
      *
-     * @return {@code true} if this method description represents a type initializer.
+     * @return {@code true} if this method description representedBy a type initializer.
      */
     boolean isTypeInitializer();
 
     /**
-     * Verifies if a method description represents a given loaded method.
+     * Verifies if a method description representedBy a given loaded method.
      *
      * @param method The method to be checked.
-     * @return {@code true} if this method description represents the given loaded method.
+     * @return {@code true} if this method description representedBy the given loaded method.
      */
     boolean represents(Method method);
 
     /**
-     * Verifies if a method description represents a given loaded constructor.
+     * Verifies if a method description representedBy a given loaded constructor.
      *
      * @param constructor The constructor to be checked.
-     * @return {@code true} if this method description represents the given loaded constructor.
+     * @return {@code true} if this method description representedBy the given loaded constructor.
      */
     boolean represents(Constructor<?> constructor);
 
     /**
-     * Verifies if this method description represents an overridable method.
+     * Verifies if this method description representedBy an overridable method.
      *
-     * @return {@code true} if this method description represents an overridable method.
+     * @return {@code true} if this method description representedBy an overridable method.
      */
     boolean isOverridable();
 
@@ -123,7 +139,7 @@ public interface MethodDescription extends ByteCodeElement {
     int getStackSize();
 
     /**
-     * Checks if this method represents a Java 8+ default method.
+     * Checks if this method representedBy a Java 8+ default method.
      *
      * @return {@code true} if this method is a default method.
      */
@@ -137,15 +153,6 @@ public interface MethodDescription extends ByteCodeElement {
      * using the given type.
      */
     boolean isSpecializableFor(TypeDescription typeDescription);
-
-    /**
-     * Returns the unique signature of a byte code method. A unique signature is defined as the concatenation of
-     * the internal name of the method / constructor and the method descriptor. Note that methods on byte code
-     * level do consider two similar methods with different return type as distinct methods.
-     *
-     * @return A unique signature of this byte code level method.
-     */
-    String getUniqueSignature();
 
     /**
      * Returns the default value of this method or {@code null} if no such value exists. The returned values might be
@@ -217,6 +224,24 @@ public interface MethodDescription extends ByteCodeElement {
     boolean isDefaultValue(Object value);
 
     /**
+     * Transforms this method description into a token. For the resulting token, all type variables within the scope
+     * of this method's types are detached from their declaration context.
+     *
+     * @return A token representing this method.
+     */
+    Token asToken();
+
+    /**
+     * Transforms this method description into a token. For the resulting token, all type variables within the scope
+     * of this method's types are detached from their declaration context.
+     *
+     * @param targetTypeMatcher A matcher that is applied to the method's types for replacing any matched
+     *                          type by {@link net.bytebuddy.dynamic.TargetType}.
+     * @return A token representing this method.
+     */
+    Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
+
+    /**
      * An abstract base implementation of a method description.
      */
     abstract class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
@@ -232,11 +257,6 @@ public interface MethodDescription extends ByteCodeElement {
                 | Modifier.FINAL
                 | Modifier.SYNCHRONIZED
                 | Modifier.NATIVE;
-
-        @Override
-        public String getUniqueSignature() {
-            return getInternalName() + getDescriptor();
-        }
 
         @Override
         public int getStackSize() {
@@ -272,7 +292,7 @@ public interface MethodDescription extends ByteCodeElement {
         public String getName() {
             return isMethod()
                     ? getInternalName()
-                    : getDeclaringType().getName();
+                    : getDeclaringType().asRawType().getName();
         }
 
         @Override
@@ -285,15 +305,45 @@ public interface MethodDescription extends ByteCodeElement {
         @Override
         public String getDescriptor() {
             StringBuilder descriptor = new StringBuilder("(");
-            for (TypeDescription parameterType : getParameters().asTypeList()) {
+            for (TypeDescription parameterType : getParameters().asTypeList().asRawTypes()) {
                 descriptor.append(parameterType.getDescriptor());
             }
-            return descriptor.append(")").append(getReturnType().getDescriptor()).toString();
+            return descriptor.append(")").append(getReturnType().asRawType().getDescriptor()).toString();
         }
 
         @Override
         public String getGenericSignature() {
-            return null; // Currently, generic signatures are supported poorly.
+            try {
+                SignatureWriter signatureWriter = new SignatureWriter();
+                boolean generic = false;
+                for (GenericTypeDescription typeVariable : getTypeVariables()) {
+                    signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
+                    boolean classBound = true;
+                    for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
+                        upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(classBound
+                                ? signatureWriter.visitClassBound()
+                                : signatureWriter.visitInterfaceBound()));
+                        classBound = false;
+                    }
+                    generic = true;
+                }
+                for (GenericTypeDescription parameterType : getParameters().asTypeList()) {
+                    parameterType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitParameterType()));
+                    generic = generic || !parameterType.getSort().isNonGeneric();
+                }
+                GenericTypeDescription returnType = getReturnType();
+                returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
+                generic = generic || !returnType.getSort().isNonGeneric();
+                for (GenericTypeDescription exceptionType : getExceptionTypes()) {
+                    exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
+                    generic = generic || !exceptionType.getSort().isNonGeneric();
+                }
+                return generic
+                        ? signatureWriter.toString()
+                        : NON_GENERIC_SIGNATURE;
+            } catch (GenericSignatureFormatError ignored) {
+                return NON_GENERIC_SIGNATURE;
+            }
         }
 
         @Override
@@ -305,18 +355,18 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            if (!getDeclaringType().isVisibleTo(typeDescription) || !getReturnType().isVisibleTo(typeDescription)) {
+            if (!getDeclaringType().asRawType().isVisibleTo(typeDescription) || !getReturnType().asRawType().isVisibleTo(typeDescription)) {
                 return false;
             }
-            for (TypeDescription parameterType : getParameters().asTypeList()) {
+            for (TypeDescription parameterType : getParameters().asTypeList().asRawTypes()) {
                 if (!parameterType.isVisibleTo(typeDescription)) {
                     return false;
                 }
             }
             return isPublic()
                     || typeDescription.equals(getDeclaringType())
-                    || (isProtected() && getDeclaringType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType()));
+                    || (isProtected() && getDeclaringType().asRawType().isAssignableFrom(typeDescription))
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asRawType()));
         }
 
         @Override
@@ -326,7 +376,7 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public boolean isDefaultMethod() {
-            return !isAbstract() && !isBridge() && getDeclaringType().isInterface();
+            return !isAbstract() && !isBridge() && getDeclaringType().asRawType().isInterface();
         }
 
         @Override
@@ -336,7 +386,7 @@ public interface MethodDescription extends ByteCodeElement {
             } else if (isPrivate() || isConstructor()) {
                 return getDeclaringType().equals(targetType);
             } else {
-                return !isAbstract() && getDeclaringType().isAssignableFrom(targetType);
+                return !isAbstract() && getDeclaringType().asRawType().isAssignableFrom(targetType);
             }
         }
 
@@ -350,17 +400,18 @@ public interface MethodDescription extends ByteCodeElement {
             return !isStatic()
                     && !isTypeInitializer()
                     && isVisibleTo(typeDescription)
-                    && getDeclaringType().isAssignableFrom(typeDescription);
+                    && getDeclaringType().asRawType().isAssignableFrom(typeDescription);
         }
 
         @Override
         public boolean isBootstrap() {
+            TypeDescription returnType = getReturnType().asRawType();
             if ((isMethod() && (!isStatic()
-                    || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getReturnType()) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(getReturnType()))))
-                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType()))) {
+                    || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(returnType) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(returnType))))
+                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType().asRawType()))) {
                 return false;
             }
-            TypeList parameterTypes = getParameters().asTypeList();
+            TypeList parameterTypes = getParameters().asTypeList().asRawTypes();
             switch (parameterTypes.size()) {
                 case 0:
                     return false;
@@ -408,10 +459,10 @@ public interface MethodDescription extends ByteCodeElement {
                     throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
                 }
             }
-            List<TypeDescription> parameterTypes = getParameters().asTypeList();
+            TypeList parameterTypes = getParameters().asTypeList().asRawTypes();
             // The following assumes that the bootstrap method is a valid one, as checked above.
             if (parameterTypes.size() < 4) {
-                return arguments.size() == 0 || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
+                return arguments.isEmpty() || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
             } else {
                 int index = 4;
                 Iterator<?> argumentIterator = arguments.iterator();
@@ -441,7 +492,7 @@ public interface MethodDescription extends ByteCodeElement {
         public boolean isDefaultValue() {
             return !isConstructor()
                     && !isStatic()
-                    && getReturnType().isAnnotationReturnType()
+                    && getReturnType().asRawType().isAnnotationReturnType()
                     && getParameters().isEmpty();
         }
 
@@ -450,7 +501,7 @@ public interface MethodDescription extends ByteCodeElement {
             if (!isDefaultValue()) {
                 return false;
             }
-            TypeDescription returnType = getReturnType();
+            TypeDescription returnType = getReturnType().asRawType();
             return (returnType.represents(boolean.class) && value instanceof Boolean)
                     || (returnType.represents(byte.class) && value instanceof Byte)
                     || (returnType.represents(char.class) && value instanceof Character)
@@ -466,36 +517,72 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
+        public TypeVariableSource getEnclosingSource() {
+            return getDeclaringType().asRawType();
+        }
+
+        @Override
+        public GenericTypeDescription findVariable(String symbol) {
+            GenericTypeList typeVariables = getTypeVariables().filter(named(symbol));
+            return typeVariables.isEmpty()
+                    ? getEnclosingSource().findVariable(symbol)
+                    : typeVariables.getOnly();
+        }
+
+        @Override
+        public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+            return visitor.onMethod(this);
+        }
+
+        @Override
+        public Token asToken() {
+            return asToken(none());
+        }
+
+        @Override
+        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+            GenericTypeDescription.Visitor<GenericTypeDescription> visitor = new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher);
+            return new Token(getInternalName(),
+                    getModifiers(),
+                    getTypeVariables().accept(visitor),
+                    getReturnType().accept(visitor),
+                    getParameters().asTokenList(targetTypeMatcher),
+                    getExceptionTypes().accept(visitor),
+                    getDeclaredAnnotations(),
+                    getDefaultValue());
+        }
+
+        @Override
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
-                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
-                    && getReturnType().equals(((MethodDescription) other).getReturnType())
-                    && getParameters().asTypeList().equals(((MethodDescription) other).getParameters().asTypeList());
+                    && getDeclaringType().asRawType().equals(((MethodDescription) other).getDeclaringType().asRawType())
+                    && getReturnType().asRawType().equals(((MethodDescription) other).getReturnType().asRawType())
+                    && getParameters().asTypeList().asRawTypes().equals(((MethodDescription) other).getParameters().asTypeList().asRawTypes());
         }
 
         @Override
         public int hashCode() {
-            int hashCode = getDeclaringType().hashCode();
+            int hashCode = getDeclaringType().asRawType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
-            hashCode = 31 * hashCode + getReturnType().hashCode();
-            return 31 * hashCode + getParameters().asTypeList().hashCode();
+            hashCode = 31 * hashCode + getReturnType().asRawType().hashCode();
+            return 31 * hashCode + getParameters().asTypeList().asRawTypes().hashCode();
         }
 
         @Override
-        public String toString() {
+        public String toGenericString() {
             StringBuilder stringBuilder = new StringBuilder();
             int modifiers = getModifiers() & SOURCE_MODIFIERS;
-            if (modifiers != 0) {
+            if (modifiers != EMPTY_MASK) {
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
             if (isMethod()) {
                 stringBuilder.append(getReturnType().getSourceCodeName()).append(" ");
-                stringBuilder.append(getDeclaringType().getSourceCodeName()).append(".");
+                stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
-            for (TypeDescription typeDescription : getParameters().asTypeList()) {
+            for (GenericTypeDescription typeDescription : getParameters().asTypeList()) {
                 if (!first) {
                     stringBuilder.append(",");
                 } else {
@@ -504,7 +591,45 @@ public interface MethodDescription extends ByteCodeElement {
                 stringBuilder.append(typeDescription.getSourceCodeName());
             }
             stringBuilder.append(")");
-            TypeList exceptionTypes = getExceptionTypes();
+            GenericTypeList exceptionTypes = getExceptionTypes();
+            if (exceptionTypes.size() > 0) {
+                stringBuilder.append(" throws ");
+                first = true;
+                for (GenericTypeDescription typeDescription : exceptionTypes) {
+                    if (!first) {
+                        stringBuilder.append(",");
+                    } else {
+                        first = false;
+                    }
+                    stringBuilder.append(typeDescription.getSourceCodeName());
+                }
+            }
+            return stringBuilder.toString();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder stringBuilder = new StringBuilder();
+            int modifiers = getModifiers() & SOURCE_MODIFIERS;
+            if (modifiers != EMPTY_MASK) {
+                stringBuilder.append(Modifier.toString(modifiers)).append(" ");
+            }
+            if (isMethod()) {
+                stringBuilder.append(getReturnType().asRawType().getSourceCodeName()).append(" ");
+                stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
+            }
+            stringBuilder.append(getName()).append("(");
+            boolean first = true;
+            for (TypeDescription typeDescription : getParameters().asTypeList().asRawTypes()) {
+                if (!first) {
+                    stringBuilder.append(",");
+                } else {
+                    first = false;
+                }
+                stringBuilder.append(typeDescription.getSourceCodeName());
+            }
+            stringBuilder.append(")");
+            TypeList exceptionTypes = getExceptionTypes().asRawTypes();
             if (exceptionTypes.size() > 0) {
                 stringBuilder.append(" throws ");
                 first = true;
@@ -514,7 +639,7 @@ public interface MethodDescription extends ByteCodeElement {
                     } else {
                         first = false;
                     }
-                    stringBuilder.append(typeDescription.getName());
+                    stringBuilder.append(typeDescription.getSourceCodeName());
                 }
             }
             return stringBuilder.toString();
@@ -541,12 +666,12 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return new TypeDescription.ForLoadedType(constructor.getDeclaringClass());
         }
 
         @Override
-        public TypeDescription getReturnType() {
+        public GenericTypeDescription getReturnType() {
             return TypeDescription.VOID;
         }
 
@@ -556,8 +681,8 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeList getExceptionTypes() {
-            return new TypeList.ForLoadedType(constructor.getExceptionTypes());
+        public GenericTypeList getExceptionTypes() {
+            return new GenericTypeList.LazyProjection.OfConstructorExceptionTypes(constructor);
         }
 
         @Override
@@ -614,6 +739,11 @@ public interface MethodDescription extends ByteCodeElement {
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations());
         }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.ForLoadedType(constructor.getTypeParameters());
+        }
     }
 
     /**
@@ -636,13 +766,13 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return new TypeDescription.ForLoadedType(method.getDeclaringClass());
         }
 
         @Override
-        public TypeDescription getReturnType() {
-            return new TypeDescription.ForLoadedType(method.getReturnType());
+        public GenericTypeDescription getReturnType() {
+            return new GenericTypeDescription.LazyProjection.OfLoadedReturnType(method);
         }
 
         @Override
@@ -651,8 +781,8 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeList getExceptionTypes() {
-            return new TypeList.ForLoadedType(method.getExceptionTypes());
+        public GenericTypeList getExceptionTypes() {
+            return new GenericTypeList.LazyProjection.OfMethodExceptionTypes(method);
         }
 
         @Override
@@ -726,6 +856,11 @@ public interface MethodDescription extends ByteCodeElement {
                     ? null
                     : AnnotationDescription.ForLoadedAnnotation.describe(value, new TypeDescription.ForLoadedType(method.getReturnType()));
         }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.ForLoadedType(method.getTypeParameters());
+        }
     }
 
     /**
@@ -735,24 +870,14 @@ public interface MethodDescription extends ByteCodeElement {
     class Latent extends AbstractMethodDescription {
 
         /**
-         * the internal name of this method.
-         */
-        private final String internalName;
-
-        /**
          * The type that is declaring this method.
          */
-        private final TypeDescription declaringType;
+        private final GenericTypeDescription declaringType;
 
         /**
-         * The return type of this method.
+         * The internal name of this method.
          */
-        private final TypeDescription returnType;
-
-        /**
-         * The parameter types of this methods.
-         */
-        private final List<? extends TypeDescription> parameterTypes;
+        private final String internalName;
 
         /**
          * The modifiers of this method.
@@ -760,67 +885,109 @@ public interface MethodDescription extends ByteCodeElement {
         private final int modifiers;
 
         /**
-         * This method's exception types.
+         * The type variables of the described method.
          */
-        private final List<? extends TypeDescription> exceptionTypes;
+        private final List<? extends GenericTypeDescription> typeVariables;
 
         /**
-         * Creates an immutable latent method description.
-         *
-         * @param internalName   The internal name of the method.
-         * @param declaringType  The type that is declaring this method latently.
-         * @param returnType     The return type of this method.
-         * @param parameterTypes The parameter types of this method.
-         * @param modifiers      The modifiers of this method.
-         * @param exceptionTypes The exception types of this method.
+         * The return type of this method.
          */
-        public Latent(String internalName,
-                      TypeDescription declaringType,
-                      TypeDescription returnType,
-                      List<? extends TypeDescription> parameterTypes,
-                      int modifiers,
-                      List<? extends TypeDescription> exceptionTypes) {
-            this.internalName = internalName;
-            this.declaringType = declaringType;
-            this.returnType = returnType;
-            this.parameterTypes = parameterTypes;
-            this.modifiers = modifiers;
-            this.exceptionTypes = exceptionTypes;
+        private final GenericTypeDescription returnType;
+
+        /**
+         * The parameter tokens describing this method.
+         */
+        private final List<? extends ParameterDescription.Token> parameterTokens;
+
+        /**
+         * This method's exception types.
+         */
+        private final List<? extends GenericTypeDescription> exceptionTypes;
+
+        /**
+         * The annotations of this method.
+         */
+        private final List<? extends AnnotationDescription> declaredAnnotations;
+
+        /**
+         * The default value of this method or {@code null} if no default annotation value is defined.
+         */
+        private final Object defaultValue;
+
+        /**
+         * Creates a new latent method description. All provided types are attached to this instance before they are returned.
+         *
+         * @param declaringType The declaring type of the method.
+         * @param token         A token representing the method's shape.
+         */
+        public Latent(GenericTypeDescription declaringType, Token token) {
+            this(declaringType,
+                    token.getInternalName(),
+                    token.getModifiers(),
+                    token.getTypeVariables(),
+                    token.getReturnType(),
+                    token.getParameterTokens(),
+                    token.getExceptionTypes(),
+                    token.getAnnotations(),
+                    token.getDefaultValue());
         }
 
         /**
-         * Creates a latent method description of a type initializer ({@code &lt;clinit&gt;}) for a given type.
+         * Creates a new latent method description. All provided types are attached to this instance before they are returned.
          *
-         * @param declaringType The type that for which a type initializer should be created.
-         * @return A method description of the type initializer of the given type.
+         * @param declaringType       The type that is declaring this method.
+         * @param internalName        The internal name of this method.
+         * @param modifiers           The modifiers of this method.
+         * @param typeVariables       The type variables of the described method.
+         * @param returnType          The return type of this method.
+         * @param parameterTokens     The parameter tokens describing this method.
+         * @param exceptionTypes      This method's exception types.
+         * @param declaredAnnotations The annotations of this method.
+         * @param defaultValue        The default value of this method or {@code null} if no default annotation value is defined.
          */
-        public static MethodDescription typeInitializerOf(TypeDescription declaringType) {
-            return new Latent(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME,
-                    declaringType,
-                    TypeDescription.VOID,
-                    new TypeList.Empty(),
-                    TYPE_INITIALIZER_MODIFIER,
-                    Collections.<TypeDescription>emptyList());
+        public Latent(GenericTypeDescription declaringType,
+                      String internalName,
+                      int modifiers,
+                      List<? extends GenericTypeDescription> typeVariables,
+                      GenericTypeDescription returnType,
+                      List<? extends ParameterDescription.Token> parameterTokens,
+                      List<? extends GenericTypeDescription> exceptionTypes,
+                      List<? extends AnnotationDescription> declaredAnnotations,
+                      Object defaultValue) {
+            this.declaringType = declaringType;
+            this.internalName = internalName;
+            this.modifiers = modifiers;
+            this.typeVariables = typeVariables;
+            this.returnType = returnType;
+            this.parameterTokens = parameterTokens;
+            this.exceptionTypes = exceptionTypes;
+            this.declaredAnnotations = declaredAnnotations;
+            this.defaultValue = defaultValue;
         }
 
         @Override
-        public TypeDescription getReturnType() {
-            return returnType;
+        public GenericTypeList getTypeVariables() {
+            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
+        }
+
+        @Override
+        public GenericTypeDescription getReturnType() {
+            return returnType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
         public ParameterList getParameters() {
-            return ParameterList.Explicit.latent(this, parameterTypes);
+            return new ParameterList.ForTokens(this, parameterTokens);
         }
 
         @Override
-        public TypeList getExceptionTypes() {
-            return new TypeList.Explicit(exceptionTypes);
+        public GenericTypeList getExceptionTypes() {
+            return GenericTypeList.ForDetachedTypes.attach(this, exceptionTypes);
         }
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Empty();
+            return new AnnotationList.Explicit(declaredAnnotations);
         }
 
         @Override
@@ -829,7 +996,7 @@ public interface MethodDescription extends ByteCodeElement {
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
+        public GenericTypeDescription getDeclaringType() {
             return declaringType;
         }
 
@@ -840,7 +1007,481 @@ public interface MethodDescription extends ByteCodeElement {
 
         @Override
         public Object getDefaultValue() {
-            return null;
+            return defaultValue;
+        }
+
+        /**
+         * A method description that representedBy the type initializer.
+         */
+        public static class TypeInitializer extends MethodDescription.AbstractMethodDescription {
+
+            /**
+             * The type for which the type initializer should be represented.
+             */
+            private final GenericTypeDescription typeDescription;
+
+            /**
+             * Creates a new method description representing the type initializer.
+             *
+             * @param typeDescription The type for which the type initializer should be represented.
+             */
+            public TypeInitializer(GenericTypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public GenericTypeDescription getReturnType() {
+                return TypeDescription.VOID;
+            }
+
+            @Override
+            public ParameterList getParameters() {
+                return new ParameterList.Empty();
+            }
+
+            @Override
+            public GenericTypeList getExceptionTypes() {
+                return new GenericTypeList.Empty();
+            }
+
+            @Override
+            public Object getDefaultValue() {
+                return NO_DEFAULT_VALUE;
+            }
+
+            @Override
+            public GenericTypeList getTypeVariables() {
+                return new GenericTypeList.Empty();
+            }
+
+            @Override
+            public AnnotationList getDeclaredAnnotations() {
+                return new AnnotationList.Empty();
+            }
+
+            @Override
+            public GenericTypeDescription getDeclaringType() {
+                return typeDescription;
+            }
+
+            @Override
+            public int getModifiers() {
+                return TYPE_INITIALIZER_MODIFIER;
+            }
+
+            @Override
+            public String getInternalName() {
+                return MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME;
+            }
+        }
+    }
+
+    /**
+     * A method description that representedBy a given method but with substituted method types.
+     */
+    class TypeSubstituting extends AbstractMethodDescription {
+
+        /**
+         * The type that declares this type-substituted method.
+         */
+        private final GenericTypeDescription declaringType;
+
+        /**
+         * The represented method description.
+         */
+        private final MethodDescription methodDescription;
+
+        /**
+         * A visitor that is applied to the method type.
+         */
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        /**
+         * Creates a method description with substituted method types.
+         *
+         * @param declaringType     The type that is declaring the substituted method.
+         * @param methodDescription The represented method description.
+         * @param visitor           A visitor that is applied to the method type.
+         */
+        public TypeSubstituting(GenericTypeDescription declaringType,
+                                MethodDescription methodDescription,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            this.declaringType = declaringType;
+            this.methodDescription = methodDescription;
+            this.visitor = visitor;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return methodDescription.getTypeVariables().accept(new VariableRetainingDelegator());
+        }
+
+        @Override
+        public GenericTypeDescription getReturnType() {
+            return methodDescription.getReturnType().accept(new VariableRetainingDelegator());
+        }
+
+        @Override
+        public ParameterList getParameters() {
+            return new ParameterList.TypeSubstituting(this, methodDescription.getParameters(), new VariableRetainingDelegator());
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypes() {
+            return methodDescription.getExceptionTypes().accept(new VariableRetainingDelegator());
+        }
+
+        @Override
+        public Object getDefaultValue() {
+            return methodDescription.getDefaultValue();
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return methodDescription.getDeclaredAnnotations();
+        }
+
+        @Override
+        public GenericTypeDescription getDeclaringType() {
+            return declaringType;
+        }
+
+        @Override
+        public int getModifiers() {
+            return methodDescription.getModifiers();
+        }
+
+        @Override
+        public String getInternalName() {
+            return methodDescription.getInternalName();
+        }
+
+        /**
+         * A visitor that only escalates to the actual visitor if a non-generic type is discovered or if a type variable
+         * that is not declared by the represented method is discovered. This way, a method's type variables are never bound
+         * by the supplied visitor as non-generic types never reference a method's type variables and since a type variable
+         * that is not declared by the represented method can never reference a type variable of the represented method.
+         */
+        protected class VariableRetainingDelegator extends GenericTypeDescription.Visitor.Substitutor {
+
+            @Override
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
+                for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
+                    if (parameter.getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(parameter)) {
+                        return visitor.onParameterizedType(parameterizedType);
+                    } else if (parameter.getSort().isWildcard()) {
+                        GenericTypeList bounds = parameter.getLowerBounds();
+                        bounds = bounds.isEmpty() ? parameter.getUpperBounds() : bounds;
+                        if (bounds.getOnly().getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(parameter)) {
+                            return visitor.onParameterizedType(parameterizedType);
+                        }
+                    }
+                    parameters.add(parameter.accept(this));
+                }
+                GenericTypeDescription ownerType = parameterizedType.getOwnerType();
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType(),
+                        parameters,
+                        ownerType == null
+                                ? null
+                                : ownerType.accept(this));
+            }
+
+            @Override
+            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
+                return visitor.onNonGenericType(typeDescription);
+            }
+
+            @Override
+            protected TypeDescription onSimpleType(TypeDescription typeDescription) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                return methodDescription.getTypeVariables().contains(typeVariable)
+                        ? new RetainedVariable(typeVariable)
+                        : visitor.onTypeVariable(typeVariable);
+            }
+
+            @Override
+            public int hashCode() {
+                return TypeSubstituting.this.hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return other != null && other.getClass() == this.getClass()
+                        && TypeSubstituting.this.equals(((VariableRetainingDelegator) other).getOuter());
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private Object getOuter() {
+                return TypeSubstituting.this;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDescription.TypeSubstituting.VariableRetainingDelegator{methodDescription=" + TypeSubstituting.this + '}';
+            }
+
+            /**
+             * A retained type variable that is declared by the method.
+             */
+            protected class RetainedVariable extends GenericTypeDescription.ForTypeVariable {
+
+                /**
+                 * The type variable this retained variable representedBy.
+                 */
+                private final GenericTypeDescription typeVariable;
+
+                /**
+                 * Creates a new retained type variable.
+                 *
+                 * @param typeVariable The type variable this retained variable representedBy.
+                 */
+                protected RetainedVariable(GenericTypeDescription typeVariable) {
+                    this.typeVariable = typeVariable;
+                }
+
+                @Override
+                public GenericTypeList getUpperBounds() {
+                    return typeVariable.getUpperBounds().accept(VariableRetainingDelegator.this);
+                }
+
+                @Override
+                public TypeVariableSource getVariableSource() {
+                    return TypeSubstituting.this;
+                }
+
+                @Override
+                public String getSymbol() {
+                    return typeVariable.getSymbol();
+                }
+            }
+        }
+    }
+
+    /**
+     * A token that representedBy a method's shape. A method token is equal to another token when the name, the raw return type
+     * and the raw parameter types are equal to those of another method token.
+     */
+    class Token implements ByteCodeElement.Token<Token> {
+
+        /**
+         * The internal name of the represented method.
+         */
+        private final String internalName;
+
+        /**
+         * The modifiers of the represented method.
+         */
+        private final int modifiers;
+
+        /**
+         * The type variables of the the represented method.
+         */
+        private final List<GenericTypeDescription> typeVariables;
+
+        /**
+         * The return type of the represented method.
+         */
+        private final GenericTypeDescription returnType;
+
+        /**
+         * The parameter tokens of the represented method.
+         */
+        private final List<? extends ParameterDescription.Token> parameterTokens;
+
+        /**
+         * The exception types of the represented method.
+         */
+        private final List<? extends GenericTypeDescription> exceptionTypes;
+
+        /**
+         * The annotations of the represented method.
+         */
+        private final List<? extends AnnotationDescription> annotations;
+
+        /**
+         * The default value of the represented method or {@code null} if no such value exists.
+         */
+        private final Object defaultValue;
+
+        /**
+         * Creates a new method token with simple values.
+         *
+         * @param internalName   The internal name of the represented method.
+         * @param modifiers      The modifiers of the represented method.
+         * @param returnType     The return type of the represented method.
+         * @param parameterTypes The parameter types of this method.
+         */
+        public Token(String internalName, int modifiers, GenericTypeDescription returnType, List<? extends GenericTypeDescription> parameterTypes) {
+            this(internalName,
+                    modifiers,
+                    Collections.<GenericTypeDescription>emptyList(),
+                    returnType,
+                    new ParameterDescription.Token.TypeList(parameterTypes),
+                    Collections.<GenericTypeDescription>emptyList(),
+                    Collections.<AnnotationDescription>emptyList(),
+                    NO_DEFAULT_VALUE);
+        }
+
+        /**
+         * Creates a new token for a method description.
+         *
+         * @param internalName    The internal name of the represented method.
+         * @param modifiers       The modifiers of the represented method.
+         * @param typeVariables   The type variables of the the represented method.
+         * @param returnType      The return type of the represented method.
+         * @param parameterTokens The parameter tokens of the represented method.
+         * @param exceptionTypes  The exception types of the represented method.
+         * @param annotations     The annotations of the represented method.
+         * @param defaultValue    The default value of the represented method or {@code null} if no such value exists.
+         */
+        public Token(String internalName,
+                     int modifiers,
+                     List<GenericTypeDescription> typeVariables,
+                     GenericTypeDescription returnType,
+                     List<? extends ParameterDescription.Token> parameterTokens,
+                     List<? extends GenericTypeDescription> exceptionTypes,
+                     List<? extends AnnotationDescription> annotations,
+                     Object defaultValue) {
+            this.internalName = internalName;
+            this.modifiers = modifiers;
+            this.typeVariables = typeVariables;
+            this.returnType = returnType;
+            this.parameterTokens = parameterTokens;
+            this.exceptionTypes = exceptionTypes;
+            this.annotations = annotations;
+            this.defaultValue = defaultValue;
+        }
+
+        /**
+         * Returns the internal name of the represented method.
+         *
+         * @return The internal name of the represented method.
+         */
+        public String getInternalName() {
+            return internalName;
+        }
+
+        /**
+         * Returns the modifiers of the represented method.
+         *
+         * @return The modifiers of the represented method.
+         */
+        public int getModifiers() {
+            return modifiers;
+        }
+
+        /**
+         * Returns the type variables of the the represented method.
+         *
+         * @return The type variables of the the represented method.
+         */
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Explicit(typeVariables);
+        }
+
+        /**
+         * Returns the return type of the represented method.
+         *
+         * @return The return type of the represented method.
+         */
+        public GenericTypeDescription getReturnType() {
+            return returnType;
+        }
+
+        /**
+         * Returns the parameter tokens of the represented method.
+         *
+         * @return The parameter tokens of the represented method.
+         */
+        public TokenList<ParameterDescription.Token> getParameterTokens() {
+            return new TokenList<ParameterDescription.Token>(parameterTokens);
+        }
+
+        /**
+         * Returns the exception types of the represented method.
+         *
+         * @return The exception types of the represented method.
+         */
+        public GenericTypeList getExceptionTypes() {
+            return new GenericTypeList.Explicit(exceptionTypes);
+        }
+
+        /**
+         * Returns the annotations of the represented method.
+         *
+         * @return The annotations of the represented method.
+         */
+        public AnnotationList getAnnotations() {
+            return new AnnotationList.Explicit(annotations);
+        }
+
+        /**
+         * Returns the default value of the represented method.
+         *
+         * @return The default value of the represented method or {@code null} if no such value exists.
+         */
+        public Object getDefaultValue() {
+            return defaultValue;
+        }
+
+        @Override
+        public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return new Token(getInternalName(),
+                    getModifiers(),
+                    getTypeVariables().accept(visitor),
+                    getReturnType().accept(visitor),
+                    getParameterTokens().accept(visitor),
+                    getExceptionTypes().accept(visitor),
+                    getAnnotations(),
+                    getDefaultValue());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof Token)) return false;
+            Token token = (Token) other;
+            if (!getInternalName().equals(token.getInternalName())) return false;
+            if (!getReturnType().asRawType().equals(token.getReturnType().asRawType())) return false;
+            List<ParameterDescription.Token> tokens = getParameterTokens(), otherTokens = token.getParameterTokens();
+            if (tokens.size() != otherTokens.size()) return false;
+            for (int index = 0; index < tokens.size(); index++) {
+                if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = getInternalName().hashCode();
+            result = 31 * result + getReturnType().asRawType().hashCode();
+            for (ParameterDescription.Token parameterToken : getParameterTokens()) {
+                result = 31 * result + parameterToken.getType().asRawType().hashCode();
+            }
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodDescription.Token{" +
+                    "internalName='" + internalName + '\'' +
+                    ", modifiers=" + modifiers +
+                    ", typeVariables=" + typeVariables +
+                    ", returnType=" + returnType +
+                    ", parameterTokens=" + parameterTokens +
+                    ", exceptionTypes=" + exceptionTypes +
+                    ", annotations=" + annotations +
+                    ", defaultValue=" + defaultValue +
+                    '}';
         }
     }
 }

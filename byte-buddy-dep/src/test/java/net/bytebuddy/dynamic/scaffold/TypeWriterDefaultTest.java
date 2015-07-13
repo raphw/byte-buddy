@@ -13,7 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import java.security.acl.Owner;
+import java.io.Serializable;
 import java.util.Collections;
 
 public class TypeWriterDefaultTest {
@@ -205,12 +205,45 @@ public class TypeWriterDefaultTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testPackageDescriptionWithModifiers() throws Exception {
+        new ByteBuddy()
+                .makePackage(FOO)
+                .modifiers(Visibility.PRIVATE)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageDescriptionWithInterfaces() throws Exception {
+        new ByteBuddy()
+                .makePackage(FOO)
+                .implement(Serializable.class)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageDescriptionWithField() throws Exception {
+        new ByteBuddy()
+                .makePackage(FOO)
+                .defineField(FOO, Void.class)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageDescriptionWithMethod() throws Exception {
+        new ByteBuddy()
+                .makePackage(FOO)
+                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList())
+                .withoutCode()
+                .make();
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyMutable();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyMutable();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.class).apply();
     }

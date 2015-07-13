@@ -55,7 +55,7 @@ public enum Removal implements StackManipulation {
      * Removes a value from the operand stack dependant of its size.
      *
      * @param typeDescription The type to remove from the stack.
-     * @return A stack manipulation that represents the removal.
+     * @return A stack manipulation that representedBy the removal.
      */
     public static StackManipulation pop(TypeDescription typeDescription) {
         switch (typeDescription.getStackSize()) {

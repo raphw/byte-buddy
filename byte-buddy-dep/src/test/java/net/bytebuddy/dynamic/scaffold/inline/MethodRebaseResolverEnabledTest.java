@@ -3,7 +3,8 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -23,6 +24,7 @@ import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 public class MethodRebaseResolverEnabledTest {
@@ -36,7 +38,7 @@ public class MethodRebaseResolverEnabledTest {
     private MethodDescription method, constructor, other;
 
     @Mock
-    private TypeDescription placeholderType, returnType, parameterType;
+    private TypeDescription placeholderType, returnType, parameterType, declaringType;
 
     @Mock
     private DynamicType dynamicType;
@@ -47,7 +49,12 @@ public class MethodRebaseResolverEnabledTest {
     private MethodRebaseResolver methodRebaseResolver;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
+        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(method.getDeclaringType()).thenReturn(declaringType);
+        when(constructor.getDeclaringType()).thenReturn(declaringType);
+        when(other.getDeclaringType()).thenReturn(declaringType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
         Set<MethodDescription> methodDescriptions = new HashSet<MethodDescription>();
@@ -57,14 +64,18 @@ public class MethodRebaseResolverEnabledTest {
         when(dynamicType.getTypeDescription()).thenReturn(placeholderType);
         when(method.getInternalName()).thenReturn(FOO);
         when(method.getReturnType()).thenReturn(returnType);
-        ParameterList methodParameterList = ParameterList.Explicit.latent(method, Collections.singletonList(parameterType));
-        when(method.getParameters()).thenReturn(methodParameterList);
+        when(method.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(method, Collections.singletonList(parameterType)));
         when(constructor.isConstructor()).thenReturn(true);
         when(constructor.getInternalName()).thenReturn(FOO);
         when(constructor.getReturnType()).thenReturn(returnType);
-        ParameterList constructorParameterList = ParameterList.Explicit.latent(method, Collections.singletonList(parameterType));
-        when(constructor.getParameters()).thenReturn(constructorParameterList);
+        when(constructor.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(method, Collections.singletonList(parameterType)));
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
+        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
+        when(placeholderType.asRawType()).thenReturn(placeholderType); // REFACTOR
+        when(placeholderType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(placeholderType);
     }
 
     @Test
@@ -81,8 +92,9 @@ public class MethodRebaseResolverEnabledTest {
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.LegalTrivial.INSTANCE));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(BAR));
-        assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
-        assertThat(resolution.getResolvedMethod().getParameters().asTypeList(), is((TypeList) new TypeList.Explicit(Collections.singletonList(parameterType))));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
+        assertThat(resolution.getResolvedMethod().getParameters().asTypeList(),
+                is((GenericTypeList) new GenericTypeList.Explicit(Collections.singletonList(parameterType))));
         assertThat(resolution.getResolvedMethod().isSynthetic(), is(true));
     }
 
@@ -91,9 +103,10 @@ public class MethodRebaseResolverEnabledTest {
         MethodRebaseResolver.Resolution resolution = methodRebaseResolver.resolve(constructor);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getAdditionalArguments(), is((StackManipulation) NullConstant.INSTANCE));
-        assertThat(resolution.getResolvedMethod().getInternalName(), is(FOO));
-        assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
-        assertThat(resolution.getResolvedMethod().getParameters().asTypeList(), is((TypeList) new TypeList.Explicit(Arrays.asList(parameterType, placeholderType))));
+        assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
+        assertThat(resolution.getResolvedMethod().getParameters().asTypeList(),
+                is((GenericTypeList) new GenericTypeList.Explicit(Arrays.asList(parameterType, placeholderType))));
         assertThat(resolution.getResolvedMethod().isSynthetic(), is(true));
     }
 

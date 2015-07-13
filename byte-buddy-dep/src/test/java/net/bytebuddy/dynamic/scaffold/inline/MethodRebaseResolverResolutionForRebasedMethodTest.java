@@ -3,7 +3,8 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -48,6 +49,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     private Implementation.Context implementationContext;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
@@ -58,19 +60,23 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodNameTransformer.transform(methodDescription)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        ParameterList parameterList = ParameterList.Explicit.latent(methodDescription, Collections.singletonList(parameterType));
-        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
+        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType); // REFACTOR
+        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType); // REFACTOR
     }
 
     @Test
     public void testPreservation() throws Exception {
-        MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.ForRebasedMethod(methodDescription, methodNameTransformer);
+        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedMethod.of(methodDescription, methodNameTransformer);
         assertThat(resolution.isRebased(), is(true));
-        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
+        assertThat(resolution.getResolvedMethod().getDeclaringType(), is((GenericTypeDescription) typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
-        assertThat(resolution.getResolvedMethod().getReturnType(), is(returnType));
-        assertThat(resolution.getResolvedMethod().getParameters(), is(ParameterList.Explicit.latent(resolution.getResolvedMethod(), Collections.singletonList(parameterType))));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
+        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(resolution.getResolvedMethod(),
+                Collections.singletonList(parameterType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
@@ -84,9 +90,11 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
             @Override
             public void apply(MethodDescription mock) {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty());
-                when(mock.getExceptionTypes()).thenReturn(new TypeList.Empty());
+                when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-                when(mock.getReturnType()).thenReturn(mock(TypeDescription.class));
+                TypeDescription returnType = mock(TypeDescription.class);
+                when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+                when(mock.getReturnType()).thenReturn(returnType);
             }
         }).refine(new ObjectPropertyAssertion.Refinement<MethodRebaseResolver.MethodNameTransformer>() {
             @Override

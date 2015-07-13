@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -585,7 +586,7 @@ public class MethodCall implements Implementation {
     protected interface TargetHandler {
 
         /**
-         * Creates a stack manipulation that represents the method's invocation.
+         * Creates a stack manipulation that representedBy the method's invocation.
          *
          * @param methodDescription The method to be invoked.
          * @param instrumentedType  The instrumented type.
@@ -647,7 +648,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType()), Duplication.SINGLE);
+                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType().asRawType()), Duplication.SINGLE);
             }
 
             @Override
@@ -698,7 +699,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                if (methodDescription.isStatic() || !methodDescription.getDeclaringType().isInstance(target)) {
+                if (methodDescription.isStatic() || !methodDescription.getDeclaringType().asRawType().isInstance(target)) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + target);
                 }
                 return FieldAccess.forField(instrumentedType.getDeclaredFields()
@@ -708,7 +709,7 @@ public class MethodCall implements Implementation {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(fieldName, new TypeDescription.ForLoadedType(target.getClass()), FIELD_MODIFIERS)
+                        .withField(new FieldDescription.Token(fieldName, FIELD_MODIFIERS, new TypeDescription.ForLoadedType(target.getClass())))
                         .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, target));
             }
 
@@ -778,7 +779,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(fieldName, fieldType, FIELD_MODIFIERS);
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, FIELD_MODIFIERS, fieldType));
             }
 
             @Override
@@ -973,8 +974,8 @@ public class MethodCall implements Implementation {
                 }
                 ParameterDescription parameterDescription = interceptedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(parameterDescription.getTypeDescription()).loadOffset(parameterDescription.getOffset()),
-                        assigner.assign(parameterDescription.getTypeDescription(), targetType, dynamicallyTyped));
+                        MethodVariableAccess.forType(parameterDescription.getType().asRawType()).loadOffset(parameterDescription.getOffset()),
+                        assigner.assign(parameterDescription.getType().asRawType(), targetType, dynamicallyTyped));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + targetType + " for " + interceptedMethod);
                 }
@@ -1097,9 +1098,8 @@ public class MethodCall implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(fieldName,
-                        new TypeDescription.ForLoadedType(value.getClass()),
-                        FIELD_MODIFIER)
+                return instrumentedType
+                        .withField(new FieldDescription.Token(fieldName, FIELD_MODIFIER, new TypeDescription.ForLoadedType(value.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField<Object>(fieldName, value, true));
             }
 
@@ -1176,7 +1176,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(fieldName, fieldType, MODIFIERS);
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, MODIFIERS, fieldType));
             }
 
             @Override
@@ -1228,14 +1228,14 @@ public class MethodCall implements Implementation {
                                              TypeDescription targetType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                TypeDescription currentType = instrumentedType;
+                GenericTypeDescription currentType = instrumentedType;
                 FieldDescription fieldDescription = null;
                 do {
-                    FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName));
+                    FieldList fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
                     if (fieldList.size() != 0) {
                         fieldDescription = fieldList.getOnly();
                     }
-                    currentType = currentType.getSupertype();
+                    currentType = currentType.getSuperType();
                 }
                 while (currentType != null && (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)));
                 if (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)) {
@@ -1248,7 +1248,7 @@ public class MethodCall implements Implementation {
                                 ? StackManipulation.LegalTrivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(fieldDescription).getter(),
-                        assigner.assign(fieldDescription.getFieldType(), targetType, dynamicallyTyped)
+                        assigner.assign(fieldDescription.getType().asRawType(), targetType, dynamicallyTyped)
                 );
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + targetType);
@@ -1973,7 +1973,7 @@ public class MethodCall implements Implementation {
          *
          * @param methodDescription    The method to be invoked.
          * @param implementationTarget The implementation target of the instrumented instance.
-         * @return A stack manipulation that represents the method invocation.
+         * @return A stack manipulation that representedBy the method invocation.
          */
         StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget);
 
@@ -2043,8 +2043,7 @@ public class MethodCall implements Implementation {
                 if (!methodDescription.isDefaultMethod()) {
                     throw new IllegalStateException("Not a default method: " + methodDescription);
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription
-                        .getDeclaringType(), methodDescription.getUniqueSignature());
+                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asRawType(), methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
                 }
@@ -2094,13 +2093,13 @@ public class MethodCall implements Implementation {
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
                 StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType()
-                        : invokedMethod.getReturnType(), interceptedMethod.getReturnType(), dynamicallyTyped);
+                        ? invokedMethod.getDeclaringType().asRawType()
+                        : invokedMethod.getReturnType().asRawType(), interceptedMethod.getReturnType().asRawType(), dynamicallyTyped);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + interceptedMethod);
                 }
                 return new StackManipulation.Compound(stackManipulation,
-                        MethodReturn.returning(interceptedMethod.getReturnType()));
+                        MethodReturn.returning(interceptedMethod.getReturnType().asRawType()));
             }
 
             @Override
@@ -2126,8 +2125,8 @@ public class MethodCall implements Implementation {
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
                 return Removal.pop(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType()
-                        : invokedMethod.getReturnType());
+                        ? invokedMethod.getDeclaringType().asRawType()
+                        : invokedMethod.getReturnType().asRawType());
             }
 
             @Override
@@ -2142,7 +2141,7 @@ public class MethodCall implements Implementation {
      * an invocation method. Some methods can for example be invoked both virtually or as a super method invocation.
      * Similarly, interface methods can be invoked virtually or as an explicit invocation of a default method. If
      * no explicit invocation type is set, a method is always invoked virtually unless the method
-     * represents a static methods or a constructor.
+     * representedBy a static methods or a constructor.
      */
     public static class WithoutSpecifiedTarget extends MethodCall {
 
@@ -2199,7 +2198,7 @@ public class MethodCall implements Implementation {
          */
         public MethodCall onInstanceField(TypeDescription typeDescription, String fieldName) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForInstanceField(nonNull(fieldName), nonVoid(typeDescription)),
+                    new TargetHandler.ForInstanceField(nonNull(fieldName), isActualType(typeDescription)),
                     argumentLoaders,
                     MethodInvoker.ForStandardInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
@@ -2278,7 +2277,7 @@ public class MethodCall implements Implementation {
                           Context implementationContext,
                           MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
-            TypeList methodParameters = invokedMethod.getParameters().asTypeList();
+            TypeList methodParameters = invokedMethod.getParameters().asTypeList().asRawTypes();
             if (methodParameters.size() != argumentLoaders.size()) {
                 throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
             }

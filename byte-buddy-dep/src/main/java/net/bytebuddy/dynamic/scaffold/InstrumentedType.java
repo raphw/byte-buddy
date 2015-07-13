@@ -6,20 +6,19 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static net.bytebuddy.utility.ByteBuddyCommons.joinUnique;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
@@ -30,30 +29,18 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param internalName The internal name of the new field.
-     * @param fieldType    A description of the type of the new field.
-     * @param modifiers    The modifier of the new field.
+     * @param fieldToken A token that representedBy the field's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
-    InstrumentedType withField(String internalName,
-                               TypeDescription fieldType,
-                               int modifiers);
+    InstrumentedType withField(FieldDescription.Token fieldToken);
 
     /**
      * Creates a new instrumented type that includes a new method or constructor.
      *
-     * @param internalName   The internal name of the new field.
-     * @param returnType     A description of the return type of the new field.
-     * @param parameterTypes A list of descriptions of the parameter types.
-     * @param exceptionTypes A list of descriptions of the exception types that are declared by this method.
-     * @param modifiers      The modifier of the new field.
-     * @return A new instrumented type that is equal to this instrumented type but with the additional field.
+     * @param methodToken A token that representedBy the method's shape. This token must represent types in their detached state.
+     * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
-    InstrumentedType withMethod(String internalName,
-                                TypeDescription returnType,
-                                List<? extends TypeDescription> parameterTypes,
-                                List<? extends TypeDescription> exceptionTypes,
-                                int modifiers);
+    InstrumentedType withMethod(MethodDescription.Token methodToken);
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -87,15 +74,6 @@ public interface InstrumentedType extends TypeDescription {
      * @return This instrumented type's type initializer.
      */
     TypeInitializer getTypeInitializer();
-
-    /**
-     * Creates a <i>compressed</i> version of this instrumented type which only needs to fulfil the
-     * {@link TypeDescription} interface. This allows
-     * for a potential compression of the representation of {@code this} instrumented type.
-     *
-     * @return A (potentially) compressed version of {@code this} instrumented type.
-     */
-    TypeDescription detach();
 
     /**
      * A type initializer is responsible for defining a type's static initialization block.
@@ -222,132 +200,240 @@ public interface InstrumentedType extends TypeDescription {
     }
 
     /**
-     * An abstract base implementation of an instrumented type.
+     * A default implementation of an instrumented type.
      */
-    abstract class AbstractBase extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
+    class Default extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
 
         /**
-         * The loaded type initializer for this instrumented type.
+         * The binary name of the instrumented type.
          */
-        protected final LoadedTypeInitializer loadedTypeInitializer;
+        private final String name;
 
         /**
-         * The type initializer for this instrumented type.
+         * The modifiers of the instrumented type.
          */
-        protected final TypeInitializer typeInitializer;
+        private final int modifiers;
 
         /**
-         * A list of field descriptions registered for this instrumented type.
+         * A list of type variables of the instrumented type.
          */
-        protected final List<FieldDescription> fieldDescriptions;
+        private final List<? extends GenericTypeDescription> typeVariables;
 
         /**
-         * A list of method descriptions registered for this instrumented type.
+         * The generic super type of the instrumented type.
          */
-        protected final List<MethodDescription> methodDescriptions;
+        private final GenericTypeDescription superType;
 
         /**
-         * Creates a new instrumented type with a no-op loaded type initializer and without registered fields or
-         * methods.
+         * A list of interfaces of the instrumented type.
          */
-        protected AbstractBase() {
-            loadedTypeInitializer = LoadedTypeInitializer.NoOp.INSTANCE;
-            typeInitializer = TypeInitializer.None.INSTANCE;
-            fieldDescriptions = Collections.emptyList();
-            methodDescriptions = Collections.emptyList();
+        private final List<? extends GenericTypeDescription> interfaceTypes;
+
+        /**
+         * A list of field tokens describing the fields of the instrumented type.
+         */
+        private final List<? extends FieldDescription.Token> fieldTokens;
+
+        /**
+         * A list of method tokens describing the methods of the instrumented type.
+         */
+        private final List<? extends MethodDescription.Token> methodTokens;
+
+        /**
+         * A list of annotations of the annotated type.
+         */
+        private final List<? extends AnnotationDescription> annotationDescriptions;
+
+        /**
+         * The type initializer of the instrumented type.
+         */
+        private final TypeInitializer typeInitializer;
+
+        /**
+         * The loaded type initializer of the instrumented type.
+         */
+        private final LoadedTypeInitializer loadedTypeInitializer;
+
+        /**
+         * The declaring type of the instrumented type or {@code null} if no such type exists.
+         */
+        private final TypeDescription declaringType;
+
+        /**
+         * The enclosing method of the instrumented type or {@code null} if no such type exists.
+         */
+        private final MethodDescription enclosingMethod;
+
+        /**
+         * The enclosing type of the instrumented type or {@code null} if no such type exists.
+         */
+        private final TypeDescription enclosingType;
+
+        /**
+         * {@code true} if this type is a member class.
+         */
+        private final boolean memberClass;
+
+        /**
+         * {@code true} if this type is a anonymous class.
+         */
+        private final boolean anonymousClass;
+
+        /**
+         * {@code true} if this type is a local class.
+         */
+        private final boolean localClass;
+
+        /**
+         * Creates a new instrumented type with default values for any properties that only exist for types that are declared within another type.
+         *
+         * @param name                   The binary name of the instrumented type.
+         * @param modifiers              The modifiers of the instrumented type.
+         * @param typeVariables          A list of type variables of the instrumented type.
+         * @param superType              The generic super type of the instrumented type.
+         * @param interfaceTypes         A list of interfaces of the instrumented type.
+         * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
+         * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
+         * @param annotationDescriptions A list of annotations of the annotated type.
+         * @param typeInitializer        The type initializer of the instrumented type.
+         * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
+         */
+        public Default(String name,
+                       int modifiers,
+                       List<? extends GenericTypeDescription> typeVariables,
+                       GenericTypeDescription superType,
+                       List<? extends GenericTypeDescription> interfaceTypes,
+                       List<? extends FieldDescription.Token> fieldTokens,
+                       List<? extends MethodDescription.Token> methodTokens,
+                       List<? extends AnnotationDescription> annotationDescriptions,
+                       TypeInitializer typeInitializer,
+                       LoadedTypeInitializer loadedTypeInitializer) {
+            this(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    null,
+                    null,
+                    null,
+                    false,
+                    false,
+                    false);
         }
 
         /**
-         * Creates a new instrumented type with the given loaded type initializer and field and methods. All field and
-         * method descriptions will be replaced by new instances where type descriptions with the internalName of this
-         * type as given by {@code typeInternalName} are replaced by references to {@code this}.
+         * Creates a new instrumented type.
          *
-         * @param loadedTypeInitializer A loaded type initializer for this instrumented type.
-         * @param typeInitializer       A type initializer for this instrumented type.
-         * @param typeName              The non-internal name of this instrumented type.
-         * @param fieldDescriptions     A list of field descriptions for this instrumented type.
-         * @param methodDescriptions    A list of method descriptions for this instrumented type.
+         * @param name                   The binary name of the instrumented type.
+         * @param modifiers              The modifiers of the instrumented type.
+         * @param typeVariables          A list of type variables of the instrumented type.
+         * @param superType              The generic super type of the instrumented type.
+         * @param interfaceTypes         A list of interfaces of the instrumented type.
+         * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
+         * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
+         * @param annotationDescriptions A list of annotations of the annotated type.
+         * @param typeInitializer        The type initializer of the instrumented type.
+         * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
+         * @param declaringType          The declaring type of the instrumented type or {@code null} if no such type exists.
+         * @param enclosingMethod        The enclosing method of the instrumented type or {@code null} if no such type exists.
+         * @param enclosingType          The enclosing type of the instrumented type or {@code null} if no such type exists.
+         * @param memberClass            {@code true} if this type is a member class.
+         * @param anonymousClass         {@code true} if this type is a anonymous class.
+         * @param localClass             {@code true} if this type is a local class.
          */
-        protected AbstractBase(LoadedTypeInitializer loadedTypeInitializer,
-                               TypeInitializer typeInitializer,
-                               String typeName,
-                               List<? extends FieldDescription> fieldDescriptions,
-                               List<? extends MethodDescription> methodDescriptions) {
-            this.loadedTypeInitializer = loadedTypeInitializer;
+        public Default(String name,
+                       int modifiers,
+                       List<? extends GenericTypeDescription> typeVariables,
+                       GenericTypeDescription superType,
+                       List<? extends GenericTypeDescription> interfaceTypes,
+                       List<? extends FieldDescription.Token> fieldTokens,
+                       List<? extends MethodDescription.Token> methodTokens,
+                       List<? extends AnnotationDescription> annotationDescriptions,
+                       TypeInitializer typeInitializer,
+                       LoadedTypeInitializer loadedTypeInitializer,
+                       TypeDescription declaringType,
+                       MethodDescription enclosingMethod,
+                       TypeDescription enclosingType,
+                       boolean memberClass,
+                       boolean anonymousClass,
+                       boolean localClass) {
+            this.name = name;
+            this.modifiers = modifiers;
+            this.typeVariables = typeVariables;
+            this.superType = superType;
+            this.interfaceTypes = interfaceTypes;
+            this.fieldTokens = fieldTokens;
+            this.methodTokens = methodTokens;
+            this.annotationDescriptions = annotationDescriptions;
             this.typeInitializer = typeInitializer;
-            this.fieldDescriptions = new ArrayList<FieldDescription>(fieldDescriptions.size());
-            for (FieldDescription fieldDescription : fieldDescriptions) {
-                this.fieldDescriptions.add(new FieldToken(typeName, fieldDescription));
-            }
-            this.methodDescriptions = new ArrayList<MethodDescription>(methodDescriptions.size());
-            for (MethodDescription methodDescription : methodDescriptions) {
-                this.methodDescriptions.add(new MethodToken(typeName, methodDescription));
-            }
-        }
-
-        /**
-         * Substitutes an <i>outdated</i> reference to the instrumented type with a reference to <i>this</i>.
-         *
-         * @param typeName        The non-internal name of this instrumented type.
-         * @param typeDescription The type description to be checked to represent this instrumented type.
-         * @return This type, if the type description represents the name of the instrumented type or the given
-         * instrumented type if this is not the case.
-         */
-        private TypeDescription withSubstitutedSelfReference(String typeName, TypeDescription typeDescription) {
-            int arity = 0;
-            TypeDescription componentType = typeDescription;
-            while (componentType.isArray()) {
-                arity++;
-                componentType = componentType.getComponentType();
-            }
-            return componentType.getName().equals(typeName)
-                    ? ArrayProjection.of(this, arity)
-                    : typeDescription;
+            this.loadedTypeInitializer = loadedTypeInitializer;
+            this.declaringType = declaringType;
+            this.enclosingMethod = enclosingMethod;
+            this.enclosingType = enclosingType;
+            this.memberClass = memberClass;
+            this.anonymousClass = anonymousClass;
+            this.localClass = localClass;
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
-            return null;
+        public InstrumentedType withField(FieldDescription.Token fieldToken) {
+            return new Default(this.name,
+                    this.modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    joinUnique(fieldTokens, fieldToken),
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
         }
 
         @Override
-        public TypeDescription getEnclosingType() {
-            return null;
+        public InstrumentedType withMethod(MethodDescription.Token methodToken) {
+            return new Default(name,
+                    this.modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    joinUnique(methodTokens, methodToken),
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
         }
 
         @Override
-        public TypeDescription getDeclaringType() {
-            return null;
+        public InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
         }
 
         @Override
-        public boolean isAnonymousClass() {
-            return false;
-        }
-
-        @Override
-        public String getCanonicalName() {
-            return getName();
-        }
-
-        @Override
-        public boolean isLocalClass() {
-            return false;
-        }
-
-        @Override
-        public boolean isMemberClass() {
-            return false;
-        }
-
-        @Override
-        public FieldList getDeclaredFields() {
-            return new FieldList.Explicit(fieldDescriptions);
-        }
-
-        @Override
-        public MethodList getDeclaredMethods() {
-            return new MethodList.Explicit(methodDescriptions);
+        public InstrumentedType withInitializer(ByteCodeAppender byteCodeAppender) {
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer.expandWith(byteCodeAppender),
+                    loadedTypeInitializer);
         }
 
         @Override
@@ -361,276 +447,83 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
+        public MethodDescription getEnclosingMethod() {
+            return enclosingMethod;
+        }
+
+        @Override
+        public TypeDescription getEnclosingType() {
+            return enclosingType;
+        }
+
+        @Override
+        public boolean isAnonymousClass() {
+            return anonymousClass;
+        }
+
+        @Override
+        public boolean isLocalClass() {
+            return localClass;
+        }
+
+        @Override
+        public boolean isMemberClass() {
+            return memberClass;
+        }
+
+        @Override
         public PackageDescription getPackage() {
-            String packageName = getPackageName();
-            return packageName == null
+            int packageIndex = name.lastIndexOf('.');
+            return packageIndex == -1
                     ? null
-                    : new PackageDescription.Simple(packageName);
+                    : new PackageDescription.Simple(name.substring(0, packageIndex));
         }
 
-        /**
-         * An implementation of a new field for the enclosing instrumented type.
-         */
-        protected class FieldToken extends FieldDescription.AbstractFieldDescription {
-
-            /**
-             * The name of the field token.
-             */
-            private final String name;
-
-            /**
-             * The type of the field.
-             */
-            private final TypeDescription fieldType;
-
-            /**
-             * The modifiers of the field.
-             */
-            private final int modifiers;
-
-            /**
-             * The declared annotations of this field.
-             */
-            private final List<AnnotationDescription> declaredAnnotations;
-
-            /**
-             * Creates a new field for the enclosing instrumented type.
-             *
-             * @param typeName         The non-internal name of the enclosing instrumented type.
-             * @param fieldDescription The field description to copy.
-             */
-            private FieldToken(String typeName, FieldDescription fieldDescription) {
-                name = fieldDescription.getName();
-                fieldType = withSubstitutedSelfReference(typeName, fieldDescription.getFieldType());
-                modifiers = fieldDescription.getModifiers();
-                declaredAnnotations = fieldDescription.getDeclaredAnnotations();
-            }
-
-            @Override
-            public TypeDescription getFieldType() {
-                return fieldType;
-            }
-
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.Explicit(declaredAnnotations);
-            }
-
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public String getDescriptor() {
-                return fieldType.getDescriptor();
-            }
-
-            @Override
-            public TypeDescription getDeclaringType() {
-                return AbstractBase.this;
-            }
-
-            @Override
-            public int getModifiers() {
-                return modifiers;
-            }
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Explicit(annotationDescriptions);
         }
 
-        /**
-         * An implementation of a new method or constructor for the enclosing instrumented type.
-         */
-        protected class MethodToken extends MethodDescription.AbstractMethodDescription {
+        @Override
+        public TypeDescription getDeclaringType() {
+            return declaringType;
+        }
 
-            /**
-             * The internal name of the represented method.
-             */
-            private final String internalName;
+        @Override
+        protected GenericTypeDescription getDeclaredSuperType() {
+            return superType == null
+                    ? null
+                    : superType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+        }
 
-            /**
-             * The return type of the represented method.
-             */
-            private final TypeDescription returnType;
+        @Override
+        protected GenericTypeList getDeclaredInterfaces() {
+            return GenericTypeList.ForDetachedTypes.attach(this, interfaceTypes);
+        }
 
-            /**
-             * The exception types of the represented method.
-             */
-            private final List<TypeDescription> exceptionTypes;
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.ForTokens(this, fieldTokens);
+        }
 
-            /**
-             * The modifiers of the represented method.
-             */
-            private final int modifiers;
+        @Override
+        public MethodList getDeclaredMethods() {
+            return new MethodList.ForTokens(this, methodTokens);
+        }
 
-            /**
-             * The declared annotations of this method.
-             */
-            private final List<AnnotationDescription> declaredAnnotations;
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
+        }
 
-            /**
-             * A list of descriptions of the method's parameters.
-             */
-            private final List<ParameterDescription> parameters;
+        @Override
+        public int getModifiers() {
+            return modifiers;
+        }
 
-            /**
-             * The default value of this method or {@code null} if no such value exists.
-             */
-            private final Object defaultValue;
-
-            /**
-             * Creates a new method or constructor for the enclosing instrumented type.
-             *
-             * @param typeName          The non-internal name of the enclosing instrumented type.
-             * @param methodDescription The method description to copy.
-             */
-            private MethodToken(String typeName, MethodDescription methodDescription) {
-                internalName = methodDescription.getInternalName();
-                returnType = withSubstitutedSelfReference(typeName, methodDescription.getReturnType());
-                exceptionTypes = new ArrayList<TypeDescription>(methodDescription.getExceptionTypes().size());
-                for (TypeDescription typeDescription : methodDescription.getExceptionTypes()) {
-                    exceptionTypes.add(withSubstitutedSelfReference(typeName, typeDescription));
-                }
-                modifiers = methodDescription.getModifiers();
-                declaredAnnotations = methodDescription.getDeclaredAnnotations();
-                parameters = new ArrayList<ParameterDescription>(methodDescription.getParameters().size());
-                for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                    parameters.add(new ParameterToken(typeName, parameterDescription));
-                }
-                defaultValue = methodDescription.getDefaultValue();
-            }
-
-            @Override
-            public TypeDescription getReturnType() {
-                return returnType;
-            }
-
-            @Override
-            public TypeList getExceptionTypes() {
-                return new TypeList.Explicit(exceptionTypes);
-            }
-
-            @Override
-            public ParameterList getParameters() {
-                return new ParameterList.Explicit(parameters);
-            }
-
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.Explicit(declaredAnnotations);
-            }
-
-            @Override
-            public String getInternalName() {
-                return internalName;
-            }
-
-            @Override
-            public TypeDescription getDeclaringType() {
-                return AbstractBase.this;
-            }
-
-            @Override
-            public int getModifiers() {
-                return modifiers;
-            }
-
-            @Override
-            public Object getDefaultValue() {
-                return defaultValue;
-            }
-
-            /**
-             * An implementation of a method parameter for a method of an instrumented type.
-             */
-            protected class ParameterToken extends ParameterDescription.AbstractParameterDescription {
-
-                /**
-                 * The type of the parameter.
-                 */
-                private final TypeDescription parameterType;
-
-                /**
-                 * The index of the parameter.
-                 */
-                private final int index;
-
-                /**
-                 * The name of the parameter or {@code null} if no explicit name is known for this parameter.
-                 */
-                private final String name;
-
-                /**
-                 * The modifiers of this parameter or {@code null} if no such modifiers are known.
-                 */
-                private final Integer modifiers;
-
-                /**
-                 * The annotations of this parameter.
-                 */
-                private final List<AnnotationDescription> parameterAnnotations;
-
-                /**
-                 * Creates a new parameter token based on an existing description of a parameter.
-                 *
-                 * @param typeName             The name of the type.
-                 * @param parameterDescription The parameter description to copy.
-                 */
-                protected ParameterToken(String typeName, ParameterDescription parameterDescription) {
-                    parameterType = withSubstitutedSelfReference(typeName, parameterDescription.getTypeDescription());
-                    index = parameterDescription.getIndex();
-                    name = parameterDescription.isNamed()
-                            ? parameterDescription.getName()
-                            : null;
-                    modifiers = parameterDescription.hasModifiers()
-                            ? getModifiers()
-                            : null;
-                    parameterAnnotations = Collections.emptyList();
-                }
-
-                @Override
-                public TypeDescription getTypeDescription() {
-                    return parameterType;
-                }
-
-                @Override
-                public MethodDescription getDeclaringMethod() {
-                    return MethodToken.this;
-                }
-
-                @Override
-                public int getIndex() {
-                    return index;
-                }
-
-                @Override
-                public boolean isNamed() {
-                    return name != null;
-                }
-
-                @Override
-                public boolean hasModifiers() {
-                    return modifiers != null;
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Explicit(parameterAnnotations);
-                }
-
-                @Override
-                public int getModifiers() {
-                    return hasModifiers()
-                            ? modifiers
-                            : super.getModifiers();
-                }
-
-                @Override
-                public String getName() {
-                    return isNamed()
-                            ? name
-                            : super.getName();
-                }
-            }
+        @Override
+        public String getName() {
+            return name;
         }
     }
 }

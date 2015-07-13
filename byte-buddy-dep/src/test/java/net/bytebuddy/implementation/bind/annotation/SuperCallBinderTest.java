@@ -28,9 +28,10 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getTypeDescription()).thenReturn(targetParameterType);
+        when(target.getType()).thenReturn(targetParameterType);
         when(implementationTarget.invokeSuper(eq(source), any(Implementation.Target.MethodLookup.class)))
                 .thenReturn(specialMethodInvocation);
+        when(targetParameterType.asRawType()).thenReturn(targetParameterType);
     }
 
     @Override

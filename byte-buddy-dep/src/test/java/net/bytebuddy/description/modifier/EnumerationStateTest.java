@@ -14,17 +14,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class EnumerationStateTest extends AbstractModifierContributorTest {
 
-    public EnumerationStateTest(ModifierContributor modifierContributor, int expectedModifier) {
-        super(modifierContributor, expectedModifier);
+    public EnumerationStateTest(ModifierContributor modifierContributor, int expectedModifier, boolean defaultModifier) {
+        super(modifierContributor, expectedModifier, defaultModifier);
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {EnumerationState.ENUMERATION, Opcodes.ACC_ENUM},
-                {EnumerationState.is(true), Opcodes.ACC_ENUM},
-                {EnumerationState.NON_ENUMERATION, 0},
-                {EnumerationState.is(false), 0}
+                {EnumerationState.PLAIN, 0, true},
+                {EnumerationState.is(false), 0, true},
+                {EnumerationState.ENUMERATION, Opcodes.ACC_ENUM, false},
+                {EnumerationState.is(true), Opcodes.ACC_ENUM, false}
         });
     }
 

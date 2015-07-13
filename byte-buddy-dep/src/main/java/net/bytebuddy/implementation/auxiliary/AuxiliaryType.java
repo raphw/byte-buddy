@@ -26,7 +26,7 @@ public interface AuxiliaryType {
     /**
      * Creates a new auxiliary type.
      *
-     * @param auxiliaryTypeName     The fully qualified non-internal name for this auxiliary type. The type should be in
+     * @param auxiliaryTypeName     The fully qualified binary name for this auxiliary type. The type should be in
      *                              the same package than the instrumented type this auxiliary type is providing services
      *                              to in order to allow package-private access.
      * @param classFileVersion      The class file version the auxiliary class should be written in.

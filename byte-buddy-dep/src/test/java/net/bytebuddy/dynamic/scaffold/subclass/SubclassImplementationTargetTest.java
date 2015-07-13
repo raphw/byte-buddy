@@ -4,7 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
@@ -39,32 +39,35 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private ParameterList parameterList;
 
     @Mock
-    private TypeList parameterTypes;
+    private GenericTypeList parameterTypes;
 
     @Override
     @Before
     public void setUp() throws Exception {
         when(parameterList.asTypeList()).thenReturn(parameterTypes);
-        when(instrumentedType.getSupertype()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(superMethodConstructor)));
         when(superType.getInternalName()).thenReturn(BAR);
-        when(superMethod.getDeclaringType()).thenReturn(superType);
+        when(superType.asRawType()).thenReturn(superType);
+        when(superType.asRawType()).thenReturn(superType);
         when(superType.getStackSize()).thenReturn(StackSize.ZERO);
         when(superMethod.getReturnType()).thenReturn(returnType);
         when(superMethod.getInternalName()).thenReturn(BAZ);
         when(superMethod.getDescriptor()).thenReturn(FOOBAR);
         when(superMethod.getParameters()).thenReturn(parameterList);
+        when(superMethod.getDeclaringType()).thenReturn(superType);
         when(superMethodConstructor.isConstructor()).thenReturn(true);
         when(superMethodConstructor.getParameters()).thenReturn(parameterList);
         when(superMethodConstructor.getReturnType()).thenReturn(returnType);
         when(superMethodConstructor.isSpecializableFor(superType)).thenReturn(true);
         when(superMethodConstructor.getInternalName()).thenReturn(QUXBAZ);
         when(superMethodConstructor.getDescriptor()).thenReturn(BAZBAR);
+        when(superMethodConstructor.getDeclaringType()).thenReturn(superType);
         super.setUp();
     }
 
     @Override
-    protected Implementation.Target makeimplementationTarget() {
+    protected Implementation.Target makeImplementationTarget() {
         return new SubclassImplementationTarget(finding,
                 bridgeMethodResolverFactory,
                 SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE);
@@ -117,7 +120,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         assertThat(new SubclassImplementationTarget(finding,
                         bridgeMethodResolverFactory,
                         SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE).getOriginType(),
-                is(finding.getTypeDescription().getSupertype()));
+                is(finding.getTypeDescription().getSuperType()));
     }
 
     @Test
@@ -137,7 +140,8 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
                 when(mock.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(mock.getTypeDescription()).thenReturn(typeDescription);
-                when(typeDescription.getSupertype()).thenReturn(typeDescription);
+                when(typeDescription.asRawType()).thenReturn(typeDescription);
+                when(typeDescription.getSuperType()).thenReturn(typeDescription);
                 when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
             }
         }).refine(new ObjectPropertyAssertion.Refinement<BridgeMethodResolver.Factory>() {

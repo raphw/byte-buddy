@@ -3,10 +3,12 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.ArgumentTypeResolver;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -27,6 +29,17 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     public ArgumentBinderTest() {
         super(Argument.class);
+    }
+
+    @Override
+    @Before
+    @SuppressWarnings("unchecked")
+    public void setUp() throws Exception {
+        super.setUp();
+        when(sourceType.asRawType()).thenReturn(sourceType); // REFACTOR
+        when(sourceType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(sourceType); // REFACTOR
+        when(targetType.asRawType()).thenReturn(targetType);
+        when(targetType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(targetType); // REFACTOR
     }
 
     @Override
@@ -73,10 +86,9 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         }
         when(sourceType.getStackSize()).thenReturn(StackSize.ZERO);
         typeDescriptions.add(sourceIndex, sourceType);
-        ParameterList parameterList = ParameterList.Explicit.latent(source, typeDescriptions);
-        when(source.getParameters()).thenReturn(parameterList);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, typeDescriptions));
         when(source.isStatic()).thenReturn(false);
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(annotations));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -91,7 +103,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         }
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameters();
-        verify(target, atLeast(1)).getTypeDescription();
+        verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
         verify(assigner).assign(sourceType, targetType, dynamicallyTyped);
         verifyNoMoreInteractions(assigner);
@@ -131,7 +143,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         ObjectPropertyAssertion.of(Argument.Binder.class).apply();
         ObjectPropertyAssertion.of(Argument.BindingMechanic.class).apply();
         ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.class).apply();
-        ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.class).applyMutable();
+        ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.class).applyBasic();
 
     }
 

@@ -156,9 +156,8 @@ public enum MethodVariableAccess {
         } else {
             offset = StackSize.ZERO.getSize();
         }
-        for (TypeDescription parameterType : methodDescription.getParameters().asTypeList()) {
-            stackManipulation[parameterIndex++] = typeCastingHandler
-                    .wrapNext(forType(parameterType).loadOffset(offset), parameterType);
+        for (TypeDescription parameterType : methodDescription.getParameters().asTypeList().asRawTypes()) {
+            stackManipulation[parameterIndex++] = typeCastingHandler.wrapNext(forType(parameterType).loadOffset(offset), parameterType);
             offset += parameterType.getStackSize().getSize();
         }
         return new StackManipulation.Compound(stackManipulation);
@@ -192,9 +191,9 @@ public enum MethodVariableAccess {
          * Returns the given stack manipulation while possibly wrapping the operation by a type casting
          * if this is required.
          *
-         * @param variableAccess The stack manipulation that represents the variable access.
+         * @param variableAccess The stack manipulation that representedBy the variable access.
          * @param parameterType  The type of the loaded variable that is represented by the stack manipulation.
-         * @return A stack manipulation that represents the given variable access and potentially an additional
+         * @return A stack manipulation that representedBy the given variable access and potentially an additional
          * type casting.
          */
         StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType);
@@ -239,7 +238,7 @@ public enum MethodVariableAccess {
              * @param targetMethod The target of the bridge method.
              */
             public ForBridgeTarget(MethodDescription targetMethod) {
-                typeIterator = targetMethod.getParameters().asTypeList().iterator();
+                typeIterator = targetMethod.getParameters().asTypeList().asRawTypes().iterator();
             }
 
             @Override

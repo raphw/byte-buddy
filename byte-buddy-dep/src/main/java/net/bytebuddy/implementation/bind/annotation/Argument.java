@@ -157,13 +157,12 @@ public @interface Argument {
                                                                Assigner assigner) {
             Argument argument = annotation.loadSilent();
             if (argument.value() < 0) {
-                throw new IllegalArgumentException(String.format("Argument annotation on %d's argument virtual " +
-                        "%s holds negative index", target.getIndex(), target));
+                throw new IllegalArgumentException("@Argument annotation on " + target + " specifies negative index");
             } else if (source.getParameters().size() <= argument.value()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return argument.bindingMechanic().makeBinding(source.getParameters().get(argument.value()).getTypeDescription(),
-                    target.getTypeDescription(),
+            return argument.bindingMechanic().makeBinding(source.getParameters().get(argument.value()).getType().asRawType(),
+                    target.getType().asRawType(),
                     argument.value(),
                     assigner,
                     RuntimeType.Verifier.check(target),

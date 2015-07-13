@@ -4,10 +4,14 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ModifierResolver;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.LatentMethodMatcher;
+
+import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -24,10 +28,9 @@ public interface ConstructorStrategy {
      * created dynamic type.
      *
      * @param instrumentedType The type for which the constructors should be created.
-     * @return A list of constructor descriptions which will be mimicked by the instrumented type of which
-     * the {@code superType} is the direct super type of the instrumented type.
+     * @return A list of tokens that describe the constructors that are to be implemented.
      */
-    MethodList extractConstructors(TypeDescription instrumentedType);
+    List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType);
 
     /**
      * Returns a method registry that is capable of creating byte code for the constructors that were
@@ -40,8 +43,7 @@ public interface ConstructorStrategy {
      * @return A method registry that is capable of providing byte code for the constructors that were added by
      * this strategy.
      */
-    MethodRegistry inject(MethodRegistry methodRegistry,
-                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
+    MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
 
     /**
      * Default implementations of constructor strategies.
@@ -55,8 +57,8 @@ public interface ConstructorStrategy {
          */
         NO_CONSTRUCTORS {
             @Override
-            public MethodList extractConstructors(TypeDescription superType) {
-                return new MethodList.Empty();
+            public List<MethodDescription.Token> extractConstructors(TypeDescription superType) {
+                return Collections.emptyList();
             }
 
             @Override
@@ -72,18 +74,15 @@ public interface ConstructorStrategy {
          */
         DEFAULT_CONSTRUCTOR {
             @Override
-            public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSupertype();
-                MethodList methodList = superType == null
+            public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+                TypeDescription superType = instrumentedType.getSuperType().asRawType();
+                MethodList defaultConstructors = superType == null
                         ? new MethodList.Empty()
-                        : superType.getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(0))
-                                .<MethodDescription>and(isVisibleTo(instrumentedType)));
-                if (methodList.size() == 1) {
-                    return methodList;
+                        : superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
+                if (defaultConstructors.size() == 1) {
+                    return defaultConstructors.asTokenList();
                 } else {
-                    throw new IllegalArgumentException(String.format("%s does not declare a default constructor that " +
-                            "is visible to %s", instrumentedType.getSupertype(), instrumentedType));
+                    throw new IllegalArgumentException(instrumentedType.getSuperType() + " declares no constructor that is visible to " + instrumentedType);
                 }
             }
 
@@ -103,11 +102,11 @@ public interface ConstructorStrategy {
          */
         IMITATE_SUPER_TYPE {
             @Override
-            public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSupertype();
-                return superType == null
+            public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+                GenericTypeDescription superType = instrumentedType.getSuperType();
+                return (superType == null
                         ? new MethodList.Empty()
-                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)));
+                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList();
             }
 
             @Override
@@ -125,11 +124,11 @@ public interface ConstructorStrategy {
          */
         IMITATE_SUPER_TYPE_PUBLIC {
             @Override
-            public MethodList extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSupertype();
-                return superType == null
+            public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+                GenericTypeDescription superType = instrumentedType.getSuperType();
+                return (superType == null
                         ? new MethodList.Empty()
-                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()));
+                        : superType.asRawType().getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();
             }
 
             @Override

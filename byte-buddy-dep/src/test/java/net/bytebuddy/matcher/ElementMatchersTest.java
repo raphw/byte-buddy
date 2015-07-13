@@ -3,8 +3,11 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
@@ -18,13 +21,12 @@ import java.io.Serializable;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -61,8 +63,15 @@ public class ElementMatchersTest {
     @Test
     public void testIsType() throws Exception {
         assertThat(ElementMatchers.is(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.is(String.class).matches(new TypeDescription.ForLoadedType(Object.class)),
-                is(false));
+        assertThat(ElementMatchers.is(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+    }
+
+    @Test
+    public void testIsField() throws Exception {
+        assertThat(ElementMatchers.is(ElementMatchersTest.class.getDeclaredField("classLoader"))
+                .matches(new FieldDescription.ForLoadedField(ElementMatchersTest.class.getDeclaredField("classLoader"))), is(true));
+        assertThat(ElementMatchers.is(ElementMatchersTest.class.getDeclaredField("classLoader"))
+                .matches(new FieldDescription.ForLoadedField(ElementMatchersTest.class.getDeclaredField("javaVersionRule"))), is(false));
     }
 
     @Test
@@ -85,6 +94,31 @@ public class ElementMatchersTest {
                 .matches(annotationDescription), is(true));
         assertThat(ElementMatchers.is(Other.class.getAnnotation(OtherAnnotation.class)).matches(annotationDescription),
                 is(false));
+    }
+
+    @Test
+    public void testRepresentedByFieldToken() throws Exception {
+        FieldDescription foo = new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"));
+        FieldDescription bar = new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("bar"));
+        assertThat(ElementMatchers.representedBy(foo.asToken()).matches(foo), is(true));
+        assertThat(ElementMatchers.representedBy(foo.asToken()).matches(bar), is(false));
+    }
+
+    @Test
+    public void testRepresentedByMethodToken() throws Exception {
+        MethodDescription toString = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"));
+        MethodDescription hashCode = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"));
+        assertThat(ElementMatchers.representedBy(toString.asToken()).matches(toString), is(true));
+        assertThat(ElementMatchers.representedBy(toString.asToken()).matches(hashCode), is(false));
+    }
+
+    @Test
+    public void testRepresentedByParameterToken() throws Exception {
+        ParameterDescription parameterDescription = mock(ParameterDescription.class);
+        ParameterDescription.Token parameterToken = mock(ParameterDescription.Token.class);
+        when(parameterDescription.asToken()).thenReturn(parameterToken);
+        assertThat(ElementMatchers.representedBy(parameterToken).matches(parameterDescription), is(true));
+        assertThat(ElementMatchers.representedBy(mock(ParameterDescription.Token.class)).matches(parameterDescription), is(false));
     }
 
     @Test
@@ -155,12 +189,9 @@ public class ElementMatchersTest {
 
     @Test
     public void testNoneType() throws Exception {
-        assertThat(ElementMatchers.noneOf(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)),
-                is(false));
-        assertThat(ElementMatchers.noneOf(String.class, Object.class)
-                .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(ElementMatchers.noneOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)),
-                is(true));
+        assertThat(ElementMatchers.noneOf(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.noneOf(String.class, Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.noneOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
     }
 
     @Test
@@ -209,6 +240,27 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(value), is(false));
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(otherValue), is(false));
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(new Object()), is(true));
+    }
+
+    @Test
+    public void testRawType() throws Exception {
+        assertThat(ElementMatchers.rawType(Exception.class).matches(GenericTypeDescription.Sort.describe(GenericType.class.getTypeParameters()[0])), is(true));
+        assertThat(ElementMatchers.rawType(Object.class).matches(GenericTypeDescription.Sort.describe(GenericType.class.getTypeParameters()[0])), is(false));
+    }
+
+    @Test
+    public void testRawTypes() throws Exception {
+        assertThat(ElementMatchers.rawTypes(Exception.class)
+                .matches(Collections.singletonList(GenericTypeDescription.Sort.describe(GenericType.class.getTypeParameters()[0]))), is(true));
+        assertThat(ElementMatchers.rawTypes(Object.class)
+                .matches(Collections.singletonList(GenericTypeDescription.Sort.describe(GenericType.class.getTypeParameters()[0]))), is(false));
+    }
+
+    @Test
+    public void testMethodName() throws Exception {
+        assertThat(ElementMatchers.hasMethodName(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME), is(ElementMatchers.isTypeInitializer()));
+        assertThat(ElementMatchers.hasMethodName(MethodDescription.CONSTRUCTOR_INTERNAL_NAME), is(ElementMatchers.isConstructor()));
+        assertThat(ElementMatchers.hasMethodName(FOO), is((ElementMatchers.<MethodDescription>named(FOO))));
     }
 
     @Test
@@ -440,6 +492,16 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testReturnsGeneric() throws Exception {
+        assertThat(ElementMatchers.returnsGeneric(GenericType.class.getTypeParameters()[0])
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+        assertThat(ElementMatchers.returnsGeneric(Exception.class)
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(false));
+        assertThat(ElementMatchers.returns(Exception.class)
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+    }
+
+    @Test
     public void testReturns() throws Exception {
         assertThat(ElementMatchers.returns(void.class)
                 .matches(new MethodDescription.ForLoadedMethod(Returns.class.getDeclaredMethod(FOO))), is(true));
@@ -452,11 +514,31 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testTakesArgumentsGeneric() throws Exception {
+        assertThat(ElementMatchers.takesGenericArguments(GenericType.class.getTypeParameters()[0])
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+        assertThat(ElementMatchers.takesGenericArguments(GenericTypeDescription.Sort.describe(GenericType.class.getTypeParameters()[0]))
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+        assertThat(ElementMatchers.takesGenericArguments(Exception.class)
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(false));
+        assertThat(ElementMatchers.takesGenericArguments(Collections.singletonList(new TypeDescription.ForLoadedType(Exception.class)))
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(Exception.class)
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(Collections.singletonList(new TypeDescription.ForLoadedType(Exception.class)))
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+    }
+
+    @Test
     public void testTakesArguments() throws Exception {
-        assertThat(ElementMatchers.takesArguments(Void.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
-        assertThat(ElementMatchers.takesArguments(Void.class, Object.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
-        assertThat(ElementMatchers.takesArguments(String.class, int.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
-        assertThat(ElementMatchers.takesArguments(String.class, Integer.class).matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(Void.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(Void.class, Object.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
+        assertThat(ElementMatchers.takesArguments(String.class, int.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
+        assertThat(ElementMatchers.takesArguments(String.class, Integer.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
     }
 
     @Test
@@ -483,6 +565,36 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testDeclaresException() throws Exception {
+        assertThat(ElementMatchers.declaresException(IOException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.declaresException(SQLException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.declaresException(Error.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.declaresException(RuntimeException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.declaresException(IOException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.declaresException(SQLException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.declaresException(Error.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+        assertThat(ElementMatchers.declaresException(RuntimeException.class)
+                .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(false));
+    }
+
+    @Test
+    public void testDeclaresGenericException() throws Exception {
+        assertThat(ElementMatchers.declaresGenericException(GenericType.class.getTypeParameters()[0])
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+        assertThat(ElementMatchers.declaresGenericException(Exception.class)
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(false));
+        assertThat(ElementMatchers.declaresException(Exception.class)
+                .matches(new MethodDescription.ForLoadedMethod(GenericType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+    }
+
+    @Test
     public void testCanThrow() throws Exception {
         assertThat(ElementMatchers.canThrow(IOException.class)
                 .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
@@ -502,20 +614,18 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(BAR))), is(true));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @SuppressWarnings("unchecked")
-    public void testCanThrowValidates() throws Exception {
-        ElementMatchers.canThrow((Class) Object.class);
+    public void testDeclaresExceptionForNonThrowableType() throws Exception {
+        ElementMatcher<Object> elementMatcher = (ElementMatcher) ElementMatchers.declaresException((Class) Object.class);
+        assertThat(elementMatcher.matches(new Object()), is(false));
     }
 
     @Test
     public void testSortIsMethod() throws Exception {
-        assertThat(ElementMatchers.isMethod()
-                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.isMethod()
-                .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
-        assertThat(ElementMatchers.isMethod()
-                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(false));
+        assertThat(ElementMatchers.isMethod().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.isMethod().matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
+        assertThat(ElementMatchers.isMethod().matches(new MethodDescription.Latent.TypeInitializer(mock(TypeDescription.class))), is(false));
     }
 
     @Test
@@ -525,7 +635,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isConstructor()
                 .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(true));
         assertThat(ElementMatchers.isConstructor()
-                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(false));
+                .matches(new MethodDescription.Latent.TypeInitializer(mock(TypeDescription.class))), is(false));
     }
 
     @Test
@@ -544,7 +654,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isTypeInitializer()
                 .matches(new MethodDescription.ForLoadedConstructor(Object.class.getDeclaredConstructor())), is(false));
         assertThat(ElementMatchers.isTypeInitializer()
-                .matches(MethodDescription.Latent.typeInitializerOf(mock(TypeDescription.class))), is(true));
+                .matches(new MethodDescription.Latent.TypeInitializer(mock(TypeDescription.class))), is(true));
     }
 
     @Test
@@ -787,6 +897,22 @@ public class ElementMatchersTest {
                 .matches(new TypeDescription.ForLoadedType(DeclaresFieldOrMethod.class)), is(true));
         assertThat(ElementMatchers.declaresMethod(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
                 .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+    }
+
+    @Test
+    public void testFieldType() throws Exception {
+        assertThat(ElementMatchers.fieldType(FieldType.class).matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField(FOO))), is(true));
+        assertThat(ElementMatchers.fieldType(Object.class).matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField(FOO))), is(false));
+    }
+
+    @Test
+    public void testGenericFieldType() throws Exception {
+        assertThat(ElementMatchers.genericFieldType(FieldType.class.getTypeParameters()[0])
+                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField(BAR))), is(true));
+        assertThat(ElementMatchers.genericFieldType(Object.class)
+                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField(BAR))), is(false));
+        assertThat(ElementMatchers.fieldType(Object.class)
+                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField(BAR))), is(true));
     }
 
     @Test
@@ -1068,5 +1194,17 @@ public class ElementMatchersTest {
         void method() {
 
         }
+    }
+
+    public interface GenericType<T extends Exception> {
+
+        T foo(T t) throws T;
+    }
+
+    public static class FieldType<T> {
+
+        FieldType foo;
+
+        T bar;
     }
 }

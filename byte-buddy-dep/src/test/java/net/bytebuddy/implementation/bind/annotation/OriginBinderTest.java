@@ -35,7 +35,8 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
+        when(targetType.asRawType()).thenReturn(targetType);
     }
 
     @Override
@@ -84,8 +85,10 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @JavaVersionRule.Enforce(7)
     public void testMethodHandleBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
-        when(target.getTypeDescription()).thenReturn(targetType);
-        when(source.getDeclaringType()).thenReturn(mock(TypeDescription.class));
+        when(target.getType()).thenReturn(targetType);
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(source.getDeclaringType()).thenReturn(typeDescription);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -95,7 +98,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
-        when(target.getTypeDescription()).thenReturn(targetType);
+        when(target.getType()).thenReturn(targetType);
         when(source.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);

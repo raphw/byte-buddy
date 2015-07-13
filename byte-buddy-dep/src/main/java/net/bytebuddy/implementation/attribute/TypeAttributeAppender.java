@@ -65,7 +65,7 @@ public interface TypeAttributeAppender {
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
-            for (AnnotationDescription annotation : typeDescription.getSupertype().getDeclaredAnnotations()) {
+            for (AnnotationDescription annotation : typeDescription.getSuperType().asRawType().getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
@@ -213,7 +213,7 @@ public interface TypeAttributeAppender {
     class Compound implements TypeAttributeAppender {
 
         /**
-         * The type attribute appenders this compound appender represents in their application order.
+         * The type attribute appenders this compound appender representedBy in their application order.
          */
         private final TypeAttributeAppender[] typeAttributeAppender;
 

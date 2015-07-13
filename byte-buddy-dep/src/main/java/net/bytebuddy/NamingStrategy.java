@@ -2,11 +2,13 @@ package net.bytebuddy;
 
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -39,14 +41,14 @@ public interface NamingStrategy {
          *
          * @return A description of the super class of the type to be named.
          */
-        TypeDescription getSuperClass();
+        GenericTypeDescription getSuperClass();
 
         /**
          * Returns a collection of descriptions of this unnamed type's directly implemented interfaces.
          *
          * @return A collection of implemented interfaces.
          */
-        Collection<TypeDescription> getDeclaredInterfaces();
+        Collection<GenericTypeDescription> getDeclaredInterfaces();
 
         /**
          * Returns the visibility of this unnamed type.
@@ -91,12 +93,12 @@ public interface NamingStrategy {
             /**
              * The unnamed type's super class.
              */
-            private final TypeDescription superClass;
+            private final GenericTypeDescription superClass;
 
             /**
              * The unnamed type's interfaces.
              */
-            private final List<TypeDescription> interfaces;
+            private final List<? extends GenericTypeDescription> interfaces;
 
             /**
              * The unnamed type's modifiers.
@@ -116,8 +118,8 @@ public interface NamingStrategy {
              * @param modifiers        The unnamed type's modifiers.
              * @param classFileVersion The class file version of the unnamed type.
              */
-            public Default(TypeDescription superClass,
-                           List<TypeDescription> interfaces,
+            public Default(GenericTypeDescription superClass,
+                           List<? extends GenericTypeDescription> interfaces,
                            int modifiers,
                            ClassFileVersion classFileVersion) {
                 this.superClass = superClass;
@@ -127,13 +129,13 @@ public interface NamingStrategy {
             }
 
             @Override
-            public TypeDescription getSuperClass() {
+            public GenericTypeDescription getSuperClass() {
                 return superClass;
             }
 
             @Override
-            public List<TypeDescription> getDeclaredInterfaces() {
-                return interfaces;
+            public List<GenericTypeDescription> getDeclaredInterfaces() {
+                return new ArrayList<GenericTypeDescription>(interfaces);
             }
 
             @Override
@@ -520,7 +522,7 @@ public interface NamingStrategy {
 
                 @Override
                 public String resolve(UnnamedType unnamedType) {
-                    return unnamedType.getSuperClass().getName();
+                    return unnamedType.getSuperClass().asRawType().getName();
                 }
 
                 @Override
@@ -535,14 +537,14 @@ public interface NamingStrategy {
             class ForGivenType implements BaseNameResolver {
 
                 /**
-                 * The type description which represents the resolved name.
+                 * The type description which representedBy the resolved name.
                  */
                 private final TypeDescription typeDescription;
 
                 /**
                  * Creates a new base name resolver that resolves a using the name of a given type.
                  *
-                 * @param typeDescription The type description which represents the resolved name.
+                 * @param typeDescription The type description which representedBy the resolved name.
                  */
                 public ForGivenType(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
@@ -645,7 +647,7 @@ public interface NamingStrategy {
 
         @Override
         public String name(UnnamedType unnamedType) {
-            return String.format("%s.%s$%s", prefix, unnamedType.getSuperClass().getName(), randomString.nextString());
+            return String.format("%s.%s$%s", prefix, unnamedType.getSuperClass().asRawType().getName(), randomString.nextString());
         }
 
         @Override
