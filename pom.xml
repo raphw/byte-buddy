@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -64,7 +65,7 @@
         <version.plugin.release>2.5.1</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
         <version.plugin.pitest>1.1.5</version.plugin.pitest>
-        <version.plugin.cobertura>2.6</version.plugin.cobertura>
+        <version.plugin.cobertura>2.7</version.plugin.cobertura>
         <version.plugin.coveralls>3.0.1</version.plugin.coveralls>
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
         <version.android.sdk>4.1.1.4</version.android.sdk>
@@ -184,7 +185,7 @@
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis. -->
