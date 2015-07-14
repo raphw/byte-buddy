@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
@@ -24,10 +25,7 @@ import org.objectweb.asm.Opcodes;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -335,7 +333,14 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(foo.getTypeParameters()[1].getBounds()[0], is((Type) Exception.class));
         assertThat(foo.getGenericReturnType(), instanceOf(ParameterizedType.class));
         assertThat(((ParameterizedType) foo.getGenericReturnType()).getActualTypeArguments().length, is(1));
-        assertThat(((ParameterizedType) foo.getGenericReturnType()).getActualTypeArguments()[0], is((Type) String[].class));
+        Type parameterType = ((ParameterizedType) foo.getGenericReturnType()).getActualTypeArguments()[0];
+        // Before Java 7, non-generic array types returned from methods of the generic reflection API returned generic arrays.
+        if (ClassFileVersion.forCurrentJavaVersion().compareTo(ClassFileVersion.JAVA_V7) < 0) {
+            assertThat(parameterType, instanceOf(GenericArrayType.class));
+            assertThat(((GenericArrayType) parameterType).getGenericComponentType(), is((Type) String.class));
+        } else {
+            assertThat(parameterType, is((Type) String[].class));
+        }
         assertThat(foo.getGenericParameterTypes().length, is(1));
         assertThat(foo.getGenericParameterTypes()[0], is((Type) foo.getTypeParameters()[0]));
         assertThat(foo.getGenericExceptionTypes().length, is(1));

@@ -1013,7 +1013,9 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public Sort getSort() {
-            return Sort.GENERIC_ARRAY;
+            return getComponentType().getSort().isNonGeneric()
+                    ? Sort.NON_GENERIC
+                    : Sort.GENERIC_ARRAY;
         }
 
         @Override
@@ -1184,14 +1186,6 @@ public interface GenericTypeDescription extends NamedElement {
                 return arity == 1
                         ? componentType
                         : new Latent(componentType, arity - 1);
-            }
-
-            @Override
-            public Sort getSort() {
-                // This instance can equally represent a raw generic array.
-                return componentType.getSort().isNonGeneric()
-                        ? Sort.NON_GENERIC
-                        : Sort.GENERIC_ARRAY;
             }
         }
     }
