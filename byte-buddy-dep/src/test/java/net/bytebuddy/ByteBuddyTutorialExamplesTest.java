@@ -609,7 +609,7 @@ public class ByteBuddyTutorialExamplesTest {
 
         @Override
         public String name(UnnamedType unnamedType) {
-            return "i.heart.ByteBuddy." + unnamedType.getSuperClass().asRawType().getSimpleName();
+            return "i.love.ByteBuddy." + unnamedType.getSuperClass().asRawType().getSimpleName();
         }
     }
 
