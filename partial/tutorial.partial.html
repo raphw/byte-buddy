@@ -477,7 +477,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .withNamingStrategy(new NamingStrategy() {
     @Override
     public String getName(UnnamedType unnamedType) {
-        return "i.love.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
+        return "i.love.ByteBuddy." + unnamedType.getSuperClass().asRawType().getSimpleName();
     }
   })
   .subclass(Object.class)
