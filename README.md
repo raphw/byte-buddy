@@ -29,7 +29,7 @@ mascot was chosen to be a ghost.
 Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
 light-weight library and only depends on the visitor API of the Java byte code parser library 
 [ASM](http://asm.ow2.org/) which does itself 
-[not require any further dependencies](http://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom).
+[not require any further dependencies](https://repo1.maven.org/maven2/org/ow2/asm/asm/5.0.4/asm-5.0.4.pom).
 
 At first sight, runtime code generation can appear to be some sort of black magic that should be avoided and only
 few developers write applications that explicitly generate code during their runtime. However, this picture changes when
