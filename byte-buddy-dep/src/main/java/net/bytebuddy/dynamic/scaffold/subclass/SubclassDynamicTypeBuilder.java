@@ -297,7 +297,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
         @Override
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-            return isOverridable().and(isVisibleTo(instrumentedType)).and(not(ignoredMethods)).or(isDeclaredBy(instrumentedType));
+            // Casting is required by JDK 6.
+            return (ElementMatcher<? super MethodDescription>) isOverridable()
+                    .and(isVisibleTo(instrumentedType))
+                    .and(not(ignoredMethods))
+                    .or(isDeclaredBy(instrumentedType));
         }
 
         @Override
