@@ -10,11 +10,11 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
-import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,6 +26,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,9 +35,10 @@ import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotEquals;
 
 public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest {
@@ -222,9 +225,9 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.getDeclaredFields().length, Is.is(0));
-        assertThat(dynamicType.getDeclaredMethods().length, Is.is(0));
-        assertThat(interfaceMethod.invoke(dynamicType.newInstance()), Is.is(interfaceMarker));
+        assertThat(dynamicType.getDeclaredFields().length, is(0));
+        assertThat(dynamicType.getDeclaredMethods().length, is(0));
+        assertThat(interfaceMethod.invoke(dynamicType.newInstance()), is(interfaceMarker));
     }
 
     @Test
@@ -238,9 +241,9 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.getDeclaredFields().length, Is.is(0));
-        assertThat(dynamicType.getDeclaredMethods().length, Is.is(1));
-        assertThat(interfaceMethod.invoke(dynamicType.newInstance()), Is.is((Object) BAR));
+        assertThat(dynamicType.getDeclaredFields().length, is(0));
+        assertThat(dynamicType.getDeclaredMethods().length, is(1));
+        assertThat(interfaceMethod.invoke(dynamicType.newInstance()), is((Object) BAR));
     }
 
     @Test
@@ -252,7 +255,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.getDeclaredMethods().length, Is.is(1));
+        assertThat(dynamicType.getDeclaredMethods().length, is(1));
         Class<?> executable = Class.forName("java.lang.reflect.Executable");
         Method getParameters = executable.getDeclaredMethod("getParameters");
         Class<?> parameter = Class.forName("java.lang.reflect.Parameter");
@@ -260,12 +263,12 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         Method getModifiers = parameter.getDeclaredMethod("getModifiers");
         Method first = dynamicType.getDeclaredMethod("foo", String.class, long.class, int.class);
         Object[] methodParameter = (Object[]) getParameters.invoke(first);
-        assertThat(getName.invoke(methodParameter[0]), Is.is((Object) "first"));
-        assertThat(getName.invoke(methodParameter[1]), Is.is((Object) "second"));
-        assertThat(getName.invoke(methodParameter[2]), Is.is((Object) "third"));
-        assertThat(getModifiers.invoke(methodParameter[0]), Is.is((Object) Opcodes.ACC_FINAL));
-        assertThat(getModifiers.invoke(methodParameter[1]), Is.is((Object) 0));
-        assertThat(getModifiers.invoke(methodParameter[2]), Is.is((Object) 0));
+        assertThat(getName.invoke(methodParameter[0]), is((Object) "first"));
+        assertThat(getName.invoke(methodParameter[1]), is((Object) "second"));
+        assertThat(getName.invoke(methodParameter[2]), is((Object) "third"));
+        assertThat(getModifiers.invoke(methodParameter[0]), is((Object) Opcodes.ACC_FINAL));
+        assertThat(getModifiers.invoke(methodParameter[1]), is((Object) 0));
+        assertThat(getModifiers.invoke(methodParameter[2]), is((Object) 0));
     }
 
     @Test
@@ -309,6 +312,36 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(new ByteArrayClassLoader(null, types, null, ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
+    }
+
+    @Test
+    public void testGenericType() throws Exception {
+        Class<?> dynamicType = create(GenericType.Inner.class)
+                .method(named(FOO).or(named("call"))).intercept(StubMethod.INSTANCE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(dynamicType.getTypeParameters().length, is(0));
+        assertThat(dynamicType.getGenericSuperclass(), instanceOf(Class.class));
+        assertThat(dynamicType.getGenericSuperclass(), is((Type) GenericType.Inner.class));
+        assertThat(dynamicType.getGenericInterfaces().length, is(0));
+        Method foo = dynamicType.getDeclaredMethod(FOO, String.class);
+        assertThat(foo.getTypeParameters().length, is(2));
+        assertThat(foo.getTypeParameters()[0].getName(), is("V"));
+        assertThat(foo.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(foo.getTypeParameters()[0].getBounds()[0], is((Type) String.class));
+        assertThat(foo.getTypeParameters()[1].getName(), is("W"));
+        assertThat(foo.getTypeParameters()[1].getBounds().length, is(1));
+        assertThat(foo.getTypeParameters()[1].getBounds()[0], is((Type) Exception.class));
+        assertThat(foo.getGenericReturnType(), instanceOf(ParameterizedType.class));
+        assertThat(((ParameterizedType) foo.getGenericReturnType()).getActualTypeArguments().length, is(1));
+        assertThat(((ParameterizedType) foo.getGenericReturnType()).getActualTypeArguments()[0], is((Type) String[].class));
+        assertThat(foo.getGenericParameterTypes().length, is(1));
+        assertThat(foo.getGenericParameterTypes()[0], is((Type) foo.getTypeParameters()[0]));
+        assertThat(foo.getGenericExceptionTypes().length, is(1));
+        assertThat(foo.getGenericExceptionTypes()[0], is((Type) foo.getTypeParameters()[1]));
+        Method call = dynamicType.getDeclaredMethod("call");
+        assertThat(call.getGenericReturnType(), is(((ParameterizedType) GenericType.Inner.class.getGenericInterfaces()[0]).getActualTypeArguments()[0]));
     }
 
     @Test

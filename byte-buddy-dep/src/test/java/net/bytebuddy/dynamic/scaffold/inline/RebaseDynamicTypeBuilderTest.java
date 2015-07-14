@@ -12,8 +12,8 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
-import net.bytebuddy.test.pkg.PkgAnnotation;
-import net.bytebuddy.test.pkg.Sample;
+import net.bytebuddy.test.visibility.PackageAnnotation;
+import net.bytebuddy.test.visibility.Sample;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
@@ -111,7 +111,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
         assertThat(packageType.getDeclaredFields().length, CoreMatchers.is(0));
         assertThat(packageType.getDeclaredMethods().length, CoreMatchers.is(0));
         assertThat(packageType.getDeclaredAnnotations().length, CoreMatchers.is(2));
-        assertThat(packageType.getAnnotation(PkgAnnotation.class), notNullValue(PkgAnnotation.class));
+        assertThat(packageType.getAnnotation(PackageAnnotation.class), notNullValue(PackageAnnotation.class));
         assertThat(packageType.getAnnotation(Baz.class), notNullValue(Baz.class));
     }
 

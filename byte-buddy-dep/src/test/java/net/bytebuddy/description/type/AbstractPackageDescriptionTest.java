@@ -1,8 +1,8 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.annotation.AnnotationList;
-import net.bytebuddy.test.pkg.Sample;
-import net.bytebuddy.test.pkg.child.Child;
+import net.bytebuddy.test.visibility.Sample;
+import net.bytebuddy.test.visibility.child.Child;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.*;
