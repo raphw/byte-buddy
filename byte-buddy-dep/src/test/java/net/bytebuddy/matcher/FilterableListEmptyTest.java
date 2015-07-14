@@ -5,6 +5,7 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 
 public class FilterableListEmptyTest {
 
@@ -16,7 +17,7 @@ public class FilterableListEmptyTest {
         empty.get(0);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test(expected = IllegalStateException.class)
     public void testGetOnly() throws Exception {
         empty.getOnly();
     }
@@ -29,7 +30,7 @@ public class FilterableListEmptyTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testFilter() throws Exception {
-        assertThat(empty.filter(any(ElementMatcher.class)), is(empty));
+        assertThat(empty.filter(mock(ElementMatcher.class)), is(empty));
     }
 
     @Test

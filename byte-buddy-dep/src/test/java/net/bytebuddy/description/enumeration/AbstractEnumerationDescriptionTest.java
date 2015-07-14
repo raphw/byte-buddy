@@ -96,6 +96,11 @@ public abstract class AbstractEnumerationDescriptionTest {
         describe(Sample.FIRST).load(Other.class);
     }
 
+    @Test
+    public void testLoad() throws Exception {
+        assertThat(describe(Sample.FIRST).load(Sample.class), is(Sample.FIRST));
+    }
+
     public enum Sample {
         FIRST,
         SECOND
