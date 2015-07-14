@@ -4434,7 +4434,7 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
-                        throw new GenericSignatureFormatError("Signature Parse error: malformed type signature");
+                        throw new GenericSignatureFormatError();
                     }
 
                     @Override
@@ -5961,7 +5961,7 @@ public interface TypePool {
 
                 @Override
                 protected GenericTypeDescription resolve() {
-                    throw new GenericSignatureFormatError("Signature Parse error: malformed type signature");
+                    throw new GenericSignatureFormatError();
                 }
 
                 @Override
