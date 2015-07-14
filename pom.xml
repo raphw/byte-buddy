@@ -65,6 +65,7 @@
         <version.plugin.release>2.5.1</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
         <version.plugin.pitest>1.1.5</version.plugin.pitest>
+        <!-- Newer versions of Cobertura raise problems with the instrumentation. -->
         <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
         <version.plugin.coveralls>3.0.1</version.plugin.coveralls>
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>

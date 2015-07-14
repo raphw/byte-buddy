@@ -21,10 +21,9 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 public class SubclassImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**
-     * The constructor of the super type, mapped by the constructor parameters of each constructor which is
-     * sufficient for a constructor's unique identification.
+     * The constructor of the super type, mapped by the constructor's method token.
      */
-    protected final Map<TypeList, MethodDescription> superConstructors;
+    protected final Map<MethodDescription.Token, MethodDescription> superConstructors;
 
     /**
      * The origin type identifier to use.
@@ -46,9 +45,9 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         MethodList superConstructors = superType == null
                 ? new MethodList.Empty()
                 : superType.asRawType().getDeclaredMethods().filter(isConstructor());
-        this.superConstructors = new HashMap<TypeList, MethodDescription>(superConstructors.size());
+        this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>(superConstructors.size());
         for (MethodDescription superConstructor : superConstructors) {
-            this.superConstructors.put(superConstructor.getParameters().asTypeList().asRawTypes(), superConstructor);
+            this.superConstructors.put(superConstructor.asToken(), superConstructor);
         }
         this.originTypeIdentifier = originTypeIdentifier;
     }
@@ -56,7 +55,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     @Override
     protected Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         if (methodDescription.isConstructor()) {
-            methodDescription = this.superConstructors.get(methodDescription.getParameters().asTypeList().asRawTypes());
+            methodDescription = this.superConstructors.get(methodDescription.asToken());
             if (methodDescription == null) {
                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }

@@ -116,6 +116,18 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     }
 
     @Test
+    public void testUnknownConstructor() throws Exception {
+        MethodDescription constructor = mock(MethodDescription.class);
+        when(constructor.isConstructor()).thenReturn(true);
+        when(constructor.getParameters()).thenReturn(new ParameterList.Empty());
+        TypeDescription declaringType = mock(TypeDescription.class);
+        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(constructor.getDeclaringType()).thenReturn(declaringType);
+        when(constructor.asToken()).thenReturn(mock(MethodDescription.Token.class));
+        assertThat(implementationTarget.invokeSuper(constructor, Implementation.Target.MethodLookup.Default.EXACT).isValid(), is(false));
+    }
+
+    @Test
     public void testSuperTypeOrigin() throws Exception {
         assertThat(new SubclassImplementationTarget(finding,
                         bridgeMethodResolverFactory,

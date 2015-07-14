@@ -47,7 +47,8 @@ public class ModifierReviewableTest {
                 {Opcodes.ACC_SYNTHETIC, "isSynthetic"},
                 {Opcodes.ACC_TRANSIENT, "isTransient"},
                 {Opcodes.ACC_VARARGS, "isVarArgs"},
-                {Opcodes.ACC_VOLATILE, "isVolatile"}
+                {Opcodes.ACC_VOLATILE, "isVolatile"},
+                {0, "isPackagePrivate"}
         });
     }
 

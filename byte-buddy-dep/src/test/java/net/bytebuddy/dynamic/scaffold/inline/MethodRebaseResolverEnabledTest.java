@@ -70,11 +70,11 @@ public class MethodRebaseResolverEnabledTest {
         when(constructor.getReturnType()).thenReturn(returnType);
         when(constructor.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(method, Collections.singletonList(parameterType)));
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
-        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.asRawType()).thenReturn(returnType);
         when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.asRawType()).thenReturn(parameterType);
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
-        when(placeholderType.asRawType()).thenReturn(placeholderType); // REFACTOR
+        when(placeholderType.asRawType()).thenReturn(placeholderType);
         when(placeholderType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(placeholderType);
     }
 

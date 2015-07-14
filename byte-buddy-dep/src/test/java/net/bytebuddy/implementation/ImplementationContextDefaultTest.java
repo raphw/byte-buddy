@@ -170,8 +170,8 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(secondSpecialMethod,
                 Collections.singletonList(secondSpecialParameterType)));
         when(firstFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(firstFieldType.asRawType()).thenReturn(firstFieldType); // REFACTOR
-        when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType); // REFACTOR
+        when(firstFieldType.asRawType()).thenReturn(firstFieldType);
+        when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType);
         when(firstField.getType()).thenReturn(firstFieldType);
         when(firstField.getName()).thenReturn(FOO);
         when(firstField.getInternalName()).thenReturn(FOO);
@@ -179,20 +179,20 @@ public class ImplementationContextDefaultTest {
         when(firstField.getDeclaringType()).thenReturn(firstFieldDeclaringType);
         when(firstFieldDeclaringType.getInternalName()).thenReturn(QUX);
         when(secondFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(secondFieldType.asRawType()).thenReturn(secondFieldType); // REFACTOR
-        when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType); // REFACTOR
+        when(secondFieldType.asRawType()).thenReturn(secondFieldType);
+        when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType);
         when(secondField.getType()).thenReturn(secondFieldType);
         when(secondField.getName()).thenReturn(BAR);
         when(secondField.getInternalName()).thenReturn(BAR);
         when(secondField.getDescriptor()).thenReturn(FOO);
         when(secondField.getDeclaringType()).thenReturn(secondFieldDeclaringType);
         when(secondFieldDeclaringType.getInternalName()).thenReturn(BAZ);
-        when(firstSpecialReturnType.asRawType()).thenReturn(firstSpecialReturnType); // REFACTOR
-        when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType); // REFACTOR
-        when(firstSpecialExceptionType.asRawType()).thenReturn(firstSpecialExceptionType); // REFACTOR
-        when(secondSpecialExceptionType.asRawType()).thenReturn(secondSpecialExceptionType); // REFACTOR
-        when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType); // REFACTOR
-        when(secondSpecialParameterType.asRawType()).thenReturn(secondSpecialParameterType); // REFACTOR
+        when(firstSpecialReturnType.asRawType()).thenReturn(firstSpecialReturnType);
+        when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType);
+        when(firstSpecialExceptionType.asRawType()).thenReturn(firstSpecialExceptionType);
+        when(secondSpecialExceptionType.asRawType()).thenReturn(secondSpecialExceptionType);
+        when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType);
+        when(secondSpecialParameterType.asRawType()).thenReturn(secondSpecialParameterType);
         when(firstSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstSpecialParameterType);
         when(secondSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondSpecialParameterType);
         when(firstFieldDeclaringType.asRawType()).thenReturn(firstFieldDeclaringType);

@@ -59,7 +59,7 @@ public class AnnotationDescriptionBuilderTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationDescription.Builder.class);
+        ObjectPropertyAssertion.of(AnnotationDescription.Builder.class).apply();
     }
 
     public @interface Foo {

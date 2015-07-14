@@ -60,7 +60,7 @@ public class InstrumentedTypeTest {
     @SuppressWarnings("unchecked")
     public void testWithField() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
-        when(fieldType.asRawType()).thenReturn(fieldType); // REFACTOR
+        when(fieldType.asRawType()).thenReturn(fieldType);
         when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType);
         when(fieldType.getName()).thenReturn(FOO);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
@@ -107,8 +107,8 @@ public class InstrumentedTypeTest {
     @SuppressWarnings("unchecked")
     public void testWithFieldDouble() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
-        when(fieldType.asRawType()).thenReturn(fieldType); // REFACTOR
-        when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType); // REFACTOR
+        when(fieldType.asRawType()).thenReturn(fieldType);
+        when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType);
         when(fieldType.getName()).thenReturn(FOO);
         makePlainInstrumentedType()
                 .withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType))
@@ -119,10 +119,10 @@ public class InstrumentedTypeTest {
     @SuppressWarnings("unchecked")
     public void testWithMethod() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.asRawType()).thenReturn(returnType);
         when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
         TypeDescription parameterType = mock(TypeDescription.class);
-        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(parameterType.asRawType()).thenReturn(parameterType);
         when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(returnType.getName()).thenReturn(FOO);
         when(parameterType.getName()).thenReturn(QUX);
@@ -188,7 +188,7 @@ public class InstrumentedTypeTest {
     @SuppressWarnings("unchecked")
     public void testWithMethodDouble() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
+        when(returnType.asRawType()).thenReturn(returnType);
         when(returnType.getName()).thenReturn(FOO);
         when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
         makePlainInstrumentedType()

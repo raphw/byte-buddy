@@ -41,10 +41,10 @@ public abstract class AbstractSpecialMethodInvocationTest {
         when(targetType.asRawType()).thenReturn(targetType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         parameterTypes = new TypeList.Explicit(Collections.singletonList(parameterType));
-        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
-        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType); // REFACTOR
-        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
-        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType); // REFACTOR
+        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
+        when(parameterType.asRawType()).thenReturn(parameterType);
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(otherType.asRawType()).thenReturn(otherType);
     }
 

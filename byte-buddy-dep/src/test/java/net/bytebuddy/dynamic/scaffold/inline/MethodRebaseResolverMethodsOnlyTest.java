@@ -56,8 +56,8 @@ public class MethodRebaseResolverMethodsOnlyTest {
         when(method.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(method, Collections.singletonList(parameterType)));
         when(constructor.isConstructor()).thenReturn(true);
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
-        when(returnType.asRawType()).thenReturn(returnType); // REFACTOR
-        when(parameterType.asRawType()).thenReturn(parameterType); // REFACTOR
+        when(returnType.asRawType()).thenReturn(returnType);
+        when(parameterType.asRawType()).thenReturn(parameterType);
         when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(method.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.asRawType()).thenReturn(declaringType);

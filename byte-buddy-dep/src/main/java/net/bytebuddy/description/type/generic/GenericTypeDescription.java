@@ -1648,14 +1648,10 @@ public interface GenericTypeDescription extends NamedElement {
              * @param typeDescription The type to resolve as a potentially raw type. Only non-generic types
              *                        ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}) and parameterized types
              *                        ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) are well-defined input.
-             *                        Also, {@code null} is an allowed input for resolving types without a super type.
              * @param transformer     A transformer to apply to a non-raw types.
-             * @return Either a raw type, i
+             * @return Either a raw type, or a transformed generic type.
              */
             public static GenericTypeDescription check(GenericTypeDescription typeDescription, Visitor<? extends GenericTypeDescription> transformer) {
-                if (typeDescription == null) {
-                    return null;
-                }
                 return typeDescription.getParameters().size() != typeDescription.asRawType().getTypeVariables().size()
                         ? new Raw(typeDescription.asRawType())
                         : typeDescription.accept(transformer);

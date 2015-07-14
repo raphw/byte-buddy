@@ -58,6 +58,6 @@ public class AnnotationAppenderValueFilterSkipDefaultsTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationAppender.ValueFilter.AppendDefaults.class).apply();
+        ObjectPropertyAssertion.of(AnnotationAppender.ValueFilter.SkipDefaults.class).apply();
     }
 }
