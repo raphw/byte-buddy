@@ -115,11 +115,16 @@ mvn package
     </p>
 
     <dl>
-        <dt>0.7</dt>
+        <dt>0.7.*</dt>
         <dd>
-            Better support for generics: In this version, generic types should be written to created class files as
+            Support for generic types: In this version, generic types should be written to created class files as
             it is often used by frameworks that read out this metadata. Additionally, the API is extended to allow the
             definition of additional generic parameters when defining new types, methods or fields.
+        </dd>
+        <dt>0.8.*</dt>
+        <dd>
+            Support for type annotations: In this version, type annotations are made accessible via Byte Buddy's
+            type API.
         </dd>
     </dl>
 </div>

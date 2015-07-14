@@ -376,7 +376,7 @@ class HardcodedFrameworkImpl implements Framework {
     a user defined Java method. Do not worry about the details for now, we will discuss both of these approaches in a
     later section. As the benchmark suggests, the latter approach is slower to implement than by using another library.
     The performance loss is caused by the <code>MethodDelegation</code>'s approach of creating specialized accessor
-    classes for each method. On the other hand, cglib only creates a single generic accessor class and Javassist does
+    classes for each method. On the other hand, cglib only creates a single multi-purpose accessor class and Javassist does
     not create any such class. This comes at the cost at runtime performance of each method invocation as obvious from
     the second measurement.
 </p>
@@ -1165,12 +1165,13 @@ new ByteBuddy()
     Byte Buddy's assignment behavior is customizable. Again, Byte Buddy only provides a sane default which mimics
     the assignment behavior of the Java compiler. Consequently, Byte Buddy allows an assignment of a type to any
     of its super types and it will also consider to box primitive values or to unbox their wrapper representations.
-    Note however, that Byte Buddy does not currently support generic types and will only consider raw types. Therefore,
-    it is possible that Byte Buddy causes <a href="http://en.wikipedia.org/wiki/Heap_pollution">heap pollution</a>.
-    Instead of using the predefined assigner, you can always implement your own <code>Assigner</code> which is capable
-    of type transformations that are not implicit in the Java programming language. We will look into such custom
-    implementations in the last section of this tutorial. For now, we settle for mentioning that you can define such
-    custom assigners by calling <code>withAssigner</code> on any <code>FixedValue</code> implementation.
+    Note however, that Byte Buddy does currently not fully support generic types and will only consider raw types.
+    Therefore, it is possible that Byte Buddy causes <a href="http://en.wikipedia.org/wiki/Heap_pollution">heap
+    pollution</a>. Instead of using the predefined assigner, you can always implement your own <code>Assigner</code>
+    which is capable of type transformations that are not implicit in the Java programming language. We will look
+    into such custom implementations in the last section of this tutorial. For now, we settle for mentioning that
+    you can define such custom assigners by calling <code>withAssigner</code> on any <code>FixedValue</code>
+    implementation.
 </p>
 
 <h4>Delegating a method call</h4>
@@ -1666,8 +1667,7 @@ class Bar extends Foo&lt;String&gt; {
     When compiling the above <code>Foo</code> class, the Java compiler will apply a
     <a href="http://docs.oracle.com/javase/tutorial/java/generics/erasure.html">type erasure</a> in order to hide
     the generic type from the Java runtime which is unaware of the Java language's concept of generics. In the process
-    of type erasure, all type variables are reduced to their lower bounds which are implicitly set to
-    <code>Object</code>
+    of type erasure, all type variables are reduced to their lower bounds which are implicitly set to <code>Object</code>
     if no explicit bound is specified. As a result, the only method of <code>Foo</code> is compiled as if it was defined
     with the signature <code>m(Object)</code>. At the same time, the Java compiler creates a <i>desugared</i> version of
     the <code>Bar</code> class. This class contains an additional bridge method with the same erased method signature
@@ -2145,7 +2145,7 @@ new ByteBuddy()
         <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Inherited.html"><code>@Inherited</code></a>.
         Using Byte Buddy, creating subclass proxies that retain their base class's annotations is easy by invoking
         the <code>attribute</code> method of Byte Buddy's domain specific language. This methods expects a
-        <code>TypeAttributeAppender</code> as its argument. A type attribute appender offers a generic way for defining
+        <code>TypeAttributeAppender</code> as its argument. A type attribute appender offers a flexible way for defining
         the annotations of a dynamically created class, based on its base class. For example, by passing a
         <code>TypeAttributeAppender.ForSuperType</code>, a class's annotations are copied to its dynamically created
         subclasses. Note that annotations and type attribute appenders are additive and no annotation type must be
