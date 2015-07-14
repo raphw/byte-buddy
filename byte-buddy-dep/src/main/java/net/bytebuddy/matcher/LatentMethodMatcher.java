@@ -83,7 +83,9 @@ public interface LatentMethodMatcher {
 
         @Override
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-            return representedBy(methodToken.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
+            // Casting required for JDK 6.
+            return (ElementMatcher<? super MethodDescription>) representedBy(methodToken
+                    .accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
         }
 
         @Override
