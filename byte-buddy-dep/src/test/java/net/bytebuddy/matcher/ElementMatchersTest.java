@@ -260,7 +260,8 @@ public class ElementMatchersTest {
     public void testMethodName() throws Exception {
         assertThat(ElementMatchers.hasMethodName(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME), is(ElementMatchers.isTypeInitializer()));
         assertThat(ElementMatchers.hasMethodName(MethodDescription.CONSTRUCTOR_INTERNAL_NAME), is(ElementMatchers.isConstructor()));
-        assertThat(ElementMatchers.<MethodDescription>hasMethodName(FOO), is((ElementMatchers.<MethodDescription>named(FOO))));
+        ElementMatcher<MethodDescription> nameMatcher = ElementMatchers.named(FOO);
+        assertThat(ElementMatchers.hasMethodName(FOO), is(nameMatcher));
     }
 
     @Test
