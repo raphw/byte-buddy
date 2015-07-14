@@ -120,7 +120,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make();
         assertThat(dynamicType, notNullValue());
         Class<?> type = dynamicType.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        assertThat(type.getName(), is("i.heart.ByteBuddy.Object"));
+        assertThat(type.getName(), is("i.love.ByteBuddy.Object"));
     }
 
     @Test
