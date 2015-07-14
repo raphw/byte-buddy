@@ -13,9 +13,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.annotation.Annotation;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.*;
 import java.lang.reflect.Method;
 import java.util.Collections;
 
@@ -375,6 +373,23 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertValue(defaultSecond, "annotationArrayValue", new AnnotationDescription[]{AnnotationDescription.ForLoadedAnnotation.of(OTHER_ANNOTATION)}, OTHER_ANNOTATION_ARRAY);
     }
 
+    @Test
+    public void testRetention() throws Exception {
+        assertThat(describe(first).getRetention(), is(RetentionPolicy.RUNTIME));
+    }
+
+    @Test
+    public void testInheritance() throws Exception {
+        assertThat(describe(first).isInherited(), is(false));
+        assertThat(describe(defaultFirst).isInherited(), is(true));
+    }
+
+    @Test
+    public void testDocumented() throws Exception {
+        assertThat(describe(first).isDocumented(), is(false));
+        assertThat(describe(defaultFirst).isDocumented(), is(true));
+    }
+
     private void assertValue(Annotation annotation, String methodName, Object rawValue, Object loadedValue) throws Exception {
         assertThat(describe(annotation).getValue(new MethodDescription
                 .ForLoadedMethod(annotation.annotationType().getDeclaredMethod(methodName))), is(rawValue));
@@ -450,6 +465,8 @@ public abstract class AbstractAnnotationDescriptionTest {
         Other[] annotationArrayValue();
     }
 
+    @Documented
+    @Inherited
     @Retention(RetentionPolicy.RUNTIME)
     public @interface SampleDefault {
 

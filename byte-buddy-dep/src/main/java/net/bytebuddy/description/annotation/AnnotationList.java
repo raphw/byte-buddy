@@ -1,11 +1,15 @@
 package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.annotation.Annotation;
-import java.lang.annotation.Inherited;
-import java.util.*;
+import java.lang.annotation.RetentionPolicy;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Defines a list of annotation instances.
@@ -47,6 +51,14 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
     AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes);
 
     /**
+     * Only retains annotations with the given retention policy.
+     *
+     * @param matcher A matcher for the required retention policy.
+     * @return A of annotations only with elements
+     */
+    AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher);
+
+    /**
      * An abstract base implementation of an annotation list.
      */
     abstract class AbstractBase extends FilterableList.AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
@@ -64,7 +76,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         @Override
         public boolean isAnnotationPresent(TypeDescription annotationType) {
             for (AnnotationDescription annotation : this) {
-                if (annotation.getAnnotationType().represents(annotation.getClass())) {
+                if (annotation.getAnnotationType().equals(annotationType)) {
                     return true;
                 }
             }
@@ -83,14 +95,24 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
 
         @Override
         public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
-            List<AnnotationDescription> inherited = new LinkedList<AnnotationDescription>();
+            List<AnnotationDescription> inherited = new ArrayList<AnnotationDescription>(size());
             for (AnnotationDescription annotation : this) {
-                if (!ignoredTypes.contains(annotation.getAnnotationType())
-                        && annotation.getAnnotationType().getDeclaredAnnotations().isAnnotationPresent(Inherited.class)) {
+                if (!ignoredTypes.contains(annotation.getAnnotationType()) && annotation.isInherited()) {
                     inherited.add(annotation);
                 }
             }
             return wrap(inherited);
+        }
+
+        @Override
+        public AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher) {
+            List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(size());
+            for (AnnotationDescription annotation : this) {
+                if (matcher.matches(annotation.getRetention())) {
+                    annotationDescriptions.add(annotation);
+                }
+            }
+            return wrap(annotationDescriptions);
         }
 
         @Override
@@ -232,6 +254,11 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
 
         @Override
         public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
+            return this;
+        }
+
+        @Override
+        public AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher) {
             return this;
         }
     }

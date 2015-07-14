@@ -172,6 +172,16 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testAnyField() throws Exception {
+        assertThat(ElementMatchers.anyOf(Integer.class.getDeclaredField("MAX_VALUE"))
+                .matches(new FieldDescription.ForLoadedField(Integer.class.getDeclaredField("MAX_VALUE"))), is(true));
+        assertThat(ElementMatchers.anyOf(Integer.class.getDeclaredField("MAX_VALUE"), Integer.class.getDeclaredField("MIN_VALUE"))
+                .matches(new FieldDescription.ForLoadedField(Integer.class.getDeclaredField("MAX_VALUE"))), is(true));
+        assertThat(ElementMatchers.anyOf(Integer.class.getDeclaredField("MAX_VALUE"), Integer.class.getDeclaredField("MIN_VALUE"))
+                .matches(new FieldDescription.ForLoadedField(Integer.class.getDeclaredField("SIZE"))), is(false));
+    }
+
+    @Test
     public void testAnyAnnotation() throws Exception {
         AnnotationDescription annotationDescription = new TypeDescription.ForLoadedType(IsAnnotatedWith.class)
                 .getDeclaredAnnotations().ofType(IsAnnotatedWithAnnotation.class);

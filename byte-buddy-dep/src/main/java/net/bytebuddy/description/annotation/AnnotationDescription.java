@@ -7,9 +7,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.utility.PropertyDispatcher;
 
-import java.lang.annotation.Annotation;
-import java.lang.annotation.AnnotationTypeMismatchException;
-import java.lang.annotation.IncompleteAnnotationException;
+import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -69,6 +67,24 @@ public interface AnnotationDescription {
      * @return A loadable version of this annotation description.
      */
     <T extends Annotation> Loadable<T> prepare(Class<T> annotationType);
+
+    RetentionPolicy getRetention();
+
+    /**
+     * Checks if this annotation is inherited.
+     *
+     * @return {@code true} if this annotation is inherited.
+     * @see Inherited
+     */
+    boolean isInherited();
+
+    /**
+     * Checks if this annotation is documented.
+     *
+     * @return {@code true} if this annotation is documented.
+     * @see Documented
+     */
+    boolean isDocumented();
 
     /**
      * A description of an annotation's value.
@@ -1075,11 +1091,6 @@ public interface AnnotationDescription {
         private static final String TO_STRING = "toString";
 
         /**
-         * The class loader to use.
-         */
-        private final ClassLoader classLoader;
-
-        /**
          * The loaded annotation type.
          */
         private final Class<? extends Annotation> annotationType;
@@ -1092,14 +1103,10 @@ public interface AnnotationDescription {
         /**
          * Creates a new invocation handler.
          *
-         * @param classLoader    The class loader for loading this value.
          * @param annotationType The loaded annotation type.
          * @param values         A sorted list of values of this annotation.
          */
-        protected AnnotationInvocationHandler(ClassLoader classLoader,
-                                              Class<T> annotationType,
-                                              LinkedHashMap<Method, AnnotationValue.Loaded<?>> values) {
-            this.classLoader = classLoader;
+        protected AnnotationInvocationHandler(Class<T> annotationType, LinkedHashMap<Method, AnnotationValue.Loaded<?>> values) {
             this.annotationType = annotationType;
             this.values = values;
         }
@@ -1122,9 +1129,9 @@ public interface AnnotationDescription {
                 AnnotationDescription.AnnotationValue<?, ?> annotationValue = values.get(method.getName());
                 loadedValues.put(method, annotationValue == null
                         ? DefaultValue.of(method)
-                        : annotationValue.load(classLoader));
+                        : annotationValue.load(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader));
             }
-            return new AnnotationInvocationHandler<S>(classLoader, annotationType, loadedValues);
+            return new AnnotationInvocationHandler<S>(annotationType, loadedValues);
         }
 
         /**
@@ -1292,7 +1299,6 @@ public interface AnnotationDescription {
         public String toString() {
             return "TypePool.LazyTypeDescription.AnnotationInvocationHandler{" +
                     "annotationType=" + annotationType +
-                    ", classLoader=" + classLoader +
                     ", values=" + values +
                     '}';
         }
@@ -1409,6 +1415,24 @@ public interface AnnotationDescription {
      * An adapter implementation of an annotation.
      */
     abstract class AbstractAnnotationDescription implements AnnotationDescription {
+
+        @Override
+        public RetentionPolicy getRetention() {
+            AnnotationDescription.Loadable<Retention> retention = getAnnotationType().getDeclaredAnnotations().ofType(Retention.class);
+            return retention == null
+                    ? RetentionPolicy.SOURCE
+                    : retention.loadSilent().value();
+        }
+
+        @Override
+        public boolean isInherited() {
+            return getAnnotationType().getDeclaredAnnotations().isAnnotationPresent(Inherited.class);
+        }
+
+        @Override
+        public boolean isDocumented() {
+            return getAnnotationType().getDeclaredAnnotations().isAnnotationPresent(Documented.class);
+        }
 
         @Override
         public <T> T getValue(MethodDescription methodDescription, Class<T> type) {

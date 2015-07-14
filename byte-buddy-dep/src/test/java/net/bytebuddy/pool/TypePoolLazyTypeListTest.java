@@ -1,28 +1,23 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.description.type.AbstractTypeListTest;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
-import org.mockito.asm.Type;
 
-import java.io.Serializable;
+import java.lang.reflect.Type;
+import java.util.List;
 
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static net.bytebuddy.matcher.ElementMatchers.anyOf;
 
-public class TypePoolLazyTypeListTest {
-
-    private TypeList typeList;
+public class TypePoolLazyTypeListTest extends AbstractTypeListTest<Class<?>> {
 
     private TypePool typePool;
 
     @Before
     public void setUp() throws Exception {
         typePool = TypePool.Default.ofClassPath();
-        typeList = typePool.describe(Sample.class.getName()).resolve().getInterfaces().asRawTypes();
     }
 
     @After
@@ -30,45 +25,23 @@ public class TypePoolLazyTypeListTest {
         typePool.clear();
     }
 
-    @Test
-    public void testFieldList() throws Exception {
-        assertThat(typeList.size(), is(2));
-        assertThat(typeList.get(0), is((TypeDescription) new TypeDescription.ForLoadedType(Serializable.class)));
-        assertThat(typeList.get(1), is((TypeDescription) new TypeDescription.ForLoadedType(Runnable.class)));
+    @Override
+    protected Class<?> getFirst() throws Exception {
+        return Foo.class;
     }
 
-    @Test
-    public void testToInternalName() throws Exception {
-        assertThat(typeList.toInternalNames(), is(new String[]{Type.getInternalName(Serializable.class),
-                Type.getInternalName(Runnable.class)}));
+    @Override
+    protected Class<?> getSecond() throws Exception {
+        return Bar.class;
     }
 
-    @Test
-    public void testEmptyList() throws Exception {
-        assertThat(typeList.subList(0, 0).toInternalNames(), nullValue(String[].class));
+    @Override
+    protected TypeList asList(List<Class<?>> elements) {
+        return typePool.describe(Holder.class.getName()).resolve().getInterfaces().asRawTypes().filter(anyOf(elements.toArray(new Class<?>[elements.size()])));
     }
 
-    @Test
-    public void testSubList() throws Exception {
-        assertThat(typeList.subList(0, 1), is((TypeList) new TypeList.ForLoadedType(Serializable.class)));
-    }
-
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void testSubListOutOfBounds() throws Exception {
-        typeList.subList(0, 10);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testSubListIllegal() throws Exception {
-        typeList.subList(1, 0);
-    }
-
-    @Test
-    public void testStackSize() throws Exception {
-        assertThat(typeList.getStackSize(), is(2));
-    }
-
-    public static abstract class Sample implements Serializable, Runnable {
-
+    @Override
+    protected TypeDescription asElement(Class<?> element) {
+        return new TypeDescription.ForLoadedType(element);
     }
 }

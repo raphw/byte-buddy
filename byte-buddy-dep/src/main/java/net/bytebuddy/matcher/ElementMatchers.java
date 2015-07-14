@@ -7,6 +7,7 @@ import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -282,6 +283,18 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Method... value) {
         return anyOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value)));
+    }
+
+    /**
+     * Creates a matcher that matches any of the given fields as {@link FieldDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with any of the given objects.
+     */
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> anyOf(Field... value) {
+        return anyOf(new FieldList.ForLoadedField(nonNull(value)));
     }
 
     /**

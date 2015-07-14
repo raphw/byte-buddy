@@ -5244,7 +5244,7 @@ public interface TypePool {
                 public S load(ClassLoader classLoader) throws ClassNotFoundException {
                     return (S) Proxy.newProxyInstance(classLoader,
                             new Class<?>[]{annotationType},
-                            AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, values));
+                            AnnotationInvocationHandler.of(classLoader, annotationType, values));
                 }
 
                 @Override

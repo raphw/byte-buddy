@@ -43,7 +43,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
      * @param visitor The visitor to apply to each type.
      * @return This type list with all types transformed by the supplied visitor.
      */
-    TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor);
+    GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
     /**
      * An abstract base implementation of a type list.
@@ -56,12 +56,12 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         }
 
         @Override
-        public TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor) {
-            List<TypeDescription> visited = new ArrayList<TypeDescription>(size());
+        public GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            List<GenericTypeDescription> visited = new ArrayList<GenericTypeDescription>(size());
             for (TypeDescription typeDescription : this) {
                 visited.add(typeDescription.accept(visitor));
             }
-            return new Explicit(visited);
+            return new GenericTypeList.Explicit(visited);
         }
     }
 
@@ -199,8 +199,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         }
 
         @Override
-        public TypeList accept(GenericTypeDescription.Visitor<? extends TypeDescription> visitor) {
-            return this;
+        public GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            return new GenericTypeList.Empty();
         }
     }
 }
