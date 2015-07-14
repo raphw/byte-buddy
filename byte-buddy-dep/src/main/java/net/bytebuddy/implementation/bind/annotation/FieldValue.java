@@ -121,6 +121,29 @@ public @interface FieldValue {
         protected abstract static class FieldLocator {
 
             /**
+             * Creates a field locator for the given type and instrumented type.
+             *
+             * @param typeDescription  The type which is supposed to define the field or {@code void} if a type should be located
+             *                         in the hierarchy.
+             * @param instrumentedType The instrumented type from which the field is accessed.
+             * @return The field locator for the given field.
+             */
+            protected static FieldLocator of(TypeDescription typeDescription, TypeDescription instrumentedType) {
+                return typeDescription.represents(void.class)
+                        ? new ForFieldInHierarchy(instrumentedType)
+                        : ForSpecificType.of(typeDescription, instrumentedType);
+            }
+
+            /**
+             * Attempts to locate a type for a given field.
+             *
+             * @param fieldName    The name of the field.
+             * @param staticMethod {@code} true if the field is accessed from a static method.
+             * @return The resolution for the requested lookup.
+             */
+            protected abstract Resolution resolve(String fieldName, boolean staticMethod);
+
+            /**
              * A resolution of a field locator.
              */
             protected interface Resolution {
@@ -139,6 +162,32 @@ public @interface FieldValue {
                  * @return {@code true} if a field was successfully located.
                  */
                 boolean isResolved();
+
+                /**
+                 * A canonical implementation of an unresolved field resolution.
+                 */
+                enum Unresolved implements Resolution {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public FieldDescription getFieldDescription() {
+                        throw new IllegalStateException("Cannot resolve field for unresolved lookup");
+                    }
+
+                    @Override
+                    public boolean isResolved() {
+                        return false;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "FieldValue.Binder.FieldLocator.Resolution.Unresolved." + name();
+                    }
+                }
 
                 /**
                  * A successfully resolved field resolution.
@@ -189,55 +238,6 @@ public @interface FieldValue {
                                 '}';
                     }
                 }
-
-                /**
-                 * A canonical implementation of an unresolved field resolution.
-                 */
-                enum Unresolved implements Resolution {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public FieldDescription getFieldDescription() {
-                        throw new IllegalStateException("Cannot resolve field for unresolved lookup");
-                    }
-
-                    @Override
-                    public boolean isResolved() {
-                        return false;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "FieldValue.Binder.FieldLocator.Resolution.Unresolved." + name();
-                    }
-                }
-            }
-
-            /**
-             * Attempts to locate a type for a given field.
-             *
-             * @param fieldName    The name of the field.
-             * @param staticMethod {@code} true if the field is accessed from a static method.
-             * @return The resolution for the requested lookup.
-             */
-            protected abstract Resolution resolve(String fieldName, boolean staticMethod);
-
-            /**
-             * Creates a field locator for the given type and instrumented type.
-             *
-             * @param typeDescription  The type which is supposed to define the field or {@code void} if a type should be located
-             *                         in the hierarchy.
-             * @param instrumentedType The instrumented type from which the field is accessed.
-             * @return The field locator for the given field.
-             */
-            protected static FieldLocator of(TypeDescription typeDescription, TypeDescription instrumentedType) {
-                return typeDescription.represents(void.class)
-                        ? new ForFieldInHierarchy(instrumentedType)
-                        : ForSpecificType.of(typeDescription, instrumentedType);
             }
 
             /**
@@ -297,23 +297,6 @@ public @interface FieldValue {
             protected static class ForSpecificType extends FieldLocator {
 
                 /**
-                 * Creates a field locator that locates a field within the given type only if that type is within the
-                 * instrumented type's type hierarchy.
-                 *
-                 * @param typeDescription  The given type to locate a field within.
-                 * @param instrumentedType The instrumented type.
-                 * @return An appropriate field locator.
-                 */
-                protected static FieldLocator of(TypeDescription typeDescription, TypeDescription instrumentedType) {
-                    if (typeDescription.isInterface() || typeDescription.isPrimitive() || typeDescription.isArray()) {
-                        throw new IllegalStateException(typeDescription + " is not capable of declaring a field");
-                    }
-                    return instrumentedType.isAssignableTo(typeDescription)
-                            ? new ForSpecificType(typeDescription, instrumentedType)
-                            : new Impossible();
-                }
-
-                /**
                  * The type which is supposed to define the field.
                  */
                 private final TypeDescription typeDescription;
@@ -332,6 +315,23 @@ public @interface FieldValue {
                 protected ForSpecificType(TypeDescription typeDescription, TypeDescription instrumentedType) {
                     this.typeDescription = typeDescription;
                     this.instrumentedType = instrumentedType;
+                }
+
+                /**
+                 * Creates a field locator that locates a field within the given type only if that type is within the
+                 * instrumented type's type hierarchy.
+                 *
+                 * @param typeDescription  The given type to locate a field within.
+                 * @param instrumentedType The instrumented type.
+                 * @return An appropriate field locator.
+                 */
+                protected static FieldLocator of(TypeDescription typeDescription, TypeDescription instrumentedType) {
+                    if (typeDescription.isInterface() || typeDescription.isPrimitive() || typeDescription.isArray()) {
+                        throw new IllegalStateException(typeDescription + " is not capable of declaring a field");
+                    }
+                    return instrumentedType.isAssignableTo(typeDescription)
+                            ? new ForSpecificType(typeDescription, instrumentedType)
+                            : new Impossible();
                 }
 
                 @Override

@@ -137,6 +137,11 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
         }).apply();
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Baz {
+        /* empty */
+    }
+
     public static class Bar {
 
         public final String bar;
@@ -165,10 +170,5 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
                 foo = FOO;
             }
         }
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface Baz {
-        /* empty */
     }
 }

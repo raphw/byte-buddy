@@ -50,11 +50,10 @@ public abstract class AbstractImplementationTargetTest {
     @Mock
     protected MethodDescription invokableMethod, defaultMethod;
 
-    @Mock
-    private MethodDescription.Token invokableToken, defaultToken;
-
     protected Implementation.Target implementationTarget;
 
+    @Mock
+    private MethodDescription.Token invokableToken, defaultToken;
 
     @Before
     @SuppressWarnings("unchecked")

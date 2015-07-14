@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.attribute;
 
-import junit.framework.TestCase;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;

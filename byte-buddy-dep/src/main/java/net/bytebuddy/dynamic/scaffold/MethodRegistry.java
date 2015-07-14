@@ -79,6 +79,20 @@ public interface MethodRegistry {
         Handler.Compiled compile(Implementation.Target implementationTarget);
 
         /**
+         * A compiled handler for implementing a method.
+         */
+        interface Compiled {
+
+            /**
+             * Assembles this compiled entry with a method attribute appender.
+             *
+             * @param attributeAppender The method attribute appender to apply together with this handler.
+             * @return A method pool entry representing this handler and the given attribute appender.
+             */
+            TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender);
+        }
+
+        /**
          * A handler for defining an abstract or native method.
          */
         class ForAbstractMethod implements Handler, Compiled {
@@ -129,20 +143,6 @@ public interface MethodRegistry {
                         "modifierResolver=" + modifierResolver +
                         '}';
             }
-        }
-
-        /**
-         * A compiled handler for implementing a method.
-         */
-        interface Compiled {
-
-            /**
-             * Assembles this compiled entry with a method attribute appender.
-             *
-             * @param attributeAppender The method attribute appender to apply together with this handler.
-             * @return A method pool entry representing this handler and the given attribute appender.
-             */
-            TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender);
         }
 
         /**
@@ -260,21 +260,6 @@ public interface MethodRegistry {
         class ForAnnotationValue implements Handler, Compiled {
 
             /**
-             * Represents the given value as an annotation default value handler after validating its suitability.
-             *
-             * @param annotationValue  The annotation value to represent.
-             * @param modifierResolver The transformer to apply to the modifier of this method.
-             * @return A handler for setting the given value as a default value for instrumented methods.
-             */
-            public static Handler of(Object annotationValue, ModifierResolver modifierResolver) {
-                TypeDescription typeDescription = new TypeDescription.ForLoadedType(annotationValue.getClass());
-                if (!typeDescription.isAnnotationValue() && !typeDescription.isPrimitiveWrapper()) {
-                    throw new IllegalArgumentException("Does not describe an annotation value: " + annotationValue);
-                }
-                return new ForAnnotationValue(annotationValue, modifierResolver);
-            }
-
-            /**
              * The annotation value to set as a default value.
              */
             private final Object annotationValue;
@@ -293,6 +278,21 @@ public interface MethodRegistry {
             protected ForAnnotationValue(Object annotationValue, ModifierResolver modifierResolver) {
                 this.annotationValue = annotationValue;
                 this.modifierResolver = modifierResolver;
+            }
+
+            /**
+             * Represents the given value as an annotation default value handler after validating its suitability.
+             *
+             * @param annotationValue  The annotation value to represent.
+             * @param modifierResolver The transformer to apply to the modifier of this method.
+             * @return A handler for setting the given value as a default value for instrumented methods.
+             */
+            public static Handler of(Object annotationValue, ModifierResolver modifierResolver) {
+                TypeDescription typeDescription = new TypeDescription.ForLoadedType(annotationValue.getClass());
+                if (!typeDescription.isAnnotationValue() && !typeDescription.isPrimitiveWrapper()) {
+                    throw new IllegalArgumentException("Does not describe an annotation value: " + annotationValue);
+                }
+                return new ForAnnotationValue(annotationValue, modifierResolver);
             }
 
             @Override

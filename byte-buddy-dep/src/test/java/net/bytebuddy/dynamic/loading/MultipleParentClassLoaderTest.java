@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;

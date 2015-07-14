@@ -62,6 +62,16 @@ public class AnnotationDescriptionBuilderTest {
         ObjectPropertyAssertion.of(AnnotationDescription.Builder.class).apply();
     }
 
+    public enum Bar {
+        FIRST,
+        SECOND
+    }
+
+    public enum FooBar {
+        FIRST,
+        SECOND
+    }
+
     public @interface Foo {
 
         Bar foo();
@@ -71,16 +81,6 @@ public class AnnotationDescriptionBuilderTest {
         Qux qux();
 
         String baz();
-    }
-
-    public enum Bar {
-        FIRST,
-        SECOND
-    }
-
-    public enum FooBar {
-        FIRST,
-        SECOND
     }
 
     public @interface Qux {

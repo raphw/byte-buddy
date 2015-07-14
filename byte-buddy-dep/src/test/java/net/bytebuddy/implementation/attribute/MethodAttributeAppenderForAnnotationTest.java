@@ -8,12 +8,9 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.asm.Type;
 
 import java.lang.annotation.Annotation;
-import java.util.Collection;
-import java.util.Collections;
 
 import static org.mockito.Mockito.*;
 

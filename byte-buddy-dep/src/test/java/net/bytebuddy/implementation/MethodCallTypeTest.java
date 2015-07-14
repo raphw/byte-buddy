@@ -130,14 +130,14 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
         implement(Foo.class, MethodCall.invokeSuper().with(value).withAssigner(nonAssigner, false));
     }
 
+    public enum Bar {
+        INSTANCE;
+    }
+
     public static class Foo {
 
         public Object foo(Object value) {
             return value;
         }
-    }
-
-    public enum Bar {
-        INSTANCE;
     }
 }

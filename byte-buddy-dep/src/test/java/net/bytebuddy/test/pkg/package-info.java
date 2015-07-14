@@ -1,2 +1,1 @@
-@PkgAnnotation
-package net.bytebuddy.test.pkg;
+@PkgAnnotation package net.bytebuddy.test.pkg;

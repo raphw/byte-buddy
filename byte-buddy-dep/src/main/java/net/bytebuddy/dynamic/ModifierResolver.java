@@ -42,7 +42,7 @@ public interface ModifierResolver {
     }
 
     /**
-     *  Resolves a modifier as it is defined by the method itself but strips any {@code synchronized} modifier.
+     * Resolves a modifier as it is defined by the method itself but strips any {@code synchronized} modifier.
      */
     enum Desynchronizing implements ModifierResolver {
 

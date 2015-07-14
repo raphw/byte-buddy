@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import junit.framework.TestCase;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -13,9 +12,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class ModifierResolverSimpleTest {
 

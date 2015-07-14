@@ -24,15 +24,15 @@ public class CollectionRawTypeMatcherTest extends AbstractElementMatcherTest<Col
     @Mock
     private TypeDescription firstRaw, secondRaw;
 
+    @SuppressWarnings("unchecked")
+    public CollectionRawTypeMatcherTest() {
+        super((Class<CollectionRawTypeMatcher<?>>) (Object) CollectionRawTypeMatcher.class, "rawTypes");
+    }
+
     @Before
     public void setUp() throws Exception {
         when(first.asRawType()).thenReturn(firstRaw);
         when(second.asRawType()).thenReturn(secondRaw);
-    }
-
-    @SuppressWarnings("unchecked")
-    public CollectionRawTypeMatcherTest() {
-        super((Class<CollectionRawTypeMatcher<?>>) (Object) CollectionRawTypeMatcher.class, "rawTypes");
     }
 
     @Test

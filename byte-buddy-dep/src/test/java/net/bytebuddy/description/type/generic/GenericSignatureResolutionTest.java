@@ -7,7 +7,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;

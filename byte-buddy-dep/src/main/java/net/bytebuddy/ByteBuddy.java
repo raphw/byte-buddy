@@ -2213,133 +2213,9 @@ public class ByteBuddy {
     }
 
     /**
-     * A matched method interception for a non-optional method definition.
-     */
-    public class MatchedMethodInterception implements MethodInterceptable {
-
-        /**
-         * A method matcher that representedBy the current method selection.
-         */
-        protected final LatentMethodMatcher methodMatcher;
-
-        /**
-         * Creates a new matched method interception.
-         *
-         * @param methodMatcher The method matcher representing the current method selection.
-         */
-        protected MatchedMethodInterception(LatentMethodMatcher methodMatcher) {
-            this.methodMatcher = methodMatcher;
-        }
-
-        @Override
-        public MethodAnnotationTarget intercept(Implementation implementation) {
-            return new MethodAnnotationTarget(classFileVersion,
-                    namingStrategy,
-                    auxiliaryTypeNamingStrategy,
-                    interfaceTypes,
-                    ignoredMethods,
-                    bridgeMethodResolverFactory,
-                    classVisitorWrapperChain,
-                    methodRegistry,
-                    modifiers,
-                    typeAttributeAppender,
-                    methodLookupEngineFactory,
-                    defaultFieldAttributeAppenderFactory,
-                    defaultMethodAttributeAppenderFactory,
-                    methodMatcher,
-                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation), ModifierResolver.Simple.INSTANCE),
-                    MethodAttributeAppender.NoOp.INSTANCE);
-        }
-
-        @Override
-        public MethodAnnotationTarget withoutCode() {
-            return new MethodAnnotationTarget(classFileVersion,
-                    namingStrategy,
-                    auxiliaryTypeNamingStrategy,
-                    interfaceTypes,
-                    ignoredMethods,
-                    bridgeMethodResolverFactory,
-                    classVisitorWrapperChain,
-                    methodRegistry,
-                    modifiers,
-                    typeAttributeAppender,
-                    methodLookupEngineFactory,
-                    defaultFieldAttributeAppenderFactory,
-                    defaultMethodAttributeAppenderFactory,
-                    methodMatcher,
-                    new MethodRegistry.Handler.ForAbstractMethod(ModifierResolver.Simple.INSTANCE),
-                    MethodAttributeAppender.NoOp.INSTANCE);
-        }
-
-        @Override
-        public MethodAnnotationTarget withDefaultValue(Object value, Class<?> type) {
-            return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.describe(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
-        }
-
-        @Override
-        public MethodAnnotationTarget withDefaultValue(Object value) {
-            return new MethodAnnotationTarget(classFileVersion,
-                    namingStrategy,
-                    auxiliaryTypeNamingStrategy,
-                    interfaceTypes,
-                    ignoredMethods,
-                    bridgeMethodResolverFactory,
-                    classVisitorWrapperChain,
-                    methodRegistry,
-                    modifiers,
-                    typeAttributeAppender,
-                    methodLookupEngineFactory,
-                    defaultFieldAttributeAppenderFactory,
-                    defaultMethodAttributeAppenderFactory,
-                    methodMatcher,
-                    MethodRegistry.Handler.ForAnnotationValue.of(value, ModifierResolver.Simple.INSTANCE),
-                    MethodAttributeAppender.NoOp.INSTANCE);
-        }
-
-        /**
-         * Returns the outer class instance of this instance.
-         *
-         * @return The outer class instance.
-         */
-        private ByteBuddy getByteBuddy() {
-            return ByteBuddy.this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && ByteBuddy.this.equals(((MatchedMethodInterception) other).getByteBuddy())
-                    && methodMatcher.equals(((MatchedMethodInterception) other).methodMatcher);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * methodMatcher.hashCode() + ByteBuddy.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "ByteBuddy.MatchedMethodInterception{" +
-                    "methodMatcher=" + methodMatcher +
-                    "byteBuddy=" + ByteBuddy.this.toString() +
-                    '}';
-        }
-    }
-
-    /**
      * An implementation fo the {@code values} method of an enumeration type.
      */
     protected static class EnumerationImplementation implements Implementation {
-
-        /**
-         * The field modifiers to use for any field that is added to an enumeration.
-         */
-        private static final int ENUM_FIELD_MODIFIERS = Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC;
-
-        /**
-         * The name of the field containing an array of all enumeration values.
-         */
-        private static final String ENUM_VALUES = "$VALUES";
 
         /**
          * The name of the {@link java.lang.Object#clone()} method.
@@ -2355,6 +2231,16 @@ public class ByteBuddy {
          * The name of the {@code values} method that is defined for any enumeration.
          */
         protected static final String ENUM_VALUES_METHOD_NAME = "values";
+
+        /**
+         * The field modifiers to use for any field that is added to an enumeration.
+         */
+        private static final int ENUM_FIELD_MODIFIERS = Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC;
+
+        /**
+         * The name of the field containing an array of all enumeration values.
+         */
+        private static final String ENUM_VALUES = "$VALUES";
 
         /**
          * The names of the enumerations to define for the enumeration.
@@ -2533,6 +2419,120 @@ public class ByteBuddy {
                         "values=" + values +
                         '}';
             }
+        }
+    }
+
+    /**
+     * A matched method interception for a non-optional method definition.
+     */
+    public class MatchedMethodInterception implements MethodInterceptable {
+
+        /**
+         * A method matcher that representedBy the current method selection.
+         */
+        protected final LatentMethodMatcher methodMatcher;
+
+        /**
+         * Creates a new matched method interception.
+         *
+         * @param methodMatcher The method matcher representing the current method selection.
+         */
+        protected MatchedMethodInterception(LatentMethodMatcher methodMatcher) {
+            this.methodMatcher = methodMatcher;
+        }
+
+        @Override
+        public MethodAnnotationTarget intercept(Implementation implementation) {
+            return new MethodAnnotationTarget(classFileVersion,
+                    namingStrategy,
+                    auxiliaryTypeNamingStrategy,
+                    interfaceTypes,
+                    ignoredMethods,
+                    bridgeMethodResolverFactory,
+                    classVisitorWrapperChain,
+                    methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
+                    methodLookupEngineFactory,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory,
+                    methodMatcher,
+                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation), ModifierResolver.Simple.INSTANCE),
+                    MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        @Override
+        public MethodAnnotationTarget withoutCode() {
+            return new MethodAnnotationTarget(classFileVersion,
+                    namingStrategy,
+                    auxiliaryTypeNamingStrategy,
+                    interfaceTypes,
+                    ignoredMethods,
+                    bridgeMethodResolverFactory,
+                    classVisitorWrapperChain,
+                    methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
+                    methodLookupEngineFactory,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory,
+                    methodMatcher,
+                    new MethodRegistry.Handler.ForAbstractMethod(ModifierResolver.Simple.INSTANCE),
+                    MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        @Override
+        public MethodAnnotationTarget withDefaultValue(Object value, Class<?> type) {
+            return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.describe(nonNull(value), new TypeDescription.ForLoadedType(nonNull(type))));
+        }
+
+        @Override
+        public MethodAnnotationTarget withDefaultValue(Object value) {
+            return new MethodAnnotationTarget(classFileVersion,
+                    namingStrategy,
+                    auxiliaryTypeNamingStrategy,
+                    interfaceTypes,
+                    ignoredMethods,
+                    bridgeMethodResolverFactory,
+                    classVisitorWrapperChain,
+                    methodRegistry,
+                    modifiers,
+                    typeAttributeAppender,
+                    methodLookupEngineFactory,
+                    defaultFieldAttributeAppenderFactory,
+                    defaultMethodAttributeAppenderFactory,
+                    methodMatcher,
+                    MethodRegistry.Handler.ForAnnotationValue.of(value, ModifierResolver.Simple.INSTANCE),
+                    MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        /**
+         * Returns the outer class instance of this instance.
+         *
+         * @return The outer class instance.
+         */
+        private ByteBuddy getByteBuddy() {
+            return ByteBuddy.this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && ByteBuddy.this.equals(((MatchedMethodInterception) other).getByteBuddy())
+                    && methodMatcher.equals(((MatchedMethodInterception) other).methodMatcher);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * methodMatcher.hashCode() + ByteBuddy.this.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ByteBuddy.MatchedMethodInterception{" +
+                    "methodMatcher=" + methodMatcher +
+                    "byteBuddy=" + ByteBuddy.this.toString() +
+                    '}';
         }
     }
 }

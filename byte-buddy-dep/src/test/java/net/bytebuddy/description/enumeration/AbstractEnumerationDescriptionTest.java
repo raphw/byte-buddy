@@ -1,6 +1,5 @@
 package net.bytebuddy.description.enumeration;
 
-import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Before;

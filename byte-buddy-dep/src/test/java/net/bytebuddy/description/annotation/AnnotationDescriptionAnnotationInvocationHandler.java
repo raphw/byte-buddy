@@ -1,7 +1,5 @@
 package net.bytebuddy.description.annotation;
 
-import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;

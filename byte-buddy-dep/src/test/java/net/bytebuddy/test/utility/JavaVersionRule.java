@@ -27,6 +27,35 @@ public class JavaVersionRule implements MethodRule {
                 : new NoOpStatement(enforce.value(), enforce.type());
     }
 
+    public enum Type {
+
+        AT_LEAST("of at least") {
+            @Override
+            protected boolean matches(int comparison) {
+                return comparison <= 0;
+            }
+        },
+
+        LESS_THEN("less than") {
+            @Override
+            protected boolean matches(int comparison) {
+                return comparison > 0;
+            }
+        };
+
+        private final String message;
+
+        Type(String message) {
+            this.message = message;
+        }
+
+        protected abstract boolean matches(int comparison);
+
+        public String toMessageString() {
+            return message;
+        }
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface Enforce {
@@ -50,35 +79,6 @@ public class JavaVersionRule implements MethodRule {
         @Override
         public void evaluate() throws Throwable {
             Logger.getAnonymousLogger().warning("Ignored test case that requires a Java version " + type.toMessageString() + " " + requiredVersion);
-        }
-    }
-
-    public enum Type {
-
-        AT_LEAST("of at least") {
-            @Override
-            protected boolean matches(int comparison) {
-                return comparison <= 0;
-            }
-        },
-
-        LESS_THEN("less than") {
-            @Override
-            protected boolean matches(int comparison) {
-                return comparison > 0;
-            }
-        };
-
-        protected abstract boolean matches(int comparison);
-
-        private final String message;
-
-        Type(String message) {
-            this.message = message;
-        }
-
-        public String toMessageString() {
-            return message;
         }
     }
 }

@@ -8,7 +8,6 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.asm.Type;
 
 import java.util.Collections;

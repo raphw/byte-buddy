@@ -6,8 +6,8 @@ public class EnumerationDescriptionForLoadedEnumerationTest extends AbstractEnum
 
     @Override
     protected EnumerationDescription describe(Enum<?> enumeration,
-                                                              Class<?> carrierType,
-                                                              MethodDescription annotationMethod) {
+                                              Class<?> carrierType,
+                                              MethodDescription annotationMethod) {
         return new EnumerationDescription.ForLoadedEnumeration(enumeration);
     }
 }

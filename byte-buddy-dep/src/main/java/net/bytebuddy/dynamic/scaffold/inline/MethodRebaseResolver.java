@@ -293,17 +293,6 @@ public interface MethodRebaseResolver {
         class ForRebasedMethod implements Resolution {
 
             /**
-             * Resolves a rebasement for the provided method.
-             *
-             * @param methodDescription     The method to be rebased.
-             * @param methodNameTransformer The transformer to use for renaming the method.
-             * @return A resolution for rebasing the provided method.
-             */
-            public static Resolution of(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
-                return new ForRebasedMethod(new RebasedMethod(methodDescription, methodNameTransformer));
-            }
-
-            /**
              * The rebased method.
              */
             private final MethodDescription methodDescription;
@@ -315,6 +304,17 @@ public interface MethodRebaseResolver {
              */
             protected ForRebasedMethod(MethodDescription methodDescription) {
                 this.methodDescription = methodDescription;
+            }
+
+            /**
+             * Resolves a rebasement for the provided method.
+             *
+             * @param methodDescription     The method to be rebased.
+             * @param methodNameTransformer The transformer to use for renaming the method.
+             * @return A resolution for rebasing the provided method.
+             */
+            public static Resolution of(MethodDescription methodDescription, MethodNameTransformer methodNameTransformer) {
+                return new ForRebasedMethod(new RebasedMethod(methodDescription, methodNameTransformer));
             }
 
             @Override
@@ -429,17 +429,6 @@ public interface MethodRebaseResolver {
         class ForRebasedConstructor implements Resolution {
 
             /**
-             * Resolves a constructor rebasement.
-             *
-             * @param methodDescription The constructor to rebase.
-             * @param placeholderType   The placeholder type to use to distinguish the constructor's signature.
-             * @return A resolution of the provided constructor.
-             */
-            public static Resolution of(MethodDescription methodDescription, TypeDescription placeholderType) {
-                return new ForRebasedConstructor(new RebasedConstructor(methodDescription, placeholderType));
-            }
-
-            /**
              * The rebased constructor.
              */
             private final MethodDescription methodDescription;
@@ -451,6 +440,17 @@ public interface MethodRebaseResolver {
              */
             protected ForRebasedConstructor(MethodDescription methodDescription) {
                 this.methodDescription = methodDescription;
+            }
+
+            /**
+             * Resolves a constructor rebasement.
+             *
+             * @param methodDescription The constructor to rebase.
+             * @param placeholderType   The placeholder type to use to distinguish the constructor's signature.
+             * @return A resolution of the provided constructor.
+             */
+            public static Resolution of(MethodDescription methodDescription, TypeDescription placeholderType) {
+                return new ForRebasedConstructor(new RebasedConstructor(methodDescription, placeholderType));
             }
 
             @Override

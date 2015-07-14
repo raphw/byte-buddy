@@ -1,10 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
@@ -13,10 +10,8 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
-import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -47,12 +42,10 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
     }
 
 
-
     @Override
     protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return new ByteBuddy().redefine(typeDescription, classFileLocator);
     }
-
 
 
     @Test

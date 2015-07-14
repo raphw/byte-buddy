@@ -25,6 +25,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class InvokeDynamicTest extends AbstractImplementationTest {
 
+    public static final String INSTANCE = "INSTANCE";
+
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
     private static final boolean BOOLEAN = true;
@@ -51,6 +53,8 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
 
     private static final String ARGUMENT_BOOTSTRAP = "net.bytebuddy.test.precompiled.ArgumentBootstrap";
 
+    public static final String SAMPLE_ENUM = ARGUMENT_BOOTSTRAP + "$SampleEnum";
+
     private static final String BOOTSTRAP_EXPLICIT_ARGUMENTS = "bootstrapExplicitArguments";
 
     private static final String BOOTSTRAP_ARRAY_ARGUMENTS = "bootstrapArrayArguments";
@@ -58,10 +62,6 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     private static final String ARGUMENTS_FIELD_NAME = "arguments";
 
     private static final String BOOTSTRAP = "bootstrap";
-
-    public static final String INSTANCE = "INSTANCE";
-
-    public static final String SAMPLE_ENUM = ARGUMENT_BOOTSTRAP + "$SampleEnum";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();

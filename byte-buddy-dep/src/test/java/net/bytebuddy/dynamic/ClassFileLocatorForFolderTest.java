@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
@@ -50,7 +49,7 @@ public class ClassFileLocatorForFolderTest {
         ClassFileLocator classFileLocator = new ClassFileLocator.ForFolder(folder);
         ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is(new byte[] {VALUE, VALUE * 2}));
+        assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
         assertThat(file.delete(), is(true));
         assertThat(packageFolder.delete(), is(true));
     }

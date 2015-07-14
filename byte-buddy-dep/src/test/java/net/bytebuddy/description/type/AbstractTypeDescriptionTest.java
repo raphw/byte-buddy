@@ -481,7 +481,33 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         ObjectPropertyAssertion.of(TypeDescription.AbstractTypeDescription.SuperTypeIterator.class).applyBasic();
     }
 
+    protected interface SampleInterface {
+        /* empty */
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    private @interface SampleAnnotation {
+        /* empty */
+    }
+
+    @Inherited
+    @Retention(RetentionPolicy.RUNTIME)
+    private @interface OtherAnnotation {
+
+        String value();
+    }
+
+    public interface SampleTransitiveInterface extends SampleInterface {
+        /* empty */
+    }
+
     private static class SignatureMalformer extends ClassVisitor {
+
+        private static final String FOO = "foo";
+
+        public SignatureMalformer(ClassVisitor classVisitor) {
+            super(Opcodes.ASM5, classVisitor);
+        }
 
         public static Class<?> malform(Class<?> type) throws Exception {
             ClassReader classReader = new ClassReader(type.getName());
@@ -492,12 +518,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
                     null,
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST);
             return classLoader.loadClass(type.getName());
-        }
-
-        private static final String FOO = "foo";
-
-        public SignatureMalformer(ClassVisitor classVisitor) {
-            super(Opcodes.ASM5, classVisitor);
         }
 
         @Override
@@ -524,26 +544,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         abstract Callable<T> foo();
     }
 
-    protected interface SampleInterface {
-        /* empty */
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    private @interface SampleAnnotation {
-        /* empty */
-    }
-
-    @Inherited
-    @Retention(RetentionPolicy.RUNTIME)
-    private @interface OtherAnnotation {
-
-        String value();
-    }
-
-    public interface SampleTransitiveInterface extends SampleInterface {
-        /* empty */
-    }
-
     static class SamplePackagePrivate {
         /* empty */
     }
@@ -560,21 +560,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         /* empty */
     }
 
-    @SampleAnnotation
-    @OtherAnnotation(FOO)
-    public class SampleClass {
-        /* empty */
-    }
-
-    public class SampleClassInherited extends SampleClass {
-        /* empty */
-    }
-
-    @OtherAnnotation(BAR)
-    public class SampleClassInheritedOverride extends SampleClass {
-        /* empty */
-    }
-
     public static class SampleGenericType<T extends ArrayList<T> & Callable<T>,
             S extends Callable<?>,
             U extends Callable<? extends Callable<U>>,
@@ -588,6 +573,21 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     }
 
     public static class Traversal {
+        /* empty */
+    }
+
+    @SampleAnnotation
+    @OtherAnnotation(FOO)
+    public class SampleClass {
+        /* empty */
+    }
+
+    public class SampleClassInherited extends SampleClass {
+        /* empty */
+    }
+
+    @OtherAnnotation(BAR)
+    public class SampleClassInheritedOverride extends SampleClass {
         /* empty */
     }
 }

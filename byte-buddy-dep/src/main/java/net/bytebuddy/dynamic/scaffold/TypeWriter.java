@@ -1045,42 +1045,6 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A method validator for checking default values.
-             */
-            protected class ValidatingMethodVisitor extends MethodVisitor {
-
-                /**
-                 * The name of the method being visited.
-                 */
-                private final String name;
-
-                /**
-                 * Creates a validating method visitor.
-                 *
-                 * @param methodVisitor The method visitor to which any calls are delegated to.
-                 * @param name          The name of the method being visited.
-                 */
-                protected ValidatingMethodVisitor(MethodVisitor methodVisitor, String name) {
-                    super(ASM_API_VERSION, methodVisitor);
-                    this.name = name;
-                }
-
-                @Override
-                public AnnotationVisitor visitAnnotationDefault() {
-                    constraint.assertDefault(name);
-                    return super.visitAnnotationDefault();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor{" +
-                            "classVisitor=" + ValidatingClassVisitor.this +
-                            ", name='" + name + '\'' +
-                            '}';
-                }
-            }
-
-            /**
              * A constraint for members that are legal for a given type.
              */
             protected enum Constraint {
@@ -1270,6 +1234,42 @@ public interface TypeWriter<T> {
                 @Override
                 public String toString() {
                     return "TypeWriter.Default.ValidatingClassVisitor.Constraint." + name();
+                }
+            }
+
+            /**
+             * A method validator for checking default values.
+             */
+            protected class ValidatingMethodVisitor extends MethodVisitor {
+
+                /**
+                 * The name of the method being visited.
+                 */
+                private final String name;
+
+                /**
+                 * Creates a validating method visitor.
+                 *
+                 * @param methodVisitor The method visitor to which any calls are delegated to.
+                 * @param name          The name of the method being visited.
+                 */
+                protected ValidatingMethodVisitor(MethodVisitor methodVisitor, String name) {
+                    super(ASM_API_VERSION, methodVisitor);
+                    this.name = name;
+                }
+
+                @Override
+                public AnnotationVisitor visitAnnotationDefault() {
+                    constraint.assertDefault(name);
+                    return super.visitAnnotationDefault();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor{" +
+                            "classVisitor=" + ValidatingClassVisitor.this +
+                            ", name='" + name + '\'' +
+                            '}';
                 }
             }
         }

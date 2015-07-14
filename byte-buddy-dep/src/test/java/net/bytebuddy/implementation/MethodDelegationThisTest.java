@@ -2,11 +2,9 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bind.annotation.This;
-import net.bytebuddy.pool.TypePool;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationThisTest extends AbstractImplementationTest {

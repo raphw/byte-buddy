@@ -105,6 +105,7 @@ public interface FieldRegistry {
 
             /**
              * Creates a new simple matcher.
+             *
              * @param fieldToken The field token to match.
              */
             public ForToken(FieldDescription.Token fieldToken) {

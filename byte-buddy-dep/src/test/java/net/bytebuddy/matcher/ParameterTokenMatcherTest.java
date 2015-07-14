@@ -1,6 +1,5 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import org.junit.Before;
 import org.junit.Test;

@@ -436,6 +436,77 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         /**
+         * A visitor for erasing type variables on the most fine-grained level. In practice, this means:
+         * <ul>
+         * <li>Parameterized types are reduced to their erasure if one of its parameters representedBy a type variable or a wildcard with a bound
+         * that is a type variable.</li>
+         * <li>Wildcards have their bound erased, if required.</li>
+         * <li>Type variables are erased.</li>
+         * <li>Generic arrays have their component type erased, if required.</li>
+         * <li>Non-generic types are transformed into raw-type representations of the same type.</li>
+         * </ul>
+         */
+        enum TypeVariableErasing implements Visitor<GenericTypeDescription> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericArray) {
+                return ForGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
+            }
+
+            @Override
+            public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
+                // Wildcards which are used within parameterized types are taken care of by the calling method.
+                GenericTypeList lowerBounds = wildcardType.getLowerBounds();
+                return lowerBounds.isEmpty()
+                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcardType.getUpperBounds().getOnly().accept(this))
+                        : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+            }
+
+            @Override
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
+                for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
+                    if (parameter.getSort().isTypeVariable()) {
+                        return parameterizedType.asRawType();
+                    } else if (parameter.getSort().isWildcard()) {
+                        GenericTypeList bounds = parameter.getLowerBounds();
+                        bounds = bounds.isEmpty() ? parameter.getUpperBounds() : bounds;
+                        if (bounds.getOnly().getSort().isTypeVariable()) {
+                            return parameterizedType.asRawType();
+                        }
+                    }
+                    parameters.add(parameter.accept(this));
+                }
+                GenericTypeDescription ownerType = parameterizedType.getOwnerType();
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType(),
+                        parameters,
+                        ownerType == null
+                                ? null
+                                : ownerType.accept(this));
+            }
+
+            @Override
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                return typeVariable.asRawType();
+            }
+
+            @Override
+            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
+                return new ForParameterizedType.Raw(typeDescription);
+            }
+
+            @Override
+            public String toString() {
+                return "GenericTypeDescription.Visitor.TypeVariableErasing." + name();
+            }
+        }
+
+        /**
          * Visits a generic type and appends the discovered type to the supplied signature visitor.
          */
         class ForSignatureVisitor implements Visitor<SignatureVisitor> {
@@ -647,6 +718,27 @@ public interface GenericTypeDescription extends NamedElement {
             public static class ForAttachment extends Substitutor {
 
                 /**
+                 * The declaring type which is filled in for {@link TargetType}.
+                 */
+                private final TypeDescription declaringType;
+
+                /**
+                 * The source which is used for locating type variables.
+                 */
+                private final TypeVariableSource typeVariableSource;
+
+                /**
+                 * Creates a visitor for attaching type variables.
+                 *
+                 * @param declaringType      The declaring type which is filled in for {@link TargetType}.
+                 * @param typeVariableSource The source which is used for locating type variables.
+                 */
+                protected ForAttachment(TypeDescription declaringType, TypeVariableSource typeVariableSource) {
+                    this.declaringType = declaringType;
+                    this.typeVariableSource = typeVariableSource;
+                }
+
+                /**
                  * Attaches all types to the given field description.
                  *
                  * @param fieldDescription The field description to which visited types should be attached to.
@@ -684,27 +776,6 @@ public interface GenericTypeDescription extends NamedElement {
                  */
                 public static ForAttachment of(TypeDescription typeDescription) {
                     return new ForAttachment(typeDescription, typeDescription);
-                }
-
-                /**
-                 * The declaring type which is filled in for {@link TargetType}.
-                 */
-                private final TypeDescription declaringType;
-
-                /**
-                 * The source which is used for locating type variables.
-                 */
-                private final TypeVariableSource typeVariableSource;
-
-                /**
-                 * Creates a visitor for attaching type variables.
-                 *
-                 * @param declaringType      The declaring type which is filled in for {@link TargetType}.
-                 * @param typeVariableSource The source which is used for locating type variables.
-                 */
-                protected ForAttachment(TypeDescription declaringType, TypeVariableSource typeVariableSource) {
-                    this.declaringType = declaringType;
-                    this.typeVariableSource = typeVariableSource;
                 }
 
                 @Override
@@ -857,6 +928,20 @@ public interface GenericTypeDescription extends NamedElement {
             public static class ForTypeVariableBinding extends Substitutor {
 
                 /**
+                 * Bindings of type variables to their substitution values.
+                 */
+                private final Map<GenericTypeDescription, GenericTypeDescription> bindings;
+
+                /**
+                 * Creates a new visitor for a type variable bindings.
+                 *
+                 * @param bindings Bindings of type variables to their substitution values.
+                 */
+                protected ForTypeVariableBinding(Map<GenericTypeDescription, GenericTypeDescription> bindings) {
+                    this.bindings = bindings;
+                }
+
+                /**
                  * Creates a visitor that binds the variables of the given generic type by the generic type's values. If the provided type
                  * representedBy a raw generic type or if the generic type is incomplete, the returned visitor erases all found type variables
                  * instead.
@@ -878,20 +963,6 @@ public interface GenericTypeDescription extends NamedElement {
                         typeDescription = typeDescription.getOwnerType();
                     } while (typeDescription != null && typeDescription.getSort().isParameterized());
                     return new ForTypeVariableBinding(bindings);
-                }
-
-                /**
-                 * Bindings of type variables to their substitution values.
-                 */
-                private final Map<GenericTypeDescription, GenericTypeDescription> bindings;
-
-                /**
-                 * Creates a new visitor for a type variable bindings.
-                 *
-                 * @param bindings Bindings of type variables to their substitution values.
-                 */
-                protected ForTypeVariableBinding(Map<GenericTypeDescription, GenericTypeDescription> bindings) {
-                    this.bindings = bindings;
                 }
 
                 @Override
@@ -931,77 +1002,6 @@ public interface GenericTypeDescription extends NamedElement {
                             "bindings=" + bindings +
                             '}';
                 }
-            }
-        }
-
-        /**
-         * A visitor for erasing type variables on the most fine-grained level. In practice, this means:
-         * <ul>
-         * <li>Parameterized types are reduced to their erasure if one of its parameters representedBy a type variable or a wildcard with a bound
-         * that is a type variable.</li>
-         * <li>Wildcards have their bound erased, if required.</li>
-         * <li>Type variables are erased.</li>
-         * <li>Generic arrays have their component type erased, if required.</li>
-         * <li>Non-generic types are transformed into raw-type representations of the same type.</li>
-         * </ul>
-         */
-        enum TypeVariableErasing implements Visitor<GenericTypeDescription> {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public GenericTypeDescription onGenericArray(GenericTypeDescription genericArray) {
-                return ForGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
-            }
-
-            @Override
-            public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
-                // Wildcards which are used within parameterized types are taken care of by the calling method.
-                GenericTypeList lowerBounds = wildcardType.getLowerBounds();
-                return lowerBounds.isEmpty()
-                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcardType.getUpperBounds().getOnly().accept(this))
-                        : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
-            }
-
-            @Override
-            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
-                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
-                for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
-                    if (parameter.getSort().isTypeVariable()) {
-                        return parameterizedType.asRawType();
-                    } else if (parameter.getSort().isWildcard()) {
-                        GenericTypeList bounds = parameter.getLowerBounds();
-                        bounds = bounds.isEmpty() ? parameter.getUpperBounds() : bounds;
-                        if (bounds.getOnly().getSort().isTypeVariable()) {
-                            return parameterizedType.asRawType();
-                        }
-                    }
-                    parameters.add(parameter.accept(this));
-                }
-                GenericTypeDescription ownerType = parameterizedType.getOwnerType();
-                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType(),
-                        parameters,
-                        ownerType == null
-                                ? null
-                                : ownerType.accept(this));
-            }
-
-            @Override
-            public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
-                return typeVariable.asRawType();
-            }
-
-            @Override
-            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
-                return new ForParameterizedType.Raw(typeDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "GenericTypeDescription.Visitor.TypeVariableErasing." + name();
             }
         }
     }
@@ -1139,26 +1139,6 @@ public interface GenericTypeDescription extends NamedElement {
         public static class Latent extends ForGenericArray {
 
             /**
-             * Returns a description of the given component type.
-             *
-             * @param componentType The component type of the array type to create.
-             * @param arity         The arity of the generic array to create.
-             * @return A description of the requested array. If the component type is non-generic, a non-generic array type is returned.
-             */
-            public static GenericTypeDescription of(GenericTypeDescription componentType, int arity) {
-                if (arity < 0) {
-                    throw new IllegalArgumentException("Arrays cannot have a negative arity");
-                }
-                while (componentType.getSort().isGenericArray()) {
-                    componentType = componentType.getComponentType();
-                    arity++;
-                }
-                return arity == 0
-                        ? componentType
-                        : new Latent(componentType, arity);
-            }
-
-            /**
              * The component type of the generic array.
              */
             private final GenericTypeDescription componentType;
@@ -1177,6 +1157,26 @@ public interface GenericTypeDescription extends NamedElement {
             protected Latent(GenericTypeDescription componentType, int arity) {
                 this.componentType = componentType;
                 this.arity = arity;
+            }
+
+            /**
+             * Returns a description of the given component type.
+             *
+             * @param componentType The component type of the array type to create.
+             * @param arity         The arity of the generic array to create.
+             * @return A description of the requested array. If the component type is non-generic, a non-generic array type is returned.
+             */
+            public static GenericTypeDescription of(GenericTypeDescription componentType, int arity) {
+                if (arity < 0) {
+                    throw new IllegalArgumentException("Arrays cannot have a negative arity");
+                }
+                while (componentType.getSort().isGenericArray()) {
+                    componentType = componentType.getComponentType();
+                    arity++;
+                }
+                return arity == 0
+                        ? componentType
+                        : new Latent(componentType, arity);
             }
 
             @Override
@@ -1354,6 +1354,27 @@ public interface GenericTypeDescription extends NamedElement {
         public static class Latent extends ForWildcardType {
 
             /**
+             * The wildcard's upper bounds.
+             */
+            private final List<? extends GenericTypeDescription> upperBounds;
+
+            /**
+             * The wildcard's lower bounds.
+             */
+            private final List<? extends GenericTypeDescription> lowerBounds;
+
+            /**
+             * Creates a description of a latent wildcard.
+             *
+             * @param upperBounds The wildcard's upper bounds.
+             * @param lowerBounds The wildcard's lower bounds.
+             */
+            protected Latent(List<? extends GenericTypeDescription> upperBounds, List<? extends GenericTypeDescription> lowerBounds) {
+                this.upperBounds = upperBounds;
+                this.lowerBounds = lowerBounds;
+            }
+
+            /**
              * Creates an unbounded wildcard. Such a wildcard is implicitly bound above by the {@link Object} type.
              *
              * @return A description of an unbounded wildcard.
@@ -1380,27 +1401,6 @@ public interface GenericTypeDescription extends NamedElement {
              */
             public static GenericTypeDescription boundedBelow(GenericTypeDescription lowerBound) {
                 return new Latent(Collections.singletonList(TypeDescription.OBJECT), Collections.singletonList(lowerBound));
-            }
-
-            /**
-             * The wildcard's upper bounds.
-             */
-            private final List<? extends GenericTypeDescription> upperBounds;
-
-            /**
-             * The wildcard's lower bounds.
-             */
-            private final List<? extends GenericTypeDescription> lowerBounds;
-
-            /**
-             * Creates a description of a latent wildcard.
-             *
-             * @param upperBounds The wildcard's upper bounds.
-             * @param lowerBounds The wildcard's lower bounds.
-             */
-            protected Latent(List<? extends GenericTypeDescription> upperBounds, List<? extends GenericTypeDescription> lowerBounds) {
-                this.upperBounds = upperBounds;
-                this.lowerBounds = lowerBounds;
             }
 
             @Override
@@ -1642,6 +1642,20 @@ public interface GenericTypeDescription extends NamedElement {
         public static class Raw implements GenericTypeDescription {
 
             /**
+             * The represented non-generic type.
+             */
+            private final TypeDescription typeDescription;
+
+            /**
+             * Creates a new raw type representation.
+             *
+             * @param typeDescription The represented non-generic type.
+             */
+            protected Raw(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            /**
              * Resolves a generic type to a potentially raw type. A raw type is returned if the given type declares a different number of type variables
              * than parameters.
              *
@@ -1655,20 +1669,6 @@ public interface GenericTypeDescription extends NamedElement {
                 return typeDescription.getParameters().size() != typeDescription.asRawType().getTypeVariables().size()
                         ? new Raw(typeDescription.asRawType())
                         : typeDescription.accept(transformer);
-            }
-
-            /**
-             * The represented non-generic type.
-             */
-            private final TypeDescription typeDescription;
-
-            /**
-             * Creates a new raw type representation.
-             *
-             * @param typeDescription The represented non-generic type.
-             */
-            protected Raw(TypeDescription typeDescription) {
-                this.typeDescription = typeDescription;
             }
 
             @Override
@@ -2069,20 +2069,6 @@ public interface GenericTypeDescription extends NamedElement {
         public static class OfPotentiallyRawType extends LazyProjection {
 
             /**
-             * Creates a generic type description, either as a raw type or as a bound parameterized type.
-             *
-             * @param unresolvedType The unresolved type.
-             * @param transformer    A transformer to apply to a non-raw type.
-             * @return A lazy projection of the provided unresolved type.
-             */
-            public static GenericTypeDescription of(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
-                if (unresolvedType == null) {
-                    return null;
-                }
-                return new OfPotentiallyRawType(unresolvedType, transformer);
-            }
-
-            /**
              * The unresolved type to resolve.
              */
             private final GenericTypeDescription unresolvedType;
@@ -2101,6 +2087,20 @@ public interface GenericTypeDescription extends NamedElement {
             public OfPotentiallyRawType(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
                 this.unresolvedType = unresolvedType;
                 this.transformer = transformer;
+            }
+
+            /**
+             * Creates a generic type description, either as a raw type or as a bound parameterized type.
+             *
+             * @param unresolvedType The unresolved type.
+             * @param transformer    A transformer to apply to a non-raw type.
+             * @return A lazy projection of the provided unresolved type.
+             */
+            public static GenericTypeDescription of(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
+                if (unresolvedType == null) {
+                    return null;
+                }
+                return new OfPotentiallyRawType(unresolvedType, transformer);
             }
 
             @Override

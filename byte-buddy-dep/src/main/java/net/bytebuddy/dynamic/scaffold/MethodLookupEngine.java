@@ -41,430 +41,6 @@ public interface MethodLookupEngine {
     Finding process(TypeDescription typeDescription);
 
     /**
-     * A factory for creating a {@link MethodLookupEngine}.
-     */
-    interface Factory {
-
-        /**
-         * Returns a {@link MethodLookupEngine}.
-         *
-         * @param extractDefaultMethods {@code true} if interface default methods should be resolved.
-         * @return A {@link MethodLookupEngine}.
-         */
-        MethodLookupEngine make(boolean extractDefaultMethods);
-    }
-
-    /**
-     * A finding contains a class's extracted invokable methods which were computed by a
-     * {@link MethodLookupEngine}.
-     */
-    interface Finding {
-
-        /**
-         * Returns the type description for which the finding was created.
-         *
-         * @return The type description for which the finding was created.
-         */
-        TypeDescription getTypeDescription();
-
-        /**
-         * Returns a list of methods that can be invoked on the analyzed type.
-         *
-         * @return A list of methods that can be invoked on the analyzed type.
-         */
-        MethodList getInvokableMethods();
-
-        /**
-         * Returns a map of interfaces that are eligible for default method invocation on the type this finding
-         * was created for.
-         *
-         * @return A map of interfaces that are eligible for default method invocation on the type this finding
-         * was created for.
-         */
-        Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods();
-
-        /**
-         * A default implementation of a {@link MethodLookupEngine.Finding}.
-         */
-        class Default implements Finding {
-
-            /**
-             * The type that was analyzed for creating this finding.
-             */
-            private final TypeDescription lookedUpType;
-
-            /**
-             * A list of methods that are invokable on this type.
-             */
-            private final MethodList invokableMethods;
-
-            /**
-             * A map of interfaces that are eligible for default method invocation on the type this finding
-             * was created for.
-             */
-            private final Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods;
-
-            /**
-             * Creates a default of a {@link MethodLookupEngine.Finding}.
-             *
-             * @param lookedUpType            The type that was analyzed for creating this finding.
-             * @param invokableMethods        A list of methods that are invokable on this type.
-             * @param invokableDefaultMethods A map of interfaces that are eligible for default method invocation on
-             *                                the type this finding was created for.
-             */
-            public Default(TypeDescription lookedUpType,
-                           MethodList invokableMethods,
-                           Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods) {
-                this.lookedUpType = lookedUpType;
-                this.invokableMethods = invokableMethods;
-                this.invokableDefaultMethods = invokableDefaultMethods;
-            }
-
-            @Override
-            public TypeDescription getTypeDescription() {
-                return lookedUpType;
-            }
-
-            @Override
-            public MethodList getInvokableMethods() {
-                return invokableMethods;
-            }
-
-            @Override
-            public Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods() {
-                return invokableDefaultMethods;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Default aDefault = (Default) other;
-                return invokableDefaultMethods.equals(aDefault.invokableDefaultMethods)
-                        && invokableMethods.equals(aDefault.invokableMethods)
-                        && lookedUpType.equals(aDefault.lookedUpType);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = lookedUpType.hashCode();
-                result = 31 * result + invokableMethods.hashCode();
-                result = 31 * result + invokableDefaultMethods.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodLookupEngine.Finding.Default{" +
-                        "lookedUpType=" + lookedUpType +
-                        ", invokableMethods=" + invokableMethods +
-                        ", invokableDefaultMethods=" + invokableDefaultMethods +
-                        '}';
-            }
-        }
-    }
-
-    /**
-     * This method description representedBy a method that is defined in a non-interface type and overrides a method
-     * in another class it directly or indirectly extends.
-     */
-    class OverriddenClassMethod extends MethodDescription.AbstractMethodDescription {
-
-        /**
-         * Describes the index of the most specific method in the method chain in order to improve
-         * the readability of the code.
-         */
-        private static final int MOST_SPECIFIC = 0;
-
-        /**
-         * A list of overridden methods starting with the most specific method going down to the least specific.
-         */
-        private final List<MethodDescription> methodChain;
-
-        /**
-         * Creates a new overriding class method.
-         *
-         * @param methodChain A list of overridden methods starting with the most specific method going down to the
-         *                    least specific.
-         */
-        protected OverriddenClassMethod(List<MethodDescription> methodChain) {
-            this.methodChain = methodChain;
-        }
-
-        /**
-         * Creates a new method description of an overriding method to an overridden method. The overriding method is
-         * considered to be a {@link net.bytebuddy.dynamic.scaffold.MethodLookupEngine.OverriddenClassMethod}
-         * itself and is resolved appropriately.
-         *
-         * @param overridingMethod The most specific method that is overriding another method.
-         * @param overriddenMethod The method that is overridden by the {@code overridingMethod}.
-         * @return A method description that representedBy the overriding method while considering how to properly
-         * specialize on invoking the overridden method.
-         */
-        public static MethodDescription of(MethodDescription overridingMethod, MethodDescription overriddenMethod) {
-            List<MethodDescription> methodChain;
-            if (overridingMethod instanceof OverriddenClassMethod) {
-                OverriddenClassMethod overriddenClassMethod = (OverriddenClassMethod) overridingMethod;
-                methodChain = new ArrayList<MethodDescription>(overriddenClassMethod.methodChain.size() + 1);
-                methodChain.addAll(overriddenClassMethod.methodChain);
-            } else {
-                methodChain = new ArrayList<MethodDescription>(2);
-                methodChain.add(overridingMethod);
-            }
-            methodChain.add(overriddenMethod);
-            return new OverriddenClassMethod(methodChain);
-        }
-
-        @Override
-        public GenericTypeDescription getReturnType() {
-            return methodChain.get(MOST_SPECIFIC).getReturnType();
-        }
-
-        @Override
-        public ParameterList getParameters() {
-            return methodChain.get(MOST_SPECIFIC).getParameters();
-        }
-
-        @Override
-        public GenericTypeList getExceptionTypes() {
-            return new GenericTypeList.Explicit(methodChain.get(MOST_SPECIFIC).getExceptionTypes());
-        }
-
-        @Override
-        public boolean isConstructor() {
-            return methodChain.get(MOST_SPECIFIC).isConstructor();
-        }
-
-        @Override
-        public boolean isTypeInitializer() {
-            return methodChain.get(MOST_SPECIFIC).isTypeInitializer();
-        }
-
-        @Override
-        public boolean represents(Method method) {
-            return methodChain.get(MOST_SPECIFIC).represents(method);
-        }
-
-        @Override
-        public boolean represents(Constructor<?> constructor) {
-            return methodChain.get(MOST_SPECIFIC).represents(constructor);
-        }
-
-        @Override
-        public String getName() {
-            return methodChain.get(MOST_SPECIFIC).getName();
-        }
-
-        @Override
-        public String getInternalName() {
-            return methodChain.get(MOST_SPECIFIC).getInternalName();
-        }
-
-        @Override
-        public GenericTypeDescription getDeclaringType() {
-            return methodChain.get(MOST_SPECIFIC).getDeclaringType();
-        }
-
-        @Override
-        public int getModifiers() {
-            return methodChain.get(MOST_SPECIFIC).getModifiers();
-        }
-
-        @Override
-        public GenericTypeList getTypeVariables() {
-            return methodChain.get(MOST_SPECIFIC).getTypeVariables();
-        }
-
-        @Override
-        public AnnotationList getDeclaredAnnotations() {
-            return methodChain.get(MOST_SPECIFIC).getDeclaredAnnotations();
-        }
-
-        @Override
-        public boolean isSpecializableFor(TypeDescription targetType) {
-            for (MethodDescription methodDescription : methodChain) {
-                if (methodDescription.isSpecializableFor(targetType)) {
-                    return true;
-                } else if (methodDescription.getDeclaringType().asRawType().isAssignableFrom(targetType)) {
-                    return false;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public Object getDefaultValue() {
-            return methodChain.get(MOST_SPECIFIC).getDefaultValue();
-        }
-    }
-
-    /**
-     * This {@link MethodDescription} representedBy methods that are defined
-     * ambiguously on several interfaces of a common type.
-     */
-    class ConflictingInterfaceMethod extends MethodDescription.AbstractMethodDescription {
-
-        /**
-         * An index that is guaranteed to exist but that expresses the fact that any method that is represented
-         * by an instance of this class defines identical signatures by definition.
-         */
-        private static final int ANY = 0;
-
-        /**
-         * The modifiers for a conflicting interface method.
-         */
-        private static final int CONFLICTING_INTERFACE_MODIFIER = Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC;
-
-        /**
-         * The virtual host of this conflicting interface method. Usually the instrumented type for which a
-         * method lookup is performed.
-         */
-        private final TypeDescription virtualHost;
-
-        /**
-         * The method descriptions that are represented by this instance.
-         */
-        private final List<MethodDescription> methodDescriptions;
-
-        /**
-         * Creates a new conflicting interface method.
-         *
-         * @param virtualHost        The virtual host of the methods that are not really declared by any type.
-         * @param methodDescriptions The methods that are in conflict to another. All of these methods must be
-         *                           methods that are declared in an interface and none of these methods must
-         *                           override another.
-         */
-        protected ConflictingInterfaceMethod(TypeDescription virtualHost, List<MethodDescription> methodDescriptions) {
-            this.virtualHost = virtualHost;
-            this.methodDescriptions = methodDescriptions;
-        }
-
-        /**
-         * Creates a new method description for at least two conflicting interface methods. This factory is intended
-         * for the use by {@link MethodLookupEngine.Default} and assumes
-         * similar properties to the latter classes resolution algorithm:
-         * <ul>
-         * <li>It is illegal to add a method of identical byte code signature after already adding this method for a
-         * sub interface where this method was overridden. It is however legal to add a method of a super interface
-         * before adding a method of a sub interface.</li>
-         * <li>The first argument is checked for being a
-         * {@link MethodLookupEngine.ConflictingInterfaceMethod} and is resolved
-         * accordingly. The second argument is however not considered to be a conflicting interface method.</li>
-         * </ul>
-         *
-         * @param virtualHost       The virtual host which should be used as a declaring class for this virtual method.
-         * @param conflictingMethod The method which was already registered when a new method of identical signature
-         *                          was discovered. This method might itself be a conflicting interface method and is
-         *                          then resolved for the methods it representedBy method when processing.
-         * @param discoveredMethod  The new discovered method. This method must not be a conflicting interface method.
-         * @return A new method description that representedBy the conflicting methods.
-         */
-        protected static MethodDescription of(TypeDescription virtualHost,
-                                              MethodDescription conflictingMethod,
-                                              MethodDescription discoveredMethod) {
-            List<MethodDescription> methodDescriptions;
-            if (conflictingMethod instanceof ConflictingInterfaceMethod) {
-                List<MethodDescription> known = ((ConflictingInterfaceMethod) conflictingMethod).methodDescriptions;
-                methodDescriptions = new ArrayList<MethodDescription>(known.size() + 1);
-                for (MethodDescription methodDescription : known) {
-                    if (!methodDescription.getDeclaringType().asRawType().isAssignableFrom(discoveredMethod.getDeclaringType().asRawType())) {
-                        methodDescriptions.add(methodDescription);
-                    }
-                }
-                methodDescriptions.add(discoveredMethod);
-            } else {
-                methodDescriptions = Arrays.asList(conflictingMethod, discoveredMethod);
-            }
-            return new ConflictingInterfaceMethod(virtualHost, methodDescriptions);
-        }
-
-        @Override
-        public GenericTypeDescription getReturnType() {
-            return methodDescriptions.get(ANY).getReturnType();
-        }
-
-        @Override
-        public ParameterList getParameters() {
-            return new ParameterList.Explicit.ForTypes(this, methodDescriptions.get(ANY).getParameters().asTypeList().asRawTypes());
-        }
-
-        @Override
-        public GenericTypeList getExceptionTypes() {
-            return new GenericTypeList.Empty();
-        }
-
-        @Override
-        public boolean isConstructor() {
-            return false;
-        }
-
-        @Override
-        public boolean isTypeInitializer() {
-            return false;
-        }
-
-        @Override
-        public boolean represents(Method method) {
-            return false;
-        }
-
-        @Override
-        public boolean represents(Constructor<?> constructor) {
-            return false;
-        }
-
-        @Override
-        public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Empty();
-        }
-
-        @Override
-        public String getName() {
-            return methodDescriptions.get(ANY).getName();
-        }
-
-        @Override
-        public String getInternalName() {
-            return methodDescriptions.get(ANY).getInternalName();
-        }
-
-        @Override
-        public TypeDescription getDeclaringType() {
-            return virtualHost;
-        }
-
-        @Override
-        public int getModifiers() {
-            return CONFLICTING_INTERFACE_MODIFIER;
-        }
-
-        @Override
-        public GenericTypeList getTypeVariables() {
-            return new GenericTypeList.Empty();
-        }
-
-        @Override
-        public boolean isSpecializableFor(TypeDescription targetType) {
-            MethodDescription invokableMethod = null;
-            for (MethodDescription methodDescription : methodDescriptions) {
-                if (!methodDescription.isAbstract() && methodDescription.getDeclaringType().asRawType().isAssignableFrom(targetType)) {
-                    if (invokableMethod == null) {
-                        invokableMethod = methodDescription;
-                    } else {
-                        return false;
-                    }
-                }
-            }
-            return invokableMethod != null;
-        }
-
-        @Override
-        public Object getDefaultValue() {
-            return null;
-        }
-    }
-
-    /**
      * A default implementation of a method lookup engine. This engine queries each type and interface for its
      * declared methods and adds them in the same order as the would be returned by calling {@link Class#getMethods()}.
      * However, conflicting interface methods are represented by
@@ -953,6 +529,430 @@ public interface MethodLookupEngine {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * A factory for creating a {@link MethodLookupEngine}.
+     */
+    interface Factory {
+
+        /**
+         * Returns a {@link MethodLookupEngine}.
+         *
+         * @param extractDefaultMethods {@code true} if interface default methods should be resolved.
+         * @return A {@link MethodLookupEngine}.
+         */
+        MethodLookupEngine make(boolean extractDefaultMethods);
+    }
+
+    /**
+     * A finding contains a class's extracted invokable methods which were computed by a
+     * {@link MethodLookupEngine}.
+     */
+    interface Finding {
+
+        /**
+         * Returns the type description for which the finding was created.
+         *
+         * @return The type description for which the finding was created.
+         */
+        TypeDescription getTypeDescription();
+
+        /**
+         * Returns a list of methods that can be invoked on the analyzed type.
+         *
+         * @return A list of methods that can be invoked on the analyzed type.
+         */
+        MethodList getInvokableMethods();
+
+        /**
+         * Returns a map of interfaces that are eligible for default method invocation on the type this finding
+         * was created for.
+         *
+         * @return A map of interfaces that are eligible for default method invocation on the type this finding
+         * was created for.
+         */
+        Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods();
+
+        /**
+         * A default implementation of a {@link MethodLookupEngine.Finding}.
+         */
+        class Default implements Finding {
+
+            /**
+             * The type that was analyzed for creating this finding.
+             */
+            private final TypeDescription lookedUpType;
+
+            /**
+             * A list of methods that are invokable on this type.
+             */
+            private final MethodList invokableMethods;
+
+            /**
+             * A map of interfaces that are eligible for default method invocation on the type this finding
+             * was created for.
+             */
+            private final Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods;
+
+            /**
+             * Creates a default of a {@link MethodLookupEngine.Finding}.
+             *
+             * @param lookedUpType            The type that was analyzed for creating this finding.
+             * @param invokableMethods        A list of methods that are invokable on this type.
+             * @param invokableDefaultMethods A map of interfaces that are eligible for default method invocation on
+             *                                the type this finding was created for.
+             */
+            public Default(TypeDescription lookedUpType,
+                           MethodList invokableMethods,
+                           Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods) {
+                this.lookedUpType = lookedUpType;
+                this.invokableMethods = invokableMethods;
+                this.invokableDefaultMethods = invokableDefaultMethods;
+            }
+
+            @Override
+            public TypeDescription getTypeDescription() {
+                return lookedUpType;
+            }
+
+            @Override
+            public MethodList getInvokableMethods() {
+                return invokableMethods;
+            }
+
+            @Override
+            public Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods() {
+                return invokableDefaultMethods;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Default aDefault = (Default) other;
+                return invokableDefaultMethods.equals(aDefault.invokableDefaultMethods)
+                        && invokableMethods.equals(aDefault.invokableMethods)
+                        && lookedUpType.equals(aDefault.lookedUpType);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = lookedUpType.hashCode();
+                result = 31 * result + invokableMethods.hashCode();
+                result = 31 * result + invokableDefaultMethods.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodLookupEngine.Finding.Default{" +
+                        "lookedUpType=" + lookedUpType +
+                        ", invokableMethods=" + invokableMethods +
+                        ", invokableDefaultMethods=" + invokableDefaultMethods +
+                        '}';
+            }
+        }
+    }
+
+    /**
+     * This method description representedBy a method that is defined in a non-interface type and overrides a method
+     * in another class it directly or indirectly extends.
+     */
+    class OverriddenClassMethod extends MethodDescription.AbstractMethodDescription {
+
+        /**
+         * Describes the index of the most specific method in the method chain in order to improve
+         * the readability of the code.
+         */
+        private static final int MOST_SPECIFIC = 0;
+
+        /**
+         * A list of overridden methods starting with the most specific method going down to the least specific.
+         */
+        private final List<MethodDescription> methodChain;
+
+        /**
+         * Creates a new overriding class method.
+         *
+         * @param methodChain A list of overridden methods starting with the most specific method going down to the
+         *                    least specific.
+         */
+        protected OverriddenClassMethod(List<MethodDescription> methodChain) {
+            this.methodChain = methodChain;
+        }
+
+        /**
+         * Creates a new method description of an overriding method to an overridden method. The overriding method is
+         * considered to be a {@link net.bytebuddy.dynamic.scaffold.MethodLookupEngine.OverriddenClassMethod}
+         * itself and is resolved appropriately.
+         *
+         * @param overridingMethod The most specific method that is overriding another method.
+         * @param overriddenMethod The method that is overridden by the {@code overridingMethod}.
+         * @return A method description that representedBy the overriding method while considering how to properly
+         * specialize on invoking the overridden method.
+         */
+        public static MethodDescription of(MethodDescription overridingMethod, MethodDescription overriddenMethod) {
+            List<MethodDescription> methodChain;
+            if (overridingMethod instanceof OverriddenClassMethod) {
+                OverriddenClassMethod overriddenClassMethod = (OverriddenClassMethod) overridingMethod;
+                methodChain = new ArrayList<MethodDescription>(overriddenClassMethod.methodChain.size() + 1);
+                methodChain.addAll(overriddenClassMethod.methodChain);
+            } else {
+                methodChain = new ArrayList<MethodDescription>(2);
+                methodChain.add(overridingMethod);
+            }
+            methodChain.add(overriddenMethod);
+            return new OverriddenClassMethod(methodChain);
+        }
+
+        @Override
+        public GenericTypeDescription getReturnType() {
+            return methodChain.get(MOST_SPECIFIC).getReturnType();
+        }
+
+        @Override
+        public ParameterList getParameters() {
+            return methodChain.get(MOST_SPECIFIC).getParameters();
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypes() {
+            return new GenericTypeList.Explicit(methodChain.get(MOST_SPECIFIC).getExceptionTypes());
+        }
+
+        @Override
+        public boolean isConstructor() {
+            return methodChain.get(MOST_SPECIFIC).isConstructor();
+        }
+
+        @Override
+        public boolean isTypeInitializer() {
+            return methodChain.get(MOST_SPECIFIC).isTypeInitializer();
+        }
+
+        @Override
+        public boolean represents(Method method) {
+            return methodChain.get(MOST_SPECIFIC).represents(method);
+        }
+
+        @Override
+        public boolean represents(Constructor<?> constructor) {
+            return methodChain.get(MOST_SPECIFIC).represents(constructor);
+        }
+
+        @Override
+        public String getName() {
+            return methodChain.get(MOST_SPECIFIC).getName();
+        }
+
+        @Override
+        public String getInternalName() {
+            return methodChain.get(MOST_SPECIFIC).getInternalName();
+        }
+
+        @Override
+        public GenericTypeDescription getDeclaringType() {
+            return methodChain.get(MOST_SPECIFIC).getDeclaringType();
+        }
+
+        @Override
+        public int getModifiers() {
+            return methodChain.get(MOST_SPECIFIC).getModifiers();
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return methodChain.get(MOST_SPECIFIC).getTypeVariables();
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return methodChain.get(MOST_SPECIFIC).getDeclaredAnnotations();
+        }
+
+        @Override
+        public boolean isSpecializableFor(TypeDescription targetType) {
+            for (MethodDescription methodDescription : methodChain) {
+                if (methodDescription.isSpecializableFor(targetType)) {
+                    return true;
+                } else if (methodDescription.getDeclaringType().asRawType().isAssignableFrom(targetType)) {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public Object getDefaultValue() {
+            return methodChain.get(MOST_SPECIFIC).getDefaultValue();
+        }
+    }
+
+    /**
+     * This {@link MethodDescription} representedBy methods that are defined
+     * ambiguously on several interfaces of a common type.
+     */
+    class ConflictingInterfaceMethod extends MethodDescription.AbstractMethodDescription {
+
+        /**
+         * An index that is guaranteed to exist but that expresses the fact that any method that is represented
+         * by an instance of this class defines identical signatures by definition.
+         */
+        private static final int ANY = 0;
+
+        /**
+         * The modifiers for a conflicting interface method.
+         */
+        private static final int CONFLICTING_INTERFACE_MODIFIER = Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC;
+
+        /**
+         * The virtual host of this conflicting interface method. Usually the instrumented type for which a
+         * method lookup is performed.
+         */
+        private final TypeDescription virtualHost;
+
+        /**
+         * The method descriptions that are represented by this instance.
+         */
+        private final List<MethodDescription> methodDescriptions;
+
+        /**
+         * Creates a new conflicting interface method.
+         *
+         * @param virtualHost        The virtual host of the methods that are not really declared by any type.
+         * @param methodDescriptions The methods that are in conflict to another. All of these methods must be
+         *                           methods that are declared in an interface and none of these methods must
+         *                           override another.
+         */
+        protected ConflictingInterfaceMethod(TypeDescription virtualHost, List<MethodDescription> methodDescriptions) {
+            this.virtualHost = virtualHost;
+            this.methodDescriptions = methodDescriptions;
+        }
+
+        /**
+         * Creates a new method description for at least two conflicting interface methods. This factory is intended
+         * for the use by {@link MethodLookupEngine.Default} and assumes
+         * similar properties to the latter classes resolution algorithm:
+         * <ul>
+         * <li>It is illegal to add a method of identical byte code signature after already adding this method for a
+         * sub interface where this method was overridden. It is however legal to add a method of a super interface
+         * before adding a method of a sub interface.</li>
+         * <li>The first argument is checked for being a
+         * {@link MethodLookupEngine.ConflictingInterfaceMethod} and is resolved
+         * accordingly. The second argument is however not considered to be a conflicting interface method.</li>
+         * </ul>
+         *
+         * @param virtualHost       The virtual host which should be used as a declaring class for this virtual method.
+         * @param conflictingMethod The method which was already registered when a new method of identical signature
+         *                          was discovered. This method might itself be a conflicting interface method and is
+         *                          then resolved for the methods it representedBy method when processing.
+         * @param discoveredMethod  The new discovered method. This method must not be a conflicting interface method.
+         * @return A new method description that representedBy the conflicting methods.
+         */
+        protected static MethodDescription of(TypeDescription virtualHost,
+                                              MethodDescription conflictingMethod,
+                                              MethodDescription discoveredMethod) {
+            List<MethodDescription> methodDescriptions;
+            if (conflictingMethod instanceof ConflictingInterfaceMethod) {
+                List<MethodDescription> known = ((ConflictingInterfaceMethod) conflictingMethod).methodDescriptions;
+                methodDescriptions = new ArrayList<MethodDescription>(known.size() + 1);
+                for (MethodDescription methodDescription : known) {
+                    if (!methodDescription.getDeclaringType().asRawType().isAssignableFrom(discoveredMethod.getDeclaringType().asRawType())) {
+                        methodDescriptions.add(methodDescription);
+                    }
+                }
+                methodDescriptions.add(discoveredMethod);
+            } else {
+                methodDescriptions = Arrays.asList(conflictingMethod, discoveredMethod);
+            }
+            return new ConflictingInterfaceMethod(virtualHost, methodDescriptions);
+        }
+
+        @Override
+        public GenericTypeDescription getReturnType() {
+            return methodDescriptions.get(ANY).getReturnType();
+        }
+
+        @Override
+        public ParameterList getParameters() {
+            return new ParameterList.Explicit.ForTypes(this, methodDescriptions.get(ANY).getParameters().asTypeList().asRawTypes());
+        }
+
+        @Override
+        public GenericTypeList getExceptionTypes() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public boolean isConstructor() {
+            return false;
+        }
+
+        @Override
+        public boolean isTypeInitializer() {
+            return false;
+        }
+
+        @Override
+        public boolean represents(Method method) {
+            return false;
+        }
+
+        @Override
+        public boolean represents(Constructor<?> constructor) {
+            return false;
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Empty();
+        }
+
+        @Override
+        public String getName() {
+            return methodDescriptions.get(ANY).getName();
+        }
+
+        @Override
+        public String getInternalName() {
+            return methodDescriptions.get(ANY).getInternalName();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return virtualHost;
+        }
+
+        @Override
+        public int getModifiers() {
+            return CONFLICTING_INTERFACE_MODIFIER;
+        }
+
+        @Override
+        public GenericTypeList getTypeVariables() {
+            return new GenericTypeList.Empty();
+        }
+
+        @Override
+        public boolean isSpecializableFor(TypeDescription targetType) {
+            MethodDescription invokableMethod = null;
+            for (MethodDescription methodDescription : methodDescriptions) {
+                if (!methodDescription.isAbstract() && methodDescription.getDeclaringType().asRawType().isAssignableFrom(targetType)) {
+                    if (invokableMethod == null) {
+                        invokableMethod = methodDescription;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+            return invokableMethod != null;
+        }
+
+        @Override
+        public Object getDefaultValue() {
+            return null;
         }
     }
 }

@@ -4,18 +4,13 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

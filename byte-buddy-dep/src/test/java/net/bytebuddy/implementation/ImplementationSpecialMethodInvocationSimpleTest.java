@@ -4,7 +4,6 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import org.junit.Test;

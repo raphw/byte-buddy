@@ -21,11 +21,13 @@ import java.io.Serializable;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -981,6 +983,11 @@ public class ElementMatchersTest {
 
     }
 
+    public interface GenericType<T extends Exception> {
+
+        T foo(T t) throws T;
+    }
+
     private static class IsDeclaredBy {
 
         static class Inner {
@@ -1195,11 +1202,6 @@ public class ElementMatchersTest {
         void method() {
 
         }
-    }
-
-    public interface GenericType<T extends Exception> {
-
-        T foo(T t) throws T;
     }
 
     public static class FieldType<T> {

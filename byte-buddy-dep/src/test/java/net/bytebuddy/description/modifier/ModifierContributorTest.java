@@ -1,6 +1,5 @@
 package net.bytebuddy.description.modifier;
 
-import net.bytebuddy.implementation.attribute.AnnotationAppenderDefaultTest;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +13,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
 public class ModifierContributorTest {
+
+    private final Class<? extends ModifierContributor> type;
+
+    public ModifierContributorTest(Class<? extends ModifierContributor> type) {
+        this.type = type;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -30,12 +35,6 @@ public class ModifierContributorTest {
                 {TypeManifestation.class},
                 {Visibility.class}
         });
-    }
-
-    private final Class<? extends ModifierContributor> type;
-
-    public ModifierContributorTest(Class<? extends ModifierContributor> type) {
-        this.type = type;
     }
 
     @Test

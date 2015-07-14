@@ -55,65 +55,6 @@ public interface MethodAttributeAppender {
     }
 
     /**
-     * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
-     * method that is being created. This includes method and parameter annotations.
-     */
-    class ForInstrumentedMethod implements MethodAttributeAppender, Factory {
-
-        /**
-         * The value filter to apply for discovering which values of an annotation should be written.
-         */
-        private final AnnotationAppender.ValueFilter valueFilter;
-
-        /**
-         * Creates a new appender for appending the instrumented method's annotation to the created method.
-         *
-         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
-         */
-        public ForInstrumentedMethod(AnnotationAppender.ValueFilter valueFilter) {
-            this.valueFilter = valueFilter;
-        }
-
-        @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor), valueFilter);
-            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
-                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-            }
-            int index = 0;
-            for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++), valueFilter);
-                for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
-                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-                }
-            }
-        }
-
-        @Override
-        public MethodAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && valueFilter.equals(((ForInstrumentedMethod) other).valueFilter);
-        }
-
-        @Override
-        public int hashCode() {
-            return valueFilter.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodAttributeAppender.ForInstrumentedMethod{" +
-                    "valueFilter=" + valueFilter +
-                    '}';
-        }
-    }
-
-    /**
      * A factory that creates method attribute appenders for a given type.
      */
     interface Factory {
@@ -172,6 +113,65 @@ public interface MethodAttributeAppender {
             public String toString() {
                 return "MethodAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
             }
+        }
+    }
+
+    /**
+     * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
+     * method that is being created. This includes method and parameter annotations.
+     */
+    class ForInstrumentedMethod implements MethodAttributeAppender, Factory {
+
+        /**
+         * The value filter to apply for discovering which values of an annotation should be written.
+         */
+        private final AnnotationAppender.ValueFilter valueFilter;
+
+        /**
+         * Creates a new appender for appending the instrumented method's annotation to the created method.
+         *
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
+         */
+        public ForInstrumentedMethod(AnnotationAppender.ValueFilter valueFilter) {
+            this.valueFilter = valueFilter;
+        }
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor), valueFilter);
+            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
+                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            }
+            int index = 0;
+            for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
+                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++), valueFilter);
+                for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
+                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                }
+            }
+        }
+
+        @Override
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && valueFilter.equals(((ForInstrumentedMethod) other).valueFilter);
+        }
+
+        @Override
+        public int hashCode() {
+            return valueFilter.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.ForInstrumentedMethod{" +
+                    "valueFilter=" + valueFilter +
+                    '}';
         }
     }
 

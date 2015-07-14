@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;

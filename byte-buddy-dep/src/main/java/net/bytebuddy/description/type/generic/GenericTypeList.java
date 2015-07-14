@@ -154,6 +154,28 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
     class ForDetachedTypes extends AbstractBase {
 
         /**
+         * The visitor to use for attaching the detached types.
+         */
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        /**
+         * The detached types this list represents.
+         */
+        private final List<? extends GenericTypeDescription> detachedTypes;
+
+        /**
+         * Creates a list of detached types that are attached on reception.
+         *
+         * @param visitor       The visitor to use for attaching the detached types.
+         * @param detachedTypes The detached types this list represents.
+         */
+        protected ForDetachedTypes(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor,
+                                   List<? extends GenericTypeDescription> detachedTypes) {
+            this.visitor = visitor;
+            this.detachedTypes = detachedTypes;
+        }
+
+        /**
          * Creates a list of types that are attached to the provided type.
          *
          * @param typeDescription The type to which the detached variables are attached to.
@@ -197,28 +219,6 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
             return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(parameterDescription), detachedTypes);
         }
 
-        /**
-         * The visitor to use for attaching the detached types.
-         */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
-
-        /**
-         * The detached types this list represents.
-         */
-        private final List<? extends GenericTypeDescription> detachedTypes;
-
-        /**
-         * Creates a list of detached types that are attached on reception.
-         *
-         * @param visitor       The visitor to use for attaching the detached types.
-         * @param detachedTypes The detached types this list represents.
-         */
-        protected ForDetachedTypes(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor,
-                                   List<? extends GenericTypeDescription> detachedTypes) {
-            this.visitor = visitor;
-            this.detachedTypes = detachedTypes;
-        }
-
         @Override
         public GenericTypeDescription get(int index) {
             return detachedTypes.get(index).accept(visitor);
@@ -233,28 +233,6 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
          * A list of type variables that are attached on reception.
          */
         public static class OfTypeVariable extends GenericTypeList.AbstractBase {
-
-            /**
-             * Creates a list of detached type variables that are attached on reception.
-             *
-             * @param typeDescription The type of which the type variables are defined.
-             * @param detachedTypes   The detached type variable bounds this list represents.
-             * @return A list of attached type variables.
-             */
-            public static GenericTypeList attach(TypeDescription typeDescription, List<? extends GenericTypeDescription> detachedTypes) {
-                return new OfTypeVariable(typeDescription, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(typeDescription), detachedTypes);
-            }
-
-            /**
-             * Creates a list of detached type variables that are attached on reception.
-             *
-             * @param methodDescription The method by which the type variables are defined.
-             * @param detachedTypes     The detached type variable bounds this list represents.
-             * @return A list of attached type variables.
-             */
-            public static GenericTypeList attach(MethodDescription methodDescription, List<? extends GenericTypeDescription> detachedTypes) {
-                return new OfTypeVariable(methodDescription, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(methodDescription), detachedTypes);
-            }
 
             /**
              * The type variable source of the represented type variables.
@@ -286,6 +264,28 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 this.detachedTypes = detachedTypes;
             }
 
+            /**
+             * Creates a list of detached type variables that are attached on reception.
+             *
+             * @param typeDescription The type of which the type variables are defined.
+             * @param detachedTypes   The detached type variable bounds this list represents.
+             * @return A list of attached type variables.
+             */
+            public static GenericTypeList attach(TypeDescription typeDescription, List<? extends GenericTypeDescription> detachedTypes) {
+                return new OfTypeVariable(typeDescription, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(typeDescription), detachedTypes);
+            }
+
+            /**
+             * Creates a list of detached type variables that are attached on reception.
+             *
+             * @param methodDescription The method by which the type variables are defined.
+             * @param detachedTypes     The detached type variable bounds this list represents.
+             * @return A list of attached type variables.
+             */
+            public static GenericTypeList attach(MethodDescription methodDescription, List<? extends GenericTypeDescription> detachedTypes) {
+                return new OfTypeVariable(methodDescription, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(methodDescription), detachedTypes);
+            }
+
             @Override
             public GenericTypeDescription get(int index) {
                 return LazyTypeVariable.of(detachedTypes.get(index), typeVariableSource, visitor);
@@ -300,20 +300,6 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
              * A lazy type variable.
              */
             protected static class LazyTypeVariable extends GenericTypeDescription.ForTypeVariable {
-
-                /**
-                 * Creates a lazy type variable representation.
-                 *
-                 * @param detachedVariable   The detached variable to represent.
-                 * @param typeVariableSource The type variable source of the type variable.
-                 * @param visitor            The visitor to be used for attaching the type variable's bounds.
-                 * @return A representation of the type variable with attached bounds.
-                 */
-                public static GenericTypeDescription of(GenericTypeDescription detachedVariable,
-                                                        TypeVariableSource typeVariableSource,
-                                                        GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-                    return new LazyTypeVariable(detachedVariable.getSymbol(), typeVariableSource, visitor, detachedVariable.getUpperBounds());
-                }
 
                 /**
                  * The represented symbol of the represented type variable.
@@ -351,6 +337,20 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                     this.typeVariableSource = typeVariableSource;
                     this.visitor = visitor;
                     this.detachedBounds = detachedBounds;
+                }
+
+                /**
+                 * Creates a lazy type variable representation.
+                 *
+                 * @param detachedVariable   The detached variable to represent.
+                 * @param typeVariableSource The type variable source of the type variable.
+                 * @param visitor            The visitor to be used for attaching the type variable's bounds.
+                 * @return A representation of the type variable with attached bounds.
+                 */
+                public static GenericTypeDescription of(GenericTypeDescription detachedVariable,
+                                                        TypeVariableSource typeVariableSource,
+                                                        GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+                    return new LazyTypeVariable(detachedVariable.getSymbol(), typeVariableSource, visitor, detachedVariable.getUpperBounds());
                 }
 
                 @Override

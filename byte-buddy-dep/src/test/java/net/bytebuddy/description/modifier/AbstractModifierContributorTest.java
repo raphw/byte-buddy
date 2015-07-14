@@ -1,6 +1,5 @@
 package net.bytebuddy.description.modifier;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;

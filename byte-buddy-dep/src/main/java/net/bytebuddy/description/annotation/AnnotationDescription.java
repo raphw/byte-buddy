@@ -304,19 +304,6 @@ public interface AnnotationDescription {
         class ForAnnotation<U extends Annotation> implements AnnotationValue<AnnotationDescription, U> {
 
             /**
-             * Creates an annotation value instance for describing the given annotation type and values.
-             *
-             * @param annotationType   The annotation type.
-             * @param annotationValues The values of the annotation.
-             * @param <V>              The type of the annotation.
-             * @return An annotation value representing the given annotation.
-             */
-            public static <V extends Annotation> AnnotationValue<AnnotationDescription, V> of(TypeDescription annotationType,
-                                                                                              Map<String, AnnotationValue<?, ?>> annotationValues) {
-                return new ForAnnotation<V>(new AnnotationDescription.Latent(annotationType, annotationValues));
-            }
-
-            /**
              * The annotation description that this value representedBy.
              */
             private final AnnotationDescription annotationDescription;
@@ -328,6 +315,19 @@ public interface AnnotationDescription {
              */
             public ForAnnotation(AnnotationDescription annotationDescription) {
                 this.annotationDescription = annotationDescription;
+            }
+
+            /**
+             * Creates an annotation value instance for describing the given annotation type and values.
+             *
+             * @param annotationType   The annotation type.
+             * @param annotationValues The values of the annotation.
+             * @param <V>              The type of the annotation.
+             * @return An annotation value representing the given annotation.
+             */
+            public static <V extends Annotation> AnnotationValue<AnnotationDescription, V> of(TypeDescription annotationType,
+                                                                                              Map<String, AnnotationValue<?, ?>> annotationValues) {
+                return new ForAnnotation<V>(new AnnotationDescription.Latent(annotationType, annotationValues));
             }
 
             @Override
@@ -461,17 +461,6 @@ public interface AnnotationDescription {
         class ForEnumeration<U extends Enum<U>> implements AnnotationValue<EnumerationDescription, U> {
 
             /**
-             * Creates a new annotation value for the given enumeration description.
-             *
-             * @param value The value to represent.
-             * @param <V>   The type of the represented enumeration.
-             * @return An annotation value that describes the given enumeration.
-             */
-            public static <V extends Enum<V>> AnnotationValue<EnumerationDescription, V> of(EnumerationDescription value) {
-                return new ForEnumeration<V>(value);
-            }
-
-            /**
              * The enumeration that is represented.
              */
             private final EnumerationDescription enumerationDescription;
@@ -483,6 +472,17 @@ public interface AnnotationDescription {
              */
             public ForEnumeration(EnumerationDescription enumerationDescription) {
                 this.enumerationDescription = enumerationDescription;
+            }
+
+            /**
+             * Creates a new annotation value for the given enumeration description.
+             *
+             * @param value The value to represent.
+             * @param <V>   The type of the represented enumeration.
+             * @return An annotation value that describes the given enumeration.
+             */
+            public static <V extends Enum<V>> AnnotationValue<EnumerationDescription, V> of(EnumerationDescription value) {
+                return new ForEnumeration<V>(value);
             }
 
             @Override
@@ -667,17 +667,6 @@ public interface AnnotationDescription {
             private static final boolean NO_INITIALIZATION = false;
 
             /**
-             * Creates an annotation value for representing the given type.
-             *
-             * @param typeDescription The type to represent.
-             * @param <V>             The represented type.
-             * @return An annotation value that representedBy the given type.
-             */
-            public static <V extends Class<V>> AnnotationValue<TypeDescription, V> of(TypeDescription typeDescription) {
-                return new ForType<V>(typeDescription);
-            }
-
-            /**
              * A description of the represented type.
              */
             private final TypeDescription typeDescription;
@@ -689,6 +678,17 @@ public interface AnnotationDescription {
              */
             public ForType(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
+            }
+
+            /**
+             * Creates an annotation value for representing the given type.
+             *
+             * @param typeDescription The type to represent.
+             * @param <V>             The represented type.
+             * @return An annotation value that representedBy the given type.
+             */
+            public static <V extends Class<V>> AnnotationValue<TypeDescription, V> of(TypeDescription typeDescription) {
+                return new ForType<V>(typeDescription);
             }
 
             @Override
@@ -813,54 +813,6 @@ public interface AnnotationDescription {
                 this.annotationValues = annotationValues;
             }
 
-            @Override
-            public U[] resolve() {
-                @SuppressWarnings("unchecked")
-                U[] value = (U[]) Array.newInstance(unloadedComponentType, annotationValues.size());
-                int index = 0;
-                for (AnnotationValue<?, ?> annotationValue : annotationValues) {
-                    Array.set(value, index++, annotationValue.resolve());
-                }
-                return value;
-            }
-
-            @Override
-            @SuppressWarnings("unchecked")
-            public AnnotationValue.Loaded<V[]> load(ClassLoader classLoader) throws ClassNotFoundException {
-                List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(annotationValues.size());
-                for (AnnotationValue<?, ?> value : annotationValues) {
-                    loadedValues.add(value.load(classLoader));
-                }
-                return new Loaded<V>((Class<V>) classLoader.loadClass(componentType.getName()), loadedValues);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ForComplexArray that = (ForComplexArray) other;
-                return annotationValues.equals(that.annotationValues)
-                        && componentType.equals(that.componentType)
-                        && unloadedComponentType.equals(that.unloadedComponentType);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = unloadedComponentType.hashCode();
-                result = 31 * result + componentType.hashCode();
-                result = 31 * result + annotationValues.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AnnotationDescription.AnnotationValue.ForComplexArra{" +
-                        "unloadedComponentType=" + unloadedComponentType +
-                        ", componentType=" + componentType +
-                        ", annotationValues=" + annotationValues +
-                        '}';
-            }
-
             /**
              * Creates a new complex array of enumeration descriptions.
              *
@@ -914,6 +866,54 @@ public interface AnnotationDescription {
                     values.add((AnnotationValue) ForType.<Class>of(value));
                 }
                 return new ForComplexArray<TypeDescription, Class<?>>(TypeDescription.class, TypeDescription.CLASS, values);
+            }
+
+            @Override
+            public U[] resolve() {
+                @SuppressWarnings("unchecked")
+                U[] value = (U[]) Array.newInstance(unloadedComponentType, annotationValues.size());
+                int index = 0;
+                for (AnnotationValue<?, ?> annotationValue : annotationValues) {
+                    Array.set(value, index++, annotationValue.resolve());
+                }
+                return value;
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public AnnotationValue.Loaded<V[]> load(ClassLoader classLoader) throws ClassNotFoundException {
+                List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(annotationValues.size());
+                for (AnnotationValue<?, ?> value : annotationValues) {
+                    loadedValues.add(value.load(classLoader));
+                }
+                return new Loaded<V>((Class<V>) classLoader.loadClass(componentType.getName()), loadedValues);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                ForComplexArray that = (ForComplexArray) other;
+                return annotationValues.equals(that.annotationValues)
+                        && componentType.equals(that.componentType)
+                        && unloadedComponentType.equals(that.unloadedComponentType);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = unloadedComponentType.hashCode();
+                result = 31 * result + componentType.hashCode();
+                result = 31 * result + annotationValues.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "AnnotationDescription.AnnotationValue.ForComplexArra{" +
+                        "unloadedComponentType=" + unloadedComponentType +
+                        ", componentType=" + componentType +
+                        ", annotationValues=" + annotationValues +
+                        '}';
             }
 
             /**
@@ -1007,6 +1007,52 @@ public interface AnnotationDescription {
     }
 
     /**
+     * An annotation description that is linked to a given loaded annotation type which allows its representation
+     * as a fully loaded instance.
+     *
+     * @param <S> The annotation type.
+     */
+    interface Loadable<S extends Annotation> extends AnnotationDescription {
+
+        /**
+         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
+         * Without specifying a class loader, the annotation's class loader which was used to prepare this instance
+         * is used.
+         *
+         * @return A loaded version of this annotation description.
+         * @throws java.lang.ClassNotFoundException If any linked classes of the annotation cannot be loaded.
+         */
+        S load() throws ClassNotFoundException;
+
+        /**
+         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
+         *
+         * @param classLoader The class loader to be used for loading the annotation's linked types.
+         * @return A loaded version of this annotation description.
+         * @throws java.lang.ClassNotFoundException If any linked classes of the annotation cannot be loaded.
+         */
+        S load(ClassLoader classLoader) throws ClassNotFoundException;
+
+        /**
+         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
+         * Without specifying a class loader, the annotation's class loader which was used to prepare this instance
+         * is used. Any {@link java.lang.ClassNotFoundException} is wrapped in an {@link java.lang.IllegalStateException}.
+         *
+         * @return A loaded version of this annotation description.
+         */
+        S loadSilent();
+
+        /**
+         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
+         * Any {@link java.lang.ClassNotFoundException} is wrapped in an {@link java.lang.IllegalStateException}.
+         *
+         * @param classLoader The class loader to be used for loading the annotation's linked types.
+         * @return A loaded version of this annotation description.
+         */
+        S loadSilent(ClassLoader classLoader);
+    }
+
+    /**
      * An {@link java.lang.reflect.InvocationHandler} for implementing annotations.
      *
      * @param <T> The type of the handled annotation.
@@ -1044,6 +1090,21 @@ public interface AnnotationDescription {
         private final LinkedHashMap<Method, AnnotationValue.Loaded<?>> values;
 
         /**
+         * Creates a new invocation handler.
+         *
+         * @param classLoader    The class loader for loading this value.
+         * @param annotationType The loaded annotation type.
+         * @param values         A sorted list of values of this annotation.
+         */
+        protected AnnotationInvocationHandler(ClassLoader classLoader,
+                                              Class<T> annotationType,
+                                              LinkedHashMap<Method, AnnotationValue.Loaded<?>> values) {
+            this.classLoader = classLoader;
+            this.annotationType = annotationType;
+            this.values = values;
+        }
+
+        /**
          * @param classLoader    The class loader that should be used for loading the annotation's values.
          * @param annotationType The annotation's type.
          * @param values         The values that the annotation contains.
@@ -1064,21 +1125,6 @@ public interface AnnotationDescription {
                         : annotationValue.load(classLoader));
             }
             return new AnnotationInvocationHandler<S>(classLoader, annotationType, loadedValues);
-        }
-
-        /**
-         * Creates a new invocation handler.
-         *
-         * @param classLoader    The class loader for loading this value.
-         * @param annotationType The loaded annotation type.
-         * @param values         A sorted list of values of this annotation.
-         */
-        protected AnnotationInvocationHandler(ClassLoader classLoader,
-                                              Class<T> annotationType,
-                                              LinkedHashMap<Method, AnnotationValue.Loaded<?>> values) {
-            this.classLoader = classLoader;
-            this.annotationType = annotationType;
-            this.values = values;
         }
 
         /**
@@ -1357,52 +1403,6 @@ public interface AnnotationDescription {
                 throw new IncompleteAnnotationException(annotationType, property);
             }
         }
-    }
-
-    /**
-     * An annotation description that is linked to a given loaded annotation type which allows its representation
-     * as a fully loaded instance.
-     *
-     * @param <S> The annotation type.
-     */
-    interface Loadable<S extends Annotation> extends AnnotationDescription {
-
-        /**
-         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
-         * Without specifying a class loader, the annotation's class loader which was used to prepare this instance
-         * is used.
-         *
-         * @return A loaded version of this annotation description.
-         * @throws java.lang.ClassNotFoundException If any linked classes of the annotation cannot be loaded.
-         */
-        S load() throws ClassNotFoundException;
-
-        /**
-         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
-         *
-         * @param classLoader The class loader to be used for loading the annotation's linked types.
-         * @return A loaded version of this annotation description.
-         * @throws java.lang.ClassNotFoundException If any linked classes of the annotation cannot be loaded.
-         */
-        S load(ClassLoader classLoader) throws ClassNotFoundException;
-
-        /**
-         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
-         * Without specifying a class loader, the annotation's class loader which was used to prepare this instance
-         * is used. Any {@link java.lang.ClassNotFoundException} is wrapped in an {@link java.lang.IllegalStateException}.
-         *
-         * @return A loaded version of this annotation description.
-         */
-        S loadSilent();
-
-        /**
-         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
-         * Any {@link java.lang.ClassNotFoundException} is wrapped in an {@link java.lang.IllegalStateException}.
-         *
-         * @param classLoader The class loader to be used for loading the annotation's linked types.
-         * @return A loaded version of this annotation description.
-         */
-        S loadSilent(ClassLoader classLoader);
     }
 
     /**
@@ -1732,6 +1732,27 @@ public interface AnnotationDescription {
     class Builder {
 
         /**
+         * The annotation type.
+         */
+        private final TypeDescription annotationType;
+
+        /**
+         * A mapping of annotation properties to their annotation values.
+         */
+        private final Map<String, AnnotationValue<?, ?>> annotationValues;
+
+        /**
+         * Creates a builder for an annotation description.
+         *
+         * @param annotationType   The annotation type.
+         * @param annotationValues A mapping of annotation properties to their annotation values.
+         */
+        protected Builder(TypeDescription annotationType, Map<String, AnnotationValue<?, ?>> annotationValues) {
+            this.annotationType = annotationType;
+            this.annotationValues = annotationValues;
+        }
+
+        /**
          * Creates a builder for creating an annotation of the given type.
          *
          * @param annotationType The annotation type.
@@ -1752,27 +1773,6 @@ public interface AnnotationDescription {
                 throw new IllegalArgumentException("Not an annotation type: " + annotationType);
             }
             return new Builder(annotationType, Collections.<String, AnnotationValue<?, ?>>emptyMap());
-        }
-
-        /**
-         * The annotation type.
-         */
-        private final TypeDescription annotationType;
-
-        /**
-         * A mapping of annotation properties to their annotation values.
-         */
-        private final Map<String, AnnotationValue<?, ?>> annotationValues;
-
-        /**
-         * Creates a builder for an annotation description.
-         *
-         * @param annotationType   The annotation type.
-         * @param annotationValues A mapping of annotation properties to their annotation values.
-         */
-        protected Builder(TypeDescription annotationType, Map<String, AnnotationValue<?, ?>> annotationValues) {
-            this.annotationType = annotationType;
-            this.annotationValues = annotationValues;
         }
 
         /**

@@ -998,6 +998,21 @@ public abstract class AbstractGenericTypeDescriptionTest {
     }
 
     @SuppressWarnings("unused")
+    public interface Foo {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public interface Bar {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public interface Qux<T, U> {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
     public static class SimpleParameterizedType {
 
         List<String> foo;
@@ -1075,31 +1090,31 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @SuppressWarnings("unused")
     public static class NestedTypeVariableType<T> {
 
+        Placeholder foo;
+
         class Placeholder {
             /* empty */
         }
-
-        Placeholder foo;
     }
 
     @SuppressWarnings("unused")
     public static class NestedSpecifiedTypeVariableType<T> {
 
+        NestedSpecifiedTypeVariableType<String>.Placeholder foo;
+
         class Placeholder {
             /* empty */
         }
-
-        NestedSpecifiedTypeVariableType<String>.Placeholder foo;
     }
 
     @SuppressWarnings("unused")
     public static class NestedStaticTypeVariableType<T> {
 
+        NestedStaticTypeVariableType.Placeholder<String> foo;
+
         static class Placeholder<S> {
             /* empty */
         }
-
-        NestedStaticTypeVariableType.Placeholder<String> foo;
     }
 
     @SuppressWarnings("unused")
@@ -1174,6 +1189,28 @@ public abstract class AbstractGenericTypeDescriptionTest {
 
         private TypeResolution<Foo>.Shadowed<Bar, Foo> foobar;
 
+        public interface BaseInterface<V, W> {
+
+            Qux<V, W> qux(Qux<V, W> qux);
+        }
+
+        public static class Intermediate<V, W> extends Base<List<V>, List<? extends W>> implements BaseInterface<List<V>, List<? extends W>> {
+            /* empty */
+        }
+
+        public static class NestedIntermediate<V, W> extends Base<List<List<V>>, List<String>> implements BaseInterface<List<List<V>>, List<String>> {
+            /* empty */
+        }
+
+        public static class Base<V, W> {
+
+            Qux<V, W> qux;
+
+            public Qux<V, W> qux(Qux<V, W> qux) {
+                return null;
+            }
+        }
+
         public class Inner<S> extends Base<T, S> implements BaseInterface<T, S> {
             /* empty */
         }
@@ -1196,28 +1233,6 @@ public abstract class AbstractGenericTypeDescriptionTest {
         @SuppressWarnings("all")
         public class Shadowed<T, S> extends Base<T, S> implements BaseInterface<T, S> {
             /* empty */
-        }
-
-        public static class Intermediate<V, W> extends Base<List<V>, List<? extends W>> implements BaseInterface<List<V>, List<? extends W>> {
-            /* empty */
-        }
-
-        public static class NestedIntermediate<V, W> extends Base<List<List<V>>, List<String>> implements BaseInterface<List<List<V>>, List<String>> {
-            /* empty */
-        }
-
-        public static class Base<V, W> {
-
-            Qux<V, W> qux;
-
-            public Qux<V, W> qux(Qux<V, W> qux) {
-                return null;
-            }
-        }
-
-        public interface BaseInterface<V, W> {
-
-            Qux<V, W> qux(Qux<V, W> qux);
         }
     }
 
@@ -1246,20 +1261,5 @@ public abstract class AbstractGenericTypeDescriptionTest {
         public static class Raw extends MemberVariable {
             /* empty */
         }
-    }
-
-    @SuppressWarnings("unused")
-    public interface Foo {
-        /* empty */
-    }
-
-    @SuppressWarnings("unused")
-    public interface Bar {
-        /* empty */
-    }
-
-    @SuppressWarnings("unused")
-    public interface Qux<T, U> {
-        /* empty */
     }
 }

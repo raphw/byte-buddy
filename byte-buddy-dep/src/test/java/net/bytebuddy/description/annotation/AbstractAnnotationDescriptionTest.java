@@ -4,8 +4,6 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericSignatureResolutionTest;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.junit.Before;

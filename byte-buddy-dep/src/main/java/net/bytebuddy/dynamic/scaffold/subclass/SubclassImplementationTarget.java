@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;

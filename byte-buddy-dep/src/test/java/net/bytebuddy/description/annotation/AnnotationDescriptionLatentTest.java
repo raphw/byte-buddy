@@ -1,20 +1,9 @@
 package net.bytebuddy.description.annotation;
 
-import org.junit.Test;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 public class AnnotationDescriptionLatentTest extends AbstractAnnotationDescriptionTest {
-
-    @Override
-    protected AnnotationDescription describe(Annotation annotation, Class<?> declaringType) {
-        try {
-            return build(annotation);
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
-    }
 
     @SuppressWarnings("unchecked")
     private static AnnotationDescription build(Annotation annotation) throws Exception {
@@ -74,5 +63,14 @@ public class AnnotationDescriptionLatentTest extends AbstractAnnotationDescripti
             }
         }
         return builder.make();
+    }
+
+    @Override
+    protected AnnotationDescription describe(Annotation annotation, Class<?> declaringType) {
+        try {
+            return build(annotation);
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
     }
 }
