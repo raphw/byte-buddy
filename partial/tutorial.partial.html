@@ -477,12 +477,13 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .withNamingStrategy(new NamingStrategy() {
     @Override
     public String getName(UnnamedType unnamedType) {
-        return "i.love.ByteBuddy." + unnamedType.getSuperClass().asRawType().getSimpleName();
+        return "i.love.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
     }
   })
   .subclass(Object.class)
   .make();
 </pre>
+<!-- Add: 'asErasedType()' when releasing 0.7 -->
 
 <p>
     In the above code example, we created a new configuration that differs from the default configuration in its
