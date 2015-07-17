@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. July 2015: version 0.6.13
+
+- Added `ClassFileLocator` implementations for reading from jar files and folder structures.
+- Fixed resolution of field accessors to not attempt reading of non-static fields from static methods.
+- Fixed renaming strategy for type redefinitions to work arround a constraint of ASM where stack map frames required to be expanded even though this was not strictly necessary.
+
 ### 10. July 2015: version 0.6.12
 
 - Added API for altering a method's modifiers when intercepting it.
