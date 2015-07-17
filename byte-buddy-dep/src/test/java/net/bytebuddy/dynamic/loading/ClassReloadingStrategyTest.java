@@ -5,6 +5,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.ToolsJarRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -46,6 +47,22 @@ public class ClassReloadingStrategyTest {
         assertThat(foo.foo(), is(BAR));
         classReloadingStrategy.reset(Foo.class);
         assertThat(foo.foo(), is(FOO));
+    }
+
+    @Test
+    @ToolsJarRule.Enforce
+    @Ignore("Requires expanded frames")
+    public void testClassRedefinitionRenamingWihFrameChange() throws Exception {
+        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
+        Bar bar = new Bar();
+        new ByteBuddy().redefine(Qux.class)
+                .name(Bar.class.getName())
+                .make()
+                .load(Bar.class.getClassLoader(), classReloadingStrategy);
+        assertThat(bar.foo(), is(BAR));
+        classReloadingStrategy.reset(Bar.class);
+        assertThat(bar.foo(), is(FOO));
     }
 
     @Test
@@ -120,6 +137,25 @@ public class ClassReloadingStrategyTest {
 
         public String foo() {
             return FOO;
+        }
+    }
+    public static class Bar {
+
+        public String foo() {
+            Bar bar = new Bar();
+            return Math.random() < 0
+                    ? FOO
+                    : FOO;
+        }
+    }
+
+    public static class Qux {
+
+        public String foo() {
+            Qux qux = new Qux();
+            return Math.random() < 0
+                    ? BAR
+                    : BAR;
         }
     }
 }
