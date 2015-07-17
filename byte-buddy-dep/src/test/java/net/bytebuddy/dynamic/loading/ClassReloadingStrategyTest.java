@@ -51,8 +51,7 @@ public class ClassReloadingStrategyTest {
 
     @Test
     @ToolsJarRule.Enforce
-    @Ignore("Requires expanded frames")
-    public void testClassRedefinitionRenamingWihFrameChange() throws Exception {
+    public void testClassRedefinitionRenamingWithStackMapFrames() throws Exception {
         assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
         Bar bar = new Bar();
