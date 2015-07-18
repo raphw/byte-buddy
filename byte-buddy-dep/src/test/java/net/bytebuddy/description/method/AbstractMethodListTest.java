@@ -10,7 +10,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public abstract class AbstractMethodListTest<U> extends AbstractFilterableListTest<MethodDescription, MethodList, U> {
+public abstract class AbstractMethodListTest<U, V extends MethodDescription> extends AbstractFilterableListTest<V, MethodList<V>, U> {
 
     @Test
     @SuppressWarnings("unchecked")

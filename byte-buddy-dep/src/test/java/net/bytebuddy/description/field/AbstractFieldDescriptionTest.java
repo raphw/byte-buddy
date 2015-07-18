@@ -22,7 +22,7 @@ public abstract class AbstractFieldDescriptionTest {
 
     private Field first, second, genericField;
 
-    protected abstract FieldDescription describe(Field field);
+    protected abstract FieldDescription.InDeclaredForm describe(Field field);
 
     @Before
     public void setUp() throws Exception {

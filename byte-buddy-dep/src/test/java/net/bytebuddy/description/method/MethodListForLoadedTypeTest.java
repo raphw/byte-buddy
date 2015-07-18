@@ -4,7 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 
-public class MethodListForLoadedTypeTest extends AbstractMethodListTest<Method> {
+public class MethodListForLoadedTypeTest extends AbstractMethodListTest<Method, MethodDescription.InDeclaredForm> {
 
     @Override
     protected Method getFirst() throws Exception {
@@ -17,12 +17,12 @@ public class MethodListForLoadedTypeTest extends AbstractMethodListTest<Method> 
     }
 
     @Override
-    protected MethodList asList(List<Method> elements) {
+    protected MethodList<MethodDescription.InDeclaredForm> asList(List<Method> elements) {
         return new MethodList.ForLoadedType(new Constructor<?>[0], elements.toArray(new Method[elements.size()]));
     }
 
     @Override
-    protected MethodDescription asElement(Method element) {
+    protected MethodDescription.InDeclaredForm asElement(Method element) {
         return new MethodDescription.ForLoadedMethod(element);
     }
 }

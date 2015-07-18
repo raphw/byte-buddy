@@ -26,14 +26,14 @@ public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescript
     }
 
     @Override
-    protected MethodDescription describe(Method method) {
+    protected MethodDescription.InDeclaredForm describe(Method method) {
         return typePool.describe(method.getDeclaringClass().getName())
                 .resolve()
                 .getDeclaredMethods().filter(is(method)).getOnly();
     }
 
     @Override
-    protected MethodDescription describe(Constructor<?> constructor) {
+    protected MethodDescription.InDeclaredForm describe(Constructor<?> constructor) {
         return typePool.describe(constructor.getDeclaringClass().getName())
                 .resolve()
                 .getDeclaredMethods().filter(is(constructor)).getOnly();

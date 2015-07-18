@@ -3,7 +3,7 @@ package net.bytebuddy.description.method;
 import java.util.Arrays;
 import java.util.List;
 
-public class MethodListExplicitTest extends AbstractMethodListTest<MethodDescription> {
+public class MethodListExplicitTest extends AbstractMethodListTest<MethodDescription, MethodDescription> {
 
     @Override
     protected MethodDescription getFirst() throws Exception {
@@ -16,8 +16,8 @@ public class MethodListExplicitTest extends AbstractMethodListTest<MethodDescrip
     }
 
     @Override
-    protected MethodList asList(List<MethodDescription> elements) {
-        return new MethodList.Explicit(elements);
+    protected MethodList<MethodDescription> asList(List<MethodDescription> elements) {
+        return new MethodList.Explicit<MethodDescription>(elements);
     }
 
     @Override

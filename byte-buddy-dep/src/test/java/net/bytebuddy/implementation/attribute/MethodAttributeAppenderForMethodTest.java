@@ -44,8 +44,9 @@ public class MethodAttributeAppenderForMethodTest extends AbstractMethodAttribut
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
     public void testMethodIllegalApplicationThrowsException() throws Exception {
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
         new MethodAttributeAppender.ForMethod(method, valueFilter).apply(methodVisitor, methodDescription);
     }
 
@@ -67,8 +68,9 @@ public class MethodAttributeAppenderForMethodTest extends AbstractMethodAttribut
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
     public void testIllegalConstructorApplicationThrowsException() throws Exception {
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
         new MethodAttributeAppender.ForMethod(constructor, valueFilter).apply(methodVisitor, methodDescription);
     }
 

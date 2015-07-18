@@ -18,9 +18,9 @@ public class MethodDescriptionLatentTypeInitializerTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private GenericTypeDescription typeDescription;
+    private TypeDescription typeDescription;
 
-    private MethodDescription typeInitializer;
+    private MethodDescription.InDeclaredForm typeInitializer;
 
     @Before
     public void setUp() throws Exception {

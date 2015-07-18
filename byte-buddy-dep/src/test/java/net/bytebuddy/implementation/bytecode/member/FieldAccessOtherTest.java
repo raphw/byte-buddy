@@ -33,13 +33,14 @@ public class FieldAccessOtherTest {
     private TypeDescription typeDescription;
 
     @Mock
-    private FieldDescription fieldDescription;
+    private FieldDescription.InDeclaredForm fieldDescription;
 
     @Before
     public void setUp() throws Exception {
         when(enumerationDescription.getEnumerationType()).thenReturn(typeDescription);
         when(enumerationDescription.getValue()).thenReturn(FOO);
-        when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Explicit(Collections.singletonList(fieldDescription)));
+        when(typeDescription.getDeclaredFields())
+                .thenReturn(new FieldList.Explicit<FieldDescription.InDeclaredForm>(Collections.singletonList(fieldDescription)));
     }
 
     @Test

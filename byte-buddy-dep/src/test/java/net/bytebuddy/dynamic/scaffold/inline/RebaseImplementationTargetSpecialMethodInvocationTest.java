@@ -31,7 +31,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
                                                           TypeDescription targetType) {
         MethodRebaseResolver.Resolution resolution = mock(MethodRebaseResolver.Resolution.class);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
-        MethodDescription methodDescription = mock(MethodDescription.class);
+        MethodDescription.InDeclaredForm methodDescription = mock(MethodDescription.InDeclaredForm.class);
         when(methodDescription.getInternalName()).thenReturn(name);
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, parameterTypes));

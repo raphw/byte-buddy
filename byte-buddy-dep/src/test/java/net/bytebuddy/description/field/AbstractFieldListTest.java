@@ -11,7 +11,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public abstract class AbstractFieldListTest<U> extends AbstractFilterableListTest<FieldDescription, FieldList, U> {
+public abstract class AbstractFieldListTest<U, V extends FieldDescription> extends AbstractFilterableListTest<V, FieldList<V>, U> {
 
     @Test
     @SuppressWarnings("unchecked")

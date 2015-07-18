@@ -20,7 +20,7 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TypePoolLazyMethodListTest extends AbstractMethodListTest<Method> {
+public class TypePoolLazyMethodListTest extends AbstractMethodListTest<Method, MethodDescription.InDeclaredForm> {
 
     private TypePool typePool;
 
@@ -45,12 +45,12 @@ public class TypePoolLazyMethodListTest extends AbstractMethodListTest<Method> {
     }
 
     @Override
-    protected MethodList asList(List<Method> elements) {
+    protected MethodList<MethodDescription.InDeclaredForm> asList(List<Method> elements) {
         return typePool.describe(Foo.class.getName()).resolve().getDeclaredMethods().filter(anyOf(elements.toArray(new Method[elements.size()])));
     }
 
     @Override
-    protected MethodDescription asElement(Method element) {
+    protected MethodDescription.InDeclaredForm asElement(Method element) {
         return new MethodDescription.ForLoadedMethod(element);
     }
 }

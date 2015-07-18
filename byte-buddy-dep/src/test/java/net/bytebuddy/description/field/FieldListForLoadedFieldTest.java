@@ -1,9 +1,11 @@
 package net.bytebuddy.description.field;
 
+import net.bytebuddy.description.method.MethodDescription;
+
 import java.lang.reflect.Field;
 import java.util.List;
 
-public class FieldListForLoadedFieldTest extends AbstractFieldListTest<Field> {
+public class FieldListForLoadedFieldTest extends AbstractFieldListTest<Field, FieldDescription.InDeclaredForm> {
 
     @Override
     protected Field getFirst() throws Exception {
@@ -16,12 +18,12 @@ public class FieldListForLoadedFieldTest extends AbstractFieldListTest<Field> {
     }
 
     @Override
-    protected FieldList asList(List<Field> elements) {
+    protected FieldList<FieldDescription.InDeclaredForm> asList(List<Field> elements) {
         return new FieldList.ForLoadedField(elements);
     }
 
     @Override
-    protected FieldDescription asElement(Field element) {
+    protected FieldDescription.InDeclaredForm asElement(Field element) {
         return new FieldDescription.ForLoadedField(element);
     }
 }

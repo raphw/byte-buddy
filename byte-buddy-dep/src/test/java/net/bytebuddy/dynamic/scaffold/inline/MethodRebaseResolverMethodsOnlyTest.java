@@ -32,7 +32,7 @@ public class MethodRebaseResolverMethodsOnlyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription method, constructor, other;
+    private MethodDescription.InDeclaredForm method, constructor, other;
 
     @Mock
     private TypeDescription returnType, parameterType, declaringType;
@@ -67,7 +67,7 @@ public class MethodRebaseResolverMethodsOnlyTest {
         MethodRebaseResolver.Resolution resolution = methodRebaseResolver.resolve(other);
         assertThat(resolution.isRebased(), is(false));
         assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.LegalTrivial.INSTANCE));
-        assertThat(resolution.getResolvedMethod(), is(other));
+        assertThat(resolution.getResolvedMethod(), is((MethodDescription) other));
     }
 
     @Test

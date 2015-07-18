@@ -607,17 +607,17 @@ public interface Implementation {
             /**
              * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation.
              */
-            private final Map<Implementation.SpecialMethodInvocation, MethodDescription> registeredAccessorMethods;
+            private final Map<Implementation.SpecialMethodInvocation, MethodDescription.InDeclaredForm> registeredAccessorMethods;
 
             /**
              * The registered getters.
              */
-            private final Map<FieldDescription, MethodDescription> registeredGetters;
+            private final Map<FieldDescription, MethodDescription.InDeclaredForm> registeredGetters;
 
             /**
              * The registered setters.
              */
-            private final Map<FieldDescription, MethodDescription> registeredSetters;
+            private final Map<FieldDescription, MethodDescription.InDeclaredForm> registeredSetters;
 
             /**
              * A map of accessor methods to a method pool entry that representedBy their implementation.
@@ -662,9 +662,9 @@ public interface Implementation {
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
                 this.classFileVersion = classFileVersion;
-                registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription>();
-                registeredGetters = new HashMap<FieldDescription, MethodDescription>();
-                registeredSetters = new HashMap<FieldDescription, MethodDescription>();
+                registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.InDeclaredForm>();
+                registeredGetters = new HashMap<FieldDescription, MethodDescription.InDeclaredForm>();
+                registeredSetters = new HashMap<FieldDescription, MethodDescription.InDeclaredForm>();
                 accessorMethodEntries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
@@ -673,8 +673,8 @@ public interface Implementation {
             }
 
             @Override
-            public MethodDescription registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
-                MethodDescription accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
+            public MethodDescription.InDeclaredForm registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
+                MethodDescription.InDeclaredForm accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
                 if (accessorMethod == null) {
                     accessorMethod = new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), randomString.nextString());
                     registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
@@ -684,8 +684,8 @@ public interface Implementation {
             }
 
             @Override
-            public MethodDescription registerGetterFor(FieldDescription fieldDescription) {
-                MethodDescription accessorMethod = registeredGetters.get(fieldDescription);
+            public MethodDescription.InDeclaredForm registerGetterFor(FieldDescription fieldDescription) {
+                MethodDescription.InDeclaredForm accessorMethod = registeredGetters.get(fieldDescription);
                 if (accessorMethod == null) {
                     accessorMethod = new FieldGetter(instrumentedType, fieldDescription, randomString.nextString());
                     registeredGetters.put(fieldDescription, accessorMethod);
@@ -695,8 +695,8 @@ public interface Implementation {
             }
 
             @Override
-            public MethodDescription registerSetterFor(FieldDescription fieldDescription) {
-                MethodDescription accessorMethod = registeredSetters.get(fieldDescription);
+            public MethodDescription.InDeclaredForm registerSetterFor(FieldDescription fieldDescription) {
+                MethodDescription.InDeclaredForm accessorMethod = registeredSetters.get(fieldDescription);
                 if (accessorMethod == null) {
                     accessorMethod = new FieldSetter(instrumentedType, fieldDescription, randomString.nextString());
                     registeredSetters.put(fieldDescription, accessorMethod);

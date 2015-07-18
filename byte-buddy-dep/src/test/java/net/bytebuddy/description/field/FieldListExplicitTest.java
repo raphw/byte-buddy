@@ -2,7 +2,7 @@ package net.bytebuddy.description.field;
 
 import java.util.List;
 
-public class FieldListExplicitTest extends AbstractFieldListTest<FieldDescription> {
+public class FieldListExplicitTest extends AbstractFieldListTest<FieldDescription, FieldDescription> {
 
     @Override
     protected FieldDescription getFirst() throws Exception {
@@ -15,8 +15,8 @@ public class FieldListExplicitTest extends AbstractFieldListTest<FieldDescriptio
     }
 
     @Override
-    protected FieldList asList(List<FieldDescription> elements) {
-        return new FieldList.Explicit(elements);
+    protected FieldList<FieldDescription> asList(List<FieldDescription> elements) {
+        return new FieldList.Explicit<FieldDescription>(elements);
     }
 
     @Override

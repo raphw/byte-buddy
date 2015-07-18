@@ -55,11 +55,11 @@ public class TypeProxyCreationTest {
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Mock
-    private MethodDescription proxyMethod;
+    private MethodDescription.InDeclaredForm proxyMethod;
 
     private TypeDescription foo;
 
-    private MethodList fooMethods;
+    private MethodList<?> fooMethods;
 
     private int modifiers;
 

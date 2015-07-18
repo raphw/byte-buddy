@@ -8,10 +8,8 @@ import java.lang.reflect.Field;
 
 public class FieldDescriptionLatentTest extends AbstractFieldDescriptionTest {
 
-    private static final String FOO = "foo";
-
     @Override
-    protected FieldDescription describe(Field field) {
+    protected FieldDescription.InDeclaredForm describe(Field field) {
         return new FieldDescription.Latent(new TypeDescription.ForLoadedType(field.getDeclaringClass()),
                 field.getName(),
                 field.getModifiers(),

@@ -116,10 +116,11 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testUnknownConstructor() throws Exception {
         MethodDescription constructor = mock(MethodDescription.class);
         when(constructor.isConstructor()).thenReturn(true);
-        when(constructor.getParameters()).thenReturn(new ParameterList.Empty());
+        when(constructor.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
         TypeDescription declaringType = mock(TypeDescription.class);
         when(declaringType.asRawType()).thenReturn(declaringType);
         when(constructor.getDeclaringType()).thenReturn(declaringType);
@@ -144,11 +145,12 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(SubclassImplementationTarget.class).refine(new ObjectPropertyAssertion.Refinement<MethodLookupEngine.Finding>() {
             @Override
             public void apply(MethodLookupEngine.Finding mock) {
-                when(mock.getInvokableMethods()).thenReturn(new MethodList.Empty());
+                when(mock.getInvokableMethods()).thenReturn((MethodList) new MethodList.Empty());
                 when(mock.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(mock.getTypeDescription()).thenReturn(typeDescription);

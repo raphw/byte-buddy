@@ -23,6 +23,7 @@ public class MethodInvocationOtherTest {
     private static final String FOO = "foo";
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodInvocation.IllegalInvocation.class).apply();
@@ -37,7 +38,7 @@ public class MethodInvocationOtherTest {
                 when(mock.getReturnType()).thenReturn(returnType);
                 when(returnType.asRawType()).thenReturn(returnType);
                 when(mock.getInternalName()).thenReturn(FOO);
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty());
+                when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
             }
         }).apply();
         ObjectPropertyAssertion.of(MethodInvocation.DynamicInvocation.class).apply();

@@ -16,7 +16,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class TypePoolLazyFieldListTest extends AbstractFieldListTest<Field> {
+public class TypePoolLazyFieldListTest extends AbstractFieldListTest<Field, FieldDescription.InDeclaredForm> {
 
     private TypePool typePool;
 
@@ -41,12 +41,12 @@ public class TypePoolLazyFieldListTest extends AbstractFieldListTest<Field> {
     }
 
     @Override
-    protected FieldList asList(List<Field> elements) {
+    protected FieldList<FieldDescription.InDeclaredForm> asList(List<Field> elements) {
         return typePool.describe(Foo.class.getName()).resolve().getDeclaredFields().filter(anyOf(elements.toArray(new Field[elements.size()])));
     }
 
     @Override
-    protected FieldDescription asElement(Field element) {
+    protected FieldDescription.InDeclaredForm asElement(Field element) {
         return new FieldDescription.ForLoadedField(element);
     }
 }

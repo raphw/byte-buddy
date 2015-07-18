@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 public class MethodDelegationBinderTest {
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodInvoker.Simple.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodInvoker.Virtual.class).apply();
@@ -26,7 +27,7 @@ public class MethodDelegationBinderTest {
             @Override
             public MethodDescription create() {
                 MethodDescription methodDescription = mock(MethodDescription.class);
-                when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
+                when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
                 return methodDescription;
             }
         }).applyBasic();
