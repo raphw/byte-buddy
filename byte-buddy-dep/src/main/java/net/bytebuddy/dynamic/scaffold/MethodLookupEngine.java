@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -84,9 +85,7 @@ public interface MethodLookupEngine {
             }
             Map<TypeDescription, Set<MethodDescription>> defaultMethods = apply(methodBucket, interfaces, typeDescription.getInterfaces());
             methodBucket.pushInterfaces(interfaces);
-            return new Finding.Default(methodBucket.getTypeOfInterest(),
-                    methodBucket.extractInvokableMethods(),
-                    defaultMethods);
+            return new Finding.Default(methodBucket.getTypeOfInterest(), methodBucket.extractInvokableMethods(), defaultMethods);
         }
 
 
@@ -341,11 +340,11 @@ public interface MethodLookupEngine {
              *
              * @return A list of all invokable methods that were pushed into this bucket.
              */
-            private MethodList extractInvokableMethods() {
+            private MethodList<?> extractInvokableMethods() {
                 List<MethodDescription> invokableMethods = new ArrayList<MethodDescription>(classMethods.size() + interfaceMethods.size());
                 invokableMethods.addAll(classMethods.values());
                 invokableMethods.addAll(interfaceMethods.values());
-                return new MethodList.Explicit(invokableMethods);
+                return new MethodList.Explicit<MethodDescription>(invokableMethods);
             }
 
             /**
@@ -564,7 +563,7 @@ public interface MethodLookupEngine {
          *
          * @return A list of methods that can be invoked on the analyzed type.
          */
-        MethodList getInvokableMethods();
+        MethodList<?> getInvokableMethods();
 
         /**
          * Returns a map of interfaces that are eligible for default method invocation on the type this finding
@@ -604,9 +603,7 @@ public interface MethodLookupEngine {
              * @param invokableDefaultMethods A map of interfaces that are eligible for default method invocation on
              *                                the type this finding was created for.
              */
-            public Default(TypeDescription lookedUpType,
-                           MethodList invokableMethods,
-                           Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods) {
+            public Default(TypeDescription lookedUpType, MethodList<?> invokableMethods, Map<TypeDescription, Set<MethodDescription>> invokableDefaultMethods) {
                 this.lookedUpType = lookedUpType;
                 this.invokableMethods = invokableMethods;
                 this.invokableDefaultMethods = invokableDefaultMethods;
@@ -618,7 +615,7 @@ public interface MethodLookupEngine {
             }
 
             @Override
-            public MethodList getInvokableMethods() {
+            public MethodList<?> getInvokableMethods() {
                 return invokableMethods;
             }
 
@@ -788,13 +785,18 @@ public interface MethodLookupEngine {
         public Object getDefaultValue() {
             return methodChain.get(MOST_SPECIFIC).getDefaultValue();
         }
+
+        @Override
+        public InDeclaredForm asDeclared() {
+            return methodChain.get(MOST_SPECIFIC).asDeclared();
+        }
     }
 
     /**
      * This {@link MethodDescription} representedBy methods that are defined
      * ambiguously on several interfaces of a common type.
      */
-    class ConflictingInterfaceMethod extends MethodDescription.AbstractMethodDescription {
+    class ConflictingInterfaceMethod extends MethodDescription.InDeclaredForm.AbstractBase {
 
         /**
          * An index that is guaranteed to exist but that expresses the fact that any method that is represented
@@ -876,7 +878,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public ParameterList getParameters() {
+        public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
             return new ParameterList.Explicit.ForTypes(this, methodDescriptions.get(ANY).getParameters().asTypeList().asRawTypes());
         }
 

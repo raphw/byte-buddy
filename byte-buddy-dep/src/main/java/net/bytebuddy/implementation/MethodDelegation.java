@@ -178,7 +178,7 @@ public class MethodDelegation implements Implementation {
     /**
      * A list of methods to be considered as target by this method delegation.
      */
-    private final MethodList targetMethodCandidates;
+    private final MethodList<?> targetMethodCandidates;
 
     /**
      * Creates a new method delegation.
@@ -198,7 +198,7 @@ public class MethodDelegation implements Implementation {
                                TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                Assigner assigner,
-                               MethodList targetMethodCandidates) {
+                               MethodList<?> targetMethodCandidates) {
         this.implementationDelegate = implementationDelegate;
         this.parameterBinders = parameterBinders;
         this.defaultsProvider = defaultsProvider;
@@ -611,7 +611,7 @@ public class MethodDelegation implements Implementation {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        MethodList methodList = this.targetMethodCandidates.filter(isVisibleTo(implementationTarget.getTypeDescription()));
+        MethodList<?> methodList = this.targetMethodCandidates.filter(isVisibleTo(implementationTarget.getTypeDescription()));
         if (methodList.size() == 0) {
             throw new IllegalStateException("No bindable method is visible to " + implementationTarget.getTypeDescription());
         }

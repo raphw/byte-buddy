@@ -18,7 +18,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 /**
  * Implementations represent a list of method descriptions.
  */
-public interface MethodList extends FilterableList<MethodDescription, MethodList> {
+public interface MethodList<T extends MethodDescription> extends FilterableList<T, MethodList<T>> {
 
     /**
      * Transforms the list of method descriptions into a list of detached tokens.
@@ -39,11 +39,11 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
     /**
      * A base implementation of a {@link MethodList}.
      */
-    abstract class AbstractBase extends FilterableList.AbstractBase<MethodDescription, MethodList> implements MethodList {
+    abstract class AbstractBase<S extends MethodDescription> extends FilterableList.AbstractBase<S, MethodList<S>> implements MethodList<S> {
 
         @Override
-        protected MethodList wrap(List<MethodDescription> values) {
-            return new Explicit(values);
+        protected MethodList<S> wrap(List<S> values) {
+            return new Explicit<S>(values);
         }
 
         @Override
@@ -65,7 +65,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
      * are declared for a given type.
      */
-    class ForLoadedType extends AbstractBase {
+    class ForLoadedType extends AbstractBase<MethodDescription.InDeclaredForm> {
 
         /**
          * The loaded methods that are represented by this method list.
@@ -110,7 +110,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         @Override
-        public MethodDescription get(int index) {
+        public MethodDescription.InDeclaredForm get(int index) {
             return index < constructors.size()
                     ? new MethodDescription.ForLoadedConstructor(constructors.get(index))
                     : new MethodDescription.ForLoadedMethod(methods.get(index - constructors.size()));
@@ -126,24 +126,24 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
     /**
      * A method list that is a wrapper for a given list of method descriptions.
      */
-    class Explicit extends AbstractBase {
+    class Explicit<S extends MethodDescription> extends AbstractBase<S> {
 
         /**
          * The list of methods that is represented by this method list.
          */
-        private final List<? extends MethodDescription> methodDescriptions;
+        private final List<? extends S> methodDescriptions;
 
         /**
          * Creates a new wrapper for a given list of methods.
          *
          * @param methodDescriptions The underlying list of methods used for this method list.
          */
-        public Explicit(List<? extends MethodDescription> methodDescriptions) {
+        public Explicit(List<? extends S> methodDescriptions) {
             this.methodDescriptions = Collections.unmodifiableList(methodDescriptions);
         }
 
         @Override
-        public MethodDescription get(int index) {
+        public S get(int index) {
             return methodDescriptions.get(index);
         }
 
@@ -156,7 +156,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
     /**
      * A list of method descriptions for a list of detached tokens. For the returned method, each token is attached to its method representation.
      */
-    class ForTokens extends AbstractBase {
+    class ForTokens extends AbstractBase<MethodDescription.InDeclaredForm> {
 
         /**
          * The method's declaring type.
@@ -180,7 +180,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
         }
 
         @Override
-        public MethodDescription get(int index) {
+        public MethodDescription.InDeclaredForm get(int index) {
             return new MethodDescription.Latent(declaringType, tokens.get(index));
         }
 
@@ -193,7 +193,7 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
     /**
      * A list of method descriptions that yields {@link net.bytebuddy.description.method.MethodDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase {
+    class TypeSubstituting extends AbstractBase<MethodDescription> {
 
         /**
          * The methods' declaring type.
@@ -239,7 +239,8 @@ public interface MethodList extends FilterableList<MethodDescription, MethodList
     /**
      * An implementation of an empty method list.
      */
-    class Empty extends FilterableList.Empty<MethodDescription, MethodList> implements MethodList {
+    class Empty extends FilterableList.Empty<MethodDescription.InDeclaredForm, MethodList<MethodDescription.InDeclaredForm>>
+            implements MethodList<MethodDescription.InDeclaredForm> {
 
         @Override
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {

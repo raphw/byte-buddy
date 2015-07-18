@@ -95,6 +95,22 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
+    InDeclaredForm asDeclared();
+
+    interface InDeclaredForm extends ParameterDescription {
+
+        @Override
+        MethodDescription.InDeclaredForm getDeclaringMethod();
+
+        abstract class AbstractBase extends AbstractParameterDescription implements InDeclaredForm {
+
+            @Override
+            public InDeclaredForm asDeclared() {
+                return this;
+            }
+        }
+    }
+
     /**
      * A base implementation of a method parameter description.
      */
@@ -184,7 +200,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     /**
      * Description of a loaded parameter, represented by a Java 8 {@code java.lang.reflect.Parameter}.
      */
-    class ForLoadedParameter extends AbstractParameterDescription {
+    class ForLoadedParameter extends InDeclaredForm.AbstractBase {
 
         /**
          * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getType} method.
@@ -275,7 +291,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public MethodDescription getDeclaringMethod() {
+        public MethodDescription.InDeclaredForm getDeclaringMethod() {
             Object executable = GET_DECLARING_EXECUTABLE.invoke(parameter);
             if (executable instanceof Method) {
                 return new MethodDescription.ForLoadedMethod((Method) executable);
@@ -322,7 +338,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * Description of a loaded method's parameter on a virtual machine where {@code java.lang.reflect.Parameter}
          * is not available.
          */
-        protected static class OfLegacyVmMethod extends AbstractParameterDescription {
+        protected static class OfLegacyVmMethod extends InDeclaredForm.AbstractBase {
 
             /**
              * The method that declares this parameter.
@@ -365,7 +381,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public MethodDescription getDeclaringMethod() {
+            public MethodDescription.InDeclaredForm getDeclaringMethod() {
                 return new MethodDescription.ForLoadedMethod(method);
             }
 
@@ -394,7 +410,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * Description of a loaded constructor's parameter on a virtual machine where {@code java.lang.reflect.Parameter}
          * is not available.
          */
-        protected static class OfLegacyVmConstructor extends AbstractParameterDescription {
+        protected static class OfLegacyVmConstructor extends InDeclaredForm.AbstractBase {
 
             /**
              * The method that declares this parameter.
@@ -437,7 +453,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public MethodDescription getDeclaringMethod() {
+            public MethodDescription.InDeclaredForm getDeclaringMethod() {
                 return new MethodDescription.ForLoadedConstructor(constructor);
             }
 
@@ -466,12 +482,12 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     /**
      * A latent description of a parameter that is not attached to a method or constructor.
      */
-    class Latent extends AbstractParameterDescription {
+    class Latent extends InDeclaredForm.AbstractBase {
 
         /**
          * The method that is declaring the parameter.
          */
-        private final MethodDescription declaringMethod;
+        private final MethodDescription.InDeclaredForm declaringMethod;
 
         /**
          * The type of the parameter.
@@ -511,7 +527,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index           The index of the parameter.
          * @param offset          The parameter's offset in the local method variables array.
          */
-        public Latent(MethodDescription declaringMethod, Token token, int index, int offset) {
+        public Latent(MethodDescription.InDeclaredForm declaringMethod, Token token, int index, int offset) {
             this(declaringMethod,
                     token.getType(),
                     token.getAnnotations(),
@@ -529,7 +545,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index           The index of the parameter.
          * @param offset          The offset of the parameter.
          */
-        public Latent(MethodDescription declaringMethod,
+        public Latent(MethodDescription.InDeclaredForm declaringMethod,
                       GenericTypeDescription parameterType,
                       int index,
                       int offset) {
@@ -553,7 +569,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index               The index of the parameter.
          * @param offset              The parameter's offset in the local method variables array.
          */
-        public Latent(MethodDescription declaringMethod,
+        public Latent(MethodDescription.InDeclaredForm declaringMethod,
                       GenericTypeDescription parameterType,
                       List<? extends AnnotationDescription> declaredAnnotations,
                       String name,
@@ -575,7 +591,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public MethodDescription getDeclaringMethod() {
+        public MethodDescription.InDeclaredForm getDeclaringMethod() {
             return declaringMethod;
         }
 
@@ -702,6 +718,11 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return parameterDescription.getDeclaredAnnotations();
+        }
+
+        @Override
+        public InDeclaredForm asDeclared() {
+            return parameterDescription.asDeclared();
         }
     }
 

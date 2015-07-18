@@ -96,7 +96,7 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
                               MethodDelegationBinder.MethodBinding left,
                               MethodDelegationBinder.MethodBinding right) {
         Resolution resolution = Resolution.UNKNOWN;
-        ParameterList sourceParameters = source.getParameters();
+        ParameterList<?> sourceParameters = source.getParameters();
         int leftExtra = 0, rightExtra = 0;
         for (int sourceParameterIndex = 0; sourceParameterIndex < sourceParameters.size(); sourceParameterIndex++) {
             ParameterIndexToken parameterIndexToken = new ParameterIndexToken(sourceParameterIndex);
@@ -132,54 +132,54 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
     protected enum PrimitiveTypePrecedence {
 
         /**
-         * The specifity {@code boolean} type.
+         * The precedence of the {@code boolean} type.
          */
         BOOLEAN(0),
 
         /**
-         * The specifity {@code byte} type.
+         * The precedence of the {@code byte} type.
          */
         BYTE(1),
 
         /**
-         * The specifity {@code short} type.
+         * The precedence of the {@code short} type.
          */
         SHORT(2),
 
         /**
-         * The specifity {@code int} type.
+         * The precedence of the {@code int} type.
          */
         INTEGER(3),
 
         /**
-         * The specifity {@code char} type.
+         * The precedence of the {@code char} type.
          */
         CHARACTER(4),
 
         /**
-         * The specifity {@code long} type.
+         * The precedence of the {@code long} type.
          */
         LONG(5),
 
         /**
-         * The specifity {@code float} type.
+         * The precedence of the {@code float} type.
          */
         FLOAT(6),
 
         /**
-         * The specifity {@code double} type.
+         * The precedence of the {@code double} type.
          */
         DOUBLE(7);
 
         /**
-         * A score representing the specifity where a higher score representedBy a less specific type.
+         * A score representing the precedence where a higher score represents a less specific type.
          */
         private final int score;
 
         /**
          * Creates a new primitive type precedence.
          *
-         * @param score A score representing the specifity where a higher score representedBy a less specific type.
+         * @param score A score representing the precedence where a higher score representedBy a less specific type.
          */
         PrimitiveTypePrecedence(int score) {
             this.score = score;

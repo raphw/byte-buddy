@@ -17,7 +17,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 /**
  * Implementations represent a list of field descriptions.
  */
-public interface FieldList extends FilterableList<FieldDescription, FieldList> {
+public interface FieldList<T extends FieldDescription> extends FilterableList<T, FieldList<T>> {
 
     /**
      * Transforms the list of field descriptions into a list of detached tokens.
@@ -38,7 +38,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
     /**
      * An abstract base implementation of a {@link FieldList}.
      */
-    abstract class AbstractBase extends FilterableList.AbstractBase<FieldDescription, FieldList> implements FieldList {
+    abstract class AbstractBase<S extends FieldDescription> extends FilterableList.AbstractBase<S, FieldList<S>> implements FieldList<S> {
 
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
@@ -55,15 +55,15 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         }
 
         @Override
-        protected FieldList wrap(List<FieldDescription> values) {
-            return new Explicit(values);
+        protected FieldList<S> wrap(List<S> values) {
+            return new Explicit<S>(values);
         }
     }
 
     /**
      * An implementation of a field list for an array of loaded fields.
      */
-    class ForLoadedField extends AbstractBase {
+    class ForLoadedField extends AbstractBase<FieldDescription.InDeclaredForm> {
 
         /**
          * The loaded fields this field list representedBy.
@@ -89,7 +89,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         }
 
         @Override
-        public FieldDescription get(int index) {
+        public FieldDescription.InDeclaredForm get(int index) {
             return new FieldDescription.ForLoadedField(fields.get(index));
         }
 
@@ -102,24 +102,24 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
     /**
      * A wrapper implementation of a field list for a given list of field descriptions.
      */
-    class Explicit extends AbstractBase {
+    class Explicit<S extends FieldDescription> extends AbstractBase<S> {
 
         /**
          * The list of field descriptions this list representedBy.
          */
-        private final List<? extends FieldDescription> fieldDescriptions;
+        private final List<? extends S> fieldDescriptions;
 
         /**
          * Creates a new immutable wrapper field list.
          *
          * @param fieldDescriptions The list of fields to be represented by this field list.
          */
-        public Explicit(List<? extends FieldDescription> fieldDescriptions) {
+        public Explicit(List<? extends S> fieldDescriptions) {
             this.fieldDescriptions = fieldDescriptions;
         }
 
         @Override
-        public FieldDescription get(int index) {
+        public S get(int index) {
             return fieldDescriptions.get(index);
         }
 
@@ -132,7 +132,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
     /**
      * A list of field descriptions for a list of detached tokens. For the returned fields, each token is attached to its field representation.
      */
-    class ForTokens extends AbstractBase {
+    class ForTokens extends AbstractBase<FieldDescription.InDeclaredForm> {
 
         /**
          * The declaring type of the represented fields.
@@ -156,7 +156,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
         }
 
         @Override
-        public FieldDescription get(int index) {
+        public FieldDescription.InDeclaredForm get(int index) {
             return new FieldDescription.Latent(declaringType, tokens.get(index));
         }
 
@@ -169,7 +169,7 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
     /**
      * A list of field descriptions that yields {@link net.bytebuddy.description.field.FieldDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase {
+    class TypeSubstituting extends AbstractBase<FieldDescription> {
 
         /**
          * The field's actual declaring type.
@@ -215,7 +215,8 @@ public interface FieldList extends FilterableList<FieldDescription, FieldList> {
     /**
      * An implementation of an empty field list.
      */
-    class Empty extends FilterableList.Empty<FieldDescription, FieldList> implements FieldList {
+    class Empty extends FilterableList.Empty<FieldDescription.InDeclaredForm, FieldList<FieldDescription.InDeclaredForm>>
+            implements FieldList<FieldDescription.InDeclaredForm> {
 
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {

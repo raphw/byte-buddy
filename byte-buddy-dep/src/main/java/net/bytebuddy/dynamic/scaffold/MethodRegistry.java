@@ -349,7 +349,7 @@ public interface MethodRegistry {
          *
          * @return A list of all methods that should be instrumented.
          */
-        MethodList getInstrumentedMethods();
+        MethodList<?> getInstrumentedMethods();
 
         /**
          * Returns the loaded type initializer of the instrumented type.
@@ -458,7 +458,7 @@ public interface MethodRegistry {
             for (Entry entry : entries) {
                 if (handlers.add(entry.getHandler())) {
                     instrumentedType = entry.getHandler().prepare(instrumentedType);
-                    MethodList helperMethods = instrumentedType.getDeclaredMethods();
+                    MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
                     for (MethodDescription helperMethod : helperMethods.subList(helperMethodIndex, helperMethods.size())) {
                         implementations.put(helperMethod, entry);
                     }
@@ -466,7 +466,8 @@ public interface MethodRegistry {
                 }
             }
             MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
-            List<MethodDescription> relevant = finding.getInvokableMethods().filter(not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType)));
+            List<? extends MethodDescription> relevant = finding.getInvokableMethods()
+                    .filter(not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType)));
             for (MethodDescription methodDescription : join(new MethodDescription.Latent.TypeInitializer(instrumentedType), relevant)) {
                 for (Entry entry : entries) {
                     if (entry.resolve(instrumentedType).matches(methodDescription)) {
@@ -642,8 +643,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public MethodList getInstrumentedMethods() {
-                return new MethodList.Explicit(new ArrayList<MethodDescription>(implementations.keySet())).filter(not(isTypeInitializer()));
+            public MethodList<?> getInstrumentedMethods() {
+                return new MethodList.Explicit<MethodDescription>(new ArrayList<MethodDescription>(implementations.keySet())).filter(not(isTypeInitializer()));
             }
 
             @Override
@@ -758,8 +759,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public MethodList getInstrumentedMethods() {
-                return new MethodList.Explicit(new ArrayList<MethodDescription>(implementations.keySet())).filter(not(isTypeInitializer()));
+            public MethodList<?> getInstrumentedMethods() {
+                return new MethodList.Explicit<MethodDescription>(new ArrayList<MethodDescription>(implementations.keySet())).filter(not(isTypeInitializer()));
             }
 
             @Override

@@ -104,7 +104,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * method, including a reference to the instance of the instrumented type that is invoked if applicable.
      */
     private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
-        ParameterList parameters = methodDescription.getParameters();
+        ParameterList<?> parameters = methodDescription.getParameters();
         LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>((methodDescription.isStatic() ? 0 : 1) + parameters.size());
         int currentIndex = 0;
         if (!methodDescription.isStatic()) {
@@ -189,7 +189,7 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * The list of methods to be returned by this method lookup engine.
          */
-        private final MethodList methodList;
+        private final MethodList<?> methodList;
 
         /**
          * Creates this singleton proxy method lookup engine.
@@ -198,7 +198,7 @@ public class MethodCallProxy implements AuxiliaryType {
             List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(2);
             methodDescriptions.addAll(new MethodList.ForLoadedType(Runnable.class));
             methodDescriptions.addAll(new MethodList.ForLoadedType(Callable.class));
-            methodList = new MethodList.Explicit(methodDescriptions);
+            methodList = new MethodList.Explicit<MethodDescription>(methodDescriptions);
         }
 
         @Override
@@ -207,7 +207,7 @@ public class MethodCallProxy implements AuxiliaryType {
             methodDescriptions.addAll(methodList);
             methodDescriptions.addAll(typeDescription.getDeclaredMethods());
             return new Finding.Default(typeDescription,
-                    new MethodList.Explicit(methodDescriptions),
+                    new MethodList.Explicit<MethodDescription>(methodDescriptions),
                     Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
         }
 
@@ -281,7 +281,7 @@ public class MethodCallProxy implements AuxiliaryType {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadOffset(0);
-                FieldList fieldList = instrumentedType.getDeclaredFields();
+                FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                 int index = 0;
                 for (FieldDescription fieldDescription : fieldList) {
@@ -400,7 +400,7 @@ public class MethodCallProxy implements AuxiliaryType {
                               Context implementationContext,
                               MethodDescription instrumentedMethod) {
                 StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadOffset(0);
-                FieldList fieldList = instrumentedType.getDeclaredFields();
+                FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                 int index = 0;
                 for (FieldDescription fieldDescription : fieldList) {

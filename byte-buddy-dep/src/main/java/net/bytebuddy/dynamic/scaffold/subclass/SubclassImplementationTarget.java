@@ -41,7 +41,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                                            OriginTypeIdentifier originTypeIdentifier) {
         super(finding, bridgeMethodResolverFactory);
         GenericTypeDescription superType = finding.getTypeDescription().getSuperType();
-        MethodList superConstructors = superType == null
+        MethodList<?> superConstructors = superType == null
                 ? new MethodList.Empty()
                 : superType.asRawType().getDeclaredMethods().filter(isConstructor());
         this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>(superConstructors.size());

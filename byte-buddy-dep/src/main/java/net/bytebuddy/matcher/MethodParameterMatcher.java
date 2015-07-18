@@ -13,14 +13,14 @@ public class MethodParameterMatcher<T extends MethodDescription> extends Element
     /**
      * The matcher to apply to the parameters.
      */
-    private final ElementMatcher<? super ParameterList> parameterMatcher;
+    private final ElementMatcher<? super ParameterList<?>> parameterMatcher;
 
     /**
      * Creates a new matcher for a method's parameters.
      *
      * @param parameterMatcher The matcher to apply to the parameters.
      */
-    public MethodParameterMatcher(ElementMatcher<? super ParameterList> parameterMatcher) {
+    public MethodParameterMatcher(ElementMatcher<? super ParameterList<?>> parameterMatcher) {
         this.parameterMatcher = parameterMatcher;
     }
 

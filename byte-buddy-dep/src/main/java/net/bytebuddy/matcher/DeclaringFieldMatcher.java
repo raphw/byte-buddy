@@ -13,14 +13,14 @@ public class DeclaringFieldMatcher<T extends TypeDescription> extends ElementMat
     /**
      * The field matcher to apply to the declared fields of the matched type description.
      */
-    private final ElementMatcher<? super FieldList> fieldMatcher;
+    private final ElementMatcher<? super FieldList<?>> fieldMatcher;
 
     /**
      * Creates a new matcher for a type's declared fields.
      *
      * @param fieldMatcher The field matcher to apply to the declared fields of the matched type description.
      */
-    public DeclaringFieldMatcher(ElementMatcher<? super FieldList> fieldMatcher) {
+    public DeclaringFieldMatcher(ElementMatcher<? super FieldList<?>> fieldMatcher) {
         this.fieldMatcher = fieldMatcher;
     }
 

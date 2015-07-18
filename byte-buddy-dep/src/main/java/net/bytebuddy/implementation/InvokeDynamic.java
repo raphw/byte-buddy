@@ -1727,7 +1727,7 @@ public class InvokeDynamic implements Implementation {
                     GenericTypeDescription currentType = instrumentedType;
                     FieldDescription fieldDescription = null;
                     do {
-                        FieldList fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
+                        FieldList<?> fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
                         if (fieldList.size() != 0) {
                             fieldDescription = fieldList.getOnly();
                         }
@@ -1795,7 +1795,7 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    ParameterList parameters = instrumentedMethod.getParameters();
+                    ParameterList<?> parameters = instrumentedMethod.getParameters();
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
@@ -1858,7 +1858,7 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    ParameterList parameters = instrumentedMethod.getParameters();
+                    ParameterList<?> parameters = instrumentedMethod.getParameters();
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }

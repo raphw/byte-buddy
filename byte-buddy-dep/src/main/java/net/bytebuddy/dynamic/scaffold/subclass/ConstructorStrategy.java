@@ -76,7 +76,7 @@ public interface ConstructorStrategy {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
                 TypeDescription superType = instrumentedType.getSuperType().asRawType();
-                MethodList defaultConstructors = superType == null
+                MethodList<?> defaultConstructors = superType == null
                         ? new MethodList.Empty()
                         : superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (defaultConstructors.size() == 1) {

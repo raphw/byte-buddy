@@ -4,6 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -797,7 +798,7 @@ public interface Implementation {
             /**
              * A description of a field that stores a cached value.
              */
-            protected static class CacheValueField extends FieldDescription.AbstractFieldDescription {
+            protected static class CacheValueField extends FieldDescription.InDeclaredForm.AbstractBase {
 
                 /**
                  * The instrumented type.
@@ -933,7 +934,7 @@ public interface Implementation {
             /**
              * A description of an accessor method to access another method from outside the instrumented type.
              */
-            protected static class AccessorMethod extends MethodDescription.AbstractMethodDescription {
+            protected static class AccessorMethod extends MethodDescription.InDeclaredForm.AbstractBase {
 
                 /**
                  * The instrumented type.
@@ -969,7 +970,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public ParameterList getParameters() {
+                public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
                     return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
@@ -1014,7 +1015,7 @@ public interface Implementation {
             /**
              * A description of a field getter method.
              */
-            protected static class FieldGetter extends MethodDescription.AbstractMethodDescription {
+            protected static class FieldGetter extends MethodDescription.InDeclaredForm.AbstractBase {
 
                 /**
                  * The instrumented type.
@@ -1050,7 +1051,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public ParameterList getParameters() {
+                public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
                     return new ParameterList.Empty();
                 }
 
@@ -1095,7 +1096,7 @@ public interface Implementation {
             /**
              * A description of a field setter method.
              */
-            protected static class FieldSetter extends MethodDescription.AbstractMethodDescription {
+            protected static class FieldSetter extends MethodDescription.InDeclaredForm.AbstractBase {
 
                 /**
                  * The instrumented type.
@@ -1131,7 +1132,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public ParameterList getParameters() {
+                public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
                     return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asRawType()));
                 }
 

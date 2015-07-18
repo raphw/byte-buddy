@@ -79,7 +79,7 @@ public @interface DefaultCall {
          * Finds references to the methods of the default call annotation.
          */
         static {
-            MethodList annotationProperties = new TypeDescription.ForLoadedType(DefaultCall.class).getDeclaredMethods();
+            MethodList<?> annotationProperties = new TypeDescription.ForLoadedType(DefaultCall.class).getDeclaredMethods();
             TARGET_TYPE = annotationProperties.filter(named("targetType")).getOnly();
             SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
         }

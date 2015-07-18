@@ -20,7 +20,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 /**
  * Represents a list of parameters of a method or a constructor.
  */
-public interface ParameterList extends FilterableList<ParameterDescription, ParameterList> {
+public interface ParameterList<T extends ParameterDescription> extends FilterableList<T, ParameterList<T>> {
 
     /**
      * Transforms this list of parameters into a list of the types of the represented parameters.
@@ -55,7 +55,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * An base implementation for a {@link ParameterList}.
      */
-    abstract class AbstractBase extends FilterableList.AbstractBase<ParameterDescription, ParameterList> implements ParameterList {
+    abstract class AbstractBase<S extends ParameterDescription> extends FilterableList.AbstractBase<S, ParameterList<S>> implements ParameterList<S> {
 
         @Override
         public boolean hasExplicitMetaData() {
@@ -91,8 +91,8 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         }
 
         @Override
-        protected ParameterList wrap(List<ParameterDescription> values) {
-            return new Explicit(values);
+        protected ParameterList<S> wrap(List<S> values) {
+            return new Explicit<S>(values);
         }
     }
 
@@ -100,7 +100,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
      * Represents a list of parameters for an executable, i.e. a {@link java.lang.reflect.Method} or
      * {@link java.lang.reflect.Constructor}.
      */
-    class ForLoadedExecutable extends AbstractBase {
+    class ForLoadedExecutable extends AbstractBase<ParameterDescription.InDeclaredForm> {
 
         /**
          * Represents the {@code java.lang.reflect.Executable}'s {@code getParameters} method.
@@ -142,7 +142,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * @param method The method to represent.
          * @return A list of parameters for this method.
          */
-        public static ParameterList of(Method method) {
+        public static ParameterList<ParameterDescription.InDeclaredForm> of(Method method) {
             return GET_PARAMETERS.isInvokable()
                     ? new ForLoadedExecutable((Object[]) GET_PARAMETERS.invoke(method))
                     : new OfLegacyVmMethod(method);
@@ -154,14 +154,14 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * @param constructor The constructor to represent.
          * @return A list of parameters for this constructor.
          */
-        public static ParameterList of(Constructor<?> constructor) {
+        public static ParameterList<ParameterDescription.InDeclaredForm> of(Constructor<?> constructor) {
             return GET_PARAMETERS.isInvokable()
                     ? new ForLoadedExecutable((Object[]) GET_PARAMETERS.invoke(constructor))
                     : new OfLegacyVmConstructor(constructor);
         }
 
         @Override
-        public ParameterDescription get(int index) {
+        public ParameterDescription.InDeclaredForm get(int index) {
             return new ParameterDescription.ForLoadedParameter(parameter[index], index);
         }
 
@@ -183,7 +183,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * Represents a list of method parameters on virtual machines where the {@code java.lang.reflect.Parameter}
          * type is not available.
          */
-        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase {
+        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase<ParameterDescription.InDeclaredForm> {
 
             /**
              * The represented method.
@@ -212,7 +212,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
 
             @Override
-            public ParameterDescription get(int index) {
+            public ParameterDescription.InDeclaredForm get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index], parameterAnnotation[index]);
             }
 
@@ -235,7 +235,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * Represents a list of constructor parameters on virtual machines where the {@code java.lang.reflect.Parameter}
          * type is not available.
          */
-        protected static class OfLegacyVmConstructor extends ParameterList.AbstractBase {
+        protected static class OfLegacyVmConstructor extends ParameterList.AbstractBase<ParameterDescription.InDeclaredForm> {
 
             /**
              * The represented constructor.
@@ -264,7 +264,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
             }
 
             @Override
-            public ParameterDescription get(int index) {
+            public ParameterDescription.InDeclaredForm get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index], parameterAnnotation[index]);
             }
 
@@ -287,24 +287,24 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * A list of explicitly provided parameter descriptions.
      */
-    class Explicit extends AbstractBase {
+    class Explicit<S extends ParameterDescription> extends AbstractBase<S> {
 
         /**
          * The list of parameter descriptions that are represented by this list.
          */
-        private final List<? extends ParameterDescription> parameterDescriptions;
+        private final List<? extends S> parameterDescriptions;
 
         /**
          * Creates a new list of explicit parameter descriptions.
          *
          * @param parameterDescriptions The list of parameter descriptions that are represented by this list.
          */
-        public Explicit(List<? extends ParameterDescription> parameterDescriptions) {
+        public Explicit(List<? extends S> parameterDescriptions) {
             this.parameterDescriptions = Collections.unmodifiableList(parameterDescriptions);
         }
 
         @Override
-        public ParameterDescription get(int index) {
+        public S get(int index) {
             return parameterDescriptions.get(index);
         }
 
@@ -316,12 +316,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
         /**
          * A parameter list representing parameters without meta data or annotations.
          */
-        public static class ForTypes extends ParameterList.AbstractBase {
+        public static class ForTypes extends ParameterList.AbstractBase<ParameterDescription.InDeclaredForm> {
 
             /**
              * The method description that declares the parameters.
              */
-            private final MethodDescription methodDescription;
+            private final MethodDescription.InDeclaredForm methodDescription;
 
             /**
              * A list of detached types representing the parameters.
@@ -334,13 +334,13 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
              * @param methodDescription The method description that declares the parameters.
              * @param typeDescriptions  A list of detached types representing the parameters.
              */
-            public ForTypes(MethodDescription methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
+            public ForTypes(MethodDescription.InDeclaredForm methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
                 this.methodDescription = methodDescription;
                 this.typeDescriptions = typeDescriptions;
             }
 
             @Override
-            public ParameterDescription get(int index) {
+            public ParameterDescription.InDeclaredForm get(int index) {
                 int offset = methodDescription.isStatic() ? 0 : 1;
                 for (GenericTypeDescription typeDescription : typeDescriptions.subList(0, index)) {
                     offset += typeDescription.getStackSize().getSize();
@@ -358,12 +358,12 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * A list of parameter descriptions for a list of detached tokens. For the returned parameter, each token is attached to its parameter representation.
      */
-    class ForTokens extends AbstractBase {
+    class ForTokens extends AbstractBase<ParameterDescription.InDeclaredForm> {
 
         /**
          * The method that is declaring the represented token.
          */
-        private final MethodDescription declaringMethod;
+        private final MethodDescription.InDeclaredForm declaringMethod;
 
         /**
          * The list of tokens to represent.
@@ -376,13 +376,13 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
          * @param declaringMethod The method that is declaring the represented token.
          * @param tokens          The list of tokens to represent.
          */
-        public ForTokens(MethodDescription declaringMethod, List<? extends ParameterDescription.Token> tokens) {
+        public ForTokens(MethodDescription.InDeclaredForm declaringMethod, List<? extends ParameterDescription.Token> tokens) {
             this.declaringMethod = declaringMethod;
             this.tokens = tokens;
         }
 
         @Override
-        public ParameterDescription get(int index) {
+        public ParameterDescription.InDeclaredForm get(int index) {
             int offset = declaringMethod.isStatic() ? 0 : 1;
             for (ParameterDescription.Token token : tokens.subList(0, index)) {
                 offset += token.getType().getStackSize().getSize();
@@ -399,7 +399,7 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * A list of parameter descriptions that yields {@link net.bytebuddy.description.method.ParameterDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase {
+    class TypeSubstituting extends AbstractBase<ParameterDescription> {
 
         /**
          * The method that is declaring the transformed parameters.
@@ -445,7 +445,8 @@ public interface ParameterList extends FilterableList<ParameterDescription, Para
     /**
      * An empty list of parameters.
      */
-    class Empty extends FilterableList.Empty<ParameterDescription, ParameterList> implements ParameterList {
+    class Empty extends FilterableList.Empty<ParameterDescription.InDeclaredForm, ParameterList<ParameterDescription.InDeclaredForm>>
+            implements ParameterList<ParameterDescription.InDeclaredForm> {
 
         @Override
         public boolean hasExplicitMetaData() {

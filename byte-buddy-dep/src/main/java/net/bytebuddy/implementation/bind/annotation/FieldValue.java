@@ -73,7 +73,7 @@ public @interface FieldValue {
          * Initializes the methods of the annotation that is read by this binder.
          */
         static {
-            MethodList methodList = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
+            MethodList<?> methodList = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
             DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
         }
@@ -262,7 +262,7 @@ public @interface FieldValue {
                 @Override
                 protected Resolution resolve(String fieldName, boolean staticMethod) {
                     for (GenericTypeDescription currentType : instrumentedType) {
-                        FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName));
+                        FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName));
                         if (!fieldList.isEmpty() && fieldList.getOnly().isVisibleTo(instrumentedType) && (!staticMethod || fieldList.getOnly().isStatic())) {
                             return new Resolution.Resolved(fieldList.getOnly());
                         }
@@ -336,7 +336,7 @@ public @interface FieldValue {
 
                 @Override
                 protected Resolution resolve(String fieldName, boolean staticMethod) {
-                    FieldList fieldList = typeDescription.getDeclaredFields().filter(named(fieldName));
+                    FieldList<?> fieldList = typeDescription.getDeclaredFields().filter(named(fieldName));
                     return fieldList.isEmpty() || !fieldList.getOnly().isVisibleTo(instrumentedType) || (staticMethod && !fieldList.getOnly().isStatic())
                             ? Resolution.Unresolved.INSTANCE
                             : new Resolution.Resolved(fieldList.getOnly());

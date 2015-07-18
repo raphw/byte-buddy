@@ -415,7 +415,7 @@ public interface TypeWriter<T> {
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
                             methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
-                    ParameterList parameterList = methodDescription.getParameters();
+                    ParameterList<?> parameterList = methodDescription.getParameters();
                     if (parameterList.hasExplicitMetaData()) {
                         for (ParameterDescription parameterDescription : parameterList) {
                             methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
@@ -768,7 +768,7 @@ public interface TypeWriter<T> {
         /**
          * A list of all instrumented methods.
          */
-        protected final MethodList instrumentedMethods;
+        protected final MethodList<?> instrumentedMethods;
 
         /**
          * Creates a new default type writer.
@@ -795,7 +795,7 @@ public interface TypeWriter<T> {
                           TypeAttributeAppender attributeAppender,
                           FieldPool fieldPool,
                           MethodPool methodPool,
-                          MethodList instrumentedMethods) {
+                          MethodList<?> instrumentedMethods) {
             this.instrumentedType = instrumentedType;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.typeInitializer = typeInitializer;

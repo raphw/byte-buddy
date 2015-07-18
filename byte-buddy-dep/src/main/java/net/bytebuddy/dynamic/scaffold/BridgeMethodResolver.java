@@ -105,8 +105,8 @@ public interface BridgeMethodResolver {
          * @param conflictHandler A conflict handler that is queried for handling ambiguous resolutions.
          * @return A corresponding bridge method resolver.
          */
-        public static BridgeMethodResolver of(MethodList methodList, ConflictHandler conflictHandler) {
-            MethodList bridgeMethods = methodList.filter(isBridge());
+        public static BridgeMethodResolver of(MethodList<?> methodList, ConflictHandler conflictHandler) {
+            MethodList<?> bridgeMethods = methodList.filter(isBridge());
             HashMap<MethodDescription.Token, BridgeTarget> bridges = new HashMap<MethodDescription.Token, BridgeTarget>(bridgeMethods.size());
             for (MethodDescription bridgeMethod : bridgeMethods) {
                 bridges.put(bridgeMethod.asToken(), findBridgeTargetFor(bridgeMethod, conflictHandler));
@@ -123,7 +123,7 @@ public interface BridgeMethodResolver {
          */
         private static BridgeTarget findBridgeTargetFor(MethodDescription bridgeMethod,
                                                         ConflictHandler conflictHandler) {
-            MethodList targetCandidates = bridgeMethod.getDeclaringType()
+            MethodList<?> targetCandidates = bridgeMethod.getDeclaringType()
                     .getDeclaredMethods()
                     .filter(not(isBridge()).and(isSpecializationOf(bridgeMethod)));
             switch (targetCandidates.size()) {

@@ -13,14 +13,14 @@ public class DeclaringMethodMatcher<T extends TypeDescription> extends ElementMa
     /**
      * The field matcher to apply to the declared fields of the matched type description.
      */
-    private final ElementMatcher<? super MethodList> methodMatcher;
+    private final ElementMatcher<? super MethodList<?>> methodMatcher;
 
     /**
      * Creates a new matcher for a type's declared methods.
      *
      * @param methodMatcher The method matcher to apply to the declared methods of the matched type description.
      */
-    public DeclaringMethodMatcher(ElementMatcher<? super MethodList> methodMatcher) {
+    public DeclaringMethodMatcher(ElementMatcher<? super MethodList<?>> methodMatcher) {
         this.methodMatcher = methodMatcher;
     }
 

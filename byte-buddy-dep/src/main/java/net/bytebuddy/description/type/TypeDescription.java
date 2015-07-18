@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -65,6 +66,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      * A list of interfaces that are implicitly implemented by any array type.
      */
     GenericTypeList ARRAY_INTERFACES = new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class);
+
+    @Override
+    FieldList<FieldDescription.InDeclaredForm> getDeclaredFields();
+
+    @Override
+    MethodList<MethodDescription.InDeclaredForm> getDeclaredMethods();
 
     /**
      * Checks if {@code value} is an instance of the type represented by this instance.
@@ -968,12 +975,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public FieldList getDeclaredFields() {
+        public FieldList<FieldDescription.InDeclaredForm> getDeclaredFields() {
             return new FieldList.ForLoadedField(type.getDeclaredFields());
         }
 
         @Override
-        public MethodList getDeclaredMethods() {
+        public MethodList<MethodDescription.InDeclaredForm> getDeclaredMethods() {
             return new MethodList.ForLoadedType(type);
         }
 
@@ -1191,12 +1198,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public FieldList getDeclaredFields() {
+        public FieldList<FieldDescription.InDeclaredForm> getDeclaredFields() {
             return new FieldList.Empty();
         }
 
         @Override
-        public MethodList getDeclaredMethods() {
+        public MethodList<MethodDescription.InDeclaredForm> getDeclaredMethods() {
             return new MethodList.Empty();
         }
 
@@ -1335,12 +1342,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public FieldList getDeclaredFields() {
+        public FieldList<FieldDescription.InDeclaredForm> getDeclaredFields() {
             return new FieldList.Empty();
         }
 
         @Override
-        public MethodList getDeclaredMethods() {
+        public MethodList<MethodDescription.InDeclaredForm> getDeclaredMethods() {
             return new MethodList.Empty();
         }
 
@@ -1434,12 +1441,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public FieldList getDeclaredFields() {
+        public FieldList<FieldDescription.InDeclaredForm> getDeclaredFields() {
             return new FieldList.Empty();
         }
 
         @Override
-        public MethodList getDeclaredMethods() {
+        public MethodList<MethodDescription.InDeclaredForm> getDeclaredMethods() {
             return new MethodList.Empty();
         }
 

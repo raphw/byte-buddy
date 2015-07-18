@@ -4,6 +4,7 @@ import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -47,6 +48,22 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      * @return A token representing this field.
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
+
+    InDeclaredForm asDeclared();
+
+    interface InDeclaredForm extends FieldDescription {
+
+        @Override
+        TypeDescription getDeclaringType();
+
+        abstract class AbstractBase extends AbstractFieldDescription implements InDeclaredForm {
+
+            @Override
+            public InDeclaredForm asDeclared() {
+                return this;
+            }
+        }
+    }
 
     /**
      * An abstract base implementation of a field description.
@@ -141,7 +158,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
     /**
      * An implementation of a field description for a loaded field.
      */
-    class ForLoadedField extends AbstractFieldDescription {
+    class ForLoadedField extends InDeclaredForm.AbstractBase {
 
         /**
          * The represented loaded field.
@@ -173,7 +190,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public GenericTypeDescription getDeclaringType() {
+        public TypeDescription getDeclaringType() {
             return new TypeDescription.ForLoadedType(field.getDeclaringClass());
         }
 
@@ -192,12 +209,12 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      * A latent field description describes a field that is not attached to a declaring
      * {@link TypeDescription}.
      */
-    class Latent extends AbstractFieldDescription {
+    class Latent extends InDeclaredForm.AbstractBase {
 
         /**
          * The type for which this field is defined.
          */
-        private final GenericTypeDescription declaringType;
+        private final TypeDescription declaringType;
 
         /**
          * The name of the field.
@@ -225,7 +242,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
          * @param declaringType The declaring type of the field.
          * @param token         A token representing the field's shape.
          */
-        public Latent(GenericTypeDescription declaringType, FieldDescription.Token token) {
+        public Latent(TypeDescription declaringType, FieldDescription.Token token) {
             this(declaringType,
                     token.getName(),
                     token.getModifiers(),
@@ -242,7 +259,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
          * @param modifiers           The type of the field.
          * @param declaredAnnotations The annotations of this field.
          */
-        public Latent(GenericTypeDescription declaringType,
+        public Latent(TypeDescription declaringType,
                       String fieldName,
                       int modifiers,
                       GenericTypeDescription fieldType,
@@ -270,7 +287,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public GenericTypeDescription getDeclaringType() {
+        public TypeDescription getDeclaringType() {
             return declaringType;
         }
 
@@ -338,6 +355,11 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         @Override
         public String getName() {
             return fieldDescription.getName();
+        }
+
+        @Override
+        public InDeclaredForm asDeclared() {
+            return fieldDescription.asDeclared();
         }
     }
 

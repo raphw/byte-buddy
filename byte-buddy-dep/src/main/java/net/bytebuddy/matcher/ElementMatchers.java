@@ -973,7 +973,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a method description by the number of its parameters.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(int length) {
-        return new MethodParameterMatcher<T>(new CollectionSizeMatcher<ParameterList>(length));
+        return new MethodParameterMatcher<T>(new CollectionSizeMatcher<ParameterList<?>>(length));
     }
 
     /**

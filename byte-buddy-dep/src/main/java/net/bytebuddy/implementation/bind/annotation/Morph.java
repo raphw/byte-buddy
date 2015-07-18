@@ -13,6 +13,7 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -101,7 +102,7 @@ public @interface Morph {
          * Looks up references for all annotation properties of the morph annotation.
          */
         static {
-            MethodList methodList = new TypeDescription.ForLoadedType(Morph.class).getDeclaredMethods();
+            MethodList<?> methodList = new TypeDescription.ForLoadedType(Morph.class).getDeclaredMethods();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
             DEFAULT_METHOD = methodList.filter(named("defaultMethod")).getOnly();
             DEFAULT_TARGET = methodList.filter(named("defaultTarget")).getOnly();
@@ -163,7 +164,7 @@ public @interface Morph {
             } else if (!typeDescription.isPublic()) {
                 throw new IllegalArgumentException(typeDescription + " is mot public");
             }
-            MethodList methodCandidates = typeDescription.getDeclaredMethods().filter(not(isStatic()));
+            MethodList<?> methodCandidates = typeDescription.getDeclaredMethods().filter(not(isStatic()));
             if (methodCandidates.size() != 1) {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
@@ -783,11 +784,11 @@ public @interface Morph {
             }
 
             @Override
-            public MethodList getInvokableMethods() {
+            public MethodList<?> getInvokableMethods() {
                 List<MethodDescription> invokableMethods = new ArrayList<MethodDescription>(2);
                 invokableMethods.addAll(typeDescription.getDeclaredMethods());
                 invokableMethods.add(forwardingMethod);
-                return new MethodList.Explicit(invokableMethods);
+                return new MethodList.Explicit<MethodDescription>(invokableMethods);
             }
 
             @Override

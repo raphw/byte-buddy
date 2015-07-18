@@ -86,7 +86,7 @@ public interface GenericTypeDescription extends NamedElement {
      *
      * @return A list of fields that are declared by this type.
      */
-    FieldList getDeclaredFields();
+    FieldList<?> getDeclaredFields();
 
     /**
      * <p>
@@ -101,7 +101,7 @@ public interface GenericTypeDescription extends NamedElement {
      *
      * @return A list of methods that are declared by this type.
      */
-    MethodList getDeclaredMethods();
+    MethodList<?> getDeclaredMethods();
 
     /**
      * <p>

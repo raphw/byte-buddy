@@ -3080,12 +3080,12 @@ public interface TypePool {
         /**
          * A list of field descriptions that are declared by this type.
          */
-        private final List<FieldDescription> declaredFields;
+        private final List<FieldDescription.InDeclaredForm> declaredFields;
 
         /**
          * A list of method descriptions that are declared by this type.
          */
-        private final List<MethodDescription> declaredMethods;
+        private final List<MethodDescription.InDeclaredForm> declaredMethods;
 
         /**
          * Creates a new lazy type description.
@@ -3134,11 +3134,11 @@ public interface TypePool {
             for (AnnotationToken annotationToken : annotationTokens) {
                 declaredAnnotations.add(annotationToken.toAnnotationDescription(typePool));
             }
-            declaredFields = new ArrayList<FieldDescription>(fieldTokens.size());
+            declaredFields = new ArrayList<FieldDescription.InDeclaredForm>(fieldTokens.size());
             for (FieldToken fieldToken : fieldTokens) {
                 declaredFields.add(fieldToken.toFieldDescription(this));
             }
-            declaredMethods = new ArrayList<MethodDescription>(methodTokens.size());
+            declaredMethods = new ArrayList<MethodDescription.InDeclaredForm>(methodTokens.size());
             for (MethodToken methodToken : methodTokens) {
                 declaredMethods.add(methodToken.toMethodDescription(this));
             }
@@ -3182,13 +3182,13 @@ public interface TypePool {
         }
 
         @Override
-        public FieldList getDeclaredFields() {
-            return new FieldList.Explicit(declaredFields);
+        public FieldList<FieldDescription.InDeclaredForm> getDeclaredFields() {
+            return new FieldList.Explicit<FieldDescription.InDeclaredForm>(declaredFields);
         }
 
         @Override
-        public MethodList getDeclaredMethods() {
-            return new MethodList.Explicit(declaredMethods);
+        public MethodList<MethodDescription.InDeclaredForm> getDeclaredMethods() {
+            return new MethodList.Explicit<MethodDescription.InDeclaredForm>(declaredMethods);
         }
 
         @Override
@@ -4775,7 +4775,7 @@ public interface TypePool {
              * @param lazyTypeDescription The lazy type description to attach this field description to.
              * @return A field description resembling this field token.
              */
-            private FieldDescription toFieldDescription(LazyTypeDescription lazyTypeDescription) {
+            private FieldDescription.InDeclaredForm toFieldDescription(LazyTypeDescription lazyTypeDescription) {
                 return lazyTypeDescription.new LazyFieldDescription(getName(),
                         getModifiers(),
                         getDescriptor(),
@@ -4990,7 +4990,7 @@ public interface TypePool {
              * @param lazyTypeDescription The lazy type description to attach this method description to.
              * @return A method description representing this field token.
              */
-            private MethodDescription toMethodDescription(LazyTypeDescription lazyTypeDescription) {
+            private MethodDescription.InDeclaredForm toMethodDescription(LazyTypeDescription lazyTypeDescription) {
                 return lazyTypeDescription.new LazyMethodDescription(getName(),
                         getModifiers(),
                         getDescriptor(),
@@ -5658,7 +5658,7 @@ public interface TypePool {
         /**
          * A lazy field description that only resolved type references when required.
          */
-        private class LazyFieldDescription extends FieldDescription.AbstractFieldDescription {
+        private class LazyFieldDescription extends FieldDescription.InDeclaredForm.AbstractBase {
 
             /**
              * The name of the field.
@@ -5738,7 +5738,7 @@ public interface TypePool {
         /**
          * A lazy representation of a method that resolves references to types only on demand.
          */
-        private class LazyMethodDescription extends MethodDescription.AbstractMethodDescription {
+        private class LazyMethodDescription extends MethodDescription.InDeclaredForm.AbstractBase {
 
             /**
              * The internal name of this method.
@@ -5882,7 +5882,7 @@ public interface TypePool {
             }
 
             @Override
-            public ParameterList getParameters() {
+            public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
                 return new LazyParameterList();
             }
 
@@ -5921,10 +5921,10 @@ public interface TypePool {
             /**
              * A lazy list of parameter descriptions for the enclosing method description.
              */
-            private class LazyParameterList extends ParameterList.AbstractBase {
+            private class LazyParameterList extends ParameterList.AbstractBase<ParameterDescription.InDeclaredForm> {
 
                 @Override
-                public ParameterDescription get(int index) {
+                public ParameterDescription.InDeclaredForm get(int index) {
                     return new LazyParameterDescription(index);
                 }
 
@@ -5952,7 +5952,7 @@ public interface TypePool {
             /**
              * A lazy description of a parameters of the enclosing method.
              */
-            private class LazyParameterDescription extends ParameterDescription.AbstractParameterDescription {
+            private class LazyParameterDescription extends ParameterDescription.InDeclaredForm.AbstractBase {
 
                 /**
                  * The index of the described parameter.
@@ -5969,7 +5969,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public MethodDescription getDeclaringMethod() {
+                public MethodDescription.InDeclaredForm getDeclaringMethod() {
                     return LazyMethodDescription.this;
                 }
 

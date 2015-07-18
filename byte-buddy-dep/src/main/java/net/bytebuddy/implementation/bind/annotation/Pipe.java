@@ -160,7 +160,7 @@ public @interface Pipe {
             } else if (!typeDescription.isPublic()) {
                 throw new IllegalArgumentException(typeDescription + " is mot public");
             }
-            MethodList methodCandidates = typeDescription.getDeclaredMethods().filter(not(isStatic()));
+            MethodList<?> methodCandidates = typeDescription.getDeclaredMethods().filter(not(isStatic()));
             if (methodCandidates.size() != 1) {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
@@ -440,7 +440,7 @@ public @interface Pipe {
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                         StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadOffset(0);
-                        FieldList fieldList = instrumentedType.getDeclaredFields();
+                        FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                         int index = 0;
                         for (FieldDescription fieldDescription : fieldList) {
@@ -562,7 +562,7 @@ public @interface Pipe {
                                       Context implementationContext,
                                       MethodDescription instrumentedMethod) {
                         StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadOffset(0);
-                        FieldList fieldList = instrumentedType.getDeclaredFields();
+                        FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                         int index = 0;
                         for (FieldDescription fieldDescription : fieldList) {
@@ -642,11 +642,11 @@ public @interface Pipe {
             }
 
             @Override
-            public MethodList getInvokableMethods() {
+            public MethodList<?> getInvokableMethods() {
                 List<MethodDescription> invokableMethods = new ArrayList<MethodDescription>(2);
                 invokableMethods.addAll(typeDescription.getDeclaredMethods());
                 invokableMethods.add(forwardingMethod);
-                return new MethodList.Explicit(invokableMethods);
+                return new MethodList.Explicit<MethodDescription>(invokableMethods);
             }
 
             @Override

@@ -1231,7 +1231,7 @@ public class MethodCall implements Implementation {
                 GenericTypeDescription currentType = instrumentedType;
                 FieldDescription fieldDescription = null;
                 do {
-                    FieldList fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
+                    FieldList<?> fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
                     if (fieldList.size() != 0) {
                         fieldDescription = fieldList.getOnly();
                     }

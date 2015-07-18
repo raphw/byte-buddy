@@ -68,7 +68,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      *
      * @return A list of this method's parameters.
      */
-    ParameterList getParameters();
+    ParameterList<?> getParameters();
 
     /**
      * Returns the exception types of the described method.
@@ -240,6 +240,25 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      * @return A token representing this method.
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
+
+    InDeclaredForm asDeclared();
+
+    interface InDeclaredForm extends MethodDescription {
+
+        @Override
+        TypeDescription getDeclaringType();
+
+        @Override
+        ParameterList<ParameterDescription.InDeclaredForm> getParameters();
+
+        abstract class AbstractBase extends MethodDescription.AbstractMethodDescription implements InDeclaredForm {
+
+            @Override
+            public InDeclaredForm asDeclared() {
+                return this;
+            }
+        }
+    }
 
     /**
      * An abstract base implementation of a method description.
@@ -649,7 +668,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     /**
      * An implementation of a method description for a loaded constructor.
      */
-    class ForLoadedConstructor extends AbstractMethodDescription {
+    class ForLoadedConstructor extends InDeclaredForm.AbstractBase {
 
         /**
          * The loaded constructor that is represented by this instance.
@@ -666,7 +685,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeDescription getDeclaringType() {
+        public TypeDescription getDeclaringType() {
             return new TypeDescription.ForLoadedType(constructor.getDeclaringClass());
         }
 
@@ -676,7 +695,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public ParameterList getParameters() {
+        public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
             return ParameterList.ForLoadedExecutable.of(constructor);
         }
 
@@ -749,7 +768,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     /**
      * An implementation of a method description for a loaded method.
      */
-    class ForLoadedMethod extends AbstractMethodDescription {
+    class ForLoadedMethod extends InDeclaredForm.AbstractBase {
 
         /**
          * The loaded method that is represented by this instance.
@@ -766,7 +785,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeDescription getDeclaringType() {
+        public TypeDescription getDeclaringType() {
             return new TypeDescription.ForLoadedType(method.getDeclaringClass());
         }
 
@@ -776,7 +795,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public ParameterList getParameters() {
+        public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
             return ParameterList.ForLoadedExecutable.of(method);
         }
 
@@ -867,12 +886,12 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      * A latent method description describes a method that is not attached to a declaring
      * {@link TypeDescription}.
      */
-    class Latent extends AbstractMethodDescription {
+    class Latent extends InDeclaredForm.AbstractBase {
 
         /**
          * The type that is declaring this method.
          */
-        private final GenericTypeDescription declaringType;
+        private final TypeDescription declaringType;
 
         /**
          * The internal name of this method.
@@ -920,7 +939,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          * @param declaringType The declaring type of the method.
          * @param token         A token representing the method's shape.
          */
-        public Latent(GenericTypeDescription declaringType, Token token) {
+        public Latent(TypeDescription declaringType, Token token) {
             this(declaringType,
                     token.getInternalName(),
                     token.getModifiers(),
@@ -945,7 +964,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
          * @param declaredAnnotations The annotations of this method.
          * @param defaultValue        The default value of this method or {@code null} if no default annotation value is defined.
          */
-        public Latent(GenericTypeDescription declaringType,
+        public Latent(TypeDescription declaringType,
                       String internalName,
                       int modifiers,
                       List<? extends GenericTypeDescription> typeVariables,
@@ -976,7 +995,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public ParameterList getParameters() {
+        public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
             return new ParameterList.ForTokens(this, parameterTokens);
         }
 
@@ -996,7 +1015,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public GenericTypeDescription getDeclaringType() {
+        public TypeDescription getDeclaringType() {
             return declaringType;
         }
 
@@ -1013,19 +1032,19 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         /**
          * A method description that representedBy the type initializer.
          */
-        public static class TypeInitializer extends MethodDescription.AbstractMethodDescription {
+        public static class TypeInitializer extends MethodDescription.InDeclaredForm.AbstractBase {
 
             /**
              * The type for which the type initializer should be represented.
              */
-            private final GenericTypeDescription typeDescription;
+            private final TypeDescription typeDescription;
 
             /**
              * Creates a new method description representing the type initializer.
              *
              * @param typeDescription The type for which the type initializer should be represented.
              */
-            public TypeInitializer(GenericTypeDescription typeDescription) {
+            public TypeInitializer(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
             }
 
@@ -1035,7 +1054,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
 
             @Override
-            public ParameterList getParameters() {
+            public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
                 return new ParameterList.Empty();
             }
 
@@ -1060,7 +1079,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
 
             @Override
-            public GenericTypeDescription getDeclaringType() {
+            public TypeDescription getDeclaringType() {
                 return typeDescription;
             }
 
@@ -1122,7 +1141,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public ParameterList getParameters() {
+        public ParameterList<?> getParameters() {
             return new ParameterList.TypeSubstituting(this, methodDescription.getParameters(), new VariableRetainingDelegator());
         }
 
@@ -1154,6 +1173,11 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         public String getInternalName() {
             return methodDescription.getInternalName();
+        }
+
+        @Override
+        public InDeclaredForm asDeclared() {
+            return methodDescription.asDeclared();
         }
 
         /**

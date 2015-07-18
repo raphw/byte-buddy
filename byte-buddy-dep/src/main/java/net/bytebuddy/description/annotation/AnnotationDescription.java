@@ -1807,7 +1807,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional, given property.
          */
         public Builder define(String property, AnnotationValue<?, ?> value) {
-            MethodList methodDescriptions = annotationType.getDeclaredMethods().filter(named(nonNull(property)));
+            MethodList<?> methodDescriptions = annotationType.getDeclaredMethods().filter(named(nonNull(property)));
             if (methodDescriptions.isEmpty()) {
                 throw new IllegalArgumentException(annotationType + " does not define a property named " + property);
             } else if (!methodDescriptions.getOnly().getReturnType().asRawType().isAnnotationValue(value.resolve())) {

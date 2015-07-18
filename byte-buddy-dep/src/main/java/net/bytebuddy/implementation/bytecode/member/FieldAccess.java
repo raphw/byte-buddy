@@ -63,7 +63,7 @@ public enum FieldAccess {
      * @return A stack manipulation for reading the enumeration.
      */
     public static StackManipulation forEnumeration(EnumerationDescription enumerationDescription) {
-        FieldList fieldList = enumerationDescription.getEnumerationType().getDeclaredFields().filter(named(enumerationDescription.getValue()));
+        FieldList<?> fieldList = enumerationDescription.getEnumerationType().getDeclaredFields().filter(named(enumerationDescription.getValue()));
         return fieldList.size() != 1 || !fieldList.getOnly().isStatic() || !fieldList.getOnly().isPublic() || !fieldList.getOnly().isEnum()
                 ? StackManipulation.Illegal.INSTANCE
                 : STATIC.new AccessDispatcher(fieldList.getOnly()).getter();

@@ -105,7 +105,7 @@ public @interface FieldProxy {
          * Fetches a reference to all annotation properties.
          */
         static {
-            MethodList methodList = new TypeDescription.ForLoadedType(FieldProxy.class).getDeclaredMethods();
+            MethodList<?> methodList = new TypeDescription.ForLoadedType(FieldProxy.class).getDeclaredMethods();
             DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
@@ -144,7 +144,7 @@ public @interface FieldProxy {
          *                   is permitted.
          * @param setterType The type which should be uses for setter proxies. The type must
          *                   represent an interface which defines a single method which returns {@code void}
-         *                   and takes a signle {@link java.lang.Object}-typed argument. The use of generics
+         *                   and takes a single {@link java.lang.Object}-typed argument. The use of generics
          *                   is permitted.
          * @return A binder for the {@link FieldProxy}
          * annotation.
@@ -164,7 +164,7 @@ public @interface FieldProxy {
          *                   is permitted.
          * @param setterType The type which should be uses for setter proxies. The type must
          *                   represent an interface which defines a single method which returns {@code void}
-         *                   and takes a signle {@link java.lang.Object}-typed argument. The use of generics
+         *                   and takes a single {@link java.lang.Object}-typed argument. The use of generics
          *                   is permitted.
          * @return A binder for the {@link FieldProxy}
          * annotation.
@@ -200,7 +200,7 @@ public @interface FieldProxy {
             } else if (!typeDescription.isPublic()) {
                 throw new IllegalArgumentException(typeDescription + " is mot public");
             }
-            MethodList methodCandidates = typeDescription.getDeclaredMethods().filter(not(isStatic()));
+            MethodList<?> methodCandidates = typeDescription.getDeclaredMethods().filter(not(isStatic()));
             if (methodCandidates.size() != 1) {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
@@ -957,7 +957,7 @@ public @interface FieldProxy {
                     @Override
                     protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
                         for (GenericTypeDescription currentType : instrumentedType) {
-                            FieldList fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                            FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
                             if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                                 return new Resolution.Resolved(fieldList.getOnly());
                             }
@@ -1012,7 +1012,7 @@ public @interface FieldProxy {
 
                     @Override
                     protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
-                        FieldList fieldList = typeDescription.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                        FieldList<?> fieldList = typeDescription.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
                         return !fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())
                                 ? new Resolution.Resolved(fieldList.getOnly())
                                 : new Resolution.Unresolved();
@@ -1043,7 +1043,7 @@ public @interface FieldProxy {
             }
 
             /**
-             * Represents a field locator for a field whos name could be located.
+             * Represents a field locator for a field whose name could be located.
              */
             protected static class Legal extends FieldLocator {
 
@@ -1066,7 +1066,7 @@ public @interface FieldProxy {
                  * for getter and setter methods.
                  *
                  * @param methodDescription The method to consider for such a field name identification.
-                 * @return A correspoding field name locator.
+                 * @return A corresponding field name locator.
                  */
                 protected static FieldLocator consider(MethodDescription methodDescription) {
                     String fieldName;

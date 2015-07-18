@@ -145,7 +145,7 @@ public @interface Super {
          * Extracts method references to the annotation methods.
          */
         static {
-            MethodList annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
+            MethodList<?> annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
             IGNORE_FINALIZER = annotationProperties.filter(named("ignoreFinalizer")).getOnly();
             SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
             CONSTRUCTOR_PARAMETERS = annotationProperties.filter(named("constructorParameters")).getOnly();
@@ -193,7 +193,7 @@ public @interface Super {
          * Extracts method references of the super annotation.
          */
         static {
-            MethodList annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
+            MethodList<?> annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
             STRATEGY = annotationProperties.filter(returns(Instantiation.class)).getOnly();
         }
 
