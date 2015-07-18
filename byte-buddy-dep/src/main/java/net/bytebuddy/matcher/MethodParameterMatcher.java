@@ -1,6 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 
 /**
@@ -20,7 +21,7 @@ public class MethodParameterMatcher<T extends MethodDescription> extends Element
      *
      * @param parameterMatcher The matcher to apply to the parameters.
      */
-    public MethodParameterMatcher(ElementMatcher<? super ParameterList<?>> parameterMatcher) {
+    public MethodParameterMatcher(ElementMatcher<? super ParameterList<? extends ParameterDescription>> parameterMatcher) {
         this.parameterMatcher = parameterMatcher;
     }
 

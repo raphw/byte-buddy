@@ -996,7 +996,8 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches a method description's parameters against the given constraint.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> hasParameters(ElementMatcher<? super Iterable<? extends ParameterDescription>> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> hasParameters(
+            ElementMatcher<? super Iterable<? extends ParameterDescription>> matcher) {
         return new MethodParameterMatcher<T>(nonNull(matcher));
     }
 
@@ -1448,7 +1449,7 @@ public final class ElementMatchers {
      * @param <T>          The type of the matched object.
      * @return A matcher that matches any type where another matcher is matched positively on at least on declared field.
      */
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresField(ElementMatcher<? super FieldDescription> fieldMatcher) {
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> declaresField(ElementMatcher<? super FieldDescription> fieldMatcher) {
         return new DeclaringFieldMatcher<T>(new CollectionItemMatcher<FieldDescription>(nonNull(fieldMatcher)));
     }
 
@@ -1459,7 +1460,7 @@ public final class ElementMatchers {
      * @param <T>           The type of the matched object.
      * @return A matcher that matches any type where another matcher is matched positively on at least on declared methods.
      */
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
         return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
     }
 

@@ -1,14 +1,17 @@
 package net.bytebuddy.matcher;
 
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
  * An element matcher that checks if a type description declares methods of a given property.
  *
  * @param <T> The exact type of the annotated element that is matched.
  */
-public class DeclaringMethodMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class DeclaringMethodMatcher<T extends GenericTypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The field matcher to apply to the declared fields of the matched type description.
@@ -20,7 +23,7 @@ public class DeclaringMethodMatcher<T extends TypeDescription> extends ElementMa
      *
      * @param methodMatcher The method matcher to apply to the declared methods of the matched type description.
      */
-    public DeclaringMethodMatcher(ElementMatcher<? super MethodList<?>> methodMatcher) {
+    public DeclaringMethodMatcher(ElementMatcher<? super MethodList<? extends MethodDescription>> methodMatcher) {
         this.methodMatcher = methodMatcher;
     }
 
