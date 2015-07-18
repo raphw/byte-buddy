@@ -242,6 +242,16 @@ public class TypeWriterDefaultTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.FramePreservingRemapper.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.FramePreservingRemapper.FramePreservingMethodRemapper.class)
+                .create(new ObjectPropertyAssertion.Creator<String>() {
+                    @Override
+                    public String create() {
+                        return "()V";
+                    }
+                }).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.class).apply();

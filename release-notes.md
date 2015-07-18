@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. July 2015: version 0.6.13
+
+- Fixed resolution of field accessors to not attempt reading of non-static fields from static methods.
+- Fixed renaming strategy for type redefinitions to work arround a constraint of ASM where stack map frames required to be expanded even though this was not strictly necessary.
+
 ### 10. July 2015: version 0.6.12
 
 - Added API for altering a method's modifiers when intercepting it.
@@ -17,16 +22,14 @@ Byte Buddy release notes
 - Corrected the resolution of a type's visibility to another type to determine if a method can be legally overridden.
 - Previous version 0.6.9 contained another bug when attempting to fix this problem.
 
-### 1. June 2015: version 0.6.8
-
 Corrected incorrect deployment of version 0.6.7 which does not use a dependency reduced POM for the *byte-buddy* module.
 
-### 1. June 2015: version 0.6.7
+### 1. June 2015: version 0.6.8 (and 0.6.7)
 
-- Upgraded ASM dependency to 0.5.4.
+- Upgraded ASM dependency to 5.0.4.
 - Fixed OSGi headers in all relevant artifacts.
 
-*Warning*: The *byte-buddy* artifact is accidentally deployed with a defect POM file which does not exclude the shaded resources.
+*Warning*: The *byte-buddy* artifact of version 0.6.7 is accidentally deployed with a defect POM file which does not exclude the shaded resources.
 
 ### 28. Mai 2015: version 0.6.6
 
