@@ -10,13 +10,15 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
-import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
+import net.bytebuddy.test.utility.*;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -31,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static junit.framework.TestCase.assertEquals;
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -350,6 +353,38 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    @Ignore("Fails because of missing bridge method")
+    public void testBridgeMethodCreation() throws Exception {
+        Class<?> dynamicType = create(BridgeRetention.Inner.class)
+                .method(named(FOO)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertEquals(String.class, dynamicType.getDeclaredMethod(FOO).getReturnType());
+        assertThat(dynamicType.getDeclaredMethod(FOO).getGenericReturnType(), is((Type) String.class));
+        SuperCall<String> superCall = (SuperCall<String>) dynamicType.newInstance();
+        assertThat(superCall.foo(FOO), is(FOO));
+        superCall.assertOnlyCall(FOO);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @Ignore("Does not invoke correct method - but JVM fixes resolution")
+    public void testBridgeMethodSuperTypeInvocation() throws Exception {
+        Class<?> dynamicType = create(SuperCall.Inner.class)
+                .method(named(FOO)).intercept(SuperMethodCall.INSTANCE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertEquals(String.class, dynamicType.getDeclaredMethod(FOO, String.class).getReturnType());
+        assertThat(dynamicType.getDeclaredMethod(FOO, String.class).getGenericReturnType(), is((Type) String.class));
+        SuperCall<String> superCall = (SuperCall<String>) dynamicType.newInstance();
+        assertThat(superCall.foo(FOO), is(FOO));
+        superCall.assertOnlyCall(FOO);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(SubclassDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
@@ -415,6 +450,29 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
         private void foo() {
             /* empty */
+        }
+    }
+
+    public static class BridgeRetention<T> {
+
+        public T foo() {
+            return null;
+        }
+
+        public static class Inner extends BridgeRetention<String> {
+        /* empty */
+        }
+    }
+
+    public static class SuperCall<T> extends CallTraceable {
+
+        public T foo(T value) {
+            register(FOO);
+            return value;
+        }
+
+        public static class Inner extends SuperCall<String> {
+        /* empty */
         }
     }
 }
