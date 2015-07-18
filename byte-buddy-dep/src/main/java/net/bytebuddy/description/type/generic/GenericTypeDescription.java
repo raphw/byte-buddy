@@ -434,7 +434,6 @@ public interface GenericTypeDescription extends NamedElement {
                 return "GenericTypeDescription.Visitor.NoOp." + name();
             }
         }
-
         /**
          * A visitor for erasing type variables on the most fine-grained level. In practice, this means:
          * <ul>
@@ -447,17 +446,14 @@ public interface GenericTypeDescription extends NamedElement {
          * </ul>
          */
         enum TypeVariableErasing implements Visitor<GenericTypeDescription> {
-
             /**
              * The singleton instance.
              */
             INSTANCE;
-
             @Override
             public GenericTypeDescription onGenericArray(GenericTypeDescription genericArray) {
                 return ForGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
             }
-
             @Override
             public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
                 // Wildcards which are used within parameterized types are taken care of by the calling method.
@@ -466,19 +462,12 @@ public interface GenericTypeDescription extends NamedElement {
                         ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcardType.getUpperBounds().getOnly().accept(this))
                         : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
             }
-
             @Override
             public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
                 List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
                 for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
-                    if (parameter.getSort().isTypeVariable()) {
+                    if (parameter.accept(PartialErasureReviser.INSTANCE)) {
                         return parameterizedType.asRawType();
-                    } else if (parameter.getSort().isWildcard()) {
-                        GenericTypeList bounds = parameter.getLowerBounds();
-                        bounds = bounds.isEmpty() ? parameter.getUpperBounds() : bounds;
-                        if (bounds.getOnly().getSort().isTypeVariable()) {
-                            return parameterizedType.asRawType();
-                        }
                     }
                     parameters.add(parameter.accept(this));
                 }
@@ -489,20 +478,55 @@ public interface GenericTypeDescription extends NamedElement {
                                 ? null
                                 : ownerType.accept(this));
             }
-
             @Override
             public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
                 return typeVariable.asRawType();
             }
-
             @Override
             public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
                 return new ForParameterizedType.Raw(typeDescription);
             }
-
             @Override
             public String toString() {
                 return "GenericTypeDescription.Visitor.TypeVariableErasing." + name();
+            }
+            /**
+             * A visitor for checking if a type can be erased partially when defined as a parameter of a parameterized type.
+             * If this condition is true, a parameterized type must be erased instead of erasing the parameterized type's
+             * parameters.
+             */
+            protected enum PartialErasureReviser implements Visitor<Boolean> {
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+                @Override
+                public Boolean onGenericArray(GenericTypeDescription genericArray) {
+                    return genericArray.getComponentType().accept(this);
+                }
+                @Override
+                public Boolean onWildcardType(GenericTypeDescription wildcardType) {
+                    GenericTypeList lowerBounds = wildcardType.getLowerBounds();
+                    return lowerBounds.isEmpty()
+                            ? wildcardType.getUpperBounds().getOnly().accept(this)
+                            : lowerBounds.getOnly().accept(this);
+                }
+                @Override
+                public Boolean onParameterizedType(GenericTypeDescription parameterizedType) {
+                    return false;
+                }
+                @Override
+                public Boolean onTypeVariable(GenericTypeDescription typeVariable) {
+                    return true;
+                }
+                @Override
+                public Boolean onNonGenericType(TypeDescription typeDescription) {
+                    return false;
+                }
+                @Override
+                public String toString() {
+                    return "GenericTypeDescription.Visitor.TypeVariableErasing.PartialErasureReviser." + name();
+                }
             }
         }
 
