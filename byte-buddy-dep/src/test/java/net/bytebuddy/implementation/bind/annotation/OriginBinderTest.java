@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -27,6 +28,9 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Mock
     private TypeDescription targetType;
 
+    @Mock
+    private MethodDescription.InDeclaredForm methodDescription;
+
     public OriginBinderTest() {
         super(Origin.class);
     }
@@ -37,6 +41,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         super.setUp();
         when(target.getType()).thenReturn(targetType);
         when(targetType.asRawType()).thenReturn(targetType);
+        when(source.asDeclared()).thenReturn(methodDescription);
     }
 
     @Override
@@ -88,7 +93,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(target.getType()).thenReturn(targetType);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.asRawType()).thenReturn(typeDescription);
-        when(source.getDeclaringType()).thenReturn(typeDescription);
+        when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -99,7 +104,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testMethodTypeBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
         when(target.getType()).thenReturn(targetType);
-        when(source.getDescriptor()).thenReturn(FOO);
+        when(methodDescription.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));

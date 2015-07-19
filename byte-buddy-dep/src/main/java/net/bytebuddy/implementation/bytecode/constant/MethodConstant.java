@@ -28,7 +28,7 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * A description of the method to be loaded onto the stack.
      */
-    protected final MethodDescription methodDescription;
+    protected final MethodDescription.InDeclaredForm methodDescription;
 
     /**
      * Creates a new method constant.
@@ -36,7 +36,7 @@ public abstract class MethodConstant implements StackManipulation {
      * @param methodDescription The method description for which the {@link java.lang.reflect.Method} representation
      *                          should be created.
      */
-    protected MethodConstant(MethodDescription methodDescription) {
+    protected MethodConstant(MethodDescription.InDeclaredForm methodDescription) {
         this.methodDescription = methodDescription;
     }
 
@@ -46,7 +46,7 @@ public abstract class MethodConstant implements StackManipulation {
      * @param methodDescription The method to be loaded onto the stack.
      * @return A stack manipulation that assigns a method constant for the given method description.
      */
-    public static CanCache forMethod(MethodDescription methodDescription) {
+    public static CanCache forMethod(MethodDescription.InDeclaredForm methodDescription) {
         if (methodDescription.isTypeInitializer()) {
             return CanCacheIllegal.INSTANCE;
         } else if (methodDescription.isConstructor()) {
@@ -204,7 +204,7 @@ public abstract class MethodConstant implements StackManipulation {
          *
          * @param methodDescription The method to be loaded onto the stack.
          */
-        protected ForMethod(MethodDescription methodDescription) {
+        protected ForMethod(MethodDescription.InDeclaredForm methodDescription) {
             super(methodDescription);
         }
 
@@ -254,7 +254,7 @@ public abstract class MethodConstant implements StackManipulation {
          *
          * @param methodDescription The constructor to be loaded onto the stack.
          */
-        protected ForConstructor(MethodDescription methodDescription) {
+        protected ForConstructor(MethodDescription.InDeclaredForm methodDescription) {
             super(methodDescription);
         }
 

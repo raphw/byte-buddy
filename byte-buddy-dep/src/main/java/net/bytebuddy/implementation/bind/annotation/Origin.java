@@ -80,16 +80,16 @@ public @interface Origin {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(implementationTarget.getOriginType()));
             } else if (parameterType.represents(Method.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation.loadSilent().cache()
-                        ? MethodConstant.forMethod(source).cached()
-                        : MethodConstant.forMethod(source));
+                        ? MethodConstant.forMethod(source.asDeclared()).cached()
+                        : MethodConstant.forMethod(source.asDeclared()));
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.toString()));
             } else if (parameterType.represents(int.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(IntegerConstant.forValue(source.getModifiers()));
             } else if (parameterType.equals(JavaType.METHOD_HANDLE.getTypeStub())) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodHandleConstant.of(source));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodHandleConstant.of(source.asDeclared()));
             } else if (parameterType.equals(JavaType.METHOD_TYPE.getTypeStub())) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodTypeConstant.of(source));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodTypeConstant.of(source.asDeclared()));
             } else {
                 throw new IllegalStateException("The " + target + " method's " + target.getIndex() +
                         " parameter is annotated with a Origin annotation with an argument not representing a Class," +

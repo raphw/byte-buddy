@@ -42,7 +42,7 @@ public class MethodHandleConstant implements StackManipulation {
      * @param methodDescription The method for which a method handle is to be put onto the operand stack.
      * @return A stack manipulation that representedBy the loading of the handle.
      */
-    public static StackManipulation of(MethodDescription methodDescription) {
+    public static StackManipulation of(MethodDescription.InDeclaredForm methodDescription) {
         return methodDescription.isTypeInitializer()
                 ? Illegal.INSTANCE
                 : new MethodHandleConstant(new Handle(tagFor(methodDescription),

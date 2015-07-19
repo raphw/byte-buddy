@@ -170,8 +170,8 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         .filter((named(fieldName))).getOnly()).getter(),
                 MethodVariableAccess.forType(TypeDescription.OBJECT).loadOffset(0),
                 cacheMethods
-                        ? MethodConstant.forMethod(instrumentedMethod).cached()
-                        : MethodConstant.forMethod(instrumentedMethod),
+                        ? MethodConstant.forMethod(instrumentedMethod.asDeclared()).cached()
+                        : MethodConstant.forMethod(instrumentedMethod.asDeclared()),
                 ArrayFactory.forType(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().getOnly()),
                 assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType().asRawType(), Assigner.DYNAMICALLY_TYPED),
