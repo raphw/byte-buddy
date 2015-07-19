@@ -143,11 +143,13 @@ public class AnnotationAppenderDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testSkipValues() throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(false);
         MethodDescription methodDescription = mock(MethodDescription.class);
         TypeDescription annotationType = mock(TypeDescription.class);
-        when(annotationType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(methodDescription)));
+        when(annotationType.getDeclaredMethods())
+                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(Collections.singletonList(methodDescription)));
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
         when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
         AnnotationVisitor annotationVisitor = mock(AnnotationVisitor.class);

@@ -13,14 +13,15 @@ import static org.mockito.Mockito.when;
 public class ParameterLengthResolverTest extends AbstractAmbiguityResolverTest {
 
     @Mock
-    private ParameterList leftList, rightList;
+    private ParameterList<?> leftList, rightList;
 
     @Override
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();
-        when(leftMethod.getParameters()).thenReturn(leftList);
-        when(rightMethod.getParameters()).thenReturn(rightList);
+        when(leftMethod.getParameters()).thenReturn((ParameterList) leftList);
+        when(rightMethod.getParameters()).thenReturn((ParameterList) rightList);
     }
 
     @Test

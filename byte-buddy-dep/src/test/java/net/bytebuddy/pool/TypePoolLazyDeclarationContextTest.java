@@ -84,6 +84,7 @@ public class TypePoolLazyDeclarationContextTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testDeclaredInMethodGetMethodIsNull() throws Exception {
         MethodDescription methodDescription = mock(MethodDescription.class);
         when(methodDescription.getSourceCodeName()).thenReturn(BAR);
@@ -91,7 +92,8 @@ public class TypePoolLazyDeclarationContextTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         TypePool typePool = mock(TypePool.class);
         when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(methodDescription)));
+        when(typeDescription.getDeclaredMethods())
+                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(Collections.singletonList(methodDescription)));
         assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
                 .getEnclosingMethod(typePool), is(methodDescription));
     }

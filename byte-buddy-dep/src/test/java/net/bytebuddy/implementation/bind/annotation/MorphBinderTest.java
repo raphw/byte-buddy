@@ -153,6 +153,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Morph.Binder.class).apply();
         ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.class).apply();
@@ -169,11 +170,11 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
             @Override
             public void apply(Implementation.Target mock) {
                 TypeDescription typeDescription = mock(TypeDescription.class);
-                FieldList fieldList = mock(FieldList.class);
-                FieldList filteredFieldList = mock(FieldList.class);
-                when(fieldList.filter(named(Morph.Binder.RedirectionProxy.FIELD_NAME))).thenReturn(filteredFieldList);
+                FieldList<?> fieldList = mock(FieldList.class);
+                FieldList<?> filteredFieldList = mock(FieldList.class);
+                when(fieldList.filter(named(Morph.Binder.RedirectionProxy.FIELD_NAME))).thenReturn((FieldList) filteredFieldList);
                 when(filteredFieldList.getOnly()).thenReturn(mock(FieldDescription.class));
-                when(typeDescription.getDeclaredFields()).thenReturn(fieldList);
+                when(typeDescription.getDeclaredFields()).thenReturn((FieldList) fieldList);
                 when(mock.getTypeDescription()).thenReturn(typeDescription);
             }
         }).apply();

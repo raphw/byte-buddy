@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
@@ -12,13 +13,13 @@ import static org.mockito.Mockito.*;
 public class DeclaringFieldMatcherTest extends AbstractElementMatcherTest<DeclaringFieldMatcher<?>> {
 
     @Mock
-    private ElementMatcher<? super FieldList> fieldMatcher;
+    private ElementMatcher<? super FieldList<?>> fieldMatcher;
 
     @Mock
     private TypeDescription typeDescription;
 
     @Mock
-    private FieldList fieldList;
+    private FieldList<FieldDescription.InDeclaredForm> fieldList;
 
     @SuppressWarnings("unchecked")
     public DeclaringFieldMatcherTest() {

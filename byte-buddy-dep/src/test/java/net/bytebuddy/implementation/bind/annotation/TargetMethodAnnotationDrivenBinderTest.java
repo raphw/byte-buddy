@@ -117,6 +117,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     }
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(assignmentBinding.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
@@ -138,8 +139,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(firstParameter.getIndex()).thenReturn(0);
         when(secondParameter.getDeclaringMethod()).thenReturn(targetMethod);
         when(secondParameter.getIndex()).thenReturn(1);
-        ParameterList parameterList = new ParameterList.Explicit(Arrays.asList(firstParameter, secondParameter));
-        when(targetMethod.getParameters()).thenReturn(parameterList);
+        when(targetMethod.getParameters())
+                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(Arrays.asList(firstParameter, secondParameter)));
         when(firstPseudoAnnotation.getAnnotationType())
                 .thenReturn(new TypeDescription.ForLoadedType(FirstPseudoAnnotation.class));
         when(firstPseudoAnnotation.prepare(FirstPseudoAnnotation.class)).thenReturn(firstPseudoAnnotation);

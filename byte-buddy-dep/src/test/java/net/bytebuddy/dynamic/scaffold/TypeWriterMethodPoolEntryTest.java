@@ -70,6 +70,7 @@ public class TypeWriterMethodPoolEntryTest {
     private ModifierResolver modifierResolver;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(BAR);
@@ -81,7 +82,7 @@ public class TypeWriterMethodPoolEntryTest {
         when(rawExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ});
         when(classVisitor.visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ})).thenReturn(methodVisitor);
         when(methodDescription.getParameters())
-                .thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));
+                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(Collections.singletonList(parameterDescription)));
         when(parameterDescription.getName()).thenReturn(FOO);
         when(parameterDescription.getModifiers()).thenReturn(MODIFIERS);
         when(methodVisitor.visitAnnotationDefault()).thenReturn(annotationVisitor);

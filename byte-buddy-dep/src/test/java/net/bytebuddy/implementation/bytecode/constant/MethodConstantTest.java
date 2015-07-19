@@ -41,7 +41,7 @@ public class MethodConstantTest {
     private TypeDescription declaringType, parameterType, fieldType;
 
     @Mock
-    private ParameterList parameterList;
+    private ParameterList<?> parameterList;
 
     @Mock
     private GenericTypeList typeList;
@@ -59,11 +59,12 @@ public class MethodConstantTest {
     private FieldDescription fieldDescription;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(declaringType.asRawType()).thenReturn(declaringType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
-        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) parameterList);
         when(parameterList.asTypeList()).thenReturn(typeList);
         when(declaringType.getDescriptor()).thenReturn(BAR);
         when(typeList.asRawTypes()).thenReturn(rawTypeList);

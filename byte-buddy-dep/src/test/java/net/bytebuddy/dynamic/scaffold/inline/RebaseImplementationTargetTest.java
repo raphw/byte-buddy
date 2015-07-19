@@ -48,6 +48,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAR);
         when(targetRebaseMethod.getDeclaringType()).thenReturn(instrumentedType);
+        when(targetRebaseMethod.asDeclared()).thenReturn(targetRebaseMethod);
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(methodRebaseResolver.resolve(targetRebaseMethod)).thenReturn(rebasedResolution);
         when(rebasedResolution.isRebased()).thenReturn(true);
@@ -71,6 +72,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(nonRebasedMethod.getReturnType()).thenReturn(returnType);
         when(nonRebasedMethod.getInternalName()).thenReturn(BAZ);
         when(nonRebasedMethod.getDescriptor()).thenReturn(FOOBAR);
+        when(nonRebasedMethod.asDeclared()).thenReturn(nonRebasedMethod);
         when(methodRebaseResolver.resolve(nonRebasedMethod)).thenReturn(nonRebasedResolution);
         when(nonRebasedResolution.isRebased()).thenReturn(false);
         when(nonRebasedResolution.getResolvedMethod()).thenReturn(nonRebasedMethod);

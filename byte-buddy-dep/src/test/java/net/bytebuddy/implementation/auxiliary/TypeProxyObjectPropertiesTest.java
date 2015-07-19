@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 public class TypeProxyObjectPropertiesTest {
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeProxy.class).apply();
         ObjectPropertyAssertion.of(TypeProxy.AbstractMethodErrorThrow.class).apply();
@@ -22,9 +23,10 @@ public class TypeProxyObjectPropertiesTest {
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
             public void apply(TypeDescription mock) {
-                FieldDescription fieldDescription = Mockito.mock(FieldDescription.class);
+                FieldDescription.InDeclaredForm fieldDescription = Mockito.mock(FieldDescription.InDeclaredForm.class);
                 when(fieldDescription.getSourceCodeName()).thenReturn(TypeProxy.INSTANCE_FIELD);
-                when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit(Collections.singletonList(fieldDescription)));
+                when(mock.getDeclaredFields())
+                        .thenReturn(new FieldList.Explicit<FieldDescription.InDeclaredForm>(Collections.singletonList(fieldDescription)));
             }
         }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.AccessorMethodInvocation.class).skipSynthetic().apply();

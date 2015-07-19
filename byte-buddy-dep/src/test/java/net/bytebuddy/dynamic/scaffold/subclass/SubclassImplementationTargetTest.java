@@ -36,17 +36,19 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private TypeDescription superType;
 
     @Mock
-    private ParameterList parameterList;
+    private ParameterList<?> parameterList;
 
     @Mock
     private GenericTypeList parameterTypes;
 
     @Override
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(parameterList.asTypeList()).thenReturn(parameterTypes);
         when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(superMethodConstructor)));
+        when(superType.getDeclaredMethods())
+                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(Collections.singletonList(superMethodConstructor)));
         when(superType.getInternalName()).thenReturn(BAR);
         when(superType.asRawType()).thenReturn(superType);
         when(superType.asRawType()).thenReturn(superType);
@@ -54,10 +56,10 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superMethod.getReturnType()).thenReturn(returnType);
         when(superMethod.getInternalName()).thenReturn(BAZ);
         when(superMethod.getDescriptor()).thenReturn(FOOBAR);
-        when(superMethod.getParameters()).thenReturn(parameterList);
+        when(superMethod.getParameters()).thenReturn((ParameterList) parameterList);
         when(superMethod.getDeclaringType()).thenReturn(superType);
         when(superMethodConstructor.isConstructor()).thenReturn(true);
-        when(superMethodConstructor.getParameters()).thenReturn(parameterList);
+        when(superMethodConstructor.getParameters()).thenReturn((ParameterList) parameterList);
         when(superMethodConstructor.getReturnType()).thenReturn(returnType);
         when(superMethodConstructor.isSpecializableFor(superType)).thenReturn(true);
         when(superMethodConstructor.getInternalName()).thenReturn(QUXBAZ);

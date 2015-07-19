@@ -38,18 +38,19 @@ public class ConstructorStrategyDefaultTest {
     private InstrumentedType instrumentedType, superType;
 
     @Mock
-    private MethodList methodList, filteredMethodList;
+    private MethodList<?> methodList, filteredMethodList;
 
     @Mock
     private ByteCodeElement.Token.TokenList<MethodDescription.Token> filteredMethodTokenList;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodRegistry.append(any(LatentMethodMatcher.class),
                 any(MethodRegistry.Handler.class),
                 any(MethodAttributeAppender.Factory.class))).thenReturn(methodRegistry);
         when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.getDeclaredMethods()).thenReturn(methodList);
+        when(superType.getDeclaredMethods()).thenReturn((MethodList) methodList);
         when(superType.asRawType()).thenReturn(superType);
         when(filteredMethodList.asTokenList()).thenReturn(filteredMethodTokenList);
     }
@@ -63,8 +64,9 @@ public class ConstructorStrategyDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testImitateSuperTypeStrategy() throws Exception {
-        when(methodList.filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        when(methodList.filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn((MethodList) filteredMethodList);
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(instrumentedType),
                 is((List<MethodDescription.Token>) filteredMethodTokenList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
@@ -75,8 +77,9 @@ public class ConstructorStrategyDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testImitateSuperTypePublicStrategy() throws Exception {
-        when(methodList.filter(isPublic().and(isConstructor()))).thenReturn(filteredMethodList);
+        when(methodList.filter(isPublic().and(isConstructor()))).thenReturn((MethodList) filteredMethodList);
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.extractConstructors(instrumentedType),
                 is((List<MethodDescription.Token>) filteredMethodTokenList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
@@ -87,8 +90,9 @@ public class ConstructorStrategyDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testDefaultConstructorStrategy() throws Exception {
-        when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn((MethodList) filteredMethodList);
         when(filteredMethodList.size()).thenReturn(1);
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType),
                 is((List<MethodDescription.Token>) filteredMethodTokenList));
@@ -100,8 +104,10 @@ public class ConstructorStrategyDefaultTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
     public void testDefaultConstructorStrategyNoDefault() throws Exception {
-        when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn(filteredMethodList);
+        when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType))))
+                .thenReturn((MethodList) filteredMethodList);
         when(filteredMethodList.size()).thenReturn(0);
         ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType);
     }

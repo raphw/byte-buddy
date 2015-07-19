@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverTest {
 
     @Mock
-    protected ParameterList sourceParameterList, leftParameterList, rightParameterList;
+    protected ParameterList<?> sourceParameterList, leftParameterList, rightParameterList;
 
     @Mock
     protected TypeDescription sourceType;
@@ -41,13 +41,14 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
 
     @Override
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();
-        when(source.getParameters()).thenReturn(sourceParameterList);
+        when(source.getParameters()).thenReturn((ParameterList) sourceParameterList);
         when(sourceParameterList.get(anyInt())).thenReturn(sourceParameter);
         when(sourceParameter.getType()).thenReturn(sourceType);
-        when(leftMethod.getParameters()).thenReturn(leftParameterList);
-        when(rightMethod.getParameters()).thenReturn(rightParameterList);
+        when(leftMethod.getParameters()).thenReturn((ParameterList) leftParameterList);
+        when(rightMethod.getParameters()).thenReturn((ParameterList) rightParameterList);
         when(sourceType.asRawType()).thenReturn(sourceType);
     }
 

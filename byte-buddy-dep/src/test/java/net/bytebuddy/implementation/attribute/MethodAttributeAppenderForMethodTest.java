@@ -27,13 +27,14 @@ public class MethodAttributeAppenderForMethodTest extends AbstractMethodAttribut
     private Constructor<?> constructor;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         method = Foo.class.getDeclaredMethod(BAR, Object.class);
-        ParameterList parameters = mock(ParameterList.class);
-        when(methodDescription.getParameters()).thenReturn(parameters);
+        ParameterList<?> parameters = mock(ParameterList.class);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) parameters);
         when(parameters.size()).thenReturn(PARAMETER_INDEX + 1);
         constructor = Bar.class.getDeclaredConstructor(Object.class);
-        when(methodDescription.getParameters()).thenReturn(parameters);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) parameters);
         when(parameters.size()).thenReturn(PARAMETER_INDEX + 1);
     }
 

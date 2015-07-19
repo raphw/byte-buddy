@@ -19,10 +19,11 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
     private static final int PARAMETER_INDEX = 0;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        ParameterList parameterList = mock(ParameterList.class);
+        ParameterList<?> parameterList = mock(ParameterList.class);
         when(parameterList.size()).thenReturn(PARAMETER_INDEX + 1);
-        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) parameterList);
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
     }
 

@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -41,8 +42,9 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testMethodWithoutArguments() throws Exception {
-        when(source.getParameters()).thenReturn(sourceParameterList);
+        when(source.getParameters()).thenReturn((ParameterList) sourceParameterList);
         MethodDelegationBinder.AmbiguityResolver.Resolution resolution =
                 ArgumentTypeResolver.INSTANCE.resolve(source, left, right);
         assertThat(resolution.isUnresolved(), is(true));

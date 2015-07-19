@@ -13,13 +13,13 @@ import static org.mockito.Mockito.*;
 public class MethodParameterMatcherTest extends AbstractElementMatcherTest<MethodParameterMatcher<?>> {
 
     @Mock
-    private ElementMatcher<? super ParameterList> parameterListMatcher;
+    private ElementMatcher<? super ParameterList<?>> parameterListMatcher;
 
     @Mock
     private MethodDescription methodDescription;
 
     @Mock
-    private ParameterList parameterList;
+    private ParameterList<?> parameterList;
 
     @SuppressWarnings("unchecked")
     public MethodParameterMatcherTest() {
@@ -27,8 +27,9 @@ public class MethodParameterMatcherTest extends AbstractElementMatcherTest<Metho
     }
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(methodDescription.getParameters()).thenReturn(parameterList);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) parameterList);
     }
 
     @Test

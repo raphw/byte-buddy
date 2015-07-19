@@ -37,7 +37,7 @@ public class MethodBindingBuilderTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private ParameterList methodParameterList;
+    private ParameterList<?> methodParameterList;
 
     @Mock
     private TargetMethodAnnotationDrivenBinder.MethodInvoker methodInvoker;
@@ -52,8 +52,9 @@ public class MethodBindingBuilderTest {
     private Implementation.Context implementationContext;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(methodDescription.getParameters()).thenReturn(methodParameterList);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) methodParameterList);
         when(methodDescription.isStatic()).thenReturn(false);
         TypeDescription declaringType = mock(TypeDescription.class);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);

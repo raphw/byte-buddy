@@ -57,7 +57,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected StackManipulation stackManipulation;
 
     @Mock
-    protected ParameterList sourceParameterList;
+    protected ParameterList<?> sourceParameterList;
 
     @Mock
     protected GenericTypeList sourceTypeList;
@@ -77,6 +77,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     }
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(sourceDeclaringType.asRawType()).thenReturn(sourceDeclaringType);
         when(targetDeclaringType.asRawType()).thenReturn(targetDeclaringType);
@@ -84,7 +85,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         annotation = mock(annotationType);
         doReturn(annotationType).when(annotation).annotationType();
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
-        when(source.getParameters()).thenReturn(sourceParameterList);
+        when(source.getParameters()).thenReturn((ParameterList) sourceParameterList);
         when(sourceParameterList.asTypeList()).thenReturn(sourceTypeList);
         when(sourceTypeList.asRawTypes()).thenReturn(rawSourceTypeList);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(stackManipulation);

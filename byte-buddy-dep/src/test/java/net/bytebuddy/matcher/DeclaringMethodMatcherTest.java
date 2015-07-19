@@ -12,13 +12,13 @@ import static org.mockito.Mockito.*;
 public class DeclaringMethodMatcherTest extends AbstractElementMatcherTest<DeclaringMethodMatcher<?>> {
 
     @Mock
-    private ElementMatcher<? super MethodList> methodMatcher;
+    private ElementMatcher<? super MethodList<?>> methodMatcher;
 
     @Mock
     private TypeDescription typeDescription;
 
     @Mock
-    private MethodList methodList;
+    private MethodList<?> methodList;
 
     @SuppressWarnings("unchecked")
     public DeclaringMethodMatcherTest() {
@@ -26,8 +26,9 @@ public class DeclaringMethodMatcherTest extends AbstractElementMatcherTest<Decla
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testMatch() throws Exception {
-        when(typeDescription.getDeclaredMethods()).thenReturn(methodList);
+        when(typeDescription.getDeclaredMethods()).thenReturn((MethodList) methodList);
         when(methodMatcher.matches(methodList)).thenReturn(true);
         assertThat(new DeclaringMethodMatcher<TypeDescription>(methodMatcher).matches(typeDescription), is(true));
         verify(methodMatcher).matches(methodList);
@@ -37,8 +38,9 @@ public class DeclaringMethodMatcherTest extends AbstractElementMatcherTest<Decla
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testNoMatch() throws Exception {
-        when(typeDescription.getDeclaredMethods()).thenReturn(methodList);
+        when(typeDescription.getDeclaredMethods()).thenReturn((MethodList) methodList);
         when(methodMatcher.matches(methodList)).thenReturn(false);
         assertThat(new DeclaringMethodMatcher<TypeDescription>(methodMatcher).matches(typeDescription), is(false));
         verify(methodMatcher).matches(methodList);
