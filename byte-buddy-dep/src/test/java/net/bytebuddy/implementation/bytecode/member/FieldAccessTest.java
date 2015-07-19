@@ -41,7 +41,7 @@ public class FieldAccessTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private FieldDescription fieldDescription;
+    private FieldDescription.InDeclaredForm fieldDescription;
 
     @Mock
     private TypeDescription declaringType, fieldType;
@@ -100,7 +100,6 @@ public class FieldAccessTest {
     @Test
     public void testGetter() throws Exception {
         FieldAccess.Defined getter = FieldAccess.forField(fieldDescription);
-        assertThat(getter.getDefinedField(), is(fieldDescription));
         assertThat(getter.getter().isValid(), is(true));
         StackManipulation.Size size = getter.getter().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(getterChange));
@@ -112,7 +111,6 @@ public class FieldAccessTest {
     @Test
     public void testPutter() throws Exception {
         FieldAccess.Defined setter = FieldAccess.forField(fieldDescription);
-        assertThat(setter.getDefinedField(), is(fieldDescription));
         assertThat(setter.putter().isValid(), is(true));
         StackManipulation.Size size = setter.putter().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(putterChange));

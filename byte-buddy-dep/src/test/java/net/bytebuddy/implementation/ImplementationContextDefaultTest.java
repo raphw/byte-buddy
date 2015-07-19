@@ -101,7 +101,7 @@ public class ImplementationContextDefaultTest {
             firstDeclaringType, secondDeclaringType;
 
     @Mock
-    private FieldDescription firstField, secondField;
+    private FieldDescription.InDeclaredForm firstField, secondField;
 
     @Mock
     private TypeDescription firstFieldDeclaringType, secondFieldDeclaringType;
@@ -177,6 +177,7 @@ public class ImplementationContextDefaultTest {
         when(firstField.getInternalName()).thenReturn(FOO);
         when(firstField.getDescriptor()).thenReturn(BAR);
         when(firstField.getDeclaringType()).thenReturn(firstFieldDeclaringType);
+        when(firstField.asDeclared()).thenReturn(firstField);
         when(firstFieldDeclaringType.getInternalName()).thenReturn(QUX);
         when(secondFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(secondFieldType.asRawType()).thenReturn(secondFieldType);
@@ -186,6 +187,7 @@ public class ImplementationContextDefaultTest {
         when(secondField.getInternalName()).thenReturn(BAR);
         when(secondField.getDescriptor()).thenReturn(FOO);
         when(secondField.getDeclaringType()).thenReturn(secondFieldDeclaringType);
+        when(secondField.asDeclared()).thenReturn(secondField);
         when(secondFieldDeclaringType.getInternalName()).thenReturn(BAZ);
         when(firstSpecialReturnType.asRawType()).thenReturn(firstSpecialReturnType);
         when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType);

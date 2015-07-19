@@ -329,9 +329,9 @@ public class TypeProxyCreationTest {
                 false);
         TypeProxy.MethodCall methodCall = typeProxy.new MethodCall(mock(AuxiliaryType.MethodAccessorFactory.class));
         TypeDescription instrumentedType = mock(TypeDescription.class);
-        FieldList fieldList = mock(FieldList.class);
+        FieldList<FieldDescription.InDeclaredForm> fieldList = mock(FieldList.class);
         when(fieldList.filter(any(ElementMatcher.class))).thenReturn(fieldList);
-        when(fieldList.getOnly()).thenReturn(mock(FieldDescription.class));
+        when(fieldList.getOnly()).thenReturn(mock(FieldDescription.InDeclaredForm.class));
         when(instrumentedType.getDeclaredFields()).thenReturn(fieldList);
         TypeProxy.MethodCall.Appender appender = methodCall.new Appender(instrumentedType);
         Implementation.SpecialMethodInvocation specialMethodInvocation = mock(Implementation.SpecialMethodInvocation.class);

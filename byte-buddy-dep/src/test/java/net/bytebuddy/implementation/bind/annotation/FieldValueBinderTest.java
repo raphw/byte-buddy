@@ -22,7 +22,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     private static final String FOO = "foo", BAR = "bar";
 
     @Mock
-    private FieldDescription fieldDescription;
+    private FieldDescription.InDeclaredForm fieldDescription;
 
     @Mock
     private TypeDescription fieldType;
@@ -38,6 +38,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        when(fieldDescription.asDeclared()).thenReturn(fieldDescription);
         when(fieldDescription.getType()).thenReturn(fieldType);
         when(fieldType.asRawType()).thenReturn(fieldType);
         when(targetType.asRawType()).thenReturn(targetType);

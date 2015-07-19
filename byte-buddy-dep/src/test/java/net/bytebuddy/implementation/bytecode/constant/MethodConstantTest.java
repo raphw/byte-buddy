@@ -56,7 +56,7 @@ public class MethodConstantTest {
     private Implementation.Context implementationContext;
 
     @Mock
-    private FieldDescription fieldDescription;
+    private FieldDescription.InDeclaredForm fieldDescription;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -73,10 +73,12 @@ public class MethodConstantTest {
         when(fieldDescription.getType()).thenReturn(fieldType);
         when(fieldDescription.isStatic()).thenReturn(true);
         when(fieldType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(fieldType.asRawType()).thenReturn(fieldType);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getInternalName()).thenReturn(BAZ);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getDescriptor()).thenReturn(QUX);
+        when(fieldDescription.asDeclared()).thenReturn(fieldDescription);
     }
 
     @Test

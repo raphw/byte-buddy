@@ -6,6 +6,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -75,12 +76,17 @@ public enum FieldAccess {
      * @param fieldDescription The field to be accessed.
      * @return A field access definition for the given field.
      */
+    public static Defined forField(FieldDescription.InDeclaredForm fieldDescription) {
+        return fieldDescription.isStatic()
+                ? STATIC.new AccessDispatcher(fieldDescription)
+                : INSTANCE.new AccessDispatcher(fieldDescription);
+    }
+
     public static Defined forField(FieldDescription fieldDescription) {
-        if (fieldDescription.isStatic()) {
-            return STATIC.new AccessDispatcher(fieldDescription);
-        } else {
-            return INSTANCE.new AccessDispatcher(fieldDescription);
-        }
+        FieldDescription.InDeclaredForm declaredField = fieldDescription.asDeclared();
+        return fieldDescription.getType().asRawType().equals(declaredField.getType().asRawType())
+                ? forField(declaredField)
+                : new OfGenericField(fieldDescription, forField(declaredField));
     }
 
     @Override
@@ -106,13 +112,6 @@ public enum FieldAccess {
          * @return A stack manipulation representing the setting of a field value.
          */
         StackManipulation putter();
-
-        /**
-         * Returns the field for which this field access is defined for.
-         *
-         * @return The field for which this field access was defined for.
-         */
-        FieldDescription getDefinedField();
     }
 
     /**
@@ -142,11 +141,6 @@ public enum FieldAccess {
         @Override
         public StackManipulation putter() {
             return new FieldPutInstruction();
-        }
-
-        @Override
-        public FieldDescription getDefinedField() {
-            return fieldDescription;
         }
 
         @Override
@@ -294,6 +288,51 @@ public enum FieldAccess {
             private AccessDispatcher getAccessDispatcher() {
                 return AccessDispatcher.this;
             }
+        }
+    }
+
+    protected static class OfGenericField implements Defined {
+
+        private final FieldDescription fieldDescription;
+
+        private final Defined defined;
+
+        protected OfGenericField(FieldDescription fieldDescription, Defined defined) {
+            this.fieldDescription = fieldDescription;
+            this.defined = defined;
+        }
+
+        @Override
+        public StackManipulation getter() {
+            return new StackManipulation.Compound(defined.getter(), TypeCasting.to(fieldDescription.getType().asRawType()));
+        }
+
+        @Override
+        public StackManipulation putter() {
+            return defined.putter();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            OfGenericField that = (OfGenericField) other;
+            return fieldDescription.equals(that.fieldDescription) && defined.equals(that.defined);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldDescription.hashCode();
+            result = 31 * result + defined.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "FieldAccess.OfGenericField{" +
+                    "fieldDescription=" + fieldDescription +
+                    ", defined=" + defined +
+                    '}';
         }
     }
 }
