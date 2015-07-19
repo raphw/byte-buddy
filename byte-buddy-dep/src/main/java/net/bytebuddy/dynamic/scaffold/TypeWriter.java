@@ -1630,14 +1630,12 @@ public interface TypeWriter<T> {
                      * @param entry               The method pool entry to apply.
                      * @param methodDescription   A description of the actual method.
                      */
-                    protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
-                                                          MethodPool.Entry entry,
-                                                          MethodDescription methodDescription) {
+                    protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Entry entry, MethodDescription methodDescription) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.entry = entry;
                         this.methodDescription = methodDescription;
-                        this.resolution = methodRebaseResolver.resolve(methodDescription);
+                        this.resolution = methodRebaseResolver.resolve(methodDescription.asDeclared());
                         entry.applyHead(actualMethodVisitor, methodDescription);
                     }
 

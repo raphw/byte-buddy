@@ -37,7 +37,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     private StackManipulation additionalArguments;
 
     @Mock
-    private MethodDescription targetRebaseMethod, rebasedMethod, nonRebasedMethod, superMethod;
+    private MethodDescription.InDeclaredForm targetRebaseMethod, rebasedMethod, nonRebasedMethod, superMethod;
 
     @Mock
     private TypeDescription superType;
@@ -89,7 +89,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
         verify(additionalArguments).isValid();
-        assertThat(specialMethodInvocation.getMethodDescription(), is(rebasedMethod));
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) rebasedMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
@@ -117,7 +117,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         verify(methodRebaseResolver).resolve(nonRebasedMethod);
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
-        assertThat(specialMethodInvocation.getMethodDescription(), is(nonRebasedMethod));
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) nonRebasedMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
@@ -143,7 +143,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(superMethod.isSpecializableFor(superType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(true));
-        assertThat(specialMethodInvocation.getMethodDescription(), is(superMethod));
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) superMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(superType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
@@ -166,12 +166,13 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(RebaseImplementationTarget.class).refine(new ObjectPropertyAssertion.Refinement<MethodLookupEngine.Finding>() {
             @Override
             public void apply(MethodLookupEngine.Finding mock) {
                 when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
-                when(mock.getInvokableMethods()).thenReturn(new MethodList.Empty());
+                when(mock.getInvokableMethods()).thenReturn((MethodList) new MethodList.Empty());
                 when(mock.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
             }
         }).refine(new ObjectPropertyAssertion.Refinement<BridgeMethodResolver.Factory>() {

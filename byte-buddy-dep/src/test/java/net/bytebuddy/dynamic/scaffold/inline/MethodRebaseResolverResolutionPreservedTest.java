@@ -18,7 +18,7 @@ public class MethodRebaseResolverResolutionPreservedTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription methodDescription;
+    private MethodDescription.InDeclaredForm methodDescription;
 
     @Test
     public void testPreservation() throws Exception {

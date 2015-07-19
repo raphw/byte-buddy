@@ -36,7 +36,7 @@ public class RebaseImplementationTargetFactoryTest {
     private MethodLookupEngine.Finding finding;
 
     @Mock
-    private MethodList instrumentedMethods;
+    private MethodList<?> instrumentedMethods;
 
     @Mock
     private TypeDescription instrumentedType, superType;
@@ -44,8 +44,9 @@ public class RebaseImplementationTargetFactoryTest {
     private Implementation.Target.Factory factory;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(finding.getInvokableMethods()).thenReturn(new MethodList.Empty());
+        when(finding.getInvokableMethods()).thenReturn((MethodList) new MethodList.Empty());
         when(finding.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
         when(instrumentedType.getSuperType()).thenReturn(superType);

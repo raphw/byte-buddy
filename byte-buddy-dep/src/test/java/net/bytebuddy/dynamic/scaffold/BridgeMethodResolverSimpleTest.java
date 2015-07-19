@@ -37,8 +37,8 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodSingleStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
-        MethodList invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
-        MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
+        MethodList<?> invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
+        MethodList<?> relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(2));
         BridgeMethodResolver bridgeMethodResolver = BridgeMethodResolver.Simple.of(invokableMethods, conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()),
@@ -49,8 +49,8 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodTwoStep() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Qux.class);
-        MethodList invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
-        MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
+        MethodList<?> invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
+        MethodList<?> relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(3));
         BridgeMethodResolver bridgeMethodResolver = BridgeMethodResolver.Simple.of(invokableMethods, conflictHandler);
         for (MethodDescription methodDescription : relevantMethods.filter(isBridge())) {
@@ -62,15 +62,15 @@ public class BridgeMethodResolverSimpleTest {
     @Test
     public void testFindsBridgeMethodConflictResolver() throws Exception {
         TypeDescription target = new TypeDescription.ForLoadedType(Baz.class);
-        MethodList invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
-        MethodList relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
+        MethodList<?> invokableMethods = MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED.process(target).getInvokableMethods();
+        MethodList<?> relevantMethods = invokableMethods.filter(not(isDeclaredBy(Object.class).or(isConstructor())));
         assertThat(relevantMethods.size(), is(3));
         when(conflictHandler.choose(any(MethodDescription.class), any(MethodList.class))).thenReturn(bridgeTarget);
         when(bridgeTarget.isResolved()).thenReturn(true);
         when(bridgeTarget.extract()).thenReturn(methodDescription);
         BridgeMethodResolver bridgeMethodResolver = BridgeMethodResolver.Simple.of(invokableMethods, conflictHandler);
         assertThat(bridgeMethodResolver.resolve(relevantMethods.filter(isBridge()).getOnly()), is(methodDescription));
-        ArgumentCaptor<MethodList> capturedConflictHandlerCandidates = ArgumentCaptor.forClass(MethodList.class);
+        ArgumentCaptor<MethodList<?>> capturedConflictHandlerCandidates = ArgumentCaptor.forClass(MethodList.class);
         verify(conflictHandler).choose(eq(relevantMethods.filter(isBridge()).getOnly()), capturedConflictHandlerCandidates.capture());
         assertThat(capturedConflictHandlerCandidates.getValue().size(), is(2));
         assertThat(capturedConflictHandlerCandidates.getValue(), containsAllOf(relevantMethods.filter(not(isBridge()))));

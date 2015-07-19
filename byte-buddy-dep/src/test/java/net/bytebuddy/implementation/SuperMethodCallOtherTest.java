@@ -97,7 +97,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     public void testStaticMethod() throws Exception {
         when(typeDescription.getSuperType()).thenReturn(superType);
         when(methodDescription.isStatic()).thenReturn(true);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
@@ -111,7 +111,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @SuppressWarnings("unchecked")
     public void testNoSuper() throws Exception {
         when(typeDescription.getSuperType()).thenReturn(superType);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
         when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);

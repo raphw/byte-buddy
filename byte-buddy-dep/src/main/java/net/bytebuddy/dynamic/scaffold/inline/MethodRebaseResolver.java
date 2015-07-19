@@ -45,7 +45,7 @@ public interface MethodRebaseResolver {
      * @param methodDescription A description of the method to resolve.
      * @return A resolution for the given method.
      */
-    Resolution resolve(MethodDescription methodDescription);
+    Resolution resolve(MethodDescription.InDeclaredForm methodDescription);
 
     /**
      * Returns a (potentially empty) list of auxiliary types that are required by this method rebase resolver.
@@ -65,7 +65,7 @@ public interface MethodRebaseResolver {
         INSTANCE;
 
         @Override
-        public Resolution resolve(MethodDescription methodDescription) {
+        public Resolution resolve(MethodDescription.InDeclaredForm methodDescription) {
             return new Resolution.Preserved(methodDescription);
         }
 
@@ -225,7 +225,7 @@ public interface MethodRebaseResolver {
          *
          * @return The resolved method if this resolution representedBy a rebased method or the original method.
          */
-        MethodDescription getResolvedMethod();
+        MethodDescription.InDeclaredForm getResolvedMethod();
 
         /**
          * A rebased method might require additional arguments in order to create a distinct signature. The
@@ -244,7 +244,7 @@ public interface MethodRebaseResolver {
             /**
              * The preserved method.
              */
-            private final MethodDescription methodDescription;
+            private final MethodDescription.InDeclaredForm methodDescription;
 
             /**
              * Creates a new {@link MethodRebaseResolver.Resolution} for
@@ -252,7 +252,7 @@ public interface MethodRebaseResolver {
              *
              * @param methodDescription The preserved method.
              */
-            public Preserved(MethodDescription methodDescription) {
+            public Preserved(MethodDescription.InDeclaredForm methodDescription) {
                 this.methodDescription = methodDescription;
             }
 
@@ -262,7 +262,7 @@ public interface MethodRebaseResolver {
             }
 
             @Override
-            public MethodDescription getResolvedMethod() {
+            public MethodDescription.InDeclaredForm getResolvedMethod() {
                 return methodDescription;
             }
 
@@ -579,9 +579,9 @@ public interface MethodRebaseResolver {
         }
 
         @Override
-        public Resolution resolve(MethodDescription methodDescription) {
+        public Resolution resolve(MethodDescription.InDeclaredForm methodDescription) {
             return instrumentedMethods.contains(methodDescription)
-                    ? rebase(methodDescription.asDeclared())
+                    ? rebase(methodDescription)
                     : new Resolution.Preserved(methodDescription);
         }
 

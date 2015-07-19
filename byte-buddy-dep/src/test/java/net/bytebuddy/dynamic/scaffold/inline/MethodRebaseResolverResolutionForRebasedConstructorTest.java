@@ -33,7 +33,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription methodDescription;
+    private MethodDescription.InDeclaredForm methodDescription;
 
     @Mock
     private StackManipulation stackManipulation;
@@ -90,11 +90,12 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedConstructor.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
             public void apply(MethodDescription mock) {
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty());
+                when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
                 when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
                 TypeDescription returnType = mock(TypeDescription.class);

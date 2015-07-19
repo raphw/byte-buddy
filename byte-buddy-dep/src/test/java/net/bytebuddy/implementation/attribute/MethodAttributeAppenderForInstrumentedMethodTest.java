@@ -25,11 +25,12 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testMethodAnnotations() throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
         MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForInstrumentedMethod(valueFilter);
         methodAttributeAppender.apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
@@ -41,13 +42,15 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testMethodParameterAnnotations() throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         ParameterDescription parameterDescription = mock(ParameterDescription.class);
         when(parameterDescription.getDeclaredAnnotations())
                 .thenReturn(new AnnotationList.ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));
+        when(methodDescription.getParameters())
+                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(Collections.singletonList(parameterDescription)));
         MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForInstrumentedMethod(valueFilter);
         methodAttributeAppender.apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(0, Type.getDescriptor(Baz.class), true);

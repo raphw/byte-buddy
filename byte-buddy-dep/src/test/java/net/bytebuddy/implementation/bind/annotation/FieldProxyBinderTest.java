@@ -32,7 +32,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
     private TypeDescription setterType, getterType, fieldType;
 
     @Mock
-    private FieldDescription fieldDescription;
+    private FieldDescription.InDeclaredForm fieldDescription;
 
     public FieldProxyBinderTest() {
         super(FieldProxy.class);
@@ -44,7 +44,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         super.setUp();
         when(getterMethod.getDeclaringType()).thenReturn(getterType);
         when(setterMethod.getDeclaringType()).thenReturn(setterType);
-        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit(Collections.singletonList(fieldDescription)));
+        when(instrumentedType.getDeclaredFields())
+                .thenReturn(new FieldList.Explicit<FieldDescription.InDeclaredForm>(Collections.singletonList(fieldDescription)));
         when(fieldDescription.getType()).thenReturn(fieldType);
         when(fieldType.getStackSize()).thenReturn(StackSize.ZERO);
         when(fieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
