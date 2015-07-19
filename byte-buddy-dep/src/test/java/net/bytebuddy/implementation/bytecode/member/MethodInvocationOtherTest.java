@@ -5,6 +5,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -43,15 +44,10 @@ public class MethodInvocationOtherTest {
         ObjectPropertyAssertion.of(MethodInvocation.Invocation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
             public void apply(MethodDescription mock) {
+                when(mock.asToken()).thenReturn(mock(MethodDescription.Token.class));
                 TypeDescription declaringType = mock(TypeDescription.class);
                 when(declaringType.asRawType()).thenReturn(declaringType);
                 when(mock.getDeclaringType()).thenReturn(declaringType);
-                TypeDescription returnType = mock(TypeDescription.class);
-                when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
-                when(mock.getReturnType()).thenReturn(returnType);
-                when(returnType.asRawType()).thenReturn(returnType);
-                when(mock.getInternalName()).thenReturn(FOO);
-                when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
             }
         }).apply();
         ObjectPropertyAssertion.of(MethodInvocation.DynamicInvocation.class).apply();
