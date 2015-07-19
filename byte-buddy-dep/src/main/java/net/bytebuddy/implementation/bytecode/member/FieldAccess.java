@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bytecode.member;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -86,7 +87,7 @@ public enum FieldAccess {
         FieldDescription.InDeclaredForm declaredField = fieldDescription.asDeclared();
         return fieldDescription.getType().asRawType().equals(declaredField.getType().asRawType())
                 ? forField(declaredField)
-                : new OfGenericField(fieldDescription, forField(declaredField));
+                : OfGenericField.of(fieldDescription, forField(declaredField));
     }
 
     @Override
@@ -293,18 +294,22 @@ public enum FieldAccess {
 
     protected static class OfGenericField implements Defined {
 
-        private final FieldDescription fieldDescription;
+        public static Defined of(FieldDescription fieldDescription, Defined fieldAccess) {
+            return new OfGenericField(fieldDescription.getType().asRawType(), fieldAccess);
+        }
+
+        private final TypeDescription targetType;
 
         private final Defined defined;
 
-        protected OfGenericField(FieldDescription fieldDescription, Defined defined) {
-            this.fieldDescription = fieldDescription;
+        protected OfGenericField(TypeDescription targetType, Defined defined) {
+            this.targetType = targetType;
             this.defined = defined;
         }
 
         @Override
         public StackManipulation getter() {
-            return new StackManipulation.Compound(defined.getter(), TypeCasting.to(fieldDescription.getType().asRawType()));
+            return new StackManipulation.Compound(defined.getter(), TypeCasting.to(targetType));
         }
 
         @Override
@@ -317,12 +322,12 @@ public enum FieldAccess {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             OfGenericField that = (OfGenericField) other;
-            return fieldDescription.equals(that.fieldDescription) && defined.equals(that.defined);
+            return targetType.equals(that.targetType) && defined.equals(that.defined);
         }
 
         @Override
         public int hashCode() {
-            int result = fieldDescription.hashCode();
+            int result = targetType.hashCode();
             result = 31 * result + defined.hashCode();
             return result;
         }
@@ -330,7 +335,7 @@ public enum FieldAccess {
         @Override
         public String toString() {
             return "FieldAccess.OfGenericField{" +
-                    "fieldDescription=" + fieldDescription +
+                    "targetType=" + targetType +
                     ", defined=" + defined +
                     '}';
         }

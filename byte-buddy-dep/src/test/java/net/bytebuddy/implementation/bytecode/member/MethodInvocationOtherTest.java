@@ -22,10 +22,23 @@ public class MethodInvocationOtherTest {
 
     private static final String FOO = "foo";
 
+    @Test(expected = IllegalStateException.class)
+    public void testIllegal() throws Exception {
+        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.isValid(), is(false));
+        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.special(mock(TypeDescription.class)),
+                is((StackManipulation) StackManipulation.Illegal.INSTANCE));
+        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.virtual(mock(TypeDescription.class)),
+                is((StackManipulation) StackManipulation.Illegal.INSTANCE));
+        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.dynamic(FOO, mock(TypeDescription.class), mock(TypeList.class), mock(List.class)),
+                is((StackManipulation) StackManipulation.Illegal.INSTANCE));
+        MethodInvocation.IllegalInvocation.INSTANCE.apply(mock(MethodVisitor.class), mock(Implementation.Context.class));
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodInvocation.OfGenericMethod.class).apply();
         ObjectPropertyAssertion.of(MethodInvocation.IllegalInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodInvocation.Invocation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
@@ -42,17 +55,5 @@ public class MethodInvocationOtherTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(MethodInvocation.DynamicInvocation.class).apply();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testIllegal() throws Exception {
-        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.isValid(), is(false));
-        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.special(mock(TypeDescription.class)),
-                is((StackManipulation) StackManipulation.Illegal.INSTANCE));
-        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.virtual(mock(TypeDescription.class)),
-                is((StackManipulation) StackManipulation.Illegal.INSTANCE));
-        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.dynamic(FOO, mock(TypeDescription.class), mock(TypeList.class), mock(List.class)),
-                is((StackManipulation) StackManipulation.Illegal.INSTANCE));
-        MethodInvocation.IllegalInvocation.INSTANCE.apply(mock(MethodVisitor.class), mock(Implementation.Context.class));
     }
 }

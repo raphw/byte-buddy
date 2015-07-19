@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -68,7 +69,7 @@ public enum MethodInvocation {
      * @param methodDescription The method to be invoked.
      * @return A stack manipulation with implicitly determined invocation type.
      */
-    public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
+    public static WithImplicitInvocationTargetType invoke(MethodDescription.InDeclaredForm methodDescription) {
         if (methodDescription.isTypeInitializer()) {
             return IllegalInvocation.INSTANCE;
         } else if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC
@@ -82,6 +83,13 @@ public enum MethodInvocation {
         } else {
             return VIRTUAL.new Invocation(methodDescription);
         }
+    }
+
+    public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
+        MethodDescription.InDeclaredForm declaredMethod = methodDescription.asDeclared();
+        return declaredMethod.getReturnType().asRawType().equals(methodDescription.getReturnType().asRawType())
+                ? invoke(declaredMethod)
+                : OfGenericMethod.of(methodDescription, invoke(declaredMethod));
     }
 
     @Override
@@ -409,6 +417,70 @@ public enum MethodInvocation {
                     ", parameterTypes=" + parameterTypes +
                     ", bootstrapMethod=" + bootstrapMethod +
                     ", arguments=" + arguments +
+                    '}';
+        }
+    }
+
+    protected static class OfGenericMethod implements WithImplicitInvocationTargetType {
+
+        public static WithImplicitInvocationTargetType of(MethodDescription methodDescription, WithImplicitInvocationTargetType invocation) {
+            return new OfGenericMethod(methodDescription.getReturnType().asRawType(), invocation);
+        }
+
+        private final TypeDescription targetType;
+
+        private final WithImplicitInvocationTargetType invocation;
+
+        public OfGenericMethod(TypeDescription targetType, WithImplicitInvocationTargetType invocation) {
+            this.targetType = targetType;
+            this.invocation = invocation;
+        }
+
+        @Override
+        public StackManipulation virtual(TypeDescription invocationTarget) {
+            return new StackManipulation.Compound(invocation.virtual(invocationTarget), TypeCasting.to(targetType));
+        }
+
+        @Override
+        public StackManipulation special(TypeDescription invocationTarget) {
+            return new StackManipulation.Compound(invocation.special(invocationTarget), TypeCasting.to(targetType));
+        }
+
+        @Override
+        public StackManipulation dynamic(String methodName, TypeDescription returnType, List<? extends TypeDescription> methodType, List<?> arguments) {
+            return invocation.dynamic(methodName, returnType, methodType, arguments);
+        }
+
+        @Override
+        public boolean isValid() {
+            return invocation.isValid();
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return new Compound(invocation, TypeCasting.to(targetType)).apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            OfGenericMethod that = (OfGenericMethod) other;
+            return targetType.equals(that.targetType) && invocation.equals(that.invocation);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = targetType.hashCode();
+            result = 31 * result + invocation.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodInvocation.OfGenericMethod{" +
+                    "targetType=" + targetType +
+                    ", invocation=" + invocation +
                     '}';
         }
     }

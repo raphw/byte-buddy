@@ -48,7 +48,7 @@ public abstract class AbstractImplementationTargetTest {
     protected Implementation.Target.MethodLookup methodLookup;
 
     @Mock
-    protected MethodDescription invokableMethod, defaultMethod;
+    protected MethodDescription.InDeclaredForm invokableMethod, defaultMethod;
 
     protected Implementation.Target implementationTarget;
 
@@ -61,7 +61,7 @@ public abstract class AbstractImplementationTargetTest {
         when(methodType.asRawType()).thenReturn(methodType);
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
         when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(invokableMethod)));
-        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultType, Collections.singleton(defaultMethod)));
+        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultType, Collections.<MethodDescription>singleton(defaultMethod)));
         when(bridgeMethodResolverFactory.make(any(MethodList.class))).thenReturn(bridgeMethodResolver);
         when(methodLookup.resolve(any(MethodDescription.class), any(Map.class), eq(bridgeMethodResolver)))
                 .then(new Answer<MethodDescription>() {
@@ -73,6 +73,7 @@ public abstract class AbstractImplementationTargetTest {
         when(invokableMethod.getDeclaringType()).thenReturn(methodType);
         when(invokableMethod.getReturnType()).thenReturn(returnType);
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(returnType.asRawType()).thenReturn(returnType);
         when(invokableMethod.getInternalName()).thenReturn(FOO);
         when(invokableMethod.getDescriptor()).thenReturn(QUX);
         when(invokableMethod.asToken()).thenReturn(invokableToken);
@@ -81,6 +82,7 @@ public abstract class AbstractImplementationTargetTest {
         when(defaultMethod.getDeclaringType()).thenReturn(defaultType);
         when(defaultMethod.getReturnType()).thenReturn(returnType);
         when(defaultMethod.asToken()).thenReturn(defaultToken);
+        when(defaultMethod.asDeclared()).thenReturn(defaultMethod);
         when(defaultType.isInterface()).thenReturn(true);
         when(defaultType.asRawType()).thenReturn(defaultType);
         when(defaultMethod.isSpecializableFor(defaultType)).thenReturn(true);
@@ -94,7 +96,7 @@ public abstract class AbstractImplementationTargetTest {
     public void testDefaultMethodInvocation() throws Exception {
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeDefault(defaultType, defaultToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
-        assertThat(specialMethodInvocation.getMethodDescription(), is(defaultMethod));
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) defaultMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(defaultType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
@@ -113,7 +115,8 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testIllegalSuperMethod() throws Exception {
-        MethodDescription methodDescription = mock(MethodDescription.class);
+        MethodDescription.InDeclaredForm methodDescription = mock(MethodDescription.InDeclaredForm.class);
+        when(methodDescription.asDeclared()).thenReturn(methodDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.asRawType()).thenReturn(typeDescription);

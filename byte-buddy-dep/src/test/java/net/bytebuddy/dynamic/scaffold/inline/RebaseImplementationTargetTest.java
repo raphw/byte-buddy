@@ -57,6 +57,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(rebasedMethod.getInternalName()).thenReturn(BAZ);
         when(rebasedMethod.getDescriptor()).thenReturn(FOOBAR);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
+        when(rebasedMethod.asDeclared()).thenReturn(rebasedMethod);
         when(rebasedResolution.getAdditionalArguments()).thenReturn(additionalArguments);
         when(additionalArguments.isValid()).thenReturn(true);
         when(additionalArguments.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
@@ -68,6 +69,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(superMethod.getReturnType()).thenReturn(returnType);
         when(superMethod.getInternalName()).thenReturn(BAZ);
         when(superMethod.getDescriptor()).thenReturn(FOOBAR);
+        when(superMethod.asDeclared()).thenReturn(superMethod);
         when(nonRebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(nonRebasedMethod.getReturnType()).thenReturn(returnType);
         when(nonRebasedMethod.getInternalName()).thenReturn(BAZ);

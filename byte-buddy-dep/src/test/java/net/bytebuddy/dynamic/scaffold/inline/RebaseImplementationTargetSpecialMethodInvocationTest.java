@@ -9,12 +9,16 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.AbstractSpecialMethodInvocationTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -23,6 +27,18 @@ import static org.mockito.Mockito.when;
 public class RebaseImplementationTargetSpecialMethodInvocationTest extends AbstractSpecialMethodInvocationTest {
 
     private static final String FOO = "foo";
+
+    @Mock
+    private TypeDescription returnType;
+
+    @Override
+    @Before
+    @SuppressWarnings("unchecked")
+    public void setUp() throws Exception {
+        super.setUp();
+        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
+    }
 
     @Override
     protected Implementation.SpecialMethodInvocation make(String name,
@@ -38,6 +54,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         TypeDescription declaringType = mock(TypeDescription.class);
         when(declaringType.asRawType()).thenReturn(declaringType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
+        when(methodDescription.asDeclared()).thenReturn(methodDescription);
         when(resolution.getResolvedMethod()).thenReturn(methodDescription);
         return new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, targetType);
     }
@@ -52,7 +69,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
                 FOO,
                 Opcodes.ACC_STATIC,
                 Collections.<GenericTypeDescription>emptyList(),
-                mock(GenericTypeDescription.class),
+                returnType,
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
@@ -72,7 +89,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
                 FOO,
                 Opcodes.ACC_PUBLIC,
                 Collections.<GenericTypeDescription>emptyList(),
-                mock(GenericTypeDescription.class),
+                returnType,
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),

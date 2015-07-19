@@ -30,7 +30,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private static final String BAR = "bar", BAZ = "baz", FOOBAR = "foobar";
 
     @Mock
-    private MethodDescription superMethod, superMethodConstructor;
+    private MethodDescription.InDeclaredForm superMethod, superMethodConstructor;
 
     @Mock
     private TypeDescription superType;
@@ -58,6 +58,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superMethod.getDescriptor()).thenReturn(FOOBAR);
         when(superMethod.getParameters()).thenReturn((ParameterList) parameterList);
         when(superMethod.getDeclaringType()).thenReturn(superType);
+        when(superMethod.asDeclared()).thenReturn(superMethod);
         when(superMethodConstructor.isConstructor()).thenReturn(true);
         when(superMethodConstructor.getParameters()).thenReturn((ParameterList) parameterList);
         when(superMethodConstructor.getReturnType()).thenReturn(returnType);
@@ -65,6 +66,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superMethodConstructor.getInternalName()).thenReturn(QUXBAZ);
         when(superMethodConstructor.getDescriptor()).thenReturn(BAZBAR);
         when(superMethodConstructor.getDeclaringType()).thenReturn(superType);
+        when(superMethodConstructor.asDeclared()).thenReturn(superMethodConstructor);
         super.setUp();
     }
 
@@ -80,7 +82,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superMethod.isSpecializableFor(superType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(true));
-        assertThat(specialMethodInvocation.getMethodDescription(), is(superMethod));
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) superMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(superType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
@@ -105,7 +107,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superMethod.isConstructor()).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethod, methodLookup);
         assertThat(specialMethodInvocation.isValid(), is(true));
-        assertThat(specialMethodInvocation.getMethodDescription(), is(superMethodConstructor));
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) superMethodConstructor));
         assertThat(specialMethodInvocation.getTypeDescription(), is(superType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);

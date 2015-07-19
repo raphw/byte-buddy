@@ -39,7 +39,7 @@ public class MethodInvocationTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription methodDescription;
+    private MethodDescription.InDeclaredForm methodDescription;
 
     @Mock
     private TypeDescription returnType, declaringType, otherType;
