@@ -4,6 +4,7 @@ import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Describes a manipulation of a method's operand stack that does not affect the frame's variable array.
@@ -176,7 +177,7 @@ public interface StackManipulation {
         /**
          * The stack manipulations this compound operation representedBy in their application order.
          */
-        private final StackManipulation[] stackManipulation;
+        private final List<StackManipulation> stackManipulations;
 
         /**
          * Creates a new compound stack manipulation.
@@ -184,12 +185,21 @@ public interface StackManipulation {
          * @param stackManipulation The stack manipulations to be composed in the order of their composition.
          */
         public Compound(StackManipulation... stackManipulation) {
-            this.stackManipulation = stackManipulation;
+            this(Arrays.asList(stackManipulation));
+        }
+
+        /**
+         * Creates a new compound stack manipulation.
+         *
+         * @param stackManipulation The stack manipulations to be composed in the order of their composition.
+         */
+        public Compound(List<StackManipulation> stackManipulations) {
+            this.stackManipulations = stackManipulations;
         }
 
         @Override
         public boolean isValid() {
-            for (StackManipulation stackManipulation : this.stackManipulation) {
+            for (StackManipulation stackManipulation : stackManipulations) {
                 if (!stackManipulation.isValid()) {
                     return false;
                 }
@@ -200,7 +210,7 @@ public interface StackManipulation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             Size size = new Size(0, 0);
-            for (StackManipulation stackManipulation : this.stackManipulation) {
+            for (StackManipulation stackManipulation : stackManipulations) {
                 size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
             }
             return size;
@@ -209,17 +219,17 @@ public interface StackManipulation {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(stackManipulation, ((Compound) other).stackManipulation);
+                    && stackManipulations.equals(((Compound) other).stackManipulations);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(stackManipulation);
+            return stackManipulations.hashCode();
         }
 
         @Override
         public String toString() {
-            return "StackManipulation.Compound{stackManipulation=" + Arrays.asList(stackManipulation) + "}";
+            return "StackManipulation.Compound{stackManipulations=" + stackManipulations + "}";
         }
     }
 }

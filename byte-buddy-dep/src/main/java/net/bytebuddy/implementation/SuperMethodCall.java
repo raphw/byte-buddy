@@ -118,7 +118,7 @@ public enum SuperMethodCall implements Implementation {
                 throw new IllegalStateException("Cannot call super (or default) method of " + instrumentedMethod);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                    MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                     superMethodCall,
                     terminationHandler.of(instrumentedMethod)
             ).apply(methodVisitor, implementationContext);

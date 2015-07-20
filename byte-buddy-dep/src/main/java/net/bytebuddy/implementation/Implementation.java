@@ -1233,7 +1233,7 @@ public interface Implementation {
                                   Implementation.Context implementationContext,
                                   MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                            MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             accessorMethodInvocation,
                             MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                     ).apply(methodVisitor, implementationContext);
@@ -1329,7 +1329,7 @@ public interface Implementation {
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                            MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             FieldAccess.forField(fieldDescription).putter(),
                             MethodReturn.VOID
                     ).apply(methodVisitor, implementationContext);

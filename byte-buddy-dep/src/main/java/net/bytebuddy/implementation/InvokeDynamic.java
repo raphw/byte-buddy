@@ -1040,7 +1040,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public StackManipulation getStackManipulation() {
-                    return MethodVariableAccess.loadThisReferenceAndArguments(methodDescription);
+                    return MethodVariableAccess.allArgumentsOf(methodDescription).prependThisReference();
                 }
 
                 @Override
@@ -1115,7 +1115,7 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.loadThisReferenceAndArguments(instrumentedMethod),
+                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             instrumentedMethod.isStatic()
                                     ? instrumentedMethod.getParameters().asTypeList().asRawTypes()
                                     : join(instrumentedMethod.getDeclaringType().asRawType(), instrumentedMethod.getParameters().asTypeList().asRawTypes()));
@@ -1147,7 +1147,8 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.loadArguments(instrumentedMethod), instrumentedMethod.getParameters().asTypeList().asRawTypes());
+                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod),
+                            instrumentedMethod.getParameters().asTypeList().asRawTypes());
                 }
 
                 @Override

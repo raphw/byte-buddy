@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -9,7 +10,9 @@ import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A stack assignment that loads a method variable from a given index of the local variable array.
@@ -95,72 +98,8 @@ public enum MethodVariableAccess {
         }
     }
 
-    /**
-     * Loads all method arguments for a given method onto the operand stack, including a reference to {@code this},
-     * if the method is non-static.
-     *
-     * @param methodDescription The method for which all method arguments should be loaded onto the stack, including
-     *                          a reference to {@code this} if the method is non-static.
-     * @return A stack manipulation representing the loading of all method arguments including a reference to the
-     * instance if any.
-     */
-    public static StackManipulation loadThisReferenceAndArguments(MethodDescription methodDescription) {
-        return loadArguments(methodDescription, TypeCastingHandler.NoOp.INSTANCE, true);
-    }
-
-    /**
-     * Loads all method arguments for a given method onto the operand stack.
-     *
-     * @param methodDescription The method for which all method arguments should be loaded onto the stack.
-     * @return A stack manipulation representing the loading of all method arguments.
-     */
-    public static StackManipulation loadArguments(MethodDescription methodDescription) {
-        return loadArguments(methodDescription, TypeCastingHandler.NoOp.INSTANCE, false);
-    }
-
-    /**
-     * Creates a stack manipulation for loading all parameters of a Java bridge method onto the operand stack where
-     * all variables of the bridge method are casted to the parameter types of the target method. For legally
-     * applying this manipulation, the bridge method's parameters must all be super types of the target method.
-     * The resulting stack manipulation does not load the {@code this} reference onto the operand stack.
-     *
-     * @param bridgeMethod The bridge method that is invoking its target method.
-     * @param targetMethod The target of the bridge method.
-     * @return A stack manipulation that loads all parameters of the bridge method onto the stack while type casting
-     * the parameters to the value of its target method.
-     */
-    public static StackManipulation forBridgeMethodInvocation(MethodDescription bridgeMethod,
-                                                              MethodDescription targetMethod) {
-        return loadArguments(bridgeMethod, new TypeCastingHandler.ForBridgeTarget(targetMethod), false);
-    }
-
-    /**
-     * Loads all arguments of a given method onto the stack.
-     *
-     * @param methodDescription    The method for which all method arguments should be loaded onto the stack.
-     * @param typeCastingHandler   A handler for applying type castings, if required.
-     * @param includeThisReference {@code true} if the {@code this} references should also be loaded onto the stack.
-     * @return A stack manipulation representing the specified variable loading.
-     */
-    private static StackManipulation loadArguments(MethodDescription methodDescription,
-                                                   TypeCastingHandler typeCastingHandler,
-                                                   boolean includeThisReference) {
-        int stackValues = (!includeThisReference || methodDescription.isStatic() ? 0 : 1) + methodDescription.getParameters().size();
-        StackManipulation[] stackManipulation = new StackManipulation[stackValues];
-        int parameterIndex = 0, offset;
-        if (!methodDescription.isStatic()) {
-            if (includeThisReference) {
-                stackManipulation[parameterIndex++] = MethodVariableAccess.REFERENCE.loadOffset(0);
-            }
-            offset = StackSize.SINGLE.getSize();
-        } else {
-            offset = StackSize.ZERO.getSize();
-        }
-        for (TypeDescription parameterType : methodDescription.getParameters().asTypeList().asRawTypes()) {
-            stackManipulation[parameterIndex++] = typeCastingHandler.wrapNext(forType(parameterType).loadOffset(offset), parameterType);
-            offset += parameterType.getStackSize().getSize();
-        }
-        return new StackManipulation.Compound(stackManipulation);
+    public static MethodLoading allArgumentsOf(MethodDescription methodDescription) {
+        return new MethodLoading(methodDescription, MethodLoading.TypeCastingHandler.NoOp.INSTANCE);
     }
 
     /**
@@ -179,81 +118,6 @@ public enum MethodVariableAccess {
     @Override
     public String toString() {
         return "MethodVariableAccess." + name();
-    }
-
-    /**
-     * A handler for optionally applying a type casting for each method parameter that is loaded onto the operand
-     * stack.
-     */
-    protected interface TypeCastingHandler {
-
-        /**
-         * Returns the given stack manipulation while possibly wrapping the operation by a type casting
-         * if this is required.
-         *
-         * @param variableAccess The stack manipulation that representedBy the variable access.
-         * @param parameterType  The type of the loaded variable that is represented by the stack manipulation.
-         * @return A stack manipulation that representedBy the given variable access and potentially an additional
-         * type casting.
-         */
-        StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType);
-
-        /**
-         * A non-operative implementation of a
-         * {@link net.bytebuddy.implementation.bytecode.member.MethodVariableAccess.TypeCastingHandler}
-         * that merely returns the given stack manipulation.
-         */
-        enum NoOp implements TypeCastingHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType) {
-                return variableAccess;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodVariableAccess.TypeCastingHandler.NoOp." + name();
-            }
-        }
-
-        /**
-         * A {@link net.bytebuddy.implementation.bytecode.member.MethodVariableAccess.TypeCastingHandler}
-         * that casts all parameters that are loaded for a method to their target method's type.
-         */
-        class ForBridgeTarget implements TypeCastingHandler {
-
-            /**
-             * An iterator over all parameter types of the target method.
-             */
-            private final Iterator<TypeDescription> typeIterator;
-
-            /**
-             * Creates a new type casting handler for a bridge method.
-             *
-             * @param targetMethod The target of the bridge method.
-             */
-            public ForBridgeTarget(MethodDescription targetMethod) {
-                typeIterator = targetMethod.getParameters().asTypeList().asRawTypes().iterator();
-            }
-
-            @Override
-            public StackManipulation wrapNext(StackManipulation variableAccess, TypeDescription parameterType) {
-                TypeDescription targetParameterType = typeIterator.next();
-                return targetParameterType.equals(parameterType)
-                        ? variableAccess
-                        : new StackManipulation.Compound(variableAccess, TypeCasting.to(targetParameterType));
-            }
-
-            @Override
-            public String toString() {
-                return "MethodVariableAccess.TypeCastingHandler.ForBridgeTarget{typeIterator=" + typeIterator + '}';
-            }
-        }
     }
 
     /**
@@ -328,6 +192,124 @@ public enum MethodVariableAccess {
             return "MethodVariableAccess.ArgumentLoadingStackManipulation{" +
                     "methodVariableAccess=" + MethodVariableAccess.this +
                     " ,variableIndex=" + variableIndex + '}';
+        }
+    }
+
+    public static class MethodLoading implements StackManipulation {
+
+        private final MethodDescription methodDescription;
+
+        private final TypeCastingHandler typeCastingHandler;
+
+        public MethodLoading(MethodDescription methodDescription, TypeCastingHandler typeCastingHandler) {
+            this.methodDescription = methodDescription;
+            this.typeCastingHandler = typeCastingHandler;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(methodDescription.getParameters().size() * 2);
+            for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
+                TypeDescription parameterType = parameterDescription.getType().asRawType();
+                stackManipulations.add(forType(parameterType).loadOffset(parameterDescription.getOffset()));
+                stackManipulations.add(typeCastingHandler.ofIndex(parameterType, parameterDescription.getIndex()));
+            }
+            return new Compound(stackManipulations).apply(methodVisitor, implementationContext);
+        }
+
+        public StackManipulation prependThisReference() {
+            return methodDescription.isStatic()
+                    ? this
+                    : new Compound(MethodVariableAccess.REFERENCE.loadOffset(0), this);
+        }
+
+        public StackManipulation asBridgeOf(MethodDescription methodDescription) {
+            return new MethodLoading(methodDescription, new TypeCastingHandler.ForBridgeTarget(methodDescription));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            MethodLoading that = (MethodLoading) other;
+            return methodDescription.equals(that.methodDescription) && typeCastingHandler.equals(that.typeCastingHandler);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = methodDescription.hashCode();
+            result = 31 * result + typeCastingHandler.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodVariableAccess.MethodLoading{" +
+                    "methodDescription=" + methodDescription +
+                    ", typeCastingHandler=" + typeCastingHandler +
+                    '}';
+        }
+
+        protected interface TypeCastingHandler {
+
+            StackManipulation ofIndex(TypeDescription parameterType, int index);
+
+            enum NoOp implements TypeCastingHandler {
+
+                INSTANCE;
+
+                @Override
+                public StackManipulation ofIndex(TypeDescription parameterType, int index) {
+                    return LegalTrivial.INSTANCE;
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodVariableAccess.MethodLoading.TypeCastingHandler.NoOp." + name();
+                }
+            }
+
+            class ForBridgeTarget implements TypeCastingHandler {
+
+                private final MethodDescription bridgeTarget;
+
+                public ForBridgeTarget(MethodDescription bridgeTarget) {
+                    this.bridgeTarget = bridgeTarget;
+                }
+
+                @Override
+                public StackManipulation ofIndex(TypeDescription parameterType, int index) {
+                    TypeDescription targetType = bridgeTarget.getParameters().get(index).getType().asRawType();
+                    return parameterType.equals(targetType)
+                            ? LegalTrivial.INSTANCE
+                            : TypeCasting.to(targetType);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForBridgeTarget that = (ForBridgeTarget) other;
+                    return bridgeTarget.equals(that.bridgeTarget);
+                }
+
+                @Override
+                public int hashCode() {
+                    return bridgeTarget.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodVariableAccess.MethodLoading.TypeCastingHandler.ForBridgeTarget{" +
+                            "bridgeTarget=" + bridgeTarget +
+                            '}';
+                }
+            }
         }
     }
 }

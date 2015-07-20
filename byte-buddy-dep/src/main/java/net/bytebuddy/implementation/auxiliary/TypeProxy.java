@@ -876,7 +876,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                     return new StackManipulation.Compound(
                             MethodVariableAccess.REFERENCE.loadOffset(0),
                             fieldLoadingInstruction,
-                            MethodVariableAccess.forBridgeMethodInvocation(instrumentedMethod, proxyMethod),
+                            MethodVariableAccess.allArgumentsOf(instrumentedMethod).asBridgeOf(proxyMethod),
                             MethodInvocation.invoke(proxyMethod),
                             MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                     ).apply(methodVisitor, implementationContext);

@@ -24,12 +24,13 @@ public class MethodVariableAccessOtherTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodVariableAccess.class).apply();
         ObjectPropertyAssertion.of(MethodVariableAccess.ArgumentLoadingStackManipulation.class).apply();
-        ObjectPropertyAssertion.of(MethodVariableAccess.TypeCastingHandler.ForBridgeTarget.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
-            @Override
-            public void apply(MethodDescription mock) {
-                when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
-            }
-        }).applyBasic();
-        ObjectPropertyAssertion.of(MethodVariableAccess.TypeCastingHandler.NoOp.class).apply();
+        ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.TypeCastingHandler.ForBridgeTarget.class)
+                .refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
+                    @Override
+                    public void apply(MethodDescription mock) {
+                        when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
+                    }
+                }).applyBasic();
+        ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.TypeCastingHandler.NoOp.class).apply();
     }
 }
