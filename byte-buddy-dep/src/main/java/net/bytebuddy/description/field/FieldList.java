@@ -1,6 +1,7 @@
 package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -35,6 +36,8 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
      */
     ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
+    FieldList<FieldDescription.InDeclaredForm> asDeclared();
+
     /**
      * An abstract base implementation of a {@link FieldList}.
      */
@@ -52,6 +55,15 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
                 tokens.add(fieldDescription.asToken(targetTypeMatcher));
             }
             return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(tokens);
+        }
+
+        @Override
+        public FieldList<FieldDescription.InDeclaredForm> asDeclared() {
+            List<FieldDescription.InDeclaredForm> declaredForms = new ArrayList<FieldDescription.InDeclaredForm>(size());
+            for (FieldDescription fieldDescription : this) {
+                declaredForms.add(fieldDescription.asDeclared());
+            }
+            return new Explicit<FieldDescription.InDeclaredForm>(declaredForms);
         }
 
         @Override
@@ -226,6 +238,11 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.<FieldDescription.Token>emptyList());
+        }
+
+        @Override
+        public FieldList<FieldDescription.InDeclaredForm> asDeclared() {
+            return this;
         }
     }
 }

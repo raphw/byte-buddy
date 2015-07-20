@@ -36,6 +36,8 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      */
     ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
+    MethodList<MethodDescription.InDeclaredForm> asDeclared();
+
     /**
      * A base implementation of a {@link MethodList}.
      */
@@ -58,6 +60,15 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
                 tokens.add(fieldDescription.asToken(targetTypeMatcher));
             }
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(tokens);
+        }
+
+        @Override
+        public MethodList<MethodDescription.InDeclaredForm> asDeclared() {
+            List<MethodDescription.InDeclaredForm> declaredForms = new ArrayList<MethodDescription.InDeclaredForm>(size());
+            for (MethodDescription methodDescription : this) {
+                declaredForms.add(methodDescription.asDeclared());
+            }
+            return new Explicit<MethodDescription.InDeclaredForm>(declaredForms);
         }
     }
 
@@ -250,6 +261,11 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         @Override
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(Collections.<MethodDescription.Token>emptyList());
+        }
+
+        @Override
+        public MethodList<MethodDescription.InDeclaredForm> asDeclared() {
+            return this;
         }
     }
 }

@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -35,6 +36,10 @@ public class InlineImplementationMatcherTest {
     @Before
     public void setUp() throws Exception {
         latentMethodMatcher = new InliningImplementationMatcher(ignoredMethods, predefinedMethods);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(otherType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(otherType.asRawType()).thenReturn(otherType);
     }
 
     @Test

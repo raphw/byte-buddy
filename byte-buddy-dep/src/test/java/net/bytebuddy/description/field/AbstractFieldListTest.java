@@ -27,6 +27,11 @@ public abstract class AbstractFieldListTest<U, V extends FieldDescription> exten
                 .TokenList<FieldDescription.Token>(Collections.singletonList(asElement(getFirst()).asToken(none())))));
     }
 
+    @Test
+    public void testDeclared() throws Exception {
+        assertThat(asList(Collections.singletonList(getFirst())).asDeclared(), is(Collections.singletonList(asElement(getFirst()).asDeclared())));
+    }
+
     protected static class Foo {
 
         Void foo;

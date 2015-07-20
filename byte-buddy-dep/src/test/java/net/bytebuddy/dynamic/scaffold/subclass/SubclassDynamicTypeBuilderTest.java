@@ -363,9 +363,9 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .getLoaded();
         assertEquals(String.class, dynamicType.getDeclaredMethod(FOO).getReturnType());
         assertThat(dynamicType.getDeclaredMethod(FOO).getGenericReturnType(), is((Type) String.class));
-        SuperCall<String> superCall = (SuperCall<String>) dynamicType.newInstance();
-        assertThat(superCall.foo(FOO), is(FOO));
-        superCall.assertOnlyCall(FOO);
+        BridgeRetention<String> bridgeRetention = (BridgeRetention<String>) dynamicType.newInstance();
+        assertThat(bridgeRetention.foo(), is(FOO));
+        bridgeRetention.assertZeroCalls();
     }
 
     @Test

@@ -27,6 +27,16 @@ public abstract class AbstractParameterListTest<U extends ParameterDescription, 
         assertThat(asList(Collections.singletonList(getFirst())).asTokenList(none()).getOnly().getType(), is(GenericTypeDescription.Sort.describe(Void.class)));
     }
 
+    @Test
+    public void testTypeList() throws Exception {
+        assertThat(asList(Collections.singletonList(getFirst())).asTypeList(), is(Collections.singletonList(asElement(getFirst()).getType())));
+    }
+
+    @Test
+    public void testDeclared() throws Exception {
+        assertThat(asList(Collections.singletonList(getFirst())).asDeclared(), is(Collections.singletonList(asElement(getFirst()).asDeclared())));
+    }
+
     protected static class Foo {
 
         public void foo(Void v) {

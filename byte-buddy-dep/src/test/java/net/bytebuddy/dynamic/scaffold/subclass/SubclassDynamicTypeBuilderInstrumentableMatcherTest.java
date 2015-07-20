@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -35,6 +36,10 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
     @Before
     public void setUp() throws Exception {
         latentMethodMatcher = new SubclassDynamicTypeBuilder.InstrumentableMatcher(ignoredMethods);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(otherType.asRawType()).thenReturn(otherType);
+        when(otherType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
     }
 
     @Test

@@ -45,6 +45,8 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      */
     ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
+    ParameterList<ParameterDescription.InDeclaredForm> asDeclared();
+
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
      *
@@ -88,6 +90,15 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 types.add(parameterDescription.getType());
             }
             return new GenericTypeList.Explicit(types);
+        }
+
+        @Override
+        public ParameterList<ParameterDescription.InDeclaredForm> asDeclared() {
+            List<ParameterDescription.InDeclaredForm> declaredForms = new ArrayList<ParameterDescription.InDeclaredForm>(size());
+            for (ParameterDescription parameterDescription : this) {
+                declaredForms.add(parameterDescription.asDeclared());
+            }
+            return new Explicit<ParameterDescription.InDeclaredForm>(declaredForms);
         }
 
         @Override
@@ -466,6 +477,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         @Override
         public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
+        }
+
+        @Override
+        public ParameterList<ParameterDescription.InDeclaredForm> asDeclared() {
+            return this;
         }
     }
 }

@@ -10,29 +10,26 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertArrayEquals;
@@ -242,14 +239,15 @@ public abstract class AbstractDynamicTypeBuilderTest {
         }
     }
 
-    public static class BridgeRetention<T> {
+    public static class BridgeRetention<T> extends CallTraceable {
 
         public T foo() {
+            register(FOO);
             return null;
         }
 
         public static class Inner extends BridgeRetention<String> {
-        /* empty */
+            /* empty */
         }
     }
 
@@ -261,7 +259,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         }
 
         public static class Inner extends SuperCall<String> {
-        /* empty */
+            /* empty */
         }
     }
 

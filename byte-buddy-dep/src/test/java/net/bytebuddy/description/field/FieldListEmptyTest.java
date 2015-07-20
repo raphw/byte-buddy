@@ -17,5 +17,10 @@ public class FieldListEmptyTest {
     @Test
     public void testTokenListWithoutFilter() throws Exception {
         assertThat(new FieldList.Empty().asTokenList().size(), is(0));
+}
+
+    @Test
+    public void testDeclaredList() throws Exception {
+        assertThat(new FieldList.Empty().asDeclared().size(), is(0));
     }
 }
