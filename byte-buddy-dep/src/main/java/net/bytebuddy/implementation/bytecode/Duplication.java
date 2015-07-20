@@ -36,7 +36,7 @@ public enum Duplication implements StackManipulation {
     private final Size size;
 
     /**
-     * The opcode that representedBy the manipulation.
+     * The opcode that represents the manipulation.
      */
     private final int opcode;
 
@@ -44,7 +44,7 @@ public enum Duplication implements StackManipulation {
      * Creates a new duplication.
      *
      * @param stackSize The size representing the impact of applying the duplication onto the operand stack.
-     * @param opcode    The opcode that representedBy the manipulation.
+     * @param opcode    The opcode that represents the manipulation.
      */
     Duplication(StackSize stackSize, int opcode) {
         size = stackSize.toIncreasingSize();

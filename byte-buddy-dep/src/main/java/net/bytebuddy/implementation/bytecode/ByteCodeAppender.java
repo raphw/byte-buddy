@@ -150,7 +150,7 @@ public interface ByteCodeAppender {
     }
 
     /**
-     * A simple byte code appender that only representedBy a given array of
+     * A simple byte code appender that only represents a given array of
      * {@link StackManipulation}s.
      */
     class Simple implements ByteCodeAppender {
@@ -161,7 +161,7 @@ public interface ByteCodeAppender {
         private final StackManipulation stackManipulation;
 
         /**
-         * Creates a new simple byte code appender which representedBy the given stack manipulation.
+         * Creates a new simple byte code appender which represents the given stack manipulation.
          *
          * @param stackManipulation The stack manipulations to apply for this byte code appender in their application
          *                          order.

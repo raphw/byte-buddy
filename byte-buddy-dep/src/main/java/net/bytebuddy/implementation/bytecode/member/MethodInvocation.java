@@ -172,7 +172,7 @@ public enum MethodInvocation {
          * @param returnType The return type of the method to be bound.
          * @param methodType The parameter types of the method to be bound.
          * @param arguments  The arguments to be passed to the bootstrap method.
-         * @return A stack manipulation that representedBy the dynamic method invocation.
+         * @return A stack manipulation that represents the dynamic method invocation.
          */
         StackManipulation dynamic(String methodName,
                                   TypeDescription returnType,

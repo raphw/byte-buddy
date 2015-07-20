@@ -253,7 +253,7 @@ public @interface Morph {
 
             /**
              * An implicit default method locator that only permits the invocation of a default method if the source
-             * method itself representedBy a method that was defined on a default method interface.
+             * method itself represents a method that was defined on a default method interface.
              */
             enum Implicit implements DefaultMethodLocator {
 

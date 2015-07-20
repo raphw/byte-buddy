@@ -130,7 +130,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     /**
      * Creates an unboxing responsible that is capable of unboxing a wrapper type.
      * <ol>
-     * <li>If the reference type representedBy a wrapper type, the wrapper type will simply be unboxed.</li>
+     * <li>If the reference type represents a wrapper type, the wrapper type will simply be unboxed.</li>
      * <li>If the reference type does not represent a wrapper type, the wrapper type will be inferred by the primitive target
      * type that is later given to the
      * {@link net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveUnboxingDelegate.UnboxingResponsible}

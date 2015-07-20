@@ -175,7 +175,7 @@ public interface StackManipulation {
     class Compound implements StackManipulation {
 
         /**
-         * The stack manipulations this compound operation representedBy in their application order.
+         * The stack manipulations this compound operation represents in their application order.
          */
         private final List<StackManipulation> stackManipulations;
 

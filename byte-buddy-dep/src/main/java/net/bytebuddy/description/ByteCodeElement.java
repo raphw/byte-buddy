@@ -66,14 +66,14 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         class TokenList<S extends Token<S>> extends FilterableList.AbstractBase<S, TokenList<S>> {
 
             /**
-             * The tokens that this list representedBy.
+             * The tokens that this list represents.
              */
             private final List<? extends S> tokens;
 
             /**
              * Creates a list of tokens.
              *
-             * @param tokens The tokens that this list representedBy.
+             * @param tokens The tokens that this list represents.
              */
             public TokenList(List<? extends S> tokens) {
                 this.tokens = tokens;

@@ -181,7 +181,7 @@ public interface ClassFileLocator {
         /**
          * Creates a class file locator for a given class loader.
          *
-         * @param classLoader The class loader to be used. If this class loader representedBy the bootstrap class
+         * @param classLoader The class loader to be used. If this class loader represents the bootstrap class
          *                    loader which is represented by the {@code null} value, this system class loader
          *                    is used instead.
          * @return A corresponding source locator.

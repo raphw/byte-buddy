@@ -23,7 +23,7 @@ import java.util.*;
 public interface GenericTypeDescription extends NamedElement {
 
     /**
-     * Returns the sort of the generic type this instance representedBy.
+     * Returns the sort of the generic type this instance represents.
      *
      * @return The sort of the generic type.
      */
@@ -277,63 +277,63 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         /**
-         * Checks if this type form representedBy a non-generic type.
+         * Checks if this type form represents a non-generic type.
          *
-         * @return {@code true} if this type form representedBy a non-generic.
+         * @return {@code true} if this type form represents a non-generic.
          */
         public boolean isNonGeneric() {
             return this == NON_GENERIC;
         }
 
         /**
-         * Checks if this type form representedBy a parameterized type.
+         * Checks if this type form represents a parameterized type.
          *
-         * @return {@code true} if this type form representedBy a parameterized type.
+         * @return {@code true} if this type form represents a parameterized type.
          */
         public boolean isParameterized() {
             return this == PARAMETERIZED;
         }
 
         /**
-         * Checks if this type form representedBy a generic array.
+         * Checks if this type form represents a generic array.
          *
-         * @return {@code true} if this type form representedBy a generic array.
+         * @return {@code true} if this type form represents a generic array.
          */
         public boolean isGenericArray() {
             return this == GENERIC_ARRAY;
         }
 
         /**
-         * Checks if this type form representedBy a wildcard.
+         * Checks if this type form represents a wildcard.
          *
-         * @return {@code true} if this type form representedBy a wildcard.
+         * @return {@code true} if this type form represents a wildcard.
          */
         public boolean isWildcard() {
             return this == WILDCARD;
         }
 
         /**
-         * Checks if this type form representedBy an attached type variable.
+         * Checks if this type form represents an attached type variable.
          *
-         * @return {@code true} if this type form representedBy an attached type variable.
+         * @return {@code true} if this type form represents an attached type variable.
          */
         public boolean isTypeVariable() {
             return this == VARIABLE;
         }
 
         /**
-         * Checks if this type form representedBy a detached type variable.
+         * Checks if this type form represents a detached type variable.
          *
-         * @return {@code true} if this type form representedBy a detached type variable.
+         * @return {@code true} if this type form represents a detached type variable.
          */
         public boolean isDetachedTypeVariable() {
             return this == VARIABLE_DETACHED;
         }
 
         /**
-         * Checks if this type form representedBy a symbolic type variable.
+         * Checks if this type form represents a symbolic type variable.
          *
-         * @return {@code true} if this type form representedBy a symbolic type variable.
+         * @return {@code true} if this type form represents a symbolic type variable.
          */
         public boolean isSymbolicTypeVariable() {
             return this == VARIABLE_SYMBOLIC;
@@ -437,7 +437,7 @@ public interface GenericTypeDescription extends NamedElement {
         /**
          * A visitor for erasing type variables on the most fine-grained level. In practice, this means:
          * <ul>
-         * <li>Parameterized types are reduced to their erasure if one of its parameters representedBy a type variable or a wildcard with a bound
+         * <li>Parameterized types are reduced to their erasure if one of its parameters represents a type variable or a wildcard with a bound
          * that is a type variable.</li>
          * <li>Wildcards have their bound erased, if required.</li>
          * <li>Type variables are erased.</li>
@@ -967,7 +967,7 @@ public interface GenericTypeDescription extends NamedElement {
 
                 /**
                  * Creates a visitor that binds the variables of the given generic type by the generic type's values. If the provided type
-                 * representedBy a raw generic type or if the generic type is incomplete, the returned visitor erases all found type variables
+                 * represents a raw generic type or if the generic type is incomplete, the returned visitor erases all found type variables
                  * instead.
                  *
                  * @param typeDescription The type description to be bound.
@@ -1031,7 +1031,7 @@ public interface GenericTypeDescription extends NamedElement {
     }
 
     /**
-     * A base implementation of a generic type description that representedBy a generic array.
+     * A base implementation of a generic type description that represents a generic array.
      */
     abstract class ForGenericArray implements GenericTypeDescription {
 
@@ -1215,7 +1215,7 @@ public interface GenericTypeDescription extends NamedElement {
     }
 
     /**
-     * A base implementation of a generic type description that representedBy a wildcard type.
+     * A base implementation of a generic type description that represents a wildcard type.
      */
     abstract class ForWildcardType implements GenericTypeDescription {
 
@@ -1434,7 +1434,7 @@ public interface GenericTypeDescription extends NamedElement {
     }
 
     /**
-     * A base implementation of a generic type description that representedBy a parameterized type.
+     * A base implementation of a generic type description that represents a parameterized type.
      */
     abstract class ForParameterizedType implements GenericTypeDescription {
 
@@ -1801,7 +1801,7 @@ public interface GenericTypeDescription extends NamedElement {
     }
 
     /**
-     * A base implementation of a generic type description that representedBy a type variable.
+     * A base implementation of a generic type description that represents a type variable.
      */
     abstract class ForTypeVariable implements GenericTypeDescription {
 

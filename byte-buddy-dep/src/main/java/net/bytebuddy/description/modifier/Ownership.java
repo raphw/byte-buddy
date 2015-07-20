@@ -61,7 +61,7 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
     /**
      * Checks if the current state describes a {@code static} member.
      *
-     * @return {@code true} if this ownership representation representedBy a {@code static} member.
+     * @return {@code true} if this ownership representation represents a {@code static} member.
      */
     public boolean isStatic() {
         return this == STATIC;

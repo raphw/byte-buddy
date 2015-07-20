@@ -28,7 +28,7 @@ public class TypeCreation implements StackManipulation {
      * Creates a type creation for the given type.
      *
      * @param typeDescription The type to be create.
-     * @return A stack manipulation that representedBy the creation of the given type.
+     * @return A stack manipulation that represents the creation of the given type.
      */
     public static StackManipulation forType(TypeDescription typeDescription) {
         if (typeDescription.isArray() || typeDescription.isPrimitive() || typeDescription.isAbstract()) {

@@ -63,7 +63,7 @@ public interface AgentBuilder {
      * @param matcher A matcher that decides if the entailed
      *                {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for a type that
      *                is being loaded.
-     * @return A definable that representedBy this agent builder which allows for the definition of one or several
+     * @return A definable that represents this agent builder which allows for the definition of one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code matcher}
      * indicates a match.
      */
@@ -77,7 +77,7 @@ public interface AgentBuilder {
      *                    decides if the entailed
      *                    {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for that
      *                    type.
-     * @return A definable that representedBy this agent builder which allows for the definition of one or several
+     * @return A definable that represents this agent builder which allows for the definition of one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code typeMatcher}
      * indicates a match.
      */
@@ -95,7 +95,7 @@ public interface AgentBuilder {
      *                           {@link java.lang.ClassLoader} that is loading the type being loaded. This matcher
      *                           is always applied first where the type matcher is not applied in case that this
      *                           matcher does not indicate a match.
-     * @return A definable that representedBy this agent builder which allows for the definition of one or several
+     * @return A definable that represents this agent builder which allows for the definition of one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
      * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
      */
@@ -240,7 +240,7 @@ public interface AgentBuilder {
          *
          * @param typeDescription     A description of the type to be instrumented.
          * @param classLoader         The class loader of the instrumented type. Might be {@code null} if this class
-         *                            loader representedBy the bootstrap class loader.
+         *                            loader represents the bootstrap class loader.
          * @param classBeingRedefined The class being redefined which is only not {@code null} if a retransofmration
          *                            is applied.
          * @param protectionDomain    The protection domain of the type being transformed.
@@ -414,7 +414,7 @@ public interface AgentBuilder {
          * @param typeName             The binary name of the type that is being instrumented.
          * @param binaryRepresentation The binary representation of the instrumented type.
          * @param classLoader          The class loader of the instrumented type. Might be {@code null} if this class
-         *                             loader representedBy the bootstrap class loader.
+         *                             loader represents the bootstrap class loader.
          * @return This binary locator in its initialized form.
          */
         Initialized initialize(String typeName, byte[] binaryRepresentation, ClassLoader classLoader);
@@ -1036,7 +1036,7 @@ public interface AgentBuilder {
              * @param name                  The name of the type for which the loaded type initializer is to be
              *                              registered.
              * @param classLoader           The class loader of the instrumented type. Might be {@code null} if
-             *                              this class loader representedBy the bootstrap class loader.
+             *                              this class loader represents the bootstrap class loader.
              * @param loadedTypeInitializer The loaded type initializer that is being registered.
              */
             void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer);
@@ -1699,7 +1699,7 @@ public interface AgentBuilder {
             /**
              * Materializes the currently described {@link net.bytebuddy.agent.builder.AgentBuilder.Default.Transformation}.
              *
-             * @return An agent builder that representedBy the currently described entry of this instance.
+             * @return An agent builder that represents the currently described entry of this instance.
              */
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,

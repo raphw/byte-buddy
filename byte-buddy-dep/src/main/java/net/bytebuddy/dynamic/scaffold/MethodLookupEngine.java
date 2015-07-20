@@ -654,7 +654,7 @@ public interface MethodLookupEngine {
     }
 
     /**
-     * This method description representedBy a method that is defined in a non-interface type and overrides a method
+     * This method description represents a method that is defined in a non-interface type and overrides a method
      * in another class it directly or indirectly extends.
      */
     class OverriddenClassMethod extends MethodDescription.AbstractMethodDescription {
@@ -687,7 +687,7 @@ public interface MethodLookupEngine {
          *
          * @param overridingMethod The most specific method that is overriding another method.
          * @param overriddenMethod The method that is overridden by the {@code overridingMethod}.
-         * @return A method description that representedBy the overriding method while considering how to properly
+         * @return A method description that represents the overriding method while considering how to properly
          * specialize on invoking the overridden method.
          */
         public static MethodDescription of(MethodDescription overridingMethod, MethodDescription overriddenMethod) {
@@ -793,7 +793,7 @@ public interface MethodLookupEngine {
     }
 
     /**
-     * This {@link MethodDescription} representedBy methods that are defined
+     * This {@link MethodDescription} represents methods that are defined
      * ambiguously on several interfaces of a common type.
      */
     class ConflictingInterfaceMethod extends MethodDescription.InDeclaredForm.AbstractBase {
@@ -849,9 +849,9 @@ public interface MethodLookupEngine {
          * @param virtualHost       The virtual host which should be used as a declaring class for this virtual method.
          * @param conflictingMethod The method which was already registered when a new method of identical signature
          *                          was discovered. This method might itself be a conflicting interface method and is
-         *                          then resolved for the methods it representedBy method when processing.
+         *                          then resolved for the methods it represents method when processing.
          * @param discoveredMethod  The new discovered method. This method must not be a conflicting interface method.
-         * @return A new method description that representedBy the conflicting methods.
+         * @return A new method description that represents the conflicting methods.
          */
         protected static MethodDescription of(TypeDescription virtualHost,
                                               MethodDescription conflictingMethod,

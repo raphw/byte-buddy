@@ -155,7 +155,7 @@ public abstract class FieldAccessor implements Implementation {
      * @param implementationContext The implementation context of the current implementation.
      * @param fieldDescription      The description of the field to access.
      * @param methodDescription     The method that is target of the implementation.
-     * @param fieldAccess           The manipulation that representedBy the field access.
+     * @param fieldAccess           The manipulation that represents the field access.
      * @return A suitable {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
      */
     private ByteCodeAppender.Size apply(MethodVisitor methodVisitor,

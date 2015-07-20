@@ -756,7 +756,7 @@ public class InvokeDynamic implements Implementation {
     /**
      * Returns the invocation provider to be used for equals and hash code calculations.
      *
-     * @return The invocation provider that representedBy this instance.
+     * @return The invocation provider that represents this instance.
      */
     protected InvocationProvider getInvocationProvider() {
         return invocationProvider;
@@ -1326,14 +1326,14 @@ public class InvokeDynamic implements Implementation {
                 protected class WrappingArgumentProvider implements ArgumentProvider {
 
                     /**
-                     * The stack manipulation that representedBy the loading of the primitive value.
+                     * The stack manipulation that represents the loading of the primitive value.
                      */
                     private final StackManipulation stackManipulation;
 
                     /**
                      * Creates a new wrapping argument provider.
                      *
-                     * @param stackManipulation The stack manipulation that representedBy the loading of the
+                     * @param stackManipulation The stack manipulation that represents the loading of the
                      *                          primitive value.
                      */
                     protected WrappingArgumentProvider(StackManipulation stackManipulation) {
@@ -3375,7 +3375,7 @@ public class InvokeDynamic implements Implementation {
         private final Object value;
 
         /**
-         * An argument provider that representedBy the argument with an implicit type.
+         * An argument provider that represents the argument with an implicit type.
          */
         private final InvocationProvider.ArgumentProvider argumentProvider;
 

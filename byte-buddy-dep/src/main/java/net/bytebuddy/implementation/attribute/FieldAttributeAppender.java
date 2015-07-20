@@ -69,7 +69,7 @@ public interface FieldAttributeAppender {
         class Compound implements Factory {
 
             /**
-             * The factories that this compound factory representedBy in their application order.
+             * The factories that this compound factory represents in their application order.
              */
             private final Factory[] factory;
 
@@ -250,7 +250,7 @@ public interface FieldAttributeAppender {
     class Compound implements FieldAttributeAppender {
 
         /**
-         * The field attribute appenders this appender representedBy in their application order.
+         * The field attribute appenders this appender represents in their application order.
          */
         private final FieldAttributeAppender[] fieldAttributeAppender;
 

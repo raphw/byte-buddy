@@ -86,46 +86,46 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     int getAdjustedModifiers(boolean nonAbstract);
 
     /**
-     * Checks if this method description representedBy a constructor.
+     * Checks if this method description represents a constructor.
      *
-     * @return {@code true} if this method description representedBy a constructor.
+     * @return {@code true} if this method description represents a constructor.
      */
     boolean isConstructor();
 
     /**
-     * Checks if this method description representedBy a method, i.e. not a constructor or a type initializer.
+     * Checks if this method description represents a method, i.e. not a constructor or a type initializer.
      *
-     * @return {@code true} if this method description representedBy a method.
+     * @return {@code true} if this method description represents a method.
      */
     boolean isMethod();
 
     /**
      * Checks if this method is a type initializer.
      *
-     * @return {@code true} if this method description representedBy a type initializer.
+     * @return {@code true} if this method description represents a type initializer.
      */
     boolean isTypeInitializer();
 
     /**
-     * Verifies if a method description representedBy a given loaded method.
+     * Verifies if a method description represents a given loaded method.
      *
      * @param method The method to be checked.
-     * @return {@code true} if this method description representedBy the given loaded method.
+     * @return {@code true} if this method description represents the given loaded method.
      */
     boolean represents(Method method);
 
     /**
-     * Verifies if a method description representedBy a given loaded constructor.
+     * Verifies if a method description represents a given loaded constructor.
      *
      * @param constructor The constructor to be checked.
-     * @return {@code true} if this method description representedBy the given loaded constructor.
+     * @return {@code true} if this method description represents the given loaded constructor.
      */
     boolean represents(Constructor<?> constructor);
 
     /**
-     * Verifies if this method description representedBy an overridable method.
+     * Verifies if this method description represents an overridable method.
      *
-     * @return {@code true} if this method description representedBy an overridable method.
+     * @return {@code true} if this method description represents an overridable method.
      */
     boolean isOverridable();
 
@@ -139,7 +139,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     int getStackSize();
 
     /**
-     * Checks if this method representedBy a Java 8+ default method.
+     * Checks if this method represents a Java 8+ default method.
      *
      * @return {@code true} if this method is a default method.
      */
@@ -1030,7 +1030,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         /**
-         * A method description that representedBy the type initializer.
+         * A method description that represents the type initializer.
          */
         public static class TypeInitializer extends MethodDescription.InDeclaredForm.AbstractBase {
 
@@ -1096,7 +1096,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     }
 
     /**
-     * A method description that representedBy a given method but with substituted method types.
+     * A method description that represents a given method but with substituted method types.
      */
     class TypeSubstituting extends AbstractMethodDescription {
 
@@ -1259,14 +1259,14 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             protected class RetainedVariable extends GenericTypeDescription.ForTypeVariable {
 
                 /**
-                 * The type variable this retained variable representedBy.
+                 * The type variable this retained variable represents.
                  */
                 private final GenericTypeDescription typeVariable;
 
                 /**
                  * Creates a new retained type variable.
                  *
-                 * @param typeVariable The type variable this retained variable representedBy.
+                 * @param typeVariable The type variable this retained variable represents.
                  */
                 protected RetainedVariable(GenericTypeDescription typeVariable) {
                     this.typeVariable = typeVariable;
@@ -1291,7 +1291,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     }
 
     /**
-     * A token that representedBy a method's shape. A method token is equal to another token when the name, the raw return type
+     * A token that represents a method's shape. A method token is equal to another token when the name, the raw return type
      * and the raw parameter types are equal to those of another method token.
      */
     class Token implements ByteCodeElement.Token<Token> {

@@ -42,14 +42,14 @@ public enum DefaultValue implements StackManipulation {
     ANY_REFERENCE(NullConstant.INSTANCE);
 
     /**
-     * The stack manipulation that representedBy the loading of a given default value onto the operand stack.
+     * The stack manipulation that represents the loading of a given default value onto the operand stack.
      */
     private final StackManipulation stackManipulation;
 
     /**
      * Creates a new default value load operation.
      *
-     * @param stackManipulation The stack manipulation that representedBy the loading of a given default value onto the
+     * @param stackManipulation The stack manipulation that represents the loading of a given default value onto the
      *                          operand stack.
      */
     DefaultValue(StackManipulation stackManipulation) {

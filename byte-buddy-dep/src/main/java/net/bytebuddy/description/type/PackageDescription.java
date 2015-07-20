@@ -6,7 +6,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A package description representedBy a Java package.
+ * A package description represents a Java package.
  */
 public interface PackageDescription extends NamedElement.WithRuntimeName, AnnotatedCodeElement {
 
@@ -21,7 +21,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
     int PACKAGE_MODIFIERS = Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_SYNTHETIC;
 
     /**
-     * Checks if this package description representedBy a sealed package. This information is only available
+     * Checks if this package description represents a sealed package. This information is only available
      * for descriptions that represented loaded packages as packages are sealed by a {@link ClassLoader}.
      *
      * @return {@code true} if this package is sealed.

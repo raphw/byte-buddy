@@ -66,12 +66,12 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     class ForLoadedField extends AbstractBase<FieldDescription.InDeclaredForm> {
 
         /**
-         * The loaded fields this field list representedBy.
+         * The loaded fields this field list represents.
          */
         private final List<? extends Field> fields;
 
         /**
-         * Creates a new immutable field list that representedBy an array of loaded field.
+         * Creates a new immutable field list that represents an array of loaded field.
          *
          * @param field An array of fields to be represented by this field list.
          */
@@ -80,7 +80,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         /**
-         * Creates a new immutable field list that representedBy an array of loaded field.
+         * Creates a new immutable field list that represents an array of loaded field.
          *
          * @param fields An array of fields to be represented by this field list.
          */
@@ -105,7 +105,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     class Explicit<S extends FieldDescription> extends AbstractBase<S> {
 
         /**
-         * The list of field descriptions this list representedBy.
+         * The list of field descriptions this list represents.
          */
         private final List<? extends S> fieldDescriptions;
 

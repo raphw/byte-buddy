@@ -33,7 +33,7 @@ public interface ModifierContributor {
     /**
      * Determines if this is the default modifier.
      *
-     * @return {@code true} if this contributor representedBy the default modifier.
+     * @return {@code true} if this contributor represents the default modifier.
      */
     boolean isDefault();
 

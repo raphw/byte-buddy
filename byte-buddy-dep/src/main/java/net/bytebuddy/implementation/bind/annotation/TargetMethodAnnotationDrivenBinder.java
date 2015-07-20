@@ -455,7 +455,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             }
 
             /**
-             * A bound handler representedBy an unambiguous parameter binder that was located for a given array of
+             * A bound handler represents an unambiguous parameter binder that was located for a given array of
              * annotations.
              *
              * @param <T> The annotation type of a given handler.

@@ -53,7 +53,7 @@ public abstract class FixedValue implements Implementation {
      * Creates a fixed value implementation that returns {@code null} as a fixed value. This value is inlined into
      * the method and does not create a field.
      *
-     * @return An implementation that representedBy the {@code null} value.
+     * @return An implementation that represents the {@code null} value.
      */
     public static Implementation nullValue() {
         return value((Object) null);
@@ -228,7 +228,7 @@ public abstract class FixedValue implements Implementation {
      * @param instrumentedMethod      The instrumented method that is target of the implementation.
      * @param fixedValueType          A description of the type of the fixed value that is loaded by the
      *                                {@code valueLoadingInstruction}.
-     * @param valueLoadingInstruction A stack manipulation that representedBy the loading of the fixed value onto the
+     * @param valueLoadingInstruction A stack manipulation that represents the loading of the fixed value onto the
      *                                operand stack.
      * @return A representation of the stack and variable array sized that are required for this implementation.
      */
@@ -280,7 +280,7 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * A fixed value implementation that representedBy its fixed value as a value that is written to the instrumented
+     * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
      * class's constant pool.
      */
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
@@ -363,7 +363,7 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * A fixed value implementation that representedBy its fixed value as a static field of the instrumented class.
+     * A fixed value implementation that represents its fixed value as a static field of the instrumented class.
      */
     protected static class ForStaticField extends FixedValue implements AssignerConfigurable {
 

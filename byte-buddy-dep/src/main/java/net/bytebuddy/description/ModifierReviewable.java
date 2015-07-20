@@ -106,58 +106,58 @@ public interface ModifierReviewable {
     boolean isSuper();
 
     /**
-     * Specifies if the modifier described by this object representedBy the bridge flag.
+     * Specifies if the modifier described by this object represents the bridge flag.
      *
-     * @return {@code true} if the modifier described by this object representedBy the bridge flag
+     * @return {@code true} if the modifier described by this object represents the bridge flag
      */
     boolean isBridge();
 
     /**
-     * Specifies if the modifier described by this object representedBy the deprecated flag.
+     * Specifies if the modifier described by this object represents the deprecated flag.
      *
-     * @return {@code true} if the modifier described by this object representedBy the deprecated flag.
+     * @return {@code true} if the modifier described by this object represents the deprecated flag.
      */
     boolean isDeprecated();
 
     /**
-     * Specifies if the modifier described by this object representedBy the annotation flag.
+     * Specifies if the modifier described by this object represents the annotation flag.
      *
-     * @return {@code true} if the modifier described by this object representedBy the annotation flag.
+     * @return {@code true} if the modifier described by this object represents the annotation flag.
      */
     boolean isAnnotation();
 
     /**
-     * Specifies if the modifier described by this object representedBy the enum flag.
+     * Specifies if the modifier described by this object represents the enum flag.
      *
-     * @return {@code true} if the modifier described by this object representedBy the enum flag.
+     * @return {@code true} if the modifier described by this object represents the enum flag.
      */
     boolean isEnum();
 
     /**
-     * Specifies if the modifier described by this object representedBy the interface flag.
+     * Specifies if the modifier described by this object represents the interface flag.
      *
-     * @return {@code true} if the modifier described by this object representedBy the interface flag.
+     * @return {@code true} if the modifier described by this object represents the interface flag.
      */
     boolean isInterface();
 
     /**
-     * Specifies if the modifier described by this object representedBy the transient flag.
+     * Specifies if the modifier described by this object represents the transient flag.
      *
-     * @return {@code true} if the modifier described by this object representedBy the transient flag.
+     * @return {@code true} if the modifier described by this object represents the transient flag.
      */
     boolean isTransient();
 
     /**
-     * Specifies if the modifier described by this object representedBy the volatile flag.
+     * Specifies if the modifier described by this object represents the volatile flag.
      *
-     * @return {@code true} if the modifier described by this object representedBy the volatile flag.
+     * @return {@code true} if the modifier described by this object represents the volatile flag.
      */
     boolean isVolatile();
 
     /**
-     * Specifies if the modifier described by this object representedBy the var args flag.
+     * Specifies if the modifier described by this object represents the var args flag.
      *
-     * @return {@code true} if the modifier described by this object representedBy the var args flag.
+     * @return {@code true} if the modifier described by this object represents the var args flag.
      */
     boolean isVarArgs();
 

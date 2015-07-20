@@ -44,7 +44,7 @@ public interface TypePool {
      * @param name The name of the type to describe. The name is to be written as when calling {@link Object#toString()}
      *             on a loaded {@link java.lang.Class}.
      * @return A resolution of the type to describe. If the type to be described was found, the returned
-     * {@link net.bytebuddy.pool.TypePool.Resolution} representedBy this type. Otherwise, an illegal resolution is
+     * {@link net.bytebuddy.pool.TypePool.Resolution} represents this type. Otherwise, an illegal resolution is
      * returned.
      */
     Resolution describe(String name);
@@ -60,7 +60,7 @@ public interface TypePool {
     interface Resolution {
 
         /**
-         * Determines if this resolution representedBy a {@link TypeDescription}.
+         * Determines if this resolution represents a {@link TypeDescription}.
          *
          * @return {@code true} if the queried type could be resolved.
          */
@@ -75,7 +75,7 @@ public interface TypePool {
         TypeDescription resolve();
 
         /**
-         * A simple resolution that representedBy a given {@link TypeDescription}.
+         * A simple resolution that represents a given {@link TypeDescription}.
          */
         class Simple implements Resolution {
 
@@ -382,7 +382,7 @@ public interface TypePool {
         }
 
         /**
-         * A resolution for a type that, if resolved, representedBy an array type.
+         * A resolution for a type that, if resolved, represents an array type.
          */
         protected static class ArrayTypeResolution implements Resolution {
 
@@ -397,7 +397,7 @@ public interface TypePool {
             private final int arity;
 
             /**
-             * Creates a wrapper for another resolution that, if resolved, representedBy an array type.
+             * Creates a wrapper for another resolution that, if resolved, represents an array type.
              *
              * @param resolution The underlying resolution that is represented by this instance.
              * @param arity      The arity of the represented array.
@@ -408,13 +408,13 @@ public interface TypePool {
             }
 
             /**
-             * Creates a wrapper for another resolution that, if resolved, representedBy an array type. The wrapper
+             * Creates a wrapper for another resolution that, if resolved, represents an array type. The wrapper
              * is only created if the arity is not zero. If the arity is zero, the given resolution is simply
              * returned instead.
              *
              * @param resolution The underlying resolution that is represented by this instance.
              * @param arity      The arity of the represented array.
-             * @return A wrapper for another resolution that, if resolved, representedBy an array type or the
+             * @return A wrapper for another resolution that, if resolved, represents an array type or the
              * given resolution if the given arity is zero.
              */
             protected static Resolution of(Resolution resolution, int arity) {
@@ -467,7 +467,7 @@ public interface TypePool {
             private final TypePool typePool;
 
             /**
-             * The annotation token that representedBy the nested invocation.
+             * The annotation token that represents the nested invocation.
              */
             private final LazyTypeDescription.AnnotationToken annotationToken;
 
@@ -475,7 +475,7 @@ public interface TypePool {
              * Creates a new annotation value for a nested annotation.
              *
              * @param typePool        The type pool to use for looking up types.
-             * @param annotationToken The token that representedBy the annotation.
+             * @param annotationToken The token that represents the annotation.
              */
             public RawAnnotationValue(TypePool typePool, LazyTypeDescription.AnnotationToken annotationToken) {
                 this.typePool = typePool;
@@ -678,7 +678,7 @@ public interface TypePool {
             }
 
             /**
-             * Represents a loaded annotation property that representedBy a type.
+             * Represents a loaded annotation property that represents a type.
              */
             protected class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Class<?>> {
 
@@ -3250,25 +3250,25 @@ public interface TypePool {
             TypeDescription getEnclosingType(TypePool typePool);
 
             /**
-             * Returns {@code true} if this instance representedBy a self declared type.
+             * Returns {@code true} if this instance represents a self declared type.
              *
-             * @return {@code true} if this instance representedBy a self declared type.
+             * @return {@code true} if this instance represents a self declared type.
              */
             boolean isSelfDeclared();
 
             /**
-             * Returns {@code true} if this instance representedBy a type that was declared within another type but not
+             * Returns {@code true} if this instance represents a type that was declared within another type but not
              * within a method.
              *
-             * @return {@code true} if this instance representedBy a type that was declared within another type but not
+             * @return {@code true} if this instance represents a type that was declared within another type but not
              * within a method.
              */
             boolean isDeclaredInType();
 
             /**
-             * Returns {@code true} if this instance representedBy a type that was declared within a method.
+             * Returns {@code true} if this instance represents a type that was declared within a method.
              *
-             * @return {@code true} if this instance representedBy a type that was declared within a method.
+             * @return {@code true} if this instance represents a type that was declared within a method.
              */
             boolean isDeclaredInMethod();
 
@@ -3470,9 +3470,9 @@ public interface TypePool {
         protected interface GenericTypeToken {
 
             /**
-             * Returns the sort of the generic type this token representedBy.
+             * Returns the sort of the generic type this token represents.
              *
-             * @return The sort of the generic type this token representedBy.
+             * @return The sort of the generic type this token represents.
              */
             Sort getSort();
 
@@ -3486,7 +3486,7 @@ public interface TypePool {
             GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource);
 
             /**
-             * A generic type token that representedBy a primitive type.
+             * A generic type token that represents a primitive type.
              */
             enum ForPrimitiveType implements GenericTypeToken {
 
@@ -3597,7 +3597,7 @@ public interface TypePool {
             }
 
             /**
-             * A generic type token that representedBy an unbound wildcard.
+             * A generic type token that represents an unbound wildcard.
              */
             enum ForUnboundWildcard implements GenericTypeToken {
 
@@ -4033,7 +4033,7 @@ public interface TypePool {
             }
 
             /**
-             * A generic type token that representedBy a non-generic type.
+             * A generic type token that represents a non-generic type.
              */
             class ForRawType implements GenericTypeToken {
 
@@ -4043,7 +4043,7 @@ public interface TypePool {
                 private final String name;
 
                 /**
-                 * Creates a new type token that representedBy a non-generic type.
+                 * Creates a new type token that represents a non-generic type.
                  *
                  * @param name The name of the represented type.
                  */
@@ -4080,7 +4080,7 @@ public interface TypePool {
             }
 
             /**
-             * A generic type token that representedBy a type variable.
+             * A generic type token that represents a type variable.
              */
             class ForTypeVariable implements GenericTypeToken {
 
@@ -4090,7 +4090,7 @@ public interface TypePool {
                 private final String symbol;
 
                 /**
-                 * Creates a generic type token that representedBy a type variable.
+                 * Creates a generic type token that represents a type variable.
                  *
                  * @param symbol This type variable's nominal symbol.
                  */
@@ -4187,7 +4187,7 @@ public interface TypePool {
                     }
 
                     /**
-                     * A type description that representedBy a type variable with bounds that are resolved lazily.
+                     * A type description that represents a type variable with bounds that are resolved lazily.
                      */
                     protected class LazyTypeVariable extends GenericTypeDescription.ForTypeVariable {
 
@@ -4235,7 +4235,7 @@ public interface TypePool {
             }
 
             /**
-             * A generic type token that representedBy a generic array.
+             * A generic type token that represents a generic array.
              */
             class ForGenericArray implements GenericTypeToken {
 
@@ -4245,7 +4245,7 @@ public interface TypePool {
                 private final GenericTypeToken componentTypeToken;
 
                 /**
-                 * Creates a generic type token that representedBy a generic array.
+                 * Creates a generic type token that represents a generic array.
                  *
                  * @param componentTypeToken The array's component type.
                  */
@@ -4288,14 +4288,14 @@ public interface TypePool {
             class ForLowerBoundWildcard implements GenericTypeToken {
 
                 /**
-                 * A token that representedBy the wildcard's lower bound.
+                 * A token that represents the wildcard's lower bound.
                  */
                 private final GenericTypeToken baseType;
 
                 /**
                  * Creates a generic type token for a wildcard that is bound below.
                  *
-                 * @param baseType A token that representedBy the wildcard's lower bound.
+                 * @param baseType A token that represents the wildcard's lower bound.
                  */
                 public ForLowerBoundWildcard(GenericTypeToken baseType) {
                     this.baseType = baseType;
@@ -4336,14 +4336,14 @@ public interface TypePool {
             class ForUpperBoundWildcard implements GenericTypeToken {
 
                 /**
-                 * A token that representedBy the wildcard's upper bound.
+                 * A token that represents the wildcard's upper bound.
                  */
                 private final GenericTypeToken baseType;
 
                 /**
                  * Creates a generic type token for a wildcard that is bound above.
                  *
-                 * @param baseType A token that representedBy the wildcard's upper bound.
+                 * @param baseType A token that represents the wildcard's upper bound.
                  */
                 public ForUpperBoundWildcard(GenericTypeToken baseType) {
                     this.baseType = baseType;
@@ -4379,7 +4379,7 @@ public interface TypePool {
             }
 
             /**
-             * A generic type token that representedBy a parameterized type.
+             * A generic type token that represents a parameterized type.
              */
             class ForParameterizedType implements GenericTypeToken {
 
@@ -4394,7 +4394,7 @@ public interface TypePool {
                 private final List<GenericTypeToken> parameters;
 
                 /**
-                 * Creates a type token that representedBy a parameterized type.
+                 * Creates a type token that represents a parameterized type.
                  *
                  * @param name       The name of the parameterized type's raw type.
                  * @param parameters A list of tokens that represent the parameters of the represented type.
@@ -4455,7 +4455,7 @@ public interface TypePool {
                     private final GenericTypeToken ownerType;
 
                     /**
-                     * Creates a type token that representedBy a parameterized type.
+                     * Creates a type token that represents a parameterized type.
                      *
                      * @param name       The name of the parameterized type's raw type.
                      * @param parameters A list of tokens that represent the parameters of the represented type.
@@ -4547,7 +4547,7 @@ public interface TypePool {
                 }
 
                 /**
-                 * A generic type description that representedBy a parameterized type <b>without</b> an enclosing generic owner type.
+                 * A generic type description that represents a parameterized type <b>without</b> an enclosing generic owner type.
                  */
                 protected class LazyParameterizedType extends GenericTypeDescription.ForParameterizedType {
 
@@ -5324,7 +5324,7 @@ public interface TypePool {
             private final TypePool typePool;
 
             /**
-             * A list of type descriptors that this list representedBy.
+             * A list of type descriptors that this list represents.
              */
             private final List<String> descriptors;
 
@@ -5332,7 +5332,7 @@ public interface TypePool {
              * Creates a list of lazy type descriptions.
              *
              * @param typePool    The type pool to use for locating types.
-             * @param descriptors A list of type descriptors that this list representedBy.
+             * @param descriptors A list of type descriptors that this list represents.
              */
             private LazyTypeList(TypePool typePool, List<String> descriptors) {
                 this.typePool = typePool;

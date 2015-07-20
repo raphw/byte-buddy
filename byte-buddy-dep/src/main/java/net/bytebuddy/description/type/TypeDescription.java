@@ -137,17 +137,17 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     boolean isAssignableTo(TypeDescription typeDescription);
 
     /**
-     * Checks if the type described by this instance representedBy {@code type}.
+     * Checks if the type described by this instance represents {@code type}.
      *
      * @param type The type of interest.
-     * @return {@code true} if the type described by this instance representedBy {@code type}.
+     * @return {@code true} if the type described by this instance represents {@code type}.
      */
     boolean represents(Class<?> type);
 
     /**
      * Checks if the type described by this entity is an array.
      *
-     * @return {@code true} if this type description representedBy an array.
+     * @return {@code true} if this type description represents an array.
      */
     boolean isArray();
 
@@ -163,7 +163,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     /**
      * Checks if the type described by this entity is a primitive type.
      *
-     * @return {@code true} if this type description representedBy a primitive type.
+     * @return {@code true} if this type description represents a primitive type.
      */
     boolean isPrimitive();
 
@@ -211,23 +211,23 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     String getCanonicalName();
 
     /**
-     * Checks if this type description representedBy an anonymous type.
+     * Checks if this type description represents an anonymous type.
      *
-     * @return {@code true} if this type description representedBy an anonymous type.
+     * @return {@code true} if this type description represents an anonymous type.
      */
     boolean isAnonymousClass();
 
     /**
-     * Checks if this type description representedBy a local type.
+     * Checks if this type description represents a local type.
      *
-     * @return {@code true} if this type description representedBy a local type.
+     * @return {@code true} if this type description represents a local type.
      */
     boolean isLocalClass();
 
     /**
-     * Checks if this type description representedBy a member type.
+     * Checks if this type description represents a member type.
      *
-     * @return {@code true} if this type description representedBy a member type.
+     * @return {@code true} if this type description represents a member type.
      */
     boolean isMemberClass();
 
@@ -263,10 +263,10 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     boolean isConstantPool();
 
     /**
-     * Checks if this type representedBy a wrapper type for a primitive type. The {@link java.lang.Void} type is
+     * Checks if this type represents a wrapper type for a primitive type. The {@link java.lang.Void} type is
      * not considered to be a wrapper type.
      *
-     * @return {@code true} if this type representedBy a wrapper type.
+     * @return {@code true} if this type represents a wrapper type.
      */
     boolean isPrimitiveWrapper();
 
@@ -788,12 +788,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     }
 
     /**
-     * A type description implementation that representedBy a loaded type.
+     * A type description implementation that represents a loaded type.
      */
     class ForLoadedType extends AbstractTypeDescription {
 
         /**
-         * The loaded type this instance representedBy.
+         * The loaded type this instance represents.
          */
         private final Class<?> type;
 
