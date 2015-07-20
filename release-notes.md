@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### 17. July 2015: version 0.6.14
+### 20. July 2015: version 0.6.14
 
 - Fixed resolution of ignored methods. Previously, additional ignored methods were not appended but added as an additional criteria for ignoring a method.
 
