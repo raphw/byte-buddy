@@ -11,7 +11,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -112,7 +111,7 @@ public enum MethodVariableAccess {
      * @return A stack manipulation representing the method retrieval.
      */
     public StackManipulation loadOffset(int variableOffset) {
-        return new ArgumentLoadingStackManipulation(variableOffset);
+        return new OffsetLoading(variableOffset);
     }
 
     @Override
@@ -123,20 +122,20 @@ public enum MethodVariableAccess {
     /**
      * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
      */
-    protected class ArgumentLoadingStackManipulation implements StackManipulation {
+    protected class OffsetLoading implements StackManipulation {
 
         /**
          * The index of the local variable array from which the variable should be loaded.
          */
-        private final int variableIndex;
+        private final int offset;
 
         /**
          * Creates a new argument loading stack manipulation.
          *
-         * @param variableIndex The index of the local variable array from which the variable should be loaded.
+         * @param offset The index of the local variable array from which the variable should be loaded.
          */
-        protected ArgumentLoadingStackManipulation(int variableIndex) {
-            this.variableIndex = variableIndex;
+        protected OffsetLoading(int offset) {
+            this.offset = offset;
         }
 
         @Override
@@ -146,7 +145,7 @@ public enum MethodVariableAccess {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            switch (variableIndex) {
+            switch (offset) {
                 case 0:
                     methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset);
                     break;
@@ -160,7 +159,7 @@ public enum MethodVariableAccess {
                     methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 3);
                     break;
                 default:
-                    methodVisitor.visitVarInsn(loadOpcode, variableIndex);
+                    methodVisitor.visitVarInsn(loadOpcode, offset);
                     break;
             }
             return size;
@@ -178,20 +177,20 @@ public enum MethodVariableAccess {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && MethodVariableAccess.this == ((ArgumentLoadingStackManipulation) other).getMethodVariableAccess()
-                    && variableIndex == ((ArgumentLoadingStackManipulation) other).variableIndex;
+                    && MethodVariableAccess.this == ((OffsetLoading) other).getMethodVariableAccess()
+                    && offset == ((OffsetLoading) other).offset;
         }
 
         @Override
         public int hashCode() {
-            return MethodVariableAccess.this.hashCode() + 31 * variableIndex;
+            return MethodVariableAccess.this.hashCode() + 31 * offset;
         }
 
         @Override
         public String toString() {
-            return "MethodVariableAccess.ArgumentLoadingStackManipulation{" +
+            return "MethodVariableAccess.OffsetLoading{" +
                     "methodVariableAccess=" + MethodVariableAccess.this +
-                    " ,variableIndex=" + variableIndex + '}';
+                    " ,offset=" + offset + '}';
         }
     }
 

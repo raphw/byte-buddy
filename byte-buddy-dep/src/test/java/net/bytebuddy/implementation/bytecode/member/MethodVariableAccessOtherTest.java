@@ -23,7 +23,7 @@ public class MethodVariableAccessOtherTest {
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodVariableAccess.class).apply();
-        ObjectPropertyAssertion.of(MethodVariableAccess.ArgumentLoadingStackManipulation.class).apply();
+        ObjectPropertyAssertion.of(MethodVariableAccess.OffsetLoading.class).apply();
         ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.TypeCastingHandler.ForBridgeTarget.class)
                 .refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
                     @Override
