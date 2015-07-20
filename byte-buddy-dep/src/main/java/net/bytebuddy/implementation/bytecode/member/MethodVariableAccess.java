@@ -229,7 +229,7 @@ public enum MethodVariableAccess {
         }
 
         public StackManipulation asBridgeOf(MethodDescription methodDescription) {
-            return new MethodLoading(methodDescription, new TypeCastingHandler.ForBridgeTarget(methodDescription));
+            return new MethodLoading(this.methodDescription, new TypeCastingHandler.ForBridgeTarget(methodDescription));
         }
 
         @Override
