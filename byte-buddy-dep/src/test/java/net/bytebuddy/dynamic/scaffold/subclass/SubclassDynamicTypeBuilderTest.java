@@ -370,10 +370,10 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     @SuppressWarnings("unchecked")
-    @Ignore("Does not invoke correct method - but JVM fixes resolution")
     public void testBridgeMethodSuperTypeInvocation() throws Exception {
         Class<?> dynamicType = create(SuperCall.Inner.class)
                 .method(named(FOO)).intercept(SuperMethodCall.INSTANCE)
+                .classVisitor(new MethodCallValidator.ClassWrapper())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
@@ -450,29 +450,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
         private void foo() {
             /* empty */
-        }
-    }
-
-    public static class BridgeRetention<T> {
-
-        public T foo() {
-            return null;
-        }
-
-        public static class Inner extends BridgeRetention<String> {
-        /* empty */
-        }
-    }
-
-    public static class SuperCall<T> extends CallTraceable {
-
-        public T foo(T value) {
-            register(FOO);
-            return value;
-        }
-
-        public static class Inner extends SuperCall<String> {
-        /* empty */
         }
     }
 }

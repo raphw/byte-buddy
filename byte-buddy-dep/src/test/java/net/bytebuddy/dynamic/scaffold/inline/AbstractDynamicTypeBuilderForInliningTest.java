@@ -1,5 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -20,6 +22,8 @@ import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.core.Is;
 import org.junit.*;
 import org.junit.rules.MethodRule;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.*;
@@ -199,10 +203,10 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     @Test
     @SuppressWarnings("unchecked")
-    @Ignore("Does not invoke correct method - but JVM fixes resolution")
     public void testBridgeMethodSuperTypeInvocation() throws Exception {
         Class<?> dynamicType = create(SuperCall.Inner.class)
                 .method(named(FOO)).intercept(SuperMethodCall.INSTANCE)
+                .classVisitor(new MethodCallValidator.ClassWrapper())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
@@ -230,29 +234,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
         public static void invoke() {
             bar = BAR;
-        }
-    }
-
-    public static class BridgeRetention<T> {
-
-        public T foo() {
-            return null;
-        }
-
-        public static class Inner extends BridgeRetention<String> {
-        /* empty */
-        }
-    }
-
-    public static class SuperCall<T> extends CallTraceable {
-
-        public T foo(T value) {
-            register(FOO);
-            return value;
-        }
-
-        public static class Inner extends SuperCall<String> {
-        /* empty */
         }
     }
 }

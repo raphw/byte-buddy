@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
@@ -13,9 +14,12 @@ import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
+import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.hamcrest.core.Is;
 import org.junit.Test;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.*;
@@ -235,6 +239,64 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
         public static void invoke() {
             foo = FOO;
+        }
+    }
+
+    public static class BridgeRetention<T> {
+
+        public T foo() {
+            return null;
+        }
+
+        public static class Inner extends BridgeRetention<String> {
+        /* empty */
+        }
+    }
+
+    public static class SuperCall<T> extends CallTraceable {
+
+        public T foo(T value) {
+            register(FOO);
+            return value;
+        }
+
+        public static class Inner extends SuperCall<String> {
+        /* empty */
+        }
+    }
+
+    protected static class MethodCallValidator extends MethodVisitor {
+
+        public static class ClassWrapper implements ClassVisitorWrapper {
+
+            @Override
+            public ClassVisitor wrap(ClassVisitor classVisitor) {
+                return new ClassValidator(classVisitor);
+            }
+        }
+
+        private static class ClassValidator extends ClassVisitor {
+
+            private ClassValidator(ClassVisitor classVisitor) {
+                super(Opcodes.ASM5, classVisitor);
+            }
+
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                return new MethodCallValidator(super.visitMethod(access, name, desc, signature, exceptions));
+            }
+        }
+
+        private MethodCallValidator(MethodVisitor methodVisitor) {
+            super(Opcodes.ASM5, methodVisitor);
+        }
+
+        @Override
+        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            if (!name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
+                assertThat(desc, is("(Ljava/lang/Object;)Ljava/lang/Object;"));
+            }
+            super.visitMethodInsn(opcode, owner, name, desc, itf);
         }
     }
 }
