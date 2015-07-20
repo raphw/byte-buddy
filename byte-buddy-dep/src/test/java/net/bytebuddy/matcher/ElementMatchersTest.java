@@ -372,10 +372,22 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsDeclaredBy() throws Exception {
-        assertThat(ElementMatchers.isDeclaredBy(IsDeclaredBy.class)
-                .matches(new TypeDescription.ForLoadedType(IsDeclaredBy.Inner.class)), is(true));
+        assertThat(ElementMatchers.isDeclaredBy(IsDeclaredBy.class).matches(new TypeDescription.ForLoadedType(IsDeclaredBy.Inner.class)), is(true));
         assertThat(ElementMatchers.isDeclaredBy(IsDeclaredBy.class).matches(mock(ByteCodeElement.class)), is(false));
         assertThat(ElementMatchers.isDeclaredBy(Object.class).matches(mock(ByteCodeElement.class)), is(false));
+    }
+
+    @Test
+    public void testIsDeclaredByGeneric() throws Exception {
+        assertThat(ElementMatchers.isDeclaredByGeneric(GenericDeclaredBy.Inner.class.getGenericInterfaces()[0])
+                .matches(new TypeDescription.ForLoadedType(GenericDeclaredBy.Inner.class)
+                        .getInterfaces().getOnly().getDeclaredMethods().filter(ElementMatchers.isMethod()).getOnly()), is(true));
+        assertThat(ElementMatchers.isDeclaredByGeneric(GenericDeclaredBy.Inner.class.getGenericInterfaces()[0])
+                .matches(new TypeDescription.ForLoadedType(GenericDeclaredBy.class)
+                        .getDeclaredMethods().filter(ElementMatchers.isMethod()).getOnly()), is(false));
+        assertThat(ElementMatchers.isDeclaredByGeneric(GenericDeclaredBy.class)
+                .matches(new TypeDescription.ForLoadedType(GenericDeclaredBy.Inner.class)
+                        .getInterfaces().getOnly().getDeclaredMethods().filter(ElementMatchers.isMethod()).getOnly()), is(false));
     }
 
     @Test
@@ -1219,5 +1231,14 @@ public class ElementMatchersTest {
         FieldType foo;
 
         T bar;
+    }
+
+    public interface GenericDeclaredBy<T> {
+
+        void foo();
+
+        interface Inner extends GenericDeclaredBy<String> {
+
+        }
     }
 }

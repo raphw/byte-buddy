@@ -584,20 +584,8 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link ByteCodeElement} for being declared by a given
-     * {@link TypeDescription}.
-     *
-     * @param type The type that is expected to declare the matched byte code element.
-     * @param <T>  The type of the matched object.
-     * @return A matcher for byte code elements being declared by the given {@code type}.
-     */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(TypeDescription type) {
-        return isDeclaredBy(is(nonNull(type)));
-    }
-
-    /**
-     * Matches a {@link ByteCodeElement} for being declared by a given
-     * {@link java.lang.Class}.
+     * Matches a {@link ByteCodeElement} for being declared by a given {@link java.lang.Class}. This matcher matches
+     * a declared element's raw declaring type.
      *
      * @param type The type that is expected to declare the matched byte code element.
      * @param <T>  The type of the matched object.
@@ -608,15 +596,60 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link ByteCodeElement} for being declared by a
-     * {@link TypeDescription} that is matched by the given matcher.
+     * Matches a {@link ByteCodeElement} for being declared by a given {@link TypeDescription}. This matcher matches
+     * a declared element's raw declaring type.
+     *
+     * @param type The type that is expected to declare the matched byte code element.
+     * @param <T>  The type of the matched object.
+     * @return A matcher for byte code elements being declared by the given {@code type}.
+     */
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(TypeDescription type) {
+        return isDeclaredBy(is(nonNull(type)));
+    }
+
+    /**
+     * Matches a {@link ByteCodeElement} for being declared by a {@link TypeDescription} that is matched by the given matcher. This matcher matches
+     * a declared element's raw declaring type.
      *
      * @param matcher A matcher for the declaring type of the matched byte code element as long as it
      *                is not {@code null}.
      * @param <T>     The type of the matched object.
      * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super GenericTypeDescription> matcher) {
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super TypeDescription> matcher) {
+        return isDeclaredByGeneric(rawType(nonNull(matcher)));
+    }
+
+    /**
+     * Matches a {@link ByteCodeElement} for being declared by a given generic {@link Type}.
+     *
+     * @param type The type that is expected to declare the matched byte code element.
+     * @param <T>  The type of the matched object.
+     * @return A matcher for byte code elements being declared by the given {@code type}.
+     */
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(Type type) {
+        return isDeclaredByGeneric(GenericTypeDescription.Sort.describe(nonNull(type)));
+    }
+
+    /**
+     * Matches a {@link ByteCodeElement} for being declared by a given {@link GenericTypeDescription}.
+     *
+     * @param type The type that is expected to declare the matched byte code element.
+     * @param <T>  The type of the matched object.
+     * @return A matcher for byte code elements being declared by the given {@code type}.
+     */
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(GenericTypeDescription type) {
+        return isDeclaredByGeneric(is(nonNull(type)));
+    }
+
+    /**
+     * Matches a {@link ByteCodeElement} for being declared by a {@link GenericTypeDescription} that is matched by the given matcher.
+     *
+     * @param matcher A matcher for the declaring type of the matched byte code element as long as it is not {@code null}.
+     * @param <T>     The type of the matched object.
+     * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
+     */
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(ElementMatcher<? super GenericTypeDescription> matcher) {
         return new DeclaringTypeMatcher<T>(nonNull(matcher));
     }
 
