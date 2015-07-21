@@ -52,13 +52,15 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     @Override
+    public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
+        MethodDescription methodDescription = superConstructors.get(methodToken);
+        return methodDescription == null
+                ? super.invokeSuper(methodToken)
+                : invokeSuper(methodDescription);
+    }
+
+    @Override
     protected Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
-        if (methodDescription.isConstructor()) {
-            methodDescription = this.superConstructors.get(methodDescription.asToken());
-            if (methodDescription == null) {
-                return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
-            }
-        }
         return Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSuperType().asRawType());
     }
 
