@@ -1,6 +1,8 @@
 package net.bytebuddy.description.type.generic;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import org.hamcrest.CoreMatchers;
@@ -936,7 +938,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getParameters().get(0).asRawType().represents(Number.class), is(true));
         assertThat(genericTypeDescription.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(genericTypeDescription.getParameters().get(1).asRawType().represents(Integer.class), is(true));
-        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("foo")).getOnly();
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
         assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
@@ -951,7 +953,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getParameters().get(0).asRawType().represents(Number.class), is(true));
         assertThat(genericTypeDescription.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(genericTypeDescription.getParameters().get(1).asRawType().represents(Integer.class), is(true));
-        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("bar")).getOnly();
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named(BAR)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("T"));
         assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
@@ -966,7 +968,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getParameters().get(0).asRawType().represents(Number.class), is(true));
         assertThat(genericTypeDescription.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(genericTypeDescription.getParameters().get(1).asRawType().represents(Integer.class), is(true));
-        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("qux")).getOnly();
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named(QUX)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
         assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
@@ -979,7 +981,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
     public void testMethodTypeVariableErasedBound() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(BAR)).getSuperType();
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("foo")).getOnly();
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
         assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
@@ -989,12 +991,66 @@ public abstract class AbstractGenericTypeDescriptionTest {
     public void testMethodTypeVariableWithExtensionErasedBound() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(BAR)).getSuperType();
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named("qux")).getOnly();
+        MethodDescription methodDescription = genericTypeDescription.getDeclaredMethods().filter(named(QUX)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
         assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
         assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().asRawType().represents(Object.class), is(true));
+    }
+
+    @Test
+    public void testGenericFieldHashCode() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getDeclaredFields().filter(named(FOO)).getOnly().hashCode(),
+                CoreMatchers.not(new FieldDescription.ForLoadedField(MemberVariable.class.getDeclaredField(FOO)).hashCode()));
+        assertThat(genericTypeDescription.getDeclaredFields().filter(named(FOO)).getOnly().asDeclared().hashCode(),
+                is(new FieldDescription.ForLoadedField(MemberVariable.class.getDeclaredField(FOO)).hashCode()));
+    }
+
+    @Test
+    public void testGenericFieldEquality() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getDeclaredFields().filter(named(FOO)).getOnly(),
+                CoreMatchers.not((FieldDescription) new FieldDescription.ForLoadedField(MemberVariable.class.getDeclaredField(FOO))));
+        assertThat(genericTypeDescription.getDeclaredFields().filter(named(FOO)).getOnly().asDeclared(),
+                is((FieldDescription) new FieldDescription.ForLoadedField(MemberVariable.class.getDeclaredField(FOO))));
+    }
+
+    @Test
+    public void testGenericMethodHashCode() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().hashCode(),
+                CoreMatchers.not(new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(FOO)).hashCode()));
+        assertThat(genericTypeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().asDeclared().hashCode(),
+                is(new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(FOO)).hashCode()));
+    }
+
+    @Test
+    public void testGenericMethodEquality() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getDeclaredMethods().filter(named(FOO)).getOnly(),
+                CoreMatchers.not((MethodDescription) new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(FOO))));
+        assertThat(genericTypeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().asDeclared(),
+                is((MethodDescription) new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(FOO))));
+    }
+
+    @Test
+    public void testGenericParameterHashCode() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getDeclaredMethods().filter(named(BAZ)).getOnly().getParameters().getOnly().hashCode(), CoreMatchers.not(
+                new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(BAZ, Object.class)).getParameters().getOnly().hashCode()));
+        assertThat(genericTypeDescription.getDeclaredMethods().filter(named(BAZ)).getOnly().getParameters().getOnly().asDeclared().hashCode(), is(
+                new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(BAZ, Object.class)).getParameters().getOnly().hashCode()));
+    }
+
+    @Test
+    public void testGenericParameterEquality() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(MemberVariable.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getDeclaredMethods().filter(named(BAZ)).getOnly().getParameters().getOnly(), CoreMatchers.not((ParameterDescription)
+                new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(BAZ, Object.class)).getParameters().getOnly()));
+        assertThat(genericTypeDescription.getDeclaredMethods().filter(named(BAZ)).getOnly().getParameters().getOnly().asDeclared(), is((ParameterDescription)
+                new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(BAZ, Object.class)).getParameters().getOnly()));
     }
 
     @SuppressWarnings("unused")
@@ -1255,6 +1311,10 @@ public abstract class AbstractGenericTypeDescriptionTest {
         @SuppressWarnings("all")
         public <S extends U> S qux() {
             return null;
+        }
+
+        public U baz(U u) {
+            return u;
         }
 
         @SuppressWarnings("unchecked")

@@ -575,14 +575,14 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         public boolean equals(Object other) {
             return other == this || other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
-                    && getDeclaringType().asRawType().equals(((MethodDescription) other).getDeclaringType().asRawType())
+                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
                     && getReturnType().asRawType().equals(((MethodDescription) other).getReturnType().asRawType())
                     && getParameters().asTypeList().asRawTypes().equals(((MethodDescription) other).getParameters().asTypeList().asRawTypes());
         }
 
         @Override
         public int hashCode() {
-            int hashCode = getDeclaringType().asRawType().hashCode();
+            int hashCode = getDeclaringType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
             hashCode = 31 * hashCode + getReturnType().asRawType().hashCode();
             return 31 * hashCode + getParameters().asTypeList().asRawTypes().hashCode();

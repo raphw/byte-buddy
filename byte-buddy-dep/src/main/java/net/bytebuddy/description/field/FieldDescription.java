@@ -123,12 +123,12 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         public boolean equals(Object other) {
             return other == this || other instanceof FieldDescription
                     && getName().equals(((FieldDescription) other).getName())
-                    && getDeclaringType().asRawType().equals(((FieldDescription) other).getDeclaringType().asRawType());
+                    && getDeclaringType().equals(((FieldDescription) other).getDeclaringType());
         }
 
         @Override
         public int hashCode() {
-            return getDeclaringType().asRawType().hashCode() + 31 * getName().hashCode();
+            return getDeclaringType().hashCode() + 31 * getName().hashCode();
         }
 
         @Override
