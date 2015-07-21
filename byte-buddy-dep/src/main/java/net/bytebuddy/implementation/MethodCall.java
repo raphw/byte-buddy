@@ -2014,8 +2014,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                StackManipulation stackManipulation = implementationTarget.invokeSuper(methodDescription,
-                        Target.MethodLookup.Default.EXACT);
+                StackManipulation stackManipulation = implementationTarget.invokeSuper(methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " as a super method");
                 }

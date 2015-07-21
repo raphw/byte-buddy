@@ -45,15 +45,12 @@ public abstract class AbstractImplementationTargetTest {
     protected BridgeMethodResolver bridgeMethodResolver;
 
     @Mock
-    protected Implementation.Target.MethodLookup methodLookup;
-
-    @Mock
     protected MethodDescription.InDeclaredForm invokableMethod, defaultMethod;
 
     protected Implementation.Target implementationTarget;
 
     @Mock
-    private MethodDescription.Token invokableToken, defaultToken;
+    protected MethodDescription.Token invokableToken, defaultToken;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -63,13 +60,6 @@ public abstract class AbstractImplementationTargetTest {
         when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(invokableMethod)));
         when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultType, Collections.<MethodDescription>singleton(defaultMethod)));
         when(bridgeMethodResolverFactory.make(any(MethodList.class))).thenReturn(bridgeMethodResolver);
-        when(methodLookup.resolve(any(MethodDescription.class), any(Map.class), eq(bridgeMethodResolver)))
-                .then(new Answer<MethodDescription>() {
-                    @Override
-                    public MethodDescription answer(InvocationOnMock invocation) throws Throwable {
-                        return (MethodDescription) invocation.getArguments()[0];
-                    }
-                });
         when(invokableMethod.getDeclaringType()).thenReturn(methodType);
         when(invokableMethod.getReturnType()).thenReturn(returnType);
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
@@ -115,12 +105,6 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testIllegalSuperMethod() throws Exception {
-        MethodDescription.InDeclaredForm methodDescription = mock(MethodDescription.InDeclaredForm.class);
-        when(methodDescription.asDeclared()).thenReturn(methodDescription);
-        when(methodDescription.getReturnType()).thenReturn(returnType);
-        TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
-        when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
-        assertThat(implementationTarget.invokeSuper(methodDescription, methodLookup).isValid(), is(false));
+        assertThat(implementationTarget.invokeSuper(mock(MethodDescription.Token.class)).isValid(), is(false));
     }
 }

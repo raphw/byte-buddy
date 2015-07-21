@@ -262,12 +262,11 @@ public interface Implementation {
         /**
          * Creates a special method invocation for invoking the super method of the given method.
          *
-         * @param methodDescription The method that is to be invoked specially.
-         * @param methodLookup      The lookup for this method which mainly serves to avoid bridge method invocation.
+         * @param methodToken A token of the method that is to be invoked as a super method.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
-        SpecialMethodInvocation invokeSuper(MethodDescription methodDescription, MethodLookup methodLookup);
+        SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken);
 
         /**
          * Creates a special method invocation for invoking a default method.
@@ -278,64 +277,6 @@ public interface Implementation {
          * not legal.
          */
         SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken);
-
-        /**
-         * A strategy for looking up a method.
-         */
-        interface MethodLookup {
-
-            /**
-             * Resolves the target method that is actually invoked.
-             *
-             * @param methodDescription    The method that is to be invoked specially.
-             * @param invokableMethods     A mapping of all invokable methods by their token.
-             * @param bridgeMethodResolver The bridge method resolver for this type.
-             * @return The target method that is actually invoked.
-             */
-            MethodDescription resolve(MethodDescription methodDescription,
-                                      Map<MethodDescription.Token, MethodDescription> invokableMethods,
-                                      BridgeMethodResolver bridgeMethodResolver);
-
-            /**
-             * Default implementations of a {@link Implementation.Target.MethodLookup}.
-             */
-            enum Default implements MethodLookup {
-
-                /**
-                 * An exact method lookup which directly invokes the given method.
-                 */
-                EXACT {
-                    @Override
-                    public MethodDescription resolve(MethodDescription methodDescription,
-                                                     Map<MethodDescription.Token, MethodDescription> invokableMethods,
-                                                     BridgeMethodResolver bridgeMethodResolver) {
-                        return methodDescription;
-                    }
-                },
-
-                /**
-                 * Looks up a most specific method by a method signature. All bridge methods are resolved by this
-                 * lookup.
-                 */
-                MOST_SPECIFIC {
-                    @Override
-                    public MethodDescription resolve(MethodDescription methodDescription,
-                                                     Map<MethodDescription.Token, MethodDescription> invokableMethods,
-                                                     BridgeMethodResolver bridgeMethodResolver) {
-                        MethodDescription mostSpecificMethod = invokableMethods.get(methodDescription.asToken());
-                        if (mostSpecificMethod == null) {
-                            throw new IllegalArgumentException("Cannot invoke: " + methodDescription);
-                        }
-                        return bridgeMethodResolver.resolve(mostSpecificMethod);
-                    }
-                };
-
-                @Override
-                public String toString() {
-                    return "Implementation.Target.MethodLookup.Default." + name();
-                }
-            }
-        }
 
         /**
          * A factory for creating an {@link Implementation.Target}.
@@ -408,8 +349,11 @@ public interface Implementation {
             }
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription, MethodLookup methodLookup) {
-                return invokeSuper(methodLookup.resolve(methodDescription, invokableMethods, bridgeMethodResolver));
+            public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
+                MethodDescription methodDescription = invokableMethods.get(methodToken);
+                return methodDescription == null
+                        ? SpecialMethodInvocation.Illegal.INSTANCE
+                        : invokeSuper(bridgeMethodResolver.resolve(methodDescription));
             }
 
             /**

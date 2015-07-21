@@ -391,7 +391,7 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
-                    return implementationTarget.invokeSuper(instrumentedMethod, Implementation.Target.MethodLookup.Default.MOST_SPECIFIC);
+                    return implementationTarget.invokeSuper(instrumentedMethod.asToken());
                 }
             },
 

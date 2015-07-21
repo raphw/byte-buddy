@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -20,6 +21,9 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
+    @Mock
+    private MethodDescription.Token sourceToken;
+
     public SuperCallBinderTest() {
         super(SuperCall.class);
     }
@@ -29,9 +33,9 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(targetParameterType);
-        when(implementationTarget.invokeSuper(eq(source), any(Implementation.Target.MethodLookup.class)))
-                .thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
         when(targetParameterType.asRawType()).thenReturn(targetParameterType);
+        when(source.asToken()).thenReturn(sourceToken);
     }
 
     @Override
@@ -45,7 +49,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
-        verify(implementationTarget).invokeSuper(source, Implementation.Target.MethodLookup.Default.EXACT);
+        verify(implementationTarget).invokeSuper(sourceToken);
         verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(true));
     }
@@ -56,7 +60,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(specialMethodInvocation.isValid()).thenReturn(false);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
-        verify(implementationTarget).invokeSuper(source, Implementation.Target.MethodLookup.Default.EXACT);
+        verify(implementationTarget).invokeSuper(sourceToken);
         verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
     }

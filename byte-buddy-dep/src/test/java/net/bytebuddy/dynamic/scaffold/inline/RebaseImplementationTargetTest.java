@@ -39,6 +39,8 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Mock
     private MethodDescription.InDeclaredForm targetRebaseMethod, rebasedMethod, nonRebasedMethod, superMethod;
 
+    private MethodDescription.Token superMethodToken, nonRebasedMethodToken, targetRebaseMethodToken;
+
     @Mock
     private TypeDescription superType;
 
@@ -78,6 +80,9 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(methodRebaseResolver.resolve(nonRebasedMethod)).thenReturn(nonRebasedResolution);
         when(nonRebasedResolution.isRebased()).thenReturn(false);
         when(nonRebasedResolution.getResolvedMethod()).thenReturn(nonRebasedMethod);
+        when(superMethod.asToken()).thenReturn(superMethodToken);
+        when(targetRebaseMethod.asToken()).thenReturn(targetRebaseMethodToken);
+        when(nonRebasedMethod.asToken()).thenReturn(nonRebasedMethodToken);
         super.setUp();
     }
 
@@ -88,7 +93,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
 
     @Test
     public void testRebasedMethodIsInvokable() throws Exception {
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(targetRebaseMethod, methodLookup);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(targetRebaseMethodToken);
         verify(methodRebaseResolver).resolve(targetRebaseMethod);
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -108,7 +113,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Test
     public void testAbstractRebasedMethodIsNotInvokable() throws Exception {
         when(rebasedMethod.isAbstract()).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(targetRebaseMethod, methodLookup);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(targetRebaseMethodToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
         verify(methodRebaseResolver).resolve(targetRebaseMethod);
         verifyNoMoreInteractions(methodRebaseResolver);
@@ -117,7 +122,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Test
     public void testNonRebasedMethodIsInvokable() throws Exception {
         when(nonRebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(nonRebasedMethod, methodLookup);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(nonRebasedMethodToken);
         verify(methodRebaseResolver).resolve(nonRebasedMethod);
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -136,7 +141,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Test
     public void testAbstractNonRebasedMethodIsNotInvokable() throws Exception {
         when(nonRebasedMethod.isAbstract()).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(nonRebasedMethod, methodLookup);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(nonRebasedMethodToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
         verify(methodRebaseResolver).resolve(nonRebasedMethod);
         verifyNoMoreInteractions(methodRebaseResolver);
@@ -145,7 +150,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Test
     public void testSuperTypeMethodIsInvokable() throws Exception {
         when(superMethod.isSpecializableFor(superType)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethod, methodLookup);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethodToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) superMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(superType));
@@ -164,7 +169,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     public void testAbstractSuperTypeMethodIsNotInvokable() throws Exception {
         when(superMethod.isSpecializableFor(superType)).thenReturn(true);
         when(superMethod.isAbstract()).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethod, methodLookup);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethodToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
         verifyZeroInteractions(methodRebaseResolver);
     }

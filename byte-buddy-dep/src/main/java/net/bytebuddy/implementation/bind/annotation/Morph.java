@@ -193,7 +193,7 @@ public @interface Morph {
             Implementation.SpecialMethodInvocation specialMethodInvocation;
             TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);
             if (typeDescription.represents(void.class) && !annotation.getValue(DEFAULT_METHOD, Boolean.class)) {
-                specialMethodInvocation = implementationTarget.invokeSuper(source, Implementation.Target.MethodLookup.Default.EXACT);
+                specialMethodInvocation = implementationTarget.invokeSuper(source.asToken());
             } else {
                 specialMethodInvocation = (typeDescription.represents(void.class)
                         ? DefaultMethodLocator.Implicit.INSTANCE

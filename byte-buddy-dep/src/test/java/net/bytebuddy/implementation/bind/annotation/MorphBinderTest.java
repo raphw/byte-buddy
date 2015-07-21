@@ -19,8 +19,6 @@ import static org.mockito.Mockito.*;
 
 public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
 
-    private static final String FOO = "foo";
-
     @Mock
     private MethodDescription morphMethod;
 
@@ -29,6 +27,9 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
 
     @Mock
     private TypeDescription morphType, defaultType;
+
+    @Mock
+    private MethodDescription.Token sourceToken;
 
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
@@ -48,6 +49,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         super.setUp();
         when(morphType.asRawType()).thenReturn(morphType);
         when(defaultType.asRawType()).thenReturn(defaultType);
+        when(source.asToken()).thenReturn(sourceToken);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -62,8 +64,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         doReturn(void.class).when(annotation).defaultTarget();
-        when(implementationTarget.invokeSuper(source, Implementation.Target.MethodLookup.Default.EXACT))
-                .thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
@@ -75,8 +76,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         doReturn(void.class).when(annotation).defaultTarget();
-        when(implementationTarget.invokeSuper(source, Implementation.Target.MethodLookup.Default.EXACT))
-                .thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
