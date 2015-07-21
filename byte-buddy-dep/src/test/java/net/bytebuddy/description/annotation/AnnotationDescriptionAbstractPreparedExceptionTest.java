@@ -18,7 +18,7 @@ public class AnnotationDescriptionAbstractPreparedExceptionTest {
         new PseudoDescription().loadSilent(getClass().getClassLoader());
     }
 
-    private static class PseudoDescription extends AnnotationDescription.AbstractAnnotationDescription.ForPrepared<Annotation> {
+    private static class PseudoDescription extends AnnotationDescription.AbstractBase.ForPrepared<Annotation> {
 
         @Override
         public Annotation load() throws ClassNotFoundException {

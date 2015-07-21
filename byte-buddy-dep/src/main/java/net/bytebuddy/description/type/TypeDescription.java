@@ -295,7 +295,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     /**
      * An abstract base implementation of a type description.
      */
-    abstract class AbstractTypeDescription extends AbstractModifierReviewable implements TypeDescription {
+    abstract class AbstractTypeDescription extends AbstractBase implements TypeDescription {
 
         @Override
         public GenericTypeDescription getSuperType() {

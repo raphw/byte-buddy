@@ -657,7 +657,7 @@ public interface MethodLookupEngine {
      * This method description represents a method that is defined in a non-interface type and overrides a method
      * in another class it directly or indirectly extends.
      */
-    class OverriddenClassMethod extends MethodDescription.AbstractMethodDescription {
+    class OverriddenClassMethod extends MethodDescription.AbstractBase {
 
         /**
          * Describes the index of the most specific method in the method chain in order to improve

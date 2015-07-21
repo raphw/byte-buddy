@@ -597,7 +597,7 @@ public interface TypePool {
             /**
              * An enumeration description where any type references are only resolved on demand.
              */
-            protected class LazyEnumerationDescription extends EnumerationDescription.AbstractEnumerationDescription {
+            protected class LazyEnumerationDescription extends EnumerationDescription.AbstractBase {
 
                 @Override
                 public String getValue() {
@@ -5146,7 +5146,7 @@ public interface TypePool {
         /**
          * A lazy description of an annotation that looks up types from a type pool when required.
          */
-        private static class LazyAnnotationDescription extends AnnotationDescription.AbstractAnnotationDescription {
+        private static class LazyAnnotationDescription extends AnnotationDescription.AbstractBase {
 
             /**
              * The type pool for looking up type references.
@@ -5271,7 +5271,7 @@ public interface TypePool {
          * An implementation of a {@link PackageDescription} that only
          * loads its annotations on requirement.
          */
-        private static class LazyPackageDescription extends PackageDescription.AbstractPackageDescription {
+        private static class LazyPackageDescription extends PackageDescription.AbstractBase {
 
             /**
              * The type pool to use for look-ups.
@@ -5305,11 +5305,6 @@ public interface TypePool {
             @Override
             public String getName() {
                 return name;
-            }
-
-            @Override
-            public boolean isSealed() {
-                return false;
             }
         }
 

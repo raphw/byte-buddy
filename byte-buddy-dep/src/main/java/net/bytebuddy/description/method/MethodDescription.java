@@ -252,7 +252,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         ParameterList<ParameterDescription.InDeclaredForm> getParameters();
 
-        abstract class AbstractBase extends MethodDescription.AbstractMethodDescription implements InDeclaredForm {
+        abstract class AbstractBase extends MethodDescription.AbstractBase implements InDeclaredForm {
 
             @Override
             public InDeclaredForm asDeclared() {
@@ -264,7 +264,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     /**
      * An abstract base implementation of a method description.
      */
-    abstract class AbstractMethodDescription extends AbstractModifierReviewable implements MethodDescription {
+    abstract class AbstractBase extends ModifierReviewable.AbstractBase implements MethodDescription {
 
         /**
          * A merger of all method modifiers that are visible in the Java source code.
@@ -1033,7 +1033,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         /**
          * A method description that represents the type initializer.
          */
-        public static class TypeInitializer extends MethodDescription.InDeclaredForm.AbstractBase {
+        public static class TypeInitializer extends InDeclaredForm.AbstractBase {
 
             /**
              * The type for which the type initializer should be represented.
@@ -1099,7 +1099,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     /**
      * A method description that represents a given method but with substituted method types.
      */
-    class TypeSubstituting extends AbstractMethodDescription {
+    class TypeSubstituting extends AbstractBase {
 
         /**
          * The type that declares this type-substituted method.
@@ -1295,7 +1295,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      * A token that represents a method's shape. A method token is equal to another token when the name, the raw return type
      * and the raw parameter types are equal to those of another method token.
      */
-    class Token extends ModifierReviewable.AbstractModifierReviewable implements ByteCodeElement.Token<Token> {
+    class Token extends ModifierReviewable.AbstractBase implements ByteCodeElement.Token<Token> {
 
         /**
          * The internal name of the represented method.

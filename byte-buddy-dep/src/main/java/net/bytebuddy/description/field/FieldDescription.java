@@ -56,7 +56,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         @Override
         TypeDescription getDeclaringType();
 
-        abstract class AbstractBase extends AbstractFieldDescription implements InDeclaredForm {
+        abstract class AbstractBase extends FieldDescription.AbstractBase implements InDeclaredForm {
 
             @Override
             public InDeclaredForm asDeclared() {
@@ -68,7 +68,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
     /**
      * An abstract base implementation of a field description.
      */
-    abstract class AbstractFieldDescription extends AbstractModifierReviewable implements FieldDescription {
+    abstract class AbstractBase extends ModifierReviewable.AbstractBase implements FieldDescription {
 
         @Override
         public String getInternalName() {
@@ -300,7 +300,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
     /**
      * A field description that represents a given field but with a substituted field type.
      */
-    class TypeSubstituting extends AbstractFieldDescription {
+    class TypeSubstituting extends AbstractBase {
 
         /**
          * The declaring type of the field.
@@ -367,7 +367,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      * A token that represents a field's shape. A field token is equal to another token when the other field
      * tokens's name is equal to this token.
      */
-    class Token extends ModifierReviewable.AbstractModifierReviewable implements ByteCodeElement.Token<Token> {
+    class Token extends ModifierReviewable.AbstractBase implements ByteCodeElement.Token<Token> {
 
         /**
          * The name of the represented field.

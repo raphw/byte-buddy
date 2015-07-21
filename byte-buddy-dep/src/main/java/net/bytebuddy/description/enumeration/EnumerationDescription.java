@@ -37,7 +37,7 @@ public interface EnumerationDescription {
     /**
      * An adapter implementation of an enumeration description.
      */
-    abstract class AbstractEnumerationDescription implements EnumerationDescription {
+    abstract class AbstractBase implements EnumerationDescription {
 
         @Override
         public boolean equals(Object other) {
@@ -60,7 +60,7 @@ public interface EnumerationDescription {
     /**
      * An enumeration description representing a loaded enumeration.
      */
-    class ForLoadedEnumeration extends AbstractEnumerationDescription {
+    class ForLoadedEnumeration extends AbstractBase {
 
         /**
          * The loaded enumeration value.
@@ -113,7 +113,7 @@ public interface EnumerationDescription {
     /**
      * A latent description of an enumeration value.
      */
-    class Latent extends AbstractEnumerationDescription {
+    class Latent extends AbstractBase {
 
         /**
          * The type of the enumeration.

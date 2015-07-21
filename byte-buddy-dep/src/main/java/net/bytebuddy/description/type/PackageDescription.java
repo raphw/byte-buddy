@@ -21,17 +21,9 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
     int PACKAGE_MODIFIERS = Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_SYNTHETIC;
 
     /**
-     * Checks if this package description represents a sealed package. This information is only available
-     * for descriptions that represented loaded packages as packages are sealed by a {@link ClassLoader}.
-     *
-     * @return {@code true} if this package is sealed.
-     */
-    boolean isSealed();
-
-    /**
      * An abstract base implementation of a package description.
      */
-    abstract class AbstractPackageDescription implements PackageDescription {
+    abstract class AbstractBase implements PackageDescription {
 
         @Override
         public String getInternalName() {
@@ -63,7 +55,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
     /**
      * A simple implementation of a package without annotations.
      */
-    class Simple extends AbstractPackageDescription {
+    class Simple extends AbstractBase {
 
         /**
          * The name of the package.
@@ -88,18 +80,13 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
         public String getName() {
             return name;
         }
-
-        @Override
-        public boolean isSealed() {
-            return false;
-        }
     }
 
     /**
      * Represents a loaded {@link java.lang.Package} wrapped as a
      * {@link PackageDescription}.
      */
-    class ForLoadedPackage extends AbstractPackageDescription {
+    class ForLoadedPackage extends AbstractBase {
 
         /**
          * The represented package.
@@ -123,11 +110,6 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
         @Override
         public String getName() {
             return aPackage.getName();
-        }
-
-        @Override
-        public boolean isSealed() {
-            return aPackage.isSealed();
         }
     }
 }

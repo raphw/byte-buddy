@@ -102,7 +102,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         @Override
         MethodDescription.InDeclaredForm getDeclaringMethod();
 
-        abstract class AbstractBase extends AbstractParameterDescription implements InDeclaredForm {
+        abstract class AbstractBase extends ParameterDescription.AbstractBase implements InDeclaredForm {
 
             @Override
             public InDeclaredForm asDeclared() {
@@ -114,7 +114,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     /**
      * A base implementation of a method parameter description.
      */
-    abstract class AbstractParameterDescription extends AbstractModifierReviewable implements ParameterDescription {
+    abstract class AbstractBase extends ModifierReviewable.AbstractBase implements ParameterDescription {
 
         @Override
         public String getName() {
@@ -643,7 +643,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      * <b>Note</b>: The supplied visitor must assure to not substitute
      * </p>
      */
-    class TypeSubstituting extends AbstractParameterDescription {
+    class TypeSubstituting extends AbstractBase {
 
         /**
          * The method that declares this type-substituted parameter.

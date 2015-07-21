@@ -171,7 +171,7 @@ public interface ModifierReviewable {
     /**
      * An abstract base implementation of a {@link ModifierReviewable} class.
      */
-    abstract class AbstractModifierReviewable implements ModifierReviewable {
+    abstract class AbstractBase implements ModifierReviewable {
 
         @Override
         public boolean isAbstract() {

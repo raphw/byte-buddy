@@ -1414,7 +1414,7 @@ public interface AnnotationDescription {
     /**
      * An adapter implementation of an annotation.
      */
-    abstract class AbstractAnnotationDescription implements AnnotationDescription {
+    abstract class AbstractBase implements AnnotationDescription {
 
         @Override
         public RetentionPolicy getRetention() {
@@ -1497,7 +1497,7 @@ public interface AnnotationDescription {
          *
          * @param <S> The annotation type this instance was prepared for.
          */
-        public abstract static class ForPrepared<S extends Annotation> extends AbstractAnnotationDescription implements Loadable<S> {
+        public abstract static class ForPrepared<S extends Annotation> extends AbstractBase implements Loadable<S> {
 
             /**
              * The error message to be displayed on a {@link java.lang.ClassNotFoundException}.
@@ -1529,7 +1529,7 @@ public interface AnnotationDescription {
      *
      * @param <S> The type of the annotation.
      */
-    class ForLoadedAnnotation<S extends Annotation> extends AbstractAnnotationDescription.ForPrepared<S> implements Loadable<S> {
+    class ForLoadedAnnotation<S extends Annotation> extends AbstractBase.ForPrepared<S> implements Loadable<S> {
 
         /**
          * The represented annotation value.
@@ -1650,7 +1650,7 @@ public interface AnnotationDescription {
     /**
      * A latent description of an annotation value that is defined explicitly.
      */
-    class Latent extends AbstractAnnotationDescription {
+    class Latent extends AbstractBase {
 
         /**
          * The type of the annotation.
@@ -1704,7 +1704,7 @@ public interface AnnotationDescription {
          *
          * @param <S> The annotation type.
          */
-        protected class Loadable<S extends Annotation> extends AbstractAnnotationDescription.ForPrepared<S> {
+        protected class Loadable<S extends Annotation> extends AbstractBase.ForPrepared<S> {
 
             /**
              * The annotation type.

@@ -57,7 +57,7 @@ public class ModifierReviewableTest {
         assertThat((Boolean) method.invoke(simpleModifierReviewable), is(true));
     }
 
-    private static class SimpleModifierReviewable extends ModifierReviewable.AbstractModifierReviewable {
+    private static class SimpleModifierReviewable extends ModifierReviewable.AbstractBase {
 
         private final int modifiers;
 
