@@ -1,11 +1,8 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -13,97 +10,68 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.util.Collections;
-import java.util.List;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public abstract class AbstractSpecialMethodInvocationTest {
-
-    private static final String FOO = "foo", BAR = "bar";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription returnType, parameterType, targetType, otherType;
+    private MethodDescription methodDescription, otherMethod;
 
-    private TypeList parameterTypes;
+    @Mock
+    private MethodDescription.Token methodToken, otherToken;
+
+    @Mock
+    private TypeDescription typeDescription, otherType;
+
+    @Mock
+    private StackManipulation stackManipulation;
 
     @Before
-    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(targetType.asRawType()).thenReturn(targetType);
-        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        parameterTypes = new TypeList.Explicit(Collections.singletonList(parameterType));
-        when(returnType.asRawType()).thenReturn(returnType);
-        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
-        when(parameterType.asRawType()).thenReturn(parameterType);
-        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
-        when(otherType.asRawType()).thenReturn(otherType);
+        when(methodDescription.asToken()).thenReturn(methodToken);
+        when(otherMethod.asToken()).thenReturn(otherToken);
     }
 
-    protected abstract Implementation.SpecialMethodInvocation make(String name,
-                                                                   TypeDescription returnType,
-                                                                   List<TypeDescription> parameterTypes,
-                                                                   TypeDescription targetType);
+    protected abstract Implementation.SpecialMethodInvocation make(MethodDescription methodDescription, TypeDescription typeDescription);
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testEquals() throws Exception {
-        Implementation.SpecialMethodInvocation identical = make(FOO, returnType, parameterTypes, targetType);
-        assertThat(identical, is(identical));
-        assertThat(make(FOO, returnType, parameterTypes, targetType), is(make(FOO, returnType, parameterTypes, targetType)));
-        Implementation.SpecialMethodInvocation equal = mock(Implementation.SpecialMethodInvocation.class);
-        when(equal.getTypeDescription()).thenReturn(targetType);
-        MethodDescription.InDeclaredForm equalMethod = mock(MethodDescription.InDeclaredForm.class);
-        when(equalMethod.getDeclaringType()).thenReturn(otherType);
-        when(equal.getMethodDescription()).thenReturn(equalMethod);
-        when(equalMethod.getInternalName()).thenReturn(FOO);
-        when(equalMethod.getReturnType()).thenReturn(returnType);
-        when(equalMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethod, parameterTypes));
-        assertThat(make(FOO, returnType, parameterTypes, targetType), is(equal));
-        Implementation.SpecialMethodInvocation equalButType = mock(Implementation.SpecialMethodInvocation.class);
-        when(equalButType.getTypeDescription()).thenReturn(mock(TypeDescription.class));
-        when(equalButType.getMethodDescription()).thenReturn(equalMethod);
-        assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButType)));
-        Implementation.SpecialMethodInvocation equalButName = mock(Implementation.SpecialMethodInvocation.class);
-        when(equalButName.getTypeDescription()).thenReturn(targetType);
-        MethodDescription.InDeclaredForm equalMethodButName = mock(MethodDescription.InDeclaredForm.class);
-        when(equalMethodButName.getDeclaringType()).thenReturn(otherType);
-        when(equalButName.getMethodDescription()).thenReturn(equalMethodButName);
-        when(equalMethodButName.getInternalName()).thenReturn(BAR);
-        when(equalMethodButName.getReturnType()).thenReturn(returnType);
-        when(equalMethodButName.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButName, parameterTypes));
-        assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButName)));
-        Implementation.SpecialMethodInvocation equalButReturn = mock(Implementation.SpecialMethodInvocation.class);
-        when(equalButName.getTypeDescription()).thenReturn(targetType);
-        MethodDescription.InDeclaredForm equalMethodButReturn = mock(MethodDescription.InDeclaredForm.class);
-        when(equalMethodButReturn.getDeclaringType()).thenReturn(otherType);
-        when(equalButName.getMethodDescription()).thenReturn(equalMethodButReturn);
-        when(equalMethodButReturn.getInternalName()).thenReturn(FOO);
-        when(equalMethodButReturn.getReturnType()).thenReturn(mock(TypeDescription.class));
-        when(equalMethodButReturn.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButReturn, parameterTypes));
-        assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButReturn)));
-        Implementation.SpecialMethodInvocation equalButParameter = mock(Implementation.SpecialMethodInvocation.class);
-        when(equalButParameter.getTypeDescription()).thenReturn(targetType);
-        MethodDescription.InDeclaredForm equalMethodButParameter = mock(MethodDescription.InDeclaredForm.class);
-        when(equalMethodButParameter.getDeclaringType()).thenReturn(otherType);
-        when(equalButParameter.getMethodDescription()).thenReturn(equalMethodButParameter);
-        when(equalMethodButParameter.getInternalName()).thenReturn(FOO);
-        when(equalMethodButParameter.getReturnType()).thenReturn(returnType);
-        TypeDescription parameterType = mock(TypeDescription.class);
-        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
-        when(equalMethodButParameter.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButParameter,
-                Collections.singletonList(parameterType)));
-        assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(equalButParameter)));
-        assertThat(make(FOO, returnType, parameterTypes, targetType), not(is(new Object())));
-        assertThat(make(FOO, returnType, parameterTypes, targetType), not(is((Object) null)));
+    public void testEquality() throws Exception {
+        assertThat(make(methodDescription, typeDescription).hashCode(),
+                is(new Implementation.SpecialMethodInvocation.Simple(methodDescription, typeDescription, stackManipulation).hashCode()));
+        assertThat(make(methodDescription, typeDescription),
+                is((Implementation.SpecialMethodInvocation) new Implementation.SpecialMethodInvocation.Simple(methodDescription,
+                        typeDescription,
+                        stackManipulation)));
+    }
+
+    @Test
+    public void testTypeInequality() throws Exception {
+        assertThat(make(methodDescription, typeDescription).hashCode(),
+                not(new Implementation.SpecialMethodInvocation.Simple(methodDescription, otherType, stackManipulation).hashCode()));
+        assertThat(make(methodDescription, typeDescription),
+                not((Implementation.SpecialMethodInvocation) new Implementation.SpecialMethodInvocation.Simple(methodDescription,
+                        otherType,
+                        stackManipulation)));
+    }
+
+    @Test
+    public void testTokenInequality() throws Exception {
+        assertThat(make(methodDescription, typeDescription).hashCode(),
+                not(new Implementation.SpecialMethodInvocation.Simple(otherMethod, typeDescription, stackManipulation).hashCode()));
+        assertThat(make(methodDescription, typeDescription),
+                not((Implementation.SpecialMethodInvocation) new Implementation.SpecialMethodInvocation.Simple(otherMethod,
+                        typeDescription,
+                        stackManipulation)));
+    }
+
+    @Test
+    public void testValidity() throws Exception {
+        assertThat(make(methodDescription, typeDescription).isValid(), is(true));
     }
 }

@@ -62,7 +62,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      */
     private Implementation.SpecialMethodInvocation invokeSuper(MethodRebaseResolver.Resolution resolution) {
         return resolution.isRebased()
-                ? RebasedMethodInvocation.of(resolution, typeDescription)
+                ? RebasedMethodInvocation.of(resolution.getResolvedMethod(), typeDescription, resolution.getAdditionalArguments())
                 : Implementation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), typeDescription);
     }
 
@@ -97,7 +97,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      * A {@link Implementation.SpecialMethodInvocation} which invokes a rebased method
      * as given by a {@link MethodRebaseResolver}.
      */
-    protected static class RebasedMethodInvocation implements Implementation.SpecialMethodInvocation {
+    protected static class RebasedMethodInvocation extends Implementation.SpecialMethodInvocation.AbstractBase {
 
         /**
          * The method to invoke via a special method invocation.
@@ -114,32 +114,21 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
          */
         private final StackManipulation stackManipulation;
 
-        /**
-         * Creates a special method invocation for a rebased method.
-         *
-         * @param resolution       The resolution of the rebased method.
-         * @param instrumentedType The instrumented type on which this method is to be invoked.
-         */
-        protected RebasedMethodInvocation(MethodRebaseResolver.Resolution resolution, TypeDescription instrumentedType) {
+        protected RebasedMethodInvocation(MethodDescription methodDescription, TypeDescription instrumentedType, StackManipulation stackManipulation) {
+            this.methodDescription = methodDescription;
             this.instrumentedType = instrumentedType;
-            methodDescription = resolution.getResolvedMethod();
-            stackManipulation = new Compound(resolution.getAdditionalArguments(), resolution.getResolvedMethod().isStatic()
-                    ? MethodInvocation.invoke(methodDescription)
-                    : MethodInvocation.invoke(methodDescription).special(instrumentedType));
+            this.stackManipulation = stackManipulation;
         }
 
-        /**
-         * Creates a special method invocation for a rebased method if such an invocation is possible or otherwise
-         * returns an illegal special method invocation.
-         *
-         * @param resolution       The resolution of the rebased method.
-         * @param instrumentedType The instrumented type on which this method is to be invoked.
-         * @return A special method invocation for the given method.
-         */
-        public static Implementation.SpecialMethodInvocation of(MethodRebaseResolver.Resolution resolution, TypeDescription instrumentedType) {
-            return resolution.getResolvedMethod().isAbstract()
-                    ? Illegal.INSTANCE
-                    : new RebasedMethodInvocation(resolution, instrumentedType);
+        protected static Implementation.SpecialMethodInvocation of(MethodDescription resolvedMethod,
+                                                                   TypeDescription instrumentedType,
+                                                                   StackManipulation additionalArguments) {
+            StackManipulation stackManipulation = resolvedMethod.isStatic()
+                    ? MethodInvocation.invoke(resolvedMethod)
+                    : MethodInvocation.invoke(resolvedMethod).special(instrumentedType);
+            return stackManipulation.isValid()
+                    ? new RebasedMethodInvocation(resolvedMethod, instrumentedType, new Compound(additionalArguments, stackManipulation))
+                    : Illegal.INSTANCE;
         }
 
         @Override
@@ -153,41 +142,16 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         }
 
         @Override
-        public boolean isValid() {
-            return stackManipulation.isValid();
-        }
-
-        @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return stackManipulation.apply(methodVisitor, implementationContext);
         }
 
         @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof Implementation.SpecialMethodInvocation)) return false;
-            Implementation.SpecialMethodInvocation specialMethodInvocation = (Implementation.SpecialMethodInvocation) other;
-            return isValid() == specialMethodInvocation.isValid()
-                    && instrumentedType.equals(specialMethodInvocation.getTypeDescription())
-                    && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
-                    && methodDescription.getParameters().asTypeList().asRawTypes().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList().asRawTypes())
-                    && methodDescription.getReturnType().asRawType().equals(specialMethodInvocation.getMethodDescription().getReturnType().asRawType());
-        }
-
-        @Override
-        public int hashCode() {
-            int result = methodDescription.getInternalName().hashCode();
-            result = 31 * result + methodDescription.getParameters().asTypeList().asRawTypes().hashCode();
-            result = 31 * result + methodDescription.getReturnType().asRawType().hashCode();
-            result = 31 * result + instrumentedType.hashCode();
-            return result;
-        }
-
-        @Override
         public String toString() {
-            return "RebaseimplementationTarget.RebasedMethodInvocation{" +
+            return "RebaseImplementationTarget.RebasedMethodInvocation{" +
                     "instrumentedType=" + instrumentedType +
                     ", methodDescription=" + methodDescription +
+                    ", stackManipulation=" + stackManipulation +
                     '}';
         }
     }

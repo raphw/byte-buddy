@@ -130,10 +130,32 @@ public interface Implementation {
             }
         }
 
+        abstract class AbstractBase implements SpecialMethodInvocation {
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * getMethodDescription().asToken().hashCode() + getTypeDescription().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (!(other instanceof SpecialMethodInvocation)) return false;
+                SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
+                return getMethodDescription().asToken().equals(specialMethodInvocation.getMethodDescription().asToken())
+                        && getTypeDescription().equals(((SpecialMethodInvocation) other).getTypeDescription());
+            }
+        }
+
         /**
          * A canonical implementation of a {@link Implementation.SpecialMethodInvocation}.
          */
-        class Simple implements SpecialMethodInvocation {
+        class Simple extends SpecialMethodInvocation.AbstractBase {
 
             /**
              * The method description that is represented by this legal special method invocation.
@@ -191,34 +213,8 @@ public interface Implementation {
             }
 
             @Override
-            public boolean isValid() {
-                return stackManipulation.isValid();
-            }
-
-            @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 return stackManipulation.apply(methodVisitor, implementationContext);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof SpecialMethodInvocation)) return false;
-                SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
-                return isValid() == specialMethodInvocation.isValid()
-                        && typeDescription.equals(specialMethodInvocation.getTypeDescription())
-                        && methodDescription.getInternalName().equals(specialMethodInvocation.getMethodDescription().getInternalName())
-                        && methodDescription.getParameters().asTypeList().asRawTypes().equals(specialMethodInvocation.getMethodDescription().getParameters().asTypeList().asRawTypes())
-                        && methodDescription.getReturnType().asRawType().equals(specialMethodInvocation.getMethodDescription().getReturnType().asRawType());
-            }
-
-            @Override
-            public int hashCode() {
-                int result = methodDescription.getInternalName().hashCode();
-                result = 31 * result + methodDescription.getParameters().asTypeList().asRawTypes().hashCode();
-                result = 31 * result + methodDescription.getReturnType().asRawType().hashCode();
-                result = 31 * result + typeDescription.hashCode();
-                return result;
             }
 
             @Override

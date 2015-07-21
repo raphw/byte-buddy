@@ -125,21 +125,10 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Test
     public void testNonSpecializableRebaseMethodIsNotInvokable() throws Exception {
         when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
-        when(invokableMethod.isSpecializableFor(instrumentedType)).thenReturn(false);
+        when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.ForRebasedMethod(rebasedMethod));
+        when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(false);
         when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.Preserved(invokableMethod));
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
-        assertThat(specialMethodInvocation.isValid(), is(false));
-    }
-
-    @Test
-    public void testAbstractRebaseMethodIsNotInvokable() throws Exception {
-        when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
-        when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.ForRebasedMethod(rebasedMethod));
-        when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
-        when(rebasedMethod.isAbstract()).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
-        verify(methodRebaseResolver).resolve(invokableMethod);
-        verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 
