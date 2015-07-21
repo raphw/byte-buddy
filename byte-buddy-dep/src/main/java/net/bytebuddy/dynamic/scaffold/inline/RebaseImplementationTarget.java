@@ -62,7 +62,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      */
     private Implementation.SpecialMethodInvocation invokeSuper(MethodRebaseResolver.Resolution resolution) {
         return resolution.isRebased()
-                ? RebasedMethodSpecialMethodInvocation.of(resolution, typeDescription)
+                ? RebasedMethodInvocation.of(resolution, typeDescription)
                 : Implementation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), typeDescription);
     }
 
@@ -97,7 +97,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      * A {@link Implementation.SpecialMethodInvocation} which invokes a rebased method
      * as given by a {@link MethodRebaseResolver}.
      */
-    protected static class RebasedMethodSpecialMethodInvocation implements Implementation.SpecialMethodInvocation {
+    protected static class RebasedMethodInvocation implements Implementation.SpecialMethodInvocation {
 
         /**
          * The method to invoke via a special method invocation.
@@ -120,7 +120,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
          * @param resolution       The resolution of the rebased method.
          * @param instrumentedType The instrumented type on which this method is to be invoked.
          */
-        protected RebasedMethodSpecialMethodInvocation(MethodRebaseResolver.Resolution resolution, TypeDescription instrumentedType) {
+        protected RebasedMethodInvocation(MethodRebaseResolver.Resolution resolution, TypeDescription instrumentedType) {
             this.instrumentedType = instrumentedType;
             methodDescription = resolution.getResolvedMethod();
             stackManipulation = new Compound(resolution.getAdditionalArguments(), resolution.getResolvedMethod().isStatic()
@@ -139,7 +139,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         public static Implementation.SpecialMethodInvocation of(MethodRebaseResolver.Resolution resolution, TypeDescription instrumentedType) {
             return resolution.getResolvedMethod().isAbstract()
                     ? Illegal.INSTANCE
-                    : new RebasedMethodSpecialMethodInvocation(resolution, instrumentedType);
+                    : new RebasedMethodInvocation(resolution, instrumentedType);
         }
 
         @Override
@@ -185,7 +185,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
 
         @Override
         public String toString() {
-            return "RebaseimplementationTarget.RedefinedConstructorInvocation{" +
+            return "RebaseimplementationTarget.RebasedMethodInvocation{" +
                     "instrumentedType=" + instrumentedType +
                     ", methodDescription=" + methodDescription +
                     '}';

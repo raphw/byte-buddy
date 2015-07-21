@@ -158,9 +158,7 @@ public interface Implementation {
              *                          invocation.
              * @param stackManipulation The stack manipulation that represents this special method invocation.
              */
-            protected Simple(MethodDescription methodDescription,
-                             TypeDescription typeDescription,
-                             StackManipulation stackManipulation) {
+            protected Simple(MethodDescription methodDescription, TypeDescription typeDescription, StackManipulation stackManipulation) {
                 this.methodDescription = methodDescription;
                 this.typeDescription = typeDescription;
                 this.stackManipulation = stackManipulation;
@@ -175,10 +173,9 @@ public interface Implementation {
              * @return A special method invocation representing a legal invocation if the method can be invoked
              * specially on the target type or an illegal invocation if this is not possible.
              */
-            public static SpecialMethodInvocation of(MethodDescription methodDescription,
-                                                     TypeDescription typeDescription) {
+            public static SpecialMethodInvocation of(MethodDescription methodDescription, TypeDescription typeDescription) {
                 StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).special(typeDescription);
-                return stackManipulation.isValid() && !methodDescription.isAbstract()
+                return stackManipulation.isValid()
                         ? new Simple(methodDescription, typeDescription, stackManipulation)
                         : SpecialMethodInvocation.Illegal.INSTANCE;
             }

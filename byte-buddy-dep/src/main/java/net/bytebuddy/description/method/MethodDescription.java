@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -1294,7 +1295,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      * A token that represents a method's shape. A method token is equal to another token when the name, the raw return type
      * and the raw parameter types are equal to those of another method token.
      */
-    class Token implements ByteCodeElement.Token<Token> {
+    class Token extends ModifierReviewable.AbstractModifierReviewable implements ByteCodeElement.Token<Token> {
 
         /**
          * The internal name of the represented method.
@@ -1394,11 +1395,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             return internalName;
         }
 
-        /**
-         * Returns the modifiers of the represented method.
-         *
-         * @return The modifiers of the represented method.
-         */
+        @Override
         public int getModifiers() {
             return modifiers;
         }

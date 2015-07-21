@@ -13,13 +13,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,7 +24,7 @@ import static org.mockito.Mockito.*;
 
 public abstract class AbstractImplementationTargetTest {
 
-    protected static final String FOO = "foo", QUX = "qux", QUXBAZ = "quxbaz", FOOBAZ = "foobaz", FOOQUX = "fooqux", BAZBAR = "bazbar";
+    protected static final String FOO = "foo", QUX = "qux", BAZ = "baz", QUXBAZ = "quxbaz", FOOBAZ = "foobaz", BAZBAR = "bazbar";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -36,7 +33,7 @@ public abstract class AbstractImplementationTargetTest {
     protected MethodLookupEngine.Finding finding;
 
     @Mock
-    protected TypeDescription instrumentedType, methodType, returnType, defaultType;
+    protected TypeDescription instrumentedType, methodDeclaringType, returnType, defaultMethodDeclaringType;
 
     @Mock
     protected BridgeMethodResolver.Factory bridgeMethodResolverFactory;
@@ -55,28 +52,32 @@ public abstract class AbstractImplementationTargetTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(methodType.asRawType()).thenReturn(methodType);
+        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
+        when(instrumentedType.getInternalName()).thenReturn(BAZ);
+        when(bridgeMethodResolverFactory.make(any(MethodList.class))).thenReturn(bridgeMethodResolver);
+        when(bridgeMethodResolver.resolve(invokableMethod)).thenReturn(invokableMethod);
         when(finding.getTypeDescription()).thenReturn(instrumentedType);
         when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(invokableMethod)));
-        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultType, Collections.<MethodDescription>singleton(defaultMethod)));
-        when(bridgeMethodResolverFactory.make(any(MethodList.class))).thenReturn(bridgeMethodResolver);
-        when(invokableMethod.getDeclaringType()).thenReturn(methodType);
+        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultMethodDeclaringType, Collections.<MethodDescription>singleton(defaultMethod)));
+        when(methodDeclaringType.asRawType()).thenReturn(methodDeclaringType);
+        when(invokableMethod.getDeclaringType()).thenReturn(methodDeclaringType);
         when(invokableMethod.getReturnType()).thenReturn(returnType);
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(returnType.asRawType()).thenReturn(returnType);
         when(invokableMethod.getInternalName()).thenReturn(FOO);
         when(invokableMethod.getDescriptor()).thenReturn(QUX);
         when(invokableMethod.asToken()).thenReturn(invokableToken);
+        when(invokableMethod.asDeclared()).thenReturn(invokableMethod);
         when(defaultMethod.getInternalName()).thenReturn(QUXBAZ);
         when(defaultMethod.getDescriptor()).thenReturn(FOOBAZ);
-        when(defaultMethod.getDeclaringType()).thenReturn(defaultType);
+        when(defaultMethod.getDeclaringType()).thenReturn(defaultMethodDeclaringType);
         when(defaultMethod.getReturnType()).thenReturn(returnType);
         when(defaultMethod.asToken()).thenReturn(defaultToken);
         when(defaultMethod.asDeclared()).thenReturn(defaultMethod);
-        when(defaultType.isInterface()).thenReturn(true);
-        when(defaultType.asRawType()).thenReturn(defaultType);
-        when(defaultMethod.isSpecializableFor(defaultType)).thenReturn(true);
-        when(defaultType.getInternalName()).thenReturn(BAZBAR);
+        when(defaultMethod.isSpecializableFor(defaultMethodDeclaringType)).thenReturn(true);
+        when(defaultMethodDeclaringType.isInterface()).thenReturn(true);
+        when(defaultMethodDeclaringType.asRawType()).thenReturn(defaultMethodDeclaringType);
+        when(defaultMethodDeclaringType.getInternalName()).thenReturn(BAZBAR);
         implementationTarget = makeImplementationTarget();
     }
 
@@ -84,10 +85,10 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testDefaultMethodInvocation() throws Exception {
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeDefault(defaultType, defaultToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeDefault(defaultMethodDeclaringType, defaultToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) defaultMethod));
-        assertThat(specialMethodInvocation.getTypeDescription(), is(defaultType));
+        assertThat(specialMethodInvocation.getTypeDescription(), is(defaultMethodDeclaringType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
@@ -100,7 +101,7 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testIllegalDefaultMethod() throws Exception {
-        assertThat(implementationTarget.invokeDefault(defaultType, mock(MethodDescription.Token.class)).isValid(), is(false));
+        assertThat(implementationTarget.invokeDefault(defaultMethodDeclaringType, mock(MethodDescription.Token.class)).isValid(), is(false));
     }
 
     @Test

@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
@@ -25,21 +26,13 @@ import static org.mockito.Mockito.*;
 
 public class RebaseImplementationTargetTest extends AbstractImplementationTargetTest {
 
-    private static final String BAR = "bar", BAZ = "baz", FOOBAR = "foobar", QUX = "qux";
+    private static final String BAR = "bar";
 
     @Mock
     private MethodRebaseResolver methodRebaseResolver;
 
     @Mock
-    private MethodRebaseResolver.Resolution rebasedResolution, nonRebasedResolution;
-
-    @Mock
-    private StackManipulation additionalArguments;
-
-    @Mock
-    private MethodDescription.InDeclaredForm targetRebaseMethod, rebasedMethod, nonRebasedMethod, superMethod;
-
-    private MethodDescription.Token superMethodToken, nonRebasedMethodToken, targetRebaseMethodToken;
+    private MethodDescription.InDeclaredForm rebasedMethod;
 
     @Mock
     private TypeDescription superType;
@@ -47,42 +40,15 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Override
     @Before
     public void setUp() throws Exception {
-        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
-        when(instrumentedType.getInternalName()).thenReturn(BAR);
-        when(targetRebaseMethod.getDeclaringType()).thenReturn(instrumentedType);
-        when(targetRebaseMethod.asDeclared()).thenReturn(targetRebaseMethod);
-        when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
-        when(methodRebaseResolver.resolve(targetRebaseMethod)).thenReturn(rebasedResolution);
-        when(rebasedResolution.isRebased()).thenReturn(true);
-        when(rebasedResolution.getResolvedMethod()).thenReturn(rebasedMethod);
-        when(rebasedMethod.getReturnType()).thenReturn(returnType);
-        when(rebasedMethod.getInternalName()).thenReturn(BAZ);
-        when(rebasedMethod.getDescriptor()).thenReturn(FOOBAR);
-        when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
-        when(rebasedMethod.asDeclared()).thenReturn(rebasedMethod);
-        when(rebasedResolution.getAdditionalArguments()).thenReturn(additionalArguments);
-        when(additionalArguments.isValid()).thenReturn(true);
-        when(additionalArguments.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
         when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.getInternalName()).thenReturn(QUX);
-        when(superType.getStackSize()).thenReturn(StackSize.ZERO);
         when(superType.asRawType()).thenReturn(superType);
-        when(superMethod.getDeclaringType()).thenReturn(superType);
-        when(superMethod.getReturnType()).thenReturn(returnType);
-        when(superMethod.getInternalName()).thenReturn(BAZ);
-        when(superMethod.getDescriptor()).thenReturn(FOOBAR);
-        when(superMethod.asDeclared()).thenReturn(superMethod);
-        when(nonRebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
-        when(nonRebasedMethod.getReturnType()).thenReturn(returnType);
-        when(nonRebasedMethod.getInternalName()).thenReturn(BAZ);
-        when(nonRebasedMethod.getDescriptor()).thenReturn(FOOBAR);
-        when(nonRebasedMethod.asDeclared()).thenReturn(nonRebasedMethod);
-        when(methodRebaseResolver.resolve(nonRebasedMethod)).thenReturn(nonRebasedResolution);
-        when(nonRebasedResolution.isRebased()).thenReturn(false);
-        when(nonRebasedResolution.getResolvedMethod()).thenReturn(nonRebasedMethod);
-        when(superMethod.asToken()).thenReturn(superMethodToken);
-        when(targetRebaseMethod.asToken()).thenReturn(targetRebaseMethodToken);
-        when(nonRebasedMethod.asToken()).thenReturn(nonRebasedMethodToken);
+        when(superType.getInternalName()).thenReturn(BAR);
+        when(rebasedMethod.getInternalName()).thenReturn(QUX);
+        when(rebasedMethod.getDescriptor()).thenReturn(FOO);
+        when(rebasedMethod.asDeclared()).thenReturn(rebasedMethod);
+        when(rebasedMethod.getReturnType()).thenReturn(returnType);
+        when(rebasedMethod.getParameters()).thenReturn(new ParameterList.Empty());
+        when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
         super.setUp();
     }
 
@@ -92,18 +58,41 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     }
 
     @Test
-    public void testRebasedMethodIsInvokable() throws Exception {
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(targetRebaseMethodToken);
-        verify(methodRebaseResolver).resolve(targetRebaseMethod);
+    public void testNonRebasedMethodIsInvokable() throws Exception {
+        when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
+        when(invokableMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
+        when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.Preserved(invokableMethod));
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
+        verify(methodRebaseResolver).resolve(invokableMethod);
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
-        verify(additionalArguments).isValid();
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) invokableMethod));
+        assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        Implementation.Context implementationContext = mock(Implementation.Context.class);
+        StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAZ, FOO, QUX, false);
+        verifyNoMoreInteractions(methodVisitor);
+        verifyZeroInteractions(implementationContext);
+        assertThat(size.getSizeImpact(), is(0));
+        assertThat(size.getMaximalSize(), is(0));
+    }
+
+    @Test
+    public void testRebasedMethodIsInvokable() throws Exception {
+        when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
+        when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.ForRebasedMethod(rebasedMethod));
+        when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
+        verify(methodRebaseResolver).resolve(invokableMethod);
+        verifyNoMoreInteractions(methodRebaseResolver);
+        assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) rebasedMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
-        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAR, BAZ, FOOBAR, false);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAZ, QUX, FOO, false);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
@@ -111,69 +100,72 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     }
 
     @Test
-    public void testAbstractRebasedMethodIsNotInvokable() throws Exception {
-        when(rebasedMethod.isAbstract()).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(targetRebaseMethodToken);
-        assertThat(specialMethodInvocation.isValid(), is(false));
-        verify(methodRebaseResolver).resolve(targetRebaseMethod);
-        verifyNoMoreInteractions(methodRebaseResolver);
-    }
-
-    @Test
-    public void testNonRebasedMethodIsInvokable() throws Exception {
-        when(nonRebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(nonRebasedMethodToken);
-        verify(methodRebaseResolver).resolve(nonRebasedMethod);
+    public void testRebasedConstructorIsInvokable() throws Exception {
+        when(rebasedMethod.isConstructor()).thenReturn(true);
+        when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
+        when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.ForRebasedConstructor(rebasedMethod));
+        when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
+        verify(methodRebaseResolver).resolve(invokableMethod);
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
-        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) nonRebasedMethod));
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) rebasedMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
-        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAR, BAZ, FOOBAR, false);
+        verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAZ, QUX, FOO, false);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        assertThat(size.getSizeImpact(), is(0));
-        assertThat(size.getMaximalSize(), is(0));
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(1));
     }
 
     @Test
-    public void testAbstractNonRebasedMethodIsNotInvokable() throws Exception {
-        when(nonRebasedMethod.isAbstract()).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(nonRebasedMethodToken);
+    public void testNonSpecializableRebaseMethodIsNotInvokable() throws Exception {
+        when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
+        when(invokableMethod.isSpecializableFor(instrumentedType)).thenReturn(false);
+        when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.Preserved(invokableMethod));
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
-        verify(methodRebaseResolver).resolve(nonRebasedMethod);
+    }
+
+    @Test
+    public void testAbstractRebaseMethodIsNotInvokable() throws Exception {
+        when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
+        when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.ForRebasedMethod(rebasedMethod));
+        when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
+        when(rebasedMethod.isAbstract()).thenReturn(true);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
+        verify(methodRebaseResolver).resolve(invokableMethod);
         verifyNoMoreInteractions(methodRebaseResolver);
+        assertThat(specialMethodInvocation.isValid(), is(false));
     }
 
     @Test
     public void testSuperTypeMethodIsInvokable() throws Exception {
-        when(superMethod.isSpecializableFor(superType)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethodToken);
+        when(invokableMethod.isSpecializableFor(superType)).thenReturn(true);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
-        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) superMethod));
+        assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) invokableMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(superType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
-        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, QUX, BAZ, FOOBAR, false);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESPECIAL, BAR, FOO, QUX, false);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-        verifyZeroInteractions(methodRebaseResolver);
     }
 
     @Test
-    public void testAbstractSuperTypeMethodIsNotInvokable() throws Exception {
-        when(superMethod.isSpecializableFor(superType)).thenReturn(true);
-        when(superMethod.isAbstract()).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superMethodToken);
+    public void testNonSpecializableSuperTypeMethodIsNotInvokable() throws Exception {
+        when(invokableMethod.isSpecializableFor(superType)).thenReturn(false);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
-        verifyZeroInteractions(methodRebaseResolver);
     }
-
     @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {

@@ -1,6 +1,7 @@
 package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -366,7 +367,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      * A token that represents a field's shape. A field token is equal to another token when the other field
      * tokens's name is equal to this token.
      */
-    class Token implements ByteCodeElement.Token<Token> {
+    class Token extends ModifierReviewable.AbstractModifierReviewable implements ByteCodeElement.Token<Token> {
 
         /**
          * The name of the represented field.
@@ -432,11 +433,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
             return type;
         }
 
-        /**
-         * Returns the modifiers of the represented field.
-         *
-         * @return The modifiers of the represented field.
-         */
+        @Override
         public int getModifiers() {
             return modifiers;
         }

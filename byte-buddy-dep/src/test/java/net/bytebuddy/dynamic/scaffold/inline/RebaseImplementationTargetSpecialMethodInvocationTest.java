@@ -18,7 +18,6 @@ import org.objectweb.asm.Opcodes;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -56,7 +55,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDeclared()).thenReturn(methodDescription);
         when(resolution.getResolvedMethod()).thenReturn(methodDescription);
-        return new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution, targetType);
+        return new RebaseImplementationTarget.RebasedMethodInvocation(resolution, targetType);
     }
 
     @Test
@@ -74,7 +73,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
                 MethodDescription.NO_DEFAULT_VALUE));
-        Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution,
+        Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodInvocation(resolution,
                 mock(TypeDescription.class));
         assertThat(specialMethodInvocation.isValid(), is(true));
     }
@@ -94,7 +93,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
                 MethodDescription.NO_DEFAULT_VALUE));
-        Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodSpecialMethodInvocation(resolution,
+        Implementation.SpecialMethodInvocation specialMethodInvocation = new RebaseImplementationTarget.RebasedMethodInvocation(resolution,
                 mock(TypeDescription.class));
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
