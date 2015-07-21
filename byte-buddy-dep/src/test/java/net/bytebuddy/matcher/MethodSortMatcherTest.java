@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -113,17 +114,18 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
             @SuppressWarnings("unchecked")
             protected void prepare(MethodDescription mock) {
                 when(mock.isBridge()).thenReturn(true);
-                TypeDescription typeDescription = Mockito.mock(TypeDescription.class);
-                MethodList methodList = Mockito.mock(MethodList.class);
-                when(mock.getDeclaringType()).thenReturn(typeDescription);
-                when(typeDescription.getDeclaredMethods()).thenReturn(methodList);
-                when(methodList.filter(any(ElementMatcher.class))).thenReturn(methodList);
-                when(methodList.size()).thenReturn(0);
-                when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
-                TypeDescription returnType = Mockito.mock(TypeDescription.class);
-                when(returnType.asRawType()).thenReturn(returnType);
-                when(mock.getReturnType()).thenReturn(returnType);
-                when(mock.getSourceCodeName()).thenReturn(FOO);
+                MethodDescription.Token methodToken = Mockito.mock(MethodDescription.Token.class);
+                when(mock.asToken()).thenReturn(methodToken);
+                TypeDescription declaringType = Mockito.mock(TypeDescription.class);
+                when(declaringType.asRawType()).thenReturn(declaringType);
+                when(mock.getDeclaringType()).thenReturn(declaringType);
+                TypeDescription superType = Mockito.mock(TypeDescription.class);
+                when(declaringType.getSuperType()).thenReturn(superType);
+                MethodDescription.InDeclaredForm methodDescription = Mockito.mock(MethodDescription.InDeclaredForm.class);
+                when(methodDescription.isOverridable()).thenReturn(true);
+                when(methodDescription.asToken()).thenReturn(methodToken);
+                when(superType.getDeclaredMethods())
+                        .thenReturn(new MethodList.Explicit<MethodDescription.InDeclaredForm>(Collections.singletonList(methodDescription)));
             }
         };
 

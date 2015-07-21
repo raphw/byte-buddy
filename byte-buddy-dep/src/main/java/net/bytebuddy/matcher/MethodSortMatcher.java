@@ -101,6 +101,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
         VISIBILITY_BRIDGE("isVisibilityBridge()") {
             @Override
             protected boolean isSort(MethodDescription target) {
+                // Visibility bridges are never required for Java 8 default methods.
                 if (target.isBridge() && !target.getDeclaringType().asRawType().isInterface()) {
                     GenericTypeDescription currentType = target.getDeclaringType().getSuperType();
                     while (currentType != null) {
