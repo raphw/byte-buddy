@@ -1,6 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -100,10 +101,18 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
         VISIBILITY_BRIDGE("isVisibilityBridge()") {
             @Override
             protected boolean isSort(MethodDescription target) {
-                return target.isBridge() && target.getDeclaringType()
-                        .getDeclaredMethods()
-                        .filter(isMethod().and(not(is(target))).and(isSpecializationOf(target)))
-                        .size() == 0;
+                if (target.isBridge() && !target.getDeclaringType().asRawType().isInterface()) {
+                    GenericTypeDescription currentType = target.getDeclaringType().getSuperType();
+                    while (currentType != null) {
+                        for (MethodDescription methodDescription : currentType.getDeclaredMethods().filter(isOverridable())) {
+                            if (target.asToken().equals(methodDescription.asToken())) {
+                                return !methodDescription.isBridge();
+                            }
+                        }
+                        currentType = currentType.getSuperType();
+                    }
+                }
+                return false;
             }
         },
 
