@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
@@ -11,8 +12,12 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
@@ -25,9 +30,9 @@ import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
@@ -181,22 +186,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
-    public void testDefinedMethodIsNotIgnored() throws Exception {
-        Class<?> type = createPlain()
-                .ignoreMethods(any())
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
-                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
-                .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        Method method = type.getDeclaredMethod(FOO);
-        assertThat(method.invoke(type.newInstance()), is((Object) FOO));
-    }
-
-    @Test
     public void testConstructorInvokingMethod() throws Exception {
         Class<?> type = createPlain()
-                .ignoreMethods(any())
                 .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
@@ -222,6 +213,29 @@ public abstract class AbstractDynamicTypeBuilderTest {
         verify(modifierResolver).transform(toString, true);
     }
 
+    @Test
+    public void testIgnoredMethod() throws Exception {
+        Class<?> type = createPlain()
+                .ignoreMethods(named(TO_STRING))
+                .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.newInstance().toString(), CoreMatchers.not(FOO));
+    }
+
+    @Test
+    public void testIgnoredMethodDoesNotApplyForDefined() throws Exception {
+        Class<?> type = createPlain()
+                .ignoreMethods(named(FOO))
+                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
     public static class Foo {
         /* empty */
     }
@@ -232,6 +246,65 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
         public static void invoke() {
             foo = FOO;
+        }
+    }
+
+    public static class BridgeRetention<T> extends CallTraceable {
+
+        public T foo() {
+            register(FOO);
+            return null;
+        }
+
+        public static class Inner extends BridgeRetention<String> {
+            /* empty */
+        }
+    }
+
+    public static class SuperCall<T> extends CallTraceable {
+
+        public T foo(T value) {
+            register(FOO);
+            return value;
+        }
+
+        public static class Inner extends SuperCall<String> {
+            /* empty */
+        }
+    }
+
+    protected static class MethodCallValidator extends MethodVisitor {
+
+        public static class ClassWrapper implements ClassVisitorWrapper {
+
+            @Override
+            public ClassVisitor wrap(ClassVisitor classVisitor) {
+                return new ClassValidator(classVisitor);
+            }
+        }
+
+        private static class ClassValidator extends ClassVisitor {
+
+            private ClassValidator(ClassVisitor classVisitor) {
+                super(Opcodes.ASM5, classVisitor);
+            }
+
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                return new MethodCallValidator(super.visitMethod(access, name, desc, signature, exceptions));
+            }
+        }
+
+        private MethodCallValidator(MethodVisitor methodVisitor) {
+            super(Opcodes.ASM5, methodVisitor);
+        }
+
+        @Override
+        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            if (!name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
+                assertThat(desc, is("(Ljava/lang/Object;)Ljava/lang/Object;"));
+            }
+            super.visitMethodInsn(opcode, owner, name, desc, itf);
         }
     }
 }
