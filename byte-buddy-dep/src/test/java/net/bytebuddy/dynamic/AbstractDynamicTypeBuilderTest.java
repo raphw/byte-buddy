@@ -14,6 +14,7 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -185,22 +186,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
-    public void testDefinedMethodIsNotIgnored() throws Exception {
-        Class<?> type = createPlain()
-                .ignoreMethods(any())
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
-                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
-                .make()
-                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        Method method = type.getDeclaredMethod(FOO);
-        assertThat(method.invoke(type.newInstance()), is((Object) FOO));
-    }
-
-    @Test
     public void testConstructorInvokingMethod() throws Exception {
         Class<?> type = createPlain()
-                .ignoreMethods(any())
                 .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
@@ -224,6 +211,29 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(type.newInstance().toString(), is(FOO));
         assertThat(type.getDeclaredMethod(TO_STRING).getModifiers(), is(Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC));
         verify(modifierResolver).transform(toString, true);
+    }
+
+    @Test
+    public void testIgnoredMethod() throws Exception {
+        Class<?> type = createPlain()
+                .ignoreMethods(named(TO_STRING))
+                .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.newInstance().toString(), CoreMatchers.not(FOO));
+    }
+
+    @Test
+    public void testIgnoredMethodDoesNotApplyForDefined() throws Exception {
+        Class<?> type = createPlain()
+                .ignoreMethods(named(FOO))
+                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
     public static class Foo {

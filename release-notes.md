@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 20. July 2015: version 0.6.14
+
+- Fixed resolution of ignored methods. Previously, additional ignored methods were not appended but added as an additional criteria for ignoring a method.
+
 ### 17. July 2015: version 0.6.13
 
 - Fixed resolution of field accessors to not attempt reading of non-static fields from static methods.
@@ -99,15 +103,15 @@ Extended public API with convenience methods.
 - Fixed the default `TypePool` to retain generic signatures in order to avoid that agents delete such signatures.
 - Fixed a bug in all of the the default `ConstructorStrategy` that effectively prevented intercepting of constructors.
 
-### 5. December 2014: version 0.5.1
-
-Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more convenient 
-constructor interception where a hard-coded super method call is required by the Java verifier.
-
 ### 18. January 2015: version 0.5.2
 
 - Fixed a bug where interface generation would result in a `NullPointerException`.
 - Added additional `ElementMatcher`s that allow to identify class loaders.
+
+### 5. December 2014: version 0.5.1
+
+Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more convenient 
+constructor interception where a hard-coded super method call is required by the Java verifier.
 
 ### 3. December 2014: version 0.5
 
