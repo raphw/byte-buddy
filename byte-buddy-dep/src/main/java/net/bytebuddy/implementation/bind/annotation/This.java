@@ -62,9 +62,9 @@ public @interface This {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (target.getType().asRawType().isPrimitive()) {
+            if (target.getType().isPrimitive()) {
                 throw new IllegalStateException(target + " uses a primitive type with a @This annotation");
-            } else if (target.getType().asRawType().isArray()) {
+            } else if (target.getType().isArray()) {
                 throw new IllegalStateException(target + " uses an array type with a @This annotation");
             } else if (source.isStatic() && !annotation.loadSilent().optional()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

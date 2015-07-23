@@ -132,7 +132,7 @@ public @interface AllArguments {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().asRawType().isArray()) {
+            if (!target.getType().isArray()) {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
             ArrayFactory arrayFactory = ArrayFactory.forType(target.getType().asRawType().getComponentType());
