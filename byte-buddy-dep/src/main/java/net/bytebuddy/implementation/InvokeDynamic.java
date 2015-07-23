@@ -29,6 +29,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
@@ -1725,19 +1726,8 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    GenericTypeDescription currentType = instrumentedType;
-                    FieldDescription fieldDescription = null;
-                    do {
-                        FieldList<?> fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
-                        if (fieldList.size() != 0) {
-                            fieldDescription = fieldList.getOnly();
-                        }
-                        currentType = currentType.getSuperType();
-                    }
-                    while (currentType != null && (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)));
-                    if (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)) {
-                        throw new IllegalStateException(instrumentedType + " does not define a visible field " + fieldName);
-                    } else if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
+                    FieldDescription fieldDescription = locate(instrumentedType);
+                    if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(
@@ -1746,6 +1736,22 @@ public class InvokeDynamic implements Implementation {
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter()
                     ), fieldDescription.getType().asRawType());
+                }
+
+                /**
+                 * Locates the specified field on the instrumented type.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @return The located field.
+                 */
+                private FieldDescription locate(TypeDescription instrumentedType) {
+                    for (GenericTypeDescription currentType : instrumentedType) {
+                        FieldList<?> fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                        if (fieldList.size() != 0) {
+                            return fieldList.getOnly();
+                        }
+                    }
+                    throw new IllegalStateException(instrumentedType + " does not define a visible field " + fieldName);
                 }
 
                 @Override

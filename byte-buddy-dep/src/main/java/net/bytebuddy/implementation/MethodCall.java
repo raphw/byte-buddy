@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
@@ -1228,19 +1229,8 @@ public class MethodCall implements Implementation {
                                              TypeDescription targetType,
                                              Assigner assigner,
                                              boolean dynamicallyTyped) {
-                GenericTypeDescription currentType = instrumentedType;
-                FieldDescription fieldDescription = null;
-                do {
-                    FieldList<?> fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName));
-                    if (fieldList.size() != 0) {
-                        fieldDescription = fieldList.getOnly();
-                    }
-                    currentType = currentType.getSuperType();
-                }
-                while (currentType != null && (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)));
-                if (fieldDescription == null || !fieldDescription.isVisibleTo(instrumentedType)) {
-                    throw new IllegalStateException(instrumentedType + " does not define a visible field " + fieldName);
-                } else if (!fieldDescription.isStatic() && interceptedMethod.isStatic()) {
+                FieldDescription fieldDescription = locate(instrumentedType);
+                if (!fieldDescription.isStatic() && interceptedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + interceptedMethod);
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
@@ -1254,6 +1244,22 @@ public class MethodCall implements Implementation {
                     throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + targetType);
                 }
                 return stackManipulation;
+            }
+
+            /**
+             * Locates the specified field on the instrumented type.
+             *
+             * @param instrumentedType The instrumented type.
+             * @return The located field.
+             */
+            private FieldDescription locate(TypeDescription instrumentedType) {
+                for (GenericTypeDescription currentType : instrumentedType) {
+                    FieldList<?> fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                    if (fieldList.size() != 0) {
+                        return fieldList.getOnly();
+                    }
+                }
+                throw new IllegalStateException(instrumentedType + " does not define a visible field " + fieldName);
             }
 
             @Override

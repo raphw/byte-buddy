@@ -5,6 +5,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -270,13 +271,12 @@ public abstract class FieldAccessor implements Implementation {
 
             @Override
             public FieldDescription locate(String name, boolean staticMethod) {
-                TypeDescription currentType = instrumentedType;
-                do {
+                for (GenericTypeDescription currentType : instrumentedType) {
                     FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(name).and(isVisibleTo(instrumentedType)));
                     if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                         return fieldList.getOnly();
                     }
-                } while (!(currentType = currentType.getSuperType().asRawType()).represents(Object.class));
+                }
                 throw new IllegalArgumentException("There is no field '" + name + " that is visible to " + instrumentedType);
             }
 

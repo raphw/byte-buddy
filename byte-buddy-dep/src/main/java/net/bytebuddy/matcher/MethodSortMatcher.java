@@ -117,14 +117,12 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                             .and(takesArguments(target.getParameters().asTypeList().asRawTypes()))).isEmpty()) {
                         return true;
                     }
-                    GenericTypeDescription currentType = target.getDeclaringType().getSuperType();
-                    while (currentType != null) {
+                    for (GenericTypeDescription currentType : target.getDeclaringType().getSuperType()) {
                         for (MethodDescription methodDescription : currentType.getDeclaredMethods()) {
                             if (target.asToken().equals(methodDescription.asDefined().asToken())) {
                                 return !methodDescription.equals(methodDescription.asDefined());
                             }
                         }
-                        currentType = currentType.getSuperType();
                     }
                 }
                 return false;
