@@ -613,7 +613,9 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public SignatureVisitor onNonGenericType(TypeDescription typeDescription) {
-                if (typeDescription.isPrimitive()) {
+                if(typeDescription.isArray()) {
+                    typeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
+                } else if (typeDescription.isPrimitive()) {
                     signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(ONLY_CHARACTER));
                 } else {
                     signatureVisitor.visitClassType(typeDescription.getInternalName());
@@ -1064,67 +1066,73 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public GenericTypeDescription getSuperType() {
-            throw new IllegalStateException("A generic array does not imply a super type definition: " + this);
+            return TypeDescription.OBJECT;
         }
 
         @Override
         public GenericTypeList getInterfaces() {
-            throw new IllegalStateException("A generic array does not imply an interface type definition: " + this);
+            return TypeDescription.ARRAY_INTERFACES;
         }
 
         @Override
         public FieldList getDeclaredFields() {
-            throw new IllegalStateException("A generic array does not imply field definitions: " + this);
+            return new FieldList.Empty();
         }
 
         @Override
         public MethodList getDeclaredMethods() {
-            throw new IllegalStateException("A generic array does not imply method definitions: " + this);
+            return new MethodList.Empty();
         }
 
         @Override
         public GenericTypeList getUpperBounds() {
-            throw new IllegalStateException("A generic array does not imply upper type bounds: " + this);
+            throw new IllegalStateException("An array type does not imply upper type bounds: " + this);
         }
 
         @Override
         public GenericTypeList getLowerBounds() {
-            throw new IllegalStateException("A generic array does not imply lower type bounds: " + this);
+            throw new IllegalStateException("An array type does not imply lower type bounds: " + this);
         }
 
         @Override
         public TypeVariableSource getVariableSource() {
-            throw new IllegalStateException("A generic array does not imply a type variable source: " + this);
+            throw new IllegalStateException("An array type does not imply a type variable source: " + this);
         }
 
         @Override
         public GenericTypeList getParameters() {
-            throw new IllegalStateException("A generic array does not imply type parameters: " + this);
+            return new GenericTypeList.Empty();
         }
 
         @Override
         public GenericTypeDescription getOwnerType() {
-            throw new IllegalStateException("A generic array does not imply an owner type: " + this);
+            return null;
         }
 
         @Override
         public String getSymbol() {
-            throw new IllegalStateException("A generic array does not imply a symbol: " + this);
+            throw new IllegalStateException("An array type does not imply a symbol: " + this);
         }
 
         @Override
         public String getTypeName() {
-            return toString();
+            return getSort().isNonGeneric()
+                    ? asRawType().getTypeName()
+                    : toString();
         }
 
         @Override
         public String getSourceCodeName() {
-            return toString();
+            return getSort().isNonGeneric()
+                    ? asRawType().getSourceCodeName()
+                    : toString();
         }
 
         @Override
         public <T> T accept(Visitor<T> visitor) {
-            return visitor.onGenericArray(this);
+            return getSort().isNonGeneric()
+                    ? visitor.onNonGenericType(asRawType())
+                    : visitor.onGenericArray(this);
         }
 
         @Override
@@ -1134,6 +1142,9 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public boolean equals(Object other) {
+            if (getSort().isNonGeneric()) {
+                return asRawType().equals(other);
+            }
             if (!(other instanceof GenericTypeDescription)) return false;
             GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
             return genericTypeDescription.getSort().isGenericArray() && getComponentType().equals(genericTypeDescription.getComponentType());
@@ -1141,12 +1152,16 @@ public interface GenericTypeDescription extends NamedElement {
 
         @Override
         public int hashCode() {
-            return getComponentType().hashCode();
+            return getSort().isNonGeneric()
+                    ? asRawType().hashCode()
+                    : getComponentType().hashCode();
         }
 
         @Override
         public String toString() {
-            return getComponentType().getTypeName() + "[]";
+            return getSort().isNonGeneric()
+                    ? asRawType().toString()
+                    : getComponentType().getTypeName() + "[]";
         }
 
         /**

@@ -4,12 +4,8 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
-import net.bytebuddy.pool.TypePool;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public interface MethodGraph {
 
@@ -62,66 +58,6 @@ public interface MethodGraph {
         }
     }
 
-    interface Key {
-
-        MethodDescription.Token getToken();
-
-        interface Factory {
-
-            Key make(MethodDescription.Token methodToken);
-
-            enum ForJavaMethod implements Factory {
-
-                INSTANCE;
-
-                @Override
-                public Key make(MethodDescription.Token methodToken) {
-                    return new Key.ForJavaMethod(methodToken);
-                }
-            }
-        }
-
-        class ForJavaMethod implements Key {
-
-            private final MethodDescription.Token methodToken;
-
-            public ForJavaMethod(MethodDescription.Token methodToken) {
-                this.methodToken = methodToken;
-            }
-
-            @Override
-            public MethodDescription.Token getToken() {
-                return methodToken;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (other == this) return true;
-                if (!(other instanceof Key)) return false;
-                Key key = (Key) other;
-                if (!methodToken.getInternalName().equals(key.getToken().getInternalName())) {
-                    return false;
-                }
-                int index = 0;
-                for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                    if (!parameterToken.getType().asRawType().equals(key.getToken().getParameterTokens().get(index++).getType().asRawType())) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-
-            @Override
-            public int hashCode() {
-                int hashCode = methodToken.getInternalName().hashCode();
-                for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                    hashCode = hashCode * 31 + parameterToken.getType().asRawType().hashCode();
-                }
-                return hashCode;
-            }
-        }
-    }
-
     interface Fabricator {
 
         MethodGraph process(TypeDescription typeDescription);
@@ -136,29 +72,106 @@ public interface MethodGraph {
 
             @Override
             public MethodGraph process(TypeDescription typeDescription) {
-                for (GenericTypeDescription currentType : typeDescription) {
-                    currentType.getDeclaredMethods();
-                    currentType.getInterfaces();
-                }
-                return null; // TODO: Implement.
+//                Registry registry = new Registry();
+//                for (GenericTypeDescription currentType : typeDescription) {
+//                    registry.append(currentType.getDeclaredMethods());
+//                }
+//                return registry.toGraph();
+                return null;
             }
 
-            protected class Registry {
+            protected static class Registry {
 
-                protected Bucket locate(MethodDescription.Token methodToken) {
+                private final Key.Factory keyFactory;
+
+                private final Map<Key, Key> primaryKeys;
+
+                private final Map<Key, Entry> entries;
+
+                protected Registry(Key.Factory keyFactory) {
+                    this.keyFactory = keyFactory;
+                    primaryKeys = new HashMap<Key, Key>();
+                    entries = new LinkedHashMap<Key, Entry>();
+                }
+
+                protected void append(List<? extends MethodDescription> methodDescriptions) {
+                    for (MethodDescription methodDescription : methodDescriptions) {
+                        Key key = primaryKeys.get(keyFactory.make(methodDescription.asToken())); // TODO: Smarter structure, get or insert
+                        Entry entry = entries.get(key); // TODO: Smarter structure, get or create
+                        entry.append(methodDescription); // TODO: Add declared method's key.
+                    }
+                }
+
+                protected MethodGraph toGraph() {
                     return null;
                 }
 
-                class Bucket {
+                protected static class Entry {
 
-                    private final Set<Key> identifiers;
+                    List<MethodDescription> representedMethods;
 
-                    public Bucket(Set<Key> identifiers) {
-                        this.identifiers = identifiers;
+                    Entry append(MethodDescription methodDescription) {
+                        return null;
+                    }
+                }
+            }
+
+            public interface Key {
+
+                MethodDescription.Token getToken();
+
+                interface Factory {
+
+                    Key make(MethodDescription.Token methodToken);
+
+                    enum ForJavaMethod implements Factory {
+
+                        INSTANCE;
+
+                        @Override
+                        public Key make(MethodDescription.Token methodToken) {
+                            return new Key.ForJavaMethod(methodToken);
+                        }
+                    }
+                }
+
+                class ForJavaMethod implements Key {
+
+                    private final MethodDescription.Token methodToken;
+
+                    public ForJavaMethod(MethodDescription.Token methodToken) {
+                        this.methodToken = methodToken;
                     }
 
-                    void register(MethodDescription methodDescription) {
+                    @Override
+                    public MethodDescription.Token getToken() {
+                        return methodToken;
+                    }
 
+                    @Override
+                    public boolean equals(Object other) {
+                        if (other == this) return true;
+                        if (!(other instanceof Key)) return false;
+                        Key key = (Key) other;
+                        if (!methodToken.getInternalName().equals(key.getToken().getInternalName())) {
+                            return false;
+                        }
+                        int index = 0;
+                        for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
+                            if (!parameterToken.getType().asRawType().equals(key.getToken().getParameterTokens().get(index++).getType().asRawType())) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int hashCode = methodToken.getInternalName().hashCode();
+                        for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
+                            hashCode = hashCode * 31 + parameterToken.getType().asRawType().hashCode();
+                        }
+                        return hashCode;
                     }
                 }
             }

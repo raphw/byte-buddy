@@ -390,6 +390,12 @@ public abstract class AbstractGenericTypeDescriptionTest {
         GenericTypeDescription genericTypeDescription = describe(GenericArrayType.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.GENERIC_ARRAY));
         assertThat(genericTypeDescription.getStackSize(), is(StackSize.SINGLE));
+        assertThat(genericTypeDescription.getDeclaredFields().size(), is(0));
+        assertThat(genericTypeDescription.getDeclaredMethods().size(), is(0));
+        assertThat(genericTypeDescription.getParameters().size(), is(0));
+        assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(genericTypeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
         assertThat(genericTypeDescription.getSourceCodeName(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.getTypeName(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.toString(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
@@ -407,11 +413,6 @@ public abstract class AbstractGenericTypeDescriptionTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testGenericArrayTypeNoOwnerType() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getOwnerType();
-    }
-
-    @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoVariableSource() throws Exception {
         describe(GenericArrayType.class.getDeclaredField(FOO)).getVariableSource();
     }
@@ -419,26 +420,6 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoSymbol() throws Exception {
         describe(GenericArrayType.class.getDeclaredField(FOO)).getSymbol();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGenericArrayTypeNoSuperType() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getSuperType();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGenericArrayTypeNoInterfaceTypes() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getInterfaces();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGenericArrayTypeNoFields() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getDeclaredFields();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGenericArrayTypeNoMethods() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getDeclaredMethods();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -451,9 +432,51 @@ public abstract class AbstractGenericTypeDescriptionTest {
         describe(GenericArrayType.class.getDeclaredField(FOO)).getLowerBounds();
     }
 
+    @Test
+    public void testGenericArrayOfGenericComponentType() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO));
+        assertThat(genericTypeDescription.getSort(), is(GenericTypeDescription.Sort.GENERIC_ARRAY));
+        assertThat(genericTypeDescription.getStackSize(), is(StackSize.SINGLE));
+        assertThat(genericTypeDescription.getDeclaredFields().size(), is(0));
+        assertThat(genericTypeDescription.getDeclaredMethods().size(), is(0));
+        assertThat(genericTypeDescription.getParameters().size(), is(0));
+        assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(genericTypeDescription.getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(genericTypeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
+        assertThat(genericTypeDescription.getSourceCodeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.getTypeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.toString(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(genericTypeDescription.hashCode(),
+                is(GenericTypeDescription.Sort.describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType()).hashCode()));
+        assertThat(genericTypeDescription, is(GenericTypeDescription.Sort.describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType())));
+        assertThat(genericTypeDescription, CoreMatchers.not(GenericTypeDescription.Sort.describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getType())));
+        assertThat(genericTypeDescription, CoreMatchers.not(new Object()));
+        assertThat(genericTypeDescription.equals(null), is(false));
+        assertThat(genericTypeDescription.getComponentType().getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
+        assertThat(genericTypeDescription.getComponentType().getParameters().size(), is(1));
+        assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
+        assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().asRawType().represents(String.class), is(true));
+        assertThat(genericTypeDescription.getTypeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
+    }
+
     @Test(expected = IllegalStateException.class)
-    public void testGenericArrayTypeNoParameters() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getParameters();
+    public void testGenericArrayOfGenericComponentTypeNoVariableSource() throws Exception {
+        describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO)).getVariableSource();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGenericArrayOfGenericComponentTypeNoSymbol() throws Exception {
+        describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO)).getSymbol();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGenericArrayOfGenericComponentTypeNoUpperBounds() throws Exception {
+        describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO)).getUpperBounds();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGenericArrayOfGenericComponentTypeNoLowerBounds() throws Exception {
+        describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO)).getLowerBounds();
     }
 
     @Test
@@ -1108,6 +1131,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
     public static class GenericArrayType {
 
         List<String>[] foo;
+    }
+
+    public static class GenericArrayOfGenericComponentType<T extends String> {
+
+        List<T>[] foo;
     }
 
     @SuppressWarnings("unused")
