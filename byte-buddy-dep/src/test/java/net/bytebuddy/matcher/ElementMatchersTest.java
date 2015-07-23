@@ -664,7 +664,9 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isVisibilityBridge()
-                .matches(new MethodDescription.ForLoadedMethod(IsBridge.class.getDeclaredMethod(FOO, Object.class))), is(false));
+                .matches(new MethodDescription.ForLoadedMethod(IsTypeVariableBridge.class.getDeclaredMethod(FOO, Object.class))), is(false));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
+                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
@@ -672,7 +674,7 @@ public class ElementMatchersTest {
     @Test
     public void testSortIsBridge() throws Exception {
         assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
-        assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(IsBridge.class.getDeclaredMethod(FOO, Object.class))), is(true));
+        assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(IsTypeVariableBridge.class.getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
 
@@ -983,18 +985,33 @@ public class ElementMatchersTest {
         /* empty */
     }
 
-    public static class BridgeBase<T> {
+    public static class TypeVariableBridgeBase<T> {
 
         public void foo(T arg) {
             /* empty */
         }
     }
 
-    public static class IsBridge extends BridgeBase<Void> {
+    public static class IsTypeVariableBridge extends TypeVariableBridgeBase<Void> {
 
         @Override
         public void foo(Void arg) {
             /* empty */
+        }
+    }
+
+    public static class ReturnTypeBridgeBase {
+
+        public Object foo() {
+            return null;
+        }
+    }
+
+    public static class IsReturnTypeBridge extends ReturnTypeBridgeBase {
+
+        @Override
+        public String foo() {
+            return null;
         }
     }
 
