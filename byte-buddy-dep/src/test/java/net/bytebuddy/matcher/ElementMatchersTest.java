@@ -669,6 +669,10 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
         assertThat(ElementMatchers.isTypeBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.isTypeBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Intermediate.class.getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Inner.class.getDeclaredMethod(FOO, Object.class))), is(true));
@@ -696,6 +700,10 @@ public class ElementMatchersTest {
     public void testSortIsVisibilityBridge() throws Exception {
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.isVisibilityBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.isVisibilityBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Intermediate.class.getDeclaredMethod(FOO, Object.class))), is(false));
         assertThat(ElementMatchers.isVisibilityBridge()
@@ -737,6 +745,10 @@ public class ElementMatchersTest {
     public void testSortIsBridge() throws Exception {
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.isBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.isBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Intermediate.class.getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isBridge()
@@ -1067,7 +1079,22 @@ public class ElementMatchersTest {
         }
     }
 
-    public abstract static class IsVisibilityBridge extends VisibilityBridgeBase {
+    public static class IsVisibilityBridge extends VisibilityBridgeBase {
+        /* empty */
+    }
+
+    static class GenericVisibilityBridgeBase<T> {
+
+        public T foo() {
+            return null;
+        }
+    }
+
+    public static class IsGenericVisibilityBridge<T> extends GenericVisibilityBridgeBase<T> {
+        /* empty */
+    }
+
+    public static class IsRawGenericVisibilityBridge<T> extends GenericVisibilityBridgeBase {
         /* empty */
     }
 
