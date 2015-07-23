@@ -449,6 +449,36 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
         }
 
+        enum TypeErasing implements Visitor<TypeDescription> {
+
+            INSTANCE;
+
+            @Override
+            public TypeDescription onGenericArray(GenericTypeDescription genericArray) {
+                return genericArray.asRawType();
+            }
+
+            @Override
+            public TypeDescription onWildcardType(GenericTypeDescription wildcardType) {
+                throw new IllegalArgumentException("Cannot erase a wilcard type");
+            }
+
+            @Override
+            public TypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                return parameterizedType.asRawType();
+            }
+
+            @Override
+            public TypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                return typeVariable.asRawType();
+            }
+
+            @Override
+            public TypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
+                return typeDescription.asRawType();
+            }
+        }
+
         /**
          * A visitor for erasing type variables on the most fine-grained level. In practice, this means:
          * <ul>

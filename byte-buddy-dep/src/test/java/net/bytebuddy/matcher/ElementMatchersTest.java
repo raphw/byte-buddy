@@ -673,11 +673,17 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
         assertThat(ElementMatchers.isTypeBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsDivergentVisibilityBridge.class.getDeclaredMethod(FOO, Object.class))), is(false));
+        assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Intermediate.class.getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Inner.class.getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Inner.class.getDeclaredMethod(FOO, Number.class))), is(true));
+        assertThat(ElementMatchers.isTypeBridge().matches(new MethodDescription.ForLoadedMethod(DivergentTypeVariableBridge.FullyDiverged.class
+                .getDeclaredMethod(FOO, Object.class))), is(true));
+        assertThat(ElementMatchers.isTypeBridge().matches(new MethodDescription.ForLoadedMethod(DivergentTypeVariableBridge.AmbivalentlyDiverged.class
+                .getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(ReturnTypeBridge.Intermediate.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(ReturnTypeBridge.Inner.class)
@@ -689,6 +695,8 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(true));
+        assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeCombinationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeSpecializationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
@@ -705,11 +713,17 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isVisibilityBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsDivergentVisibilityBridge.class.getDeclaredMethod(FOO, Object.class))), is(true));
+        assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Intermediate.class.getDeclaredMethod(FOO, Object.class))), is(false));
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Inner.class.getDeclaredMethod(FOO, Object.class))), is(false));
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Inner.class.getDeclaredMethod(FOO, Number.class))), is(false));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new MethodDescription.ForLoadedMethod(DivergentTypeVariableBridge.FullyDiverged.class
+                .getDeclaredMethod(FOO, Object.class))), is(false));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new MethodDescription.ForLoadedMethod(DivergentTypeVariableBridge.AmbivalentlyDiverged.class
+                .getDeclaredMethod(FOO, Object.class))), is(false));
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(ReturnTypeBridge.Intermediate.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(ReturnTypeBridge.Inner.class)
@@ -721,6 +735,8 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(false));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeCombinationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeSpecializationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
@@ -750,11 +766,17 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsDivergentVisibilityBridge.class.getDeclaredMethod(FOO, Object.class))), is(true));
+        assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Intermediate.class.getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Inner.class.getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(TypeVariableBridge.Inner.class.getDeclaredMethod(FOO, Number.class))), is(true));
+        assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(DivergentTypeVariableBridge.FullyDiverged.class
+                .getDeclaredMethod(FOO, Object.class))), is(true));
+        assertThat(ElementMatchers.isBridge().matches(new MethodDescription.ForLoadedMethod(DivergentTypeVariableBridge.AmbivalentlyDiverged.class
+                .getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(ReturnTypeBridge.Intermediate.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(ReturnTypeBridge.Inner.class)
@@ -766,6 +788,8 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
+        assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeCombinationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeSpecializationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
@@ -1094,8 +1118,22 @@ public class ElementMatchersTest {
         /* empty */
     }
 
-    public static class IsRawGenericVisibilityBridge<T> extends GenericVisibilityBridgeBase {
+    public static class IsRawGenericVisibilityBridge extends GenericVisibilityBridgeBase {
         /* empty */
+    }
+
+    static class DivergentVisibilityBridgeBase {
+
+        public void foo(Object o) {
+            /* empty */
+        }
+    }
+
+    public static class IsDivergentVisibilityBridge extends DivergentVisibilityBridgeBase {
+
+        public void foo(Integer o) {
+            /* empty */
+        }
     }
 
     public static class TypeVariableBridge<T> {
@@ -1121,6 +1159,37 @@ public class ElementMatchersTest {
         }
     }
 
+    public class DivergentTypeVariableBridge<T> {
+
+        public void foo(T t) {
+            /* empty */
+        }
+
+        public void foo(Integer t) {
+            /* empty */
+        }
+
+        public class FullyDiverged extends DivergentTypeVariableBridge<Integer> {
+
+            @Override
+            public void foo(Integer t) {
+            /* empty */
+            }
+        }
+
+        public class AmbivalentlyDiverged extends DivergentTypeVariableBridge<Number> {
+
+            @Override
+            public void foo(Number t) {
+            /* empty */
+            }
+
+            public void foo(Integer t) {
+            /* empty */
+            }
+        }
+    }
+
     public static class ReturnTypeBridge {
 
         public Object foo() {
@@ -1135,7 +1204,7 @@ public class ElementMatchersTest {
             }
         }
 
-        public static class Inner extends Intermediate{
+        public static class Inner extends Intermediate {
 
             @Override
             public Integer foo() {
@@ -1162,6 +1231,21 @@ public class ElementMatchersTest {
 
             @Override
             public Integer foo() {
+                return null;
+            }
+        }
+    }
+
+    public static class TypeVariableReturnTypeCombinationBridge<T> {
+
+        public Object foo(T t) {
+            return null;
+        }
+
+        public static class Inner extends TypeVariableReturnTypeCombinationBridge<String> {
+
+            @Override
+            public String foo(String s) {
                 return null;
             }
         }

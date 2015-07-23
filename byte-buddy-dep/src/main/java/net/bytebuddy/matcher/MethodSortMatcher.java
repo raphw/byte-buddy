@@ -101,31 +101,37 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
         VISIBILITY_BRIDGE("isVisibilityBridge()") {
             @Override
             protected boolean isSort(MethodDescription target) {
-                return target.isBridge() && !TYPE_BRIDGE.isSort(target);
+                if (target.isBridge()) {
+                    if (target.getDeclaringType().asRawType().isInterface()) {
+                        return false;
+                    }
+                    for (GenericTypeDescription superType : target.getDeclaringType().asRawType().getSuperType()) {
+                        for (MethodDescription methodDescription : superType.getDeclaredMethods()) {
+                            if (methodDescription.asDefined().asToken().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE).equals(target.asToken())) {
+                                return !methodDescription.isBridge() && target.getDeclaringType().asRawType().getDeclaredMethods()
+                                        .filter(not(isBridge())
+                                                .and(hasMethodName(target.getInternalName()))
+                                                .and(takesArguments(target.getParameters().asTypeList().asRawTypes())))
+                                        .isEmpty();
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+        },
+
+        TYPE_VARIABLE_BRIDGE("isTypeVariableBridge()") {
+            @Override
+            protected boolean isSort(MethodDescription target) {
+                return false;
             }
         },
 
         TYPE_BRIDGE("isTypeBridge()") {
             @Override
             protected boolean isSort(MethodDescription target) {
-                if (target.isBridge()) {
-                    if (target.getDeclaringType().asRawType().isInterface()) {
-                        return true;
-                    }
-                    if (!target.getDeclaringType().getDeclaredMethods().filter(not(isBridge())
-                            .and(hasMethodName(target.getInternalName()))
-                            .and(takesArguments(target.getParameters().asTypeList().asRawTypes()))).isEmpty()) {
-                        return true;
-                    }
-                    for (GenericTypeDescription currentType : target.getDeclaringType().getSuperType()) {
-                        for (MethodDescription methodDescription : currentType.getDeclaredMethods()) {
-                            if (target.asToken().equals(methodDescription.asDefined().asToken())) {
-                                return !methodDescription.equals(methodDescription.asDefined());
-                            }
-                        }
-                    }
-                }
-                return false;
+                return target.isBridge() && !VISIBILITY_BRIDGE.isSort(target);
             }
         },
 
