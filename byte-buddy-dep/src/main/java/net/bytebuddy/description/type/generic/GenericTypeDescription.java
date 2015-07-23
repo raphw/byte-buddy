@@ -1161,7 +1161,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         @Override
         public <T> T accept(Visitor<T> visitor) {
             return getSort().isNonGeneric()
-                    ? visitor.onNonGenericType(asRawType())
+                    ? visitor.onNonGenericType(this)
                     : visitor.onGenericArray(this);
         }
 
