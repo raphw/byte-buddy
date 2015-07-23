@@ -206,6 +206,20 @@ public interface GenericTypeDescription extends NamedElement {
     StackSize getStackSize();
 
     /**
+     * Checks if the type described by this entity is an array.
+     *
+     * @return {@code true} if this type description represents an array.
+     */
+    boolean isArray();
+
+    /**
+     * Checks if the type described by this entity is a primitive type.
+     *
+     * @return {@code true} if this type description represents a primitive type.
+     */
+    boolean isPrimitive();
+
+    /**
      * Applies a visitor to this generic type description.
      *
      * @param visitor The visitor to apply.
@@ -392,7 +406,7 @@ public interface GenericTypeDescription extends NamedElement {
          * @param typeDescription The non-generic type.
          * @return The visitor's return value.
          */
-        T onNonGenericType(TypeDescription typeDescription);
+        T onNonGenericType(GenericTypeDescription typeDescription);
 
         /**
          * A non-operational generic type visitor. Any visited type is returned in its existing form.
@@ -425,7 +439,7 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
+            public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
                 return typeDescription;
             }
 
@@ -490,8 +504,8 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
-                return new ForParameterizedType.Raw(typeDescription);
+            public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
+                return new ForParameterizedType.Raw(typeDescription.asRawType());
             }
 
             @Override
@@ -505,6 +519,7 @@ public interface GenericTypeDescription extends NamedElement {
              * parameters.
              */
             protected enum PartialErasureReviser implements Visitor<Boolean> {
+
                 /**
                  * The singleton instance.
                  */
@@ -534,7 +549,7 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                public Boolean onNonGenericType(TypeDescription typeDescription) {
+                public Boolean onNonGenericType(GenericTypeDescription typeDescription) {
                     return false;
                 }
 
@@ -612,13 +627,13 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public SignatureVisitor onNonGenericType(TypeDescription typeDescription) {
+            public SignatureVisitor onNonGenericType(GenericTypeDescription typeDescription) {
                 if(typeDescription.isArray()) {
                     typeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
                 } else if (typeDescription.isPrimitive()) {
-                    signatureVisitor.visitBaseType(typeDescription.getDescriptor().charAt(ONLY_CHARACTER));
+                    signatureVisitor.visitBaseType(typeDescription.asRawType().getDescriptor().charAt(ONLY_CHARACTER));
                 } else {
-                    signatureVisitor.visitClassType(typeDescription.getInternalName());
+                    signatureVisitor.visitClassType(typeDescription.asRawType().getInternalName());
                     signatureVisitor.visitEnd();
                 }
                 return signatureVisitor;
@@ -689,7 +704,7 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                public SignatureVisitor onNonGenericType(TypeDescription typeDescription) {
+                public SignatureVisitor onNonGenericType(GenericTypeDescription typeDescription) {
                     typeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                     return signatureVisitor;
                 }
@@ -735,13 +750,13 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
-            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
+            public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
                 int arity = 0;
                 while (typeDescription.isArray()) {
                     typeDescription = typeDescription.getComponentType();
                     arity++;
                 }
-                return TypeDescription.ArrayProjection.of(onSimpleType(typeDescription), arity);
+                return ForGenericArray.Latent.of(onSimpleType(typeDescription), arity);
             }
 
             /**
@@ -750,7 +765,7 @@ public interface GenericTypeDescription extends NamedElement {
              * @param typeDescription The type that is visited.
              * @return The substituted type.
              */
-            protected abstract TypeDescription onSimpleType(TypeDescription typeDescription);
+            protected abstract GenericTypeDescription onSimpleType(GenericTypeDescription typeDescription);
 
             /**
              * A substitutor that attaches type variables to a type variable source and replaces representations of
@@ -828,7 +843,7 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                protected TypeDescription onSimpleType(TypeDescription typeDescription) {
+                protected GenericTypeDescription onSimpleType(GenericTypeDescription typeDescription) {
                     return typeDescription.equals(TargetType.DESCRIPTION)
                             ? declaringType
                             : typeDescription;
@@ -895,8 +910,8 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                protected TypeDescription onSimpleType(TypeDescription typeDescription) {
-                    return typeMatcher.matches(typeDescription)
+                protected GenericTypeDescription onSimpleType(GenericTypeDescription typeDescription) {
+                    return typeMatcher.matches(typeDescription.asRawType())
                             ? TargetType.DESCRIPTION
                             : typeDescription;
                 }
@@ -1015,12 +1030,12 @@ public interface GenericTypeDescription extends NamedElement {
                 }
 
                 @Override
-                public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
+                public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
                     return typeDescription;
                 }
 
                 @Override
-                protected TypeDescription onSimpleType(TypeDescription typeDescription) {
+                protected GenericTypeDescription onSimpleType(GenericTypeDescription typeDescription) {
                     throw new UnsupportedOperationException();
                 }
 
@@ -1126,6 +1141,16 @@ public interface GenericTypeDescription extends NamedElement {
             return getSort().isNonGeneric()
                     ? asRawType().getSourceCodeName()
                     : toString();
+        }
+
+        @Override
+        public boolean isArray() {
+            return true;
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return false;
         }
 
         @Override
@@ -1317,6 +1342,16 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public String getSourceCodeName() {
             return toString();
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return false;
+        }
+
+        @Override
+        public boolean isArray() {
+            return false;
         }
 
         @Override
@@ -1526,6 +1561,16 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public String getSourceCodeName() {
             return toString();
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return false;
+        }
+
+        @Override
+        public boolean isArray() {
+            return false;
         }
 
         @Override
@@ -1814,6 +1859,16 @@ public interface GenericTypeDescription extends NamedElement {
             }
 
             @Override
+            public boolean isArray() {
+                return typeDescription.isArray();
+            }
+
+            @Override
+            public boolean isPrimitive() {
+                return typeDescription.isPrimitive();
+            }
+
+            @Override
             public int hashCode() {
                 return typeDescription.hashCode();
             }
@@ -1906,6 +1961,16 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public StackSize getStackSize() {
             return StackSize.SINGLE;
+        }
+
+        @Override
+        public boolean isArray() {
+            return false;
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return false;
         }
 
         @Override
@@ -2094,6 +2159,16 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public StackSize getStackSize() {
             return asRawType().getStackSize();
+        }
+
+        @Override
+        public boolean isArray() {
+            return asRawType().isArray();
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return asRawType().isPrimitive();
         }
 
         @Override

@@ -144,13 +144,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      */
     boolean represents(Class<?> type);
 
-    /**
-     * Checks if the type described by this entity is an array.
-     *
-     * @return {@code true} if this type description represents an array.
-     */
-    boolean isArray();
-
     @Override
     TypeDescription getComponentType();
 
@@ -159,13 +152,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
     @Override
     TypeDescription getDeclaringType();
-
-    /**
-     * Checks if the type described by this entity is a primitive type.
-     *
-     * @return {@code true} if this type description represents a primitive type.
-     */
-    boolean isPrimitive();
 
     /**
      * Returns a description of the enclosing method of this type.

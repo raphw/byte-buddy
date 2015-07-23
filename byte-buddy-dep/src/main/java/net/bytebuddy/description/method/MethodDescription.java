@@ -1213,12 +1213,12 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
 
             @Override
-            public GenericTypeDescription onNonGenericType(TypeDescription typeDescription) {
+            public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
                 return visitor.onNonGenericType(typeDescription);
             }
 
             @Override
-            protected TypeDescription onSimpleType(TypeDescription typeDescription) {
+            protected GenericTypeDescription onSimpleType(GenericTypeDescription typeDescription) {
                 throw new UnsupportedOperationException();
             }
 
