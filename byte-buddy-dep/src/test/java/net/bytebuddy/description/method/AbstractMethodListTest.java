@@ -28,7 +28,7 @@ public abstract class AbstractMethodListTest<U, V extends MethodDescription> ext
 
     @Test
     public void testDeclared() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asDeclared(), is(Collections.singletonList(asElement(getFirst()).asDeclared())));
+        assertThat(asList(Collections.singletonList(getFirst())).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
     }
 
     public static abstract class Foo {

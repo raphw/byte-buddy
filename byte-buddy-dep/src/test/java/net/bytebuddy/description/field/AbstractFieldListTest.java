@@ -1,7 +1,6 @@
 package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.AbstractFilterableListTest;
 import org.junit.Test;
 
@@ -29,7 +28,7 @@ public abstract class AbstractFieldListTest<U, V extends FieldDescription> exten
 
     @Test
     public void testDeclared() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asDeclared(), is(Collections.singletonList(asElement(getFirst()).asDeclared())));
+        assertThat(asList(Collections.singletonList(getFirst())).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
     }
 
     protected static class Foo {

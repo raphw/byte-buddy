@@ -1,6 +1,5 @@
 package net.bytebuddy.description.field;
 
-import net.bytebuddy.description.method.MethodList;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
@@ -21,6 +20,6 @@ public class FieldListEmptyTest {
 
     @Test
     public void testDeclaredList() throws Exception {
-        assertThat(new FieldList.Empty().asDeclared().size(), is(0));
+        assertThat(new FieldList.Empty().asDefined().size(), is(0));
     }
 }

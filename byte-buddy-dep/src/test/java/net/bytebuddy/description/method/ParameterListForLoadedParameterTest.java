@@ -1,11 +1,10 @@
 package net.bytebuddy.description.method;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ParameterListForLoadedParameterTest extends AbstractParameterListTest<ParameterDescription.InDeclaredForm, Method> {
+public class ParameterListForLoadedParameterTest extends AbstractParameterListTest<ParameterDescription.InDefinedShape, Method> {
 
     @Override
     protected Method getFirst() throws Exception {
@@ -18,16 +17,16 @@ public class ParameterListForLoadedParameterTest extends AbstractParameterListTe
     }
 
     @Override
-    protected ParameterList<ParameterDescription.InDeclaredForm> asList(List<Method> elements) {
-        List<ParameterDescription.InDeclaredForm> parameters = new LinkedList<ParameterDescription.InDeclaredForm>();
+    protected ParameterList<ParameterDescription.InDefinedShape> asList(List<Method> elements) {
+        List<ParameterDescription.InDefinedShape> parameters = new LinkedList<ParameterDescription.InDefinedShape>();
         for (Method method : elements) {
             parameters.add(new MethodDescription.ForLoadedMethod(method).getParameters().getOnly());
         }
-        return new ParameterList.Explicit<ParameterDescription.InDeclaredForm>(parameters);
+        return new ParameterList.Explicit<ParameterDescription.InDefinedShape>(parameters);
     }
 
     @Override
-    protected ParameterDescription.InDeclaredForm asElement(Method element) {
+    protected ParameterDescription.InDefinedShape asElement(Method element) {
         return new MethodDescription.ForLoadedMethod(element).getParameters().getOnly();
     }
 }

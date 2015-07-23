@@ -35,7 +35,7 @@ public class MethodConstantTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.InDeclaredForm methodDescription;
+    private MethodDescription.inDefinedShape methodDescription;
 
     @Mock
     private TypeDescription declaringType, parameterType, fieldType;
@@ -56,7 +56,7 @@ public class MethodConstantTest {
     private Implementation.Context implementationContext;
 
     @Mock
-    private FieldDescription.InDeclaredForm fieldDescription;
+    private FieldDescription.InDefinedShape fieldDescription;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -78,7 +78,7 @@ public class MethodConstantTest {
         when(declaringType.getInternalName()).thenReturn(BAZ);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getDescriptor()).thenReturn(QUX);
-        when(fieldDescription.asDeclared()).thenReturn(fieldDescription);
+        when(fieldDescription.asDefined()).thenReturn(fieldDescription);
     }
 
     @Test

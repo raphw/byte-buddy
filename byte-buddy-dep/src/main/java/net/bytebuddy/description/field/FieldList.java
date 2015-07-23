@@ -1,7 +1,6 @@
 package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -36,7 +35,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
      */
     ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
-    FieldList<FieldDescription.InDeclaredForm> asDeclared();
+    FieldList<FieldDescription.InDefinedShape> asDefined();
 
     /**
      * An abstract base implementation of a {@link FieldList}.
@@ -58,12 +57,12 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public FieldList<FieldDescription.InDeclaredForm> asDeclared() {
-            List<FieldDescription.InDeclaredForm> declaredForms = new ArrayList<FieldDescription.InDeclaredForm>(size());
+        public FieldList<FieldDescription.InDefinedShape> asDefined() {
+            List<FieldDescription.InDefinedShape> declaredForms = new ArrayList<FieldDescription.InDefinedShape>(size());
             for (FieldDescription fieldDescription : this) {
-                declaredForms.add(fieldDescription.asDeclared());
+                declaredForms.add(fieldDescription.asDefined());
             }
-            return new Explicit<FieldDescription.InDeclaredForm>(declaredForms);
+            return new Explicit<FieldDescription.InDefinedShape>(declaredForms);
         }
 
         @Override
@@ -75,7 +74,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     /**
      * An implementation of a field list for an array of loaded fields.
      */
-    class ForLoadedField extends AbstractBase<FieldDescription.InDeclaredForm> {
+    class ForLoadedField extends AbstractBase<FieldDescription.InDefinedShape> {
 
         /**
          * The loaded fields this field list represents.
@@ -101,7 +100,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public FieldDescription.InDeclaredForm get(int index) {
+        public FieldDescription.InDefinedShape get(int index) {
             return new FieldDescription.ForLoadedField(fields.get(index));
         }
 
@@ -144,7 +143,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     /**
      * A list of field descriptions for a list of detached tokens. For the returned fields, each token is attached to its field representation.
      */
-    class ForTokens extends AbstractBase<FieldDescription.InDeclaredForm> {
+    class ForTokens extends AbstractBase<FieldDescription.InDefinedShape> {
 
         /**
          * The declaring type of the represented fields.
@@ -168,7 +167,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public FieldDescription.InDeclaredForm get(int index) {
+        public FieldDescription.InDefinedShape get(int index) {
             return new FieldDescription.Latent(declaringType, tokens.get(index));
         }
 
@@ -227,8 +226,8 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     /**
      * An implementation of an empty field list.
      */
-    class Empty extends FilterableList.Empty<FieldDescription.InDeclaredForm, FieldList<FieldDescription.InDeclaredForm>>
-            implements FieldList<FieldDescription.InDeclaredForm> {
+    class Empty extends FilterableList.Empty<FieldDescription.InDefinedShape, FieldList<FieldDescription.InDefinedShape>>
+            implements FieldList<FieldDescription.InDefinedShape> {
 
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
@@ -241,7 +240,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public FieldList<FieldDescription.InDeclaredForm> asDeclared() {
+        public FieldList<FieldDescription.InDefinedShape> asDefined() {
             return this;
         }
     }

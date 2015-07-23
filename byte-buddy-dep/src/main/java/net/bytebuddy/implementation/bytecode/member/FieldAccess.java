@@ -77,14 +77,14 @@ public enum FieldAccess {
      * @param fieldDescription The field to be accessed.
      * @return A field access definition for the given field.
      */
-    public static Defined forField(FieldDescription.InDeclaredForm fieldDescription) {
+    public static Defined forField(FieldDescription.InDefinedShape fieldDescription) {
         return fieldDescription.isStatic()
                 ? STATIC.new AccessDispatcher(fieldDescription)
                 : INSTANCE.new AccessDispatcher(fieldDescription);
     }
 
     public static Defined forField(FieldDescription fieldDescription) {
-        FieldDescription.InDeclaredForm declaredField = fieldDescription.asDeclared();
+        FieldDescription.InDefinedShape declaredField = fieldDescription.asDefined();
         return fieldDescription.getType().asRawType().equals(declaredField.getType().asRawType())
                 ? forField(declaredField)
                 : OfGenericField.of(fieldDescription, forField(declaredField));

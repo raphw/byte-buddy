@@ -12,7 +12,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 
-public class TypePoolLazyParameterListTest extends AbstractParameterListTest<ParameterDescription.InDeclaredForm, ParameterDescription> {
+public class TypePoolLazyParameterListTest extends AbstractParameterListTest<ParameterDescription.InDefinedShape, ParameterDescription> {
 
     private TypePool typePool;
 
@@ -37,8 +37,8 @@ public class TypePoolLazyParameterListTest extends AbstractParameterListTest<Par
     }
 
     @Override
-    protected ParameterList<ParameterDescription.InDeclaredForm> asList(List<ParameterDescription> elements) {
-        List<ParameterDescription.InDeclaredForm> parameterDescriptions = new LinkedList<ParameterDescription.InDeclaredForm>();
+    protected ParameterList<ParameterDescription.InDefinedShape> asList(List<ParameterDescription> elements) {
+        List<ParameterDescription.InDefinedShape> parameterDescriptions = new LinkedList<ParameterDescription.InDefinedShape>();
         for (ParameterDescription element : elements) {
             parameterDescriptions.add(typePool.describe(Foo.class.getName()).resolve()
                     .getDeclaredMethods()
@@ -47,11 +47,11 @@ public class TypePoolLazyParameterListTest extends AbstractParameterListTest<Par
                     .getParameters()
                     .getOnly());
         }
-        return new ParameterList.Explicit<ParameterDescription.InDeclaredForm>(parameterDescriptions);
+        return new ParameterList.Explicit<ParameterDescription.InDefinedShape>(parameterDescriptions);
     }
 
     @Override
-    protected ParameterDescription.InDeclaredForm asElement(ParameterDescription element) {
-        return element.asDeclared();
+    protected ParameterDescription.InDefinedShape asElement(ParameterDescription element) {
+        return element.asDefined();
     }
 }

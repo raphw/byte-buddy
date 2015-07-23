@@ -28,7 +28,7 @@ public class MethodTypeConstantTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.InDeclaredForm methodDescription;
+    private MethodDescription.inDefinedShape methodDescription;
 
     @Mock
     private MethodVisitor methodVisitor;

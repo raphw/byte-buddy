@@ -32,23 +32,23 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
     private Implementation.Target implementationTarget;
 
     @Mock
-    private MethodDescription.InDeclaredForm source, target;
+    private MethodDescription.inDefinedShape source, target;
 
     @Mock
     private TypeDescription firstParameter, secondParameter;
 
-    private ParameterList<ParameterDescription.InDeclaredForm> sourceParameters;
+    private ParameterList<ParameterDescription.InDefinedShape> sourceParameters;
 
     @Mock
-    private ParameterDescription.InDeclaredForm firstTargetParameter, secondTargetParameter;
+    private ParameterDescription.InDefinedShape firstTargetParameter, secondTargetParameter;
 
     @Before
     public void setUp() throws Exception {
         when(firstParameter.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondParameter.getStackSize()).thenReturn(StackSize.ZERO);
         sourceParameters = new ParameterList.Explicit.ForTypes(source, Arrays.asList(firstParameter, secondParameter));
-        ParameterList<ParameterDescription.InDeclaredForm> targetParameters =
-                new ParameterList.Explicit<ParameterDescription.InDeclaredForm>(Arrays.asList(firstTargetParameter, secondTargetParameter));
+        ParameterList<ParameterDescription.InDefinedShape> targetParameters =
+                new ParameterList.Explicit<ParameterDescription.InDefinedShape>(Arrays.asList(firstTargetParameter, secondTargetParameter));
         when(source.getParameters()).thenReturn(sourceParameters);
         when(target.getParameters()).thenReturn(targetParameters);
     }

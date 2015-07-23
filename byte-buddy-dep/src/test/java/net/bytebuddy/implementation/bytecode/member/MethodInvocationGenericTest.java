@@ -13,7 +13,6 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -29,7 +28,7 @@ public class MethodInvocationGenericTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.InDeclaredForm declaredMethod;
+    private MethodDescription.inDefinedShape declaredMethod;
 
     @Mock
     private MethodDescription methodDescription;
@@ -45,7 +44,7 @@ public class MethodInvocationGenericTest {
 
     @Before
     public void setUp() throws Exception {
-        when(methodDescription.asDeclared()).thenReturn(declaredMethod);
+        when(methodDescription.asDefined()).thenReturn(declaredMethod);
         when(methodDescription.getReturnType()).thenReturn(methodReturnType);
         when(declaredMethod.getReturnType()).thenReturn(declaredReturnType);
         when(declaredReturnType.asRawType()).thenReturn(declaredErasure);

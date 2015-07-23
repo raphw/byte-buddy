@@ -31,7 +31,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private TypeDescription superType;
 
     @Mock
-    private MethodDescription.InDeclaredForm superTypeConstructor;
+    private MethodDescription.inDefinedShape superTypeConstructor;
 
     @Mock
     private MethodDescription.Token superConstructorToken;
@@ -43,11 +43,11 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superType.asRawType()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(BAR);
         when(superType.getDeclaredMethods())
-                .thenReturn(new MethodList.Explicit<MethodDescription.InDeclaredForm>(Collections.singletonList(superTypeConstructor)));
+                .thenReturn(new MethodList.Explicit<MethodDescription.inDefinedShape>(Collections.singletonList(superTypeConstructor)));
         when(superTypeConstructor.asToken()).thenReturn(superConstructorToken);
         when(superTypeConstructor.getInternalName()).thenReturn(QUX);
         when(superTypeConstructor.getDescriptor()).thenReturn(BAZ);
-        when(superTypeConstructor.asDeclared()).thenReturn(superTypeConstructor);
+        when(superTypeConstructor.asDefined()).thenReturn(superTypeConstructor);
         when(superTypeConstructor.isConstructor()).thenReturn(true);
         when(superTypeConstructor.getDeclaringType()).thenReturn(superType);
         when(superTypeConstructor.getReturnType()).thenReturn(TypeDescription.VOID);

@@ -2,7 +2,6 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -121,11 +120,11 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
                 when(mock.getDeclaringType()).thenReturn(declaringType);
                 TypeDescription superType = Mockito.mock(TypeDescription.class);
                 when(declaringType.getSuperType()).thenReturn(superType);
-                MethodDescription.InDeclaredForm methodDescription = Mockito.mock(MethodDescription.InDeclaredForm.class);
+                MethodDescription.inDefinedShape methodDescription = Mockito.mock(MethodDescription.inDefinedShape.class);
                 when(methodDescription.isOverridable()).thenReturn(true);
                 when(methodDescription.asToken()).thenReturn(methodToken);
                 when(superType.getDeclaredMethods())
-                        .thenReturn(new MethodList.Explicit<MethodDescription.InDeclaredForm>(Collections.singletonList(methodDescription)));
+                        .thenReturn(new MethodList.Explicit<MethodDescription.inDefinedShape>(Collections.singletonList(methodDescription)));
             }
         };
 

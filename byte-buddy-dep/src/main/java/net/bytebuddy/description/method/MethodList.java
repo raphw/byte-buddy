@@ -36,7 +36,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      */
     ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
-    MethodList<MethodDescription.InDeclaredForm> asDeclared();
+    MethodList<MethodDescription.inDefinedShape> asDefined();
 
     /**
      * A base implementation of a {@link MethodList}.
@@ -63,12 +63,12 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodList<MethodDescription.InDeclaredForm> asDeclared() {
-            List<MethodDescription.InDeclaredForm> declaredForms = new ArrayList<MethodDescription.InDeclaredForm>(size());
+        public MethodList<MethodDescription.inDefinedShape> asDefined() {
+            List<MethodDescription.inDefinedShape> declaredForms = new ArrayList<MethodDescription.inDefinedShape>(size());
             for (MethodDescription methodDescription : this) {
-                declaredForms.add(methodDescription.asDeclared());
+                declaredForms.add(methodDescription.asDefined());
             }
-            return new Explicit<MethodDescription.InDeclaredForm>(declaredForms);
+            return new Explicit<MethodDescription.inDefinedShape>(declaredForms);
         }
     }
 
@@ -76,7 +76,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
      * are declared for a given type.
      */
-    class ForLoadedType extends AbstractBase<MethodDescription.InDeclaredForm> {
+    class ForLoadedType extends AbstractBase<MethodDescription.inDefinedShape> {
 
         /**
          * The loaded methods that are represented by this method list.
@@ -121,7 +121,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodDescription.InDeclaredForm get(int index) {
+        public MethodDescription.inDefinedShape get(int index) {
             return index < constructors.size()
                     ? new MethodDescription.ForLoadedConstructor(constructors.get(index))
                     : new MethodDescription.ForLoadedMethod(methods.get(index - constructors.size()));
@@ -167,7 +167,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     /**
      * A list of method descriptions for a list of detached tokens. For the returned method, each token is attached to its method representation.
      */
-    class ForTokens extends AbstractBase<MethodDescription.InDeclaredForm> {
+    class ForTokens extends AbstractBase<MethodDescription.inDefinedShape> {
 
         /**
          * The method's declaring type.
@@ -191,7 +191,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodDescription.InDeclaredForm get(int index) {
+        public MethodDescription.inDefinedShape get(int index) {
             return new MethodDescription.Latent(declaringType, tokens.get(index));
         }
 
@@ -250,8 +250,8 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     /**
      * An implementation of an empty method list.
      */
-    class Empty extends FilterableList.Empty<MethodDescription.InDeclaredForm, MethodList<MethodDescription.InDeclaredForm>>
-            implements MethodList<MethodDescription.InDeclaredForm> {
+    class Empty extends FilterableList.Empty<MethodDescription.inDefinedShape, MethodList<MethodDescription.inDefinedShape>>
+            implements MethodList<MethodDescription.inDefinedShape> {
 
         @Override
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
@@ -264,7 +264,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodList<MethodDescription.InDeclaredForm> asDeclared() {
+        public MethodList<MethodDescription.inDefinedShape> asDefined() {
             return this;
         }
     }

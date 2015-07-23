@@ -117,8 +117,8 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                     GenericTypeDescription currentType = target.getDeclaringType().getSuperType();
                     while (currentType != null) {
                         for (MethodDescription methodDescription : currentType.getDeclaredMethods()) {
-                            if (target.asToken().equals(methodDescription.asDeclared().asToken())) {
-                                return !methodDescription.equals(methodDescription.asDeclared());
+                            if (target.asToken().equals(methodDescription.asDefined().asToken())) {
+                                return !methodDescription.equals(methodDescription.asDefined());
                             }
                         }
                         currentType = currentType.getSuperType();

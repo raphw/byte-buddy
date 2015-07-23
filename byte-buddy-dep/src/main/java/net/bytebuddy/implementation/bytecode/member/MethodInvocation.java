@@ -69,7 +69,7 @@ public enum MethodInvocation {
      * @param methodDescription The method to be invoked.
      * @return A stack manipulation with implicitly determined invocation type.
      */
-    public static WithImplicitInvocationTargetType invoke(MethodDescription.InDeclaredForm methodDescription) {
+    public static WithImplicitInvocationTargetType invoke(MethodDescription.inDefinedShape methodDescription) {
         if (methodDescription.isTypeInitializer()) {
             return IllegalInvocation.INSTANCE;
         } else if (methodDescription.isStatic()) { // Check this property first, private static methods must use INVOKESTATIC
@@ -86,7 +86,7 @@ public enum MethodInvocation {
     }
 
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
-        MethodDescription.InDeclaredForm declaredMethod = methodDescription.asDeclared();
+        MethodDescription.inDefinedShape declaredMethod = methodDescription.asDefined();
         return declaredMethod.getReturnType().asRawType().equals(methodDescription.getReturnType().asRawType())
                 ? invoke(declaredMethod)
                 : OfGenericMethod.of(methodDescription, invoke(declaredMethod));

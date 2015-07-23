@@ -55,7 +55,7 @@ public class TypeProxyCreationTest {
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Mock
-    private MethodDescription.InDeclaredForm proxyMethod;
+    private MethodDescription.inDefinedShape proxyMethod;
 
     private TypeDescription foo;
 
@@ -78,7 +78,7 @@ public class TypeProxyCreationTest {
         when(proxyMethod.getInternalName()).thenReturn(FOO);
         when(proxyMethod.getDescriptor()).thenReturn(FOO);
         when(proxyMethod.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
-        when(proxyMethod.asDeclared()).thenReturn(proxyMethod);
+        when(proxyMethod.asDefined()).thenReturn(proxyMethod);
     }
 
     @Test
@@ -330,9 +330,9 @@ public class TypeProxyCreationTest {
                 false);
         TypeProxy.MethodCall methodCall = typeProxy.new MethodCall(mock(AuxiliaryType.MethodAccessorFactory.class));
         TypeDescription instrumentedType = mock(TypeDescription.class);
-        FieldList<FieldDescription.InDeclaredForm> fieldList = mock(FieldList.class);
+        FieldList<FieldDescription.InDefinedShape> fieldList = mock(FieldList.class);
         when(fieldList.filter(any(ElementMatcher.class))).thenReturn(fieldList);
-        when(fieldList.getOnly()).thenReturn(mock(FieldDescription.InDeclaredForm.class));
+        when(fieldList.getOnly()).thenReturn(mock(FieldDescription.InDefinedShape.class));
         when(instrumentedType.getDeclaredFields()).thenReturn(fieldList);
         TypeProxy.MethodCall.Appender appender = methodCall.new Appender(instrumentedType);
         Implementation.SpecialMethodInvocation specialMethodInvocation = mock(Implementation.SpecialMethodInvocation.class);

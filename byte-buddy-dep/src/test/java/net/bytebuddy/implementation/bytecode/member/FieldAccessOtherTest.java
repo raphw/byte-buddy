@@ -39,20 +39,20 @@ public class FieldAccessOtherTest {
     private TypeDescription enumerationType;
 
     @Mock
-    private FieldDescription.InDeclaredForm fieldDescription;
+    private FieldDescription.InDefinedShape fieldDescription;
 
     @Mock
     private FieldDescription genericField;
 
     @Before
     public void setUp() throws Exception {
-        when(genericField.asDeclared()).thenReturn(fieldDescription);
+        when(genericField.asDefined()).thenReturn(fieldDescription);
         when(genericField.getType()).thenReturn(genericType);
         when(fieldDescription.getType()).thenReturn(declaredType);
         when(enumerationDescription.getEnumerationType()).thenReturn(enumerationType);
         when(enumerationDescription.getValue()).thenReturn(FOO);
         when(enumerationType.getDeclaredFields())
-                .thenReturn(new FieldList.Explicit<FieldDescription.InDeclaredForm>(Collections.singletonList(fieldDescription)));
+                .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
     }
 
     @Test

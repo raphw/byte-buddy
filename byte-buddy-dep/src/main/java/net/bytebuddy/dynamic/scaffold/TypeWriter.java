@@ -1635,7 +1635,7 @@ public interface TypeWriter<T> {
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.entry = entry;
                         this.methodDescription = methodDescription;
-                        this.resolution = methodRebaseResolver.resolve(methodDescription.asDeclared());
+                        this.resolution = methodRebaseResolver.resolve(methodDescription.asDefined());
                         entry.applyHead(actualMethodVisitor, methodDescription);
                     }
 

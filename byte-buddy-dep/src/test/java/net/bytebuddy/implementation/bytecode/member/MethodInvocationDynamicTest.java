@@ -32,7 +32,7 @@ public class MethodInvocationDynamicTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.InDeclaredForm methodDescription;
+    private MethodDescription.inDefinedShape methodDescription;
 
     @Mock
     private TypeDescription returnType, declaringType, firstType, secondType;

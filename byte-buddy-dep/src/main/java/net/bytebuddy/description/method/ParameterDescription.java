@@ -95,17 +95,17 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
-    InDeclaredForm asDeclared();
+    InDefinedShape asDefined();
 
-    interface InDeclaredForm extends ParameterDescription {
+    interface InDefinedShape extends ParameterDescription {
 
         @Override
-        MethodDescription.InDeclaredForm getDeclaringMethod();
+        MethodDescription.inDefinedShape getDeclaringMethod();
 
-        abstract class AbstractBase extends ParameterDescription.AbstractBase implements InDeclaredForm {
+        abstract class AbstractBase extends ParameterDescription.AbstractBase implements InDefinedShape {
 
             @Override
-            public InDeclaredForm asDeclared() {
+            public InDefinedShape asDefined() {
                 return this;
             }
         }
@@ -200,7 +200,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     /**
      * Description of a loaded parameter, represented by a Java 8 {@code java.lang.reflect.Parameter}.
      */
-    class ForLoadedParameter extends InDeclaredForm.AbstractBase {
+    class ForLoadedParameter extends InDefinedShape.AbstractBase {
 
         /**
          * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getType} method.
@@ -291,7 +291,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public MethodDescription.InDeclaredForm getDeclaringMethod() {
+        public MethodDescription.inDefinedShape getDeclaringMethod() {
             Object executable = GET_DECLARING_EXECUTABLE.invoke(parameter);
             if (executable instanceof Method) {
                 return new MethodDescription.ForLoadedMethod((Method) executable);
@@ -338,7 +338,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * Description of a loaded method's parameter on a virtual machine where {@code java.lang.reflect.Parameter}
          * is not available.
          */
-        protected static class OfLegacyVmMethod extends InDeclaredForm.AbstractBase {
+        protected static class OfLegacyVmMethod extends InDefinedShape.AbstractBase {
 
             /**
              * The method that declares this parameter.
@@ -381,7 +381,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public MethodDescription.InDeclaredForm getDeclaringMethod() {
+            public MethodDescription.inDefinedShape getDeclaringMethod() {
                 return new MethodDescription.ForLoadedMethod(method);
             }
 
@@ -410,7 +410,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * Description of a loaded constructor's parameter on a virtual machine where {@code java.lang.reflect.Parameter}
          * is not available.
          */
-        protected static class OfLegacyVmConstructor extends InDeclaredForm.AbstractBase {
+        protected static class OfLegacyVmConstructor extends InDefinedShape.AbstractBase {
 
             /**
              * The method that declares this parameter.
@@ -453,7 +453,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public MethodDescription.InDeclaredForm getDeclaringMethod() {
+            public MethodDescription.inDefinedShape getDeclaringMethod() {
                 return new MethodDescription.ForLoadedConstructor(constructor);
             }
 
@@ -482,12 +482,12 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     /**
      * A latent description of a parameter that is not attached to a method or constructor.
      */
-    class Latent extends InDeclaredForm.AbstractBase {
+    class Latent extends InDefinedShape.AbstractBase {
 
         /**
          * The method that is declaring the parameter.
          */
-        private final MethodDescription.InDeclaredForm declaringMethod;
+        private final MethodDescription.inDefinedShape declaringMethod;
 
         /**
          * The type of the parameter.
@@ -527,7 +527,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index           The index of the parameter.
          * @param offset          The parameter's offset in the local method variables array.
          */
-        public Latent(MethodDescription.InDeclaredForm declaringMethod, Token token, int index, int offset) {
+        public Latent(MethodDescription.inDefinedShape declaringMethod, Token token, int index, int offset) {
             this(declaringMethod,
                     token.getType(),
                     token.getAnnotations(),
@@ -545,7 +545,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index           The index of the parameter.
          * @param offset          The offset of the parameter.
          */
-        public Latent(MethodDescription.InDeclaredForm declaringMethod,
+        public Latent(MethodDescription.inDefinedShape declaringMethod,
                       GenericTypeDescription parameterType,
                       int index,
                       int offset) {
@@ -569,7 +569,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index               The index of the parameter.
          * @param offset              The parameter's offset in the local method variables array.
          */
-        public Latent(MethodDescription.InDeclaredForm declaringMethod,
+        public Latent(MethodDescription.inDefinedShape declaringMethod,
                       GenericTypeDescription parameterType,
                       List<? extends AnnotationDescription> declaredAnnotations,
                       String name,
@@ -591,7 +591,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public MethodDescription.InDeclaredForm getDeclaringMethod() {
+        public MethodDescription.inDefinedShape getDeclaringMethod() {
             return declaringMethod;
         }
 
@@ -721,8 +721,8 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public InDeclaredForm asDeclared() {
-            return parameterDescription.asDeclared();
+        public InDefinedShape asDefined() {
+            return parameterDescription.asDefined();
         }
     }
 

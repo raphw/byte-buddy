@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -35,7 +34,7 @@ public class MethodVariableAccessOfMethodArgumentsTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.InDeclaredForm methodDescription, bridgeMethod;
+    private MethodDescription.inDefinedShape methodDescription, bridgeMethod;
 
     @Mock
     private TypeDescription declaringType, firstParameterType, secondParameterType;

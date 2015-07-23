@@ -5,18 +5,15 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
-import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class TypePoolLazyFieldListTest extends AbstractFieldListTest<Field, FieldDescription.InDeclaredForm> {
+public class TypePoolLazyFieldListTest extends AbstractFieldListTest<Field, FieldDescription.InDefinedShape> {
 
     private TypePool typePool;
 
@@ -41,12 +38,12 @@ public class TypePoolLazyFieldListTest extends AbstractFieldListTest<Field, Fiel
     }
 
     @Override
-    protected FieldList<FieldDescription.InDeclaredForm> asList(List<Field> elements) {
+    protected FieldList<FieldDescription.InDefinedShape> asList(List<Field> elements) {
         return typePool.describe(Foo.class.getName()).resolve().getDeclaredFields().filter(anyOf(elements.toArray(new Field[elements.size()])));
     }
 
     @Override
-    protected FieldDescription.InDeclaredForm asElement(Field element) {
+    protected FieldDescription.InDefinedShape asElement(Field element) {
         return new FieldDescription.ForLoadedField(element);
     }
 }

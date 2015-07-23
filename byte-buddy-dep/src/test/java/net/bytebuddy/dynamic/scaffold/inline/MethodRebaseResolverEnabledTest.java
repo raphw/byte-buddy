@@ -35,7 +35,7 @@ public class MethodRebaseResolverEnabledTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.InDeclaredForm method, constructor, other;
+    private MethodDescription.inDefinedShape method, constructor, other;
 
     @Mock
     private TypeDescription placeholderType, returnType, parameterType, declaringType;

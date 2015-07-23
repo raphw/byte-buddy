@@ -45,7 +45,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      */
     ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
-    ParameterList<ParameterDescription.InDeclaredForm> asDeclared();
+    ParameterList<ParameterDescription.InDefinedShape> asDefined();
 
     /**
      * Checks if all parameters in this list define both an explicit name and an explicit modifier.
@@ -93,12 +93,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public ParameterList<ParameterDescription.InDeclaredForm> asDeclared() {
-            List<ParameterDescription.InDeclaredForm> declaredForms = new ArrayList<ParameterDescription.InDeclaredForm>(size());
+        public ParameterList<ParameterDescription.InDefinedShape> asDefined() {
+            List<ParameterDescription.InDefinedShape> declaredForms = new ArrayList<ParameterDescription.InDefinedShape>(size());
             for (ParameterDescription parameterDescription : this) {
-                declaredForms.add(parameterDescription.asDeclared());
+                declaredForms.add(parameterDescription.asDefined());
             }
-            return new Explicit<ParameterDescription.InDeclaredForm>(declaredForms);
+            return new Explicit<ParameterDescription.InDefinedShape>(declaredForms);
         }
 
         @Override
@@ -111,7 +111,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      * Represents a list of parameters for an executable, i.e. a {@link java.lang.reflect.Method} or
      * {@link java.lang.reflect.Constructor}.
      */
-    class ForLoadedExecutable extends AbstractBase<ParameterDescription.InDeclaredForm> {
+    class ForLoadedExecutable extends AbstractBase<ParameterDescription.InDefinedShape> {
 
         /**
          * Represents the {@code java.lang.reflect.Executable}'s {@code getParameters} method.
@@ -153,7 +153,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @param method The method to represent.
          * @return A list of parameters for this method.
          */
-        public static ParameterList<ParameterDescription.InDeclaredForm> of(Method method) {
+        public static ParameterList<ParameterDescription.InDefinedShape> of(Method method) {
             return GET_PARAMETERS.isInvokable()
                     ? new ForLoadedExecutable((Object[]) GET_PARAMETERS.invoke(method))
                     : new OfLegacyVmMethod(method);
@@ -165,14 +165,14 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @param constructor The constructor to represent.
          * @return A list of parameters for this constructor.
          */
-        public static ParameterList<ParameterDescription.InDeclaredForm> of(Constructor<?> constructor) {
+        public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor) {
             return GET_PARAMETERS.isInvokable()
                     ? new ForLoadedExecutable((Object[]) GET_PARAMETERS.invoke(constructor))
                     : new OfLegacyVmConstructor(constructor);
         }
 
         @Override
-        public ParameterDescription.InDeclaredForm get(int index) {
+        public ParameterDescription.InDefinedShape get(int index) {
             return new ParameterDescription.ForLoadedParameter(parameter[index], index);
         }
 
@@ -194,7 +194,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * Represents a list of method parameters on virtual machines where the {@code java.lang.reflect.Parameter}
          * type is not available.
          */
-        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase<ParameterDescription.InDeclaredForm> {
+        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
 
             /**
              * The represented method.
@@ -223,7 +223,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             }
 
             @Override
-            public ParameterDescription.InDeclaredForm get(int index) {
+            public ParameterDescription.InDefinedShape get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index], parameterAnnotation[index]);
             }
 
@@ -246,7 +246,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * Represents a list of constructor parameters on virtual machines where the {@code java.lang.reflect.Parameter}
          * type is not available.
          */
-        protected static class OfLegacyVmConstructor extends ParameterList.AbstractBase<ParameterDescription.InDeclaredForm> {
+        protected static class OfLegacyVmConstructor extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
 
             /**
              * The represented constructor.
@@ -275,7 +275,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             }
 
             @Override
-            public ParameterDescription.InDeclaredForm get(int index) {
+            public ParameterDescription.InDefinedShape get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index], parameterAnnotation[index]);
             }
 
@@ -327,12 +327,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * A parameter list representing parameters without meta data or annotations.
          */
-        public static class ForTypes extends ParameterList.AbstractBase<ParameterDescription.InDeclaredForm> {
+        public static class ForTypes extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
 
             /**
              * The method description that declares the parameters.
              */
-            private final MethodDescription.InDeclaredForm methodDescription;
+            private final MethodDescription.inDefinedShape methodDescription;
 
             /**
              * A list of detached types representing the parameters.
@@ -345,13 +345,13 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
              * @param methodDescription The method description that declares the parameters.
              * @param typeDescriptions  A list of detached types representing the parameters.
              */
-            public ForTypes(MethodDescription.InDeclaredForm methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
+            public ForTypes(MethodDescription.inDefinedShape methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
                 this.methodDescription = methodDescription;
                 this.typeDescriptions = typeDescriptions;
             }
 
             @Override
-            public ParameterDescription.InDeclaredForm get(int index) {
+            public ParameterDescription.InDefinedShape get(int index) {
                 int offset = methodDescription.isStatic() ? 0 : 1;
                 for (GenericTypeDescription typeDescription : typeDescriptions.subList(0, index)) {
                     offset += typeDescription.getStackSize().getSize();
@@ -369,12 +369,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     /**
      * A list of parameter descriptions for a list of detached tokens. For the returned parameter, each token is attached to its parameter representation.
      */
-    class ForTokens extends AbstractBase<ParameterDescription.InDeclaredForm> {
+    class ForTokens extends AbstractBase<ParameterDescription.InDefinedShape> {
 
         /**
          * The method that is declaring the represented token.
          */
-        private final MethodDescription.InDeclaredForm declaringMethod;
+        private final MethodDescription.inDefinedShape declaringMethod;
 
         /**
          * The list of tokens to represent.
@@ -387,13 +387,13 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @param declaringMethod The method that is declaring the represented token.
          * @param tokens          The list of tokens to represent.
          */
-        public ForTokens(MethodDescription.InDeclaredForm declaringMethod, List<? extends ParameterDescription.Token> tokens) {
+        public ForTokens(MethodDescription.inDefinedShape declaringMethod, List<? extends ParameterDescription.Token> tokens) {
             this.declaringMethod = declaringMethod;
             this.tokens = tokens;
         }
 
         @Override
-        public ParameterDescription.InDeclaredForm get(int index) {
+        public ParameterDescription.InDefinedShape get(int index) {
             int offset = declaringMethod.isStatic() ? 0 : 1;
             for (ParameterDescription.Token token : tokens.subList(0, index)) {
                 offset += token.getType().getStackSize().getSize();
@@ -456,8 +456,8 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     /**
      * An empty list of parameters.
      */
-    class Empty extends FilterableList.Empty<ParameterDescription.InDeclaredForm, ParameterList<ParameterDescription.InDeclaredForm>>
-            implements ParameterList<ParameterDescription.InDeclaredForm> {
+    class Empty extends FilterableList.Empty<ParameterDescription.InDefinedShape, ParameterList<ParameterDescription.InDefinedShape>>
+            implements ParameterList<ParameterDescription.InDefinedShape> {
 
         @Override
         public boolean hasExplicitMetaData() {
@@ -480,7 +480,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public ParameterList<ParameterDescription.InDeclaredForm> asDeclared() {
+        public ParameterList<ParameterDescription.InDefinedShape> asDefined() {
             return this;
         }
     }

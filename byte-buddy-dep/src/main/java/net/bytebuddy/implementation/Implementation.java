@@ -544,17 +544,17 @@ public interface Implementation {
             /**
              * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation.
              */
-            private final Map<Implementation.SpecialMethodInvocation, MethodDescription.InDeclaredForm> registeredAccessorMethods;
+            private final Map<Implementation.SpecialMethodInvocation, MethodDescription.inDefinedShape> registeredAccessorMethods;
 
             /**
              * The registered getters.
              */
-            private final Map<FieldDescription, MethodDescription.InDeclaredForm> registeredGetters;
+            private final Map<FieldDescription, MethodDescription.inDefinedShape> registeredGetters;
 
             /**
              * The registered setters.
              */
-            private final Map<FieldDescription, MethodDescription.InDeclaredForm> registeredSetters;
+            private final Map<FieldDescription, MethodDescription.inDefinedShape> registeredSetters;
 
             /**
              * A map of accessor methods to a method pool entry that represents their implementation.
@@ -599,9 +599,9 @@ public interface Implementation {
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
                 this.classFileVersion = classFileVersion;
-                registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.InDeclaredForm>();
-                registeredGetters = new HashMap<FieldDescription, MethodDescription.InDeclaredForm>();
-                registeredSetters = new HashMap<FieldDescription, MethodDescription.InDeclaredForm>();
+                registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.inDefinedShape>();
+                registeredGetters = new HashMap<FieldDescription, MethodDescription.inDefinedShape>();
+                registeredSetters = new HashMap<FieldDescription, MethodDescription.inDefinedShape>();
                 accessorMethodEntries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
@@ -610,8 +610,8 @@ public interface Implementation {
             }
 
             @Override
-            public MethodDescription.InDeclaredForm registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
-                MethodDescription.InDeclaredForm accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
+            public MethodDescription.inDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
+                MethodDescription.inDefinedShape accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
                 if (accessorMethod == null) {
                     accessorMethod = new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), randomString.nextString());
                     registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
@@ -621,8 +621,8 @@ public interface Implementation {
             }
 
             @Override
-            public MethodDescription.InDeclaredForm registerGetterFor(FieldDescription fieldDescription) {
-                MethodDescription.InDeclaredForm accessorMethod = registeredGetters.get(fieldDescription);
+            public MethodDescription.inDefinedShape registerGetterFor(FieldDescription fieldDescription) {
+                MethodDescription.inDefinedShape accessorMethod = registeredGetters.get(fieldDescription);
                 if (accessorMethod == null) {
                     accessorMethod = new FieldGetter(instrumentedType, fieldDescription, randomString.nextString());
                     registeredGetters.put(fieldDescription, accessorMethod);
@@ -632,8 +632,8 @@ public interface Implementation {
             }
 
             @Override
-            public MethodDescription.InDeclaredForm registerSetterFor(FieldDescription fieldDescription) {
-                MethodDescription.InDeclaredForm accessorMethod = registeredSetters.get(fieldDescription);
+            public MethodDescription.inDefinedShape registerSetterFor(FieldDescription fieldDescription) {
+                MethodDescription.inDefinedShape accessorMethod = registeredSetters.get(fieldDescription);
                 if (accessorMethod == null) {
                     accessorMethod = new FieldSetter(instrumentedType, fieldDescription, randomString.nextString());
                     registeredSetters.put(fieldDescription, accessorMethod);
@@ -735,7 +735,7 @@ public interface Implementation {
             /**
              * A description of a field that stores a cached value.
              */
-            protected static class CacheValueField extends FieldDescription.InDeclaredForm.AbstractBase {
+            protected static class CacheValueField extends FieldDescription.InDefinedShape.AbstractBase {
 
                 /**
                  * The instrumented type.
@@ -871,7 +871,7 @@ public interface Implementation {
             /**
              * A description of an accessor method to access another method from outside the instrumented type.
              */
-            protected static class AccessorMethod extends MethodDescription.InDeclaredForm.AbstractBase {
+            protected static class AccessorMethod extends MethodDescription.inDefinedShape.AbstractBase {
 
                 /**
                  * The instrumented type.
@@ -907,7 +907,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                     return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
@@ -952,7 +952,7 @@ public interface Implementation {
             /**
              * A description of a field getter method.
              */
-            protected static class FieldGetter extends MethodDescription.InDeclaredForm.AbstractBase {
+            protected static class FieldGetter extends MethodDescription.inDefinedShape.AbstractBase {
 
                 /**
                  * The instrumented type.
@@ -988,7 +988,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                     return new ParameterList.Empty();
                 }
 
@@ -1033,7 +1033,7 @@ public interface Implementation {
             /**
              * A description of a field setter method.
              */
-            protected static class FieldSetter extends MethodDescription.InDeclaredForm.AbstractBase {
+            protected static class FieldSetter extends MethodDescription.inDefinedShape.AbstractBase {
 
                 /**
                  * The instrumented type.
@@ -1069,7 +1069,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                     return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asRawType()));
                 }
 

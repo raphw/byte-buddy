@@ -30,6 +30,6 @@ public class ParameterListEmptyTest {
 
     @Test
     public void testDeclaredList() throws Exception {
-        assertThat(new ParameterList.Empty().asDeclared().size(), is(0));
+        assertThat(new ParameterList.Empty().asDefined().size(), is(0));
     }
 }

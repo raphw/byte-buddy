@@ -41,7 +41,7 @@ public class FieldAccessTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private FieldDescription.InDeclaredForm fieldDescription;
+    private FieldDescription.InDefinedShape fieldDescription;
 
     @Mock
     private TypeDescription declaringType, fieldType;

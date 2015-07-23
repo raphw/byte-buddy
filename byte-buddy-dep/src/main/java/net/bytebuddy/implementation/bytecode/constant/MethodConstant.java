@@ -28,7 +28,7 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * A description of the method to be loaded onto the stack.
      */
-    protected final MethodDescription.InDeclaredForm methodDescription;
+    protected final MethodDescription.inDefinedShape methodDescription;
 
     /**
      * Creates a new method constant.
@@ -36,7 +36,7 @@ public abstract class MethodConstant implements StackManipulation {
      * @param methodDescription The method description for which the {@link java.lang.reflect.Method} representation
      *                          should be created.
      */
-    protected MethodConstant(MethodDescription.InDeclaredForm methodDescription) {
+    protected MethodConstant(MethodDescription.inDefinedShape methodDescription) {
         this.methodDescription = methodDescription;
     }
 
@@ -46,7 +46,7 @@ public abstract class MethodConstant implements StackManipulation {
      * @param methodDescription The method to be loaded onto the stack.
      * @return A stack manipulation that assigns a method constant for the given method description.
      */
-    public static CanCache forMethod(MethodDescription.InDeclaredForm methodDescription) {
+    public static CanCache forMethod(MethodDescription.inDefinedShape methodDescription) {
         if (methodDescription.isTypeInitializer()) {
             return CanCacheIllegal.INSTANCE;
         } else if (methodDescription.isConstructor()) {
@@ -204,7 +204,7 @@ public abstract class MethodConstant implements StackManipulation {
          *
          * @param methodDescription The method to be loaded onto the stack.
          */
-        protected ForMethod(MethodDescription.InDeclaredForm methodDescription) {
+        protected ForMethod(MethodDescription.inDefinedShape methodDescription) {
             super(methodDescription);
         }
 
@@ -254,7 +254,7 @@ public abstract class MethodConstant implements StackManipulation {
          *
          * @param methodDescription The constructor to be loaded onto the stack.
          */
-        protected ForConstructor(MethodDescription.InDeclaredForm methodDescription) {
+        protected ForConstructor(MethodDescription.inDefinedShape methodDescription) {
             super(methodDescription);
         }
 

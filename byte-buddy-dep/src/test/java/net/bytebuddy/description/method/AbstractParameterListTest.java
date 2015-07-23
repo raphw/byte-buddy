@@ -1,6 +1,5 @@
 package net.bytebuddy.description.method;
 
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.AbstractFilterableListTest;
 import org.junit.Test;
@@ -34,7 +33,7 @@ public abstract class AbstractParameterListTest<U extends ParameterDescription, 
 
     @Test
     public void testDeclared() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asDeclared(), is(Collections.singletonList(asElement(getFirst()).asDeclared())));
+        assertThat(asList(Collections.singletonList(getFirst())).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
     }
 
     protected static class Foo {

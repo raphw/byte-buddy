@@ -9,7 +9,6 @@ import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +31,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     private MethodRebaseResolver methodRebaseResolver;
 
     @Mock
-    private MethodDescription.InDeclaredForm rebasedMethod;
+    private MethodDescription.inDefinedShape rebasedMethod;
 
     @Mock
     private TypeDescription superType;
@@ -45,7 +44,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(superType.getInternalName()).thenReturn(BAR);
         when(rebasedMethod.getInternalName()).thenReturn(QUX);
         when(rebasedMethod.getDescriptor()).thenReturn(FOO);
-        when(rebasedMethod.asDeclared()).thenReturn(rebasedMethod);
+        when(rebasedMethod.asDefined()).thenReturn(rebasedMethod);
         when(rebasedMethod.getReturnType()).thenReturn(returnType);
         when(rebasedMethod.getParameters()).thenReturn(new ParameterList.Empty());
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);

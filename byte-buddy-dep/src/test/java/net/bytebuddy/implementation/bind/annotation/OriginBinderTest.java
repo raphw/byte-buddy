@@ -29,7 +29,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     private TypeDescription targetType;
 
     @Mock
-    private MethodDescription.InDeclaredForm methodDescription;
+    private MethodDescription.inDefinedShape methodDescription;
 
     public OriginBinderTest() {
         super(Origin.class);
@@ -41,7 +41,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         super.setUp();
         when(target.getType()).thenReturn(targetType);
         when(targetType.asRawType()).thenReturn(targetType);
-        when(source.asDeclared()).thenReturn(methodDescription);
+        when(source.asDefined()).thenReturn(methodDescription);
     }
 
     @Override

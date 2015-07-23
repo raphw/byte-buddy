@@ -502,12 +502,12 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public FieldList<FieldDescription.InDeclaredForm> getDeclaredFields() {
+        public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             return new FieldList.ForTokens(this, fieldTokens);
         }
 
         @Override
-        public MethodList<MethodDescription.InDeclaredForm> getDeclaredMethods() {
+        public MethodList<MethodDescription.inDefinedShape> getDeclaredMethods() {
             return new MethodList.ForTokens(this, methodTokens);
         }
 

@@ -23,10 +23,10 @@ public class TypeProxyObjectPropertiesTest {
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
             public void apply(TypeDescription mock) {
-                FieldDescription.InDeclaredForm fieldDescription = Mockito.mock(FieldDescription.InDeclaredForm.class);
+                FieldDescription.InDefinedShape fieldDescription = Mockito.mock(FieldDescription.InDefinedShape.class);
                 when(fieldDescription.getSourceCodeName()).thenReturn(TypeProxy.INSTANCE_FIELD);
                 when(mock.getDeclaredFields())
-                        .thenReturn(new FieldList.Explicit<FieldDescription.InDeclaredForm>(Collections.singletonList(fieldDescription)));
+                        .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
             }
         }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.AccessorMethodInvocation.class).skipSynthetic().apply();

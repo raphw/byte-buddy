@@ -42,7 +42,7 @@ public abstract class AbstractImplementationTargetTest {
     protected BridgeMethodResolver bridgeMethodResolver;
 
     @Mock
-    protected MethodDescription.InDeclaredForm invokableMethod, defaultMethod;
+    protected MethodDescription.inDefinedShape invokableMethod, defaultMethod;
 
     protected Implementation.Target implementationTarget;
 
@@ -67,13 +67,13 @@ public abstract class AbstractImplementationTargetTest {
         when(invokableMethod.getInternalName()).thenReturn(FOO);
         when(invokableMethod.getDescriptor()).thenReturn(QUX);
         when(invokableMethod.asToken()).thenReturn(invokableToken);
-        when(invokableMethod.asDeclared()).thenReturn(invokableMethod);
+        when(invokableMethod.asDefined()).thenReturn(invokableMethod);
         when(defaultMethod.getInternalName()).thenReturn(QUXBAZ);
         when(defaultMethod.getDescriptor()).thenReturn(FOOBAZ);
         when(defaultMethod.getDeclaringType()).thenReturn(defaultMethodDeclaringType);
         when(defaultMethod.getReturnType()).thenReturn(returnType);
         when(defaultMethod.asToken()).thenReturn(defaultToken);
-        when(defaultMethod.asDeclared()).thenReturn(defaultMethod);
+        when(defaultMethod.asDefined()).thenReturn(defaultMethod);
         when(defaultMethod.isSpecializableFor(defaultMethodDeclaringType)).thenReturn(true);
         when(defaultMethodDeclaringType.isInterface()).thenReturn(true);
         when(defaultMethodDeclaringType.asRawType()).thenReturn(defaultMethodDeclaringType);

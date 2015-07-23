@@ -49,17 +49,17 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
-    InDeclaredForm asDeclared();
+    InDefinedShape asDefined();
 
-    interface InDeclaredForm extends FieldDescription {
+    interface InDefinedShape extends FieldDescription {
 
         @Override
         TypeDescription getDeclaringType();
 
-        abstract class AbstractBase extends FieldDescription.AbstractBase implements InDeclaredForm {
+        abstract class AbstractBase extends FieldDescription.AbstractBase implements InDefinedShape {
 
             @Override
-            public InDeclaredForm asDeclared() {
+            public InDefinedShape asDefined() {
                 return this;
             }
         }
@@ -158,7 +158,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
     /**
      * An implementation of a field description for a loaded field.
      */
-    class ForLoadedField extends InDeclaredForm.AbstractBase {
+    class ForLoadedField extends InDefinedShape.AbstractBase {
 
         /**
          * The represented loaded field.
@@ -209,7 +209,7 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      * A latent field description describes a field that is not attached to a declaring
      * {@link TypeDescription}.
      */
-    class Latent extends InDeclaredForm.AbstractBase {
+    class Latent extends InDefinedShape.AbstractBase {
 
         /**
          * The type for which this field is defined.
@@ -358,8 +358,8 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
         }
 
         @Override
-        public InDeclaredForm asDeclared() {
-            return fieldDescription.asDeclared();
+        public InDefinedShape asDefined() {
+            return fieldDescription.asDefined();
         }
     }
 

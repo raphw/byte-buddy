@@ -19,7 +19,7 @@ public class DeclaringFieldMatcherTest extends AbstractElementMatcherTest<Declar
     private TypeDescription typeDescription;
 
     @Mock
-    private FieldList<FieldDescription.InDeclaredForm> fieldList;
+    private FieldList<FieldDescription.InDefinedShape> fieldList;
 
     @SuppressWarnings("unchecked")
     public DeclaringFieldMatcherTest() {

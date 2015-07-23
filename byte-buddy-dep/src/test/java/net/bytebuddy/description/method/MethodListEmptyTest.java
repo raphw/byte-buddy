@@ -20,6 +20,6 @@ public class MethodListEmptyTest {
 
     @Test
     public void testDeclaredList() throws Exception {
-        assertThat(new MethodList.Empty().asDeclared().size(), is(0));
+        assertThat(new MethodList.Empty().asDefined().size(), is(0));
     }
 }

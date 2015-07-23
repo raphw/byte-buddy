@@ -242,20 +242,20 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
-    InDeclaredForm asDeclared();
+    inDefinedShape asDefined();
 
-    interface InDeclaredForm extends MethodDescription {
+    interface inDefinedShape extends MethodDescription {
 
         @Override
         TypeDescription getDeclaringType();
 
         @Override
-        ParameterList<ParameterDescription.InDeclaredForm> getParameters();
+        ParameterList<ParameterDescription.InDefinedShape> getParameters();
 
-        abstract class AbstractBase extends MethodDescription.AbstractBase implements InDeclaredForm {
+        abstract class AbstractBase extends MethodDescription.AbstractBase implements inDefinedShape {
 
             @Override
-            public InDeclaredForm asDeclared() {
+            public inDefinedShape asDefined() {
                 return this;
             }
         }
@@ -669,7 +669,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     /**
      * An implementation of a method description for a loaded constructor.
      */
-    class ForLoadedConstructor extends InDeclaredForm.AbstractBase {
+    class ForLoadedConstructor extends inDefinedShape.AbstractBase {
 
         /**
          * The loaded constructor that is represented by this instance.
@@ -696,7 +696,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
+        public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
             return ParameterList.ForLoadedExecutable.of(constructor);
         }
 
@@ -769,7 +769,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     /**
      * An implementation of a method description for a loaded method.
      */
-    class ForLoadedMethod extends InDeclaredForm.AbstractBase {
+    class ForLoadedMethod extends inDefinedShape.AbstractBase {
 
         /**
          * The loaded method that is represented by this instance.
@@ -796,7 +796,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
+        public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
             return ParameterList.ForLoadedExecutable.of(method);
         }
 
@@ -887,7 +887,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      * A latent method description describes a method that is not attached to a declaring
      * {@link TypeDescription}.
      */
-    class Latent extends InDeclaredForm.AbstractBase {
+    class Latent extends inDefinedShape.AbstractBase {
 
         /**
          * The type that is declaring this method.
@@ -996,7 +996,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
+        public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
             return new ParameterList.ForTokens(this, parameterTokens);
         }
 
@@ -1033,7 +1033,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         /**
          * A method description that represents the type initializer.
          */
-        public static class TypeInitializer extends InDeclaredForm.AbstractBase {
+        public static class TypeInitializer extends inDefinedShape.AbstractBase {
 
             /**
              * The type for which the type initializer should be represented.
@@ -1055,7 +1055,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
             }
 
             @Override
-            public ParameterList<ParameterDescription.InDeclaredForm> getParameters() {
+            public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                 return new ParameterList.Empty();
             }
 
@@ -1177,8 +1177,8 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public InDeclaredForm asDeclared() {
-            return methodDescription.asDeclared();
+        public inDefinedShape asDefined() {
+            return methodDescription.asDefined();
         }
 
         /**
