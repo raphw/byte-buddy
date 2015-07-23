@@ -1,5 +1,6 @@
-package net.bytebuddy.description.type;
+package net.bytebuddy.description.type.generic;
 
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -16,7 +17,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class TypeDescriptionSuperTypeIteratorTest {
+public class GenericTypeDescriptionSuperTypeIteratorTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -60,6 +61,6 @@ public class TypeDescriptionSuperTypeIteratorTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.AbstractTypeDescription.SuperTypeIterator.class).applyBasic();
+        ObjectPropertyAssertion.of(GenericTypeDescription.SuperTypeIterator.class).applyBasic();
     }
 }

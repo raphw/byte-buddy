@@ -939,7 +939,7 @@ public final class ElementMatchers {
      * @param <T>              The type of the matched object.
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(Iterable<? extends GenericTypeDescription> typeDescriptions) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(List<? extends GenericTypeDescription> typeDescriptions) {
         List<ElementMatcher<? super GenericTypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super GenericTypeDescription>>();
         for (GenericTypeDescription typeDescription : typeDescriptions) {
             typeMatchers.add(is(nonNull(typeDescription)));

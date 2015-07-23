@@ -20,7 +20,7 @@ import java.util.*;
  * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
  * a specialization of a generic type.
  */
-public interface GenericTypeDescription extends NamedElement {
+public interface GenericTypeDescription extends NamedElement, Iterable<GenericTypeDescription> {
 
     /**
      * Returns the sort of the generic type this instance represents.
@@ -1154,6 +1154,11 @@ public interface GenericTypeDescription extends NamedElement {
         }
 
         @Override
+        public Iterator<GenericTypeDescription> iterator() {
+            return new SuperTypeIterator(this);
+        }
+
+        @Override
         public <T> T accept(Visitor<T> visitor) {
             return getSort().isNonGeneric()
                     ? visitor.onNonGenericType(asRawType())
@@ -1352,6 +1357,11 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public boolean isArray() {
             return false;
+        }
+
+        @Override
+        public Iterator<GenericTypeDescription> iterator() {
+            throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
         }
 
         @Override
@@ -1571,6 +1581,11 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public boolean isArray() {
             return false;
+        }
+
+        @Override
+        public Iterator<GenericTypeDescription> iterator() {
+            return new SuperTypeIterator(this);
         }
 
         @Override
@@ -1812,7 +1827,7 @@ public interface GenericTypeDescription extends NamedElement {
 
             @Override
             public <T> T accept(Visitor<T> visitor) {
-                return typeDescription.accept(visitor);
+                return visitor.onNonGenericType(this);
             }
 
             @Override
@@ -1866,6 +1881,11 @@ public interface GenericTypeDescription extends NamedElement {
             @Override
             public boolean isPrimitive() {
                 return typeDescription.isPrimitive();
+            }
+
+            @Override
+            public Iterator<GenericTypeDescription> iterator() {
+                return new SuperTypeIterator(this);
             }
 
             @Override
@@ -1971,6 +1991,11 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public boolean isPrimitive() {
             return false;
+        }
+
+        @Override
+        public Iterator<GenericTypeDescription> iterator() {
+            throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
         }
 
         @Override
@@ -2169,6 +2194,11 @@ public interface GenericTypeDescription extends NamedElement {
         @Override
         public boolean isPrimitive() {
             return asRawType().isPrimitive();
+        }
+
+        @Override
+        public Iterator<GenericTypeDescription> iterator() {
+            return resolve().iterator();
         }
 
         @Override
@@ -2476,6 +2506,55 @@ public interface GenericTypeDescription extends NamedElement {
                     return new TypeDescription.ForLoadedType(rawType);
                 }
             }
+        }
+    }
+
+    /**
+     * An iterator that iterates over a type's class hierarchy.
+     */
+    class SuperTypeIterator implements Iterator<GenericTypeDescription> {
+
+        /**
+         * The next type to represent.
+         */
+        private GenericTypeDescription nextType;
+
+        /**
+         * Creates a new iterator.
+         *
+         * @param initialType The initial type of this iterator.
+         */
+        public SuperTypeIterator(GenericTypeDescription initialType) {
+            nextType = initialType;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return nextType != null;
+        }
+
+        @Override
+        public GenericTypeDescription next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException("End of type hierarchy");
+            }
+            try {
+                return nextType;
+            } finally {
+                nextType = nextType.getSuperType();
+            }
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("remove");
+        }
+
+        @Override
+        public String toString() {
+            return "GenericTypeDescription.SuperTypeIterator{" +
+                    "nextType=" + nextType +
+                    '}';
         }
     }
 }

@@ -30,7 +30,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
  * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
  * represent non-generic types of sort {@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}.
  */
-public interface TypeDescription extends GenericTypeDescription, TypeVariableSource, Iterable<GenericTypeDescription> {
+public interface TypeDescription extends GenericTypeDescription, TypeVariableSource {
 
     /**
      * A representation of the {@link java.lang.Object} type.
@@ -612,55 +612,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public String toString() {
             return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
-        }
-
-        /**
-         * An iterator that iterates over a type's class hierarchy.
-         */
-        protected static class SuperTypeIterator implements Iterator<GenericTypeDescription> {
-
-            /**
-             * The next type to represent.
-             */
-            private GenericTypeDescription nextType;
-
-            /**
-             * Creates a new iterator.
-             *
-             * @param initialType The initial type of this iterator.
-             */
-            protected SuperTypeIterator(TypeDescription initialType) {
-                nextType = initialType;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return nextType != null;
-            }
-
-            @Override
-            public GenericTypeDescription next() {
-                if (!hasNext()) {
-                    throw new NoSuchElementException("End of type hierarchy");
-                }
-                try {
-                    return nextType;
-                } finally {
-                    nextType = nextType.getSuperType();
-                }
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException("remove");
-            }
-
-            @Override
-            public String toString() {
-                return "TypeDescription.AbstractTypeDescription.SuperTypeIterator{" +
-                        "nextType=" + nextType +
-                        '}';
-            }
         }
 
         /**

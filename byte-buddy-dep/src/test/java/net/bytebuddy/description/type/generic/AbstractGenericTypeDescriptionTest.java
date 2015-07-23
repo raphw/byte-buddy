@@ -12,6 +12,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -47,6 +48,15 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getParameters().getOnly().asRawType().represents(String.class), is(true));
         assertThat(genericTypeDescription.getTypeName(), is(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(genericTypeDescription.getOwnerType(), nullValue(GenericTypeDescription.class));
+    }
+
+    @Test
+    public void testParameterizedTypeIterator() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(SimpleParameterizedType.class.getDeclaredField(FOO));
+        Iterator<GenericTypeDescription> iterator = genericTypeDescription.iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(genericTypeDescription));
+        assertThat(iterator.hasNext(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -148,6 +158,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
         describe(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredMethods();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testUpperBoundsWildcardParameterizedTypeNoIterator() throws Exception {
+        describe(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().iterator();
+    }
+
     @Test
     public void testLowerBoundWildcardParameterizedType() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO));
@@ -223,6 +238,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
         describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredMethods();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testLowerBoundWildcardParameterizedTypeNoIterator() throws Exception {
+        describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().iterator();
+    }
+
     @Test
     public void testUnboundWildcardParameterizedType() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(UnboundWildcardParameterizedType.class.getDeclaredField(FOO));
@@ -295,6 +315,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @Test(expected = IllegalStateException.class)
     public void testUnboundBoundWildcardParameterizedTypeNoMethods() throws Exception {
         describe(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredMethods();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUnboundBoundWildcardParameterizedTypeNoIterator() throws Exception {
+        describe(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().iterator();
     }
 
     @Test
@@ -374,6 +399,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
         describe(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredMethods();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testExplicitlyUnboundBoundWildcardParameterizedTypeNoIterator() throws Exception {
+        describe(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().iterator();
+    }
+
     @Test
     public void testNestedParameterizedType() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(NestedParameterizedType.class.getDeclaredField(FOO));
@@ -410,6 +440,17 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().asRawType().represents(String.class), is(true));
         assertThat(genericTypeDescription.getTypeName(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
+    }
+
+    @Test
+    public void testGenericArrayTypeIterator() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(GenericArrayType.class.getDeclaredField(FOO));
+        Iterator<GenericTypeDescription> iterator = genericTypeDescription.iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(genericTypeDescription));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.hasNext(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -457,6 +498,17 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().getSort(), is(GenericTypeDescription.Sort.VARIABLE));
         assertThat(genericTypeDescription.getComponentType().getParameters().getOnly().asRawType().represents(String.class), is(true));
         assertThat(genericTypeDescription.getTypeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
+    }
+
+    @Test
+    public void testGenericArrayOfGenericComponentTypeIterator() throws Exception {
+        GenericTypeDescription genericTypeDescription = describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO));
+        Iterator<GenericTypeDescription> iterator = genericTypeDescription.iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(genericTypeDescription));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.hasNext(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -536,6 +588,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @Test(expected = IllegalStateException.class)
     public void testTypeVariableTypeNoMethods() throws Exception {
         describe(SimpleTypeVariableType.class.getDeclaredField(FOO)).getDeclaredMethods();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeVariableTypeNoIterator() throws Exception {
+        describe(SimpleTypeVariableType.class.getDeclaredField(FOO)).iterator();
     }
 
     @Test
