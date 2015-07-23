@@ -3,6 +3,7 @@ package net.bytebuddy.description.field;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.TypeDefinable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -22,7 +23,9 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
  * {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface FieldDescription extends ByteCodeElement, NamedElement.WithGenericName {
+public interface FieldDescription extends ByteCodeElement,
+        NamedElement.WithGenericName,
+        TypeDefinable<FieldDescription, FieldDescription.InDefinedShape> {
 
     /**
      * Returns the type of the described field.
@@ -48,8 +51,6 @@ public interface FieldDescription extends ByteCodeElement, NamedElement.WithGene
      * @return A token representing this field.
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
-
-    InDefinedShape asDefined();
 
     interface InDefinedShape extends FieldDescription {
 

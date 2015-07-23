@@ -3,6 +3,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.TypeDefinable;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -76,7 +77,7 @@ public final class ElementMatchers {
      * @param <T>              The type of the matched object.
      * @return An element matcher that matches the given field description.
      */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription fieldDescription) {
+    public static <T extends FieldDescription.InDefinedShape> ElementMatcher.Junction<T> is(FieldDescription fieldDescription) {
         return new EqualityMatcher<T>(nonNull(fieldDescription));
     }
 

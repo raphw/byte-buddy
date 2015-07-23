@@ -3,6 +3,7 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.TypeDefinable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -35,7 +36,9 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
  * interface must provide meaningful {@code equal(Object)} and {@code hashCode()} implementations.
  */
-public interface MethodDescription extends TypeVariableSource, NamedElement.WithGenericName {
+public interface MethodDescription extends TypeVariableSource,
+        NamedElement.WithGenericName,
+        TypeDefinable<MethodDescription, MethodDescription.InDefinedShape> {
 
     /**
      * The internal name of a Java constructor.
@@ -241,8 +244,6 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      * @return A token representing this method.
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
-
-    InDefinedShape asDefined();
 
     interface InDefinedShape extends MethodDescription {
 

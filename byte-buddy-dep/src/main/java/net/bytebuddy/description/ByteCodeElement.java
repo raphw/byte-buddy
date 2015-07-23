@@ -109,4 +109,9 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
             }
         }
     }
+
+    interface Member<T extends Member<T>> extends ByteCodeElement {
+
+        T asDefined();
+    }
 }
