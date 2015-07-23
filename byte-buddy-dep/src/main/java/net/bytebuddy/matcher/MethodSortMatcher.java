@@ -110,7 +110,28 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                     while (currentType != null) {
                         for (MethodDescription methodDescription : currentType.getDeclaredMethods().filter(isOverridable())) {
                             if (target.asToken().equals(methodDescription.asToken())) {
-                                return !methodDescription.isBridge();
+                                return methodDescription.equals(methodDescription.asDeclared());
+                            }
+                        }
+                        currentType = currentType.getSuperType();
+                    }
+                }
+                return false;
+            }
+        },
+
+        TYPE_VARIABLE_BRIDGE("isTypeVariableBridge()") {
+            @Override
+            protected boolean isSort(MethodDescription target) {
+                if (target.isBridge() && !RETURN_TYPE_BRIDGE.isSort(target)) {
+                    if (target.getDeclaringType().asRawType().isInterface()) {
+                        return true;
+                    }
+                    GenericTypeDescription currentType = target.getDeclaringType().getSuperType();
+                    while (currentType != null) {
+                        for (MethodDescription methodDescription : currentType.getDeclaredMethods()) {
+                            if (target.asToken().equals(methodDescription.asDeclared().asToken())) {
+                                return !methodDescription.equals(methodDescription.asDeclared());
                             }
                         }
                         currentType = currentType.getSuperType();
