@@ -660,6 +660,20 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testSortIsReturnTypeBridge() throws Exception {
+        assertThat(ElementMatchers.isReturnTypeBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.isReturnTypeBridge()
+                .matches(new MethodDescription.ForLoadedMethod(IsTypeVariableBridge.class.getDeclaredMethod(FOO, Object.class))), is(false));
+        assertThat(ElementMatchers.isReturnTypeBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
+                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
+        assertThat(ElementMatchers.isReturnTypeBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
+                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(String.class))).getOnly()), is(false));
+        assertThat(ElementMatchers.isReturnTypeBridge()
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+    }
+
+    @Test
     public void testSortIsVisibilityBridge() throws Exception {
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));

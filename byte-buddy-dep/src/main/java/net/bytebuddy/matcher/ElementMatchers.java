@@ -1154,6 +1154,10 @@ public final class ElementMatchers {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_INITIALIZER);
     }
 
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isReturnTypeBridge() {
+        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.RETURN_TYPE_BRIDGE);
+    }
+
     /**
      * <p>
      * Only matches method descriptions that represent a visibility bridge. A visibility bridge is a Java bridge
