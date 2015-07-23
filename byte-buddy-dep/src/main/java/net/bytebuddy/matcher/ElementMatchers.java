@@ -1154,12 +1154,8 @@ public final class ElementMatchers {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_INITIALIZER);
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isReturnTypeBridge() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.RETURN_TYPE_BRIDGE);
-    }
-
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isTypeVariableBridge() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_VARIABLE_BRIDGE);
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isTypeBridge() {
+        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_BRIDGE);
     }
 
     /**

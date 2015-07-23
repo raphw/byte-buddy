@@ -8,6 +8,8 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.test.precompiled.ReturnTypeInterfaceBridge;
+import net.bytebuddy.test.precompiled.TypeVariableInterfaceBridge;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
@@ -30,6 +32,7 @@ import java.net.URLClassLoader;
 import java.sql.SQLException;
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
@@ -42,6 +45,10 @@ public class ElementMatchersTest {
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
     private static final String PARAMETER_NAMES = "net.bytebuddy.test.precompiled.ParameterNames";
+
+    private static final String RETURN_TYPE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.ReturnTypeInterfaceBridge";
+
+    private static final String TYPE_VARIABLE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.TypeVariableInterfaceBridge";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -259,7 +266,7 @@ public class ElementMatchersTest {
     public void testMethodName() throws Exception {
         assertThat(ElementMatchers.hasMethodName(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME), is(ElementMatchers.isTypeInitializer()));
         assertThat(ElementMatchers.hasMethodName(MethodDescription.CONSTRUCTOR_INTERNAL_NAME), is(ElementMatchers.isConstructor()));
-        ElementMatcher<MethodDescription> nameMatcher = ElementMatchers.named(FOO);
+        ElementMatcher<MethodDescription> nameMatcher = named(FOO);
         assertThat(ElementMatchers.hasMethodName(FOO), is(nameMatcher));
     }
 
@@ -267,9 +274,9 @@ public class ElementMatchersTest {
     public void testNamed() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
         when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
-        assertThat(ElementMatchers.named(FOO).matches(byteCodeElement), is(true));
-        assertThat(ElementMatchers.named(FOO.toUpperCase()).matches(byteCodeElement), is(false));
-        assertThat(ElementMatchers.named(BAR).matches(byteCodeElement), is(false));
+        assertThat(named(FOO).matches(byteCodeElement), is(true));
+        assertThat(named(FOO.toUpperCase()).matches(byteCodeElement), is(false));
+        assertThat(named(BAR).matches(byteCodeElement), is(false));
     }
 
     @Test
@@ -562,8 +569,8 @@ public class ElementMatchersTest {
     public void testHasParameter() throws Exception {
         MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(classLoader.loadClass(PARAMETER_NAMES)
                 .getDeclaredMethod(FOO, String.class, long.class, int.class));
-        assertThat(ElementMatchers.hasParameter(ElementMatchers.named(FOO)).matches(methodDescription), is(false));
-        assertThat(ElementMatchers.hasParameter(ElementMatchers.named("first")).matches(methodDescription), is(true));
+        assertThat(ElementMatchers.hasParameter(named(FOO)).matches(methodDescription), is(false));
+        assertThat(ElementMatchers.hasParameter(named("first")).matches(methodDescription), is(true));
     }
 
     @Test
@@ -660,28 +667,18 @@ public class ElementMatchersTest {
     }
 
     @Test
-    public void testSortIsTypeVariableBridge() throws Exception {
-        assertThat(ElementMatchers.isTypeVariableBridge()
+    public void testSortIsTypeBridge() throws Exception {
+        assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
-        assertThat(ElementMatchers.isTypeVariableBridge()
+        assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsTypeVariableBridge.class.getDeclaredMethod(FOO, Object.class))), is(true));
-        assertThat(ElementMatchers.isTypeVariableBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
-                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
-        assertThat(ElementMatchers.isTypeVariableBridge()
-                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
-    }
-
-    @Test
-    public void testSortIsReturnTypeBridge() throws Exception {
-        assertThat(ElementMatchers.isReturnTypeBridge()
-                .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
-        assertThat(ElementMatchers.isReturnTypeBridge()
-                .matches(new MethodDescription.ForLoadedMethod(IsTypeVariableBridge.class.getDeclaredMethod(FOO, Object.class))), is(false));
-        assertThat(ElementMatchers.isReturnTypeBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
-                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
-        assertThat(ElementMatchers.isReturnTypeBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
-                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(String.class))).getOnly()), is(false));
-        assertThat(ElementMatchers.isReturnTypeBridge()
+        assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
+        assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(IsTypeVariableReturnTypeBridge.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
+        assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(IsTypeVariableReturnTypeOverrideBridge.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
+        assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
 
@@ -692,9 +689,26 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsTypeVariableBridge.class.getDeclaredMethod(FOO, Object.class))), is(false));
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
-                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(IsTypeVariableReturnTypeBridge.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(IsTypeVariableReturnTypeOverrideBridge.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testSortInterfaceBridgeType() throws Exception {
+        assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(classLoader.loadClass(RETURN_TYPE_INTERFACE_BRIDGE))
+                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
+        assertThat(ElementMatchers.isTypeBridge().matches(new MethodDescription.ForLoadedMethod(classLoader.loadClass(TYPE_VARIABLE_INTERFACE_BRIDGE)
+                .getDeclaredMethod(FOO, Object.class))), is(true));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(classLoader.loadClass(RETURN_TYPE_INTERFACE_BRIDGE))
+                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new MethodDescription.ForLoadedMethod(classLoader.loadClass(TYPE_VARIABLE_INTERFACE_BRIDGE)
+                .getDeclaredMethod(FOO, Object.class))), is(false));
     }
 
     @Test
@@ -704,7 +718,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsTypeVariableBridge.class.getDeclaredMethod(FOO, Object.class))), is(true));
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(IsReturnTypeBridge.class)
-                .getDeclaredMethods().filter(ElementMatchers.named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(false));
     }
@@ -1042,6 +1056,36 @@ public class ElementMatchersTest {
 
         @Override
         public String foo() {
+            return null;
+        }
+    }
+
+    public static class TypeVariableReturnTypeBridgeBase<T> {
+
+        public T foo() {
+            return null;
+        }
+    }
+
+    public static class IsTypeVariableReturnTypeBridge extends TypeVariableReturnTypeBridgeBase<String> {
+
+        @Override
+        public String foo() {
+            return null;
+        }
+    }
+
+    public static class TypeVariableReturnTypeOverrideBridgeBase<T, S extends T> {
+
+        public T foo() {
+            return null;
+        }
+    }
+
+    public static class IsTypeVariableReturnTypeOverrideBridge<S extends Number> extends TypeVariableReturnTypeOverrideBridgeBase<Number, S> {
+
+        @Override
+        public S foo() {
             return null;
         }
     }

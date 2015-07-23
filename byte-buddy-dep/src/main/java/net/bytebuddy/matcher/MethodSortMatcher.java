@@ -101,17 +101,20 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
         VISIBILITY_BRIDGE("isVisibilityBridge()") {
             @Override
             protected boolean isSort(MethodDescription target) {
-                return target.isBridge()
-                        && !TYPE_VARIABLE_BRIDGE.isSort(target)
-                        && !RETURN_TYPE_BRIDGE.isSort(target);
+                return target.isBridge() && !TYPE_BRIDGE.isSort(target);
             }
         },
 
-        TYPE_VARIABLE_BRIDGE("isTypeVariableBridge()") {
+        TYPE_BRIDGE("isTypeBridge()") {
             @Override
             protected boolean isSort(MethodDescription target) {
-                if (target.isBridge() && !RETURN_TYPE_BRIDGE.isSort(target)) {
+                if (target.isBridge()) {
                     if (target.getDeclaringType().asRawType().isInterface()) {
+                        return true;
+                    }
+                    if (!target.getDeclaringType().getDeclaredMethods().filter(not(is(target))
+                            .and(hasMethodName(target.getInternalName()))
+                            .and(takesArguments(target.getParameters().asTypeList().asRawTypes()))).isEmpty()) {
                         return true;
                     }
                     GenericTypeDescription currentType = target.getDeclaringType().getSuperType();
@@ -125,16 +128,6 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                     }
                 }
                 return false;
-            }
-        },
-
-        RETURN_TYPE_BRIDGE("isReturnTypeBridge()") {
-            @Override
-            protected boolean isSort(MethodDescription target) {
-                return target.isBridge() && !target.getDeclaringType().getDeclaredMethods()
-                        .filter(not(is(target))
-                                .and(hasMethodName(target.getInternalName()))
-                                .and(takesArguments(target.getParameters().asTypeList().asRawTypes()))).isEmpty();
             }
         },
 
