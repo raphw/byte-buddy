@@ -55,7 +55,7 @@ public class TypeProxyCreationTest {
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Mock
-    private MethodDescription.inDefinedShape proxyMethod;
+    private MethodDescription.InDefinedShape proxyMethod;
 
     private TypeDescription foo;
 

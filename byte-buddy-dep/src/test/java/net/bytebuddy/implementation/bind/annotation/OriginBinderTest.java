@@ -29,7 +29,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     private TypeDescription targetType;
 
     @Mock
-    private MethodDescription.inDefinedShape methodDescription;
+    private MethodDescription.InDefinedShape methodDescription;
 
     public OriginBinderTest() {
         super(Origin.class);

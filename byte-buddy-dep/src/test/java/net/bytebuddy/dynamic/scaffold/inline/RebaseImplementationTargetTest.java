@@ -31,7 +31,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     private MethodRebaseResolver methodRebaseResolver;
 
     @Mock
-    private MethodDescription.inDefinedShape rebasedMethod;
+    private MethodDescription.InDefinedShape rebasedMethod;
 
     @Mock
     private TypeDescription superType;

@@ -11,12 +11,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class MethodDescriptionForLoadedTest extends AbstractMethodDescriptionTest {
 
     @Override
-    protected MethodDescription.inDefinedShape describe(Method method) {
+    protected MethodDescription.InDefinedShape describe(Method method) {
         return new MethodDescription.ForLoadedMethod(method);
     }
 
     @Override
-    protected MethodDescription.inDefinedShape describe(Constructor<?> constructor) {
+    protected MethodDescription.InDefinedShape describe(Constructor<?> constructor) {
         return new MethodDescription.ForLoadedConstructor(constructor);
     }
 

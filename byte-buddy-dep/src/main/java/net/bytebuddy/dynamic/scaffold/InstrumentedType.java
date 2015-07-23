@@ -507,7 +507,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public MethodList<MethodDescription.inDefinedShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.ForTokens(this, methodTokens);
         }
 

@@ -39,7 +39,7 @@ public class MethodTypeConstant implements StackManipulation {
      * @param methodDescription The method of which the method type should be loaded onto the operand stack.
      * @return A stack manipulation that loads the method type of the given method onto the operand stack.
      */
-    public static StackManipulation of(MethodDescription.inDefinedShape methodDescription) {
+    public static StackManipulation of(MethodDescription.InDefinedShape methodDescription) {
         return new MethodTypeConstant(Type.getMethodType(methodDescription.getDescriptor()));
     }
 

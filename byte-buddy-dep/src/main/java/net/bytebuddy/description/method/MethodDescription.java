@@ -242,9 +242,9 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      */
     Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
-    inDefinedShape asDefined();
+    InDefinedShape asDefined();
 
-    interface inDefinedShape extends MethodDescription {
+    interface InDefinedShape extends MethodDescription {
 
         @Override
         TypeDescription getDeclaringType();
@@ -252,10 +252,10 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         @Override
         ParameterList<ParameterDescription.InDefinedShape> getParameters();
 
-        abstract class AbstractBase extends MethodDescription.AbstractBase implements inDefinedShape {
+        abstract class AbstractBase extends MethodDescription.AbstractBase implements InDefinedShape {
 
             @Override
-            public inDefinedShape asDefined() {
+            public InDefinedShape asDefined() {
                 return this;
             }
         }
@@ -669,7 +669,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     /**
      * An implementation of a method description for a loaded constructor.
      */
-    class ForLoadedConstructor extends inDefinedShape.AbstractBase {
+    class ForLoadedConstructor extends InDefinedShape.AbstractBase {
 
         /**
          * The loaded constructor that is represented by this instance.
@@ -769,7 +769,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
     /**
      * An implementation of a method description for a loaded method.
      */
-    class ForLoadedMethod extends inDefinedShape.AbstractBase {
+    class ForLoadedMethod extends InDefinedShape.AbstractBase {
 
         /**
          * The loaded method that is represented by this instance.
@@ -887,7 +887,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
      * A latent method description describes a method that is not attached to a declaring
      * {@link TypeDescription}.
      */
-    class Latent extends inDefinedShape.AbstractBase {
+    class Latent extends InDefinedShape.AbstractBase {
 
         /**
          * The type that is declaring this method.
@@ -1033,7 +1033,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         /**
          * A method description that represents the type initializer.
          */
-        public static class TypeInitializer extends inDefinedShape.AbstractBase {
+        public static class TypeInitializer extends InDefinedShape.AbstractBase {
 
             /**
              * The type for which the type initializer should be represented.
@@ -1177,7 +1177,7 @@ public interface MethodDescription extends TypeVariableSource, NamedElement.With
         }
 
         @Override
-        public inDefinedShape asDefined() {
+        public InDefinedShape asDefined() {
             return methodDescription.asDefined();
         }
 

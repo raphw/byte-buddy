@@ -20,7 +20,7 @@ public class MethodDescriptionLatentTypeInitializerTest {
     @Mock
     private TypeDescription typeDescription;
 
-    private MethodDescription.inDefinedShape typeInitializer;
+    private MethodDescription.InDefinedShape typeInitializer;
 
     @Before
     public void setUp() throws Exception {

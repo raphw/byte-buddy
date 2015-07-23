@@ -42,7 +42,7 @@ public abstract class AbstractImplementationTargetTest {
     protected BridgeMethodResolver bridgeMethodResolver;
 
     @Mock
-    protected MethodDescription.inDefinedShape invokableMethod, defaultMethod;
+    protected MethodDescription.InDefinedShape invokableMethod, defaultMethod;
 
     protected Implementation.Target implementationTarget;
 

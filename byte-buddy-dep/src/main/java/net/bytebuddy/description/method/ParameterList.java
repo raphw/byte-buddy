@@ -332,7 +332,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * The method description that declares the parameters.
              */
-            private final MethodDescription.inDefinedShape methodDescription;
+            private final MethodDescription.InDefinedShape methodDescription;
 
             /**
              * A list of detached types representing the parameters.
@@ -345,7 +345,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
              * @param methodDescription The method description that declares the parameters.
              * @param typeDescriptions  A list of detached types representing the parameters.
              */
-            public ForTypes(MethodDescription.inDefinedShape methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
+            public ForTypes(MethodDescription.InDefinedShape methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
                 this.methodDescription = methodDescription;
                 this.typeDescriptions = typeDescriptions;
             }
@@ -374,7 +374,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * The method that is declaring the represented token.
          */
-        private final MethodDescription.inDefinedShape declaringMethod;
+        private final MethodDescription.InDefinedShape declaringMethod;
 
         /**
          * The list of tokens to represent.
@@ -387,7 +387,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @param declaringMethod The method that is declaring the represented token.
          * @param tokens          The list of tokens to represent.
          */
-        public ForTokens(MethodDescription.inDefinedShape declaringMethod, List<? extends ParameterDescription.Token> tokens) {
+        public ForTokens(MethodDescription.InDefinedShape declaringMethod, List<? extends ParameterDescription.Token> tokens) {
             this.declaringMethod = declaringMethod;
             this.tokens = tokens;
         }

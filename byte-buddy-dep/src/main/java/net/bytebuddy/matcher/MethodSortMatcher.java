@@ -112,7 +112,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                     if (target.getDeclaringType().asRawType().isInterface()) {
                         return true;
                     }
-                    if (!target.getDeclaringType().getDeclaredMethods().filter(not(is(target))
+                    if (!target.getDeclaringType().getDeclaredMethods().filter(not(isBridge())
                             .and(hasMethodName(target.getInternalName()))
                             .and(takesArguments(target.getParameters().asTypeList().asRawTypes()))).isEmpty()) {
                         return true;

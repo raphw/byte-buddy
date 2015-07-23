@@ -28,7 +28,7 @@ public class MethodInvocationGenericTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.inDefinedShape declaredMethod;
+    private MethodDescription.InDefinedShape declaredMethod;
 
     @Mock
     private MethodDescription methodDescription;

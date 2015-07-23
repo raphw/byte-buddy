@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 
-public class TypePoolLazyMethodListTest extends AbstractMethodListTest<Method, MethodDescription.inDefinedShape> {
+public class TypePoolLazyMethodListTest extends AbstractMethodListTest<Method, MethodDescription.InDefinedShape> {
 
     private TypePool typePool;
 
@@ -39,12 +39,12 @@ public class TypePoolLazyMethodListTest extends AbstractMethodListTest<Method, M
     }
 
     @Override
-    protected MethodList<MethodDescription.inDefinedShape> asList(List<Method> elements) {
+    protected MethodList<MethodDescription.InDefinedShape> asList(List<Method> elements) {
         return typePool.describe(Foo.class.getName()).resolve().getDeclaredMethods().filter(anyOf(elements.toArray(new Method[elements.size()])));
     }
 
     @Override
-    protected MethodDescription.inDefinedShape asElement(Method element) {
+    protected MethodDescription.InDefinedShape asElement(Method element) {
         return new MethodDescription.ForLoadedMethod(element);
     }
 }

@@ -90,7 +90,7 @@ public class ImplementationContextDefaultTest {
     private Implementation.SpecialMethodInvocation firstSpecialInvocation, secondSpecialInvocation;
 
     @Mock
-    private MethodDescription.inDefinedShape firstSpecialMethod, secondSpecialMethod;
+    private MethodDescription.InDefinedShape firstSpecialMethod, secondSpecialMethod;
 
     @Mock
     private AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
@@ -407,7 +407,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        MethodDescription.inDefinedShape firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
+        MethodDescription.InDefinedShape firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
         assertThat(firstMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstMethodDescription,
                 Collections.singletonList(firstSpecialParameterType))));
         assertThat(firstMethodDescription.getReturnType(), is((GenericTypeDescription) firstSpecialReturnType));
@@ -416,7 +416,7 @@ public class ImplementationContextDefaultTest {
         assertThat(firstMethodDescription.getExceptionTypes(), is(firstSpecialExceptionTypes));
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         when(secondSpecialMethod.isStatic()).thenReturn(true);
-        MethodDescription.inDefinedShape secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
+        MethodDescription.InDefinedShape secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
         assertThat(secondMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondMethodDescription,
                 Collections.singletonList(secondSpecialParameterType))));
         assertThat(secondMethodDescription.getReturnType(), is((GenericTypeDescription) secondSpecialReturnType));
@@ -551,7 +551,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        MethodDescription.inDefinedShape firstFieldSetter = implementationContext.registerSetterFor(firstField);
+        MethodDescription.InDefinedShape firstFieldSetter = implementationContext.registerSetterFor(firstField);
         assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter,
                 Collections.singletonList(firstFieldType))));
         assertThat(firstFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
@@ -560,7 +560,7 @@ public class ImplementationContextDefaultTest {
         assertThat(firstFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
-        MethodDescription.inDefinedShape secondFieldSetter = implementationContext.registerSetterFor(secondField);
+        MethodDescription.InDefinedShape secondFieldSetter = implementationContext.registerSetterFor(secondField);
         assertThat(secondFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondFieldSetter,
                 Collections.singletonList(secondFieldType))));
         assertThat(secondFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));

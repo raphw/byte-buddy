@@ -3085,7 +3085,7 @@ public interface TypePool {
         /**
          * A list of method descriptions that are declared by this type.
          */
-        private final List<MethodDescription.inDefinedShape> declaredMethods;
+        private final List<MethodDescription.InDefinedShape> declaredMethods;
 
         /**
          * Creates a new lazy type description.
@@ -3138,7 +3138,7 @@ public interface TypePool {
             for (FieldToken fieldToken : fieldTokens) {
                 declaredFields.add(fieldToken.toFieldDescription(this));
             }
-            declaredMethods = new ArrayList<MethodDescription.inDefinedShape>(methodTokens.size());
+            declaredMethods = new ArrayList<MethodDescription.InDefinedShape>(methodTokens.size());
             for (MethodToken methodToken : methodTokens) {
                 declaredMethods.add(methodToken.toMethodDescription(this));
             }
@@ -3187,8 +3187,8 @@ public interface TypePool {
         }
 
         @Override
-        public MethodList<MethodDescription.inDefinedShape> getDeclaredMethods() {
-            return new MethodList.Explicit<MethodDescription.inDefinedShape>(declaredMethods);
+        public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
+            return new MethodList.Explicit<MethodDescription.InDefinedShape>(declaredMethods);
         }
 
         @Override
@@ -4990,7 +4990,7 @@ public interface TypePool {
              * @param lazyTypeDescription The lazy type description to attach this method description to.
              * @return A method description representing this field token.
              */
-            private MethodDescription.inDefinedShape toMethodDescription(LazyTypeDescription lazyTypeDescription) {
+            private MethodDescription.InDefinedShape toMethodDescription(LazyTypeDescription lazyTypeDescription) {
                 return lazyTypeDescription.new LazyMethodDescription(getName(),
                         getModifiers(),
                         getDescriptor(),
@@ -5733,7 +5733,7 @@ public interface TypePool {
         /**
          * A lazy representation of a method that resolves references to types only on demand.
          */
-        private class LazyMethodDescription extends MethodDescription.inDefinedShape.AbstractBase {
+        private class LazyMethodDescription extends MethodDescription.InDefinedShape.AbstractBase {
 
             /**
              * The internal name of this method.
@@ -5964,7 +5964,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public inDefinedShape getDeclaringMethod() {
+                public MethodDescription.InDefinedShape getDeclaringMethod() {
                     return LazyMethodDescription.this;
                 }
 

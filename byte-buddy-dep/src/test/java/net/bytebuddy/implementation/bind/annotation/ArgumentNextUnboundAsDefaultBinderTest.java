@@ -32,7 +32,7 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
     private Implementation.Target implementationTarget;
 
     @Mock
-    private MethodDescription.inDefinedShape source, target;
+    private MethodDescription.InDefinedShape source, target;
 
     @Mock
     private TypeDescription firstParameter, secondParameter;

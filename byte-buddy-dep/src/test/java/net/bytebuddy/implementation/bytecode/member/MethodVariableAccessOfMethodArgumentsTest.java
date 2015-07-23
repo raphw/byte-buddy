@@ -34,7 +34,7 @@ public class MethodVariableAccessOfMethodArgumentsTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.inDefinedShape methodDescription, bridgeMethod;
+    private MethodDescription.InDefinedShape methodDescription, bridgeMethod;
 
     @Mock
     private TypeDescription declaringType, firstParameterType, secondParameterType;

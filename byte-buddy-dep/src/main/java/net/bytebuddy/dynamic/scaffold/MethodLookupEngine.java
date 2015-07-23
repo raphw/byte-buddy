@@ -787,7 +787,7 @@ public interface MethodLookupEngine {
         }
 
         @Override
-        public inDefinedShape asDefined() {
+        public InDefinedShape asDefined() {
             return methodChain.get(MOST_SPECIFIC).asDefined();
         }
     }
@@ -796,7 +796,7 @@ public interface MethodLookupEngine {
      * This {@link MethodDescription} represents methods that are defined
      * ambiguously on several interfaces of a common type.
      */
-    class ConflictingInterfaceMethod extends MethodDescription.inDefinedShape.AbstractBase {
+    class ConflictingInterfaceMethod extends MethodDescription.InDefinedShape.AbstractBase {
 
         /**
          * An index that is guaranteed to exist but that expresses the fact that any method that is represented

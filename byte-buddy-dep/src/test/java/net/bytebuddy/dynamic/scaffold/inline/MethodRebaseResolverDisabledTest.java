@@ -18,7 +18,7 @@ public class MethodRebaseResolverDisabledTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.inDefinedShape methodDescription;
+    private MethodDescription.InDefinedShape methodDescription;
 
     @Test
     public void testResolutionPreservesMethod() throws Exception {

@@ -35,7 +35,7 @@ public class AbstractMethodCallProxyTest {
     private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
 
     protected Class<?> proxyOnlyDeclaredMethodOf(Class<?> proxyTarget) throws Exception {
-        MethodDescription.inDefinedShape proxyMethod = new TypeDescription.ForLoadedType(proxyTarget)
+        MethodDescription.InDefinedShape proxyMethod = new TypeDescription.ForLoadedType(proxyTarget)
                 .getDeclaredMethods().filter(not(isConstructor())).getOnly();
         when(methodAccessorFactory.registerAccessorFor(eq(specialMethodInvocation))).thenReturn(proxyMethod);
         String auxiliaryTypeName = getClass().getName() + "$" + proxyTarget.getSimpleName() + "$Proxy";

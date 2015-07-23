@@ -39,7 +39,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected T annotation;
 
     @Mock
-    protected MethodDescription.inDefinedShape source;
+    protected MethodDescription.InDefinedShape source;
 
     @Mock
     protected ParameterDescription target;

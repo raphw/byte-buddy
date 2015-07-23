@@ -71,7 +71,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     FieldList<FieldDescription.InDefinedShape> getDeclaredFields();
 
     @Override
-    MethodList<MethodDescription.inDefinedShape> getDeclaredMethods();
+    MethodList<MethodDescription.InDefinedShape> getDeclaredMethods();
 
     /**
      * Checks if {@code value} is an instance of the type represented by this instance.
@@ -917,7 +917,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public MethodList<MethodDescription.inDefinedShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.ForLoadedType(type);
         }
 
@@ -1140,7 +1140,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public MethodList<MethodDescription.inDefinedShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.Empty();
         }
 
@@ -1284,7 +1284,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public MethodList<MethodDescription.inDefinedShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.Empty();
         }
 
@@ -1383,7 +1383,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public MethodList<MethodDescription.inDefinedShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.Empty();
         }
 

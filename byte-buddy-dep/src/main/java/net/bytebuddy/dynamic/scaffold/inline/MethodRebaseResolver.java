@@ -45,7 +45,7 @@ public interface MethodRebaseResolver {
      * @param methodDescription A description of the method to resolve.
      * @return A resolution for the given method.
      */
-    Resolution resolve(MethodDescription.inDefinedShape methodDescription);
+    Resolution resolve(MethodDescription.InDefinedShape methodDescription);
 
     /**
      * Returns a (potentially empty) list of auxiliary types that are required by this method rebase resolver.
@@ -65,7 +65,7 @@ public interface MethodRebaseResolver {
         INSTANCE;
 
         @Override
-        public Resolution resolve(MethodDescription.inDefinedShape methodDescription) {
+        public Resolution resolve(MethodDescription.InDefinedShape methodDescription) {
             return new Resolution.Preserved(methodDescription);
         }
 
@@ -225,7 +225,7 @@ public interface MethodRebaseResolver {
          *
          * @return The resolved method if this resolution represents a rebased method or the original method.
          */
-        MethodDescription.inDefinedShape getResolvedMethod();
+        MethodDescription.InDefinedShape getResolvedMethod();
 
         /**
          * A rebased method might require additional arguments in order to create a distinct signature. The
@@ -244,7 +244,7 @@ public interface MethodRebaseResolver {
             /**
              * The preserved method.
              */
-            private final MethodDescription.inDefinedShape methodDescription;
+            private final MethodDescription.InDefinedShape methodDescription;
 
             /**
              * Creates a new {@link MethodRebaseResolver.Resolution} for
@@ -252,7 +252,7 @@ public interface MethodRebaseResolver {
              *
              * @param methodDescription The preserved method.
              */
-            public Preserved(MethodDescription.inDefinedShape methodDescription) {
+            public Preserved(MethodDescription.InDefinedShape methodDescription) {
                 this.methodDescription = methodDescription;
             }
 
@@ -262,7 +262,7 @@ public interface MethodRebaseResolver {
             }
 
             @Override
-            public MethodDescription.inDefinedShape getResolvedMethod() {
+            public MethodDescription.InDefinedShape getResolvedMethod() {
                 return methodDescription;
             }
 
@@ -296,14 +296,14 @@ public interface MethodRebaseResolver {
             /**
              * The rebased method.
              */
-            private final MethodDescription.inDefinedShape methodDescription;
+            private final MethodDescription.InDefinedShape methodDescription;
 
             /**
              * Creates a resolution for a rebased method.
              *
              * @param methodDescription The rebased method.
              */
-            protected ForRebasedMethod(MethodDescription.inDefinedShape methodDescription) {
+            protected ForRebasedMethod(MethodDescription.InDefinedShape methodDescription) {
                 this.methodDescription = methodDescription;
             }
 
@@ -314,7 +314,7 @@ public interface MethodRebaseResolver {
              * @param methodNameTransformer The transformer to use for renaming the method.
              * @return A resolution for rebasing the provided method.
              */
-            public static Resolution of(MethodDescription.inDefinedShape methodDescription, MethodNameTransformer methodNameTransformer) {
+            public static Resolution of(MethodDescription.InDefinedShape methodDescription, MethodNameTransformer methodNameTransformer) {
                 return new ForRebasedMethod(new RebasedMethod(methodDescription, methodNameTransformer));
             }
 
@@ -324,7 +324,7 @@ public interface MethodRebaseResolver {
             }
 
             @Override
-            public MethodDescription.inDefinedShape getResolvedMethod() {
+            public MethodDescription.InDefinedShape getResolvedMethod() {
                 return methodDescription;
             }
 
@@ -352,12 +352,12 @@ public interface MethodRebaseResolver {
             /**
              * A description of a rebased method.
              */
-            protected static class RebasedMethod extends MethodDescription.inDefinedShape.AbstractBase {
+            protected static class RebasedMethod extends MethodDescription.InDefinedShape.AbstractBase {
 
                 /**
                  * The method that is being rebased.
                  */
-                private final inDefinedShape methodDescription;
+                private final InDefinedShape methodDescription;
 
                 /**
                  * The transformer to use for renaming the method.
@@ -370,7 +370,7 @@ public interface MethodRebaseResolver {
                  * @param methodDescription     The method that is being rebased.
                  * @param methodNameTransformer The transformer to use for renaming the method.
                  */
-                protected RebasedMethod(inDefinedShape methodDescription, MethodNameTransformer methodNameTransformer) {
+                protected RebasedMethod(InDefinedShape methodDescription, MethodNameTransformer methodNameTransformer) {
                     this.methodDescription = methodDescription;
                     this.methodNameTransformer = methodNameTransformer;
                 }
@@ -432,14 +432,14 @@ public interface MethodRebaseResolver {
             /**
              * The rebased constructor.
              */
-            private final MethodDescription.inDefinedShape methodDescription;
+            private final MethodDescription.InDefinedShape methodDescription;
 
             /**
              * Creates a new resolution for a rebased constructor.
              *
              * @param methodDescription The rebased constructor.
              */
-            protected ForRebasedConstructor(MethodDescription.inDefinedShape methodDescription) {
+            protected ForRebasedConstructor(MethodDescription.InDefinedShape methodDescription) {
                 this.methodDescription = methodDescription;
             }
 
@@ -450,7 +450,7 @@ public interface MethodRebaseResolver {
              * @param placeholderType   The placeholder type to use to distinguish the constructor's signature.
              * @return A resolution of the provided constructor.
              */
-            public static Resolution of(MethodDescription.inDefinedShape methodDescription, TypeDescription placeholderType) {
+            public static Resolution of(MethodDescription.InDefinedShape methodDescription, TypeDescription placeholderType) {
                 return new ForRebasedConstructor(new RebasedConstructor(methodDescription, placeholderType));
             }
 
@@ -460,7 +460,7 @@ public interface MethodRebaseResolver {
             }
 
             @Override
-            public MethodDescription.inDefinedShape getResolvedMethod() {
+            public MethodDescription.InDefinedShape getResolvedMethod() {
                 return methodDescription;
             }
 
@@ -488,12 +488,12 @@ public interface MethodRebaseResolver {
             /**
              * An description of a rebased constructor.
              */
-            protected static class RebasedConstructor extends MethodDescription.inDefinedShape.AbstractBase {
+            protected static class RebasedConstructor extends MethodDescription.InDefinedShape.AbstractBase {
 
                 /**
                  * The constructor that is rebased.
                  */
-                private final inDefinedShape methodDescription;
+                private final InDefinedShape methodDescription;
 
                 /**
                  * The placeholder type that is used to distinguish the constructor's signature.
@@ -506,7 +506,7 @@ public interface MethodRebaseResolver {
                  * @param methodDescription The constructor that is rebased.
                  * @param placeholderType   The placeholder type that is used to distinguish the constructor's signature.
                  */
-                protected RebasedConstructor(inDefinedShape methodDescription, TypeDescription placeholderType) {
+                protected RebasedConstructor(InDefinedShape methodDescription, TypeDescription placeholderType) {
                     this.methodDescription = methodDescription;
                     this.placeholderType = placeholderType;
                 }
@@ -579,7 +579,7 @@ public interface MethodRebaseResolver {
         }
 
         @Override
-        public Resolution resolve(MethodDescription.inDefinedShape methodDescription) {
+        public Resolution resolve(MethodDescription.InDefinedShape methodDescription) {
             return instrumentedMethods.contains(methodDescription)
                     ? rebase(methodDescription)
                     : new Resolution.Preserved(methodDescription);
@@ -591,7 +591,7 @@ public interface MethodRebaseResolver {
          * @param methodDescription The method to be rebased.
          * @return A resolution for the given method.
          */
-        protected abstract Resolution rebase(MethodDescription.inDefinedShape methodDescription);
+        protected abstract Resolution rebase(MethodDescription.InDefinedShape methodDescription);
 
         @Override
         public boolean equals(Object other) {
@@ -638,7 +638,7 @@ public interface MethodRebaseResolver {
         }
 
         @Override
-        protected Resolution rebase(MethodDescription.inDefinedShape methodDescription) {
+        protected Resolution rebase(MethodDescription.InDefinedShape methodDescription) {
             if (methodDescription.isConstructor()) {
                 throw new IllegalArgumentException("Cannot rebase constructor without preparation");
             }
@@ -736,7 +736,7 @@ public interface MethodRebaseResolver {
         }
 
         @Override
-        protected Resolution rebase(MethodDescription.inDefinedShape methodDescription) {
+        protected Resolution rebase(MethodDescription.InDefinedShape methodDescription) {
             return methodDescription.isConstructor()
                     ? Resolution.ForRebasedConstructor.of(methodDescription, placeholderType.getTypeDescription())
                     : Resolution.ForRebasedMethod.of(methodDescription, methodNameTransformer);

@@ -36,7 +36,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      */
     ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
-    MethodList<MethodDescription.inDefinedShape> asDefined();
+    MethodList<MethodDescription.InDefinedShape> asDefined();
 
     /**
      * A base implementation of a {@link MethodList}.
@@ -63,12 +63,12 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodList<MethodDescription.inDefinedShape> asDefined() {
-            List<MethodDescription.inDefinedShape> declaredForms = new ArrayList<MethodDescription.inDefinedShape>(size());
+        public MethodList<MethodDescription.InDefinedShape> asDefined() {
+            List<MethodDescription.InDefinedShape> declaredForms = new ArrayList<MethodDescription.InDefinedShape>(size());
             for (MethodDescription methodDescription : this) {
                 declaredForms.add(methodDescription.asDefined());
             }
-            return new Explicit<MethodDescription.inDefinedShape>(declaredForms);
+            return new Explicit<MethodDescription.InDefinedShape>(declaredForms);
         }
     }
 
@@ -76,7 +76,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
      * are declared for a given type.
      */
-    class ForLoadedType extends AbstractBase<MethodDescription.inDefinedShape> {
+    class ForLoadedType extends AbstractBase<MethodDescription.InDefinedShape> {
 
         /**
          * The loaded methods that are represented by this method list.
@@ -121,7 +121,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodDescription.inDefinedShape get(int index) {
+        public MethodDescription.InDefinedShape get(int index) {
             return index < constructors.size()
                     ? new MethodDescription.ForLoadedConstructor(constructors.get(index))
                     : new MethodDescription.ForLoadedMethod(methods.get(index - constructors.size()));
@@ -167,7 +167,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     /**
      * A list of method descriptions for a list of detached tokens. For the returned method, each token is attached to its method representation.
      */
-    class ForTokens extends AbstractBase<MethodDescription.inDefinedShape> {
+    class ForTokens extends AbstractBase<MethodDescription.InDefinedShape> {
 
         /**
          * The method's declaring type.
@@ -191,7 +191,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodDescription.inDefinedShape get(int index) {
+        public MethodDescription.InDefinedShape get(int index) {
             return new MethodDescription.Latent(declaringType, tokens.get(index));
         }
 
@@ -250,8 +250,8 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     /**
      * An implementation of an empty method list.
      */
-    class Empty extends FilterableList.Empty<MethodDescription.inDefinedShape, MethodList<MethodDescription.inDefinedShape>>
-            implements MethodList<MethodDescription.inDefinedShape> {
+    class Empty extends FilterableList.Empty<MethodDescription.InDefinedShape, MethodList<MethodDescription.InDefinedShape>>
+            implements MethodList<MethodDescription.InDefinedShape> {
 
         @Override
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
@@ -264,7 +264,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodList<MethodDescription.inDefinedShape> asDefined() {
+        public MethodList<MethodDescription.InDefinedShape> asDefined() {
             return this;
         }
     }

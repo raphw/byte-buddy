@@ -58,7 +58,7 @@ public interface AuxiliaryType {
          * @param specialMethodInvocation The special method invocation.
          * @return The accessor method for invoking the special method invocation.
          */
-        MethodDescription.inDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation);
+        MethodDescription.InDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation);
 
         /**
          * Registers a getter for the given {@link net.bytebuddy.description.field.FieldDescription} which might
@@ -69,7 +69,7 @@ public interface AuxiliaryType {
          * @param fieldDescription The field which is to be accessed.
          * @return A getter method for the given field.
          */
-        MethodDescription.inDefinedShape registerGetterFor(FieldDescription fieldDescription);
+        MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription);
 
         /**
          * Registers a setter for the given {@link net.bytebuddy.description.field.FieldDescription} which might
@@ -80,7 +80,7 @@ public interface AuxiliaryType {
          * @param fieldDescription The field which is to be accessed.
          * @return A setter method for the given field.
          */
-        MethodDescription.inDefinedShape registerSetterFor(FieldDescription fieldDescription);
+        MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription);
 
         /**
          * A method accessor factory that forbids any accessor registration.
@@ -93,17 +93,17 @@ public interface AuxiliaryType {
             INSTANCE;
 
             @Override
-            public MethodDescription.inDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
+            public MethodDescription.InDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
                 throw new IllegalStateException("It is illegal to register an accessor for this type");
             }
 
             @Override
-            public MethodDescription.inDefinedShape registerGetterFor(FieldDescription fieldDescription) {
+            public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription) {
                 throw new IllegalStateException("It is illegal to register a field getter for this type");
             }
 
             @Override
-            public MethodDescription.inDefinedShape registerSetterFor(FieldDescription fieldDescription) {
+            public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription) {
                 throw new IllegalStateException("It is illegal to register a field setter for this type");
             }
 

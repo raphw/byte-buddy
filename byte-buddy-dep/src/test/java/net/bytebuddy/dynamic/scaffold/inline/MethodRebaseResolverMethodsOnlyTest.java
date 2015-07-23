@@ -32,7 +32,7 @@ public class MethodRebaseResolverMethodsOnlyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.inDefinedShape method, constructor, other;
+    private MethodDescription.InDefinedShape method, constructor, other;
 
     @Mock
     private TypeDescription returnType, parameterType, declaringType;

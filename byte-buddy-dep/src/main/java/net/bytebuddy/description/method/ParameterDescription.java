@@ -100,7 +100,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
     interface InDefinedShape extends ParameterDescription {
 
         @Override
-        MethodDescription.inDefinedShape getDeclaringMethod();
+        MethodDescription.InDefinedShape getDeclaringMethod();
 
         abstract class AbstractBase extends ParameterDescription.AbstractBase implements InDefinedShape {
 
@@ -291,7 +291,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public MethodDescription.inDefinedShape getDeclaringMethod() {
+        public MethodDescription.InDefinedShape getDeclaringMethod() {
             Object executable = GET_DECLARING_EXECUTABLE.invoke(parameter);
             if (executable instanceof Method) {
                 return new MethodDescription.ForLoadedMethod((Method) executable);
@@ -381,7 +381,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public MethodDescription.inDefinedShape getDeclaringMethod() {
+            public MethodDescription.InDefinedShape getDeclaringMethod() {
                 return new MethodDescription.ForLoadedMethod(method);
             }
 
@@ -453,7 +453,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
             }
 
             @Override
-            public MethodDescription.inDefinedShape getDeclaringMethod() {
+            public MethodDescription.InDefinedShape getDeclaringMethod() {
                 return new MethodDescription.ForLoadedConstructor(constructor);
             }
 
@@ -487,7 +487,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         /**
          * The method that is declaring the parameter.
          */
-        private final MethodDescription.inDefinedShape declaringMethod;
+        private final MethodDescription.InDefinedShape declaringMethod;
 
         /**
          * The type of the parameter.
@@ -527,7 +527,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index           The index of the parameter.
          * @param offset          The parameter's offset in the local method variables array.
          */
-        public Latent(MethodDescription.inDefinedShape declaringMethod, Token token, int index, int offset) {
+        public Latent(MethodDescription.InDefinedShape declaringMethod, Token token, int index, int offset) {
             this(declaringMethod,
                     token.getType(),
                     token.getAnnotations(),
@@ -545,7 +545,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index           The index of the parameter.
          * @param offset          The offset of the parameter.
          */
-        public Latent(MethodDescription.inDefinedShape declaringMethod,
+        public Latent(MethodDescription.InDefinedShape declaringMethod,
                       GenericTypeDescription parameterType,
                       int index,
                       int offset) {
@@ -569,7 +569,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
          * @param index               The index of the parameter.
          * @param offset              The parameter's offset in the local method variables array.
          */
-        public Latent(MethodDescription.inDefinedShape declaringMethod,
+        public Latent(MethodDescription.InDefinedShape declaringMethod,
                       GenericTypeDescription parameterType,
                       List<? extends AnnotationDescription> declaredAnnotations,
                       String name,
@@ -591,7 +591,7 @@ public interface ParameterDescription extends AnnotatedCodeElement, NamedElement
         }
 
         @Override
-        public MethodDescription.inDefinedShape getDeclaringMethod() {
+        public MethodDescription.InDefinedShape getDeclaringMethod() {
             return declaringMethod;
         }
 
