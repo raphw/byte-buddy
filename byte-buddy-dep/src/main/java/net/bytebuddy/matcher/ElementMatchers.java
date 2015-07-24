@@ -1463,6 +1463,14 @@ public final class ElementMatchers {
         return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
     }
 
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(GenericTypeDescription.Sort sort) {
+        return ofSort(is(nonNull(sort)));
+    }
+
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(ElementMatcher<? super GenericTypeDescription.Sort> matcher) {
+        return new TypeSortMatcher<T>(nonNull(matcher));
+    }
+
     /**
      * Matches a field's generic type against the provided matcher.
      *

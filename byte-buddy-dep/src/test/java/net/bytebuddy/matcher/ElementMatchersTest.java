@@ -1058,6 +1058,12 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testTypeSort() throws Exception {
+        assertThat(ElementMatchers.ofSort(GenericTypeDescription.Sort.NON_GENERIC).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(ElementMatchers.ofSort(GenericTypeDescription.Sort.VARIABLE).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+    }
+
+    @Test
     public void testDeclaresField() throws Exception {
         assertThat(ElementMatchers.declaresField(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
                 .matches(new TypeDescription.ForLoadedType(DeclaresFieldOrMethod.class)), is(true));
