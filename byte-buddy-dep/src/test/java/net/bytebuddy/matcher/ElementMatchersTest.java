@@ -778,6 +778,8 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
         assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
+        assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(IsGenericResolvedVisibilityBridge.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isTypeBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(false));
         assertThat(ElementMatchers.isTypeBridge()
@@ -818,6 +820,8 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(IsGenericResolvedVisibilityBridge.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isVisibilityBridge()
@@ -871,6 +875,8 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(IsVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(IsGenericResolvedVisibilityBridge.class)
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isBridge()
                 .matches(new MethodDescription.ForLoadedMethod(IsRawGenericVisibilityBridge.class.getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isBridge()
@@ -1225,6 +1231,14 @@ public class ElementMatchersTest {
 
     public static class IsGenericVisibilityBridge<T> extends GenericVisibilityBridgeBase<T> {
         /* empty */
+    }
+
+    public static class IsGenericResolvedVisibilityBridge extends GenericVisibilityBridgeBase<String> {
+
+        @Override
+        public String foo() {
+            return null;
+        }
     }
 
     public static class IsRawGenericVisibilityBridge extends GenericVisibilityBridgeBase {
