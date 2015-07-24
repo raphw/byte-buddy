@@ -35,8 +35,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
      * @param throwableType        The type of the exception to be thrown.
      * @param constructionDelegate A delegate that is responsible for calling the isThrowable's constructor.
      */
-    public ExceptionMethod(TypeDescription throwableType,
-                           ConstructionDelegate constructionDelegate) {
+    public ExceptionMethod(TypeDescription throwableType, ConstructionDelegate constructionDelegate) {
         this.throwableType = throwableType;
         this.constructionDelegate = constructionDelegate;
     }
@@ -112,9 +111,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     @Override
-    public Size apply(MethodVisitor methodVisitor,
-                      Context implementationContext,
-                      MethodDescription instrumentedMethod) {
+    public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 constructionDelegate.make(),
                 Throw.INSTANCE

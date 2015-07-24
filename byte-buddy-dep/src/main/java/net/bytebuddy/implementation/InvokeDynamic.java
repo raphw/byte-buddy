@@ -43,7 +43,7 @@ public class InvokeDynamic implements Implementation {
     /**
      * The bootstrap method.
      */
-    protected final MethodDescription bootstrapMethod;
+    protected final MethodDescription.InDefinedShape bootstrapMethod;
 
     /**
      * The arguments that are provided to the bootstrap method.
@@ -80,7 +80,7 @@ public class InvokeDynamic implements Implementation {
      * @param assigner           The assigner to be used.
      * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
      */
-    protected InvokeDynamic(MethodDescription bootstrapMethod,
+    protected InvokeDynamic(MethodDescription.InDefinedShape bootstrapMethod,
                             List<?> handleArguments,
                             InvocationProvider invocationProvider,
                             TerminationHandler terminationHandler,
@@ -187,7 +187,7 @@ public class InvokeDynamic implements Implementation {
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
-    public static WithImplicitTarget bootstrap(MethodDescription bootstrapMethod, Object... rawArgument) {
+    public static WithImplicitTarget bootstrap(MethodDescription.InDefinedShape bootstrapMethod, Object... rawArgument) {
         return bootstrap(bootstrapMethod, Arrays.asList(rawArgument));
     }
 
@@ -206,7 +206,7 @@ public class InvokeDynamic implements Implementation {
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
-    public static WithImplicitTarget bootstrap(MethodDescription bootstrapMethod, List<?> rawArguments) {
+    public static WithImplicitTarget bootstrap(MethodDescription.InDefinedShape bootstrapMethod, List<?> rawArguments) {
         List<Object> arguments = new ArrayList<Object>(rawArguments.size());
         for (Object argument : rawArguments) {
             if (argument instanceof Class) {
@@ -1013,14 +1013,14 @@ public class InvokeDynamic implements Implementation {
                 /**
                  * The method that is being substituted.
                  */
-                private final MethodDescription methodDescription;
+                private final MethodDescription.InDefinedShape methodDescription;
 
                 /**
                  * Creates a new target for substituting a given method.
                  *
                  * @param methodDescription The method that is being substituted.
                  */
-                protected ForMethodDescription(MethodDescription methodDescription) {
+                protected ForMethodDescription(MethodDescription.InDefinedShape methodDescription) {
                     this.methodDescription = methodDescription;
                 }
 
@@ -3038,7 +3038,7 @@ public class InvokeDynamic implements Implementation {
          * @param assigner           The assigner to be used.
          * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
          */
-        public AbstractDelegator(MethodDescription bootstrapMethod,
+        public AbstractDelegator(MethodDescription.InDefinedShape bootstrapMethod,
                                  List<?> handleArguments,
                                  InvocationProvider invocationProvider,
                                  TerminationHandler terminationHandler,
@@ -3191,7 +3191,7 @@ public class InvokeDynamic implements Implementation {
          * @param assigner           The assigner to be used.
          * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
          */
-        protected WithImplicitArguments(MethodDescription bootstrapMethod,
+        protected WithImplicitArguments(MethodDescription.InDefinedShape bootstrapMethod,
                                         List<?> handleArguments,
                                         InvocationProvider invocationProvider,
                                         TerminationHandler terminationHandler,
@@ -3264,7 +3264,7 @@ public class InvokeDynamic implements Implementation {
          * @param assigner           The assigner to be used.
          * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
          */
-        protected WithImplicitTarget(MethodDescription bootstrapMethod,
+        protected WithImplicitTarget(MethodDescription.InDefinedShape bootstrapMethod,
                                      List<?> handleArguments,
                                      InvocationProvider invocationProvider,
                                      TerminationHandler terminationHandler,
@@ -3396,7 +3396,7 @@ public class InvokeDynamic implements Implementation {
          * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
          * @param value              The value that is supplied as the next argument to the bootstrapped method.
          */
-        protected WithImplicitFieldType(MethodDescription bootstrapMethod,
+        protected WithImplicitFieldType(MethodDescription.InDefinedShape bootstrapMethod,
                                         List<?> handleArguments,
                                         InvocationProvider invocationProvider,
                                         TerminationHandler terminationHandler,
@@ -3505,7 +3505,7 @@ public class InvokeDynamic implements Implementation {
          * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
          * @param index              The index of of the argument to supply to the bootstapped method.
          */
-        protected WithImplicitArgumentType(MethodDescription bootstrapMethod,
+        protected WithImplicitArgumentType(MethodDescription.InDefinedShape bootstrapMethod,
                                            List<?> handleArguments,
                                            InvocationProvider invocationProvider,
                                            TerminationHandler terminationHandler,
