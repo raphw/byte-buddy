@@ -27,6 +27,10 @@
       Additionally, the following reports are configured:
       - cobertura:cobertura - Computes line coverage for test suite
       - org.pitest:pitest-maven:mutationCoverage - Runs mutation tests
+
+      Few tests concerning class loaders require a longer runtime than adequate for continuous application. Setting the property
+      '-Dnet.bytebuddy.property.integration=true' triggers the execution of these tests. These tests are activated on the Travis
+      build.
     -->
 
     <modules>

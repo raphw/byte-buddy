@@ -1,11 +1,13 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -26,6 +28,9 @@ public class MultipleParentClassLoaderTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Rule
+    public MethodRule integrationRule = new IntegrationRule();
 
     @Mock
     private ClassLoader first, second;
@@ -90,7 +95,7 @@ public class MultipleParentClassLoaderTest {
     }
 
     @Test
-    @Ignore("This test takes too much time: find out why.")
+    @IntegrationRule.Enforce
     public void testMultipleParentURL() throws Exception {
         ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(first, second, null).build();
         assertThat(classLoader.getResource(FOO), is(fooUrl));
@@ -110,7 +115,7 @@ public class MultipleParentClassLoaderTest {
     }
 
     @Test
-    @Ignore("This test takes too much time: find out why.")
+    @IntegrationRule.Enforce
     public void testMultipleParentEnumerationURL() throws Exception {
         ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(first, second, null).build();
         Enumeration<URL> foo = classLoader.getResources(FOO);

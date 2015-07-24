@@ -2,6 +2,8 @@ language: java
 
 sudo: false
 
+script: mvn test -Dnet.bytebuddy.property.integration=true
+
 branches:
   only:
     - master
