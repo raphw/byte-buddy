@@ -121,7 +121,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any field that is represented by the provided field description.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> representedBy(FieldDescription.Token fieldToken) {
-        return new FieldTokenMatcher<T>(is(nonNull(fieldToken)));
+        return new TokenMatcher<T, FieldDescription.Token>(is(nonNull(fieldToken)));
     }
 
     /**
@@ -132,7 +132,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any method that is represented by the provided method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> representedBy(MethodDescription.Token methodToken) {
-        return new MethodTokenMatcher<T>(is(nonNull(methodToken)));
+        return new TokenMatcher<T, MethodDescription.Token>(is(nonNull(methodToken)));
     }
 
     /**
@@ -143,7 +143,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any parameter that is represented by the provided parameter description.
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> representedBy(ParameterDescription.Token parameterToken) {
-        return new ParameterTokenMatcher<T>(is(nonNull(parameterToken)));
+        return new TokenMatcher<T, ParameterDescription.Token>(is(nonNull(parameterToken)));
     }
 
     /**
