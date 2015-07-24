@@ -697,7 +697,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeCombinationBridge.Inner.class)
-                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(true));
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isTypeBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeSpecializationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isTypeBridge()
@@ -737,7 +737,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeCombinationBridge.Inner.class)
-                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(false));
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeSpecializationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(false));
         assertThat(ElementMatchers.isVisibilityBridge()
@@ -790,7 +790,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeOverrideBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeCombinationBridge.Inner.class)
-                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Number.class))).getOnly()), is(true));
+                .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isBridge().matches(new TypeDescription.ForLoadedType(TypeVariableReturnTypeSpecializationBridge.Inner.class)
                 .getDeclaredMethods().filter(named(FOO).and(ElementMatchers.returns(Object.class))).getOnly()), is(true));
         assertThat(ElementMatchers.isBridge()

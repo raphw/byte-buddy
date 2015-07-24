@@ -105,25 +105,18 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
                     if (target.getDeclaringType().asRawType().isInterface()) {
                         return false;
                     }
-                    for (GenericTypeDescription superType : target.getDeclaringType().asRawType().getSuperType()) {
-                        for (MethodDescription methodDescription : superType.getDeclaredMethods()) {
-                            if (methodDescription.asDefined().asToken().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE).equals(target.asToken())) {
+                    for (GenericTypeDescription currentType : target.getDeclaringType().getSuperType()) {
+                        for (MethodDescription methodDescription : currentType.getDeclaredMethods()) {
+                            if (methodDescription.asDefined().asToken().equals(target.asToken())) {
                                 return !methodDescription.isBridge() && target.getDeclaringType().asRawType().getDeclaredMethods()
                                         .filter(not(isBridge())
-                                                .and(hasMethodName(target.getInternalName()))
-                                                .and(takesArguments(target.getParameters().asTypeList().asRawTypes())))
+                                                .and(hasMethodName(methodDescription.getInternalName()))
+                                                .and(takesArguments(methodDescription.getParameters().asTypeList().asRawTypes())))
                                         .isEmpty();
                             }
                         }
                     }
                 }
-                return false;
-            }
-        },
-
-        TYPE_VARIABLE_BRIDGE("isTypeVariableBridge()") {
-            @Override
-            protected boolean isSort(MethodDescription target) {
                 return false;
             }
         },
