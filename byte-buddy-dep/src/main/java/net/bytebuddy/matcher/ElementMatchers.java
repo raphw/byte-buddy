@@ -26,7 +26,6 @@ import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
-
 /**
  * A utility class that contains a human-readable language for creating {@link net.bytebuddy.matcher.ElementMatcher}s.
  */
@@ -65,7 +64,7 @@ public final class ElementMatchers {
      * @param <T>   The type of the matched object.
      * @return An element matcher that exactly matches the given field.
      */
-    public static <T extends FieldDescription.InDefinedShape> ElementMatcher.Junction<T> is(Field field) {
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(Field field) {
         return is(new FieldDescription.ForLoadedField(nonNull(field)));
     }
 
@@ -76,8 +75,12 @@ public final class ElementMatchers {
      * @param <T>              The type of the matched object.
      * @return An element matcher that matches the given field description.
      */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription fieldDescription) {
-        return new EqualityMatcher<T>(nonNull(fieldDescription));
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription.InDefinedShape fieldDescription) {
+        return definedField(new EqualityMatcher<FieldDescription.InDefinedShape>(nonNull(fieldDescription)));
+    }
+
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> definedField(ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
+        return new DefinedShapeMatcher<T, FieldDescription.InDefinedShape>(nonNull(matcher));
     }
 
     /**
@@ -120,8 +123,12 @@ public final class ElementMatchers {
      * @param <T>               The type of the matched object.
      * @return An element matcher that matches the given method description.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription methodDescription) {
-        return new EqualityMatcher<T>(nonNull(methodDescription));
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription.InDefinedShape methodDescription) {
+        return definedMethod(new EqualityMatcher<MethodDescription.InDefinedShape>(nonNull(methodDescription)));
+    }
+
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> definedMethod(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
+        return new DefinedShapeMatcher<T, MethodDescription.InDefinedShape>(nonNull(matcher));
     }
 
     /**
@@ -133,6 +140,15 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> representedBy(MethodDescription.Token methodToken) {
         return new TokenMatcher<T, MethodDescription.Token>(is(nonNull(methodToken)));
+    }
+
+    public static <T extends ParameterDescription> ElementMatcher<T> is(ParameterDescription.InDefinedShape parameterDescription) {
+        return definedParameter(new EqualityMatcher<ParameterDescription.InDefinedShape>(parameterDescription));
+    }
+
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> definedParameter(
+            ElementMatcher<? super ParameterDescription.InDefinedShape> matcher) {
+        return new DefinedShapeMatcher<T, ParameterDescription.InDefinedShape>(nonNull(matcher));
     }
 
     /**
@@ -270,7 +286,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Constructor<?>... value) {
-        return anyOf(new MethodList.ForLoadedType(nonNull(value), new Method[0]));
+        return definedMethod(anyOf(new MethodList.ForLoadedType(nonNull(value), new Method[0])));
     }
 
     /**
@@ -282,7 +298,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Method... value) {
-        return anyOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value)));
+        return definedMethod(anyOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value))));
     }
 
     /**
@@ -294,7 +310,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> anyOf(Field... value) {
-        return anyOf(new FieldList.ForLoadedField(nonNull(value)));
+        return definedField(anyOf(new FieldList.ForLoadedField(nonNull(value))));
     }
 
     /**
@@ -358,7 +374,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Constructor<?>... value) {
-        return noneOf(new MethodList.ForLoadedType(nonNull(value), new Method[0]));
+        return definedMethod(noneOf(new MethodList.ForLoadedType(nonNull(value), new Method[0])));
     }
 
     /**
@@ -370,7 +386,11 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Method... value) {
-        return noneOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value)));
+        return definedMethod(noneOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value))));
+    }
+
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Field... value) {
+        return definedMethod(noneOf(new FieldList.ForLoadedField(nonNull(value))));
     }
 
     /**

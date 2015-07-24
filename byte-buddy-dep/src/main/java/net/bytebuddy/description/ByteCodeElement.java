@@ -44,7 +44,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
      */
     boolean isVisibleTo(TypeDescription typeDescription);
 
-    interface TypeDependant<T extends TypeDependant<? extends T, S>, S extends ByteCodeElement.Token<S>> {
+    interface TypeDependant<T extends TypeDependant<?, S>, S extends ByteCodeElement.Token<S>> {
 
         T asDefined();
 
