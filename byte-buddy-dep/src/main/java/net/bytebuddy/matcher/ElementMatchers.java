@@ -65,7 +65,7 @@ public final class ElementMatchers {
      * @param <T>   The type of the matched object.
      * @return An element matcher that exactly matches the given field.
      */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(Field field) {
+    public static <T extends FieldDescription.InDefinedShape> ElementMatcher.Junction<T> is(Field field) {
         return is(new FieldDescription.ForLoadedField(nonNull(field)));
     }
 
@@ -78,6 +78,17 @@ public final class ElementMatchers {
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription fieldDescription) {
         return new EqualityMatcher<T>(nonNull(fieldDescription));
+    }
+
+    /**
+     * Validates if a method is represented by the provided field token.
+     *
+     * @param fieldToken The field token to match a method against.
+     * @param <T>        The type of the matched object.
+     * @return A matcher that matches any field that is represented by the provided field description.
+     */
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> representedBy(FieldDescription.Token fieldToken) {
+        return new TokenMatcher<T, FieldDescription.Token>(is(nonNull(fieldToken)));
     }
 
     /**
@@ -111,17 +122,6 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription methodDescription) {
         return new EqualityMatcher<T>(nonNull(methodDescription));
-    }
-
-    /**
-     * Validates if a method is represented by the provided field token.
-     *
-     * @param fieldToken The field token to match a method against.
-     * @param <T>        The type of the matched object.
-     * @return A matcher that matches any field that is represented by the provided field description.
-     */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> representedBy(FieldDescription.Token fieldToken) {
-        return new TokenMatcher<T, FieldDescription.Token>(is(nonNull(fieldToken)));
     }
 
     /**
