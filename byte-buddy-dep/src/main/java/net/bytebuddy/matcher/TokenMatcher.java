@@ -14,4 +14,20 @@ public class TokenMatcher<T extends ByteCodeElement.TypeDependant<?, S>, S exten
     public boolean matches(T target) {
         return matcher.matches(target.asToken());
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && matcher.equals(((TokenMatcher<?, ?>) other).matcher);
+    }
+
+    @Override
+    public int hashCode() {
+        return matcher.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "hasToken(" + matcher + ')';
+    }
 }

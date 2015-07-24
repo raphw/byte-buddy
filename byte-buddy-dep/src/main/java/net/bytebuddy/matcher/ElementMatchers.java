@@ -65,18 +65,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given field.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> is(Field field) {
-        return is(new FieldDescription.ForLoadedField(nonNull(field)));
-    }
-
-    /**
-     * Exactly matches a given {@link FieldDescription}.
-     *
-     * @param fieldDescription The field description to match.
-     * @param <T>              The type of the matched object.
-     * @return An element matcher that matches the given field description.
-     */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription.InDefinedShape fieldDescription) {
-        return definedField(new EqualityMatcher<FieldDescription.InDefinedShape>(nonNull(fieldDescription)));
+        return definedField(is(new FieldDescription.ForLoadedField(nonNull(field))));
     }
 
     public static <T extends FieldDescription> ElementMatcher.Junction<T> definedField(ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
@@ -102,7 +91,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Method method) {
-        return is(new MethodDescription.ForLoadedMethod(nonNull(method)));
+        return definedMethod(is(new MethodDescription.ForLoadedMethod(nonNull(method))));
     }
 
     /**
@@ -113,18 +102,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given constructor.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Constructor<?> constructor) {
-        return is(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
-    }
-
-    /**
-     * Exactly matches a given {@link MethodDescription}.
-     *
-     * @param methodDescription The method description to match.
-     * @param <T>               The type of the matched object.
-     * @return An element matcher that matches the given method description.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription.InDefinedShape methodDescription) {
-        return definedMethod(new EqualityMatcher<MethodDescription.InDefinedShape>(nonNull(methodDescription)));
+        return definedMethod(is(new MethodDescription.ForLoadedConstructor(nonNull(constructor))));
     }
 
     public static <T extends MethodDescription> ElementMatcher.Junction<T> definedMethod(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
@@ -140,10 +118,6 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> representedBy(MethodDescription.Token methodToken) {
         return new TokenMatcher<T, MethodDescription.Token>(is(nonNull(methodToken)));
-    }
-
-    public static <T extends ParameterDescription> ElementMatcher<T> is(ParameterDescription.InDefinedShape parameterDescription) {
-        return definedParameter(new EqualityMatcher<ParameterDescription.InDefinedShape>(parameterDescription));
     }
 
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> definedParameter(
@@ -174,17 +148,6 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given {@link TypeDescription}.
-     *
-     * @param typeDescription The type to match by its description
-     * @param <T>             The type of the matched object.
-     * @return An element matcher that exactly matches the given type.
-     */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> is(GenericTypeDescription typeDescription) {
-        return new EqualityMatcher<T>(nonNull(typeDescription));
-    }
-
-    /**
      * Exactly matches a given annotation as an {@link AnnotationDescription}.
      *
      * @param annotation The annotation to match by its description.
@@ -193,17 +156,6 @@ public final class ElementMatchers {
      */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> is(Annotation annotation) {
         return is(AnnotationDescription.ForLoadedAnnotation.of(nonNull(annotation)));
-    }
-
-    /**
-     * Exactly matches a given {@link AnnotationDescription}.
-     *
-     * @param annotationDescription The annotation description to match.
-     * @param <T>                   The type of the matched object.
-     * @return An element matcher that exactly matches the given annotation.
-     */
-    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> is(AnnotationDescription annotationDescription) {
-        return new EqualityMatcher<T>(nonNull(annotationDescription));
     }
 
     /**
@@ -389,8 +341,8 @@ public final class ElementMatchers {
         return definedMethod(noneOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value))));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Field... value) {
-        return definedMethod(noneOf(new FieldList.ForLoadedField(nonNull(value))));
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> noneOf(Field... value) {
+        return definedField(noneOf(new FieldList.ForLoadedField(nonNull(value))));
     }
 
     /**
@@ -1178,21 +1130,6 @@ public final class ElementMatchers {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_BRIDGE);
     }
 
-    /**
-     * <p>
-     * Only matches method descriptions that represent a visibility bridge. A visibility bridge is a Java bridge
-     * method that was inserted by the compiler in order to increase the visibility of a method when inheriting
-     * a {@code public} method from a package-private type. In this case, the package-private type's method
-     * is declared to be package-private itself such that the bridge method needs to increase the visibility and
-     * delegates the call to the original, package-private implementation.
-     * </p>
-     * <p>
-     * <b>Note</b>: This matcher requires a traversal of the type hierarchy of the for method's declaring type.
-     * </p>
-     *
-     * @param <T> The type of the matched object.
-     * @return A matcher that matches visibility bridge methods.
-     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isVisibilityBridge() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.VISIBILITY_BRIDGE);
     }
