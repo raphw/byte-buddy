@@ -77,7 +77,7 @@ public final class ElementMatchers {
      * @param <T>              The type of the matched object.
      * @return An element matcher that matches the given field description.
      */
-    public static <T extends FieldDescription.InDefinedShape> ElementMatcher.Junction<T> is(FieldDescription fieldDescription) {
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription fieldDescription) {
         return new EqualityMatcher<T>(nonNull(fieldDescription));
     }
 
