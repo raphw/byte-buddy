@@ -194,7 +194,7 @@ public @interface Super {
          */
         static {
             MethodList<?> annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
-            STRATEGY = annotationProperties.filter(returns(Instantiation.class)).getOnly();
+            STRATEGY = annotationProperties.filter(named("strategy")).getOnly();
         }
 
         @Override
