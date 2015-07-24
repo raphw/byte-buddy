@@ -3,6 +3,7 @@ package net.bytebuddy.description;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.util.ArrayList;
@@ -42,6 +43,15 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
      * @return {@code true} if this element is visible for {@code typeDescription}.
      */
     boolean isVisibleTo(TypeDescription typeDescription);
+
+    interface TypeDependant<T extends TypeDependant<T, S>, S extends ByteCodeElement.Token<S>> {
+
+        T asDefined();
+
+        S asToken();
+
+        S asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
+    }
 
     /**
      * Representation of a tokenized, detached byte code element.
@@ -108,10 +118,5 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
                 return tokens.size();
             }
         }
-    }
-
-    interface Member<T extends Member<T>> extends ByteCodeElement {
-
-        T asDefined();
     }
 }

@@ -3,7 +3,6 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.TypeDefinable;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -30,7 +29,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 public interface ParameterDescription extends AnnotatedCodeElement,
         NamedElement.WithRuntimeName,
         ModifierReviewable,
-        TypeDefinable<ParameterDescription, ParameterDescription.InDefinedShape> {
+        ByteCodeElement.TypeDependant<ParameterDescription.InDefinedShape, ParameterDescription.Token> {
 
     /**
      * The prefix for names of an unnamed parameter.
@@ -80,26 +79,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
      * @return The offset of this parameter's value.
      */
     int getOffset();
-
-    /**
-     * Transforms this parameter description into a token. For the resulting token, all type variables within the scope
-     * of this parameter's type are detached from their declaration context.
-     *
-     * @return A token representing this parameter.
-     */
-    Token asToken();
-
-    /**
-     * Transforms this parameter description into a token. For the resulting token, all type variables within the scope
-     * of this parameter's type are detached from their declaration context.
-     *
-     * @param targetTypeMatcher A matcher that is applied to the parameter type for replacing any matched
-     *                          type by {@link net.bytebuddy.dynamic.TargetType}.
-     * @return A token representing this parameter.
-     */
-    Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
-
-    InDefinedShape asDefined();
 
     interface InDefinedShape extends ParameterDescription {
 
@@ -160,7 +139,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
-        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public Token asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
             return new Token(getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
                     getDeclaredAnnotations(),
                     isNamed()

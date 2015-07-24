@@ -3,7 +3,6 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.TypeDefinable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -38,7 +37,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  */
 public interface MethodDescription extends TypeVariableSource,
         NamedElement.WithGenericName,
-        TypeDefinable<MethodDescription, MethodDescription.InDefinedShape> {
+        ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token> {
 
     /**
      * The internal name of a Java constructor.
@@ -226,24 +225,6 @@ public interface MethodDescription extends TypeVariableSource,
      * @return {@code true} if the given value can describe a default annotation value for this method.
      */
     boolean isDefaultValue(Object value);
-
-    /**
-     * Transforms this method description into a token. For the resulting token, all type variables within the scope
-     * of this method's types are detached from their declaration context.
-     *
-     * @return A token representing this method.
-     */
-    Token asToken();
-
-    /**
-     * Transforms this method description into a token. For the resulting token, all type variables within the scope
-     * of this method's types are detached from their declaration context.
-     *
-     * @param targetTypeMatcher A matcher that is applied to the method's types for replacing any matched
-     *                          type by {@link net.bytebuddy.dynamic.TargetType}.
-     * @return A token representing this method.
-     */
-    Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     interface InDefinedShape extends MethodDescription {
 
@@ -561,7 +542,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public Token asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
             GenericTypeDescription.Visitor<GenericTypeDescription> visitor = new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher);
             return new Token(getInternalName(),
                     getModifiers(),

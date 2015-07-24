@@ -3,7 +3,6 @@ package net.bytebuddy.description.field;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.TypeDefinable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -25,7 +24,7 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
  */
 public interface FieldDescription extends ByteCodeElement,
         NamedElement.WithGenericName,
-        TypeDefinable<FieldDescription, FieldDescription.InDefinedShape> {
+        ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
 
     /**
      * Returns the type of the described field.
@@ -33,24 +32,6 @@ public interface FieldDescription extends ByteCodeElement,
      * @return The type of the described field.
      */
     GenericTypeDescription getType();
-
-    /**
-     * Transforms this field description into a token. For the resulting token, all type variables within the scope
-     * of this field's type are detached from their declaration context.
-     *
-     * @return A token representing this field.
-     */
-    Token asToken();
-
-    /**
-     * Transforms this field description into a token. For the resulting token, all type variables within the scope
-     * of this field's type are detached from their declaration context.
-     *
-     * @param targetTypeMatcher A matcher that is applied to the field type for replacing any matched
-     *                          type by {@link net.bytebuddy.dynamic.TargetType}.
-     * @return A token representing this field.
-     */
-    Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     interface InDefinedShape extends FieldDescription {
 
@@ -114,7 +95,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public FieldDescription.Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public FieldDescription.Token asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
             return new FieldDescription.Token(getName(),
                     getModifiers(),
                     getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
