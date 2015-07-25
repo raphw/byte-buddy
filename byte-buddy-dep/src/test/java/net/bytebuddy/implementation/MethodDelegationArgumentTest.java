@@ -1,9 +1,12 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import org.junit.Test;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -35,6 +38,33 @@ public class MethodDelegationArgumentTest extends AbstractImplementationTest {
 
         public static String baz(String s, Object o) {
             return BAZ + s + o;
+        }
+    }
+
+    @Test
+    public void testHierarchyDelegation() throws Exception {
+        new ByteBuddy()
+                .subclass(Baz.class)
+                .method(named("foo"))
+                .intercept(MethodDelegation.to(new Qux()))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance();
+    }
+
+    public static class Baz {
+
+        public void foo() {
+
+        }
+    }
+
+    public static class Qux extends Baz {
+
+        @Override
+        public void foo() {
+            super.foo();
         }
     }
 }

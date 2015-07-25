@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -8,6 +9,8 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
+
+import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 
 /**
  * A method delegation binder is responsible for creating a method binding for a <i>source method</i> to a
@@ -834,44 +837,21 @@ public interface MethodDelegationBinder {
          * @param methodDelegationBinder This processor's method delegation binder.
          * @param ambiguityResolver      The processor's ambiguity resolver.
          */
-        public Processor(MethodDelegationBinder methodDelegationBinder,
-                         AmbiguityResolver ambiguityResolver) {
+        public Processor(MethodDelegationBinder methodDelegationBinder, AmbiguityResolver ambiguityResolver) {
             this.methodDelegationBinder = methodDelegationBinder;
             this.ambiguityResolver = ambiguityResolver;
         }
 
         /**
-         * Returns the {@link net.bytebuddy.implementation.bind.MethodDelegationBinder}
-         * used by this {@code Processor}.
-         *
-         * @return The method delegation binder used by this {@code Processor}.
-         */
-        public MethodDelegationBinder getMethodDelegationBinder() {
-            return methodDelegationBinder;
-        }
-
-        /**
-         * Returns the {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}
-         * used by this {@code Processor}.
-         *
-         * @return The ambiguity resolver used by this {@code Processor}.
-         */
-        public AmbiguityResolver getAmbiguityResolver() {
-            return ambiguityResolver;
-        }
-
-        /**
-         * @param implementationTarget The implementation target for binding the {@code source} method to.
-         * @param source               The source method that is to be bound.
-         * @param targets              All possible targets for the delegation binding that are to be considered.
+         * @param implementationTarget   The implementation target for binding the {@code source} method to.
+         * @param source                 The source method that is to be bound.
+         * @param targetCandidates All possible targets for the delegation binding that are to be considered.
          * @return The best binding that was identified. If no such binding can be identified, an exception is thrown.
          */
-        public MethodBinding process(Implementation.Target implementationTarget,
-                                     MethodDescription source,
-                                     Iterable<? extends MethodDescription> targets) {
-            List<MethodBinding> possibleDelegations = bind(implementationTarget, source, targets);
-            if (possibleDelegations.size() == 0) {
-                throw new IllegalArgumentException("No method can be bound to " + source);
+        public MethodBinding process(Implementation.Target implementationTarget, MethodDescription source, MethodList<?> targetCandidates) {
+            List<MethodBinding> possibleDelegations = bind(implementationTarget, source, targetCandidates);
+            if (possibleDelegations.isEmpty()) {
+                throw new IllegalArgumentException("No delegator method can be bound to " + source);
             }
             return resolve(source, possibleDelegations);
         }
@@ -879,21 +859,17 @@ public interface MethodDelegationBinder {
         /**
          * Creates a list of method bindings for any legal target method.
          *
-         * @param implementationTarget The implementation target for binding the {@code source} method to.
-         * @param source               The method that is to be bound to any {@code targets} method.
-         * @param targets              All possible targets for the delegation binding that are to be considered.
+         * @param implementationTarget   The implementation target for binding the {@code source} method to.
+         * @param source                 The method that is to be bound to any {@code targets} method.
+         * @param targetCandidates All possible targets for the delegation binding that are to be considered.
          * @return A list of valid method bindings representing a subset of the given target methods.
          */
-        private List<MethodBinding> bind(Implementation.Target implementationTarget,
-                                         MethodDescription source,
-                                         Iterable<? extends MethodDescription> targets) {
+        private List<MethodBinding> bind(Implementation.Target implementationTarget, MethodDescription source, MethodList<?> targetCandidates) {
             List<MethodBinding> possibleDelegations = new LinkedList<MethodBinding>();
-            for (MethodDescription target : targets) {
-                if (target.isVisibleTo(implementationTarget.getTypeDescription())) {
-                    MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, source, target);
-                    if (methodBinding.isValid()) {
-                        possibleDelegations.add(methodBinding);
-                    }
+            for (MethodDescription targetCandidate : targetCandidates.filter(isVisibleTo(implementationTarget.getTypeDescription()))) {
+                MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, source, targetCandidate);
+                if (methodBinding.isValid()) {
+                    possibleDelegations.add(methodBinding);
                 }
             }
             return possibleDelegations;

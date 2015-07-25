@@ -178,7 +178,7 @@ public class MethodDelegation implements Implementation {
     /**
      * A list of methods to be considered as target by this method delegation.
      */
-    private final MethodList<?> targetMethodCandidates;
+    private final MethodList<?> targetCandidates;
 
     /**
      * Creates a new method delegation.
@@ -189,7 +189,7 @@ public class MethodDelegation implements Implementation {
      * @param terminationHandler     The termination handler to apply.
      * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
      * @param assigner               The assigner to be supplied by this method delegator.
-     * @param targetMethodCandidates A list of methods that should be considered as possible binding targets by
+     * @param targetCandidates       A list of methods that should be considered as possible binding targets by
      *                               this method delegator.
      */
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
@@ -198,14 +198,14 @@ public class MethodDelegation implements Implementation {
                                TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                Assigner assigner,
-                               MethodList<?> targetMethodCandidates) {
+                               MethodList<?> targetCandidates) {
         this.implementationDelegate = implementationDelegate;
         this.parameterBinders = parameterBinders;
         this.defaultsProvider = defaultsProvider;
         this.terminationHandler = terminationHandler;
         this.ambiguityResolver = ambiguityResolver;
         this.assigner = assigner;
-        this.targetMethodCandidates = isNotEmpty(targetMethodCandidates, NO_METHODS_ERROR_MESSAGE);
+        this.targetCandidates = isNotEmpty(targetCandidates, NO_METHODS_ERROR_MESSAGE);
     }
 
     /**
@@ -490,7 +490,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
-                targetMethodCandidates);
+                targetCandidates);
     }
 
     /**
@@ -506,7 +506,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
-                targetMethodCandidates);
+                targetCandidates);
     }
 
     /**
@@ -522,7 +522,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
-                targetMethodCandidates);
+                targetCandidates);
     }
 
     /**
@@ -549,7 +549,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 MethodDelegationBinder.AmbiguityResolver.Chain.of(nonNull(ambiguityResolver)),
                 assigner,
-                targetMethodCandidates);
+                targetCandidates);
     }
 
     /**
@@ -565,7 +565,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 nonNull(assigner),
-                targetMethodCandidates);
+                targetCandidates);
     }
 
     /**
@@ -581,7 +581,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
-                isNotEmpty(targetMethodCandidates.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
+                isNotEmpty(targetCandidates.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
     }
 
     /**
@@ -601,7 +601,7 @@ public class MethodDelegation implements Implementation {
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.INSTANCE,
                 ambiguityResolver,
                 assigner,
-                targetMethodCandidates), nonNull(implementation));
+                targetCandidates), nonNull(implementation));
     }
 
     @Override
@@ -611,13 +611,9 @@ public class MethodDelegation implements Implementation {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        MethodList<?> methodList = this.targetMethodCandidates.filter(isVisibleTo(implementationTarget.getTypeDescription()));
-        if (methodList.size() == 0) {
-            throw new IllegalStateException("No bindable method is visible to " + implementationTarget.getTypeDescription());
-        }
         return new Appender(implementationDelegate.getPreparingStackAssignment(implementationTarget.getTypeDescription()),
                 implementationTarget,
-                methodList,
+                targetCandidates,
                 new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
                         parameterBinders,
                         defaultsProvider,
@@ -638,7 +634,7 @@ public class MethodDelegation implements Implementation {
                 && defaultsProvider.equals(that.defaultsProvider)
                 && terminationHandler.equals(that.terminationHandler)
                 && implementationDelegate.equals(that.implementationDelegate)
-                && targetMethodCandidates.equals(that.targetMethodCandidates)
+                && targetCandidates.equals(that.targetCandidates)
                 && parameterBinders.equals(that.parameterBinders);
     }
 
@@ -650,7 +646,7 @@ public class MethodDelegation implements Implementation {
         result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + ambiguityResolver.hashCode();
         result = 31 * result + assigner.hashCode();
-        result = 31 * result + targetMethodCandidates.hashCode();
+        result = 31 * result + targetCandidates.hashCode();
         return result;
     }
 
@@ -663,7 +659,7 @@ public class MethodDelegation implements Implementation {
                 ", terminationHandler=" + terminationHandler +
                 ", ambiguityResolver=" + ambiguityResolver +
                 ", assigner=" + assigner +
-                ", targetMethodCandidates=" + targetMethodCandidates +
+                ", targetCandidates=" + targetCandidates +
                 '}';
     }
 
@@ -733,6 +729,11 @@ public class MethodDelegation implements Implementation {
         class ForStaticField implements ImplementationDelegate {
 
             /**
+             * The modifier to be assigned to a static field interceptor.
+             */
+            private static final int FIELD_MODIFIERS = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
+
+            /**
              * The name prefix for the {@code static} field that is containing the delegation target.
              */
             private static final String PREFIX = "methodDelegate";
@@ -771,16 +772,13 @@ public class MethodDelegation implements Implementation {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(new FieldDescription.Token(fieldName,
-                                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC,
-                                new TypeDescription.ForLoadedType(delegate.getClass())))
+                        .withField(new FieldDescription.Token(fieldName, FIELD_MODIFIERS, new TypeDescription.ForLoadedType(delegate.getClass())))
                         .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, delegate));
             }
 
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
-                return FieldAccess.forField(instrumentedType.getDeclaredFields()
-                        .filter((named(fieldName))).getOnly()).getter();
+                return FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(fieldName))).getOnly()).getter();
             }
 
             @Override
@@ -843,9 +841,8 @@ public class MethodDelegation implements Implementation {
 
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(MethodVariableAccess.forType(instrumentedType).loadOffset(0),
-                        FieldAccess.forField(instrumentedType.getDeclaredFields()
-                                .filter((named(fieldName))).getOnly()).getter());
+                return new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(0),
+                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(fieldName))).getOnly()).getter());
             }
 
             @Override
@@ -949,7 +946,7 @@ public class MethodDelegation implements Implementation {
         /**
          * The method candidates to consider for delegating the invocation to.
          */
-        private final Iterable<? extends MethodDescription> targetMethods;
+        private final MethodList targetCandidates;
 
         /**
          * The method delegation binder processor which is responsible for implementing the method delegation.
@@ -962,27 +959,25 @@ public class MethodDelegation implements Implementation {
          * @param preparingStackAssignment The stack manipulation that is responsible for loading a potential target
          *                                 instance onto the stack on which the target method is invoked.
          * @param implementationTarget     The implementation target of this implementation.
-         * @param targetMethods            The method candidates to consider for delegating the invocation to.
+         * @param targetCandidates         The method candidates to consider for delegating the invocation to.
          * @param processor                The method delegation binder processor which is responsible for implementing
          *                                 the method delegation.
          */
         protected Appender(StackManipulation preparingStackAssignment,
                            Target implementationTarget,
-                           Iterable<? extends MethodDescription> targetMethods,
+                           MethodList targetCandidates,
                            MethodDelegationBinder.Processor processor) {
             this.preparingStackAssignment = preparingStackAssignment;
             this.implementationTarget = implementationTarget;
-            this.targetMethods = targetMethods;
+            this.targetCandidates = targetCandidates;
             this.processor = processor;
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Context implementationContext,
-                          MethodDescription instrumentedMethod) {
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     preparingStackAssignment,
-                    processor.process(implementationTarget, instrumentedMethod, targetMethods)
+                    processor.process(implementationTarget, instrumentedMethod, targetCandidates)
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
@@ -995,14 +990,14 @@ public class MethodDelegation implements Implementation {
             return implementationTarget.equals(that.implementationTarget)
                     && preparingStackAssignment.equals(that.preparingStackAssignment)
                     && processor.equals(that.processor)
-                    && targetMethods.equals(that.targetMethods);
+                    && targetCandidates.equals(that.targetCandidates);
         }
 
         @Override
         public int hashCode() {
             int result = preparingStackAssignment.hashCode();
             result = 31 * result + implementationTarget.hashCode();
-            result = 31 * result + targetMethods.hashCode();
+            result = 31 * result + targetCandidates.hashCode();
             result = 31 * result + processor.hashCode();
             return result;
         }
@@ -1012,7 +1007,7 @@ public class MethodDelegation implements Implementation {
             return "MethodDelegation.Appender{" +
                     "preparingStackAssignment=" + preparingStackAssignment +
                     ", implementationTarget=" + implementationTarget +
-                    ", targetMethods=" + targetMethods +
+                    ", targetCandidates=" + targetCandidates +
                     ", processor=" + processor +
                     '}';
         }
