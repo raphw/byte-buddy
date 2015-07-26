@@ -8,7 +8,9 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.ToolsJarRule;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.io.File;
 import java.net.URL;
@@ -23,6 +25,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ClassLoadingStrategyForBootstrapInjectionTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
+    @Rule
+    public MethodRule toolsJarRule = new ToolsJarRule();
 
     private File file;
 
