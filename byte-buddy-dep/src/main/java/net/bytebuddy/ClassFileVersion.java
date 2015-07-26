@@ -49,6 +49,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     public static final ClassFileVersion JAVA_V8 = new ClassFileVersion(Opcodes.V1_8);
 
     /**
+     * The class file version of Java 9.
+     */
+    public static final ClassFileVersion JAVA_V9 = new ClassFileVersion(Opcodes.V1_8 + 1);
+
+    /**
      * The system property for this JVM's Java version.
      */
     private static final String JAVA_VERSION_PROPERTY = "java.version";
@@ -93,6 +98,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 return JAVA_V7;
             case 8:
                 return JAVA_V8;
+            case 9:
+                return JAVA_V9;
             default:
                 throw new IllegalArgumentException("Unknown Java version: " + javaVersion);
         }
