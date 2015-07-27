@@ -134,6 +134,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * Additionally, if a method is annotated by
  * {@link net.bytebuddy.implementation.bind.annotation.IgnoreForBinding},
  * it is never considered as a target for a method delegation.
+ *
+ * <b>Important</b>: For invoking a method on another instance, use the {@link Forwarding} implementation. A method delegation
+ * intends to bind a interceptor class and its resolution algorithm will not necessarily yield a delegation to the intercepted
+ * method.
+ * @see Forwarding
  */
 public class MethodDelegation implements Implementation {
 

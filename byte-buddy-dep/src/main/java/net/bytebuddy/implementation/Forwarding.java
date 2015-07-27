@@ -20,6 +20,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * This implementation forwards method invocations to another instance. For this, the intercepted method must be
  * defined on a super type of the given delegation target. Static methods cannot be forwarded as they are not
  * invoked on an instance.
+ *
+ * @see MethodDelegation
  */
 public class Forwarding implements Implementation {
 
