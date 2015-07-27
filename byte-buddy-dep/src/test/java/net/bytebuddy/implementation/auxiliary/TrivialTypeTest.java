@@ -31,7 +31,7 @@ public class TrivialTypeTest {
 
     @Test
     public void testCreation() throws Exception {
-        when(classFileVersion.getVersionNumber()).thenReturn(BAR);
+        when(classFileVersion.getVersion()).thenReturn(BAR);
         DynamicType dynamicType = TrivialType.INSTANCE.make(FOO, classFileVersion, methodAccessorFactory);
         assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
         assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));
