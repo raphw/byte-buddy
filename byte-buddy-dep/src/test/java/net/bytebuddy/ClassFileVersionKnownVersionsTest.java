@@ -16,30 +16,46 @@ public class ClassFileVersionKnownVersionsTest {
 
     private final int javaVersion;
 
-    private final int byteCodeVersion;
+    private final int minorMajorVersion;
 
-    public ClassFileVersionKnownVersionsTest(int javaVersion, int byteCodeVersion) {
+    private final int majorVersion;
+
+    private final int minorVersion;
+
+    public ClassFileVersionKnownVersionsTest(int javaVersion, int minorMajorVersion, int majorVersion, int minorVersion) {
         this.javaVersion = javaVersion;
-        this.byteCodeVersion = byteCodeVersion;
+        this.minorMajorVersion = minorMajorVersion;
+        this.majorVersion = majorVersion;
+        this.minorVersion = minorVersion;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {1, Opcodes.V1_1},
-                {2, Opcodes.V1_2},
-                {3, Opcodes.V1_3},
-                {4, Opcodes.V1_4},
-                {5, Opcodes.V1_5},
-                {6, Opcodes.V1_6},
-                {7, Opcodes.V1_7},
-                {8, Opcodes.V1_8},
-                {9, Opcodes.V1_8}
+                {1, Opcodes.V1_1, 45, 3},
+                {2, Opcodes.V1_2, 46, 0},
+                {3, Opcodes.V1_3, 47, 0},
+                {4, Opcodes.V1_4, 48, 0},
+                {5, Opcodes.V1_5, 49, 0},
+                {6, Opcodes.V1_6, 50, 0},
+                {7, Opcodes.V1_7, 51, 0},
+                {8, Opcodes.V1_8, 52, 0},
+                {9, Opcodes.V1_8, 52, 0}
         });
     }
 
     @Test
-    public void testVersionIsAsExpected() throws Exception {
-        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).getVersionNumber(), is(byteCodeVersion));
+    public void testVersion() throws Exception {
+        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).getVersion(), is(minorMajorVersion));
+    }
+
+    @Test
+    public void testMinorVersion() throws Exception {
+        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).getMinorVersion(), is(minorVersion));
+    }
+
+    @Test
+    public void testMajorVersion() throws Exception {
+        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).getMajorVersion(), is(majorVersion));
     }
 }

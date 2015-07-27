@@ -136,8 +136,26 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return The minor-major release number of this class file version.
      */
-    public int getVersionNumber() {
+    public int getVersion() {
         return versionNumber;
+    }
+
+    /**
+     * Returns the major version this instance represents.
+     *
+     * @return The major version this instance represents.
+     */
+    public int getMajorVersion() {
+        return versionNumber & 0xFF;
+    }
+
+    /**
+     * Returns the minor version this instance represents.
+     *
+     * @return The minor version this instance represents.
+     */
+    public int getMinorVersion() {
+        return versionNumber >> 16;
     }
 
     /**
@@ -146,16 +164,14 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return {@code true} if this class file version supports interface default methods.
      */
     public boolean isSupportsDefaultMethods() {
-        return versionNumber > Opcodes.V1_7 && versionNumber != Opcodes.V1_1;
+        return compareTo(ClassFileVersion.JAVA_V8) > -1;
     }
 
     @Override
     public int compareTo(ClassFileVersion other) {
-        return other.versionNumber == versionNumber
-                ? 0 : versionNumber == Opcodes.V1_1
-                ? -1 : other.versionNumber == Opcodes.V1_1
-                ? 1 : versionNumber < other.versionNumber
-                ? -1 : 1;
+        return getMajorVersion() == other.getMajorVersion()
+                ? Integer.compareUnsigned(getMinorVersion(), other.getMinorVersion())
+                : Integer.compareUnsigned(getMajorVersion(), other.getMajorVersion());
     }
 
     @Override

@@ -1465,7 +1465,7 @@ public interface TypeWriter<T> {
                     ClassFileVersion originalClassFileVersion = new ClassFileVersion(classFileVersionNumber);
                     super.visit((classFileVersion.compareTo(originalClassFileVersion) > 0
                                     ? classFileVersion
-                                    : originalClassFileVersion).getVersionNumber(),
+                                    : originalClassFileVersion).getVersion(),
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
@@ -1919,7 +1919,7 @@ public interface TypeWriter<T> {
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
                 ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
                 ClassVisitor classVisitor = classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter));
-                classVisitor.visit(classFileVersion.getVersionNumber(),
+                classVisitor.visit(classFileVersion.getVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
