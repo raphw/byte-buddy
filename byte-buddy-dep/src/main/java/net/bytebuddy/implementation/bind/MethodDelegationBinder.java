@@ -735,11 +735,9 @@ public interface MethodDelegationBinder {
              * @return A chained ambiguity resolver representing the given ambiguity resolvers.
              */
             public static AmbiguityResolver of(AmbiguityResolver... ambiguityResolver) {
-                if (ambiguityResolver.length == 1) {
-                    return ambiguityResolver[0];
-                } else {
-                    return new Chain(ambiguityResolver);
-                }
+                return ambiguityResolver.length == 1
+                        ? ambiguityResolver[0]
+                        : new Chain(ambiguityResolver);
             }
 
             /**
@@ -764,9 +762,7 @@ public interface MethodDelegationBinder {
             }
 
             @Override
-            public Resolution resolve(MethodDescription source,
-                                      MethodBinding left,
-                                      MethodBinding right) {
+            public Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right) {
                 Resolution resolution = Resolution.UNKNOWN;
                 Iterator<AmbiguityResolver> iterator = ambiguityResolvers.iterator();
                 while (resolution.isUnresolved() && iterator.hasNext()) {
