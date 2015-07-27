@@ -169,9 +169,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     @Override
     public int compareTo(ClassFileVersion other) {
-        return getMajorVersion() == other.getMajorVersion()
-                ? Integer.compareUnsigned(getMinorVersion(), other.getMinorVersion())
-                : Integer.compareUnsigned(getMajorVersion(), other.getMajorVersion());
+        return Integer.signum(getMajorVersion() == other.getMajorVersion()
+                ? getMinorVersion() - other.getMinorVersion()
+                : getMajorVersion() - other.getMajorVersion());
     }
 
     @Override
