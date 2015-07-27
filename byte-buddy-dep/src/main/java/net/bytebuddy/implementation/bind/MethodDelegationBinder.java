@@ -717,54 +717,30 @@ public interface MethodDelegationBinder {
             /**
              * A list of ambiguity resolvers that are applied by this chain in their order of application.
              */
-            private final List<AmbiguityResolver> ambiguityResolvers;
+            private final List<? extends AmbiguityResolver> ambiguityResolvers;
 
             /**
              * Creates an immutable chain of ambiguity resolvers.
              *
              * @param ambiguityResolver The ambiguity resolvers to chain in the order of their application.
              */
-            protected Chain(AmbiguityResolver... ambiguityResolver) {
-                ambiguityResolvers = unchained(Arrays.asList(ambiguityResolver));
+            public Chain(AmbiguityResolver... ambiguityResolver) {
+                this(Arrays.asList(ambiguityResolver));
             }
 
             /**
-             * Chains a given number of ambiguity resolvers.
+             * Creates an immutable chain of ambiguity resolvers.
              *
-             * @param ambiguityResolver The ambiguity resolvers to chain in the order of their application.
-             * @return A chained ambiguity resolver representing the given ambiguity resolvers.
+             * @param ambiguityResolvers The ambiguity resolvers to chain in the order of their application.
              */
-            public static AmbiguityResolver of(AmbiguityResolver... ambiguityResolver) {
-                return ambiguityResolver.length == 1
-                        ? ambiguityResolver[0]
-                        : new Chain(ambiguityResolver);
-            }
-
-            /**
-             * Removes all
-             * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver.Chain}s
-             * from a list of ambiguity resolvers by extracting the ambiguity resolvers they actually represent in the
-             * same order.
-             *
-             * @param chained A list of ambiguity resolvers that might contains chains.
-             * @return A list without such chains but with the ambiguity resolvers they actually represent.
-             */
-            private static List<AmbiguityResolver> unchained(List<AmbiguityResolver> chained) {
-                List<AmbiguityResolver> ambiguityResolvers = new ArrayList<AmbiguityResolver>();
-                for (AmbiguityResolver ambiguityResolver : chained) {
-                    if (ambiguityResolver instanceof Chain) {
-                        ambiguityResolvers.addAll(unchained(((Chain) ambiguityResolver).ambiguityResolvers));
-                    } else {
-                        ambiguityResolvers.add(ambiguityResolver);
-                    }
-                }
-                return ambiguityResolvers;
+            public Chain(List<? extends AmbiguityResolver> ambiguityResolvers) {
+                this.ambiguityResolvers = ambiguityResolvers;
             }
 
             @Override
             public Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right) {
                 Resolution resolution = Resolution.UNKNOWN;
-                Iterator<AmbiguityResolver> iterator = ambiguityResolvers.iterator();
+                Iterator<? extends AmbiguityResolver> iterator = ambiguityResolvers.iterator();
                 while (resolution.isUnresolved() && iterator.hasNext()) {
                     resolution = iterator.next().resolve(source, left, right);
                 }

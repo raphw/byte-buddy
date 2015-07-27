@@ -475,7 +475,7 @@ public class MethodDelegation implements Implementation {
      * @return The ambiguity resolver that is to be used if no other is specified explicitly.
      */
     private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
-        return MethodDelegationBinder.AmbiguityResolver.Chain.of(BindingPriority.Resolver.INSTANCE,
+        return new MethodDelegationBinder.AmbiguityResolver.Chain(BindingPriority.Resolver.INSTANCE,
                 DeclaringTypeResolver.INSTANCE,
                 ArgumentTypeResolver.INSTANCE,
                 MethodNameEqualityResolver.INSTANCE,
@@ -537,8 +537,7 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation that makes use of the given ambiguity resolver.
      */
     public MethodDelegation appendAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
-        return defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver.Chain
-                .of(this.ambiguityResolver, nonNull(ambiguityResolver)));
+        return defineAmbiguityResolver(new MethodDelegationBinder.AmbiguityResolver.Chain(this.ambiguityResolver, nonNull(ambiguityResolver)));
     }
 
     /**
@@ -552,7 +551,7 @@ public class MethodDelegation implements Implementation {
                 parameterBinders,
                 defaultsProvider,
                 terminationHandler,
-                MethodDelegationBinder.AmbiguityResolver.Chain.of(nonNull(ambiguityResolver)),
+                new MethodDelegationBinder.AmbiguityResolver.Chain(nonNull(ambiguityResolver)),
                 assigner,
                 targetCandidates);
     }
