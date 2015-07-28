@@ -37,7 +37,7 @@ public class MethodRegistryDefaultTest {
     private MethodRegistry.Handler.Compiled firstCompiledHandler, secondCompiledHandler;
 
     @Mock
-    private TypeWriter.MethodPool.Entry firstEntry, secondEntry;
+    private TypeWriter.MethodPool.Record firstRecord, secondRecord;
 
     @Mock
     private MethodAttributeAppender.Factory firstFactory, secondFactory;
@@ -97,8 +97,8 @@ public class MethodRegistryDefaultTest {
         when(secondFactory.make(typeDescription)).thenReturn(secondAppender);
         when(implementationTargetFactory.make(finding, new MethodList.Explicit(Collections.singletonList(instrumentedMethod))))
                 .thenReturn(implementationTarget);
-        when(firstCompiledHandler.assemble(firstAppender, instrumentedMethod)).thenReturn(firstEntry);
-        when(secondCompiledHandler.assemble(secondAppender, instrumentedMethod)).thenReturn(secondEntry);
+        when(firstCompiledHandler.assemble(firstAppender, instrumentedMethod)).thenReturn(firstRecord);
+        when(secondCompiledHandler.assemble(secondAppender, instrumentedMethod)).thenReturn(secondRecord);
     }
 
     @Test
@@ -210,7 +210,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verify(firstFactory).make(typeDescription);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), is(firstEntry));
+        assertThat(methodRegistry.target(instrumentedMethod), is(firstRecord));
     }
 
     @Test
@@ -233,7 +233,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verify(firstFactory).make(typeDescription);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), is(firstEntry));
+        assertThat(methodRegistry.target(instrumentedMethod), is(firstRecord));
     }
 
     @Test
@@ -256,7 +256,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verify(secondFactory).make(typeDescription);
-        assertThat(methodRegistry.target(instrumentedMethod), is(secondEntry));
+        assertThat(methodRegistry.target(instrumentedMethod), is(secondRecord));
     }
 
     @Test
@@ -278,7 +278,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), is((TypeWriter.MethodPool.Entry) TypeWriter.MethodPool.Entry.ForInheritedMethod.INSTANCE));
+        assertThat(methodRegistry.target(instrumentedMethod), is((TypeWriter.MethodPool.Record) TypeWriter.MethodPool.Record.ForInheritedMethod.INSTANCE));
     }
 
     @Test

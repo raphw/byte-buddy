@@ -17,7 +17,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class TypeWriterFieldPoolEntryTest {
+public class TypeWriterFieldPoolRecordTest {
 
     private static final int MODIFIER = 42;
 
@@ -52,15 +52,15 @@ public class TypeWriterFieldPoolEntryTest {
 
     @Test
     public void testRichFieldEntryProperties() throws Exception {
-        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.ForRichField(fieldAttributeAppender, DEFAULT_VALUE, fieldDescription);
-        assertThat(entry.getFieldAppender(), is(fieldAttributeAppender));
-        assertThat(entry.getDefaultValue(), is(DEFAULT_VALUE));
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, DEFAULT_VALUE, fieldDescription);
+        assertThat(record.getFieldAppender(), is(fieldAttributeAppender));
+        assertThat(record.getDefaultValue(), is(DEFAULT_VALUE));
     }
 
     @Test
     public void testRichFieldEntryWritesField() throws Exception {
-        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.ForRichField(fieldAttributeAppender, DEFAULT_VALUE, fieldDescription);
-        entry.apply(classVisitor);
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, DEFAULT_VALUE, fieldDescription);
+        record.apply(classVisitor);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, DEFAULT_VALUE);
         verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription);
         verifyNoMoreInteractions(fieldAttributeAppender);
@@ -71,8 +71,8 @@ public class TypeWriterFieldPoolEntryTest {
 
     @Test
     public void testSimpleFieldEntryWritesField() throws Exception {
-        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.ForSimpleField(fieldDescription);
-        entry.apply(classVisitor);
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
+        record.apply(classVisitor);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, null);
         verifyNoMoreInteractions(classVisitor);
         verify(fieldVisitor).visitEnd();
@@ -81,14 +81,14 @@ public class TypeWriterFieldPoolEntryTest {
 
     @Test
     public void testSimpleFieldEntryProperties() throws Exception {
-        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.ForSimpleField(fieldDescription);
-        assertThat(entry.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
-        assertThat(entry.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+        assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.ForSimpleField.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.ForRichField.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Record.ForSimpleField.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Record.ForRichField.class).apply();
     }
 }

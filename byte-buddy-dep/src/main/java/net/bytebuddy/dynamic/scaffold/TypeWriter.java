@@ -67,14 +67,14 @@ public interface TypeWriter<T> {
          * @return The registered field attribute appender for the given field or the default appender if no such
          * appender was found.
          */
-        Entry target(FieldDescription fieldDescription);
+        Record target(FieldDescription fieldDescription);
 
         /**
          * An entry of a field pool that describes how a field is implemented.
          *
          * @see net.bytebuddy.dynamic.scaffold.TypeWriter.FieldPool
          */
-        interface Entry {
+        interface Record {
 
             /**
              * Returns the field attribute appender for a given field.
@@ -98,7 +98,7 @@ public interface TypeWriter<T> {
              */
             void apply(ClassVisitor classVisitor);
 
-            class ForSimpleField implements Entry {
+            class ForSimpleField implements Record {
 
                 private final FieldDescription fieldDescription;
 
@@ -140,13 +140,13 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.FieldPool.Entry.ForSimpleField{" +
+                    return "TypeWriter.FieldPool.Record.ForSimpleField{" +
                             "fieldDescription=" + fieldDescription +
                             '}';
                 }
             }
 
-            class ForRichField implements Entry {
+            class ForRichField implements Record {
 
                 private final FieldAttributeAppender attributeAppender;
 
@@ -201,7 +201,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.FieldPool.Entry.ForRichField{" +
+                    return "TypeWriter.FieldPool.Record.ForRichField{" +
                             "attributeAppender=" + attributeAppender +
                             ", defaultValue=" + defaultValue +
                             ", fieldDescription=" + fieldDescription +
@@ -222,14 +222,14 @@ public interface TypeWriter<T> {
          * @param methodDescription The method being processed.
          * @return A handler entry for the given method.
          */
-        Entry target(MethodDescription methodDescription);
+        Record target(MethodDescription methodDescription);
 
         /**
          * An entry of a method pool that describes how a method is implemented.
          *
          * @see net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool
          */
-        interface Entry {
+        interface Record {
 
             /**
              * Returns the sort of this method instrumentation.
@@ -251,7 +251,7 @@ public interface TypeWriter<T> {
              * @param byteCodeAppender The byte code appender to prepend.
              * @return This entry with the given code prepended.
              */
-            Entry prepend(ByteCodeAppender byteCodeAppender);
+            Record prepend(ByteCodeAppender byteCodeAppender);
 
             /**
              * Applies this method entry. This method can always be called and might be a no-op.
@@ -263,7 +263,7 @@ public interface TypeWriter<T> {
 
             /**
              * Applies the head of this entry. Applying an entry is only possible if a method is defined, i.e. the sort of this entry is not
-             * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry.Sort#SKIPPED}.
+             * {@link Record.Sort#SKIPPED}.
              *
              * @param methodVisitor The method visitor to which this entry should be applied.
              */
@@ -271,7 +271,7 @@ public interface TypeWriter<T> {
 
             /**
              * Applies the body of this entry. Applying the body of an entry is only possible if a method is implemented, i.e. the sort of this
-             * entry is {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry.Sort#IMPLEMENTED}.
+             * entry is {@link Record.Sort#IMPLEMENTED}.
              *
              * @param methodVisitor         The method visitor to which this entry should be applied.
              * @param implementationContext The implementation context to which this entry should be applied.
@@ -346,7 +346,7 @@ public interface TypeWriter<T> {
             /**
              * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
-            enum ForInheritedMethod implements Entry {
+            enum ForInheritedMethod implements Record {
 
                 /**
                  * The singleton instance.
@@ -379,20 +379,20 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                public Record prepend(ByteCodeAppender byteCodeAppender) {
                     throw new IllegalStateException("Cannot prepend code to non-implemented method");
                 }
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.MethodPool.Entry.ForInheritedMethod." + name();
+                    return "TypeWriter.MethodPool.Record.ForInheritedMethod." + name();
                 }
             }
 
             /**
              * A base implementation of an abstract entry that defines a method.
              */
-            abstract class ForDeclaredMethod implements Entry {
+            abstract class ForDeclaredMethod implements Record {
 
                 protected abstract MethodDescription getDeclaredMethod();
 
@@ -486,7 +486,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                    public Record prepend(ByteCodeAppender byteCodeAppender) {
                         return new WithBody(methodDescription,
                                 new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender),
                                 methodAttributeAppender,
@@ -515,7 +515,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithBody{" +
+                        return "TypeWriter.MethodPool.Record.ForDeclaredMethod.WithBody{" +
                                 "methodDescription=" + methodDescription +
                                 ", byteCodeAppender=" + byteCodeAppender +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
@@ -581,7 +581,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                    public Record prepend(ByteCodeAppender byteCodeAppender) {
                         throw new IllegalStateException("Cannot prepend code to abstract method");
                     }
 
@@ -605,7 +605,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithoutBody{" +
+                        return "TypeWriter.MethodPool.Record.ForDeclaredMethod.WithoutBody{" +
                                 "methodDescription=" + methodDescription +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
                                 ", modifierResolver=" + modifierResolver +
@@ -686,7 +686,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                    public Record prepend(ByteCodeAppender byteCodeAppender) {
                         throw new IllegalStateException("Cannot prepend code to method that defines a default annotation value");
                     }
 
@@ -712,7 +712,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithAnnotationDefaultValue{" +
+                        return "TypeWriter.MethodPool.Record.ForDeclaredMethod.WithAnnotationDefaultValue{" +
                                 "methodDescription=" + methodDescription +
                                 ", annotationValue=" + annotationValue +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
@@ -1582,22 +1582,22 @@ public interface TypeWriter<T> {
                  * @return A method visitor which is capable of consuming the original method.
                  */
                 protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
-                    TypeWriter.MethodPool.Entry entry = methodPool.target(methodDescription);
-                    if (!entry.getSort().isDefined()) {
+                    MethodPool.Record record = methodPool.target(methodDescription);
+                    if (!record.getSort().isDefined()) {
                         return super.visitMethod(methodDescription.getModifiers(),
                                 methodDescription.getInternalName(),
                                 methodDescription.getDescriptor(),
                                 methodDescription.getGenericSignature(),
                                 methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     }
-                    MethodVisitor methodVisitor = super.visitMethod(entry.getModifierResolver().transform(methodDescription, entry.getSort().isImplemented()),
+                    MethodVisitor methodVisitor = super.visitMethod(record.getModifierResolver().transform(methodDescription, record.getSort().isImplemented()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),
                             methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     return abstractOrigin
-                            ? new AttributeObtainingMethodVisitor(methodVisitor, entry)
-                            : new CodePreservingMethodVisitor(methodVisitor, entry, methodRebaseResolver.resolve(methodDescription.asDefined()));
+                            ? new AttributeObtainingMethodVisitor(methodVisitor, record)
+                            : new CodePreservingMethodVisitor(methodVisitor, record, methodRebaseResolver.resolve(methodDescription.asDefined()));
                 }
 
                 @Override
@@ -1637,7 +1637,7 @@ public interface TypeWriter<T> {
                     /**
                      * The method pool entry to apply.
                      */
-                    private final MethodPool.Entry entry;
+                    private final MethodPool.Record record;
 
                     /**
                      * The resolution of a potential rebased method.
@@ -1648,16 +1648,16 @@ public interface TypeWriter<T> {
                      * Creates a new code preserving method visitor.
                      *
                      * @param actualMethodVisitor The method visitor of the actual method.
-                     * @param entry               The method pool entry to apply.
+                     * @param record               The method pool entry to apply.
                      */
                     protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
-                                                          MethodPool.Entry entry,
+                                                          MethodPool.Record record,
                                                           MethodRebaseResolver.Resolution resolution) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
-                        this.entry = entry;
+                        this.record = record;
                         this.resolution = resolution;
-                        entry.applyHead(actualMethodVisitor);
+                        record.applyHead(actualMethodVisitor);
                     }
 
                     @Override
@@ -1667,7 +1667,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitCode() {
-                        entry.applyBody(actualMethodVisitor, implementationContext);
+                        record.applyBody(actualMethodVisitor, implementationContext);
                         actualMethodVisitor.visitEnd();
                         mv = resolution.isRebased()
                                 ? cv.visitMethod(resolution.getResolvedMethod().getModifiers(),
@@ -1689,7 +1689,7 @@ public interface TypeWriter<T> {
                         return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.CodePreservingMethodVisitor{" +
                                 "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
                                 ", actualMethodVisitor=" + actualMethodVisitor +
-                                ", entry=" + entry +
+                                ", entry=" + record +
                                 ", resolution=" + resolution +
                                 '}';
                     }
@@ -1709,20 +1709,19 @@ public interface TypeWriter<T> {
                     /**
                      * The method pool entry to apply.
                      */
-                    private final MethodPool.Entry entry;
-
+                    private final MethodPool.Record record;
 
                     /**
                      * Creates a new attribute obtaining method visitor.
                      *
                      * @param actualMethodVisitor The method visitor of the actual method.
-                     * @param entry               The method pool entry to apply.
+                     * @param record               The method pool entry to apply.
                      */
-                    protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Entry entry) {
+                    protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Record record) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
-                        this.entry = entry;
-                        entry.applyHead(actualMethodVisitor);
+                        this.record = record;
+                        record.applyHead(actualMethodVisitor);
                     }
 
                     @Override
@@ -1737,7 +1736,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitEnd() {
-                        entry.applyBody(actualMethodVisitor, implementationContext);
+                        record.applyBody(actualMethodVisitor, implementationContext);
                         actualMethodVisitor.visitEnd();
                     }
 
@@ -1746,7 +1745,7 @@ public interface TypeWriter<T> {
                         return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{" +
                                 "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
                                 ", actualMethodVisitor=" + actualMethodVisitor +
-                                ", entry=" + entry +
+                                ", entry=" + record +
                                 '}';
                     }
                 }

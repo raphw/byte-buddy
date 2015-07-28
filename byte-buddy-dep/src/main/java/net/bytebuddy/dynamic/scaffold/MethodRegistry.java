@@ -83,7 +83,7 @@ public interface MethodRegistry {
              * @param attributeAppender The method attribute appender to apply together with this handler.
              * @return A method pool entry representing this handler and the given attribute appender.
              */
-            TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription);
+            TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription);
         }
 
         /**
@@ -116,8 +116,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                return new TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithoutBody(methodDescription, attributeAppender, modifierResolver);
+            public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
+                return new TypeWriter.MethodPool.Record.ForDeclaredMethod.WithoutBody(methodDescription, attributeAppender, modifierResolver);
             }
 
             @Override
@@ -222,8 +222,8 @@ public interface MethodRegistry {
                 }
 
                 @Override
-                public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                    return new TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithBody(methodDescription,
+                public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
+                    return new TypeWriter.MethodPool.Record.ForDeclaredMethod.WithBody(methodDescription,
                             byteCodeAppender,
                             attributeAppender,
                             modifierResolver);
@@ -303,8 +303,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                return new TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithAnnotationDefaultValue(methodDescription,
+            public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
+                return new TypeWriter.MethodPool.Record.ForDeclaredMethod.WithAnnotationDefaultValue(methodDescription,
                         annotationValue,
                         attributeAppender,
                         modifierResolver);
@@ -764,10 +764,10 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Entry target(MethodDescription methodDescription) {
+            public Record target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
-                        ? TypeWriter.MethodPool.Entry.ForInheritedMethod.INSTANCE
+                        ? Record.ForInheritedMethod.INSTANCE
                         : entry.bind(methodDescription);
             }
 
@@ -812,7 +812,7 @@ public interface MethodRegistry {
                     this.attributeAppender = attributeAppender;
                 }
 
-                protected TypeWriter.MethodPool.Entry bind(MethodDescription methodDescription) {
+                protected Record bind(MethodDescription methodDescription) {
                     return compiledHandler.assemble(attributeAppender, methodDescription);
                 }
 

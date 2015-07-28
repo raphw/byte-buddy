@@ -58,27 +58,27 @@ public class MethodRegistryHandlerTest {
     public void testHandlerForAbstractMethod() throws Exception {
         MethodRegistry.Handler handler = new MethodRegistry.Handler.ForAbstractMethod(modifierResolver);
         assertThat(handler.prepare(instrumentedType), is(instrumentedType));
-        TypeWriter.MethodPool.Entry entry = handler.compile(implementationTarget).assemble(attributeAppender, methodDescription);
-        assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINED));
-        assertThat(entry.getModifierResolver(), is(modifierResolver));
+        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(attributeAppender, methodDescription);
+        assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
+        assertThat(record.getModifierResolver(), is(modifierResolver));
     }
 
     @Test
     public void testHandlerForImplementation() throws Exception {
         MethodRegistry.Handler handler = new MethodRegistry.Handler.ForImplementation(implementation, modifierResolver);
         assertThat(handler.prepare(instrumentedType), is(preparedInstrumentedType));
-        TypeWriter.MethodPool.Entry entry = handler.compile(implementationTarget).assemble(attributeAppender, methodDescription);
-        assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.IMPLEMENTED));
-        assertThat(entry.getModifierResolver(), is(modifierResolver));
+        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(attributeAppender, methodDescription);
+        assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
+        assertThat(record.getModifierResolver(), is(modifierResolver));
     }
 
     @Test
     public void testHandlerForAnnotationValue() throws Exception {
         MethodRegistry.Handler handler = new MethodRegistry.Handler.ForAnnotationValue(annotationValue, modifierResolver);
         assertThat(handler.prepare(instrumentedType), is(instrumentedType));
-        TypeWriter.MethodPool.Entry entry = handler.compile(implementationTarget).assemble(attributeAppender, methodDescription);
-        assertThat(entry.getSort(), is(TypeWriter.MethodPool.Entry.Sort.DEFINED));
-        assertThat(entry.getModifierResolver(), is(modifierResolver));
+        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(attributeAppender, methodDescription);
+        assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
+        assertThat(record.getModifierResolver(), is(modifierResolver));
     }
 
     @Test

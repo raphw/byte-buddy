@@ -46,11 +46,11 @@ public class FieldRegistryDefaultTest {
 
     @Test
     public void testNoFieldsRegistered() throws Exception {
-        TypeWriter.FieldPool.Entry entry = new FieldRegistry.Default()
+        TypeWriter.FieldPool.Record record = new FieldRegistry.Default()
                 .compile(instrumentedType)
                 .target(unknownField);
-        assertThat(entry.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
-        assertThat(entry.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+        assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
     }
 
     @Test

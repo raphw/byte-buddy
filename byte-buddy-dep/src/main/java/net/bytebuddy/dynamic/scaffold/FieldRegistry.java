@@ -53,8 +53,8 @@ public interface FieldRegistry {
             INSTANCE;
 
             @Override
-            public Entry target(FieldDescription fieldDescription) {
-                return new Entry.ForSimpleField(fieldDescription);
+            public Record target(FieldDescription fieldDescription) {
+                return new Record.ForSimpleField(fieldDescription);
             }
 
             @Override
@@ -219,10 +219,10 @@ public interface FieldRegistry {
             }
 
             @Override
-            public TypeWriter.FieldPool.Entry target(FieldDescription fieldDescription) {
+            public Record target(FieldDescription fieldDescription) {
                 Entry entry = entries.get(fieldDescription.asToken());
                 return entry == null
-                        ? new TypeWriter.FieldPool.Entry.ForSimpleField(fieldDescription)
+                        ? new Record.ForSimpleField(fieldDescription)
                         : entry.bind(fieldDescription);
             }
 
@@ -255,8 +255,8 @@ public interface FieldRegistry {
                     this.defaultValue = defaultValue;
                 }
 
-                protected TypeWriter.FieldPool.Entry bind(FieldDescription fieldDescription) {
-                    return new TypeWriter.FieldPool.Entry.ForRichField(attributeAppender, defaultValue, fieldDescription);
+                protected Record bind(FieldDescription fieldDescription) {
+                    return new Record.ForRichField(attributeAppender, defaultValue, fieldDescription);
                 }
 
                 @Override

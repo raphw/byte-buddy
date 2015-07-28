@@ -22,9 +22,9 @@ public class FieldRegistryCompiledNoOpTest {
 
     @Test
     public void testReturnsNoOp() throws Exception {
-        TypeWriter.FieldPool.Entry entry = FieldRegistry.Compiled.NoOp.INSTANCE.target(fieldDescription);
-        assertThat(entry.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
-        assertThat(entry.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+        TypeWriter.FieldPool.Record record = FieldRegistry.Compiled.NoOp.INSTANCE.target(fieldDescription);
+        assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
     }
 
     @Test

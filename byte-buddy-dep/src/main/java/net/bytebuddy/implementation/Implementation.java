@@ -554,7 +554,7 @@ public interface Implementation {
             /**
              * A map of accessor methods to a method pool entry that represents their implementation.
              */
-            private final List<TypeWriter.MethodPool.Entry> accessorMethods;
+            private final List<TypeWriter.MethodPool.Record> accessorMethods;
 
             /**
              * A map of registered auxiliary types to their dynamic type representation.
@@ -597,7 +597,7 @@ public interface Implementation {
                 registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.InDefinedShape>();
                 registeredGetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
                 registeredSetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
-                accessorMethods = new LinkedList<TypeWriter.MethodPool.Entry>();
+                accessorMethods = new LinkedList<TypeWriter.MethodPool.Record>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
                 randomString = new RandomString();
@@ -695,15 +695,15 @@ public interface Implementation {
                     typeInitializer = typeInitializer.expandWith(injectedCode.getByteCodeAppender());
                 }
                 MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
-                TypeWriter.MethodPool.Entry initializerEntry = methodPool.target(typeInitializerMethod);
-                if (initializerEntry.getSort().isImplemented() && typeInitializer.isDefined()) {
-                    initializerEntry = initializerEntry.prepend(typeInitializer);
+                TypeWriter.MethodPool.Record initializerRecord = methodPool.target(typeInitializerMethod);
+                if (initializerRecord.getSort().isImplemented() && typeInitializer.isDefined()) {
+                    initializerRecord = initializerRecord.prepend(typeInitializer);
                 } else if (typeInitializer.isDefined()) {
-                    initializerEntry = new TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
+                    initializerRecord = new TypeWriter.MethodPool.Record.ForDeclaredMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
                 }
-                initializerEntry.apply(classVisitor, this);
-                for (TypeWriter.MethodPool.Entry entry : accessorMethods) {
-                    entry.apply(classVisitor, this);
+                initializerRecord.apply(classVisitor, this);
+                for (TypeWriter.MethodPool.Record record : accessorMethods) {
+                    record.apply(classVisitor, this);
                 }
             }
 
@@ -1107,11 +1107,11 @@ public interface Implementation {
             /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
-            protected abstract static class AbstractDelegationEntry extends TypeWriter.MethodPool.Entry.ForDeclaredMethod implements ByteCodeAppender {
+            protected abstract static class AbstractDelegationRecord extends TypeWriter.MethodPool.Record.ForDeclaredMethod implements ByteCodeAppender {
 
                 protected final MethodDescription methodDescription;
 
-                protected AbstractDelegationEntry(MethodDescription methodDescription) {
+                protected AbstractDelegationRecord(MethodDescription methodDescription) {
                     this.methodDescription = methodDescription;
                 }
 
@@ -1143,14 +1143,14 @@ public interface Implementation {
                 }
 
                 @Override
-                public TypeWriter.MethodPool.Entry prepend(ByteCodeAppender byteCodeAppender) {
+                public TypeWriter.MethodPool.Record prepend(ByteCodeAppender byteCodeAppender) {
                     throw new UnsupportedOperationException("Cannot prepend code to a delegator");
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && methodDescription.equals(((AbstractDelegationEntry) other).methodDescription);
+                            && methodDescription.equals(((AbstractDelegationRecord) other).methodDescription);
                 }
 
                 @Override
@@ -1160,10 +1160,10 @@ public interface Implementation {
             }
 
             /**
-             * An implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry} for implementing
+             * An implementation of a {@link TypeWriter.MethodPool.Record} for implementing
              * an accessor method.
              */
-            protected static class AccessorMethodDelegation extends AbstractDelegationEntry {
+            protected static class AccessorMethodDelegation extends AbstractDelegationRecord {
 
                 /**
                  * The stack manipulation that represents the requested special method invocation.
@@ -1215,7 +1215,7 @@ public interface Implementation {
             /**
              * An implementation for a field getter.
              */
-            protected static class FieldGetterDelegation extends AbstractDelegationEntry {
+            protected static class FieldGetterDelegation extends AbstractDelegationRecord {
 
                 /**
                  * The field to read from.
@@ -1269,7 +1269,7 @@ public interface Implementation {
             /**
              * An implementation for a field setter.
              */
-            protected static class FieldSetterDelegation extends AbstractDelegationEntry {
+            protected static class FieldSetterDelegation extends AbstractDelegationRecord {
 
                 /**
                  * The field to write to.
