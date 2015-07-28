@@ -2189,7 +2189,7 @@ public interface DynamicType {
                             ignoredMethods,
                             bridgeMethodResolverFactory,
                             classVisitorWrapperChain,
-                            fieldRegistry.include(new FieldRegistry.LatentFieldMatcher.ForToken(fieldToken), attributeAppenderFactory, defaultValue),
+                            fieldRegistry.include(fieldToken, attributeAppenderFactory, defaultValue),
                             methodRegistry,
                             methodLookupEngineFactory,
                             defaultFieldAttributeAppenderFactory,

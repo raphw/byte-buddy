@@ -17,8 +17,6 @@ import static org.mockito.Mockito.when;
 
 public class FieldRegistryDefaultTest {
 
-    private static final String FOO = "foo";
-
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
@@ -32,89 +30,44 @@ public class FieldRegistryDefaultTest {
     private FieldAttributeAppender distinct;
 
     @Mock
-    private TypeWriter.FieldPool.Entry fallback;
-
-    @Mock
     private FieldDescription knownField, unknownField;
 
     @Mock
-    private FieldRegistry.LatentFieldMatcher latentFieldMatcher;
+    private FieldDescription.Token knownFieldToken;
+
+    @Mock
+    private Object defaultValue;
 
     @Before
     public void setUp() throws Exception {
         when(distinctFactory.make(instrumentedType)).thenReturn(distinct);
-        when(latentFieldMatcher.getFieldName()).thenReturn(FOO);
-        when(knownField.getInternalName()).thenReturn(FOO);
+        when(knownField.asToken()).thenReturn(knownFieldToken);
     }
 
     @Test
     public void testNoFieldsRegistered() throws Exception {
-        assertThat(new FieldRegistry.Default()
-                .prepare(instrumentedType)
-                .compile(fallback)
-                .target(knownField), is(fallback));
-        assertThat(new FieldRegistry.Default()
-                .prepare(instrumentedType)
-                .compile(fallback)
-                .target(unknownField), is(fallback));
+        TypeWriter.FieldPool.Entry entry = new FieldRegistry.Default()
+                .compile(instrumentedType)
+                .target(unknownField);
+        assertThat(entry.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        assertThat(entry.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
     }
 
     @Test
     public void testKnownFieldRegistered() throws Exception {
-        assertThat(new FieldRegistry.Default()
-                .include(latentFieldMatcher, distinctFactory, null)
-                .prepare(instrumentedType)
-                .compile(fallback)
-                .target(knownField)
-                .getFieldAppender(), is(distinct));
-        assertThat(new FieldRegistry.Default()
-                .include(latentFieldMatcher, distinctFactory, null)
-                .prepare(instrumentedType)
-                .compile(fallback)
-                .target(unknownField), is(fallback));
+        TypeWriter.FieldPool fieldPool = new FieldRegistry.Default()
+                .include(knownFieldToken, distinctFactory, defaultValue)
+                .compile(instrumentedType);
+        assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));
+        assertThat(fieldPool.target(knownField).getDefaultValue(), is(defaultValue));
+        assertThat(fieldPool.target(unknownField).getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldRegistry.Default.class).apply();
-        ObjectPropertyAssertion.of(FieldRegistry.Compiled.NoOp.class).apply();
-    }
-
-    @Test
-    public void testPreparedHashCodeEquals() throws Exception {
-        assertThat(new FieldRegistry.Default().prepare(instrumentedType).hashCode(),
-                is(new FieldRegistry.Default().prepare(instrumentedType).hashCode()));
-        assertThat(new FieldRegistry.Default().prepare(instrumentedType),
-                is(new FieldRegistry.Default().prepare(instrumentedType)));
-        assertThat(new FieldRegistry.Default()
-                        .include(latentFieldMatcher, distinctFactory, null)
-                        .prepare(instrumentedType)
-                        .hashCode(),
-                not(is(new FieldRegistry.Default().hashCode())));
-        assertThat(new FieldRegistry.Default()
-                        .include(latentFieldMatcher, distinctFactory, null)
-                        .prepare(instrumentedType),
-                not(is(new FieldRegistry.Default()
-                        .prepare(instrumentedType))));
-    }
-
-    @Test
-    public void testCompiledHashCodeEquals() throws Exception {
-        assertThat(new FieldRegistry.Default().prepare(instrumentedType).compile(fallback).hashCode(),
-                is(new FieldRegistry.Default().prepare(instrumentedType).compile(fallback).hashCode()));
-        assertThat(new FieldRegistry.Default().prepare(instrumentedType).compile(fallback),
-                is(new FieldRegistry.Default().prepare(instrumentedType).compile(fallback)));
-        assertThat(new FieldRegistry.Default()
-                        .include(latentFieldMatcher, distinctFactory, null)
-                        .prepare(instrumentedType)
-                        .compile(fallback).hashCode(),
-                not(is(new FieldRegistry.Default().hashCode())));
-        assertThat(new FieldRegistry.Default()
-                        .include(latentFieldMatcher, distinctFactory, null)
-                        .prepare(instrumentedType)
-                        .compile(fallback),
-                not(is(new FieldRegistry.Default()
-                        .prepare(instrumentedType)
-                        .compile(fallback))));
+        ObjectPropertyAssertion.of(FieldRegistry.Default.Entry.class).apply();
+        ObjectPropertyAssertion.of(FieldRegistry.Default.Compiled.Entry.class).apply();
     }
 }

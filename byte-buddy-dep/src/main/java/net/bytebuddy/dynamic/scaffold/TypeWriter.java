@@ -95,26 +95,16 @@ public interface TypeWriter<T> {
              * Writes this entry to a given class visitor.
              *
              * @param classVisitor     The class visitor to which this entry is to be written to.
-             * @param fieldDescription A description of the field that is to be written.
              */
-            void apply(ClassVisitor classVisitor, FieldDescription fieldDescription);
+            void apply(ClassVisitor classVisitor);
 
-            /**
-             * A default implementation of a compiled field registry that simply returns a no-op
-             * {@link net.bytebuddy.implementation.attribute.FieldAttributeAppender.Factory}
-             * for any field.
-             */
-            enum NoOp implements Entry {
+            class ForSimpleField implements Entry {
 
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
+                private final FieldDescription fieldDescription;
 
-                /**
-                 * The default value indicating a field without a default value.
-                 */
-                private static final Object NO_DEFAULT_VALUE = null;
+                public ForSimpleField(FieldDescription fieldDescription) {
+                    this.fieldDescription = fieldDescription;
+                }
 
                 @Override
                 public FieldAttributeAppender getFieldAppender() {
@@ -123,51 +113,51 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Object getDefaultValue() {
-                    return NO_DEFAULT_VALUE;
+                    return FieldDescription.NO_DEFAULT_VALUE;
                 }
 
                 @Override
-                public void apply(ClassVisitor classVisitor, FieldDescription fieldDescription) {
+                public void apply(ClassVisitor classVisitor) {
                     classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
-                            NO_DEFAULT_VALUE).visitEnd();
+                            FieldDescription.NO_DEFAULT_VALUE).visitEnd();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForSimpleField that = (ForSimpleField) other;
+                    return fieldDescription.equals(that.fieldDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return fieldDescription.hashCode();
                 }
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.FieldPool.Entry.NoOp." + name();
+                    return "TypeWriter.FieldPool.Entry.ForSimpleField{" +
+                            "fieldDescription=" + fieldDescription +
+                            '}';
                 }
             }
 
-            /**
-             * A simple entry that creates a specific
-             * {@link net.bytebuddy.implementation.attribute.FieldAttributeAppender.Factory}
-             * for any field.
-             */
-            class Simple implements Entry {
+            class ForRichField implements Entry {
 
-                /**
-                 * The field attribute appender factory that is represented by this entry.
-                 */
                 private final FieldAttributeAppender attributeAppender;
 
-                /**
-                 * The field's default value or {@code null} if no default value is set.
-                 */
                 private final Object defaultValue;
 
-                /**
-                 * Creates a new simple entry for a given attribute appender factory.
-                 *
-                 * @param attributeAppender The attribute appender to be returned.
-                 * @param defaultValue      The field's default value or {@code null} if no default value is
-                 *                          set.
-                 */
-                public Simple(FieldAttributeAppender attributeAppender, Object defaultValue) {
+                private final FieldDescription fieldDescription;
+
+                public ForRichField(FieldAttributeAppender attributeAppender, Object defaultValue, FieldDescription fieldDescription) {
                     this.attributeAppender = attributeAppender;
                     this.defaultValue = defaultValue;
+                    this.fieldDescription = fieldDescription;
                 }
 
                 @Override
@@ -181,12 +171,12 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void apply(ClassVisitor classVisitor, FieldDescription fieldDescription) {
+                public void apply(ClassVisitor classVisitor) {
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
-                            defaultValue);
+                            getDefaultValue());
                     attributeAppender.apply(fieldVisitor, fieldDescription);
                     fieldVisitor.visitEnd();
                 }
@@ -195,23 +185,26 @@ public interface TypeWriter<T> {
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
-                    Simple simple = (Simple) other;
-                    return attributeAppender.equals(simple.attributeAppender)
-                            && !(defaultValue != null ?
-                            !defaultValue.equals(simple.defaultValue) :
-                            simple.defaultValue != null);
+                    ForRichField that = (ForRichField) other;
+                    return attributeAppender.equals(that.attributeAppender)
+                            && !(defaultValue != null ? !defaultValue.equals(that.defaultValue) : that.defaultValue != null)
+                            && fieldDescription.equals(that.fieldDescription);
                 }
 
                 @Override
                 public int hashCode() {
-                    return 31 * attributeAppender.hashCode() + (defaultValue != null ? defaultValue.hashCode() : 0);
+                    int result = attributeAppender.hashCode();
+                    result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
+                    result = 31 * result + fieldDescription.hashCode();
+                    return result;
                 }
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.FieldPool.Entry.Simple{" +
-                            "attributeAppenderFactory=" + attributeAppender +
+                    return "TypeWriter.FieldPool.Entry.ForRichField{" +
+                            "attributeAppender=" + attributeAppender +
                             ", defaultValue=" + defaultValue +
+                            ", fieldDescription=" + fieldDescription +
                             '}';
                 }
             }
@@ -1577,7 +1570,7 @@ public interface TypeWriter<T> {
                 @Override
                 public void visitEnd() {
                     for (FieldDescription fieldDescription : declaredFields.values()) {
-                        fieldPool.target(fieldDescription).apply(cv, fieldDescription);
+                        fieldPool.target(fieldDescription).apply(cv);
                     }
                     for (MethodDescription methodDescription : declarableMethods.values()) {
                         methodPool.target(methodDescription).apply(cv, implementationContext, methodDescription);
@@ -1968,7 +1961,7 @@ public interface TypeWriter<T> {
                         instrumentedType.getInterfaces().asRawTypes().toInternalNames());
                 attributeAppender.apply(classVisitor, instrumentedType);
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
-                    fieldPool.target(fieldDescription).apply(classVisitor, fieldDescription);
+                    fieldPool.target(fieldDescription).apply(classVisitor);
                 }
                 for (MethodDescription methodDescription : instrumentedMethods) {
                     methodPool.target(methodDescription).apply(classVisitor, implementationContext, methodDescription);

@@ -51,16 +51,16 @@ public class TypeWriterFieldPoolEntryTest {
     }
 
     @Test
-    public void testSimpleEntry() throws Exception {
-        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, DEFAULT_VALUE);
+    public void testRichFieldEntryProperties() throws Exception {
+        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.ForRichField(fieldAttributeAppender, DEFAULT_VALUE, fieldDescription);
         assertThat(entry.getFieldAppender(), is(fieldAttributeAppender));
         assertThat(entry.getDefaultValue(), is(DEFAULT_VALUE));
     }
 
     @Test
-    public void testSimpleEntryWritesField() throws Exception {
-        new TypeWriter.FieldPool.Entry.Simple(fieldAttributeAppender, DEFAULT_VALUE)
-                .apply(classVisitor, fieldDescription);
+    public void testRichFieldEntryWritesField() throws Exception {
+        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.ForRichField(fieldAttributeAppender, DEFAULT_VALUE, fieldDescription);
+        entry.apply(classVisitor);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, DEFAULT_VALUE);
         verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription);
         verifyNoMoreInteractions(fieldAttributeAppender);
@@ -70,8 +70,9 @@ public class TypeWriterFieldPoolEntryTest {
     }
 
     @Test
-    public void testNoOpEntryWritesField() throws Exception {
-        TypeWriter.FieldPool.Entry.NoOp.INSTANCE.apply(classVisitor, fieldDescription);
+    public void testSimpleFieldEntryWritesField() throws Exception {
+        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.ForSimpleField(fieldDescription);
+        entry.apply(classVisitor);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, null);
         verifyNoMoreInteractions(classVisitor);
         verify(fieldVisitor).visitEnd();
@@ -79,15 +80,15 @@ public class TypeWriterFieldPoolEntryTest {
     }
 
     @Test
-    public void testNoOpEntry() throws Exception {
-        assertThat(TypeWriter.FieldPool.Entry.NoOp.INSTANCE.getDefaultValue(), nullValue());
-        assertThat(TypeWriter.FieldPool.Entry.NoOp.INSTANCE.getFieldAppender(),
-                is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+    public void testSimpleFieldEntryProperties() throws Exception {
+        TypeWriter.FieldPool.Entry entry = new TypeWriter.FieldPool.Entry.ForSimpleField(fieldDescription);
+        assertThat(entry.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+        assertThat(entry.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.Simple.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.NoOp.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.ForSimpleField.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Entry.ForRichField.class).apply();
     }
 }

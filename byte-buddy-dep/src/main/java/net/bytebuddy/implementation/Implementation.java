@@ -517,11 +517,6 @@ public interface Implementation {
             public static final String FIELD_CACHE_PREFIX = "cachedValue";
 
             /**
-             * Indicates that a field should be defined without a default value.
-             */
-            private static final Object NO_DEFAULT_VALUE = null;
-
-            /**
              * The instrumented type that this instance represents.
              */
             private final TypeDescription instrumentedType;
@@ -695,7 +690,7 @@ public interface Implementation {
                             entry.getValue().getInternalName(),
                             entry.getValue().getDescriptor(),
                             entry.getValue().getGenericSignature(),
-                            NO_DEFAULT_VALUE).visitEnd();
+                            FieldDescription.NO_DEFAULT_VALUE).visitEnd();
                     typeInitializer = typeInitializer.expandWith(new ByteCodeAppender.Simple(entry.getKey().storeIn(entry.getValue())));
                 }
                 if (injectedCode.isDefined()) {

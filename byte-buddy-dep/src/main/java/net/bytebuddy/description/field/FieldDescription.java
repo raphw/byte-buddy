@@ -26,6 +26,8 @@ public interface FieldDescription extends ByteCodeElement,
         NamedElement.WithGenericName,
         ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
 
+    Object NO_DEFAULT_VALUE = null;
+
     /**
      * Returns the type of the described field.
      *

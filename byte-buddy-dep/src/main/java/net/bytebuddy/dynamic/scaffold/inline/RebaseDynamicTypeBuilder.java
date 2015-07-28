@@ -236,7 +236,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new RebaseImplementationTarget.Factory(bridgeMethodResolverFactory,
                 methodRebaseResolver));
         return TypeWriter.Default.<T>forRebasing(compiledMethodRegistry,
-                fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
                 classVisitorWrapperChain,
                 attributeAppender,

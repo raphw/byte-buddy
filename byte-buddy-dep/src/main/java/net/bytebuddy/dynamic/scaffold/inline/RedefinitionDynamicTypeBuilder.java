@@ -218,7 +218,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 InliningImplementationMatcher.of(ignoredMethods, targetType))
                 .compile(new SubclassImplementationTarget.Factory(bridgeMethodResolverFactory, SubclassImplementationTarget.OriginTypeIdentifier.LEVEL_TYPE));
         return TypeWriter.Default.<T>forRedefinition(compiledMethodRegistry,
-                fieldRegistry.prepare(compiledMethodRegistry.getInstrumentedType()).compile(TypeWriter.FieldPool.Entry.NoOp.INSTANCE),
+                fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
                 classVisitorWrapperChain,
                 attributeAppender,

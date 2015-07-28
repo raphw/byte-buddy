@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import org.objectweb.asm.ClassVisitor;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,14 +24,11 @@ public interface FieldRegistry {
     /**
      * Creates a new field registry with the given attribute appender registered for the supplied field matcher.
      *
-     * @param latentFieldMatcher       The field matcher uniquely identifying the field to be registered.
      * @param attributeAppenderFactory The field attribute appender factory to be registered for this field.
      * @param defaultValue             The field's default value or {@code null} if no such default value is set.
      * @return A new field registry that knows about the new field registration.
      */
-    FieldRegistry include(LatentFieldMatcher latentFieldMatcher,
-                          FieldAttributeAppender.Factory attributeAppenderFactory,
-                          Object defaultValue);
+    FieldRegistry include(FieldDescription.Token fieldToken, FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue);
 
     /**
      * Prepares the field registry for a given instrumented type.
@@ -38,21 +36,7 @@ public interface FieldRegistry {
      * @param instrumentedType The instrumented type.
      * @return A prepared field registry.
      */
-    Prepared prepare(TypeDescription instrumentedType);
-
-    /**
-     * A {@link net.bytebuddy.dynamic.scaffold.FieldRegistry} which was prepared for a given instrumented type.
-     */
-    interface Prepared {
-
-        /**
-         * Compiled the field registry.
-         *
-         * @param fallback The fallback entry for the compiled field registry.
-         * @return The compiled field registry.
-         */
-        Compiled compile(TypeWriter.FieldPool.Entry fallback);
-    }
+    Compiled compile(TypeDescription instrumentedType);
 
     /**
      * Represents a compiled field registry.
@@ -71,68 +55,12 @@ public interface FieldRegistry {
 
             @Override
             public Entry target(FieldDescription fieldDescription) {
-                return Entry.NoOp.INSTANCE;
+                return new Entry.ForSimpleField(fieldDescription);
             }
 
             @Override
             public String toString() {
                 return "FieldRegistry.Compiled.NoOp." + name();
-            }
-        }
-    }
-
-    /**
-     * A simple matcher for a field where fields can be uniquely identified by their identifier for a given type.
-     */
-    interface LatentFieldMatcher {
-
-        /**
-         * Returns the name of the matched field.
-         *
-         * @return The name of the field to be matched by this field matcher.
-         */
-        String getFieldName();
-
-        /**
-         * A simple matcher for a field description based on the a field token.
-         */
-        class ForToken implements LatentFieldMatcher {
-
-            /**
-             * The field token to match.
-             */
-            private final FieldDescription.Token fieldToken;
-
-            /**
-             * Creates a new simple matcher.
-             *
-             * @param fieldToken The field token to match.
-             */
-            public ForToken(FieldDescription.Token fieldToken) {
-                this.fieldToken = fieldToken;
-            }
-
-            @Override
-            public String getFieldName() {
-                return fieldToken.getName();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && fieldToken.equals(((ForToken) other).fieldToken);
-            }
-
-            @Override
-            public int hashCode() {
-                return fieldToken.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "FieldRegistry.LatentFieldMatcher.ForToken{" +
-                        "fieldToken=" + fieldToken +
-                        '}';
             }
         }
     }
@@ -145,7 +73,7 @@ public interface FieldRegistry {
         /**
          * Contains all non-prepared field registry entries mapped by the field name. This map should never be mutated.
          */
-        private final Map<String, Entry> entries;
+        private final Map<FieldDescription.Token, Entry> entries;
 
         /**
          * Creates a new field registry without any registered fields.
@@ -159,34 +87,32 @@ public interface FieldRegistry {
          *
          * @param entries The non-prepared entries of this field registry.
          */
-        private Default(Map<String, Entry> entries) {
+        private Default(Map<FieldDescription.Token, Entry> entries) {
             this.entries = entries;
         }
 
         @Override
-        public FieldRegistry include(LatentFieldMatcher latentFieldMatcher,
-                                     FieldAttributeAppender.Factory attributeAppenderFactory,
-                                     Object defaultValue) {
-            Map<String, Entry> entries = new HashMap<String, Entry>(this.entries);
-            if (entries.put(latentFieldMatcher.getFieldName(), new Entry(attributeAppenderFactory, defaultValue)) != null) {
-                throw new IllegalArgumentException("the field name " + latentFieldMatcher.getFieldName() + " is already registered");
+        public FieldRegistry include(FieldDescription.Token fieldToken, FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
+            Map<FieldDescription.Token, Entry> entries = new HashMap<FieldDescription.Token, Entry>(this.entries);
+            if (entries.put(fieldToken, new Entry(attributeAppenderFactory, defaultValue)) != null) {
+                throw new IllegalArgumentException(fieldToken + " is already registered");
             }
             return new Default(entries);
         }
 
         @Override
-        public FieldRegistry.Prepared prepare(TypeDescription instrumentedType) {
-            Map<String, TypeWriter.FieldPool.Entry> entries = new HashMap<String, TypeWriter.FieldPool.Entry>(this.entries.size());
+        public FieldRegistry.Compiled compile(TypeDescription instrumentedType) {
+            Map<FieldDescription.Token, Compiled.Entry> entries = new HashMap<FieldDescription.Token, Compiled.Entry>(this.entries.size());
             Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>(this.entries.size());
-            for (Map.Entry<String, Entry> entry : this.entries.entrySet()) {
+            for (Map.Entry<FieldDescription.Token, Entry> entry : this.entries.entrySet()) {
                 FieldAttributeAppender attributeAppender = attributeAppenders.get(entry.getValue().getAttributeAppenderFactory());
                 if (attributeAppender == null) {
                     attributeAppender = entry.getValue().getAttributeAppenderFactory().make(instrumentedType);
                     attributeAppenders.put(entry.getValue().getAttributeAppenderFactory(), attributeAppender);
                 }
-                entries.put(entry.getKey(), new TypeWriter.FieldPool.Entry.Simple(attributeAppender, entry.getValue().getDefaultValue()));
+                entries.put(entry.getKey(), new Compiled.Entry(attributeAppender, entry.getValue().getDefaultValue()));
             }
-            return new Prepared(entries);
+            return new Compiled(entries);
         }
 
         @Override
@@ -226,7 +152,7 @@ public interface FieldRegistry {
              * @param attributeAppenderFactory The field attribute appender factory that is represented by this entry.
              * @param defaultValue             The field's default value for this entry.
              */
-            private Entry(FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
+            protected Entry(FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
                 this.attributeAppenderFactory = attributeAppenderFactory;
                 this.defaultValue = defaultValue;
             }
@@ -253,14 +179,16 @@ public interface FieldRegistry {
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
-                Entry entry = ((Entry) other);
+                Entry entry = (Entry) other;
                 return attributeAppenderFactory.equals(entry.attributeAppenderFactory)
                         && !(defaultValue != null ? !defaultValue.equals(entry.defaultValue) : entry.defaultValue != null);
             }
 
             @Override
             public int hashCode() {
-                return 31 * attributeAppenderFactory.hashCode() + (defaultValue != null ? defaultValue.hashCode() : 0);
+                int result = attributeAppenderFactory.hashCode();
+                result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
+                return result;
             }
 
             @Override
@@ -273,47 +201,6 @@ public interface FieldRegistry {
         }
 
         /**
-         * A prepared default field registry.
-         */
-        protected static class Prepared implements FieldRegistry.Prepared {
-
-            /**
-             * A map of entries by field names.
-             */
-            private final Map<String, TypeWriter.FieldPool.Entry> entries;
-
-            /**
-             * Creates a new prepared default field registry.
-             *
-             * @param entries A map of entries by field names.
-             */
-            public Prepared(Map<String, TypeWriter.FieldPool.Entry> entries) {
-                this.entries = entries;
-            }
-
-            @Override
-            public FieldRegistry.Compiled compile(TypeWriter.FieldPool.Entry fallback) {
-                return new Compiled(entries, fallback);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && entries.equals(((Prepared) other).entries);
-            }
-
-            @Override
-            public int hashCode() {
-                return entries.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "FieldRegistry.Default.Prepared{entries=" + entries + '}';
-            }
-        }
-
-        /**
          * A compiled default field registry.
          */
         protected static class Compiled implements FieldRegistry.Compiled {
@@ -321,48 +208,85 @@ public interface FieldRegistry {
             /**
              * A map of entries by field names.
              */
-            private final Map<String, Entry> entries;
-
-            /**
-             * The fallback entry.
-             */
-            private final Entry fallback;
+            private final Map<FieldDescription.Token, Entry> entries;
 
             /**
              * Creates a new compiled default field registry.
              *
              * @param entries  A map of entries by field names.
-             * @param fallback The fallback entry.
              */
-            public Compiled(Map<String, Entry> entries, Entry fallback) {
+            public Compiled(Map<FieldDescription.Token, Entry> entries) {
                 this.entries = entries;
-                this.fallback = fallback;
             }
 
             @Override
-            public Entry target(FieldDescription fieldDescription) {
-                Entry entry = entries.get(fieldDescription.getInternalName());
-                return entry == null ? fallback : entry;
+            public TypeWriter.FieldPool.Entry target(FieldDescription fieldDescription) {
+                Entry entry = entries.get(fieldDescription.asToken());
+                return entry == null
+                        ? new TypeWriter.FieldPool.Entry.ForSimpleField(fieldDescription)
+                        : new TypeWriter.FieldPool.Entry.ForRichField(entry.getAttributeAppender(), entry.getDefaultValue(), fieldDescription);
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && entries.equals(((Compiled) other).entries)
-                        && fallback.equals(((Compiled) other).fallback);
+                        && entries.equals(((Compiled) other).entries);
             }
 
             @Override
             public int hashCode() {
-                return 31 * entries.hashCode() + fallback.hashCode();
+                return 31 * entries.hashCode();
             }
 
             @Override
             public String toString() {
                 return "FieldRegistry.Default.Compiled{" +
                         "entries=" + entries +
-                        ", fallback=" + fallback +
                         '}';
+            }
+
+            protected static class Entry {
+
+                private final FieldAttributeAppender attributeAppender;
+
+                private final Object defaultValue;
+
+                protected Entry(FieldAttributeAppender attributeAppender, Object defaultValue) {
+                    this.attributeAppender = attributeAppender;
+                    this.defaultValue = defaultValue;
+                }
+
+                public FieldAttributeAppender getAttributeAppender() {
+                    return attributeAppender;
+                }
+
+                public Object getDefaultValue() {
+                    return defaultValue;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Entry entry = (Entry) other;
+                    return attributeAppender.equals(entry.attributeAppender)
+                            && !(defaultValue != null ? !defaultValue.equals(entry.defaultValue) : entry.defaultValue != null);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = attributeAppender.hashCode();
+                    result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "FieldRegistry.Default.Compiled.Entry{" +
+                            "attributeAppender=" + attributeAppender +
+                            ", defaultValue=" + defaultValue +
+                            '}';
+                }
             }
         }
     }
