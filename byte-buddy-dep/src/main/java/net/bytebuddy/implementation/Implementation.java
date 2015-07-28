@@ -554,7 +554,7 @@ public interface Implementation {
             /**
              * A map of accessor methods to a method pool entry that represents their implementation.
              */
-            private final Map<MethodDescription, TypeWriter.MethodPool.Entry> accessorMethodEntries;
+            private final List<TypeWriter.MethodPool.Entry> accessorMethods;
 
             /**
              * A map of registered auxiliary types to their dynamic type representation.
@@ -597,7 +597,7 @@ public interface Implementation {
                 registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.InDefinedShape>();
                 registeredGetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
                 registeredSetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
-                accessorMethodEntries = new HashMap<MethodDescription, TypeWriter.MethodPool.Entry>();
+                accessorMethods = new LinkedList<TypeWriter.MethodPool.Entry>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
                 randomString = new RandomString();
@@ -610,7 +610,7 @@ public interface Implementation {
                 if (accessorMethod == null) {
                     accessorMethod = new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), randomString.nextString());
                     registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
-                    accessorMethodEntries.put(accessorMethod, new AccessorMethodDelegation(specialMethodInvocation));
+                    accessorMethods.add(new AccessorMethodDelegation(accessorMethod, specialMethodInvocation));
                 }
                 return accessorMethod;
             }
@@ -621,7 +621,7 @@ public interface Implementation {
                 if (accessorMethod == null) {
                     accessorMethod = new FieldGetter(instrumentedType, fieldDescription, randomString.nextString());
                     registeredGetters.put(fieldDescription, accessorMethod);
-                    accessorMethodEntries.put(accessorMethod, new FieldGetterDelegation(fieldDescription));
+                    accessorMethods.add(new FieldGetterDelegation(accessorMethod, fieldDescription));
                 }
                 return accessorMethod;
             }
@@ -632,7 +632,7 @@ public interface Implementation {
                 if (accessorMethod == null) {
                     accessorMethod = new FieldSetter(instrumentedType, fieldDescription, randomString.nextString());
                     registeredSetters.put(fieldDescription, accessorMethod);
-                    accessorMethodEntries.put(accessorMethod, new FieldSetterDelegation(fieldDescription));
+                    accessorMethods.add(new FieldSetterDelegation(accessorMethod, fieldDescription));
                 }
                 return accessorMethod;
             }
@@ -641,9 +641,7 @@ public interface Implementation {
             public TypeDescription register(AuxiliaryType auxiliaryType) {
                 DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
-                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType, instrumentedType),
-                            classFileVersion,
-                            this);
+                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType, instrumentedType), classFileVersion, this);
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
                 return dynamicType.getTypeDescription();
@@ -701,11 +699,11 @@ public interface Implementation {
                 if (initializerEntry.getSort().isImplemented() && typeInitializer.isDefined()) {
                     initializerEntry = initializerEntry.prepend(typeInitializer);
                 } else if (typeInitializer.isDefined()) {
-                    initializerEntry = new TypeWriter.MethodPool.Entry.ForImplementation(typeInitializer.withReturn());
+                    initializerEntry = new TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
                 }
-                initializerEntry.apply(classVisitor, this, typeInitializerMethod);
-                for (Map.Entry<MethodDescription, TypeWriter.MethodPool.Entry> entry : accessorMethodEntries.entrySet()) {
-                    entry.getValue().apply(classVisitor, this, entry.getKey());
+                initializerEntry.apply(classVisitor, this);
+                for (TypeWriter.MethodPool.Entry entry : accessorMethods) {
+                    entry.apply(classVisitor, this);
                 }
             }
 
@@ -719,7 +717,7 @@ public interface Implementation {
                         ", registeredAccessorMethods=" + registeredAccessorMethods +
                         ", registeredGetters=" + registeredGetters +
                         ", registeredSetters=" + registeredSetters +
-                        ", accessorMethodEntries=" + accessorMethodEntries +
+                        ", accessorMethods=" + accessorMethods +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
                         ", randomString=" + randomString +
@@ -1109,11 +1107,22 @@ public interface Implementation {
             /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
-            protected abstract static class AbstractDelegationEntry extends TypeWriter.MethodPool.Entry.AbstractDefiningEntry implements ByteCodeAppender {
+            protected abstract static class AbstractDelegationEntry extends TypeWriter.MethodPool.Entry.ForDeclaredMethod implements ByteCodeAppender {
+
+                protected final MethodDescription methodDescription;
+
+                protected AbstractDelegationEntry(MethodDescription methodDescription) {
+                    this.methodDescription = methodDescription;
+                }
+
+                @Override
+                protected MethodDescription getDeclaredMethod() {
+                    return methodDescription;
+                }
 
                 @Override
                 public Sort getSort() {
-                    return Sort.IMPLEMENT;
+                    return Sort.IMPLEMENTED;
                 }
 
                 @Override
@@ -1122,20 +1131,31 @@ public interface Implementation {
                 }
 
                 @Override
-                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                public void applyHead(MethodVisitor methodVisitor) {
                     /* do nothing */
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor, Context implementationContext, MethodDescription methodDescription) {
+                public void applyBody(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, implementationContext, methodDescription);
+                    Size size = apply(methodVisitor, implementationContext, getDeclaredMethod());
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                 }
 
                 @Override
                 public TypeWriter.MethodPool.Entry prepend(ByteCodeAppender byteCodeAppender) {
                     throw new UnsupportedOperationException("Cannot prepend code to a delegator");
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && methodDescription.equals(((AbstractDelegationEntry) other).methodDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return methodDescription.hashCode();
                 }
             }
 
@@ -1156,14 +1176,13 @@ public interface Implementation {
                  * @param accessorMethodInvocation The stack manipulation that represents the requested special method
                  *                                 invocation.
                  */
-                protected AccessorMethodDelegation(StackManipulation accessorMethodInvocation) {
+                protected AccessorMethodDelegation(MethodDescription methodDescription, StackManipulation accessorMethodInvocation) {
+                    super(methodDescription);
                     this.accessorMethodInvocation = accessorMethodInvocation;
                 }
 
                 @Override
-                public Size apply(MethodVisitor methodVisitor,
-                                  Implementation.Context implementationContext,
-                                  MethodDescription instrumentedMethod) {
+                public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             accessorMethodInvocation,
@@ -1175,17 +1194,21 @@ public interface Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
                             && accessorMethodInvocation.equals(((AccessorMethodDelegation) other).accessorMethodInvocation);
                 }
 
                 @Override
                 public int hashCode() {
-                    return accessorMethodInvocation.hashCode();
+                    return accessorMethodInvocation.hashCode() + 31 * super.hashCode();
                 }
 
                 @Override
                 public String toString() {
-                    return "Implementation.Context.Default.AccessorMethodDelegation{accessorMethodInvocation=" + accessorMethodInvocation + '}';
+                    return "Implementation.Context.Default.AccessorMethodDelegation{" +
+                            "accessorMethodInvocation=" + accessorMethodInvocation +
+                            ", methodDescription=" + methodDescription +
+                            '}';
                 }
             }
 
@@ -1204,7 +1227,8 @@ public interface Implementation {
                  *
                  * @param fieldDescription The field to read.
                  */
-                protected FieldGetterDelegation(FieldDescription fieldDescription) {
+                protected FieldGetterDelegation(MethodDescription methodDescription, FieldDescription fieldDescription) {
+                    super(methodDescription);
                     this.fieldDescription = fieldDescription;
                 }
 
@@ -1220,21 +1244,24 @@ public interface Implementation {
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
 
+
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
                             && fieldDescription.equals(((FieldGetterDelegation) other).fieldDescription);
                 }
 
                 @Override
                 public int hashCode() {
-                    return fieldDescription.hashCode();
+                    return fieldDescription.hashCode() + 31 * super.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "Implementation.Context.Default.FieldGetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
+                            ", methodDescription=" + methodDescription +
                             '}';
                 }
             }
@@ -1254,7 +1281,8 @@ public interface Implementation {
                  *
                  * @param fieldDescription The field to write to.
                  */
-                protected FieldSetterDelegation(FieldDescription fieldDescription) {
+                protected FieldSetterDelegation(MethodDescription methodDescription, FieldDescription fieldDescription) {
+                    super(methodDescription);
                     this.fieldDescription = fieldDescription;
                 }
 
@@ -1271,18 +1299,20 @@ public interface Implementation {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
                             && fieldDescription.equals(((FieldSetterDelegation) other).fieldDescription);
                 }
 
                 @Override
                 public int hashCode() {
-                    return fieldDescription.hashCode();
+                    return fieldDescription.hashCode() + 31 * super.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "Implementation.Context.Default.FieldSetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
+                            ", methodDescription=" + methodDescription+
                             '}';
                 }
             }

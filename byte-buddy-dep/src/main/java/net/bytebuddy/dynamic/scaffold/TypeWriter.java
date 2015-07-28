@@ -94,7 +94,7 @@ public interface TypeWriter<T> {
             /**
              * Writes this entry to a given class visitor.
              *
-             * @param classVisitor     The class visitor to which this entry is to be written to.
+             * @param classVisitor The class visitor to which this entry is to be written to.
              */
             void apply(ClassVisitor classVisitor);
 
@@ -258,28 +258,25 @@ public interface TypeWriter<T> {
              *
              * @param classVisitor          The class visitor to which this entry should be applied.
              * @param implementationContext The implementation context to which this entry should be applied.
-             * @param methodDescription     The method description of the instrumented method.
              */
-            void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, MethodDescription methodDescription);
+            void apply(ClassVisitor classVisitor, Implementation.Context implementationContext);
 
             /**
              * Applies the head of this entry. Applying an entry is only possible if a method is defined, i.e. the sort of this entry is not
-             * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry.Sort#SKIP}.
+             * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry.Sort#SKIPPED}.
              *
-             * @param methodVisitor     The method visitor to which this entry should be applied.
-             * @param methodDescription The method description of the instrumented method.
+             * @param methodVisitor The method visitor to which this entry should be applied.
              */
-            void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription);
+            void applyHead(MethodVisitor methodVisitor);
 
             /**
              * Applies the body of this entry. Applying the body of an entry is only possible if a method is implemented, i.e. the sort of this
-             * entry is {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry.Sort#IMPLEMENT}.
+             * entry is {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Entry.Sort#IMPLEMENTED}.
              *
              * @param methodVisitor         The method visitor to which this entry should be applied.
              * @param implementationContext The implementation context to which this entry should be applied.
-             * @param methodDescription     The method description of the instrumented method.
              */
-            void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription methodDescription);
+            void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext);
 
             /**
              * The sort of an entry.
@@ -289,17 +286,17 @@ public interface TypeWriter<T> {
                 /**
                  * Describes a method that should not be implemented or retained in its original state.
                  */
-                SKIP(false, false),
+                SKIPPED(false, false),
 
                 /**
                  * Describes a method that should be defined but is abstract or native, i.e. does not define any byte code.
                  */
-                DEFINE(true, false),
+                DEFINED(true, false),
 
                 /**
                  * Describes a method that is implemented in byte code.
                  */
-                IMPLEMENT(true, true);
+                IMPLEMENTED(true, true);
 
                 /**
                  * Indicates if this sort defines a method, with or without byte code.
@@ -347,9 +344,9 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A canonical implementation of a skipped method.
+             * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
-            enum ForSkippedMethod implements Entry {
+            enum ForInheritedMethod implements Entry {
 
                 /**
                  * The singleton instance.
@@ -357,21 +354,17 @@ public interface TypeWriter<T> {
                 INSTANCE;
 
                 @Override
-                public void apply(ClassVisitor classVisitor,
-                                  Implementation.Context implementationContext,
-                                  MethodDescription methodDescription) {
+                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
                     /* do nothing */
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor,
-                                      Implementation.Context implementationContext,
-                                      MethodDescription methodDescription) {
+                public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
                 }
 
                 @Override
-                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                public void applyHead(MethodVisitor methodVisitor) {
                     throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
                 }
 
@@ -382,7 +375,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Sort getSort() {
-                    return Sort.SKIP;
+                    return Sort.SKIPPED;
                 }
 
                 @Override
@@ -392,300 +385,340 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.MethodPool.Entry.ForSkippedMethod." + name();
+                    return "TypeWriter.MethodPool.Entry.ForInheritedMethod." + name();
                 }
             }
 
             /**
              * A base implementation of an abstract entry that defines a method.
              */
-            abstract class AbstractDefiningEntry implements Entry {
+            abstract class ForDeclaredMethod implements Entry {
+
+                protected abstract MethodDescription getDeclaredMethod();
 
                 @Override
-                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, MethodDescription methodDescription) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(getModifierResolver().transform(methodDescription, getSort().isImplemented()),
-                            methodDescription.getInternalName(),
-                            methodDescription.getDescriptor(),
-                            methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
-                    ParameterList<?> parameterList = methodDescription.getParameters();
+                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(getModifierResolver().transform(getDeclaredMethod(), getSort().isImplemented()),
+                            getDeclaredMethod().getInternalName(),
+                            getDeclaredMethod().getDescriptor(),
+                            getDeclaredMethod().getGenericSignature(),
+                            getDeclaredMethod().getExceptionTypes().asRawTypes().toInternalNames());
+                    ParameterList<?> parameterList = getDeclaredMethod().getParameters();
                     if (parameterList.hasExplicitMetaData()) {
                         for (ParameterDescription parameterDescription : parameterList) {
                             methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
                         }
                     }
-                    applyHead(methodVisitor, methodDescription);
-                    applyBody(methodVisitor, implementationContext, methodDescription);
+                    applyHead(methodVisitor);
+                    applyBody(methodVisitor, implementationContext);
                     methodVisitor.visitEnd();
                 }
-            }
-
-            /**
-             * Describes an entry that defines a method as byte code.
-             */
-            class ForImplementation extends AbstractDefiningEntry {
 
                 /**
-                 * The byte code appender to apply.
+                 * Describes an entry that defines a method as byte code.
                  */
-                private final ByteCodeAppender byteCodeAppender;
+                public static class WithBody extends ForDeclaredMethod {
 
-                /**
-                 * The method attribute appender to apply.
-                 */
-                private final MethodAttributeAppender methodAttributeAppender;
+                    private final MethodDescription methodDescription;
 
-                /**
-                 * The modifier resolver to apply to the implemented method.
-                 */
-                private final ModifierResolver modifierResolver;
+                    /**
+                     * The byte code appender to apply.
+                     */
+                    private final ByteCodeAppender byteCodeAppender;
 
-                /**
-                 * Creates a new entry for a method that defines a method as byte code. This constructor defines a reatining
-                 * modifier resolver and a non-operational method attribute appender.
-                 *
-                 * @param byteCodeAppender The byte code appender to apply.
-                 */
-                public ForImplementation(ByteCodeAppender byteCodeAppender) {
-                    this(byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE, ModifierResolver.Simple.INSTANCE);
-                }
+                    /**
+                     * The method attribute appender to apply.
+                     */
+                    private final MethodAttributeAppender methodAttributeAppender;
 
-                /**
-                 * Creates a new entry for a method that defines a method as byte code.
-                 *
-                 * @param byteCodeAppender        The byte code appender to apply.
-                 * @param methodAttributeAppender The method attribute appender to apply.
-                 * @param modifierResolver        The modifier resolver to apply to the implemented method.
-                 */
-                public ForImplementation(ByteCodeAppender byteCodeAppender,
-                                         MethodAttributeAppender methodAttributeAppender,
-                                         ModifierResolver modifierResolver) {
-                    this.byteCodeAppender = byteCodeAppender;
-                    this.methodAttributeAppender = methodAttributeAppender;
-                    this.modifierResolver = modifierResolver;
-                }
+                    /**
+                     * The modifier resolver to apply to the implemented method.
+                     */
+                    private final ModifierResolver modifierResolver;
 
-                @Override
-                public Sort getSort() {
-                    return Sort.IMPLEMENT;
-                }
-
-                @Override
-                public ModifierResolver getModifierResolver() {
-                    return modifierResolver;
-                }
-
-                @Override
-                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                    /* do nothing */
-                }
-
-                @Override
-                public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription methodDescription) {
-                    methodAttributeAppender.apply(methodVisitor, methodDescription);
-                    methodVisitor.visitCode();
-                    ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, implementationContext, methodDescription);
-                    methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                }
-
-                @Override
-                public Entry prepend(ByteCodeAppender byteCodeAppender) {
-                    return new ForImplementation(new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender),
-                            methodAttributeAppender,
-                            modifierResolver);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && byteCodeAppender.equals(((ForImplementation) other).byteCodeAppender)
-                            && methodAttributeAppender.equals(((ForImplementation) other).methodAttributeAppender)
-                            && modifierResolver.equals(((ForImplementation) other).modifierResolver);
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31 * (31 * byteCodeAppender.hashCode() + methodAttributeAppender.hashCode()) + modifierResolver.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.MethodPool.Entry.ForImplementation{" +
-                            "byteCodeAppender=" + byteCodeAppender +
-                            ", methodAttributeAppender=" + methodAttributeAppender +
-                            ", modifierResolver=" + modifierResolver +
-                            '}';
-                }
-            }
-
-            /**
-             * Describes an entry that defines a method but without byte code and without an annotation value.
-             */
-            class ForAbstractMethod extends AbstractDefiningEntry {
-
-                /**
-                 * The method attribute appender to apply.
-                 */
-                private final MethodAttributeAppender methodAttributeAppender;
-
-                /**
-                 * The modifier resolver to apply to the method that is being created.
-                 */
-                private final ModifierResolver modifierResolver;
-
-                /**
-                 * Creates a new entry for a method that is defines but does not append byte code, i.e. is native or abstract.
-                 *
-                 * @param methodAttributeAppender The method attribute appender to apply.
-                 * @param modifierResolver        The modifier resolver to apply to the method that is being created.
-                 */
-                public ForAbstractMethod(MethodAttributeAppender methodAttributeAppender, ModifierResolver modifierResolver) {
-                    this.methodAttributeAppender = methodAttributeAppender;
-                    this.modifierResolver = modifierResolver;
-                }
-
-                @Override
-                public Sort getSort() {
-                    return Sort.DEFINE;
-                }
-
-                @Override
-                public ModifierResolver getModifierResolver() {
-                    return modifierResolver;
-                }
-
-                @Override
-                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                    /* do nothing */
-                }
-
-                @Override
-                public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription methodDescription) {
-                    methodAttributeAppender.apply(methodVisitor, methodDescription);
-                }
-
-                @Override
-                public Entry prepend(ByteCodeAppender byteCodeAppender) {
-                    throw new IllegalStateException("Cannot prepend code to abstract method");
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && methodAttributeAppender.equals(((ForAbstractMethod) other).methodAttributeAppender)
-                            && modifierResolver.equals(((ForAbstractMethod) other).modifierResolver);
-                }
-
-                @Override
-                public int hashCode() {
-                    return methodAttributeAppender.hashCode() + 31 * modifierResolver.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.MethodPool.Entry.ForAbstractMethod{" +
-                            "methodAttributeAppender=" + methodAttributeAppender +
-                            ", modifierResolver=" + modifierResolver +
-                            '}';
-                }
-            }
-
-            /**
-             * Describes an entry that defines a method with a default annotation value.
-             */
-            class ForAnnotationDefaultValue extends AbstractDefiningEntry {
-
-                /**
-                 * The annotation value to define.
-                 */
-                private final Object annotationValue;
-
-                /**
-                 * The method attribute appender to apply.
-                 */
-                private final MethodAttributeAppender methodAttributeAppender;
-
-                /**
-                 * The modifier resolver to apply to the method that is being created.
-                 */
-                private final ModifierResolver modifierResolver;
-
-                /**
-                 * Creates a new entry for defining a method with a default annotation value.
-                 *
-                 * @param annotationValue         The annotation value to define.
-                 * @param methodAttributeAppender The method attribute appender to apply.
-                 * @param modifierResolver        The modifier resolver to apply to the method that is being created.
-                 */
-                public ForAnnotationDefaultValue(Object annotationValue,
-                                                 MethodAttributeAppender methodAttributeAppender,
-                                                 ModifierResolver modifierResolver) {
-                    this.annotationValue = annotationValue;
-                    this.methodAttributeAppender = methodAttributeAppender;
-                    this.modifierResolver = modifierResolver;
-                }
-
-                @Override
-                public Sort getSort() {
-                    return Sort.DEFINE;
-                }
-
-                @Override
-                public ModifierResolver getModifierResolver() {
-                    return modifierResolver;
-                }
-
-                @Override
-                public void applyHead(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                    if (!methodDescription.isDefaultValue(annotationValue)) {
-                        throw new IllegalStateException("Cannot set " + annotationValue + " as default for " + methodDescription);
+                    public WithBody(MethodDescription methodDescription, ByteCodeAppender byteCodeAppender) {
+                        this(methodDescription, byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE, ModifierResolver.Simple.INSTANCE);
                     }
-                    AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotationDefault();
-                    AnnotationAppender.Default.apply(annotationVisitor,
-                            methodDescription.getReturnType().asRawType(),
-                            AnnotationAppender.NO_NAME,
-                            annotationValue);
-                    annotationVisitor.visitEnd();
+
+                    /**
+                     * Creates a new entry for a method that defines a method as byte code.
+                     *
+                     * @param byteCodeAppender        The byte code appender to apply.
+                     * @param methodAttributeAppender The method attribute appender to apply.
+                     * @param modifierResolver        The modifier resolver to apply to the implemented method.
+                     */
+                    public WithBody(MethodDescription methodDescription,
+                                    ByteCodeAppender byteCodeAppender,
+                                    MethodAttributeAppender methodAttributeAppender,
+                                    ModifierResolver modifierResolver) {
+                        this.methodDescription = methodDescription;
+                        this.byteCodeAppender = byteCodeAppender;
+                        this.methodAttributeAppender = methodAttributeAppender;
+                        this.modifierResolver = modifierResolver;
+                    }
+
+                    @Override
+                    protected MethodDescription getDeclaredMethod() {
+                        return methodDescription;
+                    }
+
+                    @Override
+                    public Sort getSort() {
+                        return Sort.IMPLEMENTED;
+                    }
+
+                    @Override
+                    public ModifierResolver getModifierResolver() {
+                        return modifierResolver;
+                    }
+
+                    @Override
+                    public void applyHead(MethodVisitor methodVisitor) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                        methodAttributeAppender.apply(methodVisitor, methodDescription);
+                        methodVisitor.visitCode();
+                        ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, implementationContext, methodDescription);
+                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                    }
+
+                    @Override
+                    public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                        return new WithBody(methodDescription,
+                                new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender),
+                                methodAttributeAppender,
+                                modifierResolver);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        WithBody withBody = (WithBody) other;
+                        return methodDescription.equals(withBody.methodDescription)
+                                && byteCodeAppender.equals(withBody.byteCodeAppender)
+                                && methodAttributeAppender.equals(withBody.methodAttributeAppender)
+                                && modifierResolver.equals(withBody.modifierResolver);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = methodDescription.hashCode();
+                        result = 31 * result + byteCodeAppender.hashCode();
+                        result = 31 * result + methodAttributeAppender.hashCode();
+                        result = 31 * result + modifierResolver.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithBody{" +
+                                "methodDescription=" + methodDescription +
+                                ", byteCodeAppender=" + byteCodeAppender +
+                                ", methodAttributeAppender=" + methodAttributeAppender +
+                                ", modifierResolver=" + modifierResolver +
+                                '}';
+                    }
                 }
 
-                @Override
-                public void applyBody(MethodVisitor methodVisitor,
-                                      Implementation.Context implementationContext,
-                                      MethodDescription methodDescription) {
-                    methodAttributeAppender.apply(methodVisitor, methodDescription);
+                /**
+                 * Describes an entry that defines a method but without byte code and without an annotation value.
+                 */
+                public static class WithoutBody extends ForDeclaredMethod {
+
+                    private final MethodDescription methodDescription;
+
+                    /**
+                     * The method attribute appender to apply.
+                     */
+                    private final MethodAttributeAppender methodAttributeAppender;
+
+                    /**
+                     * The modifier resolver to apply to the method that is being created.
+                     */
+                    private final ModifierResolver modifierResolver;
+
+                    /**
+                     * Creates a new entry for a method that is defines but does not append byte code, i.e. is native or abstract.
+                     *
+                     * @param methodAttributeAppender The method attribute appender to apply.
+                     * @param modifierResolver        The modifier resolver to apply to the method that is being created.
+                     */
+                    public WithoutBody(MethodDescription methodDescription,
+                                       MethodAttributeAppender methodAttributeAppender,
+                                       ModifierResolver modifierResolver) {
+                        this.methodDescription = methodDescription;
+                        this.methodAttributeAppender = methodAttributeAppender;
+                        this.modifierResolver = modifierResolver;
+                    }
+
+                    @Override
+                    protected MethodDescription getDeclaredMethod() {
+                        return methodDescription;
+                    }
+
+                    @Override
+                    public Sort getSort() {
+                        return Sort.DEFINED;
+                    }
+
+                    @Override
+                    public ModifierResolver getModifierResolver() {
+                        return modifierResolver;
+                    }
+
+                    @Override
+                    public void applyHead(MethodVisitor methodVisitor) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                        methodAttributeAppender.apply(methodVisitor, methodDescription);
+                    }
+
+                    @Override
+                    public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                        throw new IllegalStateException("Cannot prepend code to abstract method");
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        WithoutBody that = (WithoutBody) other;
+                        return methodDescription.equals(that.methodDescription)
+                                && methodAttributeAppender.equals(that.methodAttributeAppender)
+                                && modifierResolver.equals(that.modifierResolver);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = methodDescription.hashCode();
+                        result = 31 * result + methodAttributeAppender.hashCode();
+                        result = 31 * result + modifierResolver.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithoutBody{" +
+                                "methodDescription=" + methodDescription +
+                                ", methodAttributeAppender=" + methodAttributeAppender +
+                                ", modifierResolver=" + modifierResolver +
+                                '}';
+                    }
                 }
 
-                @Override
-                public Entry prepend(ByteCodeAppender byteCodeAppender) {
-                    throw new IllegalStateException("Cannot prepend code to method that defines a default annotation value");
-                }
+                /**
+                 * Describes an entry that defines a method with a default annotation value.
+                 */
+                public static class WithAnnotationDefaultValue extends ForDeclaredMethod {
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForAnnotationDefaultValue that = (ForAnnotationDefaultValue) other;
-                    return annotationValue.equals(that.annotationValue)
-                            && methodAttributeAppender.equals(that.methodAttributeAppender)
-                            && modifierResolver.equals(that.modifierResolver);
+                    private final MethodDescription methodDescription;
 
-                }
+                    /**
+                     * The annotation value to define.
+                     */
+                    private final Object annotationValue;
 
-                @Override
-                public int hashCode() {
-                    int result = annotationValue.hashCode();
-                    result = 31 * result + methodAttributeAppender.hashCode();
-                    result = 31 * result + modifierResolver.hashCode();
-                    return result;
-                }
+                    /**
+                     * The method attribute appender to apply.
+                     */
+                    private final MethodAttributeAppender methodAttributeAppender;
 
-                @Override
-                public String toString() {
-                    return "TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue{" +
-                            "annotationValue=" + annotationValue +
-                            ", methodAttributeAppender=" + methodAttributeAppender +
-                            ", modifierResolver=" + modifierResolver +
-                            '}';
+                    /**
+                     * The modifier resolver to apply to the method that is being created.
+                     */
+                    private final ModifierResolver modifierResolver;
+
+                    /**
+                     * Creates a new entry for defining a method with a default annotation value.
+                     *
+                     * @param annotationValue         The annotation value to define.
+                     * @param methodAttributeAppender The method attribute appender to apply.
+                     * @param modifierResolver        The modifier resolver to apply to the method that is being created.
+                     */
+                    public WithAnnotationDefaultValue(MethodDescription methodDescription,
+                                                      Object annotationValue,
+                                                      MethodAttributeAppender methodAttributeAppender,
+                                                      ModifierResolver modifierResolver) {
+                        this.methodDescription = methodDescription;
+                        this.annotationValue = annotationValue;
+                        this.methodAttributeAppender = methodAttributeAppender;
+                        this.modifierResolver = modifierResolver;
+                    }
+
+                    @Override
+                    protected MethodDescription getDeclaredMethod() {
+                        return methodDescription;
+                    }
+
+                    @Override
+                    public Sort getSort() {
+                        return Sort.DEFINED;
+                    }
+
+                    @Override
+                    public ModifierResolver getModifierResolver() {
+                        return modifierResolver;
+                    }
+
+                    @Override
+                    public void applyHead(MethodVisitor methodVisitor) {
+                        if (!methodDescription.isDefaultValue(annotationValue)) {
+                            throw new IllegalStateException("Cannot set " + annotationValue + " as default for " + methodDescription);
+                        }
+                        AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotationDefault();
+                        AnnotationAppender.Default.apply(annotationVisitor,
+                                methodDescription.getReturnType().asRawType(),
+                                AnnotationAppender.NO_NAME,
+                                annotationValue);
+                        annotationVisitor.visitEnd();
+                    }
+
+                    @Override
+                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                        methodAttributeAppender.apply(methodVisitor, methodDescription);
+                    }
+
+                    @Override
+                    public Entry prepend(ByteCodeAppender byteCodeAppender) {
+                        throw new IllegalStateException("Cannot prepend code to method that defines a default annotation value");
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        WithAnnotationDefaultValue that = (WithAnnotationDefaultValue) other;
+                        return methodDescription.equals(that.methodDescription)
+                                && annotationValue.equals(that.annotationValue)
+                                && methodAttributeAppender.equals(that.methodAttributeAppender)
+                                && modifierResolver.equals(that.modifierResolver);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = methodDescription.hashCode();
+                        result = 31 * result + annotationValue.hashCode();
+                        result = 31 * result + methodAttributeAppender.hashCode();
+                        result = 31 * result + modifierResolver.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithAnnotationDefaultValue{" +
+                                "methodDescription=" + methodDescription +
+                                ", annotationValue=" + annotationValue +
+                                ", methodAttributeAppender=" + methodAttributeAppender +
+                                ", modifierResolver=" + modifierResolver +
+                                '}';
+                    }
                 }
             }
         }
@@ -1563,8 +1596,8 @@ public interface TypeWriter<T> {
                             methodDescription.getGenericSignature(),
                             methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     return abstractOrigin
-                            ? new AttributeObtainingMethodVisitor(methodVisitor, entry, methodDescription)
-                            : new CodePreservingMethodVisitor(methodVisitor, entry, methodDescription);
+                            ? new AttributeObtainingMethodVisitor(methodVisitor, entry)
+                            : new CodePreservingMethodVisitor(methodVisitor, entry, methodRebaseResolver.resolve(methodDescription.asDefined()));
                 }
 
                 @Override
@@ -1573,7 +1606,7 @@ public interface TypeWriter<T> {
                         fieldPool.target(fieldDescription).apply(cv);
                     }
                     for (MethodDescription methodDescription : declarableMethods.values()) {
-                        methodPool.target(methodDescription).apply(cv, implementationContext, methodDescription);
+                        methodPool.target(methodDescription).apply(cv, implementationContext);
                     }
                     implementationContext.drain(cv, methodPool, injectedCode);
                     super.visitEnd();
@@ -1607,11 +1640,6 @@ public interface TypeWriter<T> {
                     private final MethodPool.Entry entry;
 
                     /**
-                     * A description of the actual method.
-                     */
-                    private final MethodDescription methodDescription;
-
-                    /**
                      * The resolution of a potential rebased method.
                      */
                     private final MethodRebaseResolver.Resolution resolution;
@@ -1621,15 +1649,15 @@ public interface TypeWriter<T> {
                      *
                      * @param actualMethodVisitor The method visitor of the actual method.
                      * @param entry               The method pool entry to apply.
-                     * @param methodDescription   A description of the actual method.
                      */
-                    protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Entry entry, MethodDescription methodDescription) {
+                    protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
+                                                          MethodPool.Entry entry,
+                                                          MethodRebaseResolver.Resolution resolution) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.entry = entry;
-                        this.methodDescription = methodDescription;
-                        this.resolution = methodRebaseResolver.resolve(methodDescription.asDefined());
-                        entry.applyHead(actualMethodVisitor, methodDescription);
+                        this.resolution = resolution;
+                        entry.applyHead(actualMethodVisitor);
                     }
 
                     @Override
@@ -1639,7 +1667,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitCode() {
-                        entry.applyBody(actualMethodVisitor, implementationContext, methodDescription);
+                        entry.applyBody(actualMethodVisitor, implementationContext);
                         actualMethodVisitor.visitEnd();
                         mv = resolution.isRebased()
                                 ? cv.visitMethod(resolution.getResolvedMethod().getModifiers(),
@@ -1662,7 +1690,6 @@ public interface TypeWriter<T> {
                                 "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
                                 ", actualMethodVisitor=" + actualMethodVisitor +
                                 ", entry=" + entry +
-                                ", methodDescription=" + methodDescription +
                                 ", resolution=" + resolution +
                                 '}';
                     }
@@ -1684,26 +1711,18 @@ public interface TypeWriter<T> {
                      */
                     private final MethodPool.Entry entry;
 
-                    /**
-                     * A description of the method that is currently written.
-                     */
-                    private final MethodDescription methodDescription;
 
                     /**
                      * Creates a new attribute obtaining method visitor.
                      *
                      * @param actualMethodVisitor The method visitor of the actual method.
                      * @param entry               The method pool entry to apply.
-                     * @param methodDescription   A description of the actual method.
                      */
-                    protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor,
-                                                              MethodPool.Entry entry,
-                                                              MethodDescription methodDescription) {
+                    protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Entry entry) {
                         super(ASM_API_VERSION, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.entry = entry;
-                        this.methodDescription = methodDescription;
-                        entry.applyHead(actualMethodVisitor, methodDescription);
+                        entry.applyHead(actualMethodVisitor);
                     }
 
                     @Override
@@ -1718,7 +1737,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitEnd() {
-                        entry.applyBody(actualMethodVisitor, implementationContext, methodDescription);
+                        entry.applyBody(actualMethodVisitor, implementationContext);
                         actualMethodVisitor.visitEnd();
                     }
 
@@ -1728,7 +1747,6 @@ public interface TypeWriter<T> {
                                 "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
                                 ", actualMethodVisitor=" + actualMethodVisitor +
                                 ", entry=" + entry +
-                                ", methodDescription=" + methodDescription +
                                 '}';
                     }
                 }
@@ -1964,7 +1982,7 @@ public interface TypeWriter<T> {
                     fieldPool.target(fieldDescription).apply(classVisitor);
                 }
                 for (MethodDescription methodDescription : instrumentedMethods) {
-                    methodPool.target(methodDescription).apply(classVisitor, implementationContext, methodDescription);
+                    methodPool.target(methodDescription).apply(classVisitor, implementationContext);
                 }
                 implementationContext.drain(classVisitor, methodPool, Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE);
                 classVisitor.visitEnd();

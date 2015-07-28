@@ -97,8 +97,8 @@ public class MethodRegistryDefaultTest {
         when(secondFactory.make(typeDescription)).thenReturn(secondAppender);
         when(implementationTargetFactory.make(finding, new MethodList.Explicit(Collections.singletonList(instrumentedMethod))))
                 .thenReturn(implementationTarget);
-        when(firstCompiledHandler.assemble(firstAppender)).thenReturn(firstEntry);
-        when(secondCompiledHandler.assemble(secondAppender)).thenReturn(secondEntry);
+        when(firstCompiledHandler.assemble(firstAppender, instrumentedMethod)).thenReturn(firstEntry);
+        when(secondCompiledHandler.assemble(secondAppender, instrumentedMethod)).thenReturn(secondEntry);
     }
 
     @Test
@@ -278,7 +278,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), is((TypeWriter.MethodPool.Entry) TypeWriter.MethodPool.Entry.ForSkippedMethod.INSTANCE));
+        assertThat(methodRegistry.target(instrumentedMethod), is((TypeWriter.MethodPool.Entry) TypeWriter.MethodPool.Entry.ForInheritedMethod.INSTANCE));
     }
 
     @Test
@@ -287,5 +287,6 @@ public class MethodRegistryDefaultTest {
         ObjectPropertyAssertion.of(MethodRegistry.Default.Entry.class).apply();
         ObjectPropertyAssertion.of(MethodRegistry.Default.Prepared.class).apply();
         ObjectPropertyAssertion.of(MethodRegistry.Default.Compiled.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Default.Compiled.Entry.class).apply();
     }
 }

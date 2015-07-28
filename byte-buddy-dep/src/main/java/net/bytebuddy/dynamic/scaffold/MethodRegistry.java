@@ -29,9 +29,7 @@ public interface MethodRegistry {
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
      * @return A mutated version of this method registry.
      */
-    MethodRegistry prepend(LatentMethodMatcher methodMatcher,
-                           Handler handler,
-                           MethodAttributeAppender.Factory attributeAppenderFactory);
+    MethodRegistry prepend(LatentMethodMatcher methodMatcher, Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory);
 
     /**
      * Appends the given method definition to this method registry, i.e. this configuration is applied last.
@@ -41,9 +39,7 @@ public interface MethodRegistry {
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
      * @return A mutated version of this method registry.
      */
-    MethodRegistry append(LatentMethodMatcher methodMatcher,
-                          Handler handler,
-                          MethodAttributeAppender.Factory attributeAppenderFactory);
+    MethodRegistry append(LatentMethodMatcher methodMatcher, Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory);
 
     /**
      * Prepares this method registry.
@@ -53,9 +49,7 @@ public interface MethodRegistry {
      * @param methodFilter       A filter that only matches methods that should be instrumented.
      * @return A prepared version of this method registry.
      */
-    Prepared prepare(InstrumentedType instrumentedType,
-                     MethodLookupEngine methodLookupEngine,
-                     LatentMethodMatcher methodFilter);
+    Prepared prepare(InstrumentedType instrumentedType, MethodLookupEngine methodLookupEngine, LatentMethodMatcher methodFilter);
 
     /**
      * A handler for implementing a method.
@@ -89,7 +83,7 @@ public interface MethodRegistry {
              * @param attributeAppender The method attribute appender to apply together with this handler.
              * @return A method pool entry representing this handler and the given attribute appender.
              */
-            TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender);
+            TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription);
         }
 
         /**
@@ -122,8 +116,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
-                return new TypeWriter.MethodPool.Entry.ForAbstractMethod(attributeAppender, modifierResolver);
+            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
+                return new TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithoutBody(methodDescription, attributeAppender, modifierResolver);
             }
 
             @Override
@@ -228,8 +222,11 @@ public interface MethodRegistry {
                 }
 
                 @Override
-                public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
-                    return new TypeWriter.MethodPool.Entry.ForImplementation(byteCodeAppender, attributeAppender, modifierResolver);
+                public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
+                    return new TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithBody(methodDescription,
+                            byteCodeAppender,
+                            attributeAppender,
+                            modifierResolver);
                 }
 
                 @Override
@@ -306,8 +303,11 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender) {
-                return new TypeWriter.MethodPool.Entry.ForAnnotationDefaultValue(annotationValue, attributeAppender, modifierResolver);
+            public TypeWriter.MethodPool.Entry assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
+                return new TypeWriter.MethodPool.Entry.ForDeclaredMethod.WithAnnotationDefaultValue(methodDescription,
+                        annotationValue,
+                        attributeAppender,
+                        modifierResolver);
             }
 
             @Override
@@ -651,20 +651,20 @@ public interface MethodRegistry {
             public MethodRegistry.Compiled compile(Implementation.Target.Factory implementationTargetFactory) {
                 Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>(implementations.size());
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(implementations.size());
-                LinkedHashMap<MethodDescription, TypeWriter.MethodPool.Entry> entries = new LinkedHashMap<MethodDescription, TypeWriter.MethodPool.Entry>(implementations.size());
+                LinkedHashMap<MethodDescription, Compiled.Entry> entries = new LinkedHashMap<MethodDescription, Compiled.Entry>(implementations.size());
                 Implementation.Target implementationTarget = implementationTargetFactory.make(finding, getInstrumentedMethods());
                 for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) {
-                    Handler.Compiled cachedEntry = compilationCache.get(entry.getValue().getHandler());
-                    if (cachedEntry == null) {
-                        cachedEntry = entry.getValue().getHandler().compile(implementationTarget);
-                        compilationCache.put(entry.getValue().getHandler(), cachedEntry);
+                    Handler.Compiled cachedHandler = compilationCache.get(entry.getValue().getHandler());
+                    if (cachedHandler == null) {
+                        cachedHandler = entry.getValue().getHandler().compile(implementationTarget);
+                        compilationCache.put(entry.getValue().getHandler(), cachedHandler);
                     }
                     MethodAttributeAppender cachedAttributeAppender = attributeAppenderCache.get(entry.getValue().getAppenderFactory());
                     if (cachedAttributeAppender == null) {
                         cachedAttributeAppender = entry.getValue().getAppenderFactory().make(finding.getTypeDescription());
                         attributeAppenderCache.put(entry.getValue().getAppenderFactory(), cachedAttributeAppender);
                     }
-                    entries.put(entry.getKey(), cachedEntry.assemble(cachedAttributeAppender));
+                    entries.put(entry.getKey(), new Compiled.Entry(cachedHandler, cachedAttributeAppender));
                 }
                 return new Compiled(finding.getTypeDescription(), loadedTypeInitializer, typeInitializer, entries);
             }
@@ -764,11 +764,11 @@ public interface MethodRegistry {
             }
 
             @Override
-            public Entry target(MethodDescription methodDescription) {
+            public TypeWriter.MethodPool.Entry target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
-                        ? Entry.ForSkippedMethod.INSTANCE
-                        : entry;
+                        ? TypeWriter.MethodPool.Entry.ForInheritedMethod.INSTANCE
+                        : entry.bind(methodDescription);
             }
 
             @Override
@@ -799,6 +799,46 @@ public interface MethodRegistry {
                         ", typeInitializer=" + typeInitializer +
                         ", implementations=" + implementations +
                         '}';
+            }
+
+            protected static class Entry {
+
+                private final Handler.Compiled compiledHandler;
+
+                private final MethodAttributeAppender attributeAppender;
+
+                protected Entry(Handler.Compiled compiledHandler, MethodAttributeAppender attributeAppender) {
+                    this.compiledHandler = compiledHandler;
+                    this.attributeAppender = attributeAppender;
+                }
+
+                protected TypeWriter.MethodPool.Entry bind(MethodDescription methodDescription) {
+                    return compiledHandler.assemble(attributeAppender, methodDescription);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Entry entry = (Entry) other;
+                    return compiledHandler.equals(entry.compiledHandler)
+                            && attributeAppender.equals(entry.attributeAppender);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = compiledHandler.hashCode();
+                    result = 31 * result + attributeAppender.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodRegistry.Default.Compiled.Entry{" +
+                            "compiledHandler=" + compiledHandler +
+                            ", attributeAppender=" + attributeAppender +
+                            '}';
+                }
             }
         }
     }

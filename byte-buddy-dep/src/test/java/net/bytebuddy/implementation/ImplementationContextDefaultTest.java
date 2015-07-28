@@ -212,7 +212,7 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         assertThat(implementationContext.getRegisteredAuxiliaryTypes().size(), is(0));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
         verify(methodPool).target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
@@ -247,7 +247,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
     }
@@ -258,7 +258,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
         verify(typeInitializer).isDefined();
@@ -273,10 +273,10 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.IMPLEMENTED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(entry).getSort();
-        verify(entry).apply(classVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
+        verify(entry).apply(classVisitor, implementationContext);
         verifyNoMoreInteractions(entry);
         verifyZeroInteractions(classVisitor);
         verify(typeInitializer, atLeast(1)).isDefined();
@@ -291,7 +291,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         when(injectedCode.isDefined()).thenReturn(true);
         when(otherTypeInitializer.isDefined()).thenReturn(true);
         when(typeInitializer.expandWith(injectedCodeAppender)).thenReturn(otherTypeInitializer);
@@ -316,7 +316,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         when(typeInitializer.isDefined()).thenReturn(true);
         when(typeInitializer.withReturn()).thenReturn(terminationAppender);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
@@ -337,14 +337,14 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.IMPLEMENT);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.IMPLEMENTED);
         when(typeInitializer.isDefined()).thenReturn(true);
         when(entry.prepend(typeInitializer)).thenReturn(otherEntry);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(entry).getSort();
         verify(entry).prepend(typeInitializer);
         verifyNoMoreInteractions(entry);
-        verify(otherEntry).apply(classVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
+        verify(otherEntry).apply(classVisitor, implementationContext);
         verify(typeInitializer, atLeast(1)).isDefined();
         verifyNoMoreInteractions(typeInitializer);
         verify(injectedCode, atLeast(1)).isDefined();
@@ -361,7 +361,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.cache(firstFieldValue, firstFieldType), is(firstField));
         FieldDescription secondField = implementationContext.cache(secondFieldValue, secondFieldType);
         assertThat(implementationContext.cache(secondFieldValue, secondFieldType), is(secondField));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         when(typeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(otherTypeInitializer);
         when(otherTypeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(thirdTypeInitializer);
         when(thirdTypeInitializer.withReturn()).thenReturn(terminationAppender);
@@ -391,7 +391,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 classFileVersion);
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verifyZeroInteractions(classVisitor);
         verify(methodPool).target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
@@ -425,7 +425,7 @@ public class ImplementationContextDefaultTest {
         assertThat(secondMethodDescription.getExceptionTypes(), is(secondSpecialExceptionTypes));
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
@@ -441,7 +441,7 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         MethodDescription firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
@@ -463,7 +463,7 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         MethodDescription secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + BAR + ")" + FOO), isNull(String.class), aryEq(new String[]{BAZ}));
@@ -497,7 +497,7 @@ public class ImplementationContextDefaultTest {
         assertThat(secondFieldGetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         assertThat(implementationContext.registerGetterFor(secondField), is(secondFieldGetter));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
@@ -513,7 +513,7 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         MethodDescription firstMethodDescription = implementationContext.registerGetterFor(firstField);
         assertThat(implementationContext.registerGetterFor(firstField), is(firstMethodDescription));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
@@ -534,7 +534,7 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         MethodDescription secondMethodDescription = implementationContext.registerGetterFor(secondField);
         assertThat(implementationContext.registerGetterFor(secondField), is(secondMethodDescription));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("()" + QUX), isNull(String.class), isNull(String[].class));
@@ -569,7 +569,7 @@ public class ImplementationContextDefaultTest {
         assertThat(secondFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         assertThat(implementationContext.registerSetterFor(secondField), is(secondFieldSetter));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
@@ -585,7 +585,7 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         MethodDescription firstMethodDescription = implementationContext.registerSetterFor(firstField);
         assertThat(implementationContext.registerSetterFor(firstField), is(firstMethodDescription));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
@@ -607,7 +607,7 @@ public class ImplementationContextDefaultTest {
                 classFileVersion);
         MethodDescription secondMethodDescription = implementationContext.registerSetterFor(secondField);
         assertThat(implementationContext.registerSetterFor(secondField), is(secondMethodDescription));
-        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIP);
+        when(entry.getSort()).thenReturn(TypeWriter.MethodPool.Entry.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));

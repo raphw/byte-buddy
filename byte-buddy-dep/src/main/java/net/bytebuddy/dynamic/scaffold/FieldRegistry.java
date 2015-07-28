@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
-import org.objectweb.asm.ClassVisitor;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -224,7 +223,7 @@ public interface FieldRegistry {
                 Entry entry = entries.get(fieldDescription.asToken());
                 return entry == null
                         ? new TypeWriter.FieldPool.Entry.ForSimpleField(fieldDescription)
-                        : new TypeWriter.FieldPool.Entry.ForRichField(entry.getAttributeAppender(), entry.getDefaultValue(), fieldDescription);
+                        : entry.bind(fieldDescription);
             }
 
             @Override
@@ -256,12 +255,8 @@ public interface FieldRegistry {
                     this.defaultValue = defaultValue;
                 }
 
-                public FieldAttributeAppender getAttributeAppender() {
-                    return attributeAppender;
-                }
-
-                public Object getDefaultValue() {
-                    return defaultValue;
+                protected TypeWriter.FieldPool.Entry bind(FieldDescription fieldDescription) {
+                    return new TypeWriter.FieldPool.Entry.ForRichField(attributeAppender, defaultValue, fieldDescription);
                 }
 
                 @Override
