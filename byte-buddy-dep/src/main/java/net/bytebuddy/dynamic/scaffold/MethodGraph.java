@@ -9,169 +9,86 @@ import java.util.*;
 
 public interface MethodGraph {
 
-    Resolution resolve(MethodDescription.Token methodToken);
+    Node find(MethodDescription.Token methodToken);
 
-    Resolution resolveDefault(TypeDescription typeDescription, MethodDescription.Token methodToken);
+    List<Node> listNodes();
 
-    List<MethodDescription> getInvokableMethods();
+    MethodGraph getSuperGraph();
 
-    TypeDescription getTypeDescription();
+    Map<GenericTypeDescription, MethodGraph> getInterfaceGraphs();
 
-    interface Resolution {
+    interface Node {
 
-        MethodDescription getResolvedMethod();
+        MethodDescription getRepresentative();
 
-        boolean isResolved();
-
-        enum Illegal implements Resolution {
-
-            INSTANCE;
-
-            @Override
-            public MethodDescription getResolvedMethod() {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public boolean isResolved() {
-                return false;
-            }
-        }
-
-        class ForMethod implements Resolution {
-
-            private final MethodDescription methodDescription;
-
-            public ForMethod(MethodDescription methodDescription) {
-                this.methodDescription = methodDescription;
-            }
-
-            @Override
-            public MethodDescription getResolvedMethod() {
-                return methodDescription;
-            }
-
-            @Override
-            public boolean isResolved() {
-                return true;
-            }
-        }
+        Set<MethodDescription.Token> getBridges();
     }
 
-    interface Fabricator {
+    interface Factory {
 
-        MethodGraph process(TypeDescription typeDescription);
+        MethodGraph make(TypeDescription typeDescription);
 
-        class Default implements Fabricator {
+        class Default implements Factory {
 
-            private final Key.Factory keyFactory;
+            public static Factory forJavaLanguage() {
+                return new Default(KeyFactory.ForJavaLanguage.INSTANCE);
+            }
 
-            public Default(Key.Factory keyFactory) {
+            private final KeyFactory<?> keyFactory;
+
+            public Default(KeyFactory<?> keyFactory) {
                 this.keyFactory = keyFactory;
             }
 
             @Override
-            public MethodGraph process(TypeDescription typeDescription) {
-//                Registry registry = new Registry();
-//                for (GenericTypeDescription currentType : typeDescription) {
-//                    registry.append(currentType.getDeclaredMethods());
-//                }
-//                return registry.toGraph();
+            public MethodGraph make(TypeDescription typeDescription) {
                 return null;
             }
 
-            protected static class Registry {
+            public interface KeyFactory<T> {
 
-                private final Key.Factory keyFactory;
+                T make(MethodDescription.Token methodToken);
 
-                private final Map<Key, Key> primaryKeys;
+                enum ForJavaLanguage implements KeyFactory<ForJavaLanguage.Key> {
 
-                private final Map<Key, Entry> entries;
+                    INSTANCE;
 
-                protected Registry(Key.Factory keyFactory) {
-                    this.keyFactory = keyFactory;
-                    primaryKeys = new HashMap<Key, Key>();
-                    entries = new LinkedHashMap<Key, Entry>();
-                }
-
-                protected void append(List<? extends MethodDescription> methodDescriptions) {
-                    for (MethodDescription methodDescription : methodDescriptions) {
-                        Key key = primaryKeys.get(keyFactory.make(methodDescription.asToken())); // TODO: Smarter structure, get or insert
-                        Entry entry = entries.get(key); // TODO: Smarter structure, get or create
-                        entry.append(methodDescription); // TODO: Add declared method's key.
+                    @Override
+                    public Key make(MethodDescription.Token methodToken) {
+                        List<ParameterDescription.Token> parameterTokens = methodToken.getParameterTokens();
+                        List<TypeDescription> rawParameterTypes = new ArrayList<TypeDescription>(parameterTokens.size());
+                        for (ParameterDescription.Token parameterToken : parameterTokens) {
+                            rawParameterTypes.add(parameterToken.getType().asRawType());
+                        }
+                        return new Key(methodToken.getInternalName(), rawParameterTypes);
                     }
-                }
 
-                protected MethodGraph toGraph() {
-                    return null;
-                }
+                    public static class Key {
 
-                protected static class Entry {
+                        private final String internalName;
 
-                    List<MethodDescription> representedMethods;
+                        private final List<? extends TypeDescription> rawParameterTypes;
 
-                    Entry append(MethodDescription methodDescription) {
-                        return null;
-                    }
-                }
-            }
-
-            public interface Key {
-
-                MethodDescription.Token getToken();
-
-                interface Factory {
-
-                    Key make(MethodDescription.Token methodToken);
-
-                    enum ForJavaMethod implements Factory {
-
-                        INSTANCE;
+                        protected Key(String internalName, List<? extends TypeDescription> rawParameterTypes) {
+                            this.internalName = internalName;
+                            this.rawParameterTypes = rawParameterTypes;
+                        }
 
                         @Override
-                        public Key make(MethodDescription.Token methodToken) {
-                            return new Key.ForJavaMethod(methodToken);
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (other == null || getClass() != other.getClass()) return false;
+                            Key key = (Key) other;
+                            return internalName.equals(key.internalName)
+                                    && rawParameterTypes.equals(key.rawParameterTypes);
                         }
-                    }
-                }
 
-                class ForJavaMethod implements Key {
-
-                    private final MethodDescription.Token methodToken;
-
-                    public ForJavaMethod(MethodDescription.Token methodToken) {
-                        this.methodToken = methodToken;
-                    }
-
-                    @Override
-                    public MethodDescription.Token getToken() {
-                        return methodToken;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (other == this) return true;
-                        if (!(other instanceof Key)) return false;
-                        Key key = (Key) other;
-                        if (!methodToken.getInternalName().equals(key.getToken().getInternalName())) {
-                            return false;
+                        @Override
+                        public int hashCode() {
+                            int result = internalName.hashCode();
+                            result = 31 * result + rawParameterTypes.hashCode();
+                            return result;
                         }
-                        int index = 0;
-                        for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                            if (!parameterToken.getType().asRawType().equals(key.getToken().getParameterTokens().get(index++).getType().asRawType())) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int hashCode = methodToken.getInternalName().hashCode();
-                        for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                            hashCode = hashCode * 31 + parameterToken.getType().asRawType().hashCode();
-                        }
-                        return hashCode;
                     }
                 }
             }
@@ -180,52 +97,33 @@ public interface MethodGraph {
 
     class Simple implements MethodGraph {
 
-        private final TypeDescription typeDescription;
+        private final MethodGraph superGraph;
 
-        private final List<MethodDescription> invokeableMethods;
+        private final Map<GenericTypeDescription, MethodGraph> interfaceGraphs;
 
-        private final Map<MethodDescription.Token, MethodDescription> superMethods;
-
-        private final Map<TypeDescription, Map<MethodDescription.Token, MethodDescription>> defaultMethods;
-
-        public Simple(TypeDescription typeDescription,
-                      List<MethodDescription> invokeableMethods,
-                      Map<MethodDescription.Token, MethodDescription> superMethods,
-                      Map<TypeDescription, Map<MethodDescription.Token, MethodDescription>> defaultMethods) {
-            this.typeDescription = typeDescription;
-            this.invokeableMethods = invokeableMethods;
-            this.superMethods = superMethods;
-            this.defaultMethods = defaultMethods;
+        protected Simple(MethodGraph superGraph, Map<GenericTypeDescription, MethodGraph> interfaceGraphs) {
+            this.superGraph = superGraph;
+            this.interfaceGraphs = interfaceGraphs;
         }
 
         @Override
-        public Resolution resolve(MethodDescription.Token methodToken) {
-            MethodDescription methodDescription = superMethods.get(methodToken);
-            return methodDescription == null
-                    ? Resolution.Illegal.INSTANCE
-                    : new Resolution.ForMethod(methodDescription);
+        public Node find(MethodDescription.Token methodToken) {
+            return null;
         }
 
         @Override
-        public Resolution resolveDefault(TypeDescription typeDescription, MethodDescription.Token methodToken) {
-            Map<MethodDescription.Token, MethodDescription> methodDescriptions = defaultMethods.get(typeDescription);
-            if (methodDescriptions == null) {
-                throw new IllegalArgumentException("Not a default method interface: " + typeDescription);
-            }
-            MethodDescription methodDescription = methodDescriptions.get(methodToken);
-            return methodDescription == null
-                    ? Resolution.Illegal.INSTANCE
-                    : new Resolution.ForMethod(methodDescription);
+        public List<Node> listNodes() {
+            return null;
         }
 
         @Override
-        public List<MethodDescription> getInvokableMethods() {
-            return invokeableMethods;
+        public MethodGraph getSuperGraph() {
+            return superGraph;
         }
 
         @Override
-        public TypeDescription getTypeDescription() {
-            return typeDescription;
+        public Map<GenericTypeDescription, MethodGraph> getInterfaceGraphs() {
+            return interfaceGraphs;
         }
     }
 }
