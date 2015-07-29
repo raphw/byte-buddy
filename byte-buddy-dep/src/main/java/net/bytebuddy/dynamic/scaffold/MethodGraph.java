@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.*;
 
@@ -12,7 +13,7 @@ public interface MethodGraph {
 
     List<Node> listNodes();
 
-    interface Node {
+    interface Node extends ElementMatcher<ElementMatcher<? super MethodDescription>> {
 
         boolean isValid();
 
@@ -38,6 +39,11 @@ public interface MethodGraph {
             public Set<MethodDescription.Token> getBridges() {
                 throw new IllegalStateException("Cannot resolve bridge method of an illegal node");
             }
+
+            @Override
+            public boolean matches(ElementMatcher<? super MethodDescription> target) {
+                return false;
+            }
         }
     }
 
@@ -49,19 +55,28 @@ public interface MethodGraph {
 
             @Override
             public MethodGraph make(TypeDescription typeDescription) {
-                return doAnalyze(typeDescription);
+                return analyze(typeDescription, new HashMap<GenericTypeDescription, Key.Store>());
             }
 
-            protected Key.Store analyze(GenericTypeDescription typeDescription) {
+            protected Key.Store analyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> cache) {
+                Key.Store keyStore = cache.get(typeDescription);
+                if (keyStore == null) {
+                    keyStore = doAnalyze(typeDescription, cache);
+                    cache.put(typeDescription, keyStore);
+                }
+                return keyStore;
+            }
+
+            protected Key.Store analyzeNullable(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> cache) {
                 return typeDescription == null
                         ? new Key.Store()
-                        : doAnalyze(typeDescription);
+                        : analyze(typeDescription, cache);
             }
 
-            protected Key.Store doAnalyze(GenericTypeDescription typeDescription) {
-                Key.Store keyStore = analyze(typeDescription.getSuperType());
+            protected Key.Store doAnalyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> cache) {
+                Key.Store keyStore = analyzeNullable(typeDescription.getSuperType(), cache);
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    keyStore.mergeWith(doAnalyze(interfaceType));
+                    keyStore.mergeWith(analyze(interfaceType, cache));
                 }
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods()) {
                     keyStore = keyStore.register(methodDescription);
@@ -208,6 +223,11 @@ public interface MethodGraph {
                         @Override
                         public Set<MethodDescription.Token> getBridges() {
                             return key.findBridges(methodDescription);
+                        }
+
+                        @Override
+                        public boolean matches(ElementMatcher<? super MethodDescription> target) {
+                            return target.matches(methodDescription);
                         }
                     }
                 }
