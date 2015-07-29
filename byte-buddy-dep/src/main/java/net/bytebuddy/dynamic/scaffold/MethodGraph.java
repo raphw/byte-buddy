@@ -91,6 +91,8 @@ public interface MethodGraph {
 
         Set<MethodDescription.Token> getBridges();
 
+        boolean isMadeVisible();
+
         enum Illegal implements Node {
 
             INSTANCE;
@@ -108,6 +110,11 @@ public interface MethodGraph {
             @Override
             public Set<MethodDescription.Token> getBridges() {
                 throw new IllegalStateException("Cannot resolve bridge method of an illegal node");
+            }
+
+            @Override
+            public boolean isMadeVisible() {
+                throw new IllegalStateException("Cannot resolve visibility of an illegal node");
             }
         }
     }
@@ -329,6 +336,11 @@ public interface MethodGraph {
                             public Set<MethodDescription.Token> getBridges() {
                                 return key.findBridges(methodToken);
                             }
+
+                            @Override
+                            public boolean isMadeVisible() {
+                                return false;
+                            }
                         }
 
                         class ForMethod implements Entry {
@@ -337,9 +349,16 @@ public interface MethodGraph {
 
                             private final MethodDescription methodDescription;
 
+                            private final boolean madeVisible;
+
                             protected ForMethod(Key key, MethodDescription methodDescription) {
+                                this(key, methodDescription, false);
+                            }
+
+                            protected ForMethod(Key key, MethodDescription methodDescription, boolean madeVisible) {
                                 this.key = key;
                                 this.methodDescription = methodDescription;
+                                this.madeVisible = madeVisible;
                             }
 
                             @Override
@@ -347,12 +366,12 @@ public interface MethodGraph {
                                 Key key = this.key.expandWith(methodDescription.asDefined());
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
-                                        : new ForMethod(key, methodDescription.isBridge() ? this.methodDescription : methodDescription);
+                                        : new ForMethod(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, true);
                             }
 
                             @Override
                             public Entry mergeWith(Key key) {
-                                return new Entry.ForMethod(key.mergeWith(key), methodDescription);
+                                return new Entry.ForMethod(key.mergeWith(key), methodDescription, madeVisible);
                             }
 
                             @Override
@@ -373,6 +392,11 @@ public interface MethodGraph {
                             @Override
                             public Set<MethodDescription.Token> getBridges() {
                                 return key.findBridges(methodDescription.asToken());
+                            }
+
+                            @Override
+                            public boolean isMadeVisible() {
+                                return true;
                             }
                         }
                     }
