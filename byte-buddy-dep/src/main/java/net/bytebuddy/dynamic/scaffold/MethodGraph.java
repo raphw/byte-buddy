@@ -10,6 +10,8 @@ public interface MethodGraph {
 
     Node locate(MethodDescription.Token methodToken);
 
+    List<Node> listNodes();
+
     interface Node {
 
         boolean isValid();
@@ -47,7 +49,7 @@ public interface MethodGraph {
 
             @Override
             public MethodGraph make(TypeDescription typeDescription) {
-                return new KeyStoreMethodGraph(doAnalyze(typeDescription));
+                return doAnalyze(typeDescription);
             }
 
             protected Key.Store analyze(GenericTypeDescription typeDescription) {
@@ -65,20 +67,6 @@ public interface MethodGraph {
                     keyStore = keyStore.register(methodDescription);
                 }
                 return keyStore;
-            }
-
-            protected static class KeyStoreMethodGraph implements MethodGraph {
-
-                private final Key.Store keyStore;
-
-                protected KeyStoreMethodGraph(Key.Store keyStore) {
-                    this.keyStore = keyStore;
-                }
-
-                @Override
-                public Node locate(MethodDescription.Token methodToken) {
-                    return keyStore.locate(methodToken);
-                }
             }
 
             protected static class Key {
@@ -129,15 +117,17 @@ public interface MethodGraph {
                     return internalName.hashCode();
                 }
 
-                protected static class Store {
+                protected static class Store implements MethodGraph {
 
-                    private final Map<Key, Entry> entries;
+                    private static final int EMPTY = 0;
+
+                    private final LinkedHashMap<Key, Entry> entries;
 
                     protected Store() {
-                        this(Collections.<Key, Entry>emptyMap());
+                        this(new LinkedHashMap<Key, Entry>(EMPTY));
                     }
 
-                    private Store(Map<Key, Entry> entries) {
+                    private Store(LinkedHashMap<Key, Entry> entries) {
                         this.entries = entries;
                     }
 
@@ -147,7 +137,7 @@ public interface MethodGraph {
                         Entry expandedEntry = (currentEntry == null
                                 ? new Entry(key, methodDescription)
                                 : currentEntry).expand(methodDescription);
-                        Map<Key, Entry> entries = new HashMap<Key, Entry>(this.entries);
+                        LinkedHashMap<Key, Entry> entries = new LinkedHashMap<Key, Entry>(this.entries);
                         entries.put(expandedEntry.getKey(), expandedEntry);
                         return new Store(entries);
                     }
@@ -160,7 +150,7 @@ public interface MethodGraph {
                     }
 
                     protected Store inject(Entry entry) {
-                        Map<Key, Entry> entries = new HashMap<Key, Entry>(this.entries);
+                        LinkedHashMap<Key, Entry> entries = new LinkedHashMap<Key, Entry>(this.entries);
                         Entry dominantEntry = entries.get(entry.getKey());
                         Entry mergedEntry = dominantEntry == null
                                 ? entry
@@ -169,11 +159,17 @@ public interface MethodGraph {
                         return new Store(entries);
                     }
 
-                    protected Node locate(MethodDescription.Token methodToken) {
+                    @Override
+                    public Node locate(MethodDescription.Token methodToken) {
                         Entry entry = entries.get(new Key(methodToken.getInternalName(), methodToken));
                         return entry == null
                                 ? Node.Illegal.INSTANCE
                                 : entry;
+                    }
+
+                    @Override
+                    public List<Node> listNodes() {
+                        return new ArrayList<Node>(entries.values());
                     }
 
                     protected static class Entry implements Node {
