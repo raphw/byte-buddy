@@ -12,9 +12,35 @@ public interface MethodGraph {
 
     List<Node> listNodes();
 
+    enum Sort {
+
+        RESOLVED(true, true),
+
+        AMBIGUOUS(true, false),
+
+        UNRESOLVED(false, false);
+
+        private final boolean resolved;
+
+        private final boolean unique;
+
+        Sort(boolean resolved, boolean unique) {
+            this.resolved = resolved;
+            this.unique = unique;
+        }
+
+        public boolean isResolved() {
+            return resolved;
+        }
+
+        public boolean isUnique() {
+            return unique;
+        }
+    }
+
     interface Node {
 
-        boolean isValid();
+        Sort getSort();
 
         MethodDescription getRepresentative();
 
@@ -24,9 +50,10 @@ public interface MethodGraph {
 
             INSTANCE;
 
+
             @Override
-            public boolean isValid() {
-                return false;
+            public Sort getSort() {
+                return Sort.UNRESOLVED;
             }
 
             @Override
@@ -234,8 +261,8 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public boolean isValid() {
-                                return true;
+                            public Sort getSort() {
+                                return Sort.AMBIGUOUS;
                             }
 
                             @Override
@@ -279,8 +306,8 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public boolean isValid() {
-                                return true;
+                            public Sort getSort() {
+                                return Sort.RESOLVED;
                             }
 
                             @Override
