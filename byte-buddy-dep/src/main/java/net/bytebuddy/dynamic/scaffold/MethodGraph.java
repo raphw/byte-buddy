@@ -1,11 +1,13 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 import java.util.*;
 
-public interface MethodGraph extends MethodLookupEngine.Finding {
+public interface MethodGraph {
 
     interface Factory {
 
@@ -15,7 +17,33 @@ public interface MethodGraph extends MethodLookupEngine.Finding {
 
             @Override
             public MethodGraph make(TypeDescription typeDescription) {
-                return null;
+                return new KeyStoreMethodGraph(doAnalyze(typeDescription));
+            }
+
+            protected Key.Store analyze(GenericTypeDescription typeDescription) {
+                return typeDescription == null
+                        ? new Key.Store()
+                        : doAnalyze(typeDescription);
+            }
+
+            protected Key.Store doAnalyze(GenericTypeDescription typeDescription) {
+                Key.Store keyStore = analyze(typeDescription.getSuperType());
+                for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
+                    keyStore.mergeWith(doAnalyze(interfaceType));
+                }
+                for (MethodDescription methodDescription : typeDescription.getDeclaredMethods()) {
+                    keyStore = keyStore.register(methodDescription);
+                }
+                return keyStore;
+            }
+
+            protected static class KeyStoreMethodGraph implements MethodGraph {
+
+                private final Key.Store keyStore;
+
+                protected KeyStoreMethodGraph(Key.Store keyStore) {
+                    this.keyStore = keyStore;
+                }
             }
 
             protected static class Key {
@@ -26,23 +54,29 @@ public interface MethodGraph extends MethodLookupEngine.Finding {
 
                 private final String internalName;
 
-                private final Set<MethodDescription.Token> keys;
+                private final Set<MethodDescription.Token> tokens;
 
-                protected Key(String internalName, Set<MethodDescription.Token> keys) {
+                protected Key(String internalName, Set<MethodDescription.Token> tokens) {
                     this.internalName = internalName;
-                    this.keys = keys;
+                    this.tokens = tokens;
                 }
 
-                protected Key expand(MethodDescription.InDefinedShape methodDescription) {
-                    Set<MethodDescription.Token> keys = new HashSet<MethodDescription.Token>(this.keys);
+                protected Key expandWith(MethodDescription.InDefinedShape methodDescription) {
+                    Set<MethodDescription.Token> keys = new HashSet<MethodDescription.Token>(this.tokens);
                     keys.add(methodDescription.asToken());
+                    return new Key(internalName, keys);
+                }
+
+                protected Key mergeWith(Key key) {
+                    Set<MethodDescription.Token> keys = new HashSet<MethodDescription.Token>(this.tokens);
+                    keys.addAll(key.tokens);
                     return new Key(internalName, keys);
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return other == this || (other instanceof Key
-                            && !Collections.disjoint(keys, ((Key) other).keys));
+                            && !Collections.disjoint(tokens, ((Key) other).tokens));
                 }
 
                 @Override
@@ -73,6 +107,23 @@ public interface MethodGraph extends MethodLookupEngine.Finding {
                         return new Store(entries);
                     }
 
+                    protected Store mergeWith(Store keyStore) {
+                        for (Entry entry : keyStore.entries.values()) {
+                            keyStore = keyStore.inject(entry);
+                        }
+                        return keyStore;
+                    }
+
+                    protected Store inject(Entry entry) {
+                        Map<Key, Entry> entries = new HashMap<Key, Entry>(this.entries);
+                        Entry dominantEntry = entries.get(entry.getKey());
+                        Entry mergedEntry = dominantEntry == null
+                                ? entry
+                                : dominantEntry.mergeWith(entry);
+                        entries.put(mergedEntry.getKey(), mergedEntry);
+                        return new Store(entries);
+                    }
+
                     protected static class Entry {
 
                         private final Key key;
@@ -85,7 +136,11 @@ public interface MethodGraph extends MethodLookupEngine.Finding {
                         }
 
                         protected Entry expand(MethodDescription methodDescription) {
-                            return new Entry(key.expand(methodDescription.asDefined()), methodDescription);
+                            return new Entry(key.expandWith(methodDescription.asDefined()), methodDescription);
+                        }
+
+                        protected Entry mergeWith(Entry entry) {
+                            return new Entry(key.mergeWith(entry.getKey()), methodDescription);
                         }
 
                         protected Key getKey() {
