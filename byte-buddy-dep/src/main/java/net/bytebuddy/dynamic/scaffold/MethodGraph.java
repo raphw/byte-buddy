@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.*;
 
@@ -13,7 +12,7 @@ public interface MethodGraph {
 
     List<Node> listNodes();
 
-    interface Node extends ElementMatcher<ElementMatcher<? super MethodDescription>> {
+    interface Node {
 
         boolean isValid();
 
@@ -39,11 +38,6 @@ public interface MethodGraph {
             public Set<MethodDescription.Token> getBridges() {
                 throw new IllegalStateException("Cannot resolve bridge method of an illegal node");
             }
-
-            @Override
-            public boolean matches(ElementMatcher<? super MethodDescription> target) {
-                return false;
-            }
         }
     }
 
@@ -58,28 +52,28 @@ public interface MethodGraph {
                 return analyze(typeDescription, new HashMap<GenericTypeDescription, Key.Store>());
             }
 
-            protected Key.Store analyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> cache) {
-                Key.Store keyStore = cache.get(typeDescription);
+            protected Key.Store analyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> snapshots) {
+                Key.Store keyStore = snapshots.get(typeDescription);
                 if (keyStore == null) {
-                    keyStore = doAnalyze(typeDescription, cache);
-                    cache.put(typeDescription, keyStore);
+                    keyStore = doAnalyze(typeDescription, snapshots);
+                    snapshots.put(typeDescription, keyStore);
                 }
                 return keyStore;
             }
 
-            protected Key.Store analyzeNullable(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> cache) {
+            protected Key.Store analyzeNullable(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> snapshots) {
                 return typeDescription == null
                         ? new Key.Store()
-                        : analyze(typeDescription, cache);
+                        : analyze(typeDescription, snapshots);
             }
 
-            protected Key.Store doAnalyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> cache) {
-                Key.Store keyStore = analyzeNullable(typeDescription.getSuperType(), cache);
+            protected Key.Store doAnalyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> snapshots) {
+                Key.Store keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots);
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    keyStore.mergeWith(analyze(interfaceType, cache));
+                    keyStore.mergeWith(analyze(interfaceType, snapshots));
                 }
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods()) {
-                    keyStore = keyStore.register(methodDescription);
+                    keyStore = keyStore.registerTopLevel(methodDescription);
                 }
                 return keyStore;
             }
@@ -115,9 +109,9 @@ public interface MethodGraph {
                     return new Key(internalName, keys);
                 }
 
-                protected Set<MethodDescription.Token> findBridges(MethodDescription methodDescription) {
+                protected Set<MethodDescription.Token> findBridges(MethodDescription.Token methodToken) {
                     Set<MethodDescription.Token> tokens = new HashSet<MethodDescription.Token>(this.tokens);
-                    tokens.remove(methodDescription.asToken());
+                    tokens.remove(methodToken);
                     return tokens;
                 }
 
@@ -146,12 +140,12 @@ public interface MethodGraph {
                         this.entries = entries;
                     }
 
-                    protected Store register(MethodDescription methodDescription) {
+                    protected Store registerTopLevel(MethodDescription methodDescription) {
                         Key key = Key.of(methodDescription);
                         Entry currentEntry = entries.get(key);
                         Entry expandedEntry = (currentEntry == null
-                                ? new Entry(key, methodDescription)
-                                : currentEntry).expand(methodDescription);
+                                ? new Entry.ForMethod(key, methodDescription)
+                                : currentEntry).expandWith(methodDescription);
                         LinkedHashMap<Key, Entry> entries = new LinkedHashMap<Key, Entry>(this.entries);
                         entries.put(expandedEntry.getKey(), expandedEntry);
                         return new Store(entries);
@@ -169,7 +163,7 @@ public interface MethodGraph {
                         Entry dominantEntry = entries.get(entry.getKey());
                         Entry mergedEntry = dominantEntry == null
                                 ? entry
-                                : dominantEntry.mergeWith(entry);
+                                : dominantEntry.mergeWith(entry.getKey());
                         entries.put(mergedEntry.getKey(), mergedEntry);
                         return new Store(entries);
                     }
@@ -187,47 +181,117 @@ public interface MethodGraph {
                         return new ArrayList<Node>(entries.values());
                     }
 
-                    protected static class Entry implements Node {
+                    protected interface Entry extends Node {
 
-                        private final Key key;
+                        Key getKey();
 
-                        private final MethodDescription methodDescription;
+                        Entry expandWith(MethodDescription methodDescription);
 
-                        protected Entry(Key key, MethodDescription methodDescription) {
-                            this.key = key;
-                            this.methodDescription = methodDescription;
+                        Entry mergeWith(Key key);
+
+                        class Ambiguous implements Entry {
+
+                            private final Key key;
+
+                            private final TypeDescription declaringType;
+
+                            private final MethodDescription.Token methodToken;
+
+                            protected static Entry of(Key key, MethodDescription firstMethod, MethodDescription secondMethod) {
+                                return firstMethod.isBridge() ^ secondMethod.isBridge()
+                                        ? new ForMethod(key, firstMethod.isBridge() ? secondMethod : firstMethod)
+                                        : new Ambiguous(key, firstMethod.getDeclaringType().asRawType(), secondMethod.asToken());
+                            }
+
+                            protected Ambiguous(Key key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                                this.key = key;
+                                this.declaringType = declaringType;
+                                this.methodToken = methodToken;
+                            }
+
+                            @Override
+                            public Key getKey() {
+                                return key;
+                            }
+
+                            @Override
+                            public Entry expandWith(MethodDescription methodDescription) {
+                                Key key = this.key.expandWith(methodDescription.asDefined());
+                                if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
+                                    return methodToken.isBridge() ^ methodDescription.isBridge()
+                                            ? methodToken.isBridge() ? new ForMethod(key, methodDescription) : new Ambiguous(key, declaringType, methodToken)
+                                            : new Ambiguous(key, declaringType, methodDescription.asToken());
+                                } else {
+                                    return methodDescription.isBridge()
+                                            ? new Ambiguous(key, declaringType, methodToken)
+                                            : new ForMethod(key, methodDescription);
+                                }
+                            }
+
+                            @Override
+                            public Entry mergeWith(Key key) {
+                                return new Ambiguous(key.mergeWith(key), declaringType, methodToken);
+                            }
+
+                            @Override
+                            public boolean isValid() {
+                                return true;
+                            }
+
+                            @Override
+                            public MethodDescription getRepresentative() {
+                                return new MethodDescription.Latent(declaringType, methodToken);
+                            }
+
+                            @Override
+                            public Set<MethodDescription.Token> getBridges() {
+                                return key.findBridges(methodToken);
+                            }
                         }
 
-                        protected Entry expand(MethodDescription methodDescription) {
-                            return new Entry(key.expandWith(methodDescription.asDefined()), methodDescription);
-                        }
+                        class ForMethod implements Entry {
 
-                        protected Entry mergeWith(Entry entry) {
-                            return new Entry(key.mergeWith(entry.getKey()), methodDescription);
-                        }
+                            private final Key key;
 
-                        protected Key getKey() {
-                            return key;
-                        }
+                            private final MethodDescription methodDescription;
 
-                        @Override
-                        public boolean isValid() {
-                            return true;
-                        }
+                            protected ForMethod(Key key, MethodDescription methodDescription) {
+                                this.key = key;
+                                this.methodDescription = methodDescription;
+                            }
 
-                        @Override
-                        public MethodDescription getRepresentative() {
-                            return methodDescription;
-                        }
+                            @Override
+                            public Entry expandWith(MethodDescription methodDescription) {
+                                Key key = this.key.expandWith(methodDescription.asDefined());
+                                return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
+                                        ? Ambiguous.of(key, methodDescription, this.methodDescription)
+                                        : new ForMethod(key, methodDescription.isBridge() ? this.methodDescription : methodDescription);
+                            }
 
-                        @Override
-                        public Set<MethodDescription.Token> getBridges() {
-                            return key.findBridges(methodDescription);
-                        }
+                            @Override
+                            public Entry mergeWith(Key key) {
+                                return new Entry.ForMethod(key.mergeWith(key), methodDescription);
+                            }
 
-                        @Override
-                        public boolean matches(ElementMatcher<? super MethodDescription> target) {
-                            return target.matches(methodDescription);
+                            @Override
+                            public Key getKey() {
+                                return key;
+                            }
+
+                            @Override
+                            public boolean isValid() {
+                                return true;
+                            }
+
+                            @Override
+                            public MethodDescription getRepresentative() {
+                                return methodDescription;
+                            }
+
+                            @Override
+                            public Set<MethodDescription.Token> getBridges() {
+                                return key.findBridges(methodDescription.asToken());
+                            }
                         }
                     }
                 }
