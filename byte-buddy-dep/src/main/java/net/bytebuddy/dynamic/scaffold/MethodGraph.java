@@ -12,6 +12,51 @@ public interface MethodGraph {
 
     List<Node> listNodes();
 
+    interface Linked extends MethodGraph {
+
+        MethodGraph getSuperGraph();
+
+        MethodGraph getInterfaceGraph(TypeDescription typeDescription);
+
+        class Delegation implements Linked {
+
+            private final MethodGraph methodGraph;
+
+            private final MethodGraph superGraph;
+
+            private final Map<TypeDescription, MethodGraph> interfaceGraphs;
+
+            public Delegation(MethodGraph methodGraph, MethodGraph superGraph, Map<TypeDescription, MethodGraph> interfaceGraphs) {
+                this.methodGraph = methodGraph;
+                this.superGraph = superGraph;
+                this.interfaceGraphs = interfaceGraphs;
+            }
+
+            @Override
+            public MethodGraph getSuperGraph() {
+                return superGraph;
+            }
+
+            @Override
+            public MethodGraph getInterfaceGraph(TypeDescription typeDescription) {
+                MethodGraph interfaceGraph = interfaceGraphs.get(typeDescription);
+                return interfaceGraph == null
+                        ? Illegal.INSTANCE
+                        : interfaceGraph;
+            }
+
+            @Override
+            public Node locate(MethodDescription.Token methodToken) {
+                return methodGraph.locate(methodToken);
+            }
+
+            @Override
+            public List<Node> listNodes() {
+                return methodGraph.listNodes();
+            }
+        }
+    }
+
     enum Sort {
 
         RESOLVED(true, true),
@@ -50,7 +95,6 @@ public interface MethodGraph {
 
             INSTANCE;
 
-
             @Override
             public Sort getSort() {
                 return Sort.UNRESOLVED;
@@ -70,13 +114,24 @@ public interface MethodGraph {
 
     interface Factory {
 
-        MethodGraph make(TypeDescription typeDescription);
+        MethodGraph.Linked make(TypeDescription typeDescription);
 
         class Default implements Factory {
 
             @Override
-            public MethodGraph make(TypeDescription typeDescription) {
-                return analyze(typeDescription, new HashMap<GenericTypeDescription, Key.Store>());
+            public MethodGraph.Linked make(TypeDescription typeDescription) {
+                Map<GenericTypeDescription, Key.Store> snapshots = new HashMap<GenericTypeDescription, Key.Store>();
+                GenericTypeDescription superType = typeDescription.getSuperType();
+                List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
+                Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>(interfaceTypes.size());
+                for (GenericTypeDescription interfaceType : interfaceTypes) {
+                    interfaceGraphs.put(interfaceType.asRawType(), snapshots.get(interfaceType));
+                }
+                return new Linked.Delegation(analyze(typeDescription, snapshots),
+                        superType == null
+                                ? Illegal.INSTANCE
+                                : snapshots.get(superType),
+                        interfaceGraphs);
             }
 
             protected Key.Store analyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> snapshots) {
@@ -97,7 +152,7 @@ public interface MethodGraph {
             protected Key.Store doAnalyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> snapshots) {
                 Key.Store keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots);
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    keyStore.mergeWith(analyze(interfaceType, snapshots));
+                    keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots));
                 }
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods()) {
                     keyStore = keyStore.registerTopLevel(methodDescription);
@@ -323,6 +378,31 @@ public interface MethodGraph {
                     }
                 }
             }
+        }
+    }
+
+    enum Illegal implements MethodGraph.Linked {
+
+        INSTANCE;
+
+        @Override
+        public Node locate(MethodDescription.Token methodToken) {
+            return Node.Illegal.INSTANCE;
+        }
+
+        @Override
+        public List<Node> listNodes() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public MethodGraph getSuperGraph() {
+            return this;
+        }
+
+        @Override
+        public MethodGraph getInterfaceGraph(TypeDescription typeDescription) {
+            return this;
         }
     }
 }
