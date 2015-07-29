@@ -1,13 +1,43 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 import java.util.*;
 
 public interface MethodGraph {
+
+    Node locate(MethodDescription.Token methodToken);
+
+    interface Node {
+
+        boolean isValid();
+
+        MethodDescription getRepresentative();
+
+        Set<MethodDescription.Token> getBridges();
+
+        enum Illegal implements Node {
+
+            INSTANCE;
+
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+
+            @Override
+            public MethodDescription getRepresentative() {
+                throw new IllegalStateException("Cannot resolve the method of an illegal node");
+            }
+
+            @Override
+            public Set<MethodDescription.Token> getBridges() {
+                throw new IllegalStateException("Cannot resolve bridge method of an illegal node");
+            }
+        }
+    }
 
     interface Factory {
 
@@ -44,6 +74,11 @@ public interface MethodGraph {
                 protected KeyStoreMethodGraph(Key.Store keyStore) {
                     this.keyStore = keyStore;
                 }
+
+                @Override
+                public Node locate(MethodDescription.Token methodToken) {
+                    return keyStore.locate(methodToken);
+                }
             }
 
             protected static class Key {
@@ -56,7 +91,11 @@ public interface MethodGraph {
 
                 private final Set<MethodDescription.Token> tokens;
 
-                protected Key(String internalName, Set<MethodDescription.Token> tokens) {
+                protected Key(String internalName, MethodDescription.Token token) {
+                    this(internalName, Collections.singleton(token));
+                }
+
+                private Key(String internalName, Set<MethodDescription.Token> tokens) {
                     this.internalName = internalName;
                     this.tokens = tokens;
                 }
@@ -71,6 +110,12 @@ public interface MethodGraph {
                     Set<MethodDescription.Token> keys = new HashSet<MethodDescription.Token>(this.tokens);
                     keys.addAll(key.tokens);
                     return new Key(internalName, keys);
+                }
+
+                protected Set<MethodDescription.Token> findBridges(MethodDescription methodDescription) {
+                    Set<MethodDescription.Token> tokens = new HashSet<MethodDescription.Token>(this.tokens);
+                    tokens.remove(methodDescription.asToken());
+                    return tokens;
                 }
 
                 @Override
@@ -124,7 +169,14 @@ public interface MethodGraph {
                         return new Store(entries);
                     }
 
-                    protected static class Entry {
+                    protected Node locate(MethodDescription.Token methodToken) {
+                        Entry entry = entries.get(new Key(methodToken.getInternalName(), methodToken));
+                        return entry == null
+                                ? Node.Illegal.INSTANCE
+                                : entry;
+                    }
+
+                    protected static class Entry implements Node {
 
                         private final Key key;
 
@@ -145,6 +197,21 @@ public interface MethodGraph {
 
                         protected Key getKey() {
                             return key;
+                        }
+
+                        @Override
+                        public boolean isValid() {
+                            return true;
+                        }
+
+                        @Override
+                        public MethodDescription getRepresentative() {
+                            return methodDescription;
+                        }
+
+                        @Override
+                        public Set<MethodDescription.Token> getBridges() {
+                            return key.findBridges(methodDescription);
                         }
                     }
                 }
