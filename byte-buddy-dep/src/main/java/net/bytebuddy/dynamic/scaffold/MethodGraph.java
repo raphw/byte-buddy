@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
@@ -119,11 +120,17 @@ public interface MethodGraph {
         }
     }
 
-    interface Factory {
+    interface Compiler {
 
         MethodGraph.Linked make(TypeDescription typeDescription);
 
-        class Default implements Factory {
+        class Default implements Compiler {
+
+            private final Identifier.Factory identifierFactory;
+
+            public Default(Identifier.Factory identifierFactory) {
+                this.identifierFactory = identifierFactory;
+            }
 
             @Override
             public MethodGraph.Linked make(TypeDescription typeDescription) {
@@ -165,6 +172,63 @@ public interface MethodGraph {
                     keyStore = keyStore.registerTopLevel(methodDescription);
                 }
                 return keyStore;
+            }
+
+            public interface Identifier {
+
+                MethodDescription.Token getToken();
+
+                interface Factory<T extends Identifier> {
+
+                    T wrap(MethodDescription.Token token);
+
+                    enum ForJavaMethod implements Factory<Identifier.ForJavaMethod> {
+
+                        INSTANCE;
+
+                        @Override
+                        public Identifier.ForJavaMethod wrap(MethodDescription.Token token) {
+                            return new Identifier.ForJavaMethod(token);
+                        }
+                    }
+                }
+
+                class ForJavaMethod implements Identifier {
+
+                    private final MethodDescription.Token token;
+
+                    protected ForJavaMethod(MethodDescription.Token token) {
+                        this.token = token;
+                    }
+
+                    @Override
+                    public MethodDescription.Token getToken() {
+                        return token;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = token.getInternalName().hashCode();
+                        for (ParameterDescription.Token parameterToken : token.getParameterTokens()) {
+                            result = 31 * result + parameterToken.getType().asRawType().hashCode();
+                        }
+                        return result;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (!(other instanceof ForJavaMethod)) return false;
+                        ForJavaMethod forJavaMethod = (ForJavaMethod) other;
+                        if (!token.getInternalName().equals(forJavaMethod.token.getInternalName())) return false;
+                        List<ParameterDescription.Token> tokens = token.getParameterTokens(), otherTokens = forJavaMethod.token.getParameterTokens();
+                        if (tokens.size() != otherTokens.size()) return false;
+                        for (int index = 0; index < tokens.size(); index++) {
+                            if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
+                        }
+                        return true;
+                    }
+                }
             }
 
             protected static class Key {
