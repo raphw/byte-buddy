@@ -873,7 +873,7 @@ public interface MethodGraph {
 
         @Override
         public String toString() {
-            return "MethodGraph.Illegal." + name();
+            return "MethodGraph.Empty." + name();
         }
     }
 }
