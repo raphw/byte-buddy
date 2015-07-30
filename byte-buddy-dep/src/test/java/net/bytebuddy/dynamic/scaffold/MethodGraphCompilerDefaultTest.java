@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -127,6 +128,14 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodGraph.Node methodNode = methodGraph.locate(typeDescription.getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asToken());
+        MethodDescription.Token bridgeToken = typeDescription.getSuperType().getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asToken();
+        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(1));
+        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
     }
 
     @Test
@@ -134,6 +143,19 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodGraph.Node methodNode = methodGraph.locate(typeDescription.getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asToken());
+        MethodDescription.Token firstBridgeToken = typeDescription.getSuperType().getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asDefined().asToken();
+        MethodDescription.Token secondBridgeToken = typeDescription.getSuperType().getSuperType().getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asDefined().asToken();
+        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(2));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
     }
 
     @Test
@@ -141,6 +163,14 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodGraph.Node methodNode = methodGraph.locate(typeDescription.getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asToken());
+        MethodDescription.Token bridgeToken = typeDescription.getSuperType().getDeclaredMethods().filter(isMethod()).getOnly().asToken();
+        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(1));
+        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
     }
 
     @Test
@@ -152,14 +182,14 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericInterfaceSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Inner.class);
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
     }
 
     @Test
     public void testGenericInterfaceMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Intermediate.Inner.class);
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
     }
@@ -277,14 +307,14 @@ public class MethodGraphCompilerDefaultTest {
 
     public static class ReturnTypeClassBase {
 
-        Object foo() {
+        public Object foo() {
             return null;
         }
 
         public static class Inner extends ReturnTypeClassBase {
 
             @Override
-            Void foo() {
+            public Void foo() {
                 return null;
             }
         }
@@ -292,14 +322,14 @@ public class MethodGraphCompilerDefaultTest {
         public static class Intermediate extends ReturnTypeClassBase {
 
             @Override
-            Number foo() {
+            public Number foo() {
                 return null;
             }
 
             public static class Inner extends Intermediate {
 
                 @Override
-                Integer foo() {
+                public Integer foo() {
                     return null;
                 }
             }
