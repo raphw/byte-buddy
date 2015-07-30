@@ -4,8 +4,13 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.*;
+
+import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
+import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 
 public interface MethodGraph {
 
@@ -141,34 +146,43 @@ public interface MethodGraph {
                 for (GenericTypeDescription interfaceType : interfaceTypes) {
                     interfaceGraphs.put(interfaceType.asRawType(), snapshots.get(interfaceType));
                 }
-                return new Linked.Delegation(analyze(typeDescription, snapshots),
+                return new Linked.Delegation(analyze(typeDescription, snapshots, any(), isVirtual().and(isVisibleTo(typeDescription))),
                         superType == null
                                 ? Illegal.INSTANCE
                                 : snapshots.get(superType),
                         interfaceGraphs);
             }
 
-            protected Key.Store analyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> snapshots) {
+            protected Key.Store analyze(GenericTypeDescription typeDescription,
+                                        Map<GenericTypeDescription, Key.Store> snapshots,
+                                        ElementMatcher<? super MethodDescription> currentMatcher,
+                                        ElementMatcher<? super MethodDescription> nextMatcher) {
                 Key.Store keyStore = snapshots.get(typeDescription);
                 if (keyStore == null) {
-                    keyStore = doAnalyze(typeDescription, snapshots);
+                    keyStore = doAnalyze(typeDescription, snapshots, currentMatcher, nextMatcher);
                     snapshots.put(typeDescription, keyStore);
                 }
                 return keyStore;
             }
 
-            protected Key.Store analyzeNullable(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> snapshots) {
+            protected Key.Store analyzeNullable(GenericTypeDescription typeDescription,
+                                                Map<GenericTypeDescription, Key.Store> snapshots,
+                                                ElementMatcher<? super MethodDescription> currentMatcher,
+                                                ElementMatcher<? super MethodDescription> nextMatcher) {
                 return typeDescription == null
                         ? new Key.Store()
-                        : analyze(typeDescription, snapshots);
+                        : analyze(typeDescription, snapshots, currentMatcher, nextMatcher);
             }
 
-            protected Key.Store doAnalyze(GenericTypeDescription typeDescription, Map<GenericTypeDescription, Key.Store> snapshots) {
-                Key.Store keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots);
+            protected Key.Store doAnalyze(GenericTypeDescription typeDescription,
+                                          Map<GenericTypeDescription, Key.Store> snapshots,
+                                          ElementMatcher<? super MethodDescription> currentMatcher,
+                                          ElementMatcher<? super MethodDescription> nextMatcher) {
+                Key.Store keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots));
+                    keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
                 }
-                for (MethodDescription methodDescription : typeDescription.getDeclaredMethods()) {
+                for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
                     keyStore = keyStore.registerTopLevel(methodDescription);
                 }
                 return keyStore;

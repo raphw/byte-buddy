@@ -125,12 +125,7 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean represents(Constructor<?> constructor);
 
-    /**
-     * Verifies if this method description represents an overridable method.
-     *
-     * @return {@code true} if this method description represents an overridable method.
-     */
-    boolean isOverridable();
+    boolean isVirtual();
 
     /**
      * Returns the size of the local variable array that is required for this method, i.e. the size of all parameters
@@ -372,8 +367,8 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public boolean isOverridable() {
-            return !(isConstructor() || isFinal() || isPrivate() || isStatic());
+        public boolean isVirtual() {
+            return !(isConstructor() || isPrivate() || isStatic() || isTypeInitializer());
         }
 
         @Override

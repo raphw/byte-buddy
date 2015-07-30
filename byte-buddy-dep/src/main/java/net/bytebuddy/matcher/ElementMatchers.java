@@ -1134,14 +1134,8 @@ public final class ElementMatchers {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.VISIBILITY_BRIDGE);
     }
 
-    /**
-     * Only matches methods that are overridable, i.e. non-final and dispatched virtually.
-     *
-     * @param <T> The type of the matched object.
-     * @return A matcher that only matches overridable methods.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverridable() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.OVERRIDABLE);
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isVirtual() {
+        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.VIRTUAL);
     }
 
     /**

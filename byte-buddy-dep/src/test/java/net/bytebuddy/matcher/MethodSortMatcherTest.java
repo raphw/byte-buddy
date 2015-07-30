@@ -45,7 +45,7 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
                 {MethodSortMatcher.Sort.CONSTRUCTOR, MockEngine.CONSTRUCTOR},
                 {MethodSortMatcher.Sort.DEFAULT_METHOD, MockEngine.DEFAULT_METHOD},
                 {MethodSortMatcher.Sort.METHOD, MockEngine.METHOD},
-                {MethodSortMatcher.Sort.OVERRIDABLE, MockEngine.OVERRIDABLE},
+                {MethodSortMatcher.Sort.VIRTUAL, MockEngine.VIRTUAL},
                 {MethodSortMatcher.Sort.TYPE_INITIALIZER, MockEngine.TYPE_INITIALIZER},
                 {MethodSortMatcher.Sort.TYPE_BRIDGE, MockEngine.TYPE_BRIDGE},
                 {MethodSortMatcher.Sort.VISIBILITY_BRIDGE, MockEngine.VISIBILITY_BRIDGE}
@@ -96,10 +96,10 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
             }
         },
 
-        OVERRIDABLE {
+        VIRTUAL {
             @Override
             protected void prepare(MethodDescription target) {
-                when(target.isOverridable()).thenReturn(true);
+                when(target.isVirtual()).thenReturn(true);
             }
         },
 

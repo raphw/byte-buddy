@@ -7,7 +7,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericSignatureResolutionTest;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
@@ -912,12 +911,13 @@ public class ElementMatchersTest {
     }
 
     @Test
-    public void testIsOverridable() throws Exception {
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("baz"))), is(true));
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("foo"))), is(false));
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("bar"))), is(false));
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedMethod(IsOverridable.class.getDeclaredMethod("qux"))), is(false));
-        assertThat(ElementMatchers.isOverridable().matches(new MethodDescription.ForLoadedConstructor(IsOverridable.class.getDeclaredConstructor())), is(false));
+    public void testIsVirtual() throws Exception {
+        assertThat(ElementMatchers.isVirtual().matches(new MethodDescription.ForLoadedMethod(IsVirtual.class.getDeclaredMethod("baz"))), is(true));
+        assertThat(ElementMatchers.isVirtual().matches(new MethodDescription.ForLoadedMethod(IsVirtual.class.getDeclaredMethod("foo"))), is(false));
+        assertThat(ElementMatchers.isVirtual().matches(new MethodDescription.ForLoadedMethod(IsVirtual.class.getDeclaredMethod("bar"))), is(false));
+        assertThat(ElementMatchers.isVirtual().matches(new MethodDescription.ForLoadedMethod(IsVirtual.class.getDeclaredMethod("qux"))), is(true));
+        assertThat(ElementMatchers.isVirtual().matches(new MethodDescription.ForLoadedConstructor(IsVirtual.class.getDeclaredConstructor())), is(false));
+        assertThat(ElementMatchers.isVirtual().matches(new MethodDescription.Latent.TypeInitializer(TypeDescription.OBJECT)), is(false));
     }
 
     @Test
@@ -1418,7 +1418,7 @@ public class ElementMatchersTest {
     }
 
     @SuppressWarnings("unused")
-    public static class IsOverridable {
+    public static class IsVirtual {
 
         public static void bar() {
             /* empty */

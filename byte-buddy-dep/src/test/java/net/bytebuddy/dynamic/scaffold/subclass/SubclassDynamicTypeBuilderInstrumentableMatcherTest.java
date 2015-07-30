@@ -12,6 +12,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -43,8 +44,9 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
     }
 
     @Test
-    public void testMatchesOverridable() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(true);
+    public void testMatchesVirtual() throws Exception {
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(otherType);
         when(methodDescription.isVisibleTo(typeDescription)).thenReturn(true);
@@ -52,8 +54,9 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
     }
 
     @Test
-    public void testNotMatchesOverridableIfNotVisible() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(true);
+    public void testNotMatchesVirtualIfNotVisible() throws Exception {
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(otherType);
         when(methodDescription.isVisibleTo(typeDescription)).thenReturn(false);
@@ -61,8 +64,19 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
     }
 
     @Test
-    public void testNotMatchesNonOverridableIfNotDeclared() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(false);
+    public void testNotMatchesVirtualIfFinal() throws Exception {
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
+        when(ignoredMethods.matches(methodDescription)).thenReturn(false);
+        when(methodDescription.getDeclaringType()).thenReturn(otherType);
+        when(methodDescription.isVisibleTo(typeDescription)).thenReturn(false);
+        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
+    }
+
+    @Test
+    public void testNotMatchesNonVirtualIfNotDeclared() throws Exception {
+        when(methodDescription.isVirtual()).thenReturn(false);
+        when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(otherType);
         assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
@@ -70,7 +84,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
 
     @Test
     public void testNotMatchesIgnoredMethodIfNotDeclared() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(true);
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(otherType);
         assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
@@ -78,7 +93,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
 
     @Test
     public void testMatchesDeclaredMethod() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(true);
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
@@ -86,15 +102,26 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
 
     @Test
     public void testMatchesDeclaredMethodIfIgnored() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(true);
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
     }
 
     @Test
-    public void testMatchesDeclaredMethodIfNotOverridable() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(false);
+    public void testMatchesDeclaredMethodIfNotVirtual() throws Exception {
+        when(methodDescription.isVirtual()).thenReturn(false);
+        when(methodDescription.getModifiers()).thenReturn(0);
+        when(ignoredMethods.matches(methodDescription)).thenReturn(false);
+        when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
+        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
+    }
+
+    @Test
+    public void testMatchesDeclaredMethodIfFinal() throws Exception {
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));

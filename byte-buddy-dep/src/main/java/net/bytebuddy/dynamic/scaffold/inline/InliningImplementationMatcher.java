@@ -59,7 +59,7 @@ public class InliningImplementationMatcher implements LatentMethodMatcher {
 
     @Override
     public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-        return (ElementMatcher<? super MethodDescription>) not(ignoredMethods).and(isOverridable().or(isDeclaredBy(instrumentedType)))
+        return (ElementMatcher<? super MethodDescription>) not(ignoredMethods).and(isVirtual().and(not(isFinal())).or(isDeclaredBy(instrumentedType)))
                 .or(isDeclaredBy(instrumentedType).and(not(predefinedMethodSignatures)));
     }
 

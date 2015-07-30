@@ -87,10 +87,10 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
         /**
          * Matches method descriptions that are overridable.
          */
-        OVERRIDABLE("isOverridable()") {
+        VIRTUAL("isVirtual()") {
             @Override
             protected boolean isSort(MethodDescription target) {
-                return target.isOverridable();
+                return target.isVirtual();
             }
         },
 

@@ -72,7 +72,7 @@ public class TypeProxyCreationTest {
         MethodLookupEngine methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make(true);
         fooMethods = methodLookupEngine.process(foo)
                 .getInvokableMethods()
-                .filter(isOverridable().and(not(isDefaultFinalizer())));
+                .filter(isVirtual().and(not(isFinal())).and(not(isDefaultFinalizer())));
         when(proxyMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(proxyMethod, Arrays.asList(foo, foo, foo)));
         when(proxyMethod.getDeclaringType()).thenReturn(foo);
         when(proxyMethod.getInternalName()).thenReturn(FOO);

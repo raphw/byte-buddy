@@ -12,6 +12,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -43,8 +44,9 @@ public class InlineImplementationMatcherTest {
     }
 
     @Test
-    public void testMatchesOverridable() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(true);
+    public void testMatchesVirtual() throws Exception {
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(otherType);
@@ -52,8 +54,19 @@ public class InlineImplementationMatcherTest {
     }
 
     @Test
+    public void testNotMatchesVirtualAndFinal() throws Exception {
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
+        when(ignoredMethods.matches(methodDescription)).thenReturn(false);
+        when(predefinedMethods.matches(methodDescription)).thenReturn(false);
+        when(methodDescription.getDeclaringType()).thenReturn(otherType);
+        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
+    }
+
+    @Test
     public void testMatchesDeclaredNotTargetType() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(false);
+        when(methodDescription.isVirtual()).thenReturn(false);
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
@@ -62,7 +75,8 @@ public class InlineImplementationMatcherTest {
 
     @Test
     public void testMatchesDeclaredButIgnoredNotPredefined() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(false);
+        when(methodDescription.isVirtual()).thenReturn(false);
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
@@ -71,7 +85,8 @@ public class InlineImplementationMatcherTest {
 
     @Test
     public void testMatchesDeclaredButIgnoredPredefined() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(false);
+        when(methodDescription.isVirtual()).thenReturn(false);
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
         when(predefinedMethods.matches(methodDescription)).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
@@ -80,7 +95,8 @@ public class InlineImplementationMatcherTest {
 
     @Test
     public void testNotMatchesOverridableIgnored() throws Exception {
-        when(methodDescription.isOverridable()).thenReturn(true);
+        when(methodDescription.isVirtual()).thenReturn(true);
+        when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(otherType);
