@@ -65,7 +65,6 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(ClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
-        MethodDescription constructor = typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly();
         MethodDescription method = typeDescription.getDeclaredMethods().filter(isMethod()).getOnly();
         MethodGraph.Node methodNode = methodGraph.locate(method.asToken());
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -111,6 +110,16 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(MultipleInheritance.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodDescription method = typeDescription.getSuperType().getDeclaredMethods().filter(isMethod()).getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(method.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getRepresentative(), is(method));
+        assertThat(methodGraph.listNodes().contains(methodNode), is(true));
+        MethodGraph.Node baseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(method.asToken());
+        assertThat(methodNode, not(is(baseNode)));
+        assertThat(baseNode.getRepresentative(), is(typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly()));
     }
 
     @Test
@@ -231,7 +240,7 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    public static class MultipleInheritance extends ClassBase implements InterfaceBase{
+    public static class MultipleInheritance extends ClassBase implements InterfaceBase {
         /* empty */
     }
 
