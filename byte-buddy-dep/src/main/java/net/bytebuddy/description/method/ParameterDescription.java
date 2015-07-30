@@ -837,7 +837,9 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         @Override
         public int hashCode() {
-            return name != null ? name.hashCode() : 0;
+            return name != null
+                    ? name.hashCode()
+                    : super.hashCode();
         }
 
         @Override

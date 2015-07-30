@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
@@ -132,6 +133,11 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(MethodConvergence.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.class).apply();
     }
 
     public static class SimpleClass {

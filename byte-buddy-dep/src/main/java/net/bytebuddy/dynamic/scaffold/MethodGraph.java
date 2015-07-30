@@ -45,7 +45,7 @@ public interface MethodGraph {
             public MethodGraph getInterfaceGraph(TypeDescription typeDescription) {
                 MethodGraph interfaceGraph = interfaceGraphs.get(typeDescription);
                 return interfaceGraph == null
-                        ? Illegal.INSTANCE
+                        ? Empty.INSTANCE
                         : interfaceGraph;
             }
 
@@ -192,7 +192,7 @@ public interface MethodGraph {
                 }
                 return new Linked.Delegation(rootStore.asGraph(),
                         superType == null
-                                ? Illegal.INSTANCE
+                                ? Empty.INSTANCE
                                 : snapshots.get(superType).asGraph(),
                         interfaceGraphs);
             }
@@ -291,15 +291,15 @@ public interface MethodGraph {
 
                 class ForJavaMethod implements Identifier {
 
-                    private final MethodDescription.Token token;
+                    private final MethodDescription.Token methodToken;
 
-                    protected ForJavaMethod(MethodDescription.Token token) {
-                        this.token = token;
+                    protected ForJavaMethod(MethodDescription.Token methodToken) {
+                        this.methodToken = methodToken;
                     }
 
                     @Override
                     public MethodDescription.Token getToken() {
-                        return token;
+                        return methodToken;
                     }
 
                     @Override
@@ -307,8 +307,7 @@ public interface MethodGraph {
                         if (this == other) return true;
                         if (!(other instanceof ForJavaMethod)) return false;
                         ForJavaMethod forJavaMethod = (ForJavaMethod) other;
-                        if (!token.getInternalName().equals(forJavaMethod.token.getInternalName())) return false;
-                        List<ParameterDescription.Token> tokens = token.getParameterTokens(), otherTokens = forJavaMethod.token.getParameterTokens();
+                        List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = forJavaMethod.methodToken.getParameterTokens();
                         if (tokens.size() != otherTokens.size()) return false;
                         for (int index = 0; index < tokens.size(); index++) {
                             if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
@@ -318,8 +317,8 @@ public interface MethodGraph {
 
                     @Override
                     public int hashCode() {
-                        int result = token.getInternalName().hashCode();
-                        for (ParameterDescription.Token parameterToken : token.getParameterTokens()) {
+                        int result = 17;
+                        for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
                             result = 31 * result + parameterToken.getType().asRawType().hashCode();
                         }
                         return result;
@@ -328,7 +327,7 @@ public interface MethodGraph {
                     @Override
                     public String toString() {
                         return "MethodGraph.Compiler.Default.Identifier.ForJavaMethod{" +
-                                "token=" + token +
+                                "methodToken=" + methodToken +
                                 '}';
                     }
                 }
@@ -348,13 +347,25 @@ public interface MethodGraph {
 
                     @Override
                     public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && methodToken.equals(((ForJVMMethod) other).methodToken);
+                        if (this == other) return true;
+                        if (!(other instanceof ForJVMMethod)) return false;
+                        ForJVMMethod forJavaMethod = (ForJVMMethod) other;
+                        if (!methodToken.getReturnType().asRawType().equals(forJavaMethod.methodToken.getReturnType().asRawType())) return false;
+                        List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = forJavaMethod.methodToken.getParameterTokens();
+                        if (tokens.size() != otherTokens.size()) return false;
+                        for (int index = 0; index < tokens.size(); index++) {
+                            if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
+                        }
+                        return true;
                     }
 
                     @Override
                     public int hashCode() {
-                        return methodToken.hashCode();
+                        int result = methodToken.getReturnType().asRawType().hashCode();
+                        for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
+                            result = 31 * result + parameterToken.getType().asRawType().hashCode();
+                        }
+                        return result;
                     }
 
                     @Override
@@ -376,7 +387,7 @@ public interface MethodGraph {
                     this(internalName, Collections.singleton(token));
                 }
 
-                private Key(String internalName, Set<S> identifiers) {
+                protected Key(String internalName, Set<S> identifiers) {
                     this.internalName = internalName;
                     this.identifiers = identifiers;
                 }
@@ -390,6 +401,7 @@ public interface MethodGraph {
                 @Override
                 public boolean equals(Object other) {
                     return other == this || (other instanceof Key
+                            && internalName.equals(((Key) other).internalName)
                             && !Collections.disjoint(identifiers, ((Key) other).identifiers));
                 }
 
@@ -416,7 +428,7 @@ public interface MethodGraph {
                         super(internalName, identifier);
                     }
 
-                    private Identifying(String internalName, Set<V> identifiers) {
+                    protected Identifying(String internalName, Set<V> identifiers) {
                         super(internalName, identifiers);
                     }
 
@@ -835,7 +847,7 @@ public interface MethodGraph {
         }
     }
 
-    enum Illegal implements MethodGraph.Linked {
+    enum Empty implements MethodGraph.Linked {
 
         INSTANCE;
 

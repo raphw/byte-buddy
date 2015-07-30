@@ -33,29 +33,82 @@ public class ParameterDescriptionTokenTest {
     public void testTokenIdentity() throws Exception {
         ParameterDescription.Token token = new ParameterDescription.Token(mock(GenericTypeDescription.class),
                 Collections.singletonList(mock(AnnotationDescription.class)),
-                null,
-                null);
+                ParameterDescription.Token.NO_NAME,
+                ParameterDescription.Token.NO_MODIFIERS);
+        assertThat(token.hashCode(), is(token.hashCode()));
         assertThat(token, is(token));
     }
 
     @Test
+    public void testTokenInequalityHashCode() throws Exception {
+        assertThat(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS).hashCode(),
+                not(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS).hashCode()));
+    }
+
+    @Test
     public void testTokenInequality() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
-        assertThat(new ParameterDescription.Token(typeDescription, Collections.singletonList(annotationDescription), null, null),
-                not(new ParameterDescription.Token(typeDescription, Collections.singletonList(annotationDescription), null, null)));
+        assertThat(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS),
+                not(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS)));
+    }
+
+    @Test
+    public void testNameEqualityHashCode() throws Exception {
+        assertThat(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        FOO,
+                        ParameterDescription.Token.NO_MODIFIERS).hashCode(),
+                is(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        FOO,
+                        ParameterDescription.Token.NO_MODIFIERS).hashCode()));
+    }
+
+    @Test
+    public void testNameInequalityHashCode() throws Exception {
+        assertThat(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        FOO,
+                        ParameterDescription.Token.NO_MODIFIERS).hashCode(),
+                not(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        BAR,
+                        ParameterDescription.Token.NO_MODIFIERS).hashCode()));
     }
 
     @Test
     public void testNameEquality() throws Exception {
-        assertThat(new ParameterDescription.Token(mock(GenericTypeDescription.class), Collections.singletonList(mock(AnnotationDescription.class)), FOO, null),
-                is(new ParameterDescription.Token(mock(GenericTypeDescription.class), Collections.singletonList(mock(AnnotationDescription.class)), FOO, null)));
+        assertThat(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        FOO,
+                        ParameterDescription.Token.NO_MODIFIERS),
+                is(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        FOO,
+                        ParameterDescription.Token.NO_MODIFIERS)));
     }
 
     @Test
     public void testNameInequality() throws Exception {
-        assertThat(new ParameterDescription.Token(mock(GenericTypeDescription.class), Collections.singletonList(mock(AnnotationDescription.class)), FOO, null),
-                not(new ParameterDescription.Token(mock(GenericTypeDescription.class), Collections.singletonList(mock(AnnotationDescription.class)), BAR, null)));
+        assertThat(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        FOO,
+                        ParameterDescription.Token.NO_MODIFIERS),
+                not(new ParameterDescription.Token(mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class)),
+                        BAR,
+                        ParameterDescription.Token.NO_MODIFIERS)));
     }
 
     @Test

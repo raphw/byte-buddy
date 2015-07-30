@@ -21,6 +21,30 @@ public class FieldDescriptionTokenTest {
     private static final int MODIFIERS = 42;
 
     @Test
+    public void testFieldNameEqualityHashCode() throws Exception {
+        assertThat(new FieldDescription.Token(FOO,
+                        MODIFIERS,
+                        mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class))).hashCode(),
+                is(new FieldDescription.Token(FOO,
+                        MODIFIERS * 2,
+                        mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class))).hashCode()));
+    }
+
+    @Test
+    public void testFieldNameInequalityHashCode() throws Exception {
+        assertThat(new FieldDescription.Token(FOO,
+                        MODIFIERS,
+                        mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class))).hashCode(),
+                not(new FieldDescription.Token(BAR,
+                        MODIFIERS * 2,
+                        mock(GenericTypeDescription.class),
+                        Collections.singletonList(mock(AnnotationDescription.class))).hashCode()));
+    }
+
+    @Test
     public void testFieldNameEquality() throws Exception {
         assertThat(new FieldDescription.Token(FOO,
                         MODIFIERS,
