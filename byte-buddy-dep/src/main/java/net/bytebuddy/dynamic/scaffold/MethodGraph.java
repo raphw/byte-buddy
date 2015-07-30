@@ -58,32 +58,33 @@ public interface MethodGraph {
             public List<Node> listNodes() {
                 return methodGraph.listNodes();
             }
-        }
-    }
 
-    enum Sort {
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Delegation that = (Delegation) other;
+                return methodGraph.equals(that.methodGraph)
+                        && superGraph.equals(that.superGraph)
+                        && interfaceGraphs.equals(that.interfaceGraphs);
+            }
 
-        RESOLVED(true, true),
+            @Override
+            public int hashCode() {
+                int result = methodGraph.hashCode();
+                result = 31 * result + superGraph.hashCode();
+                result = 31 * result + interfaceGraphs.hashCode();
+                return result;
+            }
 
-        AMBIGUOUS(true, false),
-
-        UNRESOLVED(false, false);
-
-        private final boolean resolved;
-
-        private final boolean unique;
-
-        Sort(boolean resolved, boolean unique) {
-            this.resolved = resolved;
-            this.unique = unique;
-        }
-
-        public boolean isResolved() {
-            return resolved;
-        }
-
-        public boolean isUnique() {
-            return unique;
+            @Override
+            public String toString() {
+                return "MethodGraph.Linked.Delegation{" +
+                        "methodGraph=" + methodGraph +
+                        ", superGraph=" + superGraph +
+                        ", interfaceGraphs=" + interfaceGraphs +
+                        '}';
+            }
         }
     }
 
@@ -96,6 +97,37 @@ public interface MethodGraph {
         Set<MethodDescription.Token> getBridges();
 
         boolean isMadeVisible();
+
+        enum Sort {
+
+            RESOLVED(true, true),
+
+            AMBIGUOUS(true, false),
+
+            UNRESOLVED(false, false);
+
+            private final boolean resolved;
+
+            private final boolean unique;
+
+            Sort(boolean resolved, boolean unique) {
+                this.resolved = resolved;
+                this.unique = unique;
+            }
+
+            public boolean isResolved() {
+                return resolved;
+            }
+
+            public boolean isUnique() {
+                return unique;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodGraph.Node.Sort." + name();
+            }
+        }
 
         enum Illegal implements Node {
 
@@ -119,6 +151,11 @@ public interface MethodGraph {
             @Override
             public boolean isMadeVisible() {
                 throw new IllegalStateException("Cannot resolve visibility of an illegal node");
+            }
+
+            @Override
+            public String toString() {
+                return "MethodGraph.Node.Illegal." + name();
             }
         }
     }
@@ -160,9 +197,9 @@ public interface MethodGraph {
             }
 
             protected Key.Store<T> analyze(GenericTypeDescription typeDescription,
-                                        Map<GenericTypeDescription, Key.Store<T>> snapshots,
-                                        ElementMatcher<? super MethodDescription> currentMatcher,
-                                        ElementMatcher<? super MethodDescription> nextMatcher) {
+                                           Map<GenericTypeDescription, Key.Store<T>> snapshots,
+                                           ElementMatcher<? super MethodDescription> currentMatcher,
+                                           ElementMatcher<? super MethodDescription> nextMatcher) {
                 Key.Store<T> keyStore = snapshots.get(typeDescription);
                 if (keyStore == null) {
                     keyStore = doAnalyze(typeDescription, snapshots, currentMatcher, nextMatcher);
@@ -172,18 +209,18 @@ public interface MethodGraph {
             }
 
             protected Key.Store<T> analyzeNullable(GenericTypeDescription typeDescription,
-                                                Map<GenericTypeDescription, Key.Store<T>> snapshots,
-                                                ElementMatcher<? super MethodDescription> currentMatcher,
-                                                ElementMatcher<? super MethodDescription> nextMatcher) {
+                                                   Map<GenericTypeDescription, Key.Store<T>> snapshots,
+                                                   ElementMatcher<? super MethodDescription> currentMatcher,
+                                                   ElementMatcher<? super MethodDescription> nextMatcher) {
                 return typeDescription == null
                         ? new Key.Store<T>()
                         : analyze(typeDescription, snapshots, currentMatcher, nextMatcher);
             }
 
             protected Key.Store<T> doAnalyze(GenericTypeDescription typeDescription,
-                                          Map<GenericTypeDescription, Key.Store<T>> snapshots,
-                                          ElementMatcher<? super MethodDescription> currentMatcher,
-                                          ElementMatcher<? super MethodDescription> nextMatcher) {
+                                             Map<GenericTypeDescription, Key.Store<T>> snapshots,
+                                             ElementMatcher<? super MethodDescription> currentMatcher,
+                                             ElementMatcher<? super MethodDescription> nextMatcher) {
                 Key.Store<T> keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
                     keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
@@ -192,6 +229,24 @@ public interface MethodGraph {
                     keyStore = keyStore.registerTopLevel(methodDescription, identifierFactory);
                 }
                 return keyStore;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && identifierFactory.equals(((Default<?>) other).identifierFactory);
+            }
+
+            @Override
+            public int hashCode() {
+                return identifierFactory.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodGraph.Compiler.Default{" +
+                        "identifierFactory=" + identifierFactory +
+                        '}';
             }
 
             public interface Identifier {
@@ -210,6 +265,11 @@ public interface MethodGraph {
                         public Identifier.ForJavaMethod wrap(MethodDescription.Token methodToken) {
                             return new Identifier.ForJavaMethod(methodToken);
                         }
+
+                        @Override
+                        public String toString() {
+                            return "MethodGraph.Compiler.Default.Identifier.Factory.ForJavaMethod." + name();
+                        }
                     }
 
                     enum ForJVMMethod implements Factory<Identifier.ForJVMMethod> {
@@ -219,6 +279,11 @@ public interface MethodGraph {
                         @Override
                         public Identifier.ForJVMMethod wrap(MethodDescription.Token methodToken) {
                             return new Identifier.ForJVMMethod(methodToken);
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod." + name();
                         }
                     }
                 }
@@ -237,15 +302,6 @@ public interface MethodGraph {
                     }
 
                     @Override
-                    public int hashCode() {
-                        int result = token.getInternalName().hashCode();
-                        for (ParameterDescription.Token parameterToken : token.getParameterTokens()) {
-                            result = 31 * result + parameterToken.getType().asRawType().hashCode();
-                        }
-                        return result;
-                    }
-
-                    @Override
                     public boolean equals(Object other) {
                         if (this == other) return true;
                         if (!(other instanceof ForJavaMethod)) return false;
@@ -257,6 +313,22 @@ public interface MethodGraph {
                             if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
                         }
                         return true;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = token.getInternalName().hashCode();
+                        for (ParameterDescription.Token parameterToken : token.getParameterTokens()) {
+                            result = 31 * result + parameterToken.getType().asRawType().hashCode();
+                        }
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Identifier.ForJavaMethod{" +
+                                "token=" + token +
+                                '}';
                     }
                 }
 
@@ -282,6 +354,13 @@ public interface MethodGraph {
                     @Override
                     public int hashCode() {
                         return methodToken.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Identifier.ForJVMMethod{" +
+                                "methodToken=" + methodToken +
+                                '}';
                     }
                 }
             }
@@ -318,6 +397,14 @@ public interface MethodGraph {
                     return internalName.hashCode();
                 }
 
+                @Override
+                public String toString() {
+                    return "MethodGraph.Compiler.Default.Key{" +
+                            "internalName='" + internalName + '\'' +
+                            ", identifiers=" + identifiers +
+                            '}';
+                }
+
                 protected static class Identifying<V extends Identifier> extends Key<V> {
 
                     public static <Q extends Identifier> Key.Identifying<Q> of(MethodDescription methodDescription, Identifier.Factory<Q> factory) {
@@ -350,6 +437,14 @@ public interface MethodGraph {
                         Set<V> keys = new HashSet<V>(this.identifiers);
                         keys.addAll(key.identifiers);
                         return new Key.Identifying<V>(internalName, keys);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Key.Identifying{" +
+                                "internalName='" + internalName + '\'' +
+                                ", identifiers=" + identifiers +
+                                '}';
                     }
                 }
 
@@ -403,6 +498,24 @@ public interface MethodGraph {
                         return new Graph(entries);
                     }
 
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && entries.equals(((Store<?>) other).entries);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return entries.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Key.Store{" +
+                                "entries=" + entries +
+                                '}';
+                    }
+
                     protected static class Graph implements MethodGraph {
 
                         private final LinkedHashMap<Key, Node> entries;
@@ -422,6 +535,24 @@ public interface MethodGraph {
                         @Override
                         public List<Node> listNodes() {
                             return new ArrayList<Node>(entries.values());
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && entries.equals(((Graph) other).entries);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return entries.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "MethodGraph.Compiler.Default.Key.Store.Graph{" +
+                                    "entries=" + entries +
+                                    '}';
                         }
                     }
 
@@ -484,6 +615,33 @@ public interface MethodGraph {
                                 return new Node(key.asTokenKey(), declaringType, methodToken);
                             }
 
+                            @Override
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (other == null || getClass() != other.getClass()) return false;
+                                Ambiguous<?> ambiguous = (Ambiguous<?>) other;
+                                return key.equals(ambiguous.key)
+                                        && declaringType.equals(ambiguous.declaringType)
+                                        && methodToken.equals(ambiguous.methodToken);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = key.hashCode();
+                                result = 31 * result + declaringType.hashCode();
+                                result = 31 * result + methodToken.hashCode();
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous{" +
+                                        "key=" + key +
+                                        ", declaringType=" + declaringType +
+                                        ", methodToken=" + methodToken +
+                                        '}';
+                            }
+
                             protected static class Node implements MethodGraph.Node {
 
                                 private final Key<MethodDescription.Token> key;
@@ -516,6 +674,33 @@ public interface MethodGraph {
                                 @Override
                                 public boolean isMadeVisible() {
                                     return false;
+                                }
+
+                                @Override
+                                public boolean equals(Object other) {
+                                    if (this == other) return true;
+                                    if (other == null || getClass() != other.getClass()) return false;
+                                    Node node = (Node) other;
+                                    return key.equals(node.key)
+                                            && declaringType.equals(node.declaringType)
+                                            && methodToken.equals(node.methodToken);
+                                }
+
+                                @Override
+                                public int hashCode() {
+                                    int result = key.hashCode();
+                                    result = 31 * result + declaringType.hashCode();
+                                    result = 31 * result + methodToken.hashCode();
+                                    return result;
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.Node{" +
+                                            "key=" + key +
+                                            ", declaringType=" + declaringType +
+                                            ", methodToken=" + methodToken +
+                                            '}';
                                 }
                             }
                         }
@@ -561,6 +746,33 @@ public interface MethodGraph {
                                 return new Node(key.asTokenKey(), methodDescription);
                             }
 
+                            @Override
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (other == null || getClass() != other.getClass()) return false;
+                                ForMethod<?> forMethod = (ForMethod<?>) other;
+                                return madeVisible == forMethod.madeVisible
+                                        && key.equals(forMethod.key)
+                                        && methodDescription.equals(forMethod.methodDescription);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = key.hashCode();
+                                result = 31 * result + methodDescription.hashCode();
+                                result = 31 * result + (madeVisible ? 1 : 0);
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod{" +
+                                        "key=" + key +
+                                        ", methodDescription=" + methodDescription +
+                                        ", madeVisible=" + madeVisible +
+                                        '}';
+                            }
+
                             protected static class Node implements MethodGraph.Node {
 
                                 private final Key<MethodDescription.Token> key;
@@ -590,6 +802,28 @@ public interface MethodGraph {
                                 @Override
                                 public boolean isMadeVisible() {
                                     return true;
+                                }
+
+                                @Override
+                                public boolean equals(Object other) {
+                                    return this == other || !(other == null || getClass() != other.getClass())
+                                            && key.equals(((Node) other).key)
+                                            && methodDescription.equals(((Node) other).methodDescription);
+                                }
+
+                                @Override
+                                public int hashCode() {
+                                    int result = key.hashCode();
+                                    result = 31 * result + methodDescription.hashCode();
+                                    return result;
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod.Node{" +
+                                            "key=" + key +
+                                            ", methodDescription=" + methodDescription +
+                                            '}';
                                 }
                             }
                         }
@@ -621,6 +855,11 @@ public interface MethodGraph {
         @Override
         public MethodGraph getInterfaceGraph(TypeDescription typeDescription) {
             return this;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodGraph.Illegal." + name();
         }
     }
 }
