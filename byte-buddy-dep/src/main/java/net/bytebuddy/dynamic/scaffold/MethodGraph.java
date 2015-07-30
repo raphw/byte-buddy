@@ -408,7 +408,7 @@ public interface MethodGraph {
                 protected static class Identifying<V extends Identifier> extends Key<V> {
 
                     public static <Q extends Identifier> Key.Identifying<Q> of(MethodDescription methodDescription, Identifier.Factory<Q> factory) {
-                        return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singleton(factory.wrap(methodDescription.asToken())));
+                        return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singleton(factory.wrap(methodDescription.asDefined().asToken())));
                     }
 
                     protected Identifying(String internalName, V identifier) {
@@ -427,7 +427,7 @@ public interface MethodGraph {
                         return new Key<MethodDescription.Token>(internalName, identifiers);
                     }
 
-                    protected Key.Identifying<V> expandWith(MethodDescription.InDefinedShape methodDescription, Identifier.Factory<V> factory) {
+                    protected Key.Identifying<V> expandWith(MethodDescription methodDescription, Identifier.Factory<V> factory) {
                         Set<V> keys = new HashSet<V>(this.identifiers);
                         keys.add(factory.wrap(methodDescription.asToken()));
                         return new Key.Identifying<V>(internalName, keys);
@@ -593,7 +593,7 @@ public interface MethodGraph {
 
                             @Override
                             public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
-                                Key.Identifying<U> key = this.key.expandWith(methodDescription.asDefined(), identifierFactory);
+                                Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
                                 if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
                                     return methodToken.isBridge() ^ methodDescription.isBridge()
                                             ? methodToken.isBridge() ? new ForMethod<U>(key, methodDescription) : new Ambiguous<U>(key, declaringType, methodToken)
@@ -725,7 +725,7 @@ public interface MethodGraph {
 
                             @Override
                             public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
-                                Key.Identifying<U> key = this.key.expandWith(methodDescription.asDefined(), identifierFactory);
+                                Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
                                         : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, true);
