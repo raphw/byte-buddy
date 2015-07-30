@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
+public class MethodGraphCompilerDefaultHarmonizerForJavaMethodTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -50,7 +50,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
 
     @Test
     public void testMethodEquality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -58,7 +58,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                is(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                is(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -70,7 +70,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
 
     @Test
     public void testMethodNameInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -78,7 +78,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                is(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(BAR,
+                is(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(BAR,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -90,7 +90,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
 
     @Test
     public void testReturnTypeEquality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -98,7 +98,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                is(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                is(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -110,7 +110,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
 
     @Test
     public void testParameterTypeInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -118,7 +118,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                not(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                not(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -130,7 +130,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
 
     @Test
     public void testParameterTypeLengthInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -138,7 +138,7 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                not(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                not(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         mock(GenericTypeDescription.class),
@@ -151,12 +151,12 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
     @Test
     public void testFactory() throws Exception {
         assertThat(MethodGraph.Compiler.Default.forJavaHierarchy(), is((MethodGraph.Compiler) new MethodGraph.Compiler
-                .Default<MethodGraph.Compiler.Default.Identifier.ForJavaMethod.Token>(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.INSTANCE)));
+                .Default<MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token>(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE)));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.Token.class).create(new ObjectPropertyAssertion.Creator<MethodDescription.Token>() {
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token.class).create(new ObjectPropertyAssertion.Creator<MethodDescription.Token>() {
             @Override
             public MethodDescription.Token create() {
                 MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
@@ -169,6 +169,6 @@ public class MethodGraphCompilerDefaultIdentifierForJavaMethodTest {
                 return methodToken;
             }
         }).applyBasic();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Identifier.ForJavaMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.class).apply();
     }
 }

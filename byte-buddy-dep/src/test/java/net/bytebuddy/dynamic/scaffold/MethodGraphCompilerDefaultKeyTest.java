@@ -75,24 +75,21 @@ public class MethodGraphCompilerDefaultKeyTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testInitialEntryCannotBeMerged() throws Exception {
-        new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key
-                .Identifying(FOO, Collections.emptyMap()))
-                .mergeWith(mock(MethodGraph.Compiler.Default.Key.Identifying.class));
+        new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
+                .mergeWith(mock(MethodGraph.Compiler.Default.Key.Harmonized.class));
     }
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testInitialEntryCannotBeTransformed() throws Exception {
-        new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key
-                .Identifying(FOO, Collections.emptyMap()))
+        new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
                 .asNode();
     }
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testInitialEntryCannotExposeKey() throws Exception {
-        new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key
-                .Identifying(FOO, Collections.emptyMap()))
+        new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
                 .getKey();
     }
 
@@ -104,7 +101,7 @@ public class MethodGraphCompilerDefaultKeyTest {
                 return Collections.singleton(new Object());
             }
         }).applyBasic();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Identifying.class).create(new ObjectPropertyAssertion.Creator<Set<?>>() {
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Harmonized.class).create(new ObjectPropertyAssertion.Creator<Set<?>>() {
             @Override
             public Set<?> create() {
                 return Collections.singleton(new Object());

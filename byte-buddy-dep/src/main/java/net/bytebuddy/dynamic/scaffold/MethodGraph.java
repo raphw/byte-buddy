@@ -166,18 +166,22 @@ public interface MethodGraph {
 
         class Default<T> implements Compiler {
 
+            public static <S> Compiler of(Harmonizer<S> harmonizer) {
+                return new Default<S>(harmonizer);
+            }
+
             public static Compiler forJavaHierarchy() {
-                return new Default<Identifier.ForJavaMethod.Token>(Identifier.ForJavaMethod.INSTANCE);
+                return of(Harmonizer.ForJavaMethod.INSTANCE);
             }
 
             public static Compiler forJVMHierarchy() {
-                return new Default<Identifier.ForJVMMethod.Token>(Identifier.ForJVMMethod.INSTANCE);
+                return of(Harmonizer.ForJVMMethod.INSTANCE);
             }
 
-            private final Identifier<T> identifier;
+            private final Harmonizer<T> harmonizer;
 
-            public Default(Identifier<T> identifier) {
-                this.identifier = identifier;
+            protected Default(Harmonizer<T> harmonizer) {
+                this.harmonizer = harmonizer;
             }
 
             @Override
@@ -227,7 +231,7 @@ public interface MethodGraph {
                     keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
                 }
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
-                    keyStore = keyStore.registerTopLevel(methodDescription, identifier);
+                    keyStore = keyStore.registerTopLevel(methodDescription, harmonizer);
                 }
                 return keyStore;
             }
@@ -235,131 +239,131 @@ public interface MethodGraph {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && identifier.equals(((Default<?>) other).identifier);
+                        && harmonizer.equals(((Default<?>) other).harmonizer);
             }
 
             @Override
             public int hashCode() {
-                return identifier.hashCode();
+                return harmonizer.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodGraph.Compiler.Default{" +
-                        "identifier=" + identifier +
+                        "harmonizer=" + harmonizer +
                         '}';
             }
 
-            public interface Identifier<T> {
+            public interface Harmonizer<S> {
 
-                    T wrap(MethodDescription.Token methodToken);
+                S wrap(MethodDescription.Token methodToken);
 
-                    enum ForJavaMethod implements Identifier<ForJavaMethod.Token> {
+                enum ForJavaMethod implements Harmonizer<ForJavaMethod.Token> {
 
-                        INSTANCE;
+                    INSTANCE;
+
+                    @Override
+                    public Token wrap(MethodDescription.Token methodToken) {
+                        return new Token(methodToken);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod." + name();
+                    }
+
+                    protected static class Token {
+
+                        private final MethodDescription.Token methodToken;
+
+                        protected Token(MethodDescription.Token methodToken) {
+                            this.methodToken = methodToken;
+                        }
 
                         @Override
-                        public Token wrap(MethodDescription.Token methodToken) {
-                            return new Token(methodToken);
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (!(other instanceof Token)) return false;
+                            Token forJavaMethod = (Token) other;
+                            List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = forJavaMethod.methodToken.getParameterTokens();
+                            if (tokens.size() != otherTokens.size()) return false;
+                            for (int index = 0; index < tokens.size(); index++) {
+                                if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
+                            }
+                            return true;
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = 17;
+                            for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
+                                result = 31 * result + parameterToken.getType().asRawType().hashCode();
+                            }
+                            return result;
                         }
 
                         @Override
                         public String toString() {
-                            return "MethodGraph.Compiler.Default.Identifier.ForJavaMethod." + name();
-                        }
-
-                        protected static class Token {
-
-                            private final MethodDescription.Token methodToken;
-
-                            protected Token(MethodDescription.Token methodToken) {
-                                this.methodToken = methodToken;
-                            }
-
-                            @Override
-                            public boolean equals(Object other) {
-                                if (this == other) return true;
-                                if (!(other instanceof Token)) return false;
-                                Token forJavaMethod = (Token) other;
-                                List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = forJavaMethod.methodToken.getParameterTokens();
-                                if (tokens.size() != otherTokens.size()) return false;
-                                for (int index = 0; index < tokens.size(); index++) {
-                                    if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
-                                }
-                                return true;
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                int result = 17;
-                                for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                                    result = 31 * result + parameterToken.getType().asRawType().hashCode();
-                                }
-                                return result;
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "MethodGraph.Compiler.Default.Identifier.ForJavaMethod.Token{" +
-                                        "methodToken=" + methodToken +
-                                        '}';
-                            }
+                            return "MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token{" +
+                                    "methodToken=" + methodToken +
+                                    '}';
                         }
                     }
+                }
 
-                    enum ForJVMMethod implements Identifier<ForJVMMethod.Token> {
+                enum ForJVMMethod implements Harmonizer<ForJVMMethod.Token> {
 
-                        INSTANCE;
+                    INSTANCE;
+
+                    @Override
+                    public Token wrap(MethodDescription.Token methodToken) {
+                        return new Token(methodToken);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Harmonizer.ForJVMMethod." + name();
+                    }
+
+                    protected static class Token {
+
+                        private final MethodDescription.Token methodToken;
+
+                        public Token(MethodDescription.Token methodToken) {
+                            this.methodToken = methodToken;
+                        }
 
                         @Override
-                        public Token wrap(MethodDescription.Token methodToken) {
-                            return new Token(methodToken);
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (!(other instanceof Token)) return false;
+                            Token token = (Token) other;
+                            if (!methodToken.getReturnType().asRawType().equals(token.methodToken.getReturnType().asRawType())) return false;
+                            List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = token.methodToken.getParameterTokens();
+                            if (tokens.size() != otherTokens.size()) return false;
+                            for (int index = 0; index < tokens.size(); index++) {
+                                if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
+                            }
+                            return true;
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = methodToken.getReturnType().asRawType().hashCode();
+                            for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
+                                result = 31 * result + parameterToken.getType().asRawType().hashCode();
+                            }
+                            return result;
                         }
 
                         @Override
                         public String toString() {
-                            return "MethodGraph.Compiler.Default.Identifier.ForJVMMethod." + name();
-                        }
-
-                        protected static class Token {
-
-                            private final MethodDescription.Token methodToken;
-
-                            public Token(MethodDescription.Token methodToken) {
-                                this.methodToken = methodToken;
-                            }
-
-                            @Override
-                            public boolean equals(Object other) {
-                                if (this == other) return true;
-                                if (!(other instanceof Token)) return false;
-                                Token token = (Token) other;
-                                if (!methodToken.getReturnType().asRawType().equals(token.methodToken.getReturnType().asRawType())) return false;
-                                List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = token.methodToken.getParameterTokens();
-                                if (tokens.size() != otherTokens.size()) return false;
-                                for (int index = 0; index < tokens.size(); index++) {
-                                    if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
-                                }
-                                return true;
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                int result = methodToken.getReturnType().asRawType().hashCode();
-                                for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                                    result = 31 * result + parameterToken.getType().asRawType().hashCode();
-                                }
-                                return result;
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "MethodGraph.Compiler.Default.Identifier.ForJVMMethod.Token{" +
-                                        "methodToken=" + methodToken +
-                                        '}';
-                            }
+                            return "MethodGraph.Compiler.Default.Harmonizer.ForJVMMethod.Token{" +
+                                    "methodToken=" + methodToken +
+                                    '}';
                         }
                     }
+                }
             }
 
             protected abstract static class Key<S> {
@@ -386,8 +390,8 @@ public interface MethodGraph {
 
                 protected static class Detached extends Key<MethodDescription.Token> {
 
-                    public static Key.Detached of(MethodDescription.Token methodToken) {
-                        return new Key.Detached(methodToken.getInternalName(), Collections.singleton(methodToken));
+                    public static Detached of(MethodDescription.Token methodToken) {
+                        return new Detached(methodToken.getInternalName(), Collections.singleton(methodToken));
                     }
 
                     private final Set<MethodDescription.Token> identifiers;
@@ -417,31 +421,31 @@ public interface MethodGraph {
                     }
                 }
 
-                protected static class Identifying<V> extends Key<V> {
+                protected static class Harmonized<V> extends Key<V> {
 
-                    public static <Q> Key.Identifying<Q> of(MethodDescription.InDefinedShape methodDescription, Identifier<Q> factory) {
+                    public static <Q> Harmonized<Q> of(MethodDescription.InDefinedShape methodDescription, Harmonizer<Q> factory) {
                         MethodDescription.Token methodToken = methodDescription.asToken();
-                        return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singletonMap(factory.wrap(methodToken), Collections.singleton(methodToken)));
+                        return new Harmonized<Q>(methodDescription.getInternalName(), Collections.singletonMap(factory.wrap(methodToken), Collections.singleton(methodToken)));
                     }
 
                     private final Map<V, Set<MethodDescription.Token>> identifiers;
 
-                    protected Identifying(String internalName, Map<V, Set<MethodDescription.Token>> identifiers) {
+                    protected Harmonized(String internalName, Map<V, Set<MethodDescription.Token>> identifiers) {
                         super(internalName);
                         this.identifiers = identifiers;
                     }
 
-                    protected Key.Detached asDetachedKey() {
+                    protected Detached detach() {
                         Set<MethodDescription.Token> identifiers = new HashSet<MethodDescription.Token>();
                         for (Set<MethodDescription.Token> methodTokens : this.identifiers.values()) {
                             for (MethodDescription.Token methodToken : methodTokens) {
                                 identifiers.add(methodToken);
                             }
                         }
-                        return new Key.Detached(internalName, identifiers);
+                        return new Detached(internalName, identifiers);
                     }
 
-                    protected Key.Identifying<V> expandWith(MethodDescription methodDescription, Identifier<V> factory) {
+                    protected Harmonized<V> expandWith(MethodDescription methodDescription, Harmonizer<V> factory) {
                         Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
                         MethodDescription.Token methodToken = methodDescription.asToken();
                         V identifier = factory.wrap(methodToken);
@@ -453,10 +457,10 @@ public interface MethodGraph {
                             methodTokens.add(methodToken);
                             identifiers.put(identifier, methodTokens);
                         }
-                        return new Key.Identifying<V>(internalName, identifiers);
+                        return new Harmonized<V>(internalName, identifiers);
                     }
 
-                    protected Key.Identifying<V> mergeWith(Key.Identifying<V> key) {
+                    protected Harmonized<V> mergeWith(Harmonized<V> key) {
                         Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
                         for (Map.Entry<V, Set<MethodDescription.Token>> entry : key.identifiers.entrySet()) {
                             Set<MethodDescription.Token> methodTokens = identifiers.get(entry.getKey());
@@ -468,7 +472,7 @@ public interface MethodGraph {
                                 identifiers.put(entry.getKey(), methodTokens);
                             }
                         }
-                        return new Key.Identifying<V>(internalName, identifiers);
+                        return new Harmonized<V>(internalName, identifiers);
                     }
 
                     @Override
@@ -478,7 +482,7 @@ public interface MethodGraph {
 
                     @Override
                     public String toString() {
-                        return "MethodGraph.Compiler.Default.Key.Identifying{" +
+                        return "MethodGraph.Compiler.Default.Key.Harmonized{" +
                                 "internalName='" + internalName + '\'' +
                                 ", identifiers=" + identifiers +
                                 '}';
@@ -489,23 +493,23 @@ public interface MethodGraph {
 
                     private static final int EMPTY = 0;
 
-                    private final LinkedHashMap<Key.Identifying<V>, Entry<V>> entries;
+                    private final LinkedHashMap<Harmonized<V>, Entry<V>> entries;
 
                     protected Store() {
-                        this(new LinkedHashMap<Key.Identifying<V>, Entry<V>>(EMPTY));
+                        this(new LinkedHashMap<Harmonized<V>, Entry<V>>(EMPTY));
                     }
 
-                    private Store(LinkedHashMap<Key.Identifying<V>, Entry<V>> entries) {
+                    private Store(LinkedHashMap<Harmonized<V>, Entry<V>> entries) {
                         this.entries = entries;
                     }
 
-                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Identifier<V> factory) {
-                        Key.Identifying<V> key = Key.Identifying.of(methodDescription.asDefined(), factory);
+                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> factory) {
+                        Harmonized<V> key = Harmonized.of(methodDescription.asDefined(), factory);
                         Entry<V> currentEntry = entries.get(key);
                         Entry<V> expandedEntry = (currentEntry == null
                                 ? new Entry.Initial<V>(key)
                                 : currentEntry).expandWith(methodDescription, factory);
-                        LinkedHashMap<Key.Identifying<V>, Entry<V>> entries = new LinkedHashMap<Key.Identifying<V>, Entry<V>>(this.entries);
+                        LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         entries.put(expandedEntry.getKey(), expandedEntry);
                         return new Store<V>(entries);
                     }
@@ -519,7 +523,7 @@ public interface MethodGraph {
                     }
 
                     protected Store<V> inject(Entry<V> entry) {
-                        LinkedHashMap<Key.Identifying<V>, Entry<V>> entries = new LinkedHashMap<Key.Identifying<V>, Entry<V>>(this.entries);
+                        LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         Entry<V> dominantEntry = entries.get(entry.getKey());
                         Entry<V> mergedEntry = dominantEntry == null
                                 ? entry
@@ -531,7 +535,7 @@ public interface MethodGraph {
                     protected MethodGraph asGraph() {
                         LinkedHashMap<Key<MethodDescription.Token>, Node> entries = new LinkedHashMap<Key<MethodDescription.Token>, Node>(this.entries.size());
                         for (Entry<V> entry : this.entries.values()) {
-                            entries.put(entry.getKey().asDetachedKey(), entry.asNode());
+                            entries.put(entry.getKey().detach(), entry.asNode());
                         }
                         return new Graph(entries);
                     }
@@ -564,7 +568,7 @@ public interface MethodGraph {
 
                         @Override
                         public Node locate(MethodDescription.Token methodToken) {
-                            Node node = entries.get(Key.Detached.of(methodToken));
+                            Node node = entries.get(Detached.of(methodToken));
                             return node == null
                                     ? Node.Illegal.INSTANCE
                                     : node;
@@ -596,34 +600,34 @@ public interface MethodGraph {
 
                     protected interface Entry<W> {
 
-                        Key.Identifying<W> getKey();
+                        Harmonized<W> getKey();
 
-                        Entry<W> expandWith(MethodDescription methodDescription, Identifier<W> identifierFactory);
+                        Entry<W> expandWith(MethodDescription methodDescription, Harmonizer<W> harmonizer);
 
-                        Entry<W> mergeWith(Key.Identifying<W> key);
+                        Entry<W> mergeWith(Harmonized<W> key);
 
                         Node asNode();
 
                         class Initial<U> implements Entry<U> {
 
-                            private final Key.Identifying<U> key;
+                            private final Harmonized<U> key;
 
-                            protected Initial(Key.Identifying<U> key) {
+                            protected Initial(Harmonized<U> key) {
                                 this.key = key;
                             }
 
                             @Override
-                            public Identifying<U> getKey() {
+                            public Harmonized<U> getKey() {
                                 throw new IllegalStateException("Cannot extract key without a registered method: " + this);
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier<U> identifierFactory) {
-                                return new ForMethod<U>(key.expandWith(methodDescription, identifierFactory), methodDescription, false);
+                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
+                                return new ForMethod<U>(key.expandWith(methodDescription, harmonizer), methodDescription, false);
                             }
 
                             @Override
-                            public Entry<U> mergeWith(Identifying<U> key) {
+                            public Entry<U> mergeWith(Harmonized<U> key) {
                                 throw new IllegalStateException("Cannot merge initial entry without a registered method: " + this);
                             }
 
@@ -651,39 +655,39 @@ public interface MethodGraph {
 
                         class ForMethod<U> implements Entry<U> {
 
-                            private final Key.Identifying<U> key;
+                            private final Harmonized<U> key;
 
                             private final MethodDescription methodDescription;
 
                             private final boolean madeVisible;
 
-                            protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription, boolean madeVisible) {
+                            protected ForMethod(Harmonized<U> key, MethodDescription methodDescription, boolean madeVisible) {
                                 this.key = key;
                                 this.methodDescription = methodDescription;
                                 this.madeVisible = madeVisible;
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier<U> identifierFactory) {
-                                Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
+                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
+                                Harmonized<U> key = this.key.expandWith(methodDescription, harmonizer);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
                                         : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge());
                             }
 
                             @Override
-                            public Entry<U> mergeWith(Key.Identifying<U> key) {
+                            public Entry<U> mergeWith(Harmonized<U> key) {
                                 return new Entry.ForMethod<U>(key.mergeWith(key), methodDescription, madeVisible);
                             }
 
                             @Override
-                            public Key.Identifying<U> getKey() {
+                            public Harmonized<U> getKey() {
                                 return key;
                             }
 
                             @Override
                             public MethodGraph.Node asNode() {
-                                return new Node(key.asDetachedKey(), methodDescription, madeVisible);
+                                return new Node(key.detach(), methodDescription, madeVisible);
                             }
 
                             @Override
@@ -715,13 +719,13 @@ public interface MethodGraph {
 
                             protected static class Node implements MethodGraph.Node {
 
-                                private final Key.Detached key;
+                                private final Detached key;
 
                                 private final MethodDescription methodDescription;
 
                                 private final boolean madeVisible;
 
-                                public Node(Key.Detached key, MethodDescription methodDescription, boolean madeVisible) {
+                                public Node(Detached key, MethodDescription methodDescription, boolean madeVisible) {
                                     this.key = key;
                                     this.methodDescription = methodDescription;
                                     this.madeVisible = madeVisible;
@@ -778,32 +782,32 @@ public interface MethodGraph {
 
                         class Ambiguous<U> implements Entry<U> {
 
-                            private final Key.Identifying<U> key;
+                            private final Harmonized<U> key;
 
                             private final TypeDescription declaringType;
 
                             private final MethodDescription.Token methodToken;
 
-                            protected static <Q> Entry<Q> of(Key.Identifying<Q> key, MethodDescription left, MethodDescription right) {
+                            protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right) {
                                 return left.isBridge() ^ right.isBridge()
                                         ? new ForMethod<Q>(key, left.isBridge() ? right : left, false)
                                         : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), right.asToken());
                             }
 
-                            protected Ambiguous(Key.Identifying<U> key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                            protected Ambiguous(Harmonized<U> key, TypeDescription declaringType, MethodDescription.Token methodToken) {
                                 this.key = key;
                                 this.declaringType = declaringType;
                                 this.methodToken = methodToken;
                             }
 
                             @Override
-                            public Key.Identifying<U> getKey() {
+                            public Harmonized<U> getKey() {
                                 return key;
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier<U> identifierFactory) {
-                                Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
+                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
+                                Harmonized<U> key = this.key.expandWith(methodDescription, harmonizer);
                                 if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
                                     return methodToken.isBridge() ^ methodDescription.isBridge()
                                             ? methodToken.isBridge() ? new ForMethod<U>(key, methodDescription, false) : new Ambiguous<U>(key, declaringType, methodToken)
@@ -816,13 +820,13 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> mergeWith(Key.Identifying<U> key) {
+                            public Entry<U> mergeWith(Harmonized<U> key) {
                                 return new Ambiguous<U>(key.mergeWith(key), declaringType, methodToken);
                             }
 
                             @Override
                             public MethodGraph.Node asNode() {
-                                return new Node(key.asDetachedKey(), declaringType, methodToken);
+                                return new Node(key.detach(), declaringType, methodToken);
                             }
 
                             @Override
@@ -854,13 +858,13 @@ public interface MethodGraph {
 
                             protected static class Node implements MethodGraph.Node {
 
-                                private final Key.Detached key;
+                                private final Detached key;
 
                                 private final TypeDescription declaringType;
 
                                 private final MethodDescription.Token methodToken;
 
-                                public Node(Key.Detached key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                                public Node(Detached key, TypeDescription declaringType, MethodDescription.Token methodToken) {
                                     this.key = key;
                                     this.declaringType = declaringType;
                                     this.methodToken = methodToken;
