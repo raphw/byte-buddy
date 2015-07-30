@@ -76,7 +76,7 @@ public enum MethodInvocation {
             return STATIC.new Invocation(methodDescription);
         } else if (methodDescription.isConstructor()) {
             return SPECIAL_CONSTRUCTOR.new Invocation(methodDescription); // Check this property second, constructors might be private
-        } else if (methodDescription.isPrivate() || methodDescription.isDefaultMethod()) {
+        } else if (methodDescription.isPrivate()) {
             return SPECIAL.new Invocation(methodDescription);
         } else if (methodDescription.getDeclaringType().asRawType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
             return INTERFACE.new Invocation(methodDescription);
