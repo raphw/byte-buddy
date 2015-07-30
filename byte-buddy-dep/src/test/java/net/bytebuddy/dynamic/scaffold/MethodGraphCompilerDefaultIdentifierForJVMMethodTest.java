@@ -4,7 +4,6 @@ import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -51,7 +50,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testMethodEqualityHashCode() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -59,7 +58,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)).hashCode(),
-                is(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                is(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -71,7 +70,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testMethodNameInequalityHashCode() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -79,7 +78,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)).hashCode(),
-                is(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(BAR,
+                is(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(BAR,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -91,7 +90,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testReturnTypeInequalityHashCode() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -99,7 +98,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)).hashCode(),
-                not(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                not(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         second,
@@ -111,7 +110,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testParameterTypeInequalityHashCode() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -119,7 +118,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)).hashCode(),
-                not(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                not(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -131,7 +130,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testParameterTypeLengthInequalityHashCode() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -139,7 +138,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)).hashCode(),
-                not(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                not(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -151,7 +150,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testMethodEquality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -159,7 +158,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                is(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                is(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -171,7 +170,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testMethodNameInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -179,7 +178,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                is(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(BAR,
+                is(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(BAR,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -191,7 +190,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testReturnTypeInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -199,7 +198,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                not(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                not(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         second,
@@ -211,7 +210,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testParameterTypeInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -219,7 +218,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                not(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                not(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -231,7 +230,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
 
     @Test
     public void testParameterTypeLengthInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+        assertThat(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -239,7 +238,7 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)),
-                not(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
+                not(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(mock(GenericTypeDescription.class)),
                         first,
@@ -252,12 +251,12 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
     @Test
     public void testFactory() throws Exception {
         assertThat(MethodGraph.Compiler.Default.forJVMHierarchy(), is((MethodGraph.Compiler) new MethodGraph.Compiler
-                .Default<MethodGraph.Compiler.Default.Identifier.ForJVMMethod>(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.INSTANCE)));
+                .Default<MethodGraph.Compiler.Default.Identifier.ForJVMMethod.Token>(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.INSTANCE)));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.class).create(new ObjectPropertyAssertion.Creator<MethodDescription.Token>() {
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.Token.class).create(new ObjectPropertyAssertion.Creator<MethodDescription.Token>() {
             @Override
             public MethodDescription.Token create() {
                 MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
@@ -269,6 +268,6 @@ public class MethodGraphCompilerDefaultIdentifierForJVMMethodTest {
                 return methodToken;
             }
         }).applyBasic();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Identifier.ForJVMMethod.class).apply();
     }
 }

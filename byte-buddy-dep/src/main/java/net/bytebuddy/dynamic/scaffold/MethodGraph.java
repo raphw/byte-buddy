@@ -164,20 +164,20 @@ public interface MethodGraph {
 
         MethodGraph.Linked make(TypeDescription typeDescription);
 
-        class Default<T extends Default.Identifier> implements Compiler {
+        class Default<T> implements Compiler {
 
             public static Compiler forJavaHierarchy() {
-                return new Default<Identifier.ForJavaMethod>(Identifier.Factory.ForJavaMethod.INSTANCE);
+                return new Default<Identifier.ForJavaMethod.Token>(Identifier.ForJavaMethod.INSTANCE);
             }
 
             public static Compiler forJVMHierarchy() {
-                return new Default<Identifier.ForJVMMethod>(Identifier.Factory.ForJVMMethod.INSTANCE);
+                return new Default<Identifier.ForJVMMethod.Token>(Identifier.ForJVMMethod.INSTANCE);
             }
 
-            private final Identifier.Factory<T> identifierFactory;
+            private final Identifier<T> identifier;
 
-            public Default(Identifier.Factory<T> identifierFactory) {
-                this.identifierFactory = identifierFactory;
+            public Default(Identifier<T> identifier) {
+                this.identifier = identifier;
             }
 
             @Override
@@ -227,7 +227,7 @@ public interface MethodGraph {
                     keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
                 }
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
-                    keyStore = keyStore.registerTopLevel(methodDescription, identifierFactory);
+                    keyStore = keyStore.registerTopLevel(methodDescription, identifier);
                 }
                 return keyStore;
             }
@@ -235,161 +235,153 @@ public interface MethodGraph {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && identifierFactory.equals(((Default<?>) other).identifierFactory);
+                        && identifier.equals(((Default<?>) other).identifier);
             }
 
             @Override
             public int hashCode() {
-                return identifierFactory.hashCode();
+                return identifier.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodGraph.Compiler.Default{" +
-                        "identifierFactory=" + identifierFactory +
+                        "identifier=" + identifier +
                         '}';
             }
 
-            public interface Identifier {
-
-                MethodDescription.Token getToken();
-
-                interface Factory<T extends Identifier> {
+            public interface Identifier<T> {
 
                     T wrap(MethodDescription.Token methodToken);
 
-                    enum ForJavaMethod implements Factory<Identifier.ForJavaMethod> {
+                    enum ForJavaMethod implements Identifier<ForJavaMethod.Token> {
 
                         INSTANCE;
 
                         @Override
-                        public Identifier.ForJavaMethod wrap(MethodDescription.Token methodToken) {
-                            return new Identifier.ForJavaMethod(methodToken);
+                        public Token wrap(MethodDescription.Token methodToken) {
+                            return new Token(methodToken);
                         }
 
                         @Override
                         public String toString() {
-                            return "MethodGraph.Compiler.Default.Identifier.Factory.ForJavaMethod." + name();
+                            return "MethodGraph.Compiler.Default.Identifier.ForJavaMethod." + name();
+                        }
+
+                        protected static class Token {
+
+                            private final MethodDescription.Token methodToken;
+
+                            protected Token(MethodDescription.Token methodToken) {
+                                this.methodToken = methodToken;
+                            }
+
+                            @Override
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (!(other instanceof Token)) return false;
+                                Token forJavaMethod = (Token) other;
+                                List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = forJavaMethod.methodToken.getParameterTokens();
+                                if (tokens.size() != otherTokens.size()) return false;
+                                for (int index = 0; index < tokens.size(); index++) {
+                                    if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
+                                }
+                                return true;
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = 17;
+                                for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
+                                    result = 31 * result + parameterToken.getType().asRawType().hashCode();
+                                }
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "MethodGraph.Compiler.Default.Identifier.ForJavaMethod.Token{" +
+                                        "methodToken=" + methodToken +
+                                        '}';
+                            }
                         }
                     }
 
-                    enum ForJVMMethod implements Factory<Identifier.ForJVMMethod> {
+                    enum ForJVMMethod implements Identifier<ForJVMMethod.Token> {
 
                         INSTANCE;
 
                         @Override
-                        public Identifier.ForJVMMethod wrap(MethodDescription.Token methodToken) {
-                            return new Identifier.ForJVMMethod(methodToken);
+                        public Token wrap(MethodDescription.Token methodToken) {
+                            return new Token(methodToken);
                         }
 
                         @Override
                         public String toString() {
-                            return "MethodGraph.Compiler.Default.Identifier.Factory.ForJVMMethod." + name();
+                            return "MethodGraph.Compiler.Default.Identifier.ForJVMMethod." + name();
+                        }
+
+                        protected static class Token {
+
+                            private final MethodDescription.Token methodToken;
+
+                            public Token(MethodDescription.Token methodToken) {
+                                this.methodToken = methodToken;
+                            }
+
+                            @Override
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (!(other instanceof Token)) return false;
+                                Token token = (Token) other;
+                                if (!methodToken.getReturnType().asRawType().equals(token.methodToken.getReturnType().asRawType())) return false;
+                                List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = token.methodToken.getParameterTokens();
+                                if (tokens.size() != otherTokens.size()) return false;
+                                for (int index = 0; index < tokens.size(); index++) {
+                                    if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
+                                }
+                                return true;
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = methodToken.getReturnType().asRawType().hashCode();
+                                for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
+                                    result = 31 * result + parameterToken.getType().asRawType().hashCode();
+                                }
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "MethodGraph.Compiler.Default.Identifier.ForJVMMethod.Token{" +
+                                        "methodToken=" + methodToken +
+                                        '}';
+                            }
                         }
                     }
-                }
-
-                class ForJavaMethod implements Identifier {
-
-                    private final MethodDescription.Token methodToken;
-
-                    protected ForJavaMethod(MethodDescription.Token methodToken) {
-                        this.methodToken = methodToken;
-                    }
-
-                    @Override
-                    public MethodDescription.Token getToken() {
-                        return methodToken;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof ForJavaMethod)) return false;
-                        ForJavaMethod forJavaMethod = (ForJavaMethod) other;
-                        List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = forJavaMethod.methodToken.getParameterTokens();
-                        if (tokens.size() != otherTokens.size()) return false;
-                        for (int index = 0; index < tokens.size(); index++) {
-                            if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
-                        }
-                        return true;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = 17;
-                        for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                            result = 31 * result + parameterToken.getType().asRawType().hashCode();
-                        }
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Identifier.ForJavaMethod{" +
-                                "methodToken=" + methodToken +
-                                '}';
-                    }
-                }
-
-                class ForJVMMethod implements Identifier {
-
-                    private final MethodDescription.Token methodToken;
-
-                    public ForJVMMethod(MethodDescription.Token methodToken) {
-                        this.methodToken = methodToken;
-                    }
-
-                    @Override
-                    public MethodDescription.Token getToken() {
-                        return methodToken;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof ForJVMMethod)) return false;
-                        ForJVMMethod forJavaMethod = (ForJVMMethod) other;
-                        if (!methodToken.getReturnType().asRawType().equals(forJavaMethod.methodToken.getReturnType().asRawType())) return false;
-                        List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = forJavaMethod.methodToken.getParameterTokens();
-                        if (tokens.size() != otherTokens.size()) return false;
-                        for (int index = 0; index < tokens.size(); index++) {
-                            if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
-                        }
-                        return true;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = methodToken.getReturnType().asRawType().hashCode();
-                        for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                            result = 31 * result + parameterToken.getType().asRawType().hashCode();
-                        }
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Identifier.ForJVMMethod{" +
-                                "methodToken=" + methodToken +
-                                '}';
-                    }
-                }
             }
 
             protected static class Key<S> {
 
+                public static Key<MethodDescription.Token> of(MethodDescription.Token methodToken) {
+                    return new Key<MethodDescription.Token>(methodToken.getInternalName(), Collections.singletonMap(methodToken, Collections.singleton(methodToken)));
+                }
+
                 protected final String internalName;
 
-                protected final Set<S> identifiers;
+                protected final Map<S, Set<MethodDescription.Token>> identifiers;
 
-                protected Key(String internalName, Set<S> identifiers) {
+                protected Key(String internalName, Map<S, Set<MethodDescription.Token>> identifiers) {
                     this.internalName = internalName;
                     this.identifiers = identifiers;
                 }
 
-                protected Set<S> resolveBridges(S excluded) {
-                    Set<S> tokens = new HashSet<S>(this.identifiers);
+                protected Set<MethodDescription.Token> resolveBridges(MethodDescription.Token excluded) {
+                    Set<MethodDescription.Token> tokens = new HashSet<MethodDescription.Token>();
+                    for (Set<MethodDescription.Token> methodTokens : identifiers.values()) {
+                        tokens.addAll(methodTokens);
+                    }
                     tokens.remove(excluded);
                     return tokens;
                 }
@@ -398,7 +390,7 @@ public interface MethodGraph {
                 public boolean equals(Object other) {
                     return other == this || (other instanceof Key
                             && internalName.equals(((Key) other).internalName)
-                            && !Collections.disjoint(identifiers, ((Key) other).identifiers));
+                            && !Collections.disjoint(identifiers.keySet(), ((Key) other).identifiers.keySet()));
                 }
 
                 @Override
@@ -414,34 +406,55 @@ public interface MethodGraph {
                             '}';
                 }
 
-                protected static class Identifying<V extends Identifier> extends Key<V> {
+                protected static class Identifying<V> extends Key<V> {
 
-                    public static <Q extends Identifier> Key.Identifying<Q> of(MethodDescription.InDefinedShape methodDescription, Identifier.Factory<Q> factory) {
-                        return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singleton(factory.wrap(methodDescription.asToken())));
+                    public static <Q> Key.Identifying<Q> of(MethodDescription.InDefinedShape methodDescription, Identifier<Q> factory) {
+                        MethodDescription.Token methodToken = methodDescription.asToken();
+                        return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singletonMap(factory.wrap(methodToken), Collections.singleton(methodToken)));
                     }
 
-                    protected Identifying(String internalName, Set<V> identifiers) {
+                    protected Identifying(String internalName, Map<V, Set<MethodDescription.Token>> identifiers) {
                         super(internalName, identifiers);
                     }
 
                     protected Key<MethodDescription.Token> asTokenKey() {
-                        Set<MethodDescription.Token> identifiers = new HashSet<MethodDescription.Token>(this.identifiers.size());
-                        for (V identifier : this.identifiers) {
-                            identifiers.add(identifier.getToken());
+                        Map<MethodDescription.Token, Set<MethodDescription.Token>> identifiers = new HashMap<MethodDescription.Token, Set<MethodDescription.Token>>();
+                        for (Set<MethodDescription.Token> methodTokens : this.identifiers.values()) {
+                            for (MethodDescription.Token methodToken : methodTokens) {
+                                identifiers.put(methodToken, Collections.singleton(methodToken));
+                            }
                         }
                         return new Key<MethodDescription.Token>(internalName, identifiers);
                     }
 
-                    protected Key.Identifying<V> expandWith(MethodDescription methodDescription, Identifier.Factory<V> factory) {
-                        Set<V> keys = new HashSet<V>(this.identifiers);
-                        keys.add(factory.wrap(methodDescription.asToken()));
-                        return new Key.Identifying<V>(internalName, keys);
+                    protected Key.Identifying<V> expandWith(MethodDescription methodDescription, Identifier<V> factory) {
+                        Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
+                        MethodDescription.Token methodToken = methodDescription.asToken();
+                        V identifier = factory.wrap(methodToken);
+                        Set<MethodDescription.Token> methodTokens = identifiers.get(identifier);
+                        if (methodTokens == null) {
+                            identifiers.put(identifier, Collections.singleton(methodToken));
+                        } else {
+                            methodTokens = new HashSet<MethodDescription.Token>(methodTokens);
+                            methodTokens.add(methodToken);
+                            identifiers.put(identifier, methodTokens);
+                        }
+                        return new Key.Identifying<V>(internalName, identifiers);
                     }
 
                     protected Key.Identifying<V> mergeWith(Key.Identifying<V> key) {
-                        Set<V> keys = new HashSet<V>(this.identifiers);
-                        keys.addAll(key.identifiers);
-                        return new Key.Identifying<V>(internalName, keys);
+                        Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
+                        for (Map.Entry<V, Set<MethodDescription.Token>> entry : key.identifiers.entrySet()) {
+                            Set<MethodDescription.Token> methodTokens = identifiers.get(entry.getKey());
+                            if (methodTokens == null) {
+                                identifiers.put(entry.getKey(), entry.getValue());
+                            } else {
+                                methodTokens = new HashSet<MethodDescription.Token>(methodTokens);
+                                methodTokens.addAll(entry.getValue());
+                                identifiers.put(entry.getKey(), methodTokens);
+                            }
+                        }
+                        return new Key.Identifying<V>(internalName, identifiers);
                     }
 
                     @Override
@@ -453,7 +466,7 @@ public interface MethodGraph {
                     }
                 }
 
-                protected static class Store<V extends Identifier> {
+                protected static class Store<V> {
 
                     private static final int EMPTY = 0;
 
@@ -467,7 +480,7 @@ public interface MethodGraph {
                         this.entries = entries;
                     }
 
-                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Identifier.Factory<V> factory) {
+                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Identifier<V> factory) {
                         Key.Identifying<V> key = Key.Identifying.of(methodDescription.asDefined(), factory);
                         Entry<V> currentEntry = entries.get(key);
                         Entry<V> expandedEntry = (currentEntry == null
@@ -532,7 +545,7 @@ public interface MethodGraph {
 
                         @Override
                         public Node locate(MethodDescription.Token methodToken) {
-                            Node node = entries.get(new Key<MethodDescription.Token>(methodToken.getInternalName(), Collections.singleton(methodToken)));
+                            Node node = entries.get(Key.of(methodToken));
                             return node == null
                                     ? Node.Illegal.INSTANCE
                                     : node;
@@ -562,17 +575,17 @@ public interface MethodGraph {
                         }
                     }
 
-                    protected interface Entry<W extends Identifier> {
+                    protected interface Entry<W> {
 
                         Key.Identifying<W> getKey();
 
-                        Entry<W> expandWith(MethodDescription methodDescription, Identifier.Factory<W> identifierFactory);
+                        Entry<W> expandWith(MethodDescription methodDescription, Identifier<W> identifierFactory);
 
                         Entry<W> mergeWith(Key.Identifying<W> key);
 
                         Node asNode();
 
-                        class Initial<U extends Identifier> implements Entry<U> {
+                        class Initial<U> implements Entry<U> {
 
                             private final Key.Identifying<U> key;
 
@@ -586,7 +599,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
+                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier<U> identifierFactory) {
                                 return new ForMethod<U>(key.expandWith(methodDescription, identifierFactory), methodDescription, false);
                             }
 
@@ -617,7 +630,7 @@ public interface MethodGraph {
                             }
                         }
 
-                        class ForMethod<U extends Identifier> implements Entry<U> {
+                        class ForMethod<U> implements Entry<U> {
 
                             private final Key.Identifying<U> key;
 
@@ -632,7 +645,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
+                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier<U> identifierFactory) {
                                 Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
@@ -744,7 +757,7 @@ public interface MethodGraph {
                             }
                         }
 
-                        class Ambiguous<U extends Identifier> implements Entry<U> {
+                        class Ambiguous<U> implements Entry<U> {
 
                             private final Key.Identifying<U> key;
 
@@ -752,7 +765,7 @@ public interface MethodGraph {
 
                             private final MethodDescription.Token methodToken;
 
-                            protected static <Q extends Identifier> Entry<Q> of(Key.Identifying<Q> key, MethodDescription left, MethodDescription right) {
+                            protected static <Q> Entry<Q> of(Key.Identifying<Q> key, MethodDescription left, MethodDescription right) {
                                 return left.isBridge() ^ right.isBridge()
                                         ? new ForMethod<Q>(key, left.isBridge() ? right : left, false)
                                         : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), right.asToken());
@@ -770,7 +783,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
+                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier<U> identifierFactory) {
                                 Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
                                 if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
                                     return methodToken.isBridge() ^ methodDescription.isBridge()
