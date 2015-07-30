@@ -16,7 +16,7 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
     private GenericTypeDescription genericTypeDescription;
 
     @Mock
-    private TypeDescription typeDescriptions;
+    private TypeDescription typeDescription;
 
     @Mock
     private ElementMatcher<TypeDescription> elementMatcher;
@@ -28,20 +28,20 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
 
     @Before
     public void setUp() throws Exception {
-        when(genericTypeDescription.asRawType()).thenReturn(typeDescriptions);
+        when(genericTypeDescription.asRawType()).thenReturn(typeDescription);
     }
 
     @Test
     public void testMatch() throws Exception {
-        when(elementMatcher.matches(typeDescriptions)).thenReturn(true);
+        when(elementMatcher.matches(typeDescription)).thenReturn(true);
         when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(true));
         verify(genericTypeDescription).getSort();
         verify(genericTypeDescription).asRawType();
         verifyNoMoreInteractions(genericTypeDescription);
-        verify(elementMatcher).matches(typeDescriptions);
+        verify(elementMatcher).matches(typeDescription);
         verifyNoMoreInteractions(elementMatcher);
-        verifyZeroInteractions(typeDescriptions);
+        verifyZeroInteractions(typeDescription);
     }
 
     @Test
@@ -51,19 +51,19 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
         verify(genericTypeDescription).getSort();
         verifyNoMoreInteractions(genericTypeDescription);
         verifyZeroInteractions(elementMatcher);
-        verifyZeroInteractions(typeDescriptions);
+        verifyZeroInteractions(typeDescription);
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        when(elementMatcher.matches(typeDescriptions)).thenReturn(false);
+        when(elementMatcher.matches(typeDescription)).thenReturn(false);
         when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(false));
         verify(genericTypeDescription).getSort();
         verify(genericTypeDescription).asRawType();
         verifyNoMoreInteractions(genericTypeDescription);
-        verify(elementMatcher).matches(typeDescriptions);
+        verify(elementMatcher).matches(typeDescription);
         verifyNoMoreInteractions(elementMatcher);
-        verifyZeroInteractions(typeDescriptions);
+        verifyZeroInteractions(typeDescription);
     }
 }

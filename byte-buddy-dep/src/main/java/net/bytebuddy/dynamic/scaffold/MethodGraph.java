@@ -183,13 +183,14 @@ public interface MethodGraph {
             @Override
             public MethodGraph.Linked make(TypeDescription typeDescription) {
                 Map<GenericTypeDescription, Key.Store<T>> snapshots = new HashMap<GenericTypeDescription, Key.Store<T>>();
+                Key.Store<?> rootStore = analyze(typeDescription, snapshots, any(), isVirtual().and(isVisibleTo(typeDescription)));
                 GenericTypeDescription superType = typeDescription.getSuperType();
                 List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>(interfaceTypes.size());
                 for (GenericTypeDescription interfaceType : interfaceTypes) {
                     interfaceGraphs.put(interfaceType.asRawType(), snapshots.get(interfaceType).asGraph());
                 }
-                return new Linked.Delegation(analyze(typeDescription, snapshots, any(), isVirtual().and(isVisibleTo(typeDescription))).asGraph(),
+                return new Linked.Delegation(rootStore.asGraph(),
                         superType == null
                                 ? Illegal.INSTANCE
                                 : snapshots.get(superType).asGraph(),
@@ -474,10 +475,11 @@ public interface MethodGraph {
                     }
 
                     protected Store<V> mergeWith(Store<V> keyStore) {
+                        Store<V> mergedStore = this;
                         for (Entry<V> entry : keyStore.entries.values()) {
-                            keyStore = keyStore.inject(entry);
+                            mergedStore = mergedStore.inject(entry);
                         }
-                        return keyStore;
+                        return mergedStore;
                     }
 
                     protected Store<V> inject(Entry<V> entry) {
