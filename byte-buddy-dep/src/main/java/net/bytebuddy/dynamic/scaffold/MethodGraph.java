@@ -8,9 +8,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.any;
-import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
-import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public interface MethodGraph {
 
@@ -144,12 +142,12 @@ public interface MethodGraph {
                 List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>(interfaceTypes.size());
                 for (GenericTypeDescription interfaceType : interfaceTypes) {
-                    interfaceGraphs.put(interfaceType.asRawType(), snapshots.get(interfaceType));
+                    interfaceGraphs.put(interfaceType.asRawType(), snapshots.get(interfaceType).asGraph());
                 }
-                return new Linked.Delegation(analyze(typeDescription, snapshots, any(), isVirtual().and(isVisibleTo(typeDescription))),
+                return new Linked.Delegation(analyze(typeDescription, snapshots, any(), isVirtual().and(isVisibleTo(typeDescription))).asGraph(),
                         superType == null
                                 ? Illegal.INSTANCE
-                                : snapshots.get(superType),
+                                : snapshots.get(superType).asGraph(),
                         interfaceGraphs);
             }
 
@@ -293,7 +291,7 @@ public interface MethodGraph {
                     return internalName.hashCode();
                 }
 
-                protected static class Store implements MethodGraph {
+                protected static class Store {
 
                     private static final int EMPTY = 0;
 
@@ -335,26 +333,45 @@ public interface MethodGraph {
                         return new Store(entries);
                     }
 
-                    @Override
-                    public Node locate(MethodDescription.Token methodToken) {
-                        Entry entry = entries.get(new Key(methodToken.getInternalName(), methodToken));
-                        return entry == null
-                                ? Node.Illegal.INSTANCE
-                                : entry;
+                    protected MethodGraph asGraph() {
+                        LinkedHashMap<Key, Node> entries = new LinkedHashMap<Key, Node>(this.entries.size());
+                        for (Entry entry : this.entries.values()) {
+                            entries.put(entry.getKey(), entry.asNode());
+                        }
+                        return new Graph(entries);
                     }
 
-                    @Override
-                    public List<Node> listNodes() {
-                        return new ArrayList<Node>(entries.values());
+                    protected static class Graph implements MethodGraph {
+
+                        private final LinkedHashMap<Key, Node> entries;
+
+                        protected Graph(LinkedHashMap<Key, Node> entries) {
+                            this.entries = entries;
+                        }
+
+                        @Override
+                        public Node locate(MethodDescription.Token methodToken) {
+                            Node node = entries.get(new Key(methodToken.getInternalName(), methodToken));
+                            return node == null
+                                    ? Node.Illegal.INSTANCE
+                                    : node;
+                        }
+
+                        @Override
+                        public List<Node> listNodes() {
+                            return new ArrayList<Node>(entries.values());
+                        }
                     }
 
-                    protected interface Entry extends Node {
+                    protected interface Entry {
 
                         Key getKey();
 
                         Entry expandWith(MethodDescription methodDescription);
 
                         Entry mergeWith(Key key);
+
+                        Node asNode();
 
                         class Ambiguous implements Entry {
 
@@ -401,23 +418,43 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Sort getSort() {
-                                return Sort.AMBIGUOUS;
+                            public MethodGraph.Node asNode() {
+                                return new Node(key, declaringType, methodToken);
                             }
 
-                            @Override
-                            public MethodDescription getRepresentative() {
-                                return new MethodDescription.Latent(declaringType, methodToken);
-                            }
+                            protected static class Node implements MethodGraph.Node {
 
-                            @Override
-                            public Set<MethodDescription.Token> getBridges() {
-                                return key.findBridges(methodToken);
-                            }
+                                private final Key key;
 
-                            @Override
-                            public boolean isMadeVisible() {
-                                return false;
+                                private final TypeDescription declaringType;
+
+                                private final MethodDescription.Token methodToken;
+
+                                public Node(Key key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                                    this.key = key;
+                                    this.declaringType = declaringType;
+                                    this.methodToken = methodToken;
+                                }
+
+                                @Override
+                                public Sort getSort() {
+                                    return Sort.AMBIGUOUS;
+                                }
+
+                                @Override
+                                public MethodDescription getRepresentative() {
+                                    return new MethodDescription.Latent(declaringType, methodToken);
+                                }
+
+                                @Override
+                                public Set<MethodDescription.Token> getBridges() {
+                                    return key.findBridges(methodToken);
+                                }
+
+                                @Override
+                                public boolean isMadeVisible() {
+                                    return false;
+                                }
                             }
                         }
 
@@ -458,23 +495,40 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Sort getSort() {
-                                return Sort.RESOLVED;
+                            public MethodGraph.Node asNode() {
+                                return new Node(key, methodDescription);
                             }
 
-                            @Override
-                            public MethodDescription getRepresentative() {
-                                return methodDescription;
-                            }
+                            protected static class Node implements MethodGraph.Node {
 
-                            @Override
-                            public Set<MethodDescription.Token> getBridges() {
-                                return key.findBridges(methodDescription.asToken());
-                            }
+                                private final Key key;
 
-                            @Override
-                            public boolean isMadeVisible() {
-                                return true;
+                                private final MethodDescription methodDescription;
+
+                                public Node(Key key, MethodDescription methodDescription) {
+                                    this.key = key;
+                                    this.methodDescription = methodDescription;
+                                }
+
+                                @Override
+                                public Sort getSort() {
+                                    return Sort.RESOLVED;
+                                }
+
+                                @Override
+                                public MethodDescription getRepresentative() {
+                                    return methodDescription;
+                                }
+
+                                @Override
+                                public Set<MethodDescription.Token> getBridges() {
+                                    return key.findBridges(methodDescription.asToken());
+                                }
+
+                                @Override
+                                public boolean isMadeVisible() {
+                                    return true;
+                                }
                             }
                         }
                     }
