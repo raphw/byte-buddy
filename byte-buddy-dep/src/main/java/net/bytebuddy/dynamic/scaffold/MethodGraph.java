@@ -423,9 +423,10 @@ public interface MethodGraph {
 
                 protected static class Harmonized<V> extends Key<V> {
 
-                    public static <Q> Harmonized<Q> of(MethodDescription.InDefinedShape methodDescription, Harmonizer<Q> factory) {
+                    public static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> factory) {
                         MethodDescription.Token methodToken = methodDescription.asToken();
-                        return new Harmonized<Q>(methodDescription.getInternalName(), Collections.singletonMap(factory.wrap(methodToken), Collections.singleton(methodToken)));
+                        return new Harmonized<Q>(methodDescription.getInternalName(),
+                                Collections.singletonMap(factory.wrap(methodToken), Collections.singleton(methodToken)));
                     }
 
                     private final Map<V, Set<MethodDescription.Token>> identifiers;
@@ -445,7 +446,7 @@ public interface MethodGraph {
                         return new Detached(internalName, identifiers);
                     }
 
-                    protected Harmonized<V> expandWith(MethodDescription methodDescription, Harmonizer<V> factory) {
+                    protected Harmonized<V> expandWith(MethodDescription.InDefinedShape methodDescription, Harmonizer<V> factory) {
                         Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
                         MethodDescription.Token methodToken = methodDescription.asToken();
                         V identifier = factory.wrap(methodToken);
@@ -504,7 +505,7 @@ public interface MethodGraph {
                     }
 
                     protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> factory) {
-                        Harmonized<V> key = Harmonized.of(methodDescription.asDefined(), factory);
+                        Harmonized<V> key = Harmonized.of(methodDescription, factory);
                         Entry<V> currentEntry = entries.get(key);
                         Entry<V> expandedEntry = (currentEntry == null
                                 ? new Entry.Initial<V>(key)
@@ -623,7 +624,7 @@ public interface MethodGraph {
 
                             @Override
                             public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
-                                return new ForMethod<U>(key.expandWith(methodDescription, harmonizer), methodDescription, false);
+                                return new ForMethod<U>(key.expandWith(methodDescription.asDefined(), harmonizer), methodDescription, false);
                             }
 
                             @Override
@@ -669,7 +670,7 @@ public interface MethodGraph {
 
                             @Override
                             public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
-                                Harmonized<U> key = this.key.expandWith(methodDescription, harmonizer);
+                                Harmonized<U> key = this.key.expandWith(methodDescription.asDefined(), harmonizer);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
                                         : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge());
@@ -807,7 +808,7 @@ public interface MethodGraph {
 
                             @Override
                             public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
-                                Harmonized<U> key = this.key.expandWith(methodDescription, harmonizer);
+                                Harmonized<U> key = this.key.expandWith(methodDescription.asDefined(), harmonizer);
                                 if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
                                     return methodToken.isBridge() ^ methodDescription.isBridge()
                                             ? methodToken.isBridge() ? new ForMethod<U>(key, methodDescription, false) : new Ambiguous<U>(key, declaringType, methodToken)
