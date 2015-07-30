@@ -362,35 +362,21 @@ public interface MethodGraph {
                     }
             }
 
-            protected static class Key<S> {
-
-                public static Key<MethodDescription.Token> of(MethodDescription.Token methodToken) {
-                    return new Key<MethodDescription.Token>(methodToken.getInternalName(), Collections.singletonMap(methodToken, Collections.singleton(methodToken)));
-                }
+            protected abstract static class Key<S> {
 
                 protected final String internalName;
 
-                protected final Map<S, Set<MethodDescription.Token>> identifiers;
-
-                protected Key(String internalName, Map<S, Set<MethodDescription.Token>> identifiers) {
+                protected Key(String internalName) {
                     this.internalName = internalName;
-                    this.identifiers = identifiers;
                 }
 
-                protected Set<MethodDescription.Token> resolveBridges(MethodDescription.Token excluded) {
-                    Set<MethodDescription.Token> tokens = new HashSet<MethodDescription.Token>();
-                    for (Set<MethodDescription.Token> methodTokens : identifiers.values()) {
-                        tokens.addAll(methodTokens);
-                    }
-                    tokens.remove(excluded);
-                    return tokens;
-                }
+                protected abstract Set<S> getIdentifiers();
 
                 @Override
                 public boolean equals(Object other) {
                     return other == this || (other instanceof Key
                             && internalName.equals(((Key) other).internalName)
-                            && !Collections.disjoint(identifiers.keySet(), ((Key) other).identifiers.keySet()));
+                            && !Collections.disjoint(getIdentifiers(), ((Key) other).getIdentifiers()));
                 }
 
                 @Override
@@ -398,12 +384,37 @@ public interface MethodGraph {
                     return internalName.hashCode();
                 }
 
-                @Override
-                public String toString() {
-                    return "MethodGraph.Compiler.Default.Key{" +
-                            "internalName='" + internalName + '\'' +
-                            ", identifiers=" + identifiers +
-                            '}';
+                protected static class Detached extends Key<MethodDescription.Token> {
+
+                    public static Key.Detached of(MethodDescription.Token methodToken) {
+                        return new Key.Detached(methodToken.getInternalName(), Collections.singleton(methodToken));
+                    }
+
+                    private final Set<MethodDescription.Token> identifiers;
+
+                    public Detached(String internalName, Set<MethodDescription.Token> identifiers) {
+                        super(internalName);
+                        this.identifiers = identifiers;
+                    }
+
+                    protected Set<MethodDescription.Token> resolveBridges(MethodDescription.Token excluded) {
+                        Set<MethodDescription.Token> tokens = new HashSet<MethodDescription.Token>(identifiers);
+                        tokens.remove(excluded);
+                        return tokens;
+                    }
+
+                    @Override
+                    protected Set<MethodDescription.Token> getIdentifiers() {
+                        return identifiers;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Key.Detached{" +
+                                "internalName='" + internalName + '\'' +
+                                ", identifiers=" + identifiers +
+                                '}';
+                    }
                 }
 
                 protected static class Identifying<V> extends Key<V> {
@@ -413,18 +424,21 @@ public interface MethodGraph {
                         return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singletonMap(factory.wrap(methodToken), Collections.singleton(methodToken)));
                     }
 
+                    private final Map<V, Set<MethodDescription.Token>> identifiers;
+
                     protected Identifying(String internalName, Map<V, Set<MethodDescription.Token>> identifiers) {
-                        super(internalName, identifiers);
+                        super(internalName);
+                        this.identifiers = identifiers;
                     }
 
-                    protected Key<MethodDescription.Token> asTokenKey() {
-                        Map<MethodDescription.Token, Set<MethodDescription.Token>> identifiers = new HashMap<MethodDescription.Token, Set<MethodDescription.Token>>();
+                    protected Key.Detached asDetachedKey() {
+                        Set<MethodDescription.Token> identifiers = new HashSet<MethodDescription.Token>();
                         for (Set<MethodDescription.Token> methodTokens : this.identifiers.values()) {
                             for (MethodDescription.Token methodToken : methodTokens) {
-                                identifiers.put(methodToken, Collections.singleton(methodToken));
+                                identifiers.add(methodToken);
                             }
                         }
-                        return new Key<MethodDescription.Token>(internalName, identifiers);
+                        return new Key.Detached(internalName, identifiers);
                     }
 
                     protected Key.Identifying<V> expandWith(MethodDescription methodDescription, Identifier<V> factory) {
@@ -455,6 +469,11 @@ public interface MethodGraph {
                             }
                         }
                         return new Key.Identifying<V>(internalName, identifiers);
+                    }
+
+                    @Override
+                    protected Set<V> getIdentifiers() {
+                        return identifiers.keySet();
                     }
 
                     @Override
@@ -512,7 +531,7 @@ public interface MethodGraph {
                     protected MethodGraph asGraph() {
                         LinkedHashMap<Key<MethodDescription.Token>, Node> entries = new LinkedHashMap<Key<MethodDescription.Token>, Node>(this.entries.size());
                         for (Entry<V> entry : this.entries.values()) {
-                            entries.put(entry.getKey().asTokenKey(), entry.asNode());
+                            entries.put(entry.getKey().asDetachedKey(), entry.asNode());
                         }
                         return new Graph(entries);
                     }
@@ -545,7 +564,7 @@ public interface MethodGraph {
 
                         @Override
                         public Node locate(MethodDescription.Token methodToken) {
-                            Node node = entries.get(Key.of(methodToken));
+                            Node node = entries.get(Key.Detached.of(methodToken));
                             return node == null
                                     ? Node.Illegal.INSTANCE
                                     : node;
@@ -664,7 +683,7 @@ public interface MethodGraph {
 
                             @Override
                             public MethodGraph.Node asNode() {
-                                return new Node(key.asTokenKey(), methodDescription, madeVisible);
+                                return new Node(key.asDetachedKey(), methodDescription, madeVisible);
                             }
 
                             @Override
@@ -696,13 +715,13 @@ public interface MethodGraph {
 
                             protected static class Node implements MethodGraph.Node {
 
-                                private final Key<MethodDescription.Token> key;
+                                private final Key.Detached key;
 
                                 private final MethodDescription methodDescription;
 
                                 private final boolean madeVisible;
 
-                                public Node(Key<MethodDescription.Token> key, MethodDescription methodDescription, boolean madeVisible) {
+                                public Node(Key.Detached key, MethodDescription methodDescription, boolean madeVisible) {
                                     this.key = key;
                                     this.methodDescription = methodDescription;
                                     this.madeVisible = madeVisible;
@@ -803,7 +822,7 @@ public interface MethodGraph {
 
                             @Override
                             public MethodGraph.Node asNode() {
-                                return new Node(key.asTokenKey(), declaringType, methodToken);
+                                return new Node(key.asDetachedKey(), declaringType, methodToken);
                             }
 
                             @Override
@@ -835,13 +854,13 @@ public interface MethodGraph {
 
                             protected static class Node implements MethodGraph.Node {
 
-                                private final Key<MethodDescription.Token> key;
+                                private final Key.Detached key;
 
                                 private final TypeDescription declaringType;
 
                                 private final MethodDescription.Token methodToken;
 
-                                public Node(Key<MethodDescription.Token> key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                                public Node(Key.Detached key, TypeDescription declaringType, MethodDescription.Token methodToken) {
                                     this.key = key;
                                     this.declaringType = declaringType;
                                     this.methodToken = methodToken;

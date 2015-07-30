@@ -102,7 +102,7 @@ public class MethodGraphCompilerDefaultKeyTest {
 
     @Test
     public void testKeyObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.class).create(new ObjectPropertyAssertion.Creator<Set<?>>() {
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Detached.class).create(new ObjectPropertyAssertion.Creator<Set<?>>() {
             @Override
             public Set<?> create() {
                 return Collections.singleton(new Object());
