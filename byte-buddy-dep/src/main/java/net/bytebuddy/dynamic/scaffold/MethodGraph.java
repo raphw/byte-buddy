@@ -383,18 +383,14 @@ public interface MethodGraph {
 
                 protected final Set<S> identifiers;
 
-                protected Key(String internalName, S token) {
-                    this(internalName, Collections.singleton(token));
-                }
-
                 protected Key(String internalName, Set<S> identifiers) {
                     this.internalName = internalName;
                     this.identifiers = identifiers;
                 }
 
-                protected Set<S> findBridges(S identifier) {
+                protected Set<S> resolveBridges(S excluded) {
                     Set<S> tokens = new HashSet<S>(this.identifiers);
-                    tokens.remove(identifier);
+                    tokens.remove(excluded);
                     return tokens;
                 }
 
@@ -420,12 +416,8 @@ public interface MethodGraph {
 
                 protected static class Identifying<V extends Identifier> extends Key<V> {
 
-                    public static <Q extends Identifier> Key.Identifying<Q> of(MethodDescription methodDescription, Identifier.Factory<Q> factory) {
-                        return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singleton(factory.wrap(methodDescription.asDefined().asToken())));
-                    }
-
-                    protected Identifying(String internalName, V identifier) {
-                        super(internalName, identifier);
+                    public static <Q extends Identifier> Key.Identifying<Q> of(MethodDescription.InDefinedShape methodDescription, Identifier.Factory<Q> factory) {
+                        return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singleton(factory.wrap(methodDescription.asToken())));
                     }
 
                     protected Identifying(String internalName, Set<V> identifiers) {
@@ -476,10 +468,10 @@ public interface MethodGraph {
                     }
 
                     protected Store<V> registerTopLevel(MethodDescription methodDescription, Identifier.Factory<V> factory) {
-                        Key.Identifying<V> key = Key.Identifying.of(methodDescription, factory);
+                        Key.Identifying<V> key = Key.Identifying.of(methodDescription.asDefined(), factory);
                         Entry<V> currentEntry = entries.get(key);
                         Entry<V> expandedEntry = (currentEntry == null
-                                ? new Entry.ForMethod<V>(key, methodDescription)
+                                ? new Entry.Initial<V>(key)
                                 : currentEntry).expandWith(methodDescription, factory);
                         LinkedHashMap<Key.Identifying<V>, Entry<V>> entries = new LinkedHashMap<Key.Identifying<V>, Entry<V>>(this.entries);
                         entries.put(expandedEntry.getKey(), expandedEntry);
@@ -505,9 +497,9 @@ public interface MethodGraph {
                     }
 
                     protected MethodGraph asGraph() {
-                        LinkedHashMap<Key, Node> entries = new LinkedHashMap<Key, Node>(this.entries.size());
-                        for (Entry entry : this.entries.values()) {
-                            entries.put(entry.getKey(), entry.asNode());
+                        LinkedHashMap<Key<MethodDescription.Token>, Node> entries = new LinkedHashMap<Key<MethodDescription.Token>, Node>(this.entries.size());
+                        for (Entry<V> entry : this.entries.values()) {
+                            entries.put(entry.getKey().asTokenKey(), entry.asNode());
                         }
                         return new Graph(entries);
                     }
@@ -532,15 +524,15 @@ public interface MethodGraph {
 
                     protected static class Graph implements MethodGraph {
 
-                        private final LinkedHashMap<Key, Node> entries;
+                        private final LinkedHashMap<Key<MethodDescription.Token>, Node> entries;
 
-                        protected Graph(LinkedHashMap<Key, Node> entries) {
+                        protected Graph(LinkedHashMap<Key<MethodDescription.Token>, Node> entries) {
                             this.entries = entries;
                         }
 
                         @Override
                         public Node locate(MethodDescription.Token methodToken) {
-                            Node node = entries.get(new Key<MethodDescription.Token>(methodToken.getInternalName(), methodToken));
+                            Node node = entries.get(new Key<MethodDescription.Token>(methodToken.getInternalName(), Collections.singleton(methodToken)));
                             return node == null
                                     ? Node.Illegal.INSTANCE
                                     : node;
@@ -579,6 +571,174 @@ public interface MethodGraph {
                         Entry<W> mergeWith(Key.Identifying<W> key);
 
                         Node asNode();
+
+                        class Initial<U extends Identifier> implements Entry<U> {
+
+                            private final Key.Identifying<U> key;
+
+                            protected Initial(Key.Identifying<U> key) {
+                                this.key = key;
+                            }
+
+                            @Override
+                            public Identifying<U> getKey() {
+                                return key;
+                            }
+
+                            @Override
+                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
+                                return new ForMethod<U>(key.expandWith(methodDescription, identifierFactory), methodDescription, false);
+                            }
+
+                            @Override
+                            public Entry<U> mergeWith(Identifying<U> key) {
+                                throw new IllegalStateException("Cannot merge initial entry without a registered method: " + this);
+                            }
+
+                            @Override
+                            public Node asNode() {
+                                throw new IllegalStateException("Cannot transform initial entry without a registered method: " + this);
+                            }
+
+                            @Override
+                            public boolean equals(Object other) {
+                                return this == other || !(other == null || getClass() != other.getClass())
+                                        && key.equals(((Initial<?>) other).key);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                return key.hashCode();
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "MethodGraph.Compiler.Default.Key.Store.Entry.Initial{key=" + key + '}';
+                            }
+                        }
+
+                        class ForMethod<U extends Identifier> implements Entry<U> {
+
+                            private final Key.Identifying<U> key;
+
+                            private final MethodDescription methodDescription;
+
+                            private final boolean madeVisible;
+
+                            protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription) {
+                                this(key, methodDescription, false);
+                            }
+
+                            protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription, boolean madeVisible) {
+                                this.key = key;
+                                this.methodDescription = methodDescription;
+                                this.madeVisible = madeVisible;
+                            }
+
+                            @Override
+                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
+                                Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
+                                return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
+                                        ? Ambiguous.of(key, methodDescription, this.methodDescription)
+                                        : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, true);
+                            }
+
+                            @Override
+                            public Entry<U> mergeWith(Key.Identifying<U> key) {
+                                return new Entry.ForMethod<U>(key.mergeWith(key), methodDescription, madeVisible);
+                            }
+
+                            @Override
+                            public Key.Identifying<U> getKey() {
+                                return key;
+                            }
+
+                            @Override
+                            public MethodGraph.Node asNode() {
+                                return new Node(key.asTokenKey(), methodDescription);
+                            }
+
+                            @Override
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (other == null || getClass() != other.getClass()) return false;
+                                ForMethod<?> forMethod = (ForMethod<?>) other;
+                                return madeVisible == forMethod.madeVisible
+                                        && key.equals(forMethod.key)
+                                        && methodDescription.equals(forMethod.methodDescription);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = key.hashCode();
+                                result = 31 * result + methodDescription.hashCode();
+                                result = 31 * result + (madeVisible ? 1 : 0);
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod{" +
+                                        "key=" + key +
+                                        ", methodDescription=" + methodDescription +
+                                        ", madeVisible=" + madeVisible +
+                                        '}';
+                            }
+
+                            protected static class Node implements MethodGraph.Node {
+
+                                private final Key<MethodDescription.Token> key;
+
+                                private final MethodDescription methodDescription;
+
+                                public Node(Key<MethodDescription.Token> key, MethodDescription methodDescription) {
+                                    this.key = key;
+                                    this.methodDescription = methodDescription;
+                                }
+
+                                @Override
+                                public Sort getSort() {
+                                    return Sort.RESOLVED;
+                                }
+
+                                @Override
+                                public MethodDescription getRepresentative() {
+                                    return methodDescription;
+                                }
+
+                                @Override
+                                public Set<MethodDescription.Token> getBridges() {
+                                    return key.resolveBridges(methodDescription.asToken());
+                                }
+
+                                @Override
+                                public boolean isMadeVisible() {
+                                    return true;
+                                }
+
+                                @Override
+                                public boolean equals(Object other) {
+                                    return this == other || !(other == null || getClass() != other.getClass())
+                                            && key.equals(((Node) other).key)
+                                            && methodDescription.equals(((Node) other).methodDescription);
+                                }
+
+                                @Override
+                                public int hashCode() {
+                                    int result = key.hashCode();
+                                    result = 31 * result + methodDescription.hashCode();
+                                    return result;
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod.Node{" +
+                                            "key=" + key +
+                                            ", methodDescription=" + methodDescription +
+                                            '}';
+                                }
+                            }
+                        }
 
                         class Ambiguous<U extends Identifier> implements Entry<U> {
 
@@ -682,7 +842,7 @@ public interface MethodGraph {
 
                                 @Override
                                 public Set<MethodDescription.Token> getBridges() {
-                                    return key.findBridges(methodToken);
+                                    return key.resolveBridges(methodToken);
                                 }
 
                                 @Override
@@ -714,129 +874,6 @@ public interface MethodGraph {
                                             "key=" + key +
                                             ", declaringType=" + declaringType +
                                             ", methodToken=" + methodToken +
-                                            '}';
-                                }
-                            }
-                        }
-
-                        class ForMethod<U extends Identifier> implements Entry<U> {
-
-                            private final Key.Identifying<U> key;
-
-                            private final MethodDescription methodDescription;
-
-                            private final boolean madeVisible;
-
-                            protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription) {
-                                this(key, methodDescription, false);
-                            }
-
-                            protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription, boolean madeVisible) {
-                                this.key = key;
-                                this.methodDescription = methodDescription;
-                                this.madeVisible = madeVisible;
-                            }
-
-                            @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
-                                Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
-                                return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
-                                        ? Ambiguous.of(key, methodDescription, this.methodDescription)
-                                        : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, true);
-                            }
-
-                            @Override
-                            public Entry<U> mergeWith(Key.Identifying<U> key) {
-                                return new Entry.ForMethod<U>(key.mergeWith(key), methodDescription, madeVisible);
-                            }
-
-                            @Override
-                            public Key.Identifying<U> getKey() {
-                                return key;
-                            }
-
-                            @Override
-                            public MethodGraph.Node asNode() {
-                                return new Node(key.asTokenKey(), methodDescription);
-                            }
-
-                            @Override
-                            public boolean equals(Object other) {
-                                if (this == other) return true;
-                                if (other == null || getClass() != other.getClass()) return false;
-                                ForMethod<?> forMethod = (ForMethod<?>) other;
-                                return madeVisible == forMethod.madeVisible
-                                        && key.equals(forMethod.key)
-                                        && methodDescription.equals(forMethod.methodDescription);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                int result = key.hashCode();
-                                result = 31 * result + methodDescription.hashCode();
-                                result = 31 * result + (madeVisible ? 1 : 0);
-                                return result;
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod{" +
-                                        "key=" + key +
-                                        ", methodDescription=" + methodDescription +
-                                        ", madeVisible=" + madeVisible +
-                                        '}';
-                            }
-
-                            protected static class Node implements MethodGraph.Node {
-
-                                private final Key<MethodDescription.Token> key;
-
-                                private final MethodDescription methodDescription;
-
-                                public Node(Key<MethodDescription.Token> key, MethodDescription methodDescription) {
-                                    this.key = key;
-                                    this.methodDescription = methodDescription;
-                                }
-
-                                @Override
-                                public Sort getSort() {
-                                    return Sort.RESOLVED;
-                                }
-
-                                @Override
-                                public MethodDescription getRepresentative() {
-                                    return methodDescription;
-                                }
-
-                                @Override
-                                public Set<MethodDescription.Token> getBridges() {
-                                    return key.findBridges(methodDescription.asToken());
-                                }
-
-                                @Override
-                                public boolean isMadeVisible() {
-                                    return true;
-                                }
-
-                                @Override
-                                public boolean equals(Object other) {
-                                    return this == other || !(other == null || getClass() != other.getClass())
-                                            && key.equals(((Node) other).key)
-                                            && methodDescription.equals(((Node) other).methodDescription);
-                                }
-
-                                @Override
-                                public int hashCode() {
-                                    int result = key.hashCode();
-                                    result = 31 * result + methodDescription.hashCode();
-                                    return result;
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod.Node{" +
-                                            "key=" + key +
-                                            ", methodDescription=" + methodDescription +
                                             '}';
                                 }
                             }

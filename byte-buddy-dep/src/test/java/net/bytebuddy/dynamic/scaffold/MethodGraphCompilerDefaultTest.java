@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -14,6 +15,13 @@ public class MethodGraphCompilerDefaultTest {
     public void testTrivial() throws Exception {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(TypeDescription.OBJECT);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().size()));
+        for (MethodDescription methodDescription : TypeDescription.OBJECT.getDeclaredMethods()) {
+            MethodGraph.Node node = methodGraph.locate(methodDescription.asToken());
+            assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+            assertThat(node.isMadeVisible(), is(false));
+            assertThat(node.getBridges().size(), is(0));
+            assertThat(methodGraph.listNodes().contains(node), is(true));
+        }
     }
 
     @Test
