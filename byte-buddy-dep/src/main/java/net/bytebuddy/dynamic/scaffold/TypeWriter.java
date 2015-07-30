@@ -1527,10 +1527,7 @@ public interface TypeWriter<T> {
                                   String genericSignature,
                                   String superTypeInternalName,
                                   String[] interfaceTypeInternalName) {
-                    ClassFileVersion originalClassFileVersion = new ClassFileVersion(classFileVersionNumber);
-                    super.visit((classFileVersion.compareTo(originalClassFileVersion) > 0
-                                    ? classFileVersion
-                                    : originalClassFileVersion).getVersion(),
+                    super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
