@@ -127,17 +127,25 @@ public interface MethodGraph {
 
         MethodGraph.Linked make(TypeDescription typeDescription);
 
-        class Default implements Compiler {
+        class Default<T extends Default.Identifier> implements Compiler {
 
-            private final Identifier.Factory identifierFactory;
+            public static Compiler forJavaHierarchy() {
+                return new Default<Identifier.ForJavaMethod>(Identifier.Factory.ForJavaMethod.INSTANCE);
+            }
 
-            public Default(Identifier.Factory identifierFactory) {
+            public static Compiler forJVMHierarchy() {
+                return new Default<Identifier.ForJVMMethod>(Identifier.Factory.ForJVMMethod.INSTANCE);
+            }
+
+            private final Identifier.Factory<T> identifierFactory;
+
+            public Default(Identifier.Factory<T> identifierFactory) {
                 this.identifierFactory = identifierFactory;
             }
 
             @Override
             public MethodGraph.Linked make(TypeDescription typeDescription) {
-                Map<GenericTypeDescription, Key.Store> snapshots = new HashMap<GenericTypeDescription, Key.Store>();
+                Map<GenericTypeDescription, Key.Store<T>> snapshots = new HashMap<GenericTypeDescription, Key.Store<T>>();
                 GenericTypeDescription superType = typeDescription.getSuperType();
                 List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>(interfaceTypes.size());
@@ -151,11 +159,11 @@ public interface MethodGraph {
                         interfaceGraphs);
             }
 
-            protected Key.Store analyze(GenericTypeDescription typeDescription,
-                                        Map<GenericTypeDescription, Key.Store> snapshots,
+            protected Key.Store<T> analyze(GenericTypeDescription typeDescription,
+                                        Map<GenericTypeDescription, Key.Store<T>> snapshots,
                                         ElementMatcher<? super MethodDescription> currentMatcher,
                                         ElementMatcher<? super MethodDescription> nextMatcher) {
-                Key.Store keyStore = snapshots.get(typeDescription);
+                Key.Store<T> keyStore = snapshots.get(typeDescription);
                 if (keyStore == null) {
                     keyStore = doAnalyze(typeDescription, snapshots, currentMatcher, nextMatcher);
                     snapshots.put(typeDescription, keyStore);
@@ -163,25 +171,25 @@ public interface MethodGraph {
                 return keyStore;
             }
 
-            protected Key.Store analyzeNullable(GenericTypeDescription typeDescription,
-                                                Map<GenericTypeDescription, Key.Store> snapshots,
+            protected Key.Store<T> analyzeNullable(GenericTypeDescription typeDescription,
+                                                Map<GenericTypeDescription, Key.Store<T>> snapshots,
                                                 ElementMatcher<? super MethodDescription> currentMatcher,
                                                 ElementMatcher<? super MethodDescription> nextMatcher) {
                 return typeDescription == null
-                        ? new Key.Store()
+                        ? new Key.Store<T>()
                         : analyze(typeDescription, snapshots, currentMatcher, nextMatcher);
             }
 
-            protected Key.Store doAnalyze(GenericTypeDescription typeDescription,
-                                          Map<GenericTypeDescription, Key.Store> snapshots,
+            protected Key.Store<T> doAnalyze(GenericTypeDescription typeDescription,
+                                          Map<GenericTypeDescription, Key.Store<T>> snapshots,
                                           ElementMatcher<? super MethodDescription> currentMatcher,
                                           ElementMatcher<? super MethodDescription> nextMatcher) {
-                Key.Store keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
+                Key.Store<T> keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
                     keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
                 }
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
-                    keyStore = keyStore.registerTopLevel(methodDescription);
+                    keyStore = keyStore.registerTopLevel(methodDescription, identifierFactory);
                 }
                 return keyStore;
             }
@@ -192,15 +200,25 @@ public interface MethodGraph {
 
                 interface Factory<T extends Identifier> {
 
-                    T wrap(MethodDescription.Token token);
+                    T wrap(MethodDescription.Token methodToken);
 
                     enum ForJavaMethod implements Factory<Identifier.ForJavaMethod> {
 
                         INSTANCE;
 
                         @Override
-                        public Identifier.ForJavaMethod wrap(MethodDescription.Token token) {
-                            return new Identifier.ForJavaMethod(token);
+                        public Identifier.ForJavaMethod wrap(MethodDescription.Token methodToken) {
+                            return new Identifier.ForJavaMethod(methodToken);
+                        }
+                    }
+
+                    enum ForJVMMethod implements Factory<Identifier.ForJVMMethod> {
+
+                        INSTANCE;
+
+                        @Override
+                        public Identifier.ForJVMMethod wrap(MethodDescription.Token methodToken) {
+                            return new Identifier.ForJVMMethod(methodToken);
                         }
                     }
                 }
@@ -241,49 +259,58 @@ public interface MethodGraph {
                         return true;
                     }
                 }
+
+                class ForJVMMethod implements Identifier {
+
+                    private final MethodDescription.Token methodToken;
+
+                    public ForJVMMethod(MethodDescription.Token methodToken) {
+                        this.methodToken = methodToken;
+                    }
+
+                    @Override
+                    public MethodDescription.Token getToken() {
+                        return methodToken;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && methodToken.equals(((ForJVMMethod) other).methodToken);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return methodToken.hashCode();
+                    }
+                }
             }
 
-            protected static class Key {
+            protected static class Key<S> {
 
-                public static Key of(MethodDescription methodDescription) {
-                    return new Key(methodDescription.getInternalName(), Collections.singleton(methodDescription.asToken()));
-                }
+                protected final String internalName;
 
-                private final String internalName;
+                protected final Set<S> identifiers;
 
-                private final Set<MethodDescription.Token> tokens;
-
-                protected Key(String internalName, MethodDescription.Token token) {
+                protected Key(String internalName, S token) {
                     this(internalName, Collections.singleton(token));
                 }
 
-                private Key(String internalName, Set<MethodDescription.Token> tokens) {
+                private Key(String internalName, Set<S> identifiers) {
                     this.internalName = internalName;
-                    this.tokens = tokens;
+                    this.identifiers = identifiers;
                 }
 
-                protected Key expandWith(MethodDescription.InDefinedShape methodDescription) {
-                    Set<MethodDescription.Token> keys = new HashSet<MethodDescription.Token>(this.tokens);
-                    keys.add(methodDescription.asToken());
-                    return new Key(internalName, keys);
-                }
-
-                protected Key mergeWith(Key key) {
-                    Set<MethodDescription.Token> keys = new HashSet<MethodDescription.Token>(this.tokens);
-                    keys.addAll(key.tokens);
-                    return new Key(internalName, keys);
-                }
-
-                protected Set<MethodDescription.Token> findBridges(MethodDescription.Token methodToken) {
-                    Set<MethodDescription.Token> tokens = new HashSet<MethodDescription.Token>(this.tokens);
-                    tokens.remove(methodToken);
+                protected Set<S> findBridges(S identifier) {
+                    Set<S> tokens = new HashSet<S>(this.identifiers);
+                    tokens.remove(identifier);
                     return tokens;
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return other == this || (other instanceof Key
-                            && !Collections.disjoint(tokens, ((Key) other).tokens));
+                            && !Collections.disjoint(identifiers, ((Key) other).identifiers));
                 }
 
                 @Override
@@ -291,46 +318,81 @@ public interface MethodGraph {
                     return internalName.hashCode();
                 }
 
-                protected static class Store {
+                protected static class Identifying<V extends Identifier> extends Key<V> {
+
+                    public static <Q extends Identifier> Key.Identifying<Q> of(MethodDescription methodDescription, Identifier.Factory<Q> factory) {
+                        return new Key.Identifying<Q>(methodDescription.getInternalName(), Collections.singleton(factory.wrap(methodDescription.asToken())));
+                    }
+
+                    protected Identifying(String internalName, V identifier) {
+                        super(internalName, identifier);
+                    }
+
+                    private Identifying(String internalName, Set<V> identifiers) {
+                        super(internalName, identifiers);
+                    }
+
+                    protected Key<MethodDescription.Token> asTokenKey() {
+                        Set<MethodDescription.Token> identifiers = new HashSet<MethodDescription.Token>(this.identifiers.size());
+                        for (V identifier : this.identifiers) {
+                            identifiers.add(identifier.getToken());
+                        }
+                        return new Key<MethodDescription.Token>(internalName, identifiers);
+                    }
+
+                    protected Key.Identifying<V> expandWith(MethodDescription.InDefinedShape methodDescription, Identifier.Factory<V> factory) {
+                        Set<V> keys = new HashSet<V>(this.identifiers);
+                        keys.add(factory.wrap(methodDescription.asToken()));
+                        return new Key.Identifying<V>(internalName, keys);
+                    }
+
+                    protected Key.Identifying<V> mergeWith(Key.Identifying<V> key) {
+                        Set<V> keys = new HashSet<V>(this.identifiers);
+                        keys.addAll(key.identifiers);
+                        return new Key.Identifying<V>(internalName, keys);
+                    }
+                }
+
+                protected static class Store<V extends Identifier> {
 
                     private static final int EMPTY = 0;
 
-                    private final LinkedHashMap<Key, Entry> entries;
+                    private final LinkedHashMap<Key.Identifying<V>, Entry<V>> entries;
 
                     protected Store() {
-                        this(new LinkedHashMap<Key, Entry>(EMPTY));
+                        this(new LinkedHashMap<Key.Identifying<V>, Entry<V>>(EMPTY));
                     }
 
-                    private Store(LinkedHashMap<Key, Entry> entries) {
+                    private Store(LinkedHashMap<Key.Identifying<V>, Entry<V>> entries) {
                         this.entries = entries;
                     }
 
-                    protected Store registerTopLevel(MethodDescription methodDescription) {
-                        Key key = Key.of(methodDescription);
-                        Entry currentEntry = entries.get(key);
-                        Entry expandedEntry = (currentEntry == null
-                                ? new Entry.ForMethod(key, methodDescription)
-                                : currentEntry).expandWith(methodDescription);
-                        LinkedHashMap<Key, Entry> entries = new LinkedHashMap<Key, Entry>(this.entries);
+                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Identifier.Factory<V> factory) {
+                        Key.Identifying<V> key = Key.Identifying.of(methodDescription, factory);
+                        Entry<V> currentEntry = entries.get(key);
+                        Entry<V> expandedEntry = (currentEntry == null
+                                ? new Entry.ForMethod<V>(key, methodDescription)
+                                : currentEntry).expandWith(methodDescription, factory);
+                        LinkedHashMap<Key.Identifying<V>, Entry<V>> entries = new LinkedHashMap<Key.Identifying<V>, Entry<V>>(this.entries);
                         entries.put(expandedEntry.getKey(), expandedEntry);
-                        return new Store(entries);
+                        return new Store<V>(entries);
                     }
 
-                    protected Store mergeWith(Store keyStore) {
-                        for (Entry entry : keyStore.entries.values()) {
+                    protected Store<V> mergeWith(Store<V> keyStore) {
+                        for (Entry<V> entry : keyStore.entries.values()) {
                             keyStore = keyStore.inject(entry);
                         }
                         return keyStore;
                     }
 
-                    protected Store inject(Entry entry) {
-                        LinkedHashMap<Key, Entry> entries = new LinkedHashMap<Key, Entry>(this.entries);
-                        Entry dominantEntry = entries.get(entry.getKey());
-                        Entry mergedEntry = dominantEntry == null
+                    protected Store<V> inject(Entry<V> entry) {
+                        LinkedHashMap<Key.Identifying<V>, Entry<V>> entries = new LinkedHashMap<Key.Identifying<V>, Entry<V>>(this.entries);
+                        Entry<V> dominantEntry = entries.get(entry.getKey());
+                        Entry<V> mergedEntry = dominantEntry == null
                                 ? entry
                                 : dominantEntry.mergeWith(entry.getKey());
                         entries.put(mergedEntry.getKey(), mergedEntry);
-                        return new Store(entries);
+                        return new Store<V>(entries);
                     }
 
                     protected MethodGraph asGraph() {
@@ -351,7 +413,7 @@ public interface MethodGraph {
 
                         @Override
                         public Node locate(MethodDescription.Token methodToken) {
-                            Node node = entries.get(new Key(methodToken.getInternalName(), methodToken));
+                            Node node = entries.get(new Key<MethodDescription.Token>(methodToken.getInternalName(), methodToken));
                             return node == null
                                     ? Node.Illegal.INSTANCE
                                     : node;
@@ -363,74 +425,74 @@ public interface MethodGraph {
                         }
                     }
 
-                    protected interface Entry {
+                    protected interface Entry<W extends Identifier> {
 
-                        Key getKey();
+                        Key.Identifying<W> getKey();
 
-                        Entry expandWith(MethodDescription methodDescription);
+                        Entry<W> expandWith(MethodDescription methodDescription, Identifier.Factory<W> identifierFactory);
 
-                        Entry mergeWith(Key key);
+                        Entry<W> mergeWith(Key.Identifying<W> key);
 
                         Node asNode();
 
-                        class Ambiguous implements Entry {
+                        class Ambiguous<U extends Identifier> implements Entry<U> {
 
-                            private final Key key;
+                            private final Key.Identifying<U> key;
 
                             private final TypeDescription declaringType;
 
                             private final MethodDescription.Token methodToken;
 
-                            protected static Entry of(Key key, MethodDescription firstMethod, MethodDescription secondMethod) {
-                                return firstMethod.isBridge() ^ secondMethod.isBridge()
-                                        ? new ForMethod(key, firstMethod.isBridge() ? secondMethod : firstMethod)
-                                        : new Ambiguous(key, firstMethod.getDeclaringType().asRawType(), secondMethod.asToken());
+                            protected static <Q extends Identifier> Entry<Q> of(Key.Identifying<Q> key, MethodDescription left, MethodDescription right) {
+                                return left.isBridge() ^ right.isBridge()
+                                        ? new ForMethod<Q>(key, left.isBridge() ? right : left)
+                                        : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), right.asToken());
                             }
 
-                            protected Ambiguous(Key key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                            protected Ambiguous(Key.Identifying<U> key, TypeDescription declaringType, MethodDescription.Token methodToken) {
                                 this.key = key;
                                 this.declaringType = declaringType;
                                 this.methodToken = methodToken;
                             }
 
                             @Override
-                            public Key getKey() {
+                            public Key.Identifying<U> getKey() {
                                 return key;
                             }
 
                             @Override
-                            public Entry expandWith(MethodDescription methodDescription) {
-                                Key key = this.key.expandWith(methodDescription.asDefined());
+                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
+                                Key.Identifying<U> key = this.key.expandWith(methodDescription.asDefined(), identifierFactory);
                                 if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
                                     return methodToken.isBridge() ^ methodDescription.isBridge()
-                                            ? methodToken.isBridge() ? new ForMethod(key, methodDescription) : new Ambiguous(key, declaringType, methodToken)
-                                            : new Ambiguous(key, declaringType, methodDescription.asToken());
+                                            ? methodToken.isBridge() ? new ForMethod<U>(key, methodDescription) : new Ambiguous<U>(key, declaringType, methodToken)
+                                            : new Ambiguous<U>(key, declaringType, methodDescription.asToken());
                                 } else {
                                     return methodDescription.isBridge()
-                                            ? new Ambiguous(key, declaringType, methodToken)
-                                            : new ForMethod(key, methodDescription);
+                                            ? new Ambiguous<U>(key, declaringType, methodToken)
+                                            : new ForMethod<U>(key, methodDescription);
                                 }
                             }
 
                             @Override
-                            public Entry mergeWith(Key key) {
-                                return new Ambiguous(key.mergeWith(key), declaringType, methodToken);
+                            public Entry<U> mergeWith(Key.Identifying<U> key) {
+                                return new Ambiguous<U>(key.mergeWith(key), declaringType, methodToken);
                             }
 
                             @Override
                             public MethodGraph.Node asNode() {
-                                return new Node(key, declaringType, methodToken);
+                                return new Node(key.asTokenKey(), declaringType, methodToken);
                             }
 
                             protected static class Node implements MethodGraph.Node {
 
-                                private final Key key;
+                                private final Key<MethodDescription.Token> key;
 
                                 private final TypeDescription declaringType;
 
                                 private final MethodDescription.Token methodToken;
 
-                                public Node(Key key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                                public Node(Key<MethodDescription.Token> key, TypeDescription declaringType, MethodDescription.Token methodToken) {
                                     this.key = key;
                                     this.declaringType = declaringType;
                                     this.methodToken = methodToken;
@@ -458,54 +520,54 @@ public interface MethodGraph {
                             }
                         }
 
-                        class ForMethod implements Entry {
+                        class ForMethod<U extends Identifier> implements Entry<U> {
 
-                            private final Key key;
+                            private final Key.Identifying<U> key;
 
                             private final MethodDescription methodDescription;
 
                             private final boolean madeVisible;
 
-                            protected ForMethod(Key key, MethodDescription methodDescription) {
+                            protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription) {
                                 this(key, methodDescription, false);
                             }
 
-                            protected ForMethod(Key key, MethodDescription methodDescription, boolean madeVisible) {
+                            protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription, boolean madeVisible) {
                                 this.key = key;
                                 this.methodDescription = methodDescription;
                                 this.madeVisible = madeVisible;
                             }
 
                             @Override
-                            public Entry expandWith(MethodDescription methodDescription) {
-                                Key key = this.key.expandWith(methodDescription.asDefined());
+                            public Entry<U> expandWith(MethodDescription methodDescription, Identifier.Factory<U> identifierFactory) {
+                                Key.Identifying<U> key = this.key.expandWith(methodDescription.asDefined(), identifierFactory);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
-                                        : new ForMethod(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, true);
+                                        : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, true);
                             }
 
                             @Override
-                            public Entry mergeWith(Key key) {
-                                return new Entry.ForMethod(key.mergeWith(key), methodDescription, madeVisible);
+                            public Entry<U> mergeWith(Key.Identifying<U> key) {
+                                return new Entry.ForMethod<U>(key.mergeWith(key), methodDescription, madeVisible);
                             }
 
                             @Override
-                            public Key getKey() {
+                            public Key.Identifying<U> getKey() {
                                 return key;
                             }
 
                             @Override
                             public MethodGraph.Node asNode() {
-                                return new Node(key, methodDescription);
+                                return new Node(key.asTokenKey(), methodDescription);
                             }
 
                             protected static class Node implements MethodGraph.Node {
 
-                                private final Key key;
+                                private final Key<MethodDescription.Token> key;
 
                                 private final MethodDescription methodDescription;
 
-                                public Node(Key key, MethodDescription methodDescription) {
+                                public Node(Key<MethodDescription.Token> key, MethodDescription methodDescription) {
                                     this.key = key;
                                     this.methodDescription = methodDescription;
                                 }
