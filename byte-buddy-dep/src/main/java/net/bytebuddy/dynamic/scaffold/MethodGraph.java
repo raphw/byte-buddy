@@ -582,7 +582,7 @@ public interface MethodGraph {
 
                             @Override
                             public Identifying<U> getKey() {
-                                return key;
+                                throw new IllegalStateException("Cannot extract key without a registered method: " + this);
                             }
 
                             @Override
@@ -625,10 +625,6 @@ public interface MethodGraph {
 
                             private final boolean madeVisible;
 
-                            protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription) {
-                                this(key, methodDescription, false);
-                            }
-
                             protected ForMethod(Key.Identifying<U> key, MethodDescription methodDescription, boolean madeVisible) {
                                 this.key = key;
                                 this.methodDescription = methodDescription;
@@ -640,7 +636,7 @@ public interface MethodGraph {
                                 Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
-                                        : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, true);
+                                        : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge());
                             }
 
                             @Override
@@ -655,7 +651,7 @@ public interface MethodGraph {
 
                             @Override
                             public MethodGraph.Node asNode() {
-                                return new Node(key.asTokenKey(), methodDescription);
+                                return new Node(key.asTokenKey(), methodDescription, madeVisible);
                             }
 
                             @Override
@@ -691,9 +687,12 @@ public interface MethodGraph {
 
                                 private final MethodDescription methodDescription;
 
-                                public Node(Key<MethodDescription.Token> key, MethodDescription methodDescription) {
+                                private final boolean madeVisible;
+
+                                public Node(Key<MethodDescription.Token> key, MethodDescription methodDescription, boolean madeVisible) {
                                     this.key = key;
                                     this.methodDescription = methodDescription;
+                                    this.madeVisible = madeVisible;
                                 }
 
                                 @Override
@@ -713,20 +712,24 @@ public interface MethodGraph {
 
                                 @Override
                                 public boolean isMadeVisible() {
-                                    return true;
+                                    return madeVisible;
                                 }
 
                                 @Override
                                 public boolean equals(Object other) {
-                                    return this == other || !(other == null || getClass() != other.getClass())
-                                            && key.equals(((Node) other).key)
-                                            && methodDescription.equals(((Node) other).methodDescription);
+                                    if (this == other) return true;
+                                    if (other == null || getClass() != other.getClass()) return false;
+                                    Node node = (Node) other;
+                                    return madeVisible == node.madeVisible
+                                            && key.equals(node.key)
+                                            && methodDescription.equals(node.methodDescription);
                                 }
 
                                 @Override
                                 public int hashCode() {
                                     int result = key.hashCode();
                                     result = 31 * result + methodDescription.hashCode();
+                                    result = 31 * result + (madeVisible ? 1 : 0);
                                     return result;
                                 }
 
@@ -735,6 +738,7 @@ public interface MethodGraph {
                                     return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod.Node{" +
                                             "key=" + key +
                                             ", methodDescription=" + methodDescription +
+                                            ", madeVisible=" + madeVisible +
                                             '}';
                                 }
                             }
@@ -750,7 +754,7 @@ public interface MethodGraph {
 
                             protected static <Q extends Identifier> Entry<Q> of(Key.Identifying<Q> key, MethodDescription left, MethodDescription right) {
                                 return left.isBridge() ^ right.isBridge()
-                                        ? new ForMethod<Q>(key, left.isBridge() ? right : left)
+                                        ? new ForMethod<Q>(key, left.isBridge() ? right : left, false)
                                         : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), right.asToken());
                             }
 
@@ -770,12 +774,12 @@ public interface MethodGraph {
                                 Key.Identifying<U> key = this.key.expandWith(methodDescription, identifierFactory);
                                 if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
                                     return methodToken.isBridge() ^ methodDescription.isBridge()
-                                            ? methodToken.isBridge() ? new ForMethod<U>(key, methodDescription) : new Ambiguous<U>(key, declaringType, methodToken)
+                                            ? methodToken.isBridge() ? new ForMethod<U>(key, methodDescription, false) : new Ambiguous<U>(key, declaringType, methodToken)
                                             : new Ambiguous<U>(key, declaringType, methodDescription.asToken());
                                 } else {
                                     return methodDescription.isBridge()
                                             ? new Ambiguous<U>(key, declaringType, methodToken)
-                                            : new ForMethod<U>(key, methodDescription);
+                                            : new ForMethod<U>(key, methodDescription, false);
                                 }
                             }
 
