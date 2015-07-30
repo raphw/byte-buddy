@@ -31,9 +31,9 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testClassInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ClassInheritance.class);
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
     }
 
     @Test
@@ -51,31 +51,66 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
-    public void testGenericSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericBase.Inner.class);
+    public void testMultipleInheritance() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MultipleInheritance.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
     }
 
     @Test
-    public void testGenericMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericBase.Intermediate.Inner.class);
+    public void testGenericClassSingleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
     }
 
     @Test
-    public void testReturnTypeSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeBase.Inner.class);
+    public void testGenericClassMultipleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
     }
 
     @Test
-    public void testReturnTypeMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeBase.Intermediate.Inner.class);
+    public void testReturnTypeClassSingleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+    }
+
+    @Test
+    public void testReturnTypeClassMultipleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeClassBase.Intermediate.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+    }
+
+    @Test
+    public void testGenericInterfaceSingleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+    }
+
+    @Test
+    public void testGenericInterfaceMultipleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Intermediate.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+    }
+
+    @Test
+    public void testReturnTypeInterfaceSingleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+    }
+
+    @Test
+    public void testReturnTypeInterfaceMultipleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Intermediate.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
     }
 
     @Test
@@ -107,11 +142,18 @@ public class MethodGraphCompilerDefaultTest {
         /* empty */
     }
 
-    public static class ClassInheritance {
+    public static class ClassBase {
 
-        @Override
-        public String toString() {
-            return null;
+        public void foo() {
+            /* empty */
+        }
+
+        static class Inner extends ClassBase {
+
+            @Override
+            public void foo() {
+                /* empty */
+            }
         }
     }
 
@@ -128,44 +170,48 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    public static class GenericBase<T> {
+    public static class MultipleInheritance extends ClassBase implements InterfaceBase{
+        /* empty */
+    }
 
-        void foo(T t) {
+    public static class GenericClassBase<T> {
+
+        public void foo(T t) {
             /* empty */
         }
 
-        public static class Inner extends GenericBase<Void> {
+        public static class Inner extends GenericClassBase<Void> {
 
             @Override
-            void foo(Void t) {
+            public void foo(Void t) {
                 /* empty */
             }
         }
 
-        public static class Intermediate<T extends Number> extends GenericBase<T> {
+        public static class Intermediate<T extends Number> extends GenericClassBase<T> {
 
             @Override
-            void foo(T t) {
+            public void foo(T t) {
                 /* empty */
             }
 
             public static class Inner extends Intermediate<Integer> {
 
                 @Override
-                void foo(Integer t) {
+                public void foo(Integer t) {
                     /* empty */
                 }
             }
         }
     }
 
-    public static class ReturnTypeBase {
+    public static class ReturnTypeClassBase {
 
         Object foo() {
             return null;
         }
 
-        public static class Inner extends ReturnTypeBase {
+        public static class Inner extends ReturnTypeClassBase {
 
             @Override
             Void foo() {
@@ -173,7 +219,7 @@ public class MethodGraphCompilerDefaultTest {
             }
         }
 
-        public static class Intermediate extends ReturnTypeBase {
+        public static class Intermediate extends ReturnTypeClassBase {
 
             @Override
             Number foo() {
@@ -186,6 +232,52 @@ public class MethodGraphCompilerDefaultTest {
                 Integer foo() {
                     return null;
                 }
+            }
+        }
+    }
+
+    public interface GenericInterfaceBase<T> {
+
+        void foo(T t);
+
+        interface Inner extends GenericInterfaceBase<Void> {
+
+            @Override
+            void foo(Void t);
+        }
+
+        interface Intermediate<T extends Number> extends GenericInterfaceBase<T> {
+
+            @Override
+            void foo(T t);
+
+            interface Inner extends Intermediate<Integer> {
+
+                @Override
+                void foo(Integer t);
+            }
+        }
+    }
+
+    public interface ReturnTypeInterfaceBase {
+
+        Object foo();
+
+        interface Inner extends ReturnTypeInterfaceBase {
+
+            @Override
+            Void foo();
+        }
+
+        interface Intermediate extends ReturnTypeInterfaceBase {
+
+            @Override
+            Number foo();
+
+            interface Inner extends Intermediate {
+
+                @Override
+                Integer foo();
             }
         }
     }
