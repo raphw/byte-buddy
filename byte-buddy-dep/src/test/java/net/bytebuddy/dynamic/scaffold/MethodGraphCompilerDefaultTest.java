@@ -85,6 +85,20 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
     }
 
+    @Test
+    public void testGenericVisibilityBridge() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericVisibilityBridgeTarget.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+    }
+
+    @Test
+    public void testMethodConvergence() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MethodConvergence.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+    }
+
     public static class SimpleClass {
         /* empty */
     }
@@ -185,5 +199,43 @@ public class MethodGraphCompilerDefaultTest {
 
     public static class VisibilityBridgeTarget extends VisibilityBridgeBase {
         /* empty */
+    }
+
+    static class GenericVisibilityBridgeBase<T> {
+
+        public void foo(T t) {
+            /* empty */
+        }
+    }
+
+    static class GenericVisibilityBridge extends GenericVisibilityBridgeBase<Void> {
+
+        @Override
+        public void foo(Void aVoid) {
+            /* empty */
+        }
+    }
+
+    public static class GenericVisibilityBridgeTarget extends GenericVisibilityBridge {
+        /* empty */
+    }
+
+    public static class MethodConvergence<T> {
+
+        public T foo(T arg) {
+            return null;
+        }
+
+        public Void foo(Void arg) {
+            return null;
+        }
+
+        public static class Inner extends MethodConvergence<Void> {
+
+            @Override
+            public Void foo(Void arg) {
+                return null;
+            }
+        }
     }
 }
