@@ -201,8 +201,22 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
-    public void testDominantInterfaceInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceTarget.class);
+    public void testDominantInterfaceInheritanceLeft() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceTargetLeft.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceIntermediate.class)
+                .getDeclaredMethods().getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getRepresentative(), is(methodDescription));
+    }
+
+    @Test
+    public void testDominantInterfaceInheritanceRight() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceTargetRight.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceIntermediate.class)
@@ -523,7 +537,11 @@ public class MethodGraphCompilerDefaultTest {
             /* empty */
         }
 
-        interface DominantInterfaceTarget extends InterfaceBase, DominantInterfaceBase {
+        interface DominantInterfaceTargetLeft extends InterfaceBase, DominantInterfaceBase {
+            /* empty */
+        }
+
+        interface DominantInterfaceTargetRight extends DominantInterfaceBase, InterfaceBase {
             /* empty */
         }
     }

@@ -614,7 +614,7 @@ public interface MethodGraph {
                         TypeDescription leftType = leftMethod.getDeclaringType().asRawType(), rightType = rightMethod.getDeclaringType().asRawType();
                         if (leftType.isAssignableTo(rightType)) {
                             return left;
-                        } else if (leftType.isAssignableTo(rightType)) {
+                        } else if (rightType.isAssignableTo(leftType)) {
                             return right;
                         } else {
                             return Entry.Ambiguous.of(left.getKey().combineWith(right.getKey()), leftMethod, rightMethod, merger);
