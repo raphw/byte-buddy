@@ -232,7 +232,7 @@ public interface MethodGraph {
                 Key.Store<T> keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
                 Key.Store<T> interfaceKeyStore = new Key.Store<T>();
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    interfaceKeyStore = interfaceKeyStore.combineWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher), harmonizer, merger);
+                    interfaceKeyStore = interfaceKeyStore.combineWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher), merger);
                 }
                 keyStore = keyStore.inject(interfaceKeyStore);
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
@@ -479,10 +479,10 @@ public interface MethodGraph {
 
                 protected static class Harmonized<V> extends Key<V> {
 
-                    protected static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> factory) {
+                    protected static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> harmonizer) {
                         MethodDescription.Token methodToken = methodDescription.asToken();
                         return new Harmonized<Q>(methodDescription.getInternalName(),
-                                Collections.singletonMap(factory.wrap(methodToken), Collections.singleton(methodToken)));
+                                Collections.singletonMap(harmonizer.wrap(methodToken), Collections.singleton(methodToken)));
                     }
 
                     private final Map<V, Set<MethodDescription.Token>> identifiers;
@@ -502,15 +502,25 @@ public interface MethodGraph {
                         return new Detached(internalName, identifiers);
                     }
 
-                    protected Harmonized<V> combineWith(Key.Harmonized<V> key, Harmonizer<V> factory) {
-
-                        return null; // TODO
+                    protected Harmonized<V> combineWith(Key.Harmonized<V> key) {
+                        Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
+                        for (Map.Entry<V, Set<MethodDescription.Token>> entry : key.identifiers.entrySet()) {
+                            Set<MethodDescription.Token> methodTokens = identifiers.get(entry.getKey());
+                            if (methodTokens == null) {
+                                identifiers.put(entry.getKey(), entry.getValue());
+                            } else {
+                                methodTokens = new HashSet<MethodDescription.Token>(methodTokens);
+                                methodTokens.addAll(entry.getValue());
+                                identifiers.put(entry.getKey(), methodTokens);
+                            }
+                        }
+                        return new Harmonized<V>(internalName, identifiers);
                     }
 
-                    protected Harmonized<V> extend(MethodDescription.InDefinedShape methodDescription, Harmonizer<V> factory) {
+                    protected Harmonized<V> extend(MethodDescription.InDefinedShape methodDescription, Harmonizer<V> harmonizer) {
                         Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
                         MethodDescription.Token methodToken = methodDescription.asToken();
-                        V identifier = factory.wrap(methodToken);
+                        V identifier = harmonizer.wrap(methodToken);
                         Set<MethodDescription.Token> methodTokens = identifiers.get(identifier);
                         if (methodTokens == null) {
                             identifiers.put(identifier, Collections.singleton(methodToken));
@@ -565,38 +575,38 @@ public interface MethodGraph {
                         this.entries = entries;
                     }
 
-                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> factory, Merger merger) {
-                        Harmonized<V> key = Harmonized.of(methodDescription, factory);
+                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> harmonizer, Merger merger) {
+                        Harmonized<V> key = Harmonized.of(methodDescription, harmonizer);
                         Entry<V> currentEntry = entries.get(key);
                         Entry<V> extendedEntry = (currentEntry == null
                                 ? new Entry.Initial<V>(key)
-                                : currentEntry).extendWith(methodDescription, factory, merger);
+                                : currentEntry).extendWith(methodDescription, harmonizer, merger);
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         entries.remove(key);
                         entries.put(extendedEntry.getKey(), extendedEntry);
                         return new Store<V>(entries);
                     }
 
-                    protected Store<V> combineWith(Store<V> keyStore, Harmonizer<V> factory, Merger merger) {
+                    protected Store<V> combineWith(Store<V> keyStore, Merger merger) {
                         Store<V> combinedStore = this;
                         for (Entry<V> entry : keyStore.entries.values()) {
-                            combinedStore = combinedStore.combineWith(entry, factory, merger);
+                            combinedStore = combinedStore.combineWith(entry, merger);
                         }
                         return combinedStore;
                     }
 
-                    protected Store<V> combineWith(Entry<V> entry, Harmonizer<V> factory, Merger merger) {
+                    protected Store<V> combineWith(Entry<V> entry, Merger merger) {
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         Entry<V> previousEntry = entries.get(entry.getKey());
                         Entry<V> injectedEntry = previousEntry == null
                                 ? entry
-                                : combine(previousEntry, entry, factory, merger);
+                                : combine(previousEntry, entry, merger);
                         entries.remove(entry.getKey());
                         entries.put(injectedEntry.getKey(), injectedEntry);
                         return new Store<V>(entries);
                     }
 
-                    private static <W> Entry<W> combine(Entry<W> left, Entry<W> right, Harmonizer<W> harmonizer, Merger merger) {
+                    private static <W> Entry<W> combine(Entry<W> left, Entry<W> right, Merger merger) {
                         MethodDescription leftMethod = left.getRepresentative(), rightMethod = right.getRepresentative();
                         if (leftMethod.getDeclaringType().equals(rightMethod.getDeclaringType())) {
                             return left;
@@ -607,7 +617,7 @@ public interface MethodGraph {
                         } else if (leftType.isAssignableTo(rightType)) {
                             return right;
                         } else {
-                            return Entry.Ambiguous.of(left.getKey().combineWith(right.getKey(), harmonizer), leftMethod, rightMethod, merger);
+                            return Entry.Ambiguous.of(left.getKey().combineWith(right.getKey()), leftMethod, rightMethod, merger);
                         }
                     }
 
