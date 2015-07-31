@@ -608,18 +608,17 @@ public interface MethodGraph {
 
                     private static <W> Entry<W> combine(Entry<W> left, Entry<W> right) {
                         Set<MethodDescription> leftMethods = left.getCandidates(), rightMethods = right.getCandidates();
-                        return null;
-//                        if (leftMethod.getDeclaringType().equals(rightMethod.getDeclaringType())) {
-//                            return left;
-//                        }
-//                        TypeDescription leftType = leftMethod.getDeclaringType().asRawType(), rightType = rightMethod.getDeclaringType().asRawType();
-//                        if (leftType.isAssignableTo(rightType)) {
-//                            return left;
-//                        } else if (rightType.isAssignableTo(leftType)) {
-//                            return right;
-//                        } else {
-//                            return Entry.Ambiguous.of(left.getKey().combineWith(right.getKey()), leftMethod, rightMethod, merger);
-//                        }
+                        if (leftMethod.getDeclaringType().equals(rightMethod.getDeclaringType())) {
+                            return left;
+                        }
+                        TypeDescription leftType = leftMethod.getDeclaringType().asRawType(), rightType = rightMethod.getDeclaringType().asRawType();
+                        if (leftType.isAssignableTo(rightType)) {
+                            return left;
+                        } else if (rightType.isAssignableTo(leftType)) {
+                            return right;
+                        } else {
+                            return Entry.Ambiguous.of(left.getKey().combineWith(right.getKey()), leftMethod, rightMethod);
+                        }
                     }
 
                     protected Store<V> inject(Store<V> keyStore) {
