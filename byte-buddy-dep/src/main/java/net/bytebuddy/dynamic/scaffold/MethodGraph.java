@@ -195,12 +195,12 @@ public interface MethodGraph {
                 List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>(interfaceTypes.size());
                 for (GenericTypeDescription interfaceType : interfaceTypes) {
-                    interfaceGraphs.put(interfaceType.asRawType(), snapshots.get(interfaceType).asGraph(merger));
+                    interfaceGraphs.put(interfaceType.asRawType(), snapshots.get(interfaceType).asGraph());
                 }
-                return new Linked.Delegation(rootStore.asGraph(merger),
+                return new Linked.Delegation(rootStore.asGraph(),
                         superType == null
                                 ? Empty.INSTANCE
-                                : snapshots.get(superType).asGraph(merger),
+                                : snapshots.get(superType).asGraph(),
                         interfaceGraphs);
             }
 
@@ -232,7 +232,7 @@ public interface MethodGraph {
                 Key.Store<T> keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
                 Key.Store<T> interfaceKeyStore = new Key.Store<T>();
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    interfaceKeyStore = interfaceKeyStore.combineWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
+                    interfaceKeyStore = interfaceKeyStore.combineWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher), merger);
                 }
                 keyStore = keyStore.inject(interfaceKeyStore);
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
@@ -577,37 +577,35 @@ public interface MethodGraph {
 
                     protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> harmonizer, Merger merger) {
                         Harmonized<V> key = Harmonized.of(methodDescription, harmonizer);
-                        Entry<V> currentEntry = entries.get(key);
+                        LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
+                        Entry<V> currentEntry = entries.remove(key);
                         Entry<V> extendedEntry = (currentEntry == null
                                 ? new Entry.Initial<V>(key)
                                 : currentEntry).extendWith(methodDescription, harmonizer, merger);
-                        LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
-                        entries.remove(key);
                         entries.put(extendedEntry.getKey(), extendedEntry);
                         return new Store<V>(entries);
                     }
 
-                    protected Store<V> combineWith(Store<V> keyStore) {
+                    protected Store<V> combineWith(Store<V> keyStore, Merger merger) {
                         Store<V> combinedStore = this;
                         for (Entry<V> entry : keyStore.entries.values()) {
-                            combinedStore = combinedStore.combineWith(entry);
+                            combinedStore = combinedStore.combineWith(entry, merger);
                         }
                         return combinedStore;
                     }
 
-                    protected Store<V> combineWith(Entry<V> entry) {
+                    protected Store<V> combineWith(Entry<V> entry, Merger merger) {
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
-                        Entry<V> previousEntry = entries.get(entry.getKey());
+                        Entry<V> previousEntry = entries.remove(entry.getKey());
                         Entry<V> injectedEntry = previousEntry == null
                                 ? entry
-                                : combine(previousEntry, entry);
-                        entries.remove(entry.getKey());
+                                : combine(previousEntry, entry, merger);
                         entries.put(injectedEntry.getKey(), injectedEntry);
                         return new Store<V>(entries);
                     }
 
-                    private static <W> Entry<W> combine(Entry<W> left, Entry<W> right) {
-                        Set<MethodDescription> leftMethods = left.getCandidates(), rightMethods = right.getCandidates();
+                    private static <W> Entry<W> combine(Entry<W> left, Entry<W> right, Merger merger) {
+                        MethodDescription leftMethod = left.getRepresentative(), rightMethod = right.getRepresentative();
                         if (leftMethod.getDeclaringType().equals(rightMethod.getDeclaringType())) {
                             return left;
                         }
@@ -617,7 +615,7 @@ public interface MethodGraph {
                         } else if (rightType.isAssignableTo(leftType)) {
                             return right;
                         } else {
-                            return Entry.Ambiguous.of(left.getKey().combineWith(right.getKey()), leftMethod, rightMethod);
+                            return Entry.Ambiguous.of(left.getKey().combineWith(right.getKey()), leftMethod, rightMethod, merger);
                         }
                     }
 
@@ -631,19 +629,18 @@ public interface MethodGraph {
 
                     protected Store<V> inject(Entry<V> entry) {
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
-                        Entry<V> dominantEntry = entries.get(entry.getKey());
+                        Entry<V> dominantEntry = entries.remove(entry.getKey());
                         Entry<V> injectedEntry = dominantEntry == null
                                 ? entry
                                 : dominantEntry.inject(entry.getKey());
-                        entries.remove(entry.getKey());
                         entries.put(injectedEntry.getKey(), injectedEntry);
                         return new Store<V>(entries);
                     }
 
-                    protected MethodGraph asGraph(Merger merger) {
+                    protected MethodGraph asGraph() {
                         LinkedHashMap<Key<MethodDescription.Token>, Node> entries = new LinkedHashMap<Key<MethodDescription.Token>, Node>(this.entries.size());
                         for (Entry<V> entry : this.entries.values()) {
-                            entries.put(entry.getKey().detach(), entry.asNode(merger));
+                            entries.put(entry.getKey().detach(), entry.asNode());
                         }
                         return new Graph(entries);
                     }
@@ -710,13 +707,13 @@ public interface MethodGraph {
 
                         Harmonized<W> getKey();
 
-                        Set<MethodDescription> getCandidates();
+                        MethodDescription getRepresentative();
 
                         Entry<W> extendWith(MethodDescription methodDescription, Harmonizer<W> harmonizer, Merger merger);
 
                         Entry<W> inject(Harmonized<W> key);
 
-                        Node asNode(Merger merger);
+                        Node asNode();
 
                         class Initial<U> implements Entry<U> {
 
@@ -732,7 +729,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Set<MethodDescription> getCandidates() {
+                            public MethodDescription getRepresentative() {
                                 throw new IllegalStateException("Cannot extract method from initial entry:" + this);
                             }
 
@@ -747,7 +744,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Node asNode(Merger merger) {
+                            public Node asNode() {
                                 throw new IllegalStateException("Cannot transform initial entry without a registered method: " + this);
                             }
 
@@ -788,15 +785,15 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Set<MethodDescription> getCandidates() {
-                                return Collections.singleton(methodDescription);
+                            public MethodDescription getRepresentative() {
+                                return methodDescription;
                             }
 
                             @Override
                             public Entry<U> extendWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
                                 Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
-                                        ? Ambiguous.of(key, methodDescription, this.methodDescription)
+                                        ? Ambiguous.of(key, methodDescription, this.methodDescription, merger)
                                         : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge());
                             }
 
@@ -806,7 +803,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public MethodGraph.Node asNode(Merger merger) {
+                            public MethodGraph.Node asNode() {
                                 return new Node(key.detach(), methodDescription, madeVisible);
                             }
 
@@ -904,17 +901,17 @@ public interface MethodGraph {
 
                             private final Harmonized<U> key;
 
-                            private final Set<MethodDescription> methodDescriptions;
+                            private final MethodDescription methodDescription;
 
-                            protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right) {
+                            protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right, Merger merger) {
                                 return left.isBridge() ^ right.isBridge()
                                         ? new ForMethod<Q>(key, left.isBridge() ? right : left, false)
-                                        : new Ambiguous<Q>(key, new HashSet<MethodDescription>(Arrays.asList(left, right)));
+                                        : new Ambiguous<Q>(key, merger.merge(left, right));
                             }
 
-                            protected Ambiguous(Harmonized<U> key, Set<MethodDescription> methodDescriptions) {
+                            protected Ambiguous(Harmonized<U> key, MethodDescription methodDescription) {
                                 this.key = key;
-                                this.methodDescriptions = methodDescriptions;
+                                this.methodDescription = methodDescription;
                             }
 
                             @Override
@@ -923,41 +920,35 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Set<MethodDescription> getCandidates() {
-                                return methodDescriptions;
+                            public MethodDescription getRepresentative() {
+                                return methodDescription;
                             }
 
                             @Override
                             public Entry<U> extendWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
-                                return null;
-//                                Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
-//                                if (methodDescription.getDeclaringType().equals(this.methodDescriptions.getDeclaringType())) {
-//                                    if (this.methodDescriptions.isBridge() ^ methodDescription.isBridge()) {
-//                                        return this.methodDescriptions.isBridge()
-//                                                ? new ForMethod<U>(key, methodDescription, false)
-//                                                : new Ambiguous<U>(key, this.methodDescriptions);
-//                                    } else {
-//                                        return new Ambiguous<U>(key, merger.merge(this.methodDescriptions, methodDescription));
-//                                    }
-//                                } else {
-//                                    return methodDescription.isBridge()
-//                                            ? new Ambiguous<U>(key, this.methodDescriptions)
-//                                            : new ForMethod<U>(key, methodDescription, false);
-//                                }
+                                Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
+                                if (methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())) {
+                                    if (this.methodDescription.isBridge() ^ methodDescription.isBridge()) {
+                                        return this.methodDescription.isBridge()
+                                                ? new ForMethod<U>(key, methodDescription, false)
+                                                : new Ambiguous<U>(key, this.methodDescription);
+                                    } else {
+                                        return new Ambiguous<U>(key, merger.merge(this.methodDescription, methodDescription));
+                                    }
+                                } else {
+                                    return methodDescription.isBridge()
+                                            ? new Ambiguous<U>(key, this.methodDescription)
+                                            : new ForMethod<U>(key, methodDescription, false);
+                                }
                             }
 
                             @Override
                             public Entry<U> inject(Harmonized<U> key) {
-                                return new Ambiguous<U>(key.inject(key), methodDescriptions);
+                                return new Ambiguous<U>(key.inject(key), methodDescription);
                             }
 
                             @Override
-                            public MethodGraph.Node asNode(Merger merger) {
-                                Iterator<MethodDescription> iterator = methodDescriptions.iterator();
-                                MethodDescription methodDescription = iterator.next();
-                                while (iterator.hasNext()) {
-                                    methodDescription = merger.merge(methodDescription, iterator.next());
-                                }
+                            public MethodGraph.Node asNode() {
                                 return new Node(key.detach(), methodDescription);
                             }
 
@@ -966,13 +957,13 @@ public interface MethodGraph {
                                 if (this == other) return true;
                                 if (other == null || getClass() != other.getClass()) return false;
                                 Ambiguous<?> ambiguous = (Ambiguous<?>) other;
-                                return key.equals(ambiguous.key) && methodDescriptions.equals(ambiguous.methodDescriptions);
+                                return key.equals(ambiguous.key) && methodDescription.equals(ambiguous.methodDescription);
                             }
 
                             @Override
                             public int hashCode() {
                                 int result = key.hashCode();
-                                result = 31 * result + methodDescriptions.hashCode();
+                                result = 31 * result + methodDescription.hashCode();
                                 return result;
                             }
 
@@ -980,7 +971,7 @@ public interface MethodGraph {
                             public String toString() {
                                 return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous{" +
                                         "key=" + key +
-                                        ", methodDescriptions=" + methodDescriptions +
+                                        ", methodDescription=" + methodDescription +
                                         '}';
                             }
 
@@ -1034,7 +1025,7 @@ public interface MethodGraph {
                                 public String toString() {
                                     return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.Node{" +
                                             "key=" + key +
-                                            ", methodToken=" + methodDescription +
+                                            ", methodDescription=" + methodDescription +
                                             '}';
                                 }
                             }

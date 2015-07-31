@@ -107,9 +107,7 @@ public enum SuperMethodCall implements Implementation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Implementation.Context implementationContext,
-                          MethodDescription instrumentedMethod) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             StackManipulation superMethodCall = instrumentedMethod.isDefaultMethod()
                     && implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(instrumentedMethod.getDeclaringType().asRawType())
                     ? implementationTarget.invokeDefault(instrumentedMethod.getDeclaringType().asRawType(), instrumentedMethod.asToken())
