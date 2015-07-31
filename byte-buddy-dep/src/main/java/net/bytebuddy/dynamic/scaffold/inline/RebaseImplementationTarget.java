@@ -73,6 +73,29 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         return instrumentedType;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && super.equals(other)
+                && methodRebaseResolver.equals(((RebaseImplementationTarget) other).methodRebaseResolver);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + methodRebaseResolver.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "RebaseImplementationTarget{" +
+                "methodRebaseResolver=" + methodRebaseResolver +
+                ", instrumentedType=" + instrumentedType +
+                ", methodGraph=" + methodGraph +
+                '}';
+    }
+
     /**
      * A {@link Implementation.SpecialMethodInvocation} which invokes a rebased method
      * as given by a {@link MethodRebaseResolver}.
@@ -159,6 +182,24 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
             return new RebaseImplementationTarget(instrumentedType, methodGraph, methodRebaseResolver);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && methodRebaseResolver.equals(((Factory) other).methodRebaseResolver);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodRebaseResolver.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "RebaseImplementationTarget.Factory{" +
+                    "methodRebaseResolver=" + methodRebaseResolver +
+                    '}';
         }
     }
 }

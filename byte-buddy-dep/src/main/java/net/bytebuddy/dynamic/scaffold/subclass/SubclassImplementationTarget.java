@@ -69,6 +69,32 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         return originTypeIdentifier.identify(instrumentedType);
     }
 
+    @Override
+    public boolean equals(Object other) {
+        return this == other || !(other == null || getClass() != other.getClass())
+                && super.equals(other)
+                && superConstructors.equals(((SubclassImplementationTarget) other).superConstructors)
+                && originTypeIdentifier == ((SubclassImplementationTarget) other).originTypeIdentifier;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + superConstructors.hashCode();
+        result = 31 * result + originTypeIdentifier.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "SubclassImplementationTarget{" +
+                "superConstructors=" + superConstructors +
+                ", originTypeIdentifier=" + originTypeIdentifier +
+                ", instrumentedType=" + instrumentedType +
+                ", methodGraph=" + methodGraph +
+                '}';
+    }
+
     /**
      * Responsible for identifying the origin type that an implementation target represents when
      * {@link Implementation.Target#getOriginType()} is invoked.
@@ -126,6 +152,24 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
             return new SubclassImplementationTarget(instrumentedType, methodGraph, originTypeIdentifier);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && originTypeIdentifier == ((Factory) other).originTypeIdentifier;
+        }
+
+        @Override
+        public int hashCode() {
+            return originTypeIdentifier.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "SubclassImplementationTarget.Factory{" +
+                    "originTypeIdentifier=" + originTypeIdentifier +
+                    '}';
         }
     }
 }

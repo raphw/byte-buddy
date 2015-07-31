@@ -287,7 +287,6 @@ public interface Implementation {
 
             protected final MethodGraph.Linked methodGraph;
 
-
             protected AbstractBase(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
                 this.instrumentedType = instrumentedType;
                 this.methodGraph = methodGraph;
