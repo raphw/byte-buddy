@@ -390,13 +390,13 @@ public interface MethodGraph {
 
                 protected static class Detached extends Key<MethodDescription.Token> {
 
-                    public static Detached of(MethodDescription.Token methodToken) {
+                    protected static Detached of(MethodDescription.Token methodToken) {
                         return new Detached(methodToken.getInternalName(), Collections.singleton(methodToken));
                     }
 
                     private final Set<MethodDescription.Token> identifiers;
 
-                    public Detached(String internalName, Set<MethodDescription.Token> identifiers) {
+                    protected Detached(String internalName, Set<MethodDescription.Token> identifiers) {
                         super(internalName);
                         this.identifiers = identifiers;
                     }
@@ -423,7 +423,7 @@ public interface MethodGraph {
 
                 protected static class Harmonized<V> extends Key<V> {
 
-                    public static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> factory) {
+                    protected static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> factory) {
                         MethodDescription.Token methodToken = methodDescription.asToken();
                         return new Harmonized<Q>(methodDescription.getInternalName(),
                                 Collections.singletonMap(factory.wrap(methodToken), Collections.singleton(methodToken)));
@@ -792,7 +792,7 @@ public interface MethodGraph {
                             protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right) {
                                 return left.isBridge() ^ right.isBridge()
                                         ? new ForMethod<Q>(key, left.isBridge() ? right : left, false)
-                                        : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), right.asToken());
+                                        : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), merge(left.asToken(), right.asToken()));
                             }
 
                             protected Ambiguous(Harmonized<U> key, TypeDescription declaringType, MethodDescription.Token methodToken) {
@@ -810,9 +810,13 @@ public interface MethodGraph {
                             public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
                                 Harmonized<U> key = this.key.expandWith(methodDescription.asDefined(), harmonizer);
                                 if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
-                                    return methodToken.isBridge() ^ methodDescription.isBridge()
-                                            ? methodToken.isBridge() ? new ForMethod<U>(key, methodDescription, false) : new Ambiguous<U>(key, declaringType, methodToken)
-                                            : new Ambiguous<U>(key, declaringType, methodDescription.asToken());
+                                    if (methodToken.isBridge() ^ methodDescription.isBridge()) {
+                                        return methodToken.isBridge()
+                                                ? new ForMethod<U>(key, methodDescription, false)
+                                                : new Ambiguous<U>(key, declaringType, methodToken);
+                                    } else {
+                                        return new Ambiguous<U>(key, declaringType, merge(methodToken, methodDescription.asToken()));
+                                    }
                                 } else {
                                     return methodDescription.isBridge()
                                             ? new Ambiguous<U>(key, declaringType, methodToken)
@@ -855,6 +859,10 @@ public interface MethodGraph {
                                         ", declaringType=" + declaringType +
                                         ", methodToken=" + methodToken +
                                         '}';
+                            }
+
+                            private static MethodDescription.Token merge(MethodDescription.Token left, MethodDescription.Token right) {
+                                return right; // TODO!
                             }
 
                             protected static class Node implements MethodGraph.Node {
