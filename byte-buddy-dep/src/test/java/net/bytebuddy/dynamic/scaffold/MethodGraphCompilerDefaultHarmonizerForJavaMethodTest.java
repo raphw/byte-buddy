@@ -151,7 +151,8 @@ public class MethodGraphCompilerDefaultHarmonizerForJavaMethodTest {
     @Test
     public void testFactory() throws Exception {
         assertThat(MethodGraph.Compiler.Default.forJavaHierarchy(), is((MethodGraph.Compiler) new MethodGraph.Compiler
-                .Default<MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token>(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE)));
+                .Default<MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token>(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE,
+                MethodGraph.Compiler.Default.Merger.Directional.LEFT)));
     }
 
     @Test

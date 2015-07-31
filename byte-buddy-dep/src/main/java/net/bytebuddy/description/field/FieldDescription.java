@@ -440,6 +440,14 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
+        public boolean isIdenticalTo(Token token) {
+            return getName().equals(token.getName())
+                    && getModifiers() == token.getModifiers()
+                    && getType().equals(token.getType())
+                    && getAnnotations().equals(token.getAnnotations());
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) return true;
             if (!(other instanceof Token)) return false;

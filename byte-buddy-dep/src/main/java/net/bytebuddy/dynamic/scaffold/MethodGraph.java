@@ -166,22 +166,25 @@ public interface MethodGraph {
 
         class Default<T> implements Compiler {
 
-            public static <S> Compiler of(Harmonizer<S> harmonizer) {
-                return new Default<S>(harmonizer);
+            public static <S> Compiler of(Harmonizer<S> harmonizer, Merger merger) {
+                return new Default<S>(harmonizer, merger);
             }
 
             public static Compiler forJavaHierarchy() {
-                return of(Harmonizer.ForJavaMethod.INSTANCE);
+                return of(Harmonizer.ForJavaMethod.INSTANCE, Merger.Directional.LEFT);
             }
 
             public static Compiler forJVMHierarchy() {
-                return of(Harmonizer.ForJVMMethod.INSTANCE);
+                return of(Harmonizer.ForJVMMethod.INSTANCE, Merger.Directional.LEFT);
             }
 
             private final Harmonizer<T> harmonizer;
 
-            protected Default(Harmonizer<T> harmonizer) {
+            private final Merger merger;
+
+            protected Default(Harmonizer<T> harmonizer, Merger merger) {
                 this.harmonizer = harmonizer;
+                this.merger = merger;
             }
 
             @Override
@@ -231,7 +234,7 @@ public interface MethodGraph {
                     keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
                 }
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
-                    keyStore = keyStore.registerTopLevel(methodDescription, harmonizer);
+                    keyStore = keyStore.registerTopLevel(methodDescription, harmonizer, merger);
                 }
                 return keyStore;
             }
@@ -239,18 +242,20 @@ public interface MethodGraph {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && harmonizer.equals(((Default<?>) other).harmonizer);
+                        && harmonizer.equals(((Default<?>) other).harmonizer)
+                        && merger.equals(((Default<?>) other).merger);
             }
 
             @Override
             public int hashCode() {
-                return harmonizer.hashCode();
+                return harmonizer.hashCode() + 31 * merger.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodGraph.Compiler.Default{" +
                         "harmonizer=" + harmonizer +
+                        ", merger=" + merger +
                         '}';
             }
 
@@ -362,6 +367,55 @@ public interface MethodGraph {
                                     "methodToken=" + methodToken +
                                     '}';
                         }
+                    }
+                }
+            }
+
+            public interface Merger {
+
+                MethodDescription.Token merge(MethodDescription.Token left, MethodDescription.Token right);
+
+                enum Strict implements Merger {
+
+                    INSTANCE;
+
+                    @Override
+                    public MethodDescription.Token merge(MethodDescription.Token left, MethodDescription.Token right) {
+                        if (left.isIdenticalTo(right)) {
+                            return right;
+                        } else {
+                            throw new IllegalArgumentException("Discovered conflicting methods: " + left + " and " + right);
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Merger.Strict." + name();
+                    }
+                }
+
+                enum Directional implements Merger {
+
+                    LEFT(true),
+
+                    RIGHT(false);
+
+                    private final boolean left;
+
+                    Directional(boolean left) {
+                        this.left = left;
+                    }
+
+                    @Override
+                    public MethodDescription.Token merge(MethodDescription.Token left, MethodDescription.Token right) {
+                        return this.left
+                                ? left
+                                : right;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "MethodGraph.Compiler.Default.Merger.Directional." + name();
                     }
                 }
             }
@@ -504,12 +558,12 @@ public interface MethodGraph {
                         this.entries = entries;
                     }
 
-                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> factory) {
+                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> factory, Merger merger) {
                         Harmonized<V> key = Harmonized.of(methodDescription, factory);
                         Entry<V> currentEntry = entries.get(key);
                         Entry<V> expandedEntry = (currentEntry == null
                                 ? new Entry.Initial<V>(key)
-                                : currentEntry).expandWith(methodDescription, factory);
+                                : currentEntry).expandWith(methodDescription, factory, merger);
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         entries.put(expandedEntry.getKey(), expandedEntry);
                         return new Store<V>(entries);
@@ -603,7 +657,7 @@ public interface MethodGraph {
 
                         Harmonized<W> getKey();
 
-                        Entry<W> expandWith(MethodDescription methodDescription, Harmonizer<W> harmonizer);
+                        Entry<W> expandWith(MethodDescription methodDescription, Harmonizer<W> harmonizer, Merger merger);
 
                         Entry<W> mergeWith(Harmonized<W> key);
 
@@ -623,7 +677,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
+                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
                                 return new ForMethod<U>(key.expandWith(methodDescription.asDefined(), harmonizer), methodDescription, false);
                             }
 
@@ -669,10 +723,10 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
+                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
                                 Harmonized<U> key = this.key.expandWith(methodDescription.asDefined(), harmonizer);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
-                                        ? Ambiguous.of(key, methodDescription, this.methodDescription)
+                                        ? Ambiguous.of(key, methodDescription, this.methodDescription, merger)
                                         : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge());
                             }
 
@@ -789,10 +843,10 @@ public interface MethodGraph {
 
                             private final MethodDescription.Token methodToken;
 
-                            protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right) {
+                            protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right, Merger merger) {
                                 return left.isBridge() ^ right.isBridge()
                                         ? new ForMethod<Q>(key, left.isBridge() ? right : left, false)
-                                        : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), merge(left.asToken(), right.asToken()));
+                                        : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), merger.merge(left.asToken(), right.asToken()));
                             }
 
                             protected Ambiguous(Harmonized<U> key, TypeDescription declaringType, MethodDescription.Token methodToken) {
@@ -807,7 +861,7 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
+                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
                                 Harmonized<U> key = this.key.expandWith(methodDescription.asDefined(), harmonizer);
                                 if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
                                     if (methodToken.isBridge() ^ methodDescription.isBridge()) {
@@ -815,7 +869,7 @@ public interface MethodGraph {
                                                 ? new ForMethod<U>(key, methodDescription, false)
                                                 : new Ambiguous<U>(key, declaringType, methodToken);
                                     } else {
-                                        return new Ambiguous<U>(key, declaringType, merge(methodToken, methodDescription.asToken()));
+                                        return new Ambiguous<U>(key, declaringType, merger.merge(methodToken, methodDescription.asToken()));
                                     }
                                 } else {
                                     return methodDescription.isBridge()
@@ -859,10 +913,6 @@ public interface MethodGraph {
                                         ", declaringType=" + declaringType +
                                         ", methodToken=" + methodToken +
                                         '}';
-                            }
-
-                            private static MethodDescription.Token merge(MethodDescription.Token left, MethodDescription.Token right) {
-                                return right; // TODO!
                             }
 
                             protected static class Node implements MethodGraph.Node {

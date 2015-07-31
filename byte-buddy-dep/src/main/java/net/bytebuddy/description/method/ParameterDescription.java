@@ -827,6 +827,16 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
+        public boolean isIdenticalTo(Token token) {
+            return getType().equals(token.getType())
+                    && getAnnotations().equals(token.getAnnotations())
+                    && ((getName() == null && token.getName() == null)
+                    || (getName() != null && token.getName() != null && (getName().equals(token.getName()))))
+                    && ((getModifiers() == null && token.getModifiers() == null)
+                    || (getModifiers() != null && token.getModifiers() != null && (getModifiers().equals(token.getModifiers()))));
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) return true;
             if (!(other instanceof Token)) return false;

@@ -68,6 +68,8 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
          */
         T accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
+        boolean isIdenticalTo(T t);
+
         /**
          * A list of tokens.
          *

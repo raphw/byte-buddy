@@ -1444,6 +1444,19 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        public boolean isIdenticalTo(Token token) {
+            return getInternalName().equals(token.getInternalName())
+                    && getModifiers() == token.getModifiers()
+                    && getTypeVariables().equals(token.getTypeVariables())
+                    && getReturnType().equals(token.getReturnType())
+                    && getParameterTokens().equals(token.getParameterTokens())
+                    && getExceptionTypes().equals(token.getExceptionTypes())
+                    && getAnnotations().equals(token.getAnnotations())
+                    && ((getDefaultValue() == null && token.getDefaultValue() == null)
+                    || (getDefaultValue() != null && token.getDefaultValue() != null && (getDefaultValue().equals(token.getDefaultValue()))));
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) return true;
             if (!(other instanceof Token)) return false;
