@@ -710,6 +710,9 @@ public interface MethodGraph {
 
                         Harmonized<W> getKey();
 
+                        // TODO: Replace with: Set<MethodDescription> getCandidates, replace "combine" method with appropriate logic where the best subset
+                        // is located. If the subset contains only one method -> non-ambigous. Otherwise, ambigous. Delay merger application until
+                        // the Node creation.
                         MethodDescription getRepresentative();
 
                         Entry<W> extendWith(MethodDescription methodDescription, Harmonizer<W> harmonizer, Merger merger);
