@@ -359,6 +359,7 @@ public interface Implementation {
 
             @Override
             public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken) {
+                // TODO: Allow for lookups by token to type.
                 Map<MethodDescription.Token, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
                 if (defaultMethods != null) {
                     MethodDescription defaultMethod = defaultMethods.get(methodToken);

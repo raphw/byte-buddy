@@ -159,7 +159,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     }
 
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     @JavaVersionRule.Enforce(8)
     public void testNonDeclaredDefaultMethodThrowsException() throws Exception {
         implement(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),

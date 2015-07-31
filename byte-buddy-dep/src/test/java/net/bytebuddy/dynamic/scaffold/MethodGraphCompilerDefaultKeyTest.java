@@ -83,7 +83,7 @@ public class MethodGraphCompilerDefaultKeyTest {
     @SuppressWarnings("unchecked")
     public void testInitialEntryCannotBeTransformed() throws Exception {
         new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
-                .asNode();
+                .asNode(mock(MethodGraph.Compiler.Default.Merger.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -117,8 +117,8 @@ public class MethodGraphCompilerDefaultKeyTest {
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Initial.class).apply();
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.class).apply();
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.Node.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod.Node.class).apply();
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.class).apply();
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.Node.class).apply();
     }
     
     protected static class PseudoKey extends MethodGraph.Compiler.Default.Key<SampleKey> {
