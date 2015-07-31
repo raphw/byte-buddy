@@ -1,14 +1,10 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -137,24 +133,81 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.isMadeVisible(), is(false));
         assertThat(methodNode.getBridges().size(), is(0));
         assertThat(methodNode.getRepresentative(), is(method));
-        assertThat(methodGraph.listNodes().contains(methodNode), is(true));
         MethodGraph.Node baseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(method.asToken());
         assertThat(methodNode, not(is(baseNode)));
         assertThat(baseNode.getRepresentative(), is(typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly()));
     }
 
-    @Test // TODO: extend
+    @Test
     public void testMultipleAmbiguousClassInheritance() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.ClassTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodDescription first = typeDescription.getInterfaces().filter(rawType(InterfaceBase.class)).getOnly()
+                .getDeclaredMethods().filter(isMethod()).getOnly();
+        MethodDescription second = typeDescription.getInterfaces().filter(rawType(AmbiguousInterfaceBase.class)).getOnly()
+                .getDeclaredMethods().filter(isMethod()).getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(first.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getRepresentative(), is(first));
+        assertThat(methodNode.getRepresentative(), not(second));
+        assertThat(methodNode, is(methodGraph.locate(second.asToken())));
+        MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(first.asToken());
+        assertThat(methodNode, not(is(firstBaseNode)));
+        assertThat(firstBaseNode.getRepresentative(), is(first));
+        MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(second.asToken());
+        assertThat(methodNode, not(is(secondBaseNode)));
+        assertThat(secondBaseNode.getRepresentative(), is(first));
     }
 
-    @Test // TODO: extend
+    @Test
     public void testMultipleAmbiguousInterfaceInheritance() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.InterfaceTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription first = typeDescription.getInterfaces().filter(rawType(InterfaceBase.class)).getOnly()
+                .getDeclaredMethods().filter(isMethod()).getOnly();
+        MethodDescription second = typeDescription.getInterfaces().filter(rawType(AmbiguousInterfaceBase.class)).getOnly()
+                .getDeclaredMethods().filter(isMethod()).getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(first.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getRepresentative(), is(first));
+        assertThat(methodNode.getRepresentative(), not(second));
+        assertThat(methodNode, is(methodGraph.locate(second.asToken())));
+        MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(first.asToken());
+        assertThat(methodNode, not(is(firstBaseNode)));
+        assertThat(firstBaseNode.getRepresentative(), is(first));
+        MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(second.asToken());
+        assertThat(methodNode, not(is(secondBaseNode)));
+        assertThat(secondBaseNode.getRepresentative(), is(first));
+    }
+
+    @Test
+    public void testSuperTypeInheritance() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MultipleInterfaceBase.ClassTarget.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(MultipleInterfaceBase.InterfaceExtension.class).getDeclaredMethods().getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getRepresentative(), is(methodDescription));
+    }
+
+    @Test
+    public void testDominantSuperTypeInheritance() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MultipleInterfaceBase.DominantTarget.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(MultipleInterfaceBase.DominantExtension.class).getDeclaredMethods().getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getRepresentative(), is(methodDescription));
     }
 
     @Test
@@ -350,7 +403,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(superNode.getRepresentative(), is(genericMethod));
     }
 
-    @Test // TODO: fails
+    @Test
     public void testMethodInterfaceConvergence() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(MethodInterfaceConvergenceTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
@@ -366,16 +419,29 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode, is(methodGraph.locate(genericMethod.asDefined().asToken())));
         assertThat(methodNode, is(methodGraph.locate(nonGenericMethod.asDefined().asToken())));
         assertThat(methodNode.isMadeVisible(), is(false));
-        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getBridges().size(), is(1));
+        assertThat(methodNode.getBridges().contains(genericMethod.asDefined().asToken()), is(true));
         assertThat(methodNode.getRepresentative(), is(genericMethod));
-        assertThat(methodNode.getRepresentative(), is(nonGenericMethod));
+        assertThat(methodNode.getRepresentative(), not(nonGenericMethod));
     }
 
-    @Test // TODO: extend
+    @Test
     public void testMethodConvergenceVisibilityTarget() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(MethodConvergenceVisibilityBridgeTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodDescription genericMethod = typeDescription.getSuperType().getSuperType()
+                .getDeclaredMethods().filter(isMethod().and(definedMethod(takesArguments(Object.class)))).getOnly();
+        MethodDescription nonGenericMethod = typeDescription.getSuperType().getSuperType()
+                .getDeclaredMethods().filter(isMethod().and(definedMethod(takesArguments(Void.class)))).getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(genericMethod.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode, is(methodGraph.locate(nonGenericMethod.asToken())));
+        assertThat(methodNode.isMadeVisible(), is(true));
+        assertThat(methodNode.getBridges().size(), is(1));
+        assertThat(methodNode.getBridges().contains(genericMethod.asDefined().asToken()), is(true));
+        assertThat(methodNode.getRepresentative(), is(typeDescription.getSuperType().getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly()));
     }
 
     @Test
@@ -432,6 +498,44 @@ public class MethodGraphCompilerDefaultTest {
         }
 
         abstract class ClassTarget implements InterfaceBase, AmbiguousInterfaceBase {
+            /* empty */
+        }
+    }
+
+    public interface MultipleInterfaceBase {
+
+        void foo();
+
+        interface InterfaceExtension extends MultipleInterfaceBase {
+
+            @Override
+            void foo();
+        }
+
+        abstract class ClassBase implements InterfaceExtension {
+            /* empty */
+        }
+
+        abstract class ClassTarget extends ClassBase implements MultipleInterfaceBase {
+            /* empty */
+        }
+
+        interface AmbiguousInterface {
+
+            void foo();
+        }
+
+        interface DominantExtension extends MultipleInterfaceBase, AmbiguousInterface {
+
+            @Override
+            void foo();
+        }
+
+        abstract class AmbiguousClassBase implements DominantExtension {
+            /* empty */
+        }
+
+        abstract class DominantTarget extends AmbiguousClassBase implements MultipleInterfaceBase {
             /* empty */
         }
     }
@@ -618,11 +722,17 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    public static class MethodConvergenceVisibilityBridgeTarget extends MethodConvergenceVisibilityBridgeBase<Void> {
+    static class MethodConvergenceVisibilityBridgeIntermediate extends MethodConvergenceVisibilityBridgeBase<Void> {
 
         @Override
         public Void foo(Void arg) {
             return null;
         }
     }
+
+    public static class MethodConvergenceVisibilityBridgeTarget extends MethodConvergenceVisibilityBridgeIntermediate {
+        /* empty */
+    }
+
+    // TODO: Merge with bridges and non-bridges (default methods)
 }
