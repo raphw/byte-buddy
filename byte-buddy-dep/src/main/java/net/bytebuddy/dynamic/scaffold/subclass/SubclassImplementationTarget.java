@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isVisibilityBridge;
+import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 
 /**
  * An implementation target for creating a subclass of a given type.
@@ -33,7 +35,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         GenericTypeDescription superType = instrumentedType.getSuperType();
         MethodList<?> superConstructors = superType == null
                 ? new MethodList.Empty()
-                : superType.getDeclaredMethods().filter(isConstructor());
+                : superType.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
         this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>(superConstructors.size());
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.asToken(), superConstructor);
@@ -43,6 +45,19 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
 
     @Override
     public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
+        return methodToken.getInternalName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                ? invokeConstructor(methodToken)
+                : invokeMethod(methodToken);
+    }
+
+    private Implementation.SpecialMethodInvocation invokeConstructor(MethodDescription.Token methodToken) {
+        MethodDescription methodDescription = superConstructors.get(methodToken);
+        return methodDescription == null
+                ? Implementation.SpecialMethodInvocation.Illegal.INSTANCE
+                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asRawType());
+    }
+
+    private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.Token methodToken) {
         MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(methodToken);
         return methodNode.getSort().isUnique()
                 ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperType().asRawType())
