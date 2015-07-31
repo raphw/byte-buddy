@@ -123,8 +123,8 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
-    public void testMultipleDominantInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MultipleInheritance.class);
+    public void testClassAndInterfaceDominantInheritance() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ClassAndInterfaceInheritance.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
         MethodDescription method = typeDescription.getSuperType().getDeclaredMethods().filter(isMethod()).getOnly();
@@ -191,7 +191,7 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantClassTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceIntermediate.class)
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -205,7 +205,7 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceTargetLeft.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceIntermediate.class)
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -219,10 +219,38 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceTargetRight.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceIntermediate.class)
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getRepresentative(), is(methodDescription));
+    }
+
+    @Test
+    public void testNonDominantInterfaceInheritanceLeft() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.NonDominantTargetLeft.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
+                .getDeclaredMethods().getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(0));
+        assertThat(methodNode.getRepresentative(), is(methodDescription));
+    }
+
+    @Test
+    public void testNonDominantInterfaceInheritanceRight() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.NonDominantTargetRight.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
+                .getDeclaredMethods().getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
         assertThat(methodNode.isMadeVisible(), is(false));
         assertThat(methodNode.getBridges().size(), is(0));
         assertThat(methodNode.getRepresentative(), is(methodDescription));
@@ -573,7 +601,7 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    public static class MultipleInheritance extends ClassBase implements InterfaceBase {
+    public static class ClassAndInterfaceInheritance extends ClassBase implements InterfaceBase {
         /* empty */
     }
 
@@ -589,13 +617,13 @@ public class MethodGraphCompilerDefaultTest {
             /* empty */
         }
 
-        interface DominantInterfaceIntermediate extends InterfaceBase, AmbiguousInterfaceBase {
+        interface DominantIntermediate extends InterfaceBase, AmbiguousInterfaceBase {
 
             @Override
             void foo();
         }
 
-        abstract class DominantClassBase implements DominantInterfaceIntermediate {
+        abstract class DominantClassBase implements DominantIntermediate {
             /* empty */
         }
 
@@ -603,15 +631,32 @@ public class MethodGraphCompilerDefaultTest {
             /* empty */
         }
 
-        interface DominantInterfaceBase extends DominantInterfaceIntermediate {
+        interface DominantInterfaceTargetLeft extends InterfaceBase, DominantIntermediate {
             /* empty */
         }
 
-        interface DominantInterfaceTargetLeft extends InterfaceBase, DominantInterfaceBase {
+        interface DominantInterfaceTargetRight extends DominantIntermediate, InterfaceBase {
             /* empty */
         }
 
-        interface DominantInterfaceTargetRight extends DominantInterfaceBase, InterfaceBase {
+        interface NonDominantAmbiguous {
+
+            void foo();
+        }
+
+        interface NonDominantIntermediateLeft extends InterfaceBase, NonDominantAmbiguous {
+            /* empty */
+        }
+
+        interface NonDominantIntermediateRight extends NonDominantAmbiguous,InterfaceBase {
+            /* empty */
+        }
+
+        interface NonDominantTargetLeft extends DominantIntermediate, NonDominantIntermediateLeft {
+            /* empty */
+        }
+
+        interface NonDominantTargetRight extends DominantIntermediate, NonDominantIntermediateRight {
             /* empty */
         }
     }
