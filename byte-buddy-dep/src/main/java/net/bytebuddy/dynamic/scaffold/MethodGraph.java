@@ -836,7 +836,7 @@ public interface MethodGraph {
 
                             @Override
                             public String toString() {
-                                return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod{" +
+                                return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved{" +
                                         "key=" + key +
                                         ", methodDescription=" + methodDescription +
                                         ", madeVisible=" + madeVisible +
@@ -897,7 +897,7 @@ public interface MethodGraph {
 
                                 @Override
                                 public String toString() {
-                                    return "MethodGraph.Compiler.Default.Key.Store.Entry.ForMethod.Node{" +
+                                    return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.Node{" +
                                             "key=" + key +
                                             ", methodDescription=" + methodDescription +
                                             ", madeVisible=" + madeVisible +
