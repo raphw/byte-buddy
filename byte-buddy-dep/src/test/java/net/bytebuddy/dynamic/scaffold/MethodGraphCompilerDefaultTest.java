@@ -334,6 +334,76 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    public void testGenericWithReturnTypeClassSingleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeClassBase.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodGraph.Node methodNode = methodGraph.locate(typeDescription.getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asToken());
+        MethodDescription.Token bridgeToken = typeDescription.getSuperType().getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asToken();
+        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(1));
+        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
+    }
+
+    @Test
+    public void testGenericWithReturnTypeClassMultipleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeClassBase.Intermediate.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
+        MethodGraph.Node methodNode = methodGraph.locate(typeDescription.getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asToken());
+        MethodDescription.Token firstBridgeToken = typeDescription.getSuperType().getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asDefined().asToken();
+        MethodDescription.Token secondBridgeToken = typeDescription.getSuperType().getSuperType().getDeclaredMethods()
+                .filter(isMethod()).getOnly().asDefined().asToken();
+        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(2));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
+    }
+
+    @Test
+    public void testGenericWithReturnTypeInterfaceSingleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeInterfaceBase.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodGraph.Node methodNode = methodGraph.locate(typeDescription.getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asToken());
+        MethodDescription.Token bridgeToken = typeDescription.getInterfaces().getOnly()
+                .getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asToken();
+        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(1));
+        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
+    }
+
+    @Test
+    public void testGenericWithReturnTypeInterfaceMultipleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeInterfaceBase.Intermediate.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodGraph.Node methodNode = methodGraph.locate(typeDescription.getDeclaredMethods().getOnly().asToken());
+        MethodDescription.Token firstBridgeToken = typeDescription.getInterfaces().getOnly()
+                .getDeclaredMethods().getOnly().asDefined().asToken();
+        MethodDescription.Token secondBridgeToken = typeDescription.getInterfaces().getOnly().getInterfaces().getOnly()
+                .getDeclaredMethods().getOnly().asDefined().asToken();
+        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
+        assertThat(methodNode.getBridges().size(), is(2));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
+    }
+
+    @Test
     public void testReturnTypeInterfaceSingleEvolution() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
@@ -650,6 +720,60 @@ public class MethodGraphCompilerDefaultTest {
 
                 @Override
                 Integer foo();
+            }
+        }
+    }
+
+    public static class GenericWithReturnTypeClassBase<T> {
+
+        public Object foo(T t) {
+            return null;
+        }
+
+        public static class Inner extends GenericWithReturnTypeClassBase<Void> {
+
+            @Override
+            public Void foo(Void t) {
+                return null;
+            }
+        }
+
+        public static class Intermediate<T extends Number> extends GenericWithReturnTypeClassBase<T> {
+
+            @Override
+            public Number foo(T t) {
+                return null;
+            }
+
+            public static class Inner extends Intermediate<Integer> {
+
+                @Override
+                public Integer foo(Integer t) {
+                    return null;
+                }
+            }
+        }
+    }
+
+    public interface GenericWithReturnTypeInterfaceBase<T> {
+
+        Object foo(T t);
+
+        interface Inner extends GenericWithReturnTypeInterfaceBase<Void> {
+
+            @Override
+            Void foo(Void t);
+        }
+
+        interface Intermediate<T extends Number> extends GenericWithReturnTypeInterfaceBase<T> {
+
+            @Override
+            Number foo(T t);
+
+            interface Inner extends Intermediate<Integer> {
+
+                @Override
+                Integer foo(Integer t);
             }
         }
     }

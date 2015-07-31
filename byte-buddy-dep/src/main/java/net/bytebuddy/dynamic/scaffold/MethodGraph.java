@@ -482,7 +482,7 @@ public interface MethodGraph {
                     protected static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> harmonizer) {
                         MethodDescription.Token methodToken = methodDescription.asToken();
                         return new Harmonized<Q>(methodDescription.getInternalName(),
-                                Collections.singletonMap(harmonizer.wrap(methodToken), Collections.singleton(methodToken)));
+                                Collections.singletonMap(harmonizer.wrap(methodToken), Collections.<MethodDescription.Token>emptySet()));
                     }
 
                     private final Map<V, Set<MethodDescription.Token>> identifiers;
