@@ -74,6 +74,13 @@ public class MethodGraphCompilerDefaultKeyTest {
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
+    public void testInitialEntryCannotCombine() throws Exception {
+        new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
+                .combineWith(mock(MethodGraph.Compiler.Default.Key.Store.Entry.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    @SuppressWarnings("unchecked")
     public void testInitialEntryCannotInject() throws Exception {
         new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
                 .inject(mock(MethodGraph.Compiler.Default.Key.Harmonized.class));

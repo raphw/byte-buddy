@@ -232,7 +232,7 @@ public interface MethodGraph {
                 Key.Store<T> keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
                 Key.Store<T> interfaceKeyStore = new Key.Store<T>();
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    interfaceKeyStore = interfaceKeyStore.combineWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
+                    interfaceKeyStore = interfaceKeyStore.combineWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher), harmonizer, merger);
                 }
                 keyStore = keyStore.inject(interfaceKeyStore);
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
@@ -502,7 +502,12 @@ public interface MethodGraph {
                         return new Detached(internalName, identifiers);
                     }
 
-                    protected Harmonized<V> expandWith(MethodDescription.InDefinedShape methodDescription, Harmonizer<V> factory) {
+                    protected Harmonized<V> combineWith(Key.Harmonized<V> key, Harmonizer<V> factory) {
+
+                        return null; // TODO
+                    }
+
+                    protected Harmonized<V> extend(MethodDescription.InDefinedShape methodDescription, Harmonizer<V> factory) {
                         Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
                         MethodDescription.Token methodToken = methodDescription.asToken();
                         V identifier = factory.wrap(methodToken);
@@ -563,22 +568,47 @@ public interface MethodGraph {
                     protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> factory, Merger merger) {
                         Harmonized<V> key = Harmonized.of(methodDescription, factory);
                         Entry<V> currentEntry = entries.get(key);
-                        Entry<V> expandedEntry = (currentEntry == null
+                        Entry<V> extendedEntry = (currentEntry == null
                                 ? new Entry.Initial<V>(key)
-                                : currentEntry).expandWith(methodDescription, factory, merger);
+                                : currentEntry).extendWith(methodDescription, factory, merger);
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         entries.remove(key);
-                        entries.put(expandedEntry.getKey(), expandedEntry);
+                        entries.put(extendedEntry.getKey(), extendedEntry);
                         return new Store<V>(entries);
                     }
 
-                    protected Store<V> combineWith(Store<V> keyStore) {
-                        // TODO: needs to check if an interface type defined an ambivalent method.
+                    protected Store<V> combineWith(Store<V> keyStore, Harmonizer<V> factory, Merger merger) {
                         Store<V> combinedStore = this;
                         for (Entry<V> entry : keyStore.entries.values()) {
-                            combinedStore = combinedStore.inject(entry);
+                            combinedStore = combinedStore.combineWith(entry, factory, merger);
                         }
                         return combinedStore;
+                    }
+
+                    protected Store<V> combineWith(Entry<V> entry, Harmonizer<V> factory, Merger merger) {
+                        LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
+                        Entry<V> previousEntry = entries.get(entry.getKey());
+                        Entry<V> injectedEntry = previousEntry == null
+                                ? entry
+                                : combine(previousEntry, entry, factory, merger);
+                        entries.remove(entry.getKey());
+                        entries.put(injectedEntry.getKey(), injectedEntry);
+                        return new Store<V>(entries);
+                    }
+
+                    private static <W> Entry<W> combine(Entry<W> left, Entry<W> right, Harmonizer<W> harmonizer, Merger merger) {
+                        MethodDescription leftMethod = left.getRepresentative(), rightMethod = right.getRepresentative();
+                        if (leftMethod.getDeclaringType().equals(rightMethod.getDeclaringType())) {
+                            return left;
+                        }
+                        TypeDescription leftType = leftMethod.getDeclaringType().asRawType(), rightType = rightMethod.getDeclaringType().asRawType();
+                        if (leftType.isAssignableTo(rightType)) {
+                            return left;
+                        } else if (leftType.isAssignableTo(rightType)) {
+                            return right;
+                        } else {
+                            return Entry.Ambiguous.of(left.getKey().combineWith(right.getKey(), harmonizer), leftMethod, rightMethod, merger);
+                        }
                     }
 
                     protected Store<V> inject(Store<V> keyStore) {
@@ -670,7 +700,9 @@ public interface MethodGraph {
 
                         Harmonized<W> getKey();
 
-                        Entry<W> expandWith(MethodDescription methodDescription, Harmonizer<W> harmonizer, Merger merger);
+                        MethodDescription getRepresentative();
+
+                        Entry<W> extendWith(MethodDescription methodDescription, Harmonizer<W> harmonizer, Merger merger);
 
                         Entry<W> inject(Harmonized<W> key);
 
@@ -686,12 +718,17 @@ public interface MethodGraph {
 
                             @Override
                             public Harmonized<U> getKey() {
-                                throw new IllegalStateException("Cannot extract key without a registered method: " + this);
+                                throw new IllegalStateException("Cannot extract key from initial entry:" + this);
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
-                                return new ForMethod<U>(key.expandWith(methodDescription.asDefined(), harmonizer), methodDescription, false);
+                            public MethodDescription getRepresentative() {
+                                throw new IllegalStateException("Cannot extract method from initial entry:" + this);
+                            }
+
+                            @Override
+                            public Entry<U> extendWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
+                                return new ForMethod<U>(key.extend(methodDescription.asDefined(), harmonizer), methodDescription, false);
                             }
 
                             @Override
@@ -736,8 +773,18 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
-                                Harmonized<U> key = this.key.expandWith(methodDescription.asDefined(), harmonizer);
+                            public Harmonized<U> getKey() {
+                                return key;
+                            }
+
+                            @Override
+                            public MethodDescription getRepresentative() {
+                                return methodDescription;
+                            }
+
+                            @Override
+                            public Entry<U> extendWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
+                                Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription, merger)
                                         : new ForMethod<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge());
@@ -746,11 +793,6 @@ public interface MethodGraph {
                             @Override
                             public Entry<U> inject(Harmonized<U> key) {
                                 return new Entry.ForMethod<U>(key.inject(key), methodDescription, madeVisible);
-                            }
-
-                            @Override
-                            public Harmonized<U> getKey() {
-                                return key;
                             }
 
                             @Override
@@ -871,8 +913,13 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
-                                Harmonized<U> key = this.key.expandWith(methodDescription.asDefined(), harmonizer);
+                            public MethodDescription getRepresentative() {
+                                return methodDescription;
+                            }
+
+                            @Override
+                            public Entry<U> extendWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
+                                Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
                                 if (methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())) {
                                     if (this.methodDescription.isBridge() ^ methodDescription.isBridge()) {
                                         return this.methodDescription.isBridge()
