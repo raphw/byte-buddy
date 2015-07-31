@@ -172,7 +172,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
     }
 
-    @Test // TODO: fails
+    @Test
     public void testGenericClassMultipleEvolution() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
@@ -346,8 +346,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(superNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
         assertThat(superNode.isMadeVisible(), is(false));
         assertThat(superNode.getBridges().size(), is(1));
-        assertThat(superNode.getRepresentative().asToken(), is(genericMethod.asToken()));
-        assertThat(superNode.getRepresentative().asToken(), is(nonGenericMethod.asToken()));
+        assertThat(superNode.getRepresentative(), is(nonGenericMethod));
+        assertThat(superNode.getRepresentative(), is(genericMethod));
     }
 
     @Test // TODO: fails
@@ -367,8 +367,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode, is(methodGraph.locate(nonGenericMethod.asDefined().asToken())));
         assertThat(methodNode.isMadeVisible(), is(false));
         assertThat(methodNode.getBridges().size(), is(0));
-        assertThat(methodNode.getRepresentative().asToken(), is(genericMethod.asToken()));
-        assertThat(methodNode.getRepresentative().asToken(), is(nonGenericMethod.asToken()));
+        assertThat(methodNode.getRepresentative(), is(genericMethod));
+        assertThat(methodNode.getRepresentative(), is(nonGenericMethod));
     }
 
     @Test // TODO: extend

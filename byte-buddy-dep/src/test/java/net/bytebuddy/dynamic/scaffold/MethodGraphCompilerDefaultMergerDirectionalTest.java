@@ -17,7 +17,7 @@ public class MethodGraphCompilerDefaultMergerDirectionalTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.Token left, right;
+    private MethodDescription left, right;
 
     @Test
     public void testLeft() throws Exception {

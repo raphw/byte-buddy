@@ -373,16 +373,16 @@ public interface MethodGraph {
 
             public interface Merger {
 
-                MethodDescription.Token merge(MethodDescription.Token left, MethodDescription.Token right);
+                MethodDescription merge(MethodDescription left, MethodDescription right);
 
                 enum Strict implements Merger {
 
                     INSTANCE;
 
                     @Override
-                    public MethodDescription.Token merge(MethodDescription.Token left, MethodDescription.Token right) {
-                        if (left.isIdenticalTo(right)) {
-                            return right;
+                    public MethodDescription merge(MethodDescription left, MethodDescription right) {
+                        if (left.asToken().isIdenticalTo(right.asToken())) {
+                            return left;
                         } else {
                             throw new IllegalArgumentException("Discovered conflicting methods: " + left + " and " + right);
                         }
@@ -407,7 +407,7 @@ public interface MethodGraph {
                     }
 
                     @Override
-                    public MethodDescription.Token merge(MethodDescription.Token left, MethodDescription.Token right) {
+                    public MethodDescription merge(MethodDescription left, MethodDescription right) {
                         return this.left
                                 ? left
                                 : right;
@@ -565,6 +565,7 @@ public interface MethodGraph {
                                 ? new Entry.Initial<V>(key)
                                 : currentEntry).expandWith(methodDescription, factory, merger);
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
+                        entries.remove(key);
                         entries.put(expandedEntry.getKey(), expandedEntry);
                         return new Store<V>(entries);
                     }
@@ -583,6 +584,7 @@ public interface MethodGraph {
                         Entry<V> mergedEntry = dominantEntry == null
                                 ? entry
                                 : dominantEntry.mergeWith(entry.getKey());
+                        entries.remove(entry.getKey());
                         entries.put(mergedEntry.getKey(), mergedEntry);
                         return new Store<V>(entries);
                     }
@@ -839,20 +841,17 @@ public interface MethodGraph {
 
                             private final Harmonized<U> key;
 
-                            private final TypeDescription declaringType;
-
-                            private final MethodDescription.Token methodToken;
+                            private final MethodDescription methodDescription;
 
                             protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right, Merger merger) {
                                 return left.isBridge() ^ right.isBridge()
                                         ? new ForMethod<Q>(key, left.isBridge() ? right : left, false)
-                                        : new Ambiguous<Q>(key, left.getDeclaringType().asRawType(), merger.merge(left.asToken(), right.asToken()));
+                                        : new Ambiguous<Q>(key, merger.merge(left, right));
                             }
 
-                            protected Ambiguous(Harmonized<U> key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                            protected Ambiguous(Harmonized<U> key, MethodDescription methodDescription) {
                                 this.key = key;
-                                this.declaringType = declaringType;
-                                this.methodToken = methodToken;
+                                this.methodDescription = methodDescription;
                             }
 
                             @Override
@@ -863,29 +862,29 @@ public interface MethodGraph {
                             @Override
                             public Entry<U> expandWith(MethodDescription methodDescription, Harmonizer<U> harmonizer, Merger merger) {
                                 Harmonized<U> key = this.key.expandWith(methodDescription.asDefined(), harmonizer);
-                                if (methodDescription.getDeclaringType().asRawType().equals(declaringType)) {
-                                    if (methodToken.isBridge() ^ methodDescription.isBridge()) {
-                                        return methodToken.isBridge()
+                                if (methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())) {
+                                    if (this.methodDescription.isBridge() ^ methodDescription.isBridge()) {
+                                        return this.methodDescription.isBridge()
                                                 ? new ForMethod<U>(key, methodDescription, false)
-                                                : new Ambiguous<U>(key, declaringType, methodToken);
+                                                : new Ambiguous<U>(key, this.methodDescription);
                                     } else {
-                                        return new Ambiguous<U>(key, declaringType, merger.merge(methodToken, methodDescription.asToken()));
+                                        return new Ambiguous<U>(key, merger.merge(this.methodDescription, methodDescription));
                                     }
                                 } else {
                                     return methodDescription.isBridge()
-                                            ? new Ambiguous<U>(key, declaringType, methodToken)
+                                            ? new Ambiguous<U>(key, this.methodDescription)
                                             : new ForMethod<U>(key, methodDescription, false);
                                 }
                             }
 
                             @Override
                             public Entry<U> mergeWith(Harmonized<U> key) {
-                                return new Ambiguous<U>(key.mergeWith(key), declaringType, methodToken);
+                                return new Ambiguous<U>(key.mergeWith(key), methodDescription);
                             }
 
                             @Override
                             public MethodGraph.Node asNode() {
-                                return new Node(key.detach(), declaringType, methodToken);
+                                return new Node(key.detach(), methodDescription);
                             }
 
                             @Override
@@ -893,16 +892,13 @@ public interface MethodGraph {
                                 if (this == other) return true;
                                 if (other == null || getClass() != other.getClass()) return false;
                                 Ambiguous<?> ambiguous = (Ambiguous<?>) other;
-                                return key.equals(ambiguous.key)
-                                        && declaringType.equals(ambiguous.declaringType)
-                                        && methodToken.equals(ambiguous.methodToken);
+                                return key.equals(ambiguous.key) && methodDescription.equals(ambiguous.methodDescription);
                             }
 
                             @Override
                             public int hashCode() {
                                 int result = key.hashCode();
-                                result = 31 * result + declaringType.hashCode();
-                                result = 31 * result + methodToken.hashCode();
+                                result = 31 * result + methodDescription.hashCode();
                                 return result;
                             }
 
@@ -910,8 +906,7 @@ public interface MethodGraph {
                             public String toString() {
                                 return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous{" +
                                         "key=" + key +
-                                        ", declaringType=" + declaringType +
-                                        ", methodToken=" + methodToken +
+                                        ", methodToken=" + methodDescription +
                                         '}';
                             }
 
@@ -919,14 +914,11 @@ public interface MethodGraph {
 
                                 private final Detached key;
 
-                                private final TypeDescription declaringType;
+                                private final MethodDescription methodDescription;
 
-                                private final MethodDescription.Token methodToken;
-
-                                public Node(Detached key, TypeDescription declaringType, MethodDescription.Token methodToken) {
+                                public Node(Detached key, MethodDescription methodDescription) {
                                     this.key = key;
-                                    this.declaringType = declaringType;
-                                    this.methodToken = methodToken;
+                                    this.methodDescription = methodDescription;
                                 }
 
                                 @Override
@@ -936,12 +928,12 @@ public interface MethodGraph {
 
                                 @Override
                                 public MethodDescription getRepresentative() {
-                                    return new MethodDescription.Latent(declaringType, methodToken);
+                                    return methodDescription;
                                 }
 
                                 @Override
                                 public Set<MethodDescription.Token> getBridges() {
-                                    return key.resolveBridges(methodToken);
+                                    return key.resolveBridges(methodDescription.asToken());
                                 }
 
                                 @Override
@@ -954,16 +946,13 @@ public interface MethodGraph {
                                     if (this == other) return true;
                                     if (other == null || getClass() != other.getClass()) return false;
                                     Node node = (Node) other;
-                                    return key.equals(node.key)
-                                            && declaringType.equals(node.declaringType)
-                                            && methodToken.equals(node.methodToken);
+                                    return key.equals(node.key) && methodDescription.equals(node.methodDescription);
                                 }
 
                                 @Override
                                 public int hashCode() {
                                     int result = key.hashCode();
-                                    result = 31 * result + declaringType.hashCode();
-                                    result = 31 * result + methodToken.hashCode();
+                                    result = 31 * result + methodDescription.hashCode();
                                     return result;
                                 }
 
@@ -971,8 +960,7 @@ public interface MethodGraph {
                                 public String toString() {
                                     return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.Node{" +
                                             "key=" + key +
-                                            ", declaringType=" + declaringType +
-                                            ", methodToken=" + methodToken +
+                                            ", methodToken=" + methodDescription +
                                             '}';
                                 }
                             }

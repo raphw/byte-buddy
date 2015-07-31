@@ -19,20 +19,26 @@ public class MethodGraphCompilerDefaultMergerStrictTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodDescription.Token left, right;
+    private MethodDescription left, right;
+
+    @Mock
+    private MethodDescription.Token leftToken, rightToken;
 
     @Before
     public void setUp() throws Exception {
-        when(left.isIdenticalTo(left)).thenReturn(true);
+        when(left.asToken()).thenReturn(leftToken);
+        when(right.asToken()).thenReturn(rightToken);
     }
 
     @Test
     public void testIdentical() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Merger.Strict.INSTANCE.merge(left, left), is(left));
+        when(leftToken.isIdenticalTo(rightToken)).thenReturn(true);
+        assertThat(MethodGraph.Compiler.Default.Merger.Strict.INSTANCE.merge(left, right), is(left));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonIdentical() throws Exception {
+        when(leftToken.isIdenticalTo(rightToken)).thenReturn(false);
         MethodGraph.Compiler.Default.Merger.Strict.INSTANCE.merge(left, right);
     }
 
