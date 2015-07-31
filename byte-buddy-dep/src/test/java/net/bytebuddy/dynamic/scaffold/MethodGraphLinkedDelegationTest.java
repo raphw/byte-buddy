@@ -36,7 +36,7 @@ public class MethodGraphLinkedDelegationTest {
     private MethodGraph.Node node;
 
     @Mock
-    private List<MethodGraph.Node> nodeList;
+    private MethodGraph.NodeList nodeList;
 
     private MethodGraph.Linked linkedMethodGraph;
 

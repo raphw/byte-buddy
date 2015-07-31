@@ -8,9 +8,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
@@ -55,11 +54,10 @@ public abstract class AbstractImplementationTest {
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isSynthetic(),
-                BridgeMethodResolver.Simple.Factory.FAIL_FAST,
                 new ClassVisitorWrapper.Chain(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
-                MethodLookupEngine.Default.Factory.INSTANCE,
+                MethodGraph.Compiler.DEFAULT,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)

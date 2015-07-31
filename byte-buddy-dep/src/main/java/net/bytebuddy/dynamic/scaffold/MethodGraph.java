@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -14,7 +15,7 @@ public interface MethodGraph {
 
     Node locate(MethodDescription.Token methodToken);
 
-    List<Node> listNodes();
+    NodeList listNodes();
 
     interface Linked extends MethodGraph {
 
@@ -23,6 +24,10 @@ public interface MethodGraph {
         MethodGraph getInterfaceGraph(TypeDescription typeDescription);
 
         class Delegation implements Linked {
+
+            public static Linked forSimpleExtension(MethodGraph methodGraph) {
+                return new Delegation(methodGraph, methodGraph, Collections.<TypeDescription, MethodGraph>emptyMap());
+            }
 
             private final MethodGraph methodGraph;
 
@@ -55,7 +60,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public List<Node> listNodes() {
+            public NodeList listNodes() {
                 return methodGraph.listNodes();
             }
 
@@ -96,7 +101,7 @@ public interface MethodGraph {
 
         Set<MethodDescription.Token> getBridges();
 
-        boolean isMadeVisible();
+        Visibility isMadeVisible();
 
         enum Sort {
 
@@ -129,6 +134,58 @@ public interface MethodGraph {
             }
         }
 
+        enum Visibility {
+
+            PLAIN(false),
+
+            BRIDGED(true);
+
+            public static Visibility of(boolean visible) {
+                return visible
+                        ? BRIDGED
+                        : PLAIN;
+            }
+
+            private final boolean visible;
+
+            Visibility(boolean visible) {
+                this.visible = visible;
+            }
+
+            public boolean isVisible() {
+                return visible;
+            }
+        }
+
+        class Simple implements Node {
+
+            private final MethodDescription methodDescription;
+
+            public Simple(MethodDescription methodDescription) {
+                this.methodDescription = methodDescription;
+            }
+
+            @Override
+            public Sort getSort() {
+                return Sort.RESOLVED;
+            }
+
+            @Override
+            public MethodDescription getRepresentative() {
+                return methodDescription;
+            }
+
+            @Override
+            public Set<MethodDescription.Token> getBridges() {
+                return Collections.emptySet();
+            }
+
+            @Override
+            public Visibility isMadeVisible() {
+                return Visibility.PLAIN;
+            }
+        }
+
         enum Illegal implements Node {
 
             INSTANCE;
@@ -149,7 +206,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public boolean isMadeVisible() {
+            public Visibility isMadeVisible() {
                 throw new IllegalStateException("Cannot resolve visibility of an illegal node");
             }
 
@@ -160,9 +217,53 @@ public interface MethodGraph {
         }
     }
 
+    class NodeList extends AbstractList<Node> {
+
+        private final List<? extends Node> nodes;
+
+        public NodeList(List<? extends Node> nodes) {
+            this.nodes = nodes;
+        }
+
+        @Override
+        public Node get(int index) {
+            return nodes.get(index);
+        }
+
+        @Override
+        public int size() {
+            return nodes.size();
+        }
+
+        @Override
+        public NodeList subList(int fromIndex, int toIndex) {
+            return new NodeList(super.subList(fromIndex, toIndex));
+        }
+
+        public NodeList filter(ElementMatcher<? super MethodDescription> matcher) {
+            List<Node> nodes = new ArrayList<Node>(size());
+            for (Node node : this.nodes) {
+                if (matcher.matches(node.getRepresentative())) {
+                    nodes.add(node);
+                }
+            }
+            return new NodeList(nodes);
+        }
+
+        public MethodList<?> asMethodList() {
+            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(size());
+            for (Node node : nodes) {
+                methodDescriptions.add(node.getRepresentative());
+            }
+            return new MethodList.Explicit<MethodDescription>(methodDescriptions);
+        }
+    }
+
     interface Compiler {
 
-        MethodGraph.Linked make(TypeDescription typeDescription);
+        Compiler DEFAULT = MethodGraph.Compiler.Default.forJavaHierarchy();
+
+        MethodGraph.Linked compile(TypeDescription typeDescription);
 
         class Default<T> implements Compiler {
 
@@ -188,7 +289,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public MethodGraph.Linked make(TypeDescription typeDescription) {
+            public MethodGraph.Linked compile(TypeDescription typeDescription) {
                 Map<GenericTypeDescription, Key.Store<T>> snapshots = new HashMap<GenericTypeDescription, Key.Store<T>>();
                 Key.Store<?> rootStore = analyze(typeDescription, snapshots, any(), isVirtual().and(isVisibleTo(typeDescription)));
                 GenericTypeDescription superType = typeDescription.getSuperType();
@@ -689,8 +790,8 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public List<Node> listNodes() {
-                            return new ArrayList<Node>(entries.values());
+                        public NodeList listNodes() {
+                            return new NodeList(new ArrayList<Node>(entries.values()));
                         }
 
                         @Override
@@ -813,7 +914,7 @@ public interface MethodGraph {
 
                             @Override
                             public MethodGraph.Node asNode(Merger merger) {
-                                return new Node(key.detach(), methodDescription, madeVisible);
+                                return new Node(key.detach(), methodDescription, MethodGraph.Node.Visibility.of(madeVisible));
                             }
 
                             @Override
@@ -849,12 +950,12 @@ public interface MethodGraph {
 
                                 private final MethodDescription methodDescription;
 
-                                private final boolean madeVisible;
+                                private final Visibility visibility;
 
-                                public Node(Detached key, MethodDescription methodDescription, boolean madeVisible) {
+                                public Node(Detached key, MethodDescription methodDescription, Visibility visibility) {
                                     this.key = key;
                                     this.methodDescription = methodDescription;
-                                    this.madeVisible = madeVisible;
+                                    this.visibility = visibility;
                                 }
 
                                 @Override
@@ -873,8 +974,8 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public boolean isMadeVisible() {
-                                    return madeVisible;
+                                public Visibility isMadeVisible() {
+                                    return visibility;
                                 }
 
                                 @Override
@@ -882,7 +983,7 @@ public interface MethodGraph {
                                     if (this == other) return true;
                                     if (other == null || getClass() != other.getClass()) return false;
                                     Node node = (Node) other;
-                                    return madeVisible == node.madeVisible
+                                    return visibility == node.visibility
                                             && key.equals(node.key)
                                             && methodDescription.equals(node.methodDescription);
                                 }
@@ -891,7 +992,7 @@ public interface MethodGraph {
                                 public int hashCode() {
                                     int result = key.hashCode();
                                     result = 31 * result + methodDescription.hashCode();
-                                    result = 31 * result + (madeVisible ? 1 : 0);
+                                    result = 31 * result + visibility.hashCode();
                                     return result;
                                 }
 
@@ -900,7 +1001,7 @@ public interface MethodGraph {
                                     return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.Node{" +
                                             "key=" + key +
                                             ", methodDescription=" + methodDescription +
-                                            ", madeVisible=" + madeVisible +
+                                            ", visibility=" + visibility +
                                             '}';
                                 }
                             }
@@ -1023,8 +1124,8 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public boolean isMadeVisible() {
-                                    return false;
+                                public Visibility isMadeVisible() {
+                                    return Visibility.PLAIN;
                                 }
 
                                 @Override
@@ -1067,8 +1168,8 @@ public interface MethodGraph {
         }
 
         @Override
-        public List<Node> listNodes() {
-            return Collections.emptyList();
+        public NodeList listNodes() {
+            return new NodeList(Collections.<Node>emptyList());
         }
 
         @Override
@@ -1084,6 +1185,36 @@ public interface MethodGraph {
         @Override
         public String toString() {
             return "MethodGraph.Empty." + name();
+        }
+    }
+
+    class Simple implements MethodGraph {
+
+        public static MethodGraph of(List<? extends MethodDescription> methodDescriptions) {
+            LinkedHashMap<MethodDescription.Token, Node> nodes = new LinkedHashMap<MethodDescription.Token, Node>(methodDescriptions.size());
+            for (MethodDescription methodDescription : methodDescriptions) {
+                nodes.put(methodDescription.asToken(), new Node.Simple(methodDescription));
+            }
+            return new Simple(nodes);
+        }
+
+        private final LinkedHashMap<MethodDescription.Token, Node> nodes;
+
+        public Simple(LinkedHashMap<MethodDescription.Token, Node> nodes) {
+            this.nodes = nodes;
+        }
+
+        @Override
+        public Node locate(MethodDescription.Token methodToken) {
+            Node node = nodes.get(methodToken);
+            return node == null
+                    ? Node.Illegal.INSTANCE
+                    : node;
+        }
+
+        @Override
+        public NodeList listNodes() {
+            return new NodeList(new ArrayList<Node>(nodes.values()));
         }
     }
 }

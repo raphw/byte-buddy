@@ -3,8 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -30,16 +29,10 @@ public abstract class AbstractImplementationTargetTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    protected MethodLookupEngine.Finding finding;
+    protected MethodGraph.Linked methodGraph;
 
     @Mock
     protected TypeDescription instrumentedType, methodDeclaringType, returnType, defaultMethodDeclaringType;
-
-    @Mock
-    protected BridgeMethodResolver.Factory bridgeMethodResolverFactory;
-
-    @Mock
-    protected BridgeMethodResolver bridgeMethodResolver;
 
     @Mock
     protected MethodDescription.InDefinedShape invokableMethod, defaultMethod;
@@ -54,11 +47,9 @@ public abstract class AbstractImplementationTargetTest {
     public void setUp() throws Exception {
         when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
-        when(bridgeMethodResolverFactory.make(any(MethodList.class))).thenReturn(bridgeMethodResolver);
-        when(bridgeMethodResolver.resolve(invokableMethod)).thenReturn(invokableMethod);
-        when(finding.getTypeDescription()).thenReturn(instrumentedType);
-        when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(invokableMethod)));
-        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultMethodDeclaringType, Collections.<MethodDescription>singleton(defaultMethod)));
+//        when(finding.getTypeDescription()).thenReturn(instrumentedType);
+//        when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(invokableMethod)));
+//        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultMethodDeclaringType, Collections.<MethodDescription>singleton(defaultMethod)));
         when(methodDeclaringType.asRawType()).thenReturn(methodDeclaringType);
         when(invokableMethod.getDeclaringType()).thenReturn(methodDeclaringType);
         when(invokableMethod.getReturnType()).thenReturn(returnType);

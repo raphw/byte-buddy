@@ -4,8 +4,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -53,7 +51,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
 
     @Override
     protected Implementation.Target makeImplementationTarget() {
-        return new RebaseImplementationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver);
+        return new RebaseImplementationTarget(instrumentedType, methodGraph, methodRebaseResolver);
     }
 
     @Test
@@ -157,18 +155,6 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RebaseImplementationTarget.class).refine(new ObjectPropertyAssertion.Refinement<MethodLookupEngine.Finding>() {
-            @Override
-            public void apply(MethodLookupEngine.Finding mock) {
-                when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
-                when(mock.getInvokableMethods()).thenReturn((MethodList) new MethodList.Empty());
-                when(mock.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<BridgeMethodResolver.Factory>() {
-            @Override
-            public void apply(BridgeMethodResolver.Factory mock) {
-                when(mock.make(any(MethodList.class))).thenReturn(mock(BridgeMethodResolver.class));
-            }
-        }).apply();
+        ObjectPropertyAssertion.of(RebaseImplementationTarget.class).apply();
     }
 }

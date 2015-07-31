@@ -10,7 +10,7 @@ import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -69,9 +69,9 @@ public class TypeProxyCreationTest {
             modifiers = modifiers | modifierContributor.getMask();
         }
         foo = new TypeDescription.ForLoadedType(Foo.class);
-        MethodLookupEngine methodLookupEngine = MethodLookupEngine.Default.Factory.INSTANCE.make(true);
-        fooMethods = methodLookupEngine.process(foo)
-                .getInvokableMethods()
+        fooMethods = MethodGraph.Compiler.DEFAULT.compile(foo)
+                .listNodes()
+                .asMethodList()
                 .filter(isVirtual().and(not(isFinal())).and(not(isDefaultFinalizer())));
         when(proxyMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(proxyMethod, Arrays.asList(foo, foo, foo)));
         when(proxyMethod.getDeclaringType()).thenReturn(foo);

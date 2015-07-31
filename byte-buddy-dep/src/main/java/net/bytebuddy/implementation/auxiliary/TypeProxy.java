@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
@@ -32,7 +31,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * A type proxy creates accessor methods for all overridable methods of a given type by subclassing the given type and
  * delegating all method calls to accessor methods of the instrumented type it was created for.
  */
-public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
+public class TypeProxy implements AuxiliaryType {
 
     /**
      * The name of the {@code static} method that is added to this auxiliary type for creating instances by using the
@@ -100,19 +99,12 @@ public class TypeProxy implements AuxiliaryType, MethodLookupEngine.Factory {
                 .subclass(proxiedType)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
-                .methodLookupEngine(this)
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                 .method(any())
                 .intercept(new MethodCall(methodAccessorFactory))
                 .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
                 .intercept(SilentConstruction.INSTANCE)
                 .make();
-    }
-
-    @Override
-    public MethodLookupEngine make(boolean extractDefaultMethods) {
-        // Default methods are never required for a type proxy.
-        return MethodLookupEngine.Default.Factory.INSTANCE.make(false);
     }
 
     @Override

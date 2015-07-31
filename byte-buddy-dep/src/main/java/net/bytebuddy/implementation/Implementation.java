@@ -11,9 +11,8 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.ModifierResolver;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -276,14 +275,7 @@ public interface Implementation {
          */
         interface Factory {
 
-            /**
-             * Creates a new implementation target.
-             *
-             * @param finding             The analyzed instrumented type.
-             * @param instrumentedMethods A list of all methods that are to be instrumented.
-             * @return A suitable implementation target.
-             */
-            Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods);
+            Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph);
         }
 
         /**
@@ -291,83 +283,27 @@ public interface Implementation {
          */
         abstract class AbstractBase implements Target {
 
-            /**
-             * The type that is subject to instrumentation.
-             */
-            protected final TypeDescription typeDescription;
+            protected final TypeDescription instrumentedType;
 
-            /**
-             * A mapping of all invokable method by their method token.
-             */
-            protected final Map<MethodDescription.Token, MethodDescription> invokableMethods;
+            protected final MethodGraph.Linked methodGraph;
 
-            /**
-             * A mapping of all default methods by their method token.
-             */
-            protected final Map<TypeDescription, Map<MethodDescription.Token, MethodDescription>> defaultMethods;
 
-            /**
-             * A bridge method resolver for the given instrumented type.
-             */
-            protected final BridgeMethodResolver bridgeMethodResolver;
-
-            /**
-             * Creates a new implementation target.
-             *
-             * @param finding                     A finding of a {@link MethodLookupEngine}
-             *                                    for the instrumented type.
-             * @param bridgeMethodResolverFactory A factory for creating a
-             *                                    {@link net.bytebuddy.dynamic.scaffold.BridgeMethodResolver}.
-             */
-            protected AbstractBase(MethodLookupEngine.Finding finding, BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-                bridgeMethodResolver = bridgeMethodResolverFactory.make(finding.getInvokableMethods());
-                typeDescription = finding.getTypeDescription();
-                invokableMethods = new HashMap<MethodDescription.Token, MethodDescription>(finding.getInvokableMethods().size());
-                for (MethodDescription methodDescription : finding.getInvokableMethods()) {
-                    invokableMethods.put(methodDescription.asToken(), methodDescription);
-                }
-                defaultMethods = new HashMap<TypeDescription, Map<MethodDescription.Token, MethodDescription>>(finding.getInvokableDefaultMethods().size());
-                for (Map.Entry<TypeDescription, Set<MethodDescription>> entry : finding.getInvokableDefaultMethods().entrySet()) {
-                    Map<MethodDescription.Token, MethodDescription> defaultMethods = new HashMap<MethodDescription.Token, MethodDescription>(entry.getValue().size());
-                    for (MethodDescription methodDescription : entry.getValue()) {
-                        defaultMethods.put(methodDescription.asToken(), methodDescription);
-                    }
-                    this.defaultMethods.put(entry.getKey(), defaultMethods);
-                }
+            protected AbstractBase(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
+                this.instrumentedType = instrumentedType;
+                this.methodGraph = methodGraph;
             }
 
             @Override
             public TypeDescription getTypeDescription() {
-                return typeDescription;
+                return instrumentedType;
             }
-
-            @Override
-            public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
-                MethodDescription methodDescription = invokableMethods.get(methodToken);
-                return methodDescription == null
-                        ? SpecialMethodInvocation.Illegal.INSTANCE
-                        : invokeSuper(bridgeMethodResolver.resolve(methodDescription));
-            }
-
-            /**
-             * Invokes the fully resolved method to be invoked by a super method call.
-             *
-             * @param methodDescription The method that is to be invoked specially.
-             * @return A special method invocation for calling the super method.
-             */
-            protected abstract Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription);
 
             @Override
             public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken) {
-                // TODO: Allow for lookups by token to type.
-                Map<MethodDescription.Token, MethodDescription> defaultMethods = this.defaultMethods.get(targetType);
-                if (defaultMethods != null) {
-                    MethodDescription defaultMethod = defaultMethods.get(methodToken);
-                    if (defaultMethod != null) {
-                        return SpecialMethodInvocation.Simple.of(defaultMethod, targetType);
-                    }
-                }
-                return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
+                MethodGraph.Node node = methodGraph.getInterfaceGraph(targetType).locate(methodToken);
+                return node.getSort().isUnique()
+                        ? SpecialMethodInvocation.Simple.of(node.getRepresentative(), targetType)
+                        : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
 
             @Override
@@ -375,16 +311,14 @@ public interface Implementation {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
                 AbstractBase that = (AbstractBase) other;
-                return bridgeMethodResolver.equals(that.bridgeMethodResolver)
-                        && defaultMethods.equals(that.defaultMethods)
-                        && typeDescription.equals(that.typeDescription);
+                return instrumentedType.equals(that.instrumentedType)
+                        && methodGraph.equals(that.methodGraph);
             }
 
             @Override
             public int hashCode() {
-                int result = typeDescription.hashCode();
-                result = 31 * result + defaultMethods.hashCode();
-                result = 31 * result + bridgeMethodResolver.hashCode();
+                int result = instrumentedType.hashCode();
+                result = 31 * result + methodGraph.hashCode();
                 return result;
             }
         }
@@ -1313,7 +1247,7 @@ public interface Implementation {
                 public String toString() {
                     return "Implementation.Context.Default.FieldSetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
-                            ", methodDescription=" + methodDescription+
+                            ", methodDescription=" + methodDescription +
                             '}';
                 }
             }

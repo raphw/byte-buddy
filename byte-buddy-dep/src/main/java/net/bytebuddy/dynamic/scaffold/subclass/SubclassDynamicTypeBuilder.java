@@ -47,11 +47,9 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
      * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
      * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
      *                                              no specific appender was specified for a given field.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
@@ -67,11 +65,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       int modifiers,
                                       TypeAttributeAppender attributeAppender,
                                       ElementMatcher<? super MethodDescription> ignoredMethods,
-                                      BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                       ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                       FieldRegistry fieldRegistry,
                                       MethodRegistry methodRegistry,
-                                      MethodLookupEngine.Factory methodLookupEngineFactory,
+                                      MethodGraph.Compiler methodGraphCompiler,
                                       FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                       MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                       ConstructorStrategy constructorStrategy) {
@@ -83,11 +80,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
-                methodLookupEngineFactory,
+                methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 Collections.<FieldDescription.Token>emptyList(),
@@ -106,11 +102,9 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
      * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
      * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
      *                                              no specific appender was specified for a given field.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
@@ -130,11 +124,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          int modifiers,
                                          TypeAttributeAppender attributeAppender,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
-                                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                          ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,
-                                         MethodLookupEngine.Factory methodLookupEngineFactory,
+                                         MethodGraph.Compiler methodGraphCompiler,
                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                          List<FieldDescription.Token> fieldTokens,
@@ -148,11 +141,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
-                methodLookupEngineFactory,
+                methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -169,11 +161,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                 BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                                  ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
-                                                 MethodLookupEngine.Factory methodLookupEngineFactory,
+                                                 MethodGraph.Compiler methodGraphCompiler,
                                                  FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                                  MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                                  List<FieldDescription.Token> fieldTokens,
@@ -186,11 +177,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
-                methodLookupEngineFactory,
+                methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -215,9 +205,9 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                 Collections.<AnnotationDescription>emptyList(),
                                 InstrumentedType.TypeInitializer.None.INSTANCE,
                                 LoadedTypeInitializer.NoOp.INSTANCE)),
-                        methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
+                        methodGraphCompiler,
                         new InstrumentableMatcher(ignoredMethods))
-                .compile(new SubclassImplementationTarget.Factory(bridgeMethodResolverFactory, SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE));
+                .compile(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE));
         return TypeWriter.Default.<T>forCreation(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
@@ -263,11 +253,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", modifiers=" + modifiers +
                 ", attributeAppender=" + attributeAppender +
                 ", ignoredMethods=" + ignoredMethods +
-                ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
                 ", classVisitorWrapperChain=" + classVisitorWrapperChain +
                 ", fieldRegistry=" + fieldRegistry +
                 ", methodRegistry=" + methodRegistry +
-                ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                ", methodGraphCompiler=" + methodGraphCompiler +
                 ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                 ", fieldTokens=" + fieldTokens +

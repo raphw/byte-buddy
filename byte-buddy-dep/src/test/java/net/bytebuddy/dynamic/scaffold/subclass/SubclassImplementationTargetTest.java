@@ -4,8 +4,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -57,9 +55,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
 
     @Override
     protected Implementation.Target makeImplementationTarget() {
-        return new SubclassImplementationTarget(finding,
-                bridgeMethodResolverFactory,
-                SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE);
+        return new SubclassImplementationTarget(instrumentedType, methodGraph, SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE);
     }
 
     @Test
@@ -106,40 +102,23 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
 
     @Test
     public void testSuperTypeOrigin() throws Exception {
-        assertThat(new SubclassImplementationTarget(finding,
-                        bridgeMethodResolverFactory,
-                        SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE).getOriginType(),
-                is(finding.getTypeDescription().getSuperType()));
+        assertThat(new SubclassImplementationTarget(instrumentedType,
+                methodGraph,
+                SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE).getOriginType(), is(superType));
     }
 
     @Test
     public void testLevelTypeOrigin() throws Exception {
-        assertThat(new SubclassImplementationTarget(finding,
-                        bridgeMethodResolverFactory,
+        assertThat(new SubclassImplementationTarget(instrumentedType,
+                        methodGraph,
                         SubclassImplementationTarget.OriginTypeIdentifier.LEVEL_TYPE).getOriginType(),
-                is(finding.getTypeDescription()));
+                is(instrumentedType));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(SubclassImplementationTarget.class).refine(new ObjectPropertyAssertion.Refinement<MethodLookupEngine.Finding>() {
-            @Override
-            public void apply(MethodLookupEngine.Finding mock) {
-                when(mock.getInvokableMethods()).thenReturn((MethodList) new MethodList.Empty());
-                when(mock.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                when(mock.getTypeDescription()).thenReturn(typeDescription);
-                when(typeDescription.asRawType()).thenReturn(typeDescription);
-                when(typeDescription.getSuperType()).thenReturn(typeDescription);
-                when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<BridgeMethodResolver.Factory>() {
-            @Override
-            public void apply(BridgeMethodResolver.Factory mock) {
-                when(mock.make(any(MethodList.class))).thenReturn(mock(BridgeMethodResolver.class));
-            }
-        }).apply();
+        ObjectPropertyAssertion.of(SubclassImplementationTarget.class).apply();
         ObjectPropertyAssertion.of(SubclassImplementationTarget.OriginTypeIdentifier.class).apply();
     }
 }

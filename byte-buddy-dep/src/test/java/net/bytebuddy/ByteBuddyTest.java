@@ -5,8 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -38,9 +37,6 @@ public class ByteBuddyTest {
     private TypeAttributeAppender typeAttributeAppender;
 
     @Mock
-    private BridgeMethodResolver.Factory bridgeMethodResolverFactory;
-
-    @Mock
     private ClassFileVersion classFileVersion;
 
     @Mock
@@ -59,7 +55,7 @@ public class ByteBuddyTest {
     private TypeDescription typeDescription;
 
     @Mock
-    private MethodLookupEngine.Factory methodLookupEngineFactory;
+    private MethodGraph.Compiler methodGraphCompiler;
 
     @Mock
     private ModifierContributor.ForType modifierContributorForType;
@@ -86,14 +82,13 @@ public class ByteBuddyTest {
         assertProperties(new ByteBuddy()
                 .method(methodMatcher).intercept(implementation)
                 .withAttribute(typeAttributeAppender)
-                .withBridgeMethodResolver(bridgeMethodResolverFactory)
                 .withClassFileVersion(classFileVersion)
                 .withClassVisitor(classVisitorWrapper)
                 .withDefaultFieldAttributeAppender(fieldAttributeAppenderFactory)
                 .withDefaultMethodAttributeAppender(methodAttributeAppenderFactory)
                 .withIgnoredMethods(methodMatcher)
                 .withImplementing(typeDescription)
-                .withMethodLookupEngine(methodLookupEngineFactory)
+                .withMethodGraphCompiler(methodGraphCompiler)
                 .withModifiers(modifierContributorForType)
                 .withNamingStrategy(namingStrategy)
                 .withNamingStrategy(auxiliaryTypeNamingStrategy));
@@ -103,14 +98,13 @@ public class ByteBuddyTest {
     public void testDomainSpecificLanguageOnAnnotationTarget() throws Exception {
         assertProperties(new ByteBuddy()
                 .withAttribute(typeAttributeAppender)
-                .withBridgeMethodResolver(bridgeMethodResolverFactory)
                 .withClassFileVersion(classFileVersion)
                 .withClassVisitor(classVisitorWrapper)
                 .withDefaultFieldAttributeAppender(fieldAttributeAppenderFactory)
                 .withDefaultMethodAttributeAppender(methodAttributeAppenderFactory)
                 .withIgnoredMethods(methodMatcher)
                 .withImplementing(typeDescription)
-                .withMethodLookupEngine(methodLookupEngineFactory)
+                .withMethodGraphCompiler(methodGraphCompiler)
                 .withModifiers(modifierContributorForType)
                 .withNamingStrategy(namingStrategy)
                 .withNamingStrategy(auxiliaryTypeNamingStrategy)
@@ -124,10 +118,9 @@ public class ByteBuddyTest {
         assertThat(byteBuddy.getDefaultFieldAttributeAppenderFactory(), is(fieldAttributeAppenderFactory));
         assertThat(byteBuddy.getDefaultMethodAttributeAppenderFactory(), is(methodAttributeAppenderFactory));
         assertThat(byteBuddy.getIgnoredMethods(), is((ElementMatcher) methodMatcher));
-        assertThat(byteBuddy.getBridgeMethodResolverFactory(), is(bridgeMethodResolverFactory));
         assertThat(byteBuddy.getInterfaceTypes().size(), is(1));
         assertThat(byteBuddy.getInterfaceTypes(), hasItem(typeDescription));
-        assertThat(byteBuddy.getMethodLookupEngineFactory(), is(methodLookupEngineFactory));
+        assertThat(byteBuddy.getMethodGraphCompiler(), is(methodGraphCompiler));
         assertThat(byteBuddy.getModifiers().isDefined(), is(true));
         assertThat(byteBuddy.getModifiers().resolve(0), is(MASK));
         assertThat(byteBuddy.getNamingStrategy(), is(namingStrategy));

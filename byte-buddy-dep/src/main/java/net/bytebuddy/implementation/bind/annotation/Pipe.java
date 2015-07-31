@@ -13,7 +13,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -34,6 +34,7 @@ import java.lang.annotation.*;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
@@ -96,7 +97,7 @@ public @interface Pipe {
      * A {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder}
      * for binding the {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
      */
-    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe>, MethodLookupEngine.Factory, MethodLookupEngine {
+    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe>, MethodGraph.Compiler {
 
         /**
          * The method which implements the behavior of forwarding a method invocation. This method needs to define
@@ -197,13 +198,8 @@ public @interface Pipe {
         }
 
         @Override
-        public MethodLookupEngine make(boolean extractDefaultMethods) {
-            return this;
-        }
-
-        @Override
-        public Finding process(TypeDescription typeDescription) {
-            return new PrecomputedFinding(typeDescription);
+        public MethodGraph.Linked compile(TypeDescription typeDescription) {
+            return MethodGraph.Linked.Delegation.forSimpleExtension(MethodGraph.Simple.of(join(typeDescription.getDeclaredMethods(), forwardingMethod)));
         }
 
         @Override
@@ -253,30 +249,26 @@ public @interface Pipe {
              */
             private final boolean serializableProxy;
 
-            /**
-             * The method lookup engine factory to register.
-             */
-            private final Factory methodLookupEngineFactory;
+            private final MethodGraph.Compiler methodGraphCompiler;
 
             /**
              * Creates a new redirection.
              *
-             * @param forwardingType            The type that declares the method for forwarding a method invocation.
-             * @param sourceMethod              The method that is to be forwarded.
-             * @param assigner                  The assigner to use.
-             * @param serializableProxy         Determines if the generated proxy should be {@link java.io.Serializable}.
-             * @param methodLookupEngineFactory The method lookup engine factory to register.
+             * @param forwardingType    The type that declares the method for forwarding a method invocation.
+             * @param sourceMethod      The method that is to be forwarded.
+             * @param assigner          The assigner to use.
+             * @param serializableProxy Determines if the generated proxy should be {@link java.io.Serializable}.
              */
             protected Redirection(TypeDescription forwardingType,
                                   MethodDescription sourceMethod,
                                   Assigner assigner,
                                   boolean serializableProxy,
-                                  Factory methodLookupEngineFactory) {
+                                  MethodGraph.Compiler methodGraphCompiler) {
                 this.forwardingType = forwardingType;
                 this.sourceMethod = sourceMethod;
                 this.assigner = assigner;
                 this.serializableProxy = serializableProxy;
-                this.methodLookupEngineFactory = methodLookupEngineFactory;
+                this.methodGraphCompiler = methodGraphCompiler;
             }
 
             /**
@@ -315,7 +307,7 @@ public @interface Pipe {
                         .subclass(forwardingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
-                        .methodLookupEngine(methodLookupEngineFactory)
+                        .methodGraphCompiler(methodGraphCompiler)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                         .method(isDeclaredBy(forwardingType))
                         .intercept(new MethodCall(sourceMethod, assigner))
@@ -351,7 +343,7 @@ public @interface Pipe {
                 return serializableProxy == that.serializableProxy
                         && assigner.equals(that.assigner)
                         && forwardingType.equals(that.forwardingType)
-                        && methodLookupEngineFactory.equals(that.methodLookupEngineFactory)
+                        && methodGraphCompiler.equals(that.methodGraphCompiler)
                         && sourceMethod.equals(that.sourceMethod);
             }
 
@@ -360,7 +352,7 @@ public @interface Pipe {
                 int result = forwardingType.hashCode();
                 result = 31 * result + sourceMethod.hashCode();
                 result = 31 * result + assigner.hashCode();
-                result = 31 * result + methodLookupEngineFactory.hashCode();
+                result = 31 * result + methodGraphCompiler.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
             }
@@ -372,7 +364,7 @@ public @interface Pipe {
                         ", sourceMethod=" + sourceMethod +
                         ", assigner=" + assigner +
                         ", serializableProxy=" + serializableProxy +
-                        ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                        ", methodGraphCompiler=" + methodGraphCompiler +
                         '}';
             }
 
@@ -610,77 +602,6 @@ public @interface Pipe {
                                 '}';
                     }
                 }
-            }
-        }
-
-        /**
-         * A precomputed finding for an installed type of a
-         * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder}. By using this precomputed
-         * result, method look-ups can be avoided.
-         */
-        protected class PrecomputedFinding implements Finding {
-
-            /**
-             * The type which was looked up. This type should be the instrumented type itself and therefore defines
-             * the constructor of the instrumented type.
-             */
-            private final TypeDescription typeDescription;
-
-            /**
-             * Creates a precomputed finding.
-             *
-             * @param typeDescription The type which was looked up. This type should be the instrumented type itself
-             *                        and therefore defines the constructor of the instrumented type.
-             */
-            public PrecomputedFinding(TypeDescription typeDescription) {
-                this.typeDescription = typeDescription;
-            }
-
-            @Override
-            public TypeDescription getTypeDescription() {
-                return typeDescription;
-            }
-
-            @Override
-            public MethodList<?> getInvokableMethods() {
-                List<MethodDescription> invokableMethods = new ArrayList<MethodDescription>(2);
-                invokableMethods.addAll(typeDescription.getDeclaredMethods());
-                invokableMethods.add(forwardingMethod);
-                return new MethodList.Explicit<MethodDescription>(invokableMethods);
-            }
-
-            @Override
-            public Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods() {
-                return Collections.emptyMap();
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private Binder getBinder() {
-                return Binder.this;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && typeDescription.equals(((PrecomputedFinding) other).typeDescription)
-                        && Binder.this.equals(((PrecomputedFinding) other).getBinder());
-            }
-
-            @Override
-            public int hashCode() {
-                return typeDescription.hashCode() + 31 * Binder.this.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Pipe.Binder.PrecomputedFinding{" +
-                        "binder=" + Binder.this +
-                        ", typeDescription=" + typeDescription +
-                        '}';
             }
         }
     }

@@ -4,8 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 
 import java.util.HashMap;
@@ -29,21 +28,12 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      */
     protected final OriginTypeIdentifier originTypeIdentifier;
 
-    /**
-     * Creates a new subclass implementation target.
-     *
-     * @param finding                     The lookup of the instrumented type this instance should represent.
-     * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
-     * @param originTypeIdentifier        The origin type identifier to use.
-     */
-    protected SubclassImplementationTarget(MethodLookupEngine.Finding finding,
-                                           BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                           OriginTypeIdentifier originTypeIdentifier) {
-        super(finding, bridgeMethodResolverFactory);
-        GenericTypeDescription superType = finding.getTypeDescription().getSuperType();
+    protected SubclassImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, OriginTypeIdentifier originTypeIdentifier) {
+        super(instrumentedType, methodGraph);
+        GenericTypeDescription superType = instrumentedType.getSuperType();
         MethodList<?> superConstructors = superType == null
                 ? new MethodList.Empty()
-                : superType.asRawType().getDeclaredMethods().filter(isConstructor());
+                : superType.getDeclaredMethods().filter(isConstructor());
         this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>(superConstructors.size());
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.asToken(), superConstructor);
@@ -53,42 +43,15 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
 
     @Override
     public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
-        MethodDescription methodDescription = superConstructors.get(methodToken);
-        return methodDescription == null
-                ? super.invokeSuper(methodToken)
-                : invokeSuper(methodDescription);
-    }
-
-    @Override
-    protected Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
-        return Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSuperType().asRawType());
+        MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(methodToken);
+        return methodNode.getSort().isUnique()
+                ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperType().asRawType())
+                : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
     @Override
     public TypeDescription getOriginType() {
-        return originTypeIdentifier.identify(typeDescription);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other)
-                && originTypeIdentifier == ((SubclassImplementationTarget) other).originTypeIdentifier;
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + originTypeIdentifier.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "SubclassImplementationTarget{" +
-                "typeDescription=" + typeDescription +
-                ", defaultMethods=" + defaultMethods +
-                ", bridgeMethodResolver=" + bridgeMethodResolver +
-                ", superConstructors=" + superConstructors +
-                ", originTypeIdentifier=" + originTypeIdentifier +
-                '}';
+        return originTypeIdentifier.identify(instrumentedType);
     }
 
     /**
@@ -137,51 +100,17 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     public static class Factory implements Implementation.Target.Factory {
 
         /**
-         * A factory for creating a bridge method resolver to be handed to the created subclass implementation target.
-         */
-        private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
-
-        /**
          * The origin type identifier to use.
          */
         private final OriginTypeIdentifier originTypeIdentifier;
 
-        /**
-         * Creates a new factory for a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget}.
-         *
-         * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver to be handed to the
-         *                                    created subclass implementation target.
-         * @param originTypeIdentifier        The origin type identifier to use.
-         */
-        public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                       OriginTypeIdentifier originTypeIdentifier) {
-            this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
+        public Factory(OriginTypeIdentifier originTypeIdentifier) {
             this.originTypeIdentifier = originTypeIdentifier;
         }
 
         @Override
-        public Implementation.Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods) {
-            return new SubclassImplementationTarget(finding, bridgeMethodResolverFactory, originTypeIdentifier);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && bridgeMethodResolverFactory.equals(((Factory) other).bridgeMethodResolverFactory)
-                    && originTypeIdentifier.equals(((Factory) other).originTypeIdentifier);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * bridgeMethodResolverFactory.hashCode() + originTypeIdentifier.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "SubclassImplementationTarget.Factory{" +
-                    "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
-                    "originTypeIdentifier=" + originTypeIdentifier +
-                    '}';
+        public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
+            return new SubclassImplementationTarget(instrumentedType, methodGraph, originTypeIdentifier);
         }
     }
 }

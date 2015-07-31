@@ -46,11 +46,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
      * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
      * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
      *                                              no specific appender was specified for a given field.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
@@ -65,11 +63,10 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                           int modifiers,
                                           TypeAttributeAppender attributeAppender,
                                           ElementMatcher<? super MethodDescription> ignoredMethods,
-                                          BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                           ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                           FieldRegistry fieldRegistry,
                                           MethodRegistry methodRegistry,
-                                          MethodLookupEngine.Factory methodLookupEngineFactory,
+                                          MethodGraph.Compiler methodGraphCompiler,
                                           FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                           MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                           ClassFileLocator classFileLocator) {
@@ -81,11 +78,10 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
-                methodLookupEngineFactory,
+                methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 levelType.getDeclaredFields().asTokenList(is(levelType)),
@@ -104,11 +100,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
      * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
      * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
      *                                              no specific appender was specified for a given field.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
@@ -127,11 +121,10 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              int modifiers,
                                              TypeAttributeAppender attributeAppender,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
-                                             BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                              ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                              FieldRegistry fieldRegistry,
                                              MethodRegistry methodRegistry,
-                                             MethodLookupEngine.Factory methodLookupEngineFactory,
+                                             MethodGraph.Compiler methodGraphCompiler,
                                              FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                              MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                              List<FieldDescription.Token> fieldTokens,
@@ -145,11 +138,10 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
-                methodLookupEngineFactory,
+                methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -166,11 +158,10 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                 BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                                  ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
-                                                 MethodLookupEngine.Factory methodLookupEngineFactory,
+                                                 MethodGraph.Compiler methodGraphCompiler,
                                                  FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                                  MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                                  List<FieldDescription.Token> fieldTokens,
@@ -183,11 +174,10 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                bridgeMethodResolverFactory,
                 classVisitorWrapperChain,
                 fieldRegistry,
                 methodRegistry,
-                methodLookupEngineFactory,
+                methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
@@ -197,8 +187,8 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
-                        .UnnamedType.Default(targetType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
+        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy
+                        .name(new NamingStrategy.UnnamedType.Default(targetType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
                         targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
                         targetType.getSuperType(),
@@ -214,9 +204,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                         targetType.isMemberClass(),
                         targetType.isAnonymousClass(),
                         targetType.isLocalClass()),
-                methodLookupEngineFactory.make(classFileVersion.isSupportsDefaultMethods()),
+                methodGraphCompiler,
                 InliningImplementationMatcher.of(ignoredMethods, targetType))
-                .compile(new SubclassImplementationTarget.Factory(bridgeMethodResolverFactory, SubclassImplementationTarget.OriginTypeIdentifier.LEVEL_TYPE));
+                .compile(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeIdentifier.LEVEL_TYPE));
         return TypeWriter.Default.<T>forRedefinition(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
@@ -250,11 +240,10 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 ", modifiers=" + modifiers +
                 ", attributeAppender=" + attributeAppender +
                 ", ignoredMethods=" + ignoredMethods +
-                ", bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
                 ", classVisitorWrapperChain=" + classVisitorWrapperChain +
                 ", fieldRegistry=" + fieldRegistry +
                 ", methodRegistry=" + methodRegistry +
-                ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                ", methodGraphCompiler=" + methodGraphCompiler +
                 ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                 ", fieldTokens=" + fieldTokens +

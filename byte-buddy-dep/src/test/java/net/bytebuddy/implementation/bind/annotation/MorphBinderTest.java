@@ -178,7 +178,6 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
                 when(mock.getTypeDescription()).thenReturn(typeDescription);
             }
         }).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.PrecomputedFinding.class).apply();
         ObjectPropertyAssertion.of(Morph.Binder.DefaultMethodLocator.Implicit.class).apply();
         ObjectPropertyAssertion.of(Morph.Binder.DefaultMethodLocator.Explicit.class).apply();
     }

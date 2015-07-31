@@ -44,12 +44,11 @@ public interface MethodRegistry {
     /**
      * Prepares this method registry.
      *
-     * @param instrumentedType   The instrumented type that should be created.
-     * @param methodLookupEngine A method lookup engine to analyze the fully prepared type.
-     * @param methodFilter       A filter that only matches methods that should be instrumented.
+     * @param instrumentedType The instrumented type that should be created.
+     * @param methodFilter     A filter that only matches methods that should be instrumented.
      * @return A prepared version of this method registry.
      */
-    Prepared prepare(InstrumentedType instrumentedType, MethodLookupEngine methodLookupEngine, LatentMethodMatcher methodFilter);
+    Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMethodMatcher methodFilter);
 
     /**
      * A handler for implementing a method.
@@ -449,9 +448,7 @@ public interface MethodRegistry {
         }
 
         @Override
-        public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
-                                               MethodLookupEngine methodLookupEngine,
-                                               LatentMethodMatcher methodFilter) {
+        public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMethodMatcher methodFilter) {
             LinkedHashMap<MethodDescription, Entry> implementations = new LinkedHashMap<MethodDescription, Entry>();
             Set<Handler> handlers = new HashSet<Handler>(entries.size());
             int helperMethodIndex = instrumentedType.getDeclaredMethods().size();
@@ -465,18 +462,32 @@ public interface MethodRegistry {
                     helperMethodIndex = helperMethods.size();
                 }
             }
-            MethodLookupEngine.Finding finding = methodLookupEngine.process(instrumentedType);
-            List<? extends MethodDescription> relevant = finding.getInvokableMethods()
-                    .filter(not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType)));
-            for (MethodDescription methodDescription : join(new MethodDescription.Latent.TypeInitializer(instrumentedType), relevant)) {
-                for (Entry entry : entries) {
-                    if (entry.resolve(instrumentedType).matches(methodDescription)) {
-                        implementations.put(methodDescription, entry);
-                        break;
+            MethodGraph.Linked methodGraph = methodGraphCompiler.compile(instrumentedType);
+            ElementMatcher<? super MethodDescription> relevanceMatcher = not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType));
+            for (MethodGraph.Node node : methodGraph.listNodes()) {
+                MethodDescription methodDescription = node.getRepresentative();
+                if (relevanceMatcher.matches(methodDescription)) {
+                    for (Entry entry : entries) {
+                        if (entry.resolve(instrumentedType).matches(methodDescription)) {
+                            implementations.put(methodDescription, entry);
+                            break;
+                        }
                     }
                 }
+                // TODO: consider visibility bridges
             }
-            return new Prepared(implementations, instrumentedType.getLoadedTypeInitializer(), instrumentedType.getTypeInitializer(), finding);
+            MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
+            for (Entry entry : entries) {
+                if (entry.resolve(instrumentedType).matches(typeInitializer)) {
+                    implementations.put(typeInitializer, entry);
+                    break;
+                }
+            }
+            return new Prepared(implementations,
+                    instrumentedType.getLoadedTypeInitializer(),
+                    instrumentedType.getTypeInitializer(),
+                    instrumentedType,
+                    methodGraph);
         }
 
         @Override
@@ -604,10 +615,9 @@ public interface MethodRegistry {
              */
             private final InstrumentedType.TypeInitializer typeInitializer;
 
-            /**
-             * The analyzed instrumented type.
-             */
-            private final MethodLookupEngine.Finding finding;
+            private final TypeDescription instrumentedType;
+
+            private final MethodGraph.Linked methodGraph;
 
             /**
              * Creates a prepared version of a default method registry.
@@ -615,21 +625,22 @@ public interface MethodRegistry {
              * @param implementations       A map of all method descriptions mapped to their handling entries.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type initializer of the instrumented type.
-             * @param finding               The analyzed instrumented type.
              */
             protected Prepared(LinkedHashMap<MethodDescription, Entry> implementations,
                                LoadedTypeInitializer loadedTypeInitializer,
                                InstrumentedType.TypeInitializer typeInitializer,
-                               MethodLookupEngine.Finding finding) {
+                               TypeDescription instrumentedType,
+                               MethodGraph.Linked methodGraph) {
                 this.implementations = implementations;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
-                this.finding = finding;
+                this.instrumentedType = instrumentedType;
+                this.methodGraph = methodGraph;
             }
 
             @Override
             public TypeDescription getInstrumentedType() {
-                return finding.getTypeDescription();
+                return instrumentedType;
             }
 
             @Override
@@ -652,7 +663,7 @@ public interface MethodRegistry {
                 Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>(implementations.size());
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(implementations.size());
                 LinkedHashMap<MethodDescription, Compiled.Entry> entries = new LinkedHashMap<MethodDescription, Compiled.Entry>(implementations.size());
-                Implementation.Target implementationTarget = implementationTargetFactory.make(finding, getInstrumentedMethods());
+                Implementation.Target implementationTarget = implementationTargetFactory.make(instrumentedType, methodGraph);
                 for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) {
                     Handler.Compiled cachedHandler = compilationCache.get(entry.getValue().getHandler());
                     if (cachedHandler == null) {
@@ -661,42 +672,12 @@ public interface MethodRegistry {
                     }
                     MethodAttributeAppender cachedAttributeAppender = attributeAppenderCache.get(entry.getValue().getAppenderFactory());
                     if (cachedAttributeAppender == null) {
-                        cachedAttributeAppender = entry.getValue().getAppenderFactory().make(finding.getTypeDescription());
+                        cachedAttributeAppender = entry.getValue().getAppenderFactory().make(instrumentedType);
                         attributeAppenderCache.put(entry.getValue().getAppenderFactory(), cachedAttributeAppender);
                     }
                     entries.put(entry.getKey(), new Compiled.Entry(cachedHandler, cachedAttributeAppender));
                 }
-                return new Compiled(finding.getTypeDescription(), loadedTypeInitializer, typeInitializer, entries);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Prepared prepared = (Prepared) other;
-                return implementations.equals(prepared.implementations)
-                        && loadedTypeInitializer.equals(prepared.loadedTypeInitializer)
-                        && typeInitializer.equals(prepared.typeInitializer)
-                        && finding.equals(prepared.finding);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = implementations.hashCode();
-                result = 31 * result + loadedTypeInitializer.hashCode();
-                result = 31 * result + typeInitializer.hashCode();
-                result = 31 * result + finding.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.Default.Prepared{" +
-                        "implementations=" + implementations +
-                        ", loadedTypeInitializer=" + loadedTypeInitializer +
-                        ", typeInitializer=" + typeInitializer +
-                        ", finding=" + finding +
-                        '}';
+                return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries);
             }
         }
 

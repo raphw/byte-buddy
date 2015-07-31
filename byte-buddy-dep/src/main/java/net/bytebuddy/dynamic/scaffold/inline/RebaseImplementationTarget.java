@@ -2,8 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -31,22 +30,25 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     /**
      * Creates a rebase implementation target.
      *
-     * @param finding                     The lookup of the instrumented type this instance should represent.
-     * @param bridgeMethodResolverFactory A factory for creating a bridge method resolver.
      * @param methodRebaseResolver        A method rebase resolver to be used when calling a rebased method.
      */
-    protected RebaseImplementationTarget(MethodLookupEngine.Finding finding,
-                                         BridgeMethodResolver.Factory bridgeMethodResolverFactory,
-                                         MethodRebaseResolver methodRebaseResolver) {
-        super(finding, bridgeMethodResolverFactory);
+    protected RebaseImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, MethodRebaseResolver methodRebaseResolver) {
+        super(instrumentedType, methodGraph);
         this.methodRebaseResolver = methodRebaseResolver;
     }
 
     @Override
-    protected Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
-        return methodDescription.getDeclaringType().equals(typeDescription)
+    public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
+        MethodGraph.Node node = methodGraph.locate(methodToken);
+        return node.getSort().isUnique()
+                ? invokeSuper(node.getRepresentative())
+                : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
+    }
+
+    private Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
+        return methodDescription.getDeclaringType().equals(instrumentedType)
                 ? invokeSuper(methodRebaseResolver.resolve(methodDescription.asDefined()))
-                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, typeDescription.getSuperType().asRawType());
+                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asRawType());
     }
 
     /**
@@ -62,35 +64,13 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      */
     private Implementation.SpecialMethodInvocation invokeSuper(MethodRebaseResolver.Resolution resolution) {
         return resolution.isRebased()
-                ? RebasedMethodInvocation.of(resolution.getResolvedMethod(), typeDescription, resolution.getAdditionalArguments())
-                : Implementation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), typeDescription);
+                ? RebasedMethodInvocation.of(resolution.getResolvedMethod(), instrumentedType, resolution.getAdditionalArguments())
+                : Implementation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), instrumentedType);
     }
 
     @Override
     public TypeDescription getOriginType() {
-        return typeDescription;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && super.equals(other)
-                && methodRebaseResolver.equals(((RebaseImplementationTarget) other).methodRebaseResolver);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * super.hashCode() + methodRebaseResolver.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "RebaseImplementationTarget{" +
-                "typeDescription=" + typeDescription +
-                ", defaultMethods=" + defaultMethods +
-                ", bridgeMethodResolver=" + bridgeMethodResolver +
-                ", methodRebaseResolver=" + methodRebaseResolver +
-                '}';
+        return instrumentedType;
     }
 
     /**
@@ -162,11 +142,6 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     public static class Factory implements Implementation.Target.Factory {
 
         /**
-         * The bridge method resolver factory to use.
-         */
-        private final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
-
-        /**
          * The method rebase resolver to use.
          */
         private final MethodRebaseResolver methodRebaseResolver;
@@ -177,36 +152,13 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
          * @param bridgeMethodResolverFactory The bridge method resolver factory to use.
          * @param methodRebaseResolver        The method rebase resolver to use.
          */
-        public Factory(BridgeMethodResolver.Factory bridgeMethodResolverFactory, MethodRebaseResolver methodRebaseResolver) {
-            this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
+        public Factory(MethodRebaseResolver methodRebaseResolver) {
             this.methodRebaseResolver = methodRebaseResolver;
         }
 
         @Override
-        public Implementation.Target make(MethodLookupEngine.Finding finding, List<? extends MethodDescription> instrumentedMethods) {
-            return new RebaseImplementationTarget(finding, bridgeMethodResolverFactory, methodRebaseResolver);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && bridgeMethodResolverFactory.equals(((Factory) other).bridgeMethodResolverFactory)
-                    && methodRebaseResolver.equals(((Factory) other).methodRebaseResolver);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = bridgeMethodResolverFactory.hashCode();
-            result = 31 * result + methodRebaseResolver.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "RebaseImplementationTarget.Factory{" +
-                    "bridgeMethodResolverFactory=" + bridgeMethodResolverFactory +
-                    ", methodRebaseResolver=" + methodRebaseResolver +
-                    '}';
+        public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
+            return new RebaseImplementationTarget(instrumentedType, methodGraph, methodRebaseResolver);
         }
     }
 }

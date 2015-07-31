@@ -13,9 +13,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.scaffold.BridgeMethodResolver;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -327,24 +326,7 @@ public interface DynamicType {
          */
         Builder<T> classVisitor(ClassVisitorWrapper classVisitorWrapper);
 
-        /**
-         * Defines a bridge method resolver factory to be applied to this type creation. A bridge method resolver is
-         * responsible for determining the target method that is invoked by a bridge method. This way, a super method
-         * invocation is resolved by invoking the actual super method instead of the bridge method which would in turn
-         * resolve the actual method virtually.
-         *
-         * @param bridgeMethodResolverFactory The bridge method resolver factory that is to be used.
-         * @return A builder that will apply the given bridge method resolver factory.
-         */
-        Builder<T> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory);
-
-        /**
-         * Defines the use of a specific factory for a {@link MethodLookupEngine}.
-         *
-         * @param methodLookupEngineFactory The factory to be used.
-         * @return A builder that applies the given method lookup engine factory.
-         */
-        Builder<T> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory);
+        Builder<T> methodGraphCompiler(MethodGraph.Compiler methodGraphCompiler);
 
         /**
          * Defines a new field for this type.
@@ -1217,11 +1199,6 @@ public interface DynamicType {
             protected final ElementMatcher<? super MethodDescription> ignoredMethods;
 
             /**
-             * The bridge method resolver factory specified for this builder.
-             */
-            protected final BridgeMethodResolver.Factory bridgeMethodResolverFactory;
-
-            /**
              * The class visitor wrapper chain that is applied on created types by this builder.
              */
             protected final ClassVisitorWrapper.Chain classVisitorWrapperChain;
@@ -1236,10 +1213,7 @@ public interface DynamicType {
              */
             protected final MethodRegistry methodRegistry;
 
-            /**
-             * The method lookup engine factory to be used by this builder.
-             */
-            protected final MethodLookupEngine.Factory methodLookupEngineFactory;
+            protected final MethodGraph.Compiler methodGraphCompiler;
 
             /**
              * The default field attribute appender factory that is automatically added to any field that is
@@ -1274,11 +1248,9 @@ public interface DynamicType {
              * @param modifiers                             The modifiers to be represented by the dynamic type.
              * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
              * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-             * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
              * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
              * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
              * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-             * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
              * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
              *                                              no specific appender was specified for a given field.
              * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
@@ -1296,11 +1268,10 @@ public interface DynamicType {
                                    int modifiers,
                                    TypeAttributeAppender attributeAppender,
                                    ElementMatcher<? super MethodDescription> ignoredMethods,
-                                   BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                    ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                    FieldRegistry fieldRegistry,
                                    MethodRegistry methodRegistry,
-                                   MethodLookupEngine.Factory methodLookupEngineFactory,
+                                   MethodGraph.Compiler methodGraphCompiler,
                                    FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                    MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                    List<FieldDescription.Token> fieldTokens,
@@ -1313,11 +1284,10 @@ public interface DynamicType {
                 this.modifiers = modifiers;
                 this.attributeAppender = attributeAppender;
                 this.ignoredMethods = ignoredMethods;
-                this.bridgeMethodResolverFactory = bridgeMethodResolverFactory;
                 this.classVisitorWrapperChain = classVisitorWrapperChain;
                 this.fieldRegistry = fieldRegistry;
                 this.methodRegistry = methodRegistry;
-                this.methodLookupEngineFactory = methodLookupEngineFactory;
+                this.methodGraphCompiler = methodGraphCompiler;
                 this.defaultFieldAttributeAppenderFactory = defaultFieldAttributeAppenderFactory;
                 this.defaultMethodAttributeAppenderFactory = defaultMethodAttributeAppenderFactory;
                 this.fieldTokens = fieldTokens;
@@ -1378,11 +1348,10 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1399,11 +1368,10 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1420,11 +1388,10 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1441,11 +1408,10 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1462,11 +1428,10 @@ public interface DynamicType {
                         resolveModifierContributors(TYPE_MODIFIER_MASK, nonNull(modifier)),
                         attributeAppender,
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1483,11 +1448,10 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1504,11 +1468,10 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignoredMethods, nonNull(ignoredMethods)),
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1525,11 +1488,10 @@ public interface DynamicType {
                         modifiers,
                         new TypeAttributeAppender.Compound(this.attributeAppender, nonNull(attributeAppender)),
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1567,11 +1529,10 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain.append(nonNull(classVisitorWrapper)),
                         fieldRegistry,
                         methodRegistry,
-                        methodLookupEngineFactory,
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1579,7 +1540,7 @@ public interface DynamicType {
             }
 
             @Override
-            public Builder<S> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
+            public Builder<S> methodGraphCompiler(MethodGraph.Compiler methodGraphCompiler) {
                 return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
@@ -1588,32 +1549,10 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        bridgeMethodResolverFactory,
                         classVisitorWrapperChain,
                         fieldRegistry,
                         methodRegistry,
-                        nonNull(methodLookupEngineFactory),
-                        defaultFieldAttributeAppenderFactory,
-                        defaultMethodAttributeAppenderFactory,
-                        fieldTokens,
-                        methodTokens);
-            }
-
-            @Override
-            public Builder<S> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-                return materialize(classFileVersion,
-                        namingStrategy,
-                        auxiliaryTypeNamingStrategy,
-                        targetType,
-                        interfaceTypes,
-                        modifiers,
-                        attributeAppender,
-                        ignoredMethods,
-                        nonNull(bridgeMethodResolverFactory),
-                        classVisitorWrapperChain,
-                        fieldRegistry,
-                        methodRegistry,
-                        methodLookupEngineFactory,
+                        nonNull(methodGraphCompiler),
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1790,11 +1729,9 @@ public interface DynamicType {
              * @param modifiers                             The modifiers to be represented by the dynamic type.
              * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
              * @param ignoredMethods                        A matcher for determining methods that are to be ignored for implementation.
-             * @param bridgeMethodResolverFactory           A factory for creating a bridge method resolver.
              * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
              * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
              * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-             * @param methodLookupEngineFactory             The method lookup engine factory to apply to the dynamic type creation.
              * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
              *                                              no specific appender was specified for a given field.
              * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
@@ -1813,11 +1750,10 @@ public interface DynamicType {
                                                       int modifiers,
                                                       TypeAttributeAppender attributeAppender,
                                                       ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                      BridgeMethodResolver.Factory bridgeMethodResolverFactory,
                                                       ClassVisitorWrapper.Chain classVisitorWrapperChain,
                                                       FieldRegistry fieldRegistry,
                                                       MethodRegistry methodRegistry,
-                                                      MethodLookupEngine.Factory methodLookupEngineFactory,
+                                                      MethodGraph.Compiler methodGraphCompiler,
                                                       FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                                       MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                                       List<FieldDescription.Token> fieldTokens,
@@ -1832,7 +1768,6 @@ public interface DynamicType {
                 AbstractBase that = (AbstractBase) other;
                 return modifiers == that.modifiers
                         && attributeAppender.equals(that.attributeAppender)
-                        && bridgeMethodResolverFactory.equals(that.bridgeMethodResolverFactory)
                         && classFileVersion.equals(that.classFileVersion)
                         && classVisitorWrapperChain.equals(that.classVisitorWrapperChain)
                         && defaultFieldAttributeAppenderFactory.equals(that.defaultFieldAttributeAppenderFactory)
@@ -1842,7 +1777,7 @@ public interface DynamicType {
                         && ignoredMethods.equals(that.ignoredMethods)
                         && interfaceTypes.equals(that.interfaceTypes)
                         && targetType.equals(that.targetType)
-                        && methodLookupEngineFactory.equals(that.methodLookupEngineFactory)
+                        && methodGraphCompiler.equals(that.methodGraphCompiler)
                         && methodRegistry.equals(that.methodRegistry)
                         && methodTokens.equals(that.methodTokens)
                         && namingStrategy.equals(that.namingStrategy)
@@ -1859,11 +1794,10 @@ public interface DynamicType {
                 result = 31 * result + modifiers;
                 result = 31 * result + attributeAppender.hashCode();
                 result = 31 * result + ignoredMethods.hashCode();
-                result = 31 * result + bridgeMethodResolverFactory.hashCode();
                 result = 31 * result + classVisitorWrapperChain.hashCode();
                 result = 31 * result + fieldRegistry.hashCode();
                 result = 31 * result + methodRegistry.hashCode();
-                result = 31 * result + methodLookupEngineFactory.hashCode();
+                result = 31 * result + methodGraphCompiler.hashCode();
                 result = 31 * result + defaultFieldAttributeAppenderFactory.hashCode();
                 result = 31 * result + defaultMethodAttributeAppenderFactory.hashCode();
                 result = 31 * result + fieldTokens.hashCode();
@@ -1966,13 +1900,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> methodLookupEngine(MethodLookupEngine.Factory methodLookupEngineFactory) {
-                    return materialize().methodLookupEngine(methodLookupEngineFactory);
-                }
-
-                @Override
-                public Builder<U> bridgeMethodResolverFactory(BridgeMethodResolver.Factory bridgeMethodResolverFactory) {
-                    return materialize().bridgeMethodResolverFactory(bridgeMethodResolverFactory);
+                public Builder<U> methodGraphCompiler(MethodGraph.Compiler methodGraphCompiler) {
+                    return materialize().methodGraphCompiler(methodGraphCompiler);
                 }
 
                 @Override
@@ -2187,11 +2116,10 @@ public interface DynamicType {
                             modifiers,
                             attributeAppender,
                             ignoredMethods,
-                            bridgeMethodResolverFactory,
                             classVisitorWrapperChain,
                             fieldRegistry.include(fieldToken, attributeAppenderFactory, defaultValue),
                             methodRegistry,
-                            methodLookupEngineFactory,
+                            methodGraphCompiler,
                             defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
                             join(fieldTokens, fieldToken),
@@ -2626,11 +2554,10 @@ public interface DynamicType {
                             modifiers,
                             attributeAppender,
                             ignoredMethods,
-                            bridgeMethodResolverFactory,
                             classVisitorWrapperChain,
                             fieldRegistry,
                             methodRegistry.prepend(methodMatcher, handler, attributeAppenderFactory),
-                            methodLookupEngineFactory,
+                            methodGraphCompiler,
                             defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
                             fieldTokens,
@@ -2801,11 +2728,10 @@ public interface DynamicType {
                             modifiers,
                             attributeAppender,
                             ignoredMethods,
-                            bridgeMethodResolverFactory,
                             classVisitorWrapperChain,
                             fieldRegistry,
                             methodRegistry,
-                            methodLookupEngineFactory,
+                            methodGraphCompiler,
                             defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
                             fieldTokens,

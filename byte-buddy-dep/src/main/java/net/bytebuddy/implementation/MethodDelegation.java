@@ -5,7 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bind.*;
 import net.bytebuddy.implementation.bind.annotation.*;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -134,10 +134,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * Additionally, if a method is annotated by
  * {@link net.bytebuddy.implementation.bind.annotation.IgnoreForBinding},
  * it is never considered as a target for a method delegation.
- *
+ * <p/>
  * <b>Important</b>: For invoking a method on another instance, use the {@link Forwarding} implementation. A method delegation
  * intends to bind a interceptor class and its resolution algorithm will not necessarily yield a delegation to the intercepted
  * method.
+ *
  * @see Forwarding
  */
 public class MethodDelegation implements Implementation {
@@ -261,29 +262,20 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate) {
-        return to(nonNull(delegate), MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED);
+        return to(nonNull(delegate), MethodGraph.Compiler.DEFAULT);
     }
 
-    /**
-     * Identical to {@link net.bytebuddy.implementation.MethodDelegation#to(Object)} but uses an explicit
-     * {@link MethodLookupEngine}.
-     *
-     * @param delegate           A delegate instance which will be injected by a
-     *                           {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method
-     *                           calls are then delegated to this instance.
-     * @param methodLookupEngine The method lookup engine to use.
-     * @return A method delegation implementation to the given instance methods.
-     */
-    public static MethodDelegation to(Object delegate, MethodLookupEngine methodLookupEngine) {
+    public static MethodDelegation to(Object delegate, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(new ImplementationDelegate.ForStaticField(nonNull(delegate)),
                 defaultParameterBinders(),
                 defaultDefaultsProvider(),
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
                 Assigner.DEFAULT,
-                methodLookupEngine.process(new TypeDescription.ForLoadedType(delegate.getClass()))
-                        .getInvokableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+                methodGraphCompiler.compile(new TypeDescription.ForLoadedType(delegate.getClass()))
+                        .listNodes()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
+                        .asMethodList());
     }
 
     /**
@@ -304,20 +296,10 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, String fieldName) {
-        return to(delegate, fieldName, MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED);
+        return to(delegate, fieldName, MethodGraph.Compiler.DEFAULT);
     }
 
-    /**
-     * Identical to {@link net.bytebuddy.implementation.MethodDelegation#to(Object, java.lang.String)} but uses an
-     * explicit {@link MethodLookupEngine}.
-     *
-     * @param delegate           A delegate instance which will be injected by a type initializer and to which all intercepted
-     *                           method calls are delegated to.
-     * @param fieldName          The name of the field for storing the delegate instance.
-     * @param methodLookupEngine The method lookup engine to use.
-     * @return A method delegation implementation to the given {@code static} methods.
-     */
-    public static MethodDelegation to(Object delegate, String fieldName, MethodLookupEngine methodLookupEngine) {
+    public static MethodDelegation to(Object delegate, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(
                 new ImplementationDelegate.ForStaticField(nonNull(delegate), isValidIdentifier(fieldName)),
                 defaultParameterBinders(),
@@ -325,9 +307,10 @@ public class MethodDelegation implements Implementation {
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
                 Assigner.DEFAULT,
-                methodLookupEngine.process(new TypeDescription.ForLoadedType(delegate.getClass()))
-                        .getInvokableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+                methodGraphCompiler.compile(new TypeDescription.ForLoadedType(delegate.getClass()))
+                        .listNodes()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
+                        .asMethodList());
     }
 
     /**
@@ -375,32 +358,14 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName) {
-        return toInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName), MethodLookupEngine.Default.DEFAULT_LOOKUP_DISABLED);
+        return toInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName), MethodGraph.Compiler.DEFAULT);
     }
 
-    /**
-     * Identical to {@link net.bytebuddy.implementation.MethodDelegation#toInstanceField(Class, String)} but uses an
-     * explicit {@link MethodLookupEngine}.
-     *
-     * @param type               The type of the delegate and the field.
-     * @param fieldName          The name of the field.
-     * @param methodLookupEngine The method lookup engine to use.
-     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
-     */
-    public static MethodDelegation toInstanceField(Class<?> type, String fieldName, MethodLookupEngine methodLookupEngine) {
-        return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName, methodLookupEngine);
+    public static MethodDelegation toInstanceField(Class<?> type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+        return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName, methodGraphCompiler);
     }
 
-    /**
-     * Identical to {@link net.bytebuddy.implementation.MethodDelegation#toInstanceField(Class, String)} but uses an
-     * explicit {@link MethodLookupEngine}.
-     *
-     * @param typeDescription    The type of the delegate and the field.
-     * @param fieldName          The name of the field.
-     * @param methodLookupEngine The method lookup engine to use.
-     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
-     */
-    public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName, MethodLookupEngine methodLookupEngine) {
+    public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(
                 new ImplementationDelegate.ForInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName)),
                 defaultParameterBinders(),
@@ -408,9 +373,10 @@ public class MethodDelegation implements Implementation {
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 defaultAmbiguityResolver(),
                 Assigner.DEFAULT,
-                methodLookupEngine.process(typeDescription)
-                        .getInvokableMethods()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+                methodGraphCompiler.compile(typeDescription)
+                        .listNodes()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
+                        .asMethodList());
     }
 
     /**

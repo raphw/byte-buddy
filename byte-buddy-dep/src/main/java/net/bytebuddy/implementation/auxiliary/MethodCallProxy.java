@@ -12,7 +12,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
@@ -134,7 +135,7 @@ public class MethodCallProxy implements AuxiliaryType {
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .methodLookupEngine(ProxyMethodLookupEngine.INSTANCE)
+                .methodGraphCompiler(ProxyGraphCompiler.INSTANCE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(Runnable.class, Callable.class).intercept(new MethodCall(accessorMethod, assigner))
@@ -179,41 +180,25 @@ public class MethodCallProxy implements AuxiliaryType {
      * {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}. This avoids a reflective lookup
      * of these methods what improves the runtime performance of this lookup.
      */
-    protected enum ProxyMethodLookupEngine implements MethodLookupEngine, MethodLookupEngine.Factory {
+    protected enum ProxyGraphCompiler implements MethodGraph.Compiler {
 
         /**
          * The singleton instance.
          */
         INSTANCE;
 
-        /**
-         * The list of methods to be returned by this method lookup engine.
-         */
-        private final MethodList<?> methodList;
+        private final MethodGraph methodGraph;
 
         /**
          * Creates this singleton proxy method lookup engine.
          */
-        ProxyMethodLookupEngine() {
-            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(2);
-            methodDescriptions.addAll(new MethodList.ForLoadedType(Runnable.class));
-            methodDescriptions.addAll(new MethodList.ForLoadedType(Callable.class));
-            methodList = new MethodList.Explicit<MethodDescription>(methodDescriptions);
+        ProxyGraphCompiler() {
+            methodGraph = MethodGraph.Simple.of(join(new MethodList.ForLoadedType(Runnable.class), new MethodList.ForLoadedType(Callable.class)));
         }
 
         @Override
-        public Finding process(TypeDescription typeDescription) {
-            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(3);
-            methodDescriptions.addAll(methodList);
-            methodDescriptions.addAll(typeDescription.getDeclaredMethods());
-            return new Finding.Default(typeDescription,
-                    new MethodList.Explicit<MethodDescription>(methodDescriptions),
-                    Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
-        }
-
-        @Override
-        public MethodLookupEngine make(boolean extractDefaultMethods) {
-            return this;
+        public MethodGraph.Linked compile(TypeDescription typeDescription) {
+            return MethodGraph.Linked.Delegation.forSimpleExtension(methodGraph);
         }
 
         @Override

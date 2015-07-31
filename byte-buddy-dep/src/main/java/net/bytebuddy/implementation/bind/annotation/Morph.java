@@ -10,7 +10,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodLookupEngine;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -34,6 +34,7 @@ import java.lang.annotation.*;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
@@ -80,7 +81,7 @@ public @interface Morph {
     /**
      * A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph} annotation.
      */
-    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph>, MethodLookupEngine.Factory, MethodLookupEngine {
+    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph>, MethodGraph.Compiler {
 
         /**
          * A reference to the serializable proxy method.
@@ -210,13 +211,8 @@ public @interface Morph {
         }
 
         @Override
-        public MethodLookupEngine make(boolean extractDefaultMethods) {
-            return this;
-        }
-
-        @Override
-        public Finding process(TypeDescription typeDescription) {
-            return new PrecomputedFinding(typeDescription);
+        public MethodGraph.Linked compile(TypeDescription typeDescription) {
+            return MethodGraph.Linked.Delegation.forSimpleExtension(MethodGraph.Simple.of(join(typeDescription.getDeclaredMethods(), forwardingMethod)));
         }
 
         @Override
@@ -367,10 +363,7 @@ public @interface Morph {
              */
             private final boolean serializableProxy;
 
-            /**
-             * The method lookup engine factory to register.
-             */
-            private final Factory methodLookupEngineFactory;
+            private final MethodGraph.Compiler methodGraphCompiler;
 
             /**
              * Creates a new redirection proxy.
@@ -381,20 +374,19 @@ public @interface Morph {
              *                                  an accessor on the instrumented type.
              * @param assigner                  The assigner to use.
              * @param serializableProxy         {@code true} if the proxy should be serializable.
-             * @param methodLookupEngineFactory The method lookup engine factory to use.
              */
             protected RedirectionProxy(TypeDescription morphingType,
                                        TypeDescription instrumentedType,
                                        Implementation.SpecialMethodInvocation specialMethodInvocation,
                                        Assigner assigner,
                                        boolean serializableProxy,
-                                       Factory methodLookupEngineFactory) {
+                                       MethodGraph.Compiler methodGraphCompiler) {
                 this.morphingType = morphingType;
                 this.instrumentedType = instrumentedType;
                 this.specialMethodInvocation = specialMethodInvocation;
                 this.assigner = assigner;
                 this.serializableProxy = serializableProxy;
-                this.methodLookupEngineFactory = methodLookupEngineFactory;
+                this.methodGraphCompiler = methodGraphCompiler;
             }
 
             @Override
@@ -405,7 +397,7 @@ public @interface Morph {
                         .subclass(morphingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
-                        .methodLookupEngine(methodLookupEngineFactory)
+                        .methodGraphCompiler(methodGraphCompiler)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                         .defineConstructor(specialMethodInvocation.getMethodDescription().isStatic()
                                 ? Collections.<TypeDescription>emptyList()
@@ -446,7 +438,7 @@ public @interface Morph {
                         && instrumentedType.equals(that.instrumentedType)
                         && morphingType.equals(that.morphingType)
                         && specialMethodInvocation.equals(that.specialMethodInvocation)
-                        && methodLookupEngineFactory.equals(that.methodLookupEngineFactory);
+                        && methodGraphCompiler.equals(that.methodGraphCompiler);
             }
 
             @Override
@@ -455,7 +447,7 @@ public @interface Morph {
                 result = 31 * result + specialMethodInvocation.hashCode();
                 result = 31 * result + assigner.hashCode();
                 result = 31 * result + instrumentedType.hashCode();
-                result = 31 * result + methodLookupEngineFactory.hashCode();
+                result = 31 * result + methodGraphCompiler.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
             }
@@ -466,7 +458,7 @@ public @interface Morph {
                         "morphingType=" + morphingType +
                         ", specialMethodInvocation=" + specialMethodInvocation +
                         ", assigner=" + assigner +
-                        ", methodLookupEngineFactory=" + methodLookupEngineFactory +
+                        ", methodGraphCompiler=" + methodGraphCompiler +
                         ", serializableProxy=" + serializableProxy +
                         ", instrumentedType=" + instrumentedType +
                         '}';
@@ -755,73 +747,6 @@ public @interface Morph {
                                 '}';
                     }
                 }
-            }
-        }
-
-        /**
-         * A finding that is precomputed to only return methods that are relevant to generating the required proxy.
-         */
-        protected class PrecomputedFinding implements Finding {
-
-            /**
-             * The type to implement for generating the proxy.
-             */
-            private final TypeDescription typeDescription;
-
-            /**
-             * Creates a new precomputed finding.
-             *
-             * @param typeDescription The type description to be used by the precomputed finding.
-             */
-            public PrecomputedFinding(TypeDescription typeDescription) {
-                this.typeDescription = typeDescription;
-            }
-
-            @Override
-            public TypeDescription getTypeDescription() {
-                return typeDescription;
-            }
-
-            @Override
-            public MethodList<?> getInvokableMethods() {
-                List<MethodDescription> invokableMethods = new ArrayList<MethodDescription>(2);
-                invokableMethods.addAll(typeDescription.getDeclaredMethods());
-                invokableMethods.add(forwardingMethod);
-                return new MethodList.Explicit<MethodDescription>(invokableMethods);
-            }
-
-            @Override
-            public Map<TypeDescription, Set<MethodDescription>> getInvokableDefaultMethods() {
-                return Collections.emptyMap();
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private Binder getBinder() {
-                return Binder.this;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && typeDescription.equals(((PrecomputedFinding) other).typeDescription)
-                        && Binder.this.equals(((PrecomputedFinding) other).getBinder());
-            }
-
-            @Override
-            public int hashCode() {
-                return typeDescription.hashCode() + 31 * Binder.this.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Morph.Binder.PrecomputedFinding{" +
-                        "binder=" + Binder.this +
-                        ", typeDescription=" + typeDescription +
-                        '}';
             }
         }
     }
