@@ -74,9 +74,9 @@ public class MethodGraphCompilerDefaultKeyTest {
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
-    public void testInitialEntryCannotBeMerged() throws Exception {
+    public void testInitialEntryCannotInject() throws Exception {
         new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
-                .mergeWith(mock(MethodGraph.Compiler.Default.Key.Harmonized.class));
+                .inject(mock(MethodGraph.Compiler.Default.Key.Harmonized.class));
     }
 
     @Test(expected = IllegalStateException.class)

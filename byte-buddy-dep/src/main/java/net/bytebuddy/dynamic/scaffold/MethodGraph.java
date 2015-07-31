@@ -230,9 +230,11 @@ public interface MethodGraph {
                                              ElementMatcher<? super MethodDescription> currentMatcher,
                                              ElementMatcher<? super MethodDescription> nextMatcher) {
                 Key.Store<T> keyStore = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
+                Key.Store<T> interfaceKeyStore = new Key.Store<T>();
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    keyStore = keyStore.mergeWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
+                    interfaceKeyStore = interfaceKeyStore.combineWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
                 }
+                keyStore = keyStore.inject(interfaceKeyStore);
                 for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
                     keyStore = keyStore.registerTopLevel(methodDescription, harmonizer, merger);
                 }
@@ -515,7 +517,7 @@ public interface MethodGraph {
                         return new Harmonized<V>(internalName, identifiers);
                     }
 
-                    protected Harmonized<V> mergeWith(Harmonized<V> key) {
+                    protected Harmonized<V> inject(Harmonized<V> key) {
                         Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
                         for (Map.Entry<V, Set<MethodDescription.Token>> entry : key.identifiers.entrySet()) {
                             Set<MethodDescription.Token> methodTokens = identifiers.get(entry.getKey());
@@ -570,22 +572,31 @@ public interface MethodGraph {
                         return new Store<V>(entries);
                     }
 
-                    protected Store<V> mergeWith(Store<V> keyStore) {
-                        Store<V> mergedStore = this;
+                    protected Store<V> combineWith(Store<V> keyStore) {
+                        // TODO: needs to check if an interface type defined an ambivalent method.
+                        Store<V> combinedStore = this;
                         for (Entry<V> entry : keyStore.entries.values()) {
-                            mergedStore = mergedStore.inject(entry);
+                            combinedStore = combinedStore.inject(entry);
                         }
-                        return mergedStore;
+                        return combinedStore;
+                    }
+
+                    protected Store<V> inject(Store<V> keyStore) {
+                        Store<V> injectedStore = this;
+                        for (Entry<V> entry : keyStore.entries.values()) {
+                            injectedStore = injectedStore.inject(entry);
+                        }
+                        return injectedStore;
                     }
 
                     protected Store<V> inject(Entry<V> entry) {
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         Entry<V> dominantEntry = entries.get(entry.getKey());
-                        Entry<V> mergedEntry = dominantEntry == null
+                        Entry<V> injectedEntry = dominantEntry == null
                                 ? entry
-                                : dominantEntry.mergeWith(entry.getKey());
+                                : dominantEntry.inject(entry.getKey());
                         entries.remove(entry.getKey());
-                        entries.put(mergedEntry.getKey(), mergedEntry);
+                        entries.put(injectedEntry.getKey(), injectedEntry);
                         return new Store<V>(entries);
                     }
 
@@ -661,7 +672,7 @@ public interface MethodGraph {
 
                         Entry<W> expandWith(MethodDescription methodDescription, Harmonizer<W> harmonizer, Merger merger);
 
-                        Entry<W> mergeWith(Harmonized<W> key);
+                        Entry<W> inject(Harmonized<W> key);
 
                         Node asNode();
 
@@ -684,8 +695,8 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> mergeWith(Harmonized<U> key) {
-                                throw new IllegalStateException("Cannot merge initial entry without a registered method: " + this);
+                            public Entry<U> inject(Harmonized<U> key) {
+                                throw new IllegalStateException("Cannot inject into initial entry without a registered method: " + this);
                             }
 
                             @Override
@@ -733,8 +744,8 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> mergeWith(Harmonized<U> key) {
-                                return new Entry.ForMethod<U>(key.mergeWith(key), methodDescription, madeVisible);
+                            public Entry<U> inject(Harmonized<U> key) {
+                                return new Entry.ForMethod<U>(key.inject(key), methodDescription, madeVisible);
                             }
 
                             @Override
@@ -878,8 +889,8 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> mergeWith(Harmonized<U> key) {
-                                return new Ambiguous<U>(key.mergeWith(key), methodDescription);
+                            public Entry<U> inject(Harmonized<U> key) {
+                                return new Ambiguous<U>(key.inject(key), methodDescription);
                             }
 
                             @Override
