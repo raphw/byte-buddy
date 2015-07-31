@@ -187,25 +187,29 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
-    public void testSuperTypeInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MultipleInterfaceBase.ClassTarget.class);
+    public void testDominantClassInheritance() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantClassTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(MultipleInterfaceBase.InterfaceExtension.class).getDeclaredMethods().getOnly();
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceIntermediate.class)
+                .getDeclaredMethods().getOnly();
         MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
         assertThat(methodNode.getBridges().size(), is(0));
         assertThat(methodNode.getRepresentative(), is(methodDescription));
     }
 
     @Test
-    public void testDominantSuperTypeInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MultipleInterfaceBase.DominantTarget.class);
+    public void testDominantInterfaceInheritance() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().make(typeDescription);
-        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(MultipleInterfaceBase.DominantExtension.class).getDeclaredMethods().getOnly();
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceIntermediate.class)
+                .getDeclaredMethods().getOnly();
         MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asToken());
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.isMadeVisible(), is(false));
         assertThat(methodNode.getBridges().size(), is(0));
         assertThat(methodNode.getRepresentative(), is(methodDescription));
     }
@@ -500,42 +504,26 @@ public class MethodGraphCompilerDefaultTest {
         abstract class ClassTarget implements InterfaceBase, AmbiguousInterfaceBase {
             /* empty */
         }
-    }
 
-    public interface MultipleInterfaceBase {
-
-        void foo();
-
-        interface InterfaceExtension extends MultipleInterfaceBase {
+        interface DominantInterfaceIntermediate extends InterfaceBase, AmbiguousInterfaceBase {
 
             @Override
             void foo();
         }
 
-        abstract class ClassBase implements InterfaceExtension {
+        abstract class DominantClassBase implements DominantInterfaceIntermediate {
             /* empty */
         }
 
-        abstract class ClassTarget extends ClassBase implements MultipleInterfaceBase {
+        abstract class DominantClassTarget extends DominantClassBase implements InterfaceBase {
             /* empty */
         }
 
-        interface AmbiguousInterface {
-
-            void foo();
-        }
-
-        interface DominantExtension extends MultipleInterfaceBase, AmbiguousInterface {
-
-            @Override
-            void foo();
-        }
-
-        abstract class AmbiguousClassBase implements DominantExtension {
+        interface DominantInterfaceBase extends DominantInterfaceIntermediate {
             /* empty */
         }
 
-        abstract class DominantTarget extends AmbiguousClassBase implements MultipleInterfaceBase {
+        interface DominantInterfaceTarget extends InterfaceBase, DominantInterfaceBase {
             /* empty */
         }
     }
