@@ -6,6 +6,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -2206,18 +2207,10 @@ public class ByteBuddy {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
-                MethodDescription cloneArrayMethod = new MethodDescription.Latent(valuesField.getType().asRawType(),
-                        CLONE_METHOD_NAME,
-                        Opcodes.ACC_PUBLIC,
-                        Collections.<GenericTypeDescription>emptyList(),
-                        TypeDescription.OBJECT,
-                        Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.<GenericTypeDescription>emptyList(),
-                        Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE);
+                MethodDescription cloneMethod = TypeDescription.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),
-                        MethodInvocation.invoke(cloneArrayMethod),
+                        MethodInvocation.invoke(cloneMethod).virtual(valuesField.getType().asRawType()),
                         TypeCasting.to(valuesField.getType().asRawType()),
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
