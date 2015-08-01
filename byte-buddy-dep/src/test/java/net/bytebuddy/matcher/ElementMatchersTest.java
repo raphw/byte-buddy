@@ -368,6 +368,13 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testIsTypeVariable() throws Exception {
+        assertThat(ElementMatchers.isVariable("T").matches(new TypeDescription.ForLoadedType(GenericDeclaredBy.class).getTypeVariables().getOnly()), is(true));
+        assertThat(ElementMatchers.isVariable(FOO).matches(new TypeDescription.ForLoadedType(GenericDeclaredBy.class).getTypeVariables().getOnly()), is(false));
+        assertThat(ElementMatchers.isVariable(FOO).matches(TypeDescription.OBJECT), is(false));
+    }
+
+    @Test
     public void testMethodName() throws Exception {
         assertThat(ElementMatchers.hasMethodName(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME), is(ElementMatchers.isTypeInitializer()));
         assertThat(ElementMatchers.hasMethodName(MethodDescription.CONSTRUCTOR_INTERNAL_NAME), is(ElementMatchers.isConstructor()));

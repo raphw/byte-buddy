@@ -442,11 +442,11 @@ public final class ElementMatchers {
     }
 
     public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(String symbol) {
-        return isVariable(is(nonNull(symbol)));
+        return isVariable(named(nonNull(symbol)));
     }
 
-    public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(ElementMatcher<? super String> matcher) {
-        return new TypeSymbolMatcher<T>(nonNull(matcher));
+    public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(ElementMatcher<? super NamedElement> matcher) {
+        return new TypeVariableMatcher<T>(nonNull(matcher));
     }
 
     /**
