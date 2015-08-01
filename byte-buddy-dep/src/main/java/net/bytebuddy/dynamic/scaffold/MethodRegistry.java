@@ -476,7 +476,6 @@ public interface MethodRegistry {
                         }
                     }
                 }
-                // TODO: consider visibility bridges
             }
             MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
             for (Entry entry : entries) {

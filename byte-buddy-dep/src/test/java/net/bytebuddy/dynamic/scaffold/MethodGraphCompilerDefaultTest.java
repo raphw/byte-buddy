@@ -979,6 +979,4 @@ public class MethodGraphCompilerDefaultTest {
     public static class MethodConvergenceVisibilityBridgeTarget extends MethodConvergenceVisibilityBridgeIntermediate {
         /* empty */
     }
-
-    // TODO: Merge with bridges and non-bridges (default methods)
 }
