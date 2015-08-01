@@ -726,21 +726,27 @@ public interface TypeWriter<T> {
 
                 public static class OfVisibilityBridge extends ForDeclaredMethod implements ByteCodeAppender, MethodAttributeAppender {
 
-                    public static Record resolve(MethodDescription bridgeTarget, TypeDescription instrumentedType) {
-                        return !bridgeTarget.getDeclaringType().asRawType().isPublic() && bridgeTarget.isPublic() && instrumentedType.isPublic()
-                                ? new OfVisibilityBridge(bridgeTarget)
-                                : ForInheritedMethod.INSTANCE;
+                    public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
+                        return new OfVisibilityBridge(VisibilityBridge.of(instrumentedType, bridgeTarget),
+                                bridgeTarget,
+                                instrumentedType.getSuperType().asRawType());
                     }
+
+                    private final MethodDescription visibilityBridge;
 
                     private final MethodDescription bridgeTarget;
 
-                    public OfVisibilityBridge(MethodDescription bridgeTarget) {
+                    private final TypeDescription superType;
+
+                    protected OfVisibilityBridge(MethodDescription visibilityBridge, MethodDescription bridgeTarget, TypeDescription superType) {
+                        this.visibilityBridge = visibilityBridge;
                         this.bridgeTarget = bridgeTarget;
+                        this.superType = superType;
                     }
 
                     @Override
                     protected MethodDescription getDeclaredMethod() {
-                        return bridgeTarget;
+                        return visibilityBridge;
                     }
 
                     @Override
@@ -755,7 +761,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
-                        return new ForDeclaredMethod.WithBody(bridgeTarget,
+                        return new ForDeclaredMethod.WithBody(visibilityBridge,
                                 new ByteCodeAppender.Compound(this, byteCodeAppender),
                                 this,
                                 ModifierResolver.Retaining.INSTANCE);
@@ -763,21 +769,23 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void applyHead(MethodVisitor methodVisitor) {
-                        new MethodAttributeAppender.ForMethod(bridgeTarget, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)
-                                .apply(methodVisitor, bridgeTarget);
+                        /* do nothing */
                     }
 
                     @Override
                     public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                        apply(methodVisitor, implementationContext, bridgeTarget);
+                        apply(methodVisitor, visibilityBridge);
+                        methodVisitor.visitCode();
+                        ByteCodeAppender.Size size = apply(methodVisitor, implementationContext, visibilityBridge);
+                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                     }
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new ByteCodeAppender.Simple(
-                                MethodVariableAccess.allArgumentsOf(bridgeTarget).prependThisReference(),
-                                MethodInvocation.invoke(bridgeTarget),
-                                MethodReturn.returning(bridgeTarget.getReturnType().asRawType())
+                                MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
+                                MethodInvocation.invoke(bridgeTarget).special(superType),
+                                MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
 
@@ -790,19 +798,80 @@ public interface TypeWriter<T> {
                     @Override
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
-                                && bridgeTarget.equals(((OfVisibilityBridge) other).bridgeTarget);
+                                && visibilityBridge.equals(((OfVisibilityBridge) other).visibilityBridge);
                     }
 
                     @Override
                     public int hashCode() {
-                        return bridgeTarget.hashCode();
+                        return visibilityBridge.hashCode();
                     }
 
                     @Override
                     public String toString() {
                         return "TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge{" +
-                                "bridgeTarget=" + bridgeTarget +
+                                "bridgeTarget=" + visibilityBridge +
                                 '}';
+                    }
+
+                    protected static class VisibilityBridge extends MethodDescription.InDefinedShape.AbstractBase {
+
+                        protected static MethodDescription of(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
+                            return new VisibilityBridge(instrumentedType, bridgeTarget.asToken().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE));
+                        }
+
+                        private final TypeDescription instrumentedType;
+
+                        private final MethodDescription.Token bridgeTarget;
+
+                        protected VisibilityBridge(TypeDescription instrumentedType, Token bridgeTarget) {
+                            this.instrumentedType = instrumentedType;
+                            this.bridgeTarget = bridgeTarget;
+                        }
+
+                        @Override
+                        public TypeDescription getDeclaringType() {
+                            return instrumentedType;
+                        }
+
+                        @Override
+                        public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
+                            return new ParameterList.ForTokens(this, bridgeTarget.getParameterTokens());
+                        }
+
+                        @Override
+                        public GenericTypeDescription getReturnType() {
+                            return bridgeTarget.getReturnType();
+                        }
+
+                        @Override
+                        public GenericTypeList getExceptionTypes() {
+                            return bridgeTarget.getExceptionTypes();
+                        }
+
+                        @Override
+                        public Object getDefaultValue() {
+                            return MethodDescription.NO_DEFAULT_VALUE;
+                        }
+
+                        @Override
+                        public GenericTypeList getTypeVariables() {
+                            return new GenericTypeList.Empty();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return bridgeTarget.getAnnotations();
+                        }
+
+                        @Override
+                        public int getModifiers() {
+                            return bridgeTarget.getModifiers() | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE;
+                        }
+
+                        @Override
+                        public String getInternalName() {
+                            return bridgeTarget.getInternalName();
+                        }
                     }
                 }
             }

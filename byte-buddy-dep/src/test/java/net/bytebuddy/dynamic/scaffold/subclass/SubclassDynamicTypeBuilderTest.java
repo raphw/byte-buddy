@@ -16,10 +16,7 @@ import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
-import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
+import net.bytebuddy.test.utility.*;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -31,16 +28,14 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static junit.framework.TestCase.assertEquals;
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotEquals;
@@ -388,19 +383,38 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
-    @Ignore("Fails because visibility bridges are not yet applied")
     public void testVisibilityBridge() throws Exception {
         Class<?> type = new ByteBuddy().subclass(VisibilityBridge.class)
+                .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
-        assertThat(type.getDeclaredMethods().length, is(1));
-        Method method = type.getDeclaredMethod(FOO);
-        assertThat(method.isBridge(), is(true));
-        assertThat(method.getDeclaredAnnotations().length, is(1));
-        assertThat(method.getAnnotation(Foo.class), notNullValue(Foo.class));
-        assertThat(method.invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredMethods().length, is(2));
+        Method foo = type.getDeclaredMethod(FOO, String.class);
+        assertThat(foo.isBridge(), is(true));
+        assertThat(foo.getDeclaredAnnotations().length, is(1));
+        assertThat(foo.getAnnotation(Foo.class), notNullValue(Foo.class));
+        assertThat(foo.invoke(type.newInstance(), BAR), is((Object) (FOO + BAR)));
+        Method bar = type.getDeclaredMethod(BAR, List.class);
+        assertThat(bar.isBridge(), is(true));
+        assertThat(bar.getDeclaredAnnotations().length, is(0));
+        List<?> list = new ArrayList<Object>();
+        assertThat(bar.invoke(type.newInstance(), list), sameInstance((Object) list));
+        assertThat(bar.getGenericReturnType(), instanceOf(Class.class));
+        assertThat(bar.getGenericParameterTypes()[0], instanceOf(Class.class));
+        assertThat(bar.getGenericExceptionTypes()[0], instanceOf(Class.class));
+    }
+
+    @Test
+    public void testNoVisibilityBridgeForNonPublicType() throws Exception {
+        Class<?> type = new ByteBuddy().subclass(VisibilityBridge.class)
+                .modifiers(0)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(0));
     }
 
     @Test
@@ -472,11 +486,24 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         }
     }
 
+    @SuppressWarnings("unused")
     static class VisibilityBridge {
 
         @Foo
-        public String foo() {
-            return FOO;
+        public String foo(@Foo String value) {
+            return FOO + value;
+        }
+
+        public <T extends Exception> List<String> bar(List<String> value) throws T {
+            return value;
+        }
+
+        void noBridge() {
+            /* empty */
+        }
+
+        protected void noBridge(Void v) {
+            /* empty */
         }
     }
 }

@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -329,6 +330,35 @@ public interface MethodRegistry {
                         '}';
             }
         }
+
+        enum ForVisibilityBridge implements Handler {
+
+            INSTANCE;
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public Compiled compile(Implementation.Target implementationTarget) {
+                return new Compiled(implementationTarget.getTypeDescription());
+            }
+
+            protected static class Compiled implements Handler.Compiled {
+
+                private final TypeDescription instrumentedType;
+
+                protected Compiled(TypeDescription instrumentedType) {
+                    this.instrumentedType = instrumentedType;
+                }
+
+                @Override
+                public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
+                    return TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge.of(instrumentedType, methodDescription);
+                }
+            }
+        }
     }
 
     /**
@@ -451,7 +481,7 @@ public interface MethodRegistry {
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodGraph.Compiler methodGraphCompiler,
                                                LatentMethodMatcher methodFilter) {
-            LinkedHashMap<MethodDescription, Entry> implementations = new LinkedHashMap<MethodDescription, Entry>();
+            LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>();
             Set<Handler> handlers = new HashSet<Handler>(entries.size());
             MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
             for (Entry entry : entries) {
@@ -460,7 +490,7 @@ public interface MethodRegistry {
                     ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
                     helperMethods = instrumentedType.getDeclaredMethods();
                     for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {
-                        implementations.put(helperMethod, entry);
+                        implementations.put(helperMethod, entry.asPreparedEntry());
                     }
                 }
             }
@@ -468,19 +498,27 @@ public interface MethodRegistry {
             ElementMatcher<? super MethodDescription> relevanceMatcher = not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType));
             for (MethodGraph.Node node : methodGraph.listNodes()) {
                 MethodDescription methodDescription = node.getRepresentative();
+                boolean visibilityBridge = instrumentedType.isPublic() && !instrumentedType.isInterface();
                 if (relevanceMatcher.matches(methodDescription)) {
                     for (Entry entry : entries) {
                         if (entry.resolve(instrumentedType).matches(methodDescription)) {
-                            implementations.put(methodDescription, entry);
+                            implementations.put(methodDescription, entry.asPreparedEntry());
+                            visibilityBridge = false;
                             break;
                         }
                     }
+                }
+                if (visibilityBridge
+                        && methodDescription.isPublic()
+                        && !methodDescription.getDeclaringType().equals(instrumentedType)
+                        && methodDescription.getDeclaringType().asRawType().isPackagePrivate()) {
+                    implementations.put(methodDescription, Prepared.Entry.ofVisibilityBridge());
                 }
             }
             MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
             for (Entry entry : entries) {
                 if (entry.resolve(instrumentedType).matches(typeInitializer)) {
-                    implementations.put(typeInitializer, entry);
+                    implementations.put(typeInitializer, entry.asPreparedEntry());
                     break;
                 }
             }
@@ -545,22 +583,12 @@ public interface MethodRegistry {
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
 
-            /**
-             * Returns the handler of this entry.
-             *
-             * @return The handler of this entry.
-             */
-            protected Handler getHandler() {
-                return handler;
+            protected Prepared.Entry asPreparedEntry() {
+                return new Prepared.Entry(handler, attributeAppenderFactory);
             }
 
-            /**
-             * Returns the attribute appender factory of this entry.
-             *
-             * @return The attribute appender factory of this entry.
-             */
-            protected MethodAttributeAppender.Factory getAppenderFactory() {
-                return attributeAppenderFactory;
+            protected Handler getHandler() {
+                return handler;
             }
 
             @Override
@@ -713,6 +741,30 @@ public interface MethodRegistry {
                         ", methodGraph=" + methodGraph +
                         '}';
             }
+
+            protected static class Entry {
+
+                protected static Entry ofVisibilityBridge() {
+                    return new Entry(Handler.ForVisibilityBridge.INSTANCE, MethodAttributeAppender.NoOp.INSTANCE);
+                }
+
+                private final Handler handler;
+
+                private final MethodAttributeAppender.Factory attributeAppenderFactory;
+
+                protected Entry(Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory) {
+                    this.handler = handler;
+                    this.attributeAppenderFactory = attributeAppenderFactory;
+                }
+
+                protected Handler getHandler() {
+                    return handler;
+                }
+
+                protected MethodAttributeAppender.Factory getAppenderFactory() {
+                    return attributeAppenderFactory;
+                }
+            }
         }
 
         /**
@@ -782,7 +834,7 @@ public interface MethodRegistry {
             public Record target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
-                        ? Record.ForDeclaredMethod.OfVisibilityBridge.resolve(methodDescription, instrumentedType)
+                        ? Record.ForInheritedMethod.INSTANCE
                         : entry.bind(methodDescription);
             }
 
