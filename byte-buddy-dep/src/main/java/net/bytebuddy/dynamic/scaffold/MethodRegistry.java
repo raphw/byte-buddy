@@ -448,18 +448,20 @@ public interface MethodRegistry {
         }
 
         @Override
-        public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMethodMatcher methodFilter) {
+        public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
+                                               MethodGraph.Compiler methodGraphCompiler,
+                                               LatentMethodMatcher methodFilter) {
             LinkedHashMap<MethodDescription, Entry> implementations = new LinkedHashMap<MethodDescription, Entry>();
             Set<Handler> handlers = new HashSet<Handler>(entries.size());
-            int helperMethodIndex = instrumentedType.getDeclaredMethods().size();
+            MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
             for (Entry entry : entries) {
                 if (handlers.add(entry.getHandler())) {
                     instrumentedType = entry.getHandler().prepare(instrumentedType);
-                    MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
-                    for (MethodDescription helperMethod : helperMethods.subList(helperMethodIndex, helperMethods.size())) {
+                    ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
+                    helperMethods = instrumentedType.getDeclaredMethods();
+                    for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {
                         implementations.put(helperMethod, entry);
                     }
-                    helperMethodIndex = helperMethods.size();
                 }
             }
             MethodGraph.Linked methodGraph = methodGraphCompiler.compile(instrumentedType);

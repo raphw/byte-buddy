@@ -49,7 +49,7 @@ public class MethodRegistryDefaultTest {
     private InstrumentedType firstType, secondType, typeDescription;
 
     @Mock
-    private MethodDescription instrumentedMethod, firstMethod, secondMethod, thirdMethod;
+    private MethodDescription instrumentedMethod;
 
     @Mock
     private MethodGraph.Compiler methodGraphCompiler;
@@ -83,10 +83,9 @@ public class MethodRegistryDefaultTest {
         when(typeDescription.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
         when(methodGraphCompiler.compile(typeDescription)).thenReturn(methodGraph);
         when(methodGraph.listNodes()).thenReturn(new MethodGraph.NodeList(Collections.singletonList(new MethodGraph.Node.Simple(instrumentedMethod))));
-//        when(finding.getTypeDescription()).thenReturn(typeDescription);
-        when(firstType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(firstMethod)));
-        when(secondType.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(secondMethod)));
-        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(thirdMethod)));
+        when(firstType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        when(secondType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
         when(methodFilter.resolve(typeDescription)).thenReturn((ElementMatcher) resolvedMethodFilter);
         when(firstMatcher.resolve(typeDescription)).thenReturn((ElementMatcher) firstFilter);
         when(secondMatcher.resolve(typeDescription)).thenReturn((ElementMatcher) secondFilter);
