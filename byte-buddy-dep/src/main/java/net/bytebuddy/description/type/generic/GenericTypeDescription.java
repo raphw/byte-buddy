@@ -658,7 +658,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
             @Override
             public SignatureVisitor onNonGenericType(GenericTypeDescription typeDescription) {
-                if(typeDescription.isArray()) {
+                if (typeDescription.isArray()) {
                     typeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
                 } else if (typeDescription.isPrimitive()) {
                     signatureVisitor.visitBaseType(typeDescription.asRawType().getDescriptor().charAt(ONLY_CHARACTER));

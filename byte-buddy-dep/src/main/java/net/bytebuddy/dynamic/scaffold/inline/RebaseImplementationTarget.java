@@ -8,8 +8,6 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.List;
-
 /**
  * An implementation target for redefining a given type while preserving the original methods within the
  * instrumented type.

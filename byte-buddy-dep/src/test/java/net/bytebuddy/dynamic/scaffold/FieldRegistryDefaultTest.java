@@ -11,7 +11,6 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 

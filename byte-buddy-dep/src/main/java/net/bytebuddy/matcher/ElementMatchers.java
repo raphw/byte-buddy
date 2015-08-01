@@ -441,6 +441,14 @@ public final class ElementMatchers {
         return new CollectionRawTypeMatcher<T>(matcher);
     }
 
+    public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(String symbol) {
+        return isVariable(is(nonNull(symbol)));
+    }
+
+    public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(ElementMatcher<? super String> matcher) {
+        return new TypeSymbolMatcher<T>(nonNull(matcher));
+    }
+
     /**
      * Matches a {@link NamedElement} for its exact name.
      *

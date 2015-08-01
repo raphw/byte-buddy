@@ -20,6 +20,8 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
      */
     int PACKAGE_MODIFIERS = Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_SYNTHETIC;
 
+    boolean hasType(TypeDescription typeDescription);
+
     /**
      * An abstract base implementation of a package description.
      */
@@ -33,6 +35,11 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
         @Override
         public String getSourceCodeName() {
             return getName();
+        }
+
+        @Override
+        public boolean hasType(TypeDescription typeDescription) {
+            return this.equals(typeDescription.getPackage());
         }
 
         @Override

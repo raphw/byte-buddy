@@ -12,9 +12,9 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.visibility.PackageAnnotation;
 import net.bytebuddy.test.visibility.Sample;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 

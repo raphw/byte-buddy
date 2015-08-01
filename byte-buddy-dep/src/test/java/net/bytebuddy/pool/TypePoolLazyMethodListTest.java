@@ -10,9 +10,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.mock;
 
 public class TypePoolLazyMethodListTest extends AbstractMethodListTest<Method, MethodDescription.InDefinedShape> {
 

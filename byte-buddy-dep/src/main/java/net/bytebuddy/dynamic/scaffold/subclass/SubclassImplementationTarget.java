@@ -8,11 +8,9 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.isVisibilityBridge;
 import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 
 /**

@@ -5,7 +5,6 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.ToolsJarRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;

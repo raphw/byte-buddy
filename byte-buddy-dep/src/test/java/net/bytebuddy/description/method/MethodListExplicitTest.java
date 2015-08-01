@@ -1,6 +1,5 @@
 package net.bytebuddy.description.method;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class MethodListExplicitTest extends AbstractMethodListTest<MethodDescription, MethodDescription> {

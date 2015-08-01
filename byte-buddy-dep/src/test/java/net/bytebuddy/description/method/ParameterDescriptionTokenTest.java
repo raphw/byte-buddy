@@ -19,9 +19,9 @@ import static org.mockito.Mockito.mock;
 
 public class ParameterDescriptionTokenTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
-    private static final String BAR = "bar";
+    private static final int MODIFIERS = 42;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -29,15 +29,8 @@ public class ParameterDescriptionTokenTest {
     @Mock
     private GenericTypeDescription first, second;
 
-    @Test
-    public void testTokenIdentity() throws Exception {
-        ParameterDescription.Token token = new ParameterDescription.Token(mock(GenericTypeDescription.class),
-                Collections.singletonList(mock(AnnotationDescription.class)),
-                ParameterDescription.Token.NO_NAME,
-                ParameterDescription.Token.NO_MODIFIERS);
-        assertThat(token.hashCode(), is(token.hashCode()));
-        assertThat(token, is(token));
-    }
+    @Mock
+    private AnnotationDescription firstAnnotation, secondAnnotation;
 
     @Test
     public void testTokenInequalityHashCode() throws Exception {
@@ -109,6 +102,114 @@ public class ParameterDescriptionTokenTest {
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         BAR,
                         ParameterDescription.Token.NO_MODIFIERS)));
+    }
+
+    @Test
+    public void testTokenIdentity() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                ParameterDescription.Token.NO_NAME,
+                ParameterDescription.Token.NO_MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(first,
+                        Collections.singletonList(firstAnnotation),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS)), is(true));
+    }
+
+    @Test
+    public void testTokenNoIdentityType() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                ParameterDescription.Token.NO_NAME,
+                ParameterDescription.Token.NO_MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(second,
+                        Collections.singletonList(firstAnnotation),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS)), is(false));
+    }
+
+    @Test
+    public void testTokenNoIdentityAnnotations() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                ParameterDescription.Token.NO_NAME,
+                ParameterDescription.Token.NO_MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(first,
+                        Collections.singletonList(secondAnnotation),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS)), is(false));
+    }
+
+    @Test
+    public void testTokenNoIdentityName() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                FOO,
+                ParameterDescription.Token.NO_MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(first,
+                        Collections.singletonList(firstAnnotation),
+                        BAR,
+                        ParameterDescription.Token.NO_MODIFIERS)), is(false));
+    }
+
+    @Test
+    public void testTokenNoIdentityNameLeftNull() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                FOO,
+                ParameterDescription.Token.NO_MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(first,
+                        Collections.singletonList(firstAnnotation),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS)), is(false));
+    }
+
+    @Test
+    public void testTokenNoIdentityNameRightNull() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                FOO,
+                ParameterDescription.Token.NO_MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(first,
+                        Collections.singletonList(firstAnnotation),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS)), is(false));
+    }
+
+    @Test
+    public void testTokenNoIdentityModifiers() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                ParameterDescription.Token.NO_NAME,
+                MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(first,
+                        Collections.singletonList(firstAnnotation),
+                        ParameterDescription.Token.NO_NAME,
+                        MODIFIERS * 2)), is(false));
+    }
+
+    @Test
+    public void testTokenNoIdentityModifiersLeftNull() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                ParameterDescription.Token.NO_NAME,
+                MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(first,
+                        Collections.singletonList(firstAnnotation),
+                        ParameterDescription.Token.NO_NAME,
+                        ParameterDescription.Token.NO_MODIFIERS)), is(false));
+    }
+
+    @Test
+    public void testTokenNoIdentityModifiersRightNull() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                ParameterDescription.Token.NO_NAME,
+                ParameterDescription.Token.NO_MODIFIERS)
+                .isIdenticalTo(new ParameterDescription.Token(first,
+                        Collections.singletonList(firstAnnotation),
+                        ParameterDescription.Token.NO_NAME,
+                        MODIFIERS)), is(false));
     }
 
     @Test

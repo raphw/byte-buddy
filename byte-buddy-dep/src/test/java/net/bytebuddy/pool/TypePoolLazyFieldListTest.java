@@ -10,8 +10,6 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class TypePoolLazyFieldListTest extends AbstractFieldListTest<Field, FieldDescription.InDefinedShape> {
 

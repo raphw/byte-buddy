@@ -24,7 +24,7 @@
         <!--<module name="JavadocVariable"/>-->
         <!--<module name="JavadocStyle"/>-->
 
-        <module name="TodoComment"/>
+        <!--<module name="TodoComment"/>-->
 
         <module name="ConstantName"/>
         <module name="LocalFinalVariableName"/>

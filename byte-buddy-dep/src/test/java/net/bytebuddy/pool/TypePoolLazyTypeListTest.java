@@ -6,7 +6,6 @@ import net.bytebuddy.description.type.TypeList;
 import org.junit.After;
 import org.junit.Before;
 
-import java.lang.reflect.Type;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;

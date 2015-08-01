@@ -1,7 +1,6 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.ByteCodeElement;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
