@@ -1033,19 +1033,6 @@ public class ElementMatchersTest {
     }
 
     @Test
-    public void testisSpecializationOf() throws Exception {
-        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(FOO, Number.class));
-        assertThat(ElementMatchers.isSpecializationOf(methodDescription)
-                .matches(new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(FOO, Number.class))), is(true));
-        assertThat(ElementMatchers.isSpecializationOf(methodDescription)
-                .matches(new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(FOO, Integer.class))), is(true));
-        assertThat(ElementMatchers.isSpecializationOf(methodDescription)
-                .matches(new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(FOO, String.class))), is(false));
-        assertThat(ElementMatchers.isSpecializationOf(methodDescription)
-                .matches(new MethodDescription.ForLoadedMethod(IsSpecialization.class.getDeclaredMethod(BAR, Integer.class))), is(false));
-    }
-
-    @Test
     public void testIsSubOrSuperType() throws Exception {
         assertThat(ElementMatchers.isSubTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
         assertThat(ElementMatchers.isSubTypeOf(Object.class).matches(new TypeDescription.ForLoadedType(String.class)), is(true));
@@ -1504,26 +1491,6 @@ public class ElementMatchersTest {
 
     public static class OtherInherited extends Other {
 
-    }
-
-    @SuppressWarnings("unused")
-    public static class IsSpecialization {
-
-        public Number foo(Number argument) {
-            return null;
-        }
-
-        public Number foo(Integer argument) {
-            return null;
-        }
-
-        public Number foo(String argument) {
-            return null;
-        }
-
-        public Integer bar(Integer argument) {
-            return null;
-        }
     }
 
     @SuppressWarnings("unused")

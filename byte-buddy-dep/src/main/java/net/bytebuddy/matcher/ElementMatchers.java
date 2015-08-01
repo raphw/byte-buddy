@@ -1314,27 +1314,6 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a <i>specialized</i> version of a given method. This method is characterized by an identical name and
-     * by a return type that is a sub type of the given method's return type and by parameter types that are sub types
-     * of the the given method's parameter types.
-     *
-     * @param methodDescription The method description to match.
-     * @param <T>               The type of the matched object.
-     * @return A matcher that matches a specialized version of the given method.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSpecializationOf(MethodDescription methodDescription) {
-        TypeList parameterTypes = methodDescription.getParameters().asTypeList().asRawTypes();
-        List<ElementMatcher<GenericTypeDescription>> matchers = new ArrayList<ElementMatcher<GenericTypeDescription>>(parameterTypes.size());
-        for (TypeDescription typeDescription : parameterTypes) {
-            matchers.add(rawType(isSubTypeOf(typeDescription)));
-        }
-        return (methodDescription.isStatic() ? ElementMatchers.<T>isStatic() : ElementMatchers.<T>not(isStatic()))
-                .<T>and(named(methodDescription.getSourceCodeName()))
-                .<T>and(returnsGeneric(rawType(isSubTypeOf(methodDescription.getReturnType().asRawType()))))
-                .and(takesGenericArguments(new CollectionOneToOneMatcher<GenericTypeDescription>(matchers)));
-    }
-
-    /**
      * Matches a method against its internal name such that constructors and type initializers are matched appropriately.
      *
      * @param internalName The internal name of the method.
