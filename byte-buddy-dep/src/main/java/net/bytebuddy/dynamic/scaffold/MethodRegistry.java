@@ -679,6 +679,39 @@ public interface MethodRegistry {
                 }
                 return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries);
             }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Prepared prepared = (Prepared) other;
+                return implementations.equals(prepared.implementations)
+                        && loadedTypeInitializer.equals(prepared.loadedTypeInitializer)
+                        && typeInitializer.equals(prepared.typeInitializer)
+                        && instrumentedType.equals(prepared.instrumentedType)
+                        && methodGraph.equals(prepared.methodGraph);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = implementations.hashCode();
+                result = 31 * result + loadedTypeInitializer.hashCode();
+                result = 31 * result + typeInitializer.hashCode();
+                result = 31 * result + instrumentedType.hashCode();
+                result = 31 * result + methodGraph.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Default.Prepared{" +
+                        "implementations=" + implementations +
+                        ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
+                        ", instrumentedType=" + instrumentedType +
+                        ", methodGraph=" + methodGraph +
+                        '}';
+            }
         }
 
         /**
