@@ -60,6 +60,8 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
      */
     interface Token<T extends Token<T>> {
 
+        boolean isIdenticalTo(T t);
+
         /**
          * Transforms the types represented by this token by applying the given visitor to them.
          *
@@ -68,7 +70,9 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
          */
         T accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
-        boolean isIdenticalTo(T t);
+        T withModifiers(int modifiers);
+
+        T withModifiers(int modifiers, int mask);
 
         /**
          * A list of tokens.

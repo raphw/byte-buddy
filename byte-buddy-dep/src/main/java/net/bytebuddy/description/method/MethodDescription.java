@@ -1432,6 +1432,23 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        public Token withModifiers(int modifiers, int mask) {
+            return withModifiers((getModifiers() & ~mask) | modifiers);
+        }
+
+        @Override
+        public Token withModifiers(int modifiers) {
+            return new Token(getInternalName(),
+                    modifiers,
+                    getTypeVariables(),
+                    getReturnType(),
+                    getParameterTokens(),
+                    getExceptionTypes(),
+                    getAnnotations(),
+                    getDefaultValue());
+        }
+
+        @Override
         public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             return new Token(getInternalName(),
                     getModifiers(),

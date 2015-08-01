@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -23,7 +24,7 @@ public class MethodDescriptionTokenTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final int MODIFIERS = 42;
+    private static final int MODIFIERS = 42, MASK = 12, UPDATE = 7;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -469,6 +470,18 @@ public class MethodDescriptionTokenTest {
                         Collections.singletonList(first),
                         Collections.singletonList(firstAnnotation),
                         MethodDescription.NO_DEFAULT_VALUE)), is(false));
+    }
+
+    @Test
+    public void testModifierTransformation() throws Exception {
+        assertThat(new MethodDescription.Token(FOO,
+                MODIFIERS,
+                Collections.singletonList(first),
+                first,
+                Collections.singletonList(firstParameter),
+                Collections.singletonList(first),
+                Collections.singletonList(firstAnnotation),
+                firstDefault).withModifiers(UPDATE, MASK).getModifiers(), is((MODIFIERS & ~MASK) | UPDATE));
     }
 
     @Test

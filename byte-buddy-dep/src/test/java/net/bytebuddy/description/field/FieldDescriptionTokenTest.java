@@ -20,7 +20,7 @@ public class FieldDescriptionTokenTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final int MODIFIERS = 42;
+    private static final int MODIFIERS = 42, MASK = 12, UPDATE = 7;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -137,6 +137,14 @@ public class FieldDescriptionTokenTest {
                         MODIFIERS,
                         first,
                         Collections.singletonList(secondAnnotation))), is(false));
+    }
+
+    @Test
+    public void testModifierTransformation() throws Exception {
+        assertThat(new FieldDescription.Token(FOO,
+                MODIFIERS,
+                mock(GenericTypeDescription.class),
+                Collections.singletonList(mock(AnnotationDescription.class))).withModifiers(UPDATE, MASK).getModifiers(), is((MODIFIERS & ~MASK) | UPDATE));
     }
 
     @Test

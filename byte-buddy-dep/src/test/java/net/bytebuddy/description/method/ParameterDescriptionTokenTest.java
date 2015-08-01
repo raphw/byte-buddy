@@ -21,7 +21,7 @@ public class ParameterDescriptionTokenTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final int MODIFIERS = 42;
+    private static final int MODIFIERS = 42, MASK = 12, UPDATE = 7;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -210,6 +210,14 @@ public class ParameterDescriptionTokenTest {
                         Collections.singletonList(firstAnnotation),
                         ParameterDescription.Token.NO_NAME,
                         MODIFIERS)), is(false));
+    }
+
+    @Test
+    public void testModifierTransformation() throws Exception {
+        assertThat(new ParameterDescription.Token(first,
+                Collections.singletonList(firstAnnotation),
+                FOO,
+                MODIFIERS).withModifiers(UPDATE, MASK).getModifiers(), is((MODIFIERS & ~MASK) | UPDATE));
     }
 
     @Test
