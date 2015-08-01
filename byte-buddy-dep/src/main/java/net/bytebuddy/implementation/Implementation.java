@@ -270,6 +270,8 @@ public interface Implementation {
          */
         SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken);
 
+        SpecialMethodInvocation invokeAny(MethodDescription.Token methodToken);
+
         /**
          * A factory for creating an {@link Implementation.Target}.
          */
@@ -303,6 +305,16 @@ public interface Implementation {
                 return node.getSort().isUnique()
                         ? SpecialMethodInvocation.Simple.of(node.getRepresentative(), targetType)
                         : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
+            }
+
+            @Override
+            public SpecialMethodInvocation invokeAny(MethodDescription.Token methodToken) {
+                SpecialMethodInvocation specialMethodInvocation = invokeSuper(methodToken);
+                Iterator<TypeDescription> iterator = instrumentedType.getInterfaces().asRawTypes().iterator();
+                while (!specialMethodInvocation.isValid() && iterator.hasNext()) {
+                    specialMethodInvocation = invokeDefault(iterator.next(), methodToken);
+                }
+                return specialMethodInvocation;
             }
 
             @Override

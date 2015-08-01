@@ -108,12 +108,9 @@ public enum SuperMethodCall implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            StackManipulation superMethodCall = instrumentedMethod.isDefaultMethod()
-                    && implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(instrumentedMethod.getDeclaringType().asRawType())
-                    ? implementationTarget.invokeDefault(instrumentedMethod.getDeclaringType().asRawType(), instrumentedMethod.asToken())
-                    : implementationTarget.invokeSuper(instrumentedMethod.asToken());
+            StackManipulation superMethodCall = implementationTarget.invokeAny(instrumentedMethod.asToken());
             if (!superMethodCall.isValid()) {
-                throw new IllegalStateException("Cannot call super (or default) method of " + instrumentedMethod);
+                throw new IllegalStateException("Cannot call super (or default) method for " + instrumentedMethod);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),

@@ -74,14 +74,12 @@ public @interface SuperCall {
                 throw new IllegalStateException("A super method call proxy can only be assigned to Runnable or Callable types: " + target);
             }
             Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(source.asToken());
-            if (!specialMethodInvocation.isValid()
-                    && source.isDefaultMethod()
-                    && implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(source.getDeclaringType().asRawType())
-                    && annotation.loadSilent().fallbackToDefault()) {
-                specialMethodInvocation = implementationTarget.invokeDefault(source.getDeclaringType().asRawType(), source.asToken());
+            if (!specialMethodInvocation.isValid() && source.isDefaultMethod() && annotation.loadSilent().fallbackToDefault()) {
+                specialMethodInvocation = implementationTarget.invokeAny(source.asToken());
             }
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy()))
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy
+                    .AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy()))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
