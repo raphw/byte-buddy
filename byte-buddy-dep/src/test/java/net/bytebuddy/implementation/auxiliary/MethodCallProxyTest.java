@@ -69,7 +69,6 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodCallProxy.class).apply();
         ObjectPropertyAssertion.of(MethodCallProxy.AssignableSignatureCall.class).apply();
-        ObjectPropertyAssertion.of(MethodCallProxy.ProxyGraphCompiler.class).apply();
         ObjectPropertyAssertion.of(MethodCallProxy.ConstructorCall.class).apply();
         ObjectPropertyAssertion.of(MethodCallProxy.MethodCall.class).apply();
         ObjectPropertyAssertion.of(MethodCallProxy.MethodCall.Appender.class).skipSynthetic().apply();

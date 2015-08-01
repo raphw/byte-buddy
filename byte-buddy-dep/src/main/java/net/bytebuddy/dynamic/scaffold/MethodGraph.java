@@ -1158,7 +1158,7 @@ public interface MethodGraph {
         }
     }
 
-    enum Empty implements MethodGraph.Linked {
+    enum Empty implements MethodGraph.Linked, MethodGraph.Compiler {
 
         INSTANCE;
 
@@ -1179,6 +1179,11 @@ public interface MethodGraph {
 
         @Override
         public MethodGraph getInterfaceGraph(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public Linked compile(TypeDescription typeDescription) {
             return this;
         }
 

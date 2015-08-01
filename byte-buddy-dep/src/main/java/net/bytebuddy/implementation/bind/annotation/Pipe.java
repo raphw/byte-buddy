@@ -13,7 +13,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -36,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
@@ -99,7 +97,7 @@ public @interface Pipe {
      * A {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder}
      * for binding the {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
      */
-    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe>, MethodGraph.Compiler {
+    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> {
 
         /**
          * The method which implements the behavior of forwarding a method invocation. This method needs to define
@@ -195,13 +193,7 @@ public @interface Pipe {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType().asRawType(),
                     source,
                     assigner,
-                    annotation.loadSilent().serializableProxy(),
-                    this));
-        }
-
-        @Override
-        public MethodGraph.Linked compile(TypeDescription typeDescription) {
-            return MethodGraph.Linked.Delegation.forSimpleExtension(MethodGraph.Simple.of(join(typeDescription.getDeclaredMethods(), forwardingMethod)));
+                    annotation.loadSilent().serializableProxy()));
         }
 
         @Override
@@ -251,8 +243,6 @@ public @interface Pipe {
              */
             private final boolean serializableProxy;
 
-            private final MethodGraph.Compiler methodGraphCompiler;
-
             /**
              * Creates a new redirection.
              *
@@ -264,13 +254,11 @@ public @interface Pipe {
             protected Redirection(TypeDescription forwardingType,
                                   MethodDescription sourceMethod,
                                   Assigner assigner,
-                                  boolean serializableProxy,
-                                  MethodGraph.Compiler methodGraphCompiler) {
+                                  boolean serializableProxy) {
                 this.forwardingType = forwardingType;
                 this.sourceMethod = sourceMethod;
                 this.assigner = assigner;
                 this.serializableProxy = serializableProxy;
-                this.methodGraphCompiler = methodGraphCompiler;
             }
 
             /**
@@ -309,7 +297,6 @@ public @interface Pipe {
                         .subclass(forwardingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
-                        .methodGraphCompiler(methodGraphCompiler)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                         .method(isDeclaredBy(forwardingType))
                         .intercept(new MethodCall(sourceMethod, assigner))
@@ -345,7 +332,6 @@ public @interface Pipe {
                 return serializableProxy == that.serializableProxy
                         && assigner.equals(that.assigner)
                         && forwardingType.equals(that.forwardingType)
-                        && methodGraphCompiler.equals(that.methodGraphCompiler)
                         && sourceMethod.equals(that.sourceMethod);
             }
 
@@ -354,7 +340,6 @@ public @interface Pipe {
                 int result = forwardingType.hashCode();
                 result = 31 * result + sourceMethod.hashCode();
                 result = 31 * result + assigner.hashCode();
-                result = 31 * result + methodGraphCompiler.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
             }
@@ -366,7 +351,6 @@ public @interface Pipe {
                         ", sourceMethod=" + sourceMethod +
                         ", assigner=" + assigner +
                         ", serializableProxy=" + serializableProxy +
-                        ", methodGraphCompiler=" + methodGraphCompiler +
                         '}';
             }
 

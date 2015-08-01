@@ -11,7 +11,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
  * A trivial type that extends {@link java.lang.Object} without defining any fields, methods or constructors.
  * This type is meant to be used as a marker type only.
  */
-public enum TrivialType implements AuxiliaryType, MethodGraph.Compiler {
+public enum TrivialType implements AuxiliaryType {
 
     /**
      * The singleton instance.
@@ -26,13 +26,8 @@ public enum TrivialType implements AuxiliaryType, MethodGraph.Compiler {
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
-                .methodGraphCompiler(this)
+                .methodGraphCompiler(MethodGraph.Empty.INSTANCE)
                 .make();
-    }
-
-    @Override
-    public MethodGraph.Linked compile(TypeDescription typeDescription) {
-        return MethodGraph.Empty.INSTANCE;
     }
 
     @Override

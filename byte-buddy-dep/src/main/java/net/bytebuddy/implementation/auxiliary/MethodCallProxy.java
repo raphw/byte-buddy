@@ -137,7 +137,6 @@ public class MethodCallProxy implements AuxiliaryType {
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .methodGraphCompiler(ProxyGraphCompiler.INSTANCE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(Runnable.class, Callable.class).intercept(new MethodCall(accessorMethod, assigner))
@@ -175,38 +174,6 @@ public class MethodCallProxy implements AuxiliaryType {
                 ", serializableProxy=" + serializableProxy +
                 ", assigner=" + assigner +
                 '}';
-    }
-
-    /**
-     * A method lookup engine with hard-coded information about the methods to be implemented by a
-     * {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}. This avoids a reflective lookup
-     * of these methods what improves the runtime performance of this lookup.
-     */
-    protected enum ProxyGraphCompiler implements MethodGraph.Compiler {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        private final MethodGraph methodGraph;
-
-        /**
-         * Creates this singleton proxy method lookup engine.
-         */
-        ProxyGraphCompiler() {
-            methodGraph = MethodGraph.Simple.of(join(new MethodList.ForLoadedType(Runnable.class), new MethodList.ForLoadedType(Callable.class)));
-        }
-
-        @Override
-        public MethodGraph.Linked compile(TypeDescription typeDescription) {
-            return MethodGraph.Linked.Delegation.forSimpleExtension(methodGraph);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.ProxyMethodLookupEngine." + name();
-        }
     }
 
     /**

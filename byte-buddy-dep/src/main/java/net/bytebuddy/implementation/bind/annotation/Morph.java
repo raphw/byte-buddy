@@ -10,7 +10,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -34,7 +33,6 @@ import java.lang.annotation.*;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
@@ -81,7 +79,7 @@ public @interface Morph {
     /**
      * A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph} annotation.
      */
-    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph>, MethodGraph.Compiler {
+    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> {
 
         /**
          * A reference to the serializable proxy method.
@@ -205,14 +203,8 @@ public @interface Morph {
                     implementationTarget.getTypeDescription(),
                     specialMethodInvocation,
                     assigner,
-                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class),
-                    this))
+                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
-        }
-
-        @Override
-        public MethodGraph.Linked compile(TypeDescription typeDescription) {
-            return MethodGraph.Linked.Delegation.forSimpleExtension(MethodGraph.Simple.of(join(typeDescription.getDeclaredMethods(), forwardingMethod)));
         }
 
         @Override
@@ -363,8 +355,6 @@ public @interface Morph {
              */
             private final boolean serializableProxy;
 
-            private final MethodGraph.Compiler methodGraphCompiler;
-
             /**
              * Creates a new redirection proxy.
              *
@@ -379,14 +369,12 @@ public @interface Morph {
                                        TypeDescription instrumentedType,
                                        Implementation.SpecialMethodInvocation specialMethodInvocation,
                                        Assigner assigner,
-                                       boolean serializableProxy,
-                                       MethodGraph.Compiler methodGraphCompiler) {
+                                       boolean serializableProxy) {
                 this.morphingType = morphingType;
                 this.instrumentedType = instrumentedType;
                 this.specialMethodInvocation = specialMethodInvocation;
                 this.assigner = assigner;
                 this.serializableProxy = serializableProxy;
-                this.methodGraphCompiler = methodGraphCompiler;
             }
 
             @Override
@@ -397,7 +385,6 @@ public @interface Morph {
                         .subclass(morphingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
-                        .methodGraphCompiler(methodGraphCompiler)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                         .defineConstructor(specialMethodInvocation.getMethodDescription().isStatic()
                                 ? Collections.<TypeDescription>emptyList()
@@ -437,8 +424,7 @@ public @interface Morph {
                         && assigner.equals(that.assigner)
                         && instrumentedType.equals(that.instrumentedType)
                         && morphingType.equals(that.morphingType)
-                        && specialMethodInvocation.equals(that.specialMethodInvocation)
-                        && methodGraphCompiler.equals(that.methodGraphCompiler);
+                        && specialMethodInvocation.equals(that.specialMethodInvocation);
             }
 
             @Override
@@ -447,7 +433,6 @@ public @interface Morph {
                 result = 31 * result + specialMethodInvocation.hashCode();
                 result = 31 * result + assigner.hashCode();
                 result = 31 * result + instrumentedType.hashCode();
-                result = 31 * result + methodGraphCompiler.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
             }
@@ -458,7 +443,6 @@ public @interface Morph {
                         "morphingType=" + morphingType +
                         ", specialMethodInvocation=" + specialMethodInvocation +
                         ", assigner=" + assigner +
-                        ", methodGraphCompiler=" + methodGraphCompiler +
                         ", serializableProxy=" + serializableProxy +
                         ", instrumentedType=" + instrumentedType +
                         '}';
