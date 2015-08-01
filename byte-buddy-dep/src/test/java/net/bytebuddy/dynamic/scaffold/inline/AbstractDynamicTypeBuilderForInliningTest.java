@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.ClassFileLocator;

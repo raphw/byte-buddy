@@ -388,6 +388,22 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
+    @Ignore("Fails because visibility bridges are not yet applied")
+    public void testVisibilityBridge() throws Exception {
+        Class<?> type = new ByteBuddy().subclass(VisibilityBridge.class)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(1));
+        Method method = type.getDeclaredMethod(FOO);
+        assertThat(method.isBridge(), is(true));
+        assertThat(method.getDeclaredAnnotations().length, is(1));
+        assertThat(method.getAnnotation(Foo.class), notNullValue(Foo.class));
+        assertThat(method.invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(SubclassDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
@@ -453,6 +469,14 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
         private void foo() {
             /* empty */
+        }
+    }
+
+    static class VisibilityBridge {
+
+        @Foo
+        public String foo() {
+            return FOO;
         }
     }
 }
