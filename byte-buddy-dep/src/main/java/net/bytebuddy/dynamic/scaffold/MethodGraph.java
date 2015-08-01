@@ -593,13 +593,12 @@ public interface MethodGraph {
                         this.identifiers = identifiers;
                     }
 
-                    protected Detached detach() {
+                    protected Detached detach(MethodDescription.Token methodToken) {
                         Set<MethodDescription.Token> identifiers = new HashSet<MethodDescription.Token>();
                         for (Set<MethodDescription.Token> methodTokens : this.identifiers.values()) {
-                            for (MethodDescription.Token methodToken : methodTokens) {
-                                identifiers.add(methodToken);
-                            }
+                            identifiers.addAll(methodTokens);
                         }
+                        identifiers.add(methodToken);
                         return new Detached(internalName, identifiers);
                     }
 
@@ -750,7 +749,8 @@ public interface MethodGraph {
                     protected MethodGraph asGraph(Merger merger) {
                         LinkedHashMap<Key<MethodDescription.Token>, Node> entries = new LinkedHashMap<Key<MethodDescription.Token>, Node>(this.entries.size());
                         for (Entry<V> entry : this.entries.values()) {
-                            entries.put(entry.getKey().detach(), entry.asNode(merger));
+                            Node node = entry.asNode(merger);
+                            entries.put(entry.getKey().detach(node.getRepresentative().asToken()), node);
                         }
                         return new Graph(entries);
                     }
@@ -914,7 +914,7 @@ public interface MethodGraph {
 
                             @Override
                             public MethodGraph.Node asNode(Merger merger) {
-                                return new Node(key.detach(), methodDescription, MethodGraph.Node.Visibility.of(madeVisible));
+                                return new Node(key.detach(methodDescription.asToken()), methodDescription, MethodGraph.Node.Visibility.of(madeVisible));
                             }
 
                             @Override
@@ -1071,7 +1071,7 @@ public interface MethodGraph {
                                 while (iterator.hasNext()) {
                                     methodDescription = merger.merge(methodDescription, iterator.next());
                                 }
-                                return new Node(key.detach(), methodDescription);
+                                return new Node(key.detach(methodDescription.asToken()), methodDescription);
                             }
 
                             @Override
