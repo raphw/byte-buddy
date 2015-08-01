@@ -255,7 +255,7 @@ public class MethodRegistryDefaultTest {
     }
 
     @Test
-    public void testSkipEntryIfNotMatched() throws Exception {
+    public void testSkipEntryIfNotMatchedAndVisible() throws Exception {
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(false);
         when(secondFilter.matches(instrumentedMethod)).thenReturn(false);
@@ -273,7 +273,39 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
+        TypeDescription declaringType = mock(TypeDescription.class);
+        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(instrumentedMethod.getDeclaringType()).thenReturn(declaringType);
         assertThat(methodRegistry.target(instrumentedMethod), is((TypeWriter.MethodPool.Record) TypeWriter.MethodPool.Record.ForInheritedMethod.INSTANCE));
+    }
+
+    @Test
+    public void testVisibilityBridgeIfNotMatchedAndVisible() throws Exception {
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(false);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(false);
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
+                .append(firstMatcher, firstHandler, firstFactory)
+                .append(secondMatcher, secondHandler, secondFactory)
+                .prepare(firstType, methodGraphCompiler, methodFilter)
+                .compile(implementationTargetFactory);
+        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
+        verifyZeroInteractions(firstFactory);
+        verifyZeroInteractions(secondFactory);
+        TypeDescription declaringType = mock(TypeDescription.class);
+        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(instrumentedMethod.getDeclaringType()).thenReturn(declaringType);
+        when(typeDescription.isPublic()).thenReturn(true);
+        when(instrumentedMethod.isPublic()).thenReturn(true);
+        when(declaringType.isPublic()).thenReturn(false);
+        assertThat(methodRegistry.target(instrumentedMethod),
+                is((TypeWriter.MethodPool.Record) new TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge(instrumentedMethod)));
     }
 
     @Test

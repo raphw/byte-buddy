@@ -1080,7 +1080,7 @@ public interface Implementation {
 
                 @Override
                 public ModifierResolver getModifierResolver() {
-                    return ModifierResolver.Simple.INSTANCE;
+                    return ModifierResolver.Retaining.INSTANCE;
                 }
 
                 @Override

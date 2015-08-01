@@ -23,7 +23,7 @@ public interface ModifierResolver {
     /**
      * Resolves a modifier as it is defined by the method itself.
      */
-    enum Simple implements ModifierResolver {
+    enum Retaining implements ModifierResolver {
 
         /**
          * The singleton instance.
@@ -37,7 +37,7 @@ public interface ModifierResolver {
 
         @Override
         public String toString() {
-            return "ModifierResolver.Simple." + name();
+            return "ModifierResolver.Retaining." + name();
         }
     }
 

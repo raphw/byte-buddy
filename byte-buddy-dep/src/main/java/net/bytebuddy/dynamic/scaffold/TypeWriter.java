@@ -25,6 +25,8 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.Remapper;
@@ -437,7 +439,7 @@ public interface TypeWriter<T> {
                     private final ModifierResolver modifierResolver;
 
                     public WithBody(MethodDescription methodDescription, ByteCodeAppender byteCodeAppender) {
-                        this(methodDescription, byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE, ModifierResolver.Simple.INSTANCE);
+                        this(methodDescription, byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE, ModifierResolver.Retaining.INSTANCE);
                     }
 
                     /**
@@ -717,6 +719,88 @@ public interface TypeWriter<T> {
                                 ", annotationValue=" + annotationValue +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
                                 ", modifierResolver=" + modifierResolver +
+                                '}';
+                    }
+                }
+
+                public static class OfVisibilityBridge extends ForDeclaredMethod implements ByteCodeAppender, MethodAttributeAppender {
+
+                    public static Record resolve(MethodDescription bridgeTarget, TypeDescription instrumentedType) {
+                        return !bridgeTarget.getDeclaringType().asRawType().isPublic() && bridgeTarget.isPublic() && instrumentedType.isPublic()
+                                ? new OfVisibilityBridge(bridgeTarget)
+                                : ForInheritedMethod.INSTANCE;
+                    }
+
+                    private final MethodDescription bridgeTarget;
+
+                    public OfVisibilityBridge(MethodDescription bridgeTarget) {
+                        this.bridgeTarget = bridgeTarget;
+                    }
+
+                    @Override
+                    protected MethodDescription getDeclaredMethod() {
+                        return bridgeTarget;
+                    }
+
+                    @Override
+                    public Sort getSort() {
+                        return Sort.IMPLEMENTED;
+                    }
+
+                    @Override
+                    public ModifierResolver getModifierResolver() {
+                        return ModifierResolver.Retaining.INSTANCE;
+                    }
+
+                    @Override
+                    public Record prepend(ByteCodeAppender byteCodeAppender) {
+                        return new ForDeclaredMethod.WithBody(bridgeTarget,
+                                new ByteCodeAppender.Compound(this, byteCodeAppender),
+                                this,
+                                ModifierResolver.Retaining.INSTANCE);
+                    }
+
+                    @Override
+                    public void applyHead(MethodVisitor methodVisitor) {
+                        new MethodAttributeAppender.ForMethod(bridgeTarget, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)
+                                .apply(methodVisitor, bridgeTarget);
+                    }
+
+                    @Override
+                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                        apply(methodVisitor, implementationContext, bridgeTarget);
+                    }
+
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                        return new ByteCodeAppender.Simple(
+                                MethodVariableAccess.allArgumentsOf(bridgeTarget).prependThisReference(),
+                                MethodInvocation.invoke(bridgeTarget),
+                                MethodReturn.returning(bridgeTarget.getReturnType().asRawType())
+                        ).apply(methodVisitor, implementationContext, instrumentedMethod);
+                    }
+
+                    @Override
+                    public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                        new MethodAttributeAppender.ForMethod(methodDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)
+                                .apply(methodVisitor, methodDescription);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && bridgeTarget.equals(((OfVisibilityBridge) other).bridgeTarget);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return bridgeTarget.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge{" +
+                                "bridgeTarget=" + bridgeTarget +
                                 '}';
                     }
                 }

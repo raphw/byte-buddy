@@ -2284,7 +2284,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Implementation implementation) {
-                    return intercept(implementation, ModifierResolver.Simple.INSTANCE);
+                    return intercept(implementation, ModifierResolver.Retaining.INSTANCE);
                 }
 
                 @Override
@@ -2297,7 +2297,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
-                    return withoutCode(ModifierResolver.Simple.INSTANCE);
+                    return withoutCode(ModifierResolver.Retaining.INSTANCE);
                 }
 
                 @Override
@@ -2310,7 +2310,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
-                    return withDefaultValue(value, type, ModifierResolver.Simple.INSTANCE);
+                    return withDefaultValue(value, type, ModifierResolver.Retaining.INSTANCE);
                 }
 
                 @Override
@@ -2322,7 +2322,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
-                    return withDefaultValue(value, ModifierResolver.Simple.INSTANCE);
+                    return withDefaultValue(value, ModifierResolver.Retaining.INSTANCE);
                 }
 
                 @Override

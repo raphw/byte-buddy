@@ -14,7 +14,7 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.*;
 
-public class ModifierResolverSimpleTest {
+public class ModifierResolverRetainingTest {
 
     private static final int MODIFIERS = 42;
 
@@ -31,20 +31,20 @@ public class ModifierResolverSimpleTest {
 
     @Test
     public void testModifierResolutionImplemented() throws Exception {
-        assertThat(ModifierResolver.Simple.INSTANCE.transform(methodDescription, true), is(MODIFIERS));
+        assertThat(ModifierResolver.Retaining.INSTANCE.transform(methodDescription, true), is(MODIFIERS));
         verify(methodDescription).getAdjustedModifiers(true);
         verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
     public void testModifierResolutionNonImplemented() throws Exception {
-        assertThat(ModifierResolver.Simple.INSTANCE.transform(methodDescription, false), is(MODIFIERS));
+        assertThat(ModifierResolver.Retaining.INSTANCE.transform(methodDescription, false), is(MODIFIERS));
         verify(methodDescription).getAdjustedModifiers(false);
         verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ModifierResolver.Simple.class).apply();
+        ObjectPropertyAssertion.of(ModifierResolver.Retaining.class).apply();
     }
 }

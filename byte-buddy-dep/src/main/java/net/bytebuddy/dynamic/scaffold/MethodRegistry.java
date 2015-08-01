@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -10,10 +11,14 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.utility.ByteBuddyCommons.VISIBILITY_MODIFIER_MASK;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
@@ -783,7 +788,7 @@ public interface MethodRegistry {
             public Record target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
-                        ? Record.ForInheritedMethod.INSTANCE
+                        ? Record.ForDeclaredMethod.OfVisibilityBridge.resolve(methodDescription, instrumentedType)
                         : entry.bind(methodDescription);
             }
 

@@ -2347,7 +2347,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation), ModifierResolver.Simple.INSTANCE),
+                    new MethodRegistry.Handler.ForImplementation(nonNull(implementation), ModifierResolver.Retaining.INSTANCE),
                     MethodAttributeAppender.NoOp.INSTANCE);
         }
 
@@ -2366,7 +2366,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    new MethodRegistry.Handler.ForAbstractMethod(ModifierResolver.Simple.INSTANCE),
+                    new MethodRegistry.Handler.ForAbstractMethod(ModifierResolver.Retaining.INSTANCE),
                     MethodAttributeAppender.NoOp.INSTANCE);
         }
 
@@ -2390,7 +2390,7 @@ public class ByteBuddy {
                     defaultFieldAttributeAppenderFactory,
                     defaultMethodAttributeAppenderFactory,
                     methodMatcher,
-                    MethodRegistry.Handler.ForAnnotationValue.of(value, ModifierResolver.Simple.INSTANCE),
+                    MethodRegistry.Handler.ForAnnotationValue.of(value, ModifierResolver.Retaining.INSTANCE),
                     MethodAttributeAppender.NoOp.INSTANCE);
         }
 
