@@ -11,11 +11,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Collections;
+
+import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Mockito.*;
 
 public abstract class AbstractImplementationTargetTest {
@@ -26,7 +31,7 @@ public abstract class AbstractImplementationTargetTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    protected MethodGraph.Linked methodGraph;
+    protected MethodGraph.Linked methodGraph, superGraph, defaultGraph;
 
     @Mock
     protected TypeDescription instrumentedType, methodDeclaringType, returnType, defaultMethodDeclaringType;
@@ -44,9 +49,12 @@ public abstract class AbstractImplementationTargetTest {
     public void setUp() throws Exception {
         when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
-//        when(finding.getTypeDescription()).thenReturn(instrumentedType);
-//        when(finding.getInvokableMethods()).thenReturn(new MethodList.Explicit(Collections.singletonList(invokableMethod)));
-//        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.singletonMap(defaultMethodDeclaringType, Collections.<MethodDescription>singleton(defaultMethod)));
+        when(methodGraph.getSuperGraph()).thenReturn(superGraph);
+        when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Illegal.INSTANCE);
+        when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
+        when(methodGraph.getInterfaceGraph(defaultMethodDeclaringType)).thenReturn(defaultGraph);
+        when(defaultGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Illegal.INSTANCE);
+        when(defaultGraph.locate(defaultToken)).thenReturn(new MethodGraph.Node.Simple(defaultMethod));
         when(methodDeclaringType.asRawType()).thenReturn(methodDeclaringType);
         when(invokableMethod.getDeclaringType()).thenReturn(methodDeclaringType);
         when(invokableMethod.getReturnType()).thenReturn(returnType);
@@ -94,6 +102,15 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testIllegalSuperMethod() throws Exception {
-        assertThat(implementationTarget.invokeSuper(mock(MethodDescription.Token.class)).isValid(), is(false));
+        MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
+        when(methodToken.getInternalName()).thenReturn(FOO);
+        assertThat(implementationTarget.invokeSuper(methodToken).isValid(), is(false));
+    }
+
+    @Test
+    public void testIllegalSuperConstructor() throws Exception {
+        MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
+        when(methodToken.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
+        assertThat(implementationTarget.invokeSuper(methodToken).isValid(), is(false));
     }
 }

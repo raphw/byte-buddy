@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -11,6 +12,7 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -36,11 +38,14 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     @Override
     @Before
     public void setUp() throws Exception {
+        when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Illegal.INSTANCE);
+        when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.asRawType()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(BAR);
         when(superType.getDeclaredMethods())
                 .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(superTypeConstructor)));
+        when(superTypeConstructor.isVisibleTo(instrumentedType)).thenReturn(true);
         when(superTypeConstructor.asToken()).thenReturn(superConstructorToken);
         when(superTypeConstructor.getInternalName()).thenReturn(QUX);
         when(superTypeConstructor.getDescriptor()).thenReturn(BAZ);
@@ -49,6 +54,8 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superTypeConstructor.getDeclaringType()).thenReturn(superType);
         when(superTypeConstructor.getReturnType()).thenReturn(TypeDescription.VOID);
         when(superTypeConstructor.getParameters()).thenReturn(new ParameterList.Empty());
+        when(invokableToken.getInternalName()).thenReturn(FOO);
+        when(superConstructorToken.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         super.setUp();
     }
 
