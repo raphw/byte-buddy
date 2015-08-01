@@ -3,7 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.ModifierReviewable;
-import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -12,6 +12,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.ModifierResolver;
@@ -1639,7 +1640,7 @@ public interface TypeWriter<T> {
                                                  String genericSignature,
                                                  String[] exceptionTypeInternalName) {
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                        TypeInitializerInjection injectedCode = new TypeInitializerInjection();
+                        TypeInitializerInjection injectedCode = new TypeInitializerInjection(instrumentedType);
                         this.injectedCode = injectedCode;
                         return super.visitMethod(injectedCode.getInjectorProxyMethod().getModifiers(),
                                 injectedCode.getInjectorProxyMethod().getInternalName(),
@@ -1838,16 +1839,6 @@ public interface TypeWriter<T> {
                 protected class TypeInitializerInjection implements Implementation.Context.ExtractableView.InjectedCode {
 
                     /**
-                     * The modifiers for the method that consumes the original type initializer.
-                     */
-                    private static final int TYPE_INITIALIZER_PROXY_MODIFIERS = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
-
-                    /**
-                     * A prefix for the name of the method that represents the original type initializer.
-                     */
-                    private static final String TYPE_INITIALIZER_PROXY_PREFIX = "originalTypeInitializer";
-
-                    /**
                      * The method to which the original type initializer code is to be written to.
                      */
                     private final MethodDescription injectorProxyMethod;
@@ -1855,16 +1846,8 @@ public interface TypeWriter<T> {
                     /**
                      * Creates a new type initializer injection.
                      */
-                    private TypeInitializerInjection() {
-                        injectorProxyMethod = new MethodDescription.Latent(instrumentedType,
-                                String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, RandomString.make()),
-                                TYPE_INITIALIZER_PROXY_MODIFIERS,
-                                Collections.<GenericTypeDescription>emptyList(),
-                                TypeDescription.VOID,
-                                Collections.<ParameterDescription.Token>emptyList(),
-                                Collections.<GenericTypeDescription>emptyList(),
-                                Collections.<AnnotationDescription>emptyList(),
-                                MethodDescription.NO_DEFAULT_VALUE);
+                    protected TypeInitializerInjection(TypeDescription instrumentedType) {
+                        injectorProxyMethod = new TypeInitializerDelegate(instrumentedType, RandomString.make());
                     }
 
                     @Override
@@ -1893,6 +1876,68 @@ public interface TypeWriter<T> {
                                 ", injectorProxyMethod=" + injectorProxyMethod +
                                 '}';
                     }
+                }
+            }
+
+            protected static class TypeInitializerDelegate extends MethodDescription.InDefinedShape.AbstractBase {
+
+                /**
+                 * A prefix for the name of the method that represents the original type initializer.
+                 */
+                private static final String TYPE_INITIALIZER_PROXY_PREFIX = "classInitializer";
+
+                private final TypeDescription instrumentedType;
+
+                private final String suffix;
+
+                protected TypeInitializerDelegate(TypeDescription instrumentedType, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
+                    return new ParameterList.Empty();
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return TypeDescription.VOID;
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, suffix);
                 }
             }
 
