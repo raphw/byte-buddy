@@ -172,7 +172,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testTypeInitializer() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
-                Collections.singletonMap(Bar.class.getName(), ClassFileExtraction.extract(Bar.class)),
+                ClassFileExtraction.of(Bar.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.LATENT);
         Class<?> type = createPlain()

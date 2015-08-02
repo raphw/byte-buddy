@@ -21,11 +21,14 @@ import org.junit.*;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collections;
-import java.util.Map;
+import java.security.ProtectionDomain;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static junit.framework.TestCase.assertEquals;
@@ -109,7 +112,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @Test
     public void testGenericType() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
-                Collections.singletonMap(GenericType.class.getName(), ClassFileExtraction.extract(GenericType.class)),
+                ClassFileExtraction.of(GenericType.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.LATENT);
         Class<?> dynamicType = create(GenericType.Inner.class)
@@ -210,6 +213,71 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         superCall.assertOnlyCall(FOO);
     }
 
+    @Test
+    public void testVisibilityBridge() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT);
+        Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
+                .modifiers(Opcodes.ACC_PUBLIC)
+                .make()
+                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        Constructor<?> constructor = type.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        assertThat(type.getDeclaredMethods().length, is(2));
+        Method foo = type.getDeclaredMethod(FOO, String.class);
+        foo.setAccessible(true);
+        assertThat(foo.isBridge(), is(true));
+        assertThat(foo.getDeclaredAnnotations().length, is(1));
+        assertThat(foo.getDeclaredAnnotations()[0].annotationType().getName(), is(FooBar.class.getName()));
+        assertThat(foo.invoke(constructor.newInstance(), BAR), is((Object) (FOO + BAR)));
+        assertThat(foo.getParameterAnnotations()[0].length, is(1));
+        assertThat(foo.getParameterAnnotations()[0][0].annotationType().getName(), is(FooBar.class.getName()));
+        assertThat(foo.invoke(constructor.newInstance(), BAR), is((Object) (FOO + BAR)));
+        Method bar = type.getDeclaredMethod(BAR, List.class);
+        bar.setAccessible(true);
+        assertThat(bar.isBridge(), is(true));
+        assertThat(bar.getDeclaredAnnotations().length, is(0));
+        List<?> list = new ArrayList<Object>();
+        assertThat(bar.invoke(constructor.newInstance(), list), sameInstance((Object) list));
+        assertThat(bar.getGenericReturnType(), instanceOf(Class.class));
+        assertThat(bar.getGenericParameterTypes()[0], instanceOf(Class.class));
+        assertThat(bar.getGenericExceptionTypes()[0], instanceOf(Class.class));
+    }
+
+    @Test
+    public void testNoVisibilityBridgeForNonPublicType() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT);
+        Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
+                .modifiers(0)
+                .make()
+                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(0));
+    }
+
+    @Test
+    public void testNoVisibilityBridgeForInheritedType() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(PublicVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT);
+        Class<?> type = new ByteBuddy().subclass(PublicVisibilityBridgeExtension.class)
+                .modifiers(Opcodes.ACC_PUBLIC)
+                .make()
+                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(0));
+    }
+
     public @interface Baz {
 
         String foo();
@@ -228,5 +296,39 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         public static void invoke() {
             bar = BAR;
         }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface FooBar {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    static class VisibilityBridge {
+
+        @FooBar
+        public String foo(@FooBar String value) {
+            return FOO + value;
+        }
+
+        public <T extends Exception> List<String> bar(List<String> value) throws T {
+            return value;
+        }
+
+        void noBridge() {
+            /* empty */
+        }
+
+        protected void noBridge(Void v) {
+            /* empty */
+        }
+    }
+
+    static class PackagePrivateVisibilityBridgeExtension extends VisibilityBridge {
+        /* empty */
+    }
+
+    public static class PublicVisibilityBridgeExtension extends VisibilityBridge {
+        /* empty */
     }
 }

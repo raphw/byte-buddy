@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
@@ -396,6 +397,10 @@ public interface MethodAttributeAppender {
          */
         public ForMethod(Method method, AnnotationAppender.ValueFilter valueFilter) {
             this(new MethodDescription.ForLoadedMethod(method), valueFilter);
+        }
+
+        public ForMethod(MethodDescription methodDescription) {
+            this(methodDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE);
         }
 
         /**

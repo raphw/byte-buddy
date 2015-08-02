@@ -724,12 +724,13 @@ public interface TypeWriter<T> {
                     }
                 }
 
-                public static class OfVisibilityBridge extends ForDeclaredMethod implements ByteCodeAppender, MethodAttributeAppender {
+                public static class OfVisibilityBridge extends ForDeclaredMethod implements ByteCodeAppender {
 
-                    public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
+                    public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
                         return new OfVisibilityBridge(VisibilityBridge.of(instrumentedType, bridgeTarget),
                                 bridgeTarget,
-                                instrumentedType.getSuperType().asRawType());
+                                instrumentedType.getSuperType().asRawType(),
+                                attributeAppender);
                     }
 
                     private final MethodDescription visibilityBridge;
@@ -738,10 +739,16 @@ public interface TypeWriter<T> {
 
                     private final TypeDescription superType;
 
-                    protected OfVisibilityBridge(MethodDescription visibilityBridge, MethodDescription bridgeTarget, TypeDescription superType) {
+                    private final MethodAttributeAppender attributeAppender;
+
+                    protected OfVisibilityBridge(MethodDescription visibilityBridge,
+                                                 MethodDescription bridgeTarget,
+                                                 TypeDescription superType,
+                                                 MethodAttributeAppender attributeAppender) {
                         this.visibilityBridge = visibilityBridge;
                         this.bridgeTarget = bridgeTarget;
                         this.superType = superType;
+                        this.attributeAppender = attributeAppender;
                     }
 
                     @Override
@@ -763,7 +770,7 @@ public interface TypeWriter<T> {
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
                         return new ForDeclaredMethod.WithBody(visibilityBridge,
                                 new ByteCodeAppender.Compound(this, byteCodeAppender),
-                                this,
+                                attributeAppender,
                                 ModifierResolver.Retaining.INSTANCE);
                     }
 
@@ -774,7 +781,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                        apply(methodVisitor, visibilityBridge);
+                        attributeAppender.apply(methodVisitor, visibilityBridge);
                         methodVisitor.visitCode();
                         ByteCodeAppender.Size size = apply(methodVisitor, implementationContext, visibilityBridge);
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
@@ -787,12 +794,6 @@ public interface TypeWriter<T> {
                                 MethodInvocation.invoke(bridgeTarget).special(superType),
                                 MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
-                    }
-
-                    @Override
-                    public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-                        new MethodAttributeAppender.ForMethod(methodDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)
-                                .apply(methodVisitor, methodDescription);
                     }
 
                     @Override

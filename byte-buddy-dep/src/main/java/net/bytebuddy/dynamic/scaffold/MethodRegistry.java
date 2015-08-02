@@ -6,7 +6,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -355,7 +354,7 @@ public interface MethodRegistry {
 
                 @Override
                 public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                    return TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge.of(instrumentedType, methodDescription);
+                    return TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
                 }
             }
         }
@@ -510,9 +509,11 @@ public interface MethodRegistry {
                 }
                 if (visibilityBridge
                         && methodDescription.isPublic()
-                        && !methodDescription.getDeclaringType().equals(instrumentedType)
+                        && !node.getVisibility().isVisible()
                         && methodDescription.getDeclaringType().asRawType().isPackagePrivate()) {
-                    implementations.put(methodDescription, Prepared.Entry.ofVisibilityBridge());
+                    // Visibility bridges are required for public types that inherit a public method from a package-private type.
+                    // Checking the last condition contradicts any method that is defined by the instrumented type itself.
+                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription));
                 }
             }
             MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
@@ -744,8 +745,8 @@ public interface MethodRegistry {
 
             protected static class Entry {
 
-                protected static Entry ofVisibilityBridge() {
-                    return new Entry(Handler.ForVisibilityBridge.INSTANCE, MethodAttributeAppender.NoOp.INSTANCE);
+                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget) {
+                    return new Entry(Handler.ForVisibilityBridge.INSTANCE, new MethodAttributeAppender.ForMethod(bridgeTarget));
                 }
 
                 private final Handler handler;

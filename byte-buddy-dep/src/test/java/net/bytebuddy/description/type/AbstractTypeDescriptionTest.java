@@ -321,7 +321,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     @Test
     public void testIsAssignableClassLoader() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
-                Collections.singletonMap(SampleClass.class.getName(), ClassFileExtraction.extract(SampleClass.class)),
+                ClassFileExtraction.of(SampleClass.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         Class<?> otherSampleClass = classLoader.loadClass(SampleClass.class.getName());

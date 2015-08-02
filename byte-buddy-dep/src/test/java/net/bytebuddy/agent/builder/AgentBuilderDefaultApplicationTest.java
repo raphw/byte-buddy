@@ -40,13 +40,8 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Before
     public void setUp() throws Exception {
-        Map<String, byte[]> types = new HashMap<String, byte[]>();
-        types.put(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
-        types.put(Bar.class.getName(), ClassFileExtraction.extract(Bar.class));
-        types.put(Qux.class.getName(), ClassFileExtraction.extract(Qux.class));
-        types.put(Baz.class.getName(), ClassFileExtraction.extract(Baz.class));
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                types,
+                ClassFileExtraction.of(Foo.class, Bar.class, Qux.class, Baz.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST);
     }

@@ -101,7 +101,7 @@ public interface MethodGraph {
 
         Set<MethodDescription.Token> getBridges();
 
-        Visibility isMadeVisible();
+        Visibility getVisibility();
 
         enum Sort {
 
@@ -181,7 +181,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public Visibility isMadeVisible() {
+            public Visibility getVisibility() {
                 return Visibility.PLAIN;
             }
         }
@@ -206,7 +206,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public Visibility isMadeVisible() {
+            public Visibility getVisibility() {
                 throw new IllegalStateException("Cannot resolve visibility of an illegal node");
             }
 
@@ -974,7 +974,7 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public Visibility isMadeVisible() {
+                                public Visibility getVisibility() {
                                     return visibility;
                                 }
 
@@ -1124,7 +1124,7 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public Visibility isMadeVisible() {
+                                public Visibility getVisibility() {
                                     return Visibility.PLAIN;
                                 }
 

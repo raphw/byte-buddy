@@ -50,8 +50,7 @@ public class ByteArrayClassLoaderTest {
 
     @Before
     public void setUp() throws Exception {
-        Map<String, byte[]> values = Collections.singletonMap(Foo.class.getName(), ClassFileExtraction.extract(Foo.class));
-        classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER, values, DEFAULT_PROTECTION_DOMAIN, persistenceHandler);
+        classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER, ClassFileExtraction.of(Foo.class), DEFAULT_PROTECTION_DOMAIN, persistenceHandler);
     }
 
     @Test

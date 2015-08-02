@@ -16,7 +16,10 @@ import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
-import net.bytebuddy.test.utility.*;
+import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -33,9 +36,7 @@ import java.util.*;
 import static junit.framework.TestCase.assertEquals;
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotEquals;
@@ -272,43 +273,44 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testDoesNotOverrideMethodWithPackagePrivateReturnType() throws Exception {
-        Map<String, byte[]> types = new HashMap<String, byte[]>();
-        types.put(PackagePrivateReturnType.class.getName(), ClassFileExtraction.extract(PackagePrivateReturnType.class));
-        types.put(PackagePrivateReturnType.Argument.class.getName(), ClassFileExtraction.extract(PackagePrivateReturnType.Argument.class));
         Class<?> type = create(PackagePrivateReturnType.class)
                 .name("net.bytebuddy.test.generated." + FOO)
                 .method(isDeclaredBy(PackagePrivateReturnType.class))
                 .intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new ByteArrayClassLoader(null, types, null, ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
+                .load(new ByteArrayClassLoader(null,
+                        ClassFileExtraction.of(PackagePrivateReturnType.class, PackagePrivateReturnType.Argument.class),
+                        null,
+                        ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }
 
     @Test
     public void testDoesNotOverrideMethodWithPackagePrivateArgumentType() throws Exception {
-        Map<String, byte[]> types = new HashMap<String, byte[]>();
-        types.put(PackagePrivateArgumentType.class.getName(), ClassFileExtraction.extract(PackagePrivateArgumentType.class));
-        types.put(PackagePrivateArgumentType.Argument.class.getName(), ClassFileExtraction.extract(PackagePrivateArgumentType.Argument.class));
         Class<?> type = create(PackagePrivateArgumentType.class)
                 .name("net.bytebuddy.test.generated." + FOO)
                 .method(isDeclaredBy(PackagePrivateArgumentType.class))
                 .intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new ByteArrayClassLoader(null, types, null, ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
+                .load(new ByteArrayClassLoader(null,
+                        ClassFileExtraction.of(PackagePrivateArgumentType.class, PackagePrivateArgumentType.Argument.class),
+                        null,
+                        ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }
 
     @Test
     public void testDoesNotOverridePrivateMethod() throws Exception {
-        Map<String, byte[]> types = new HashMap<String, byte[]>();
-        types.put(PrivateMethod.class.getName(), ClassFileExtraction.extract(PrivateMethod.class));
         Class<?> type = create(PrivateMethod.class)
                 .method(isDeclaredBy(PrivateMethod.class))
                 .intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new ByteArrayClassLoader(null, types, null, ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
+                .load(new ByteArrayClassLoader(null,
+                        ClassFileExtraction.of(PrivateMethod.class),
+                        null,
+                        ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }
@@ -418,6 +420,17 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
+    public void testNoVisibilityBridgeForInheritedType() throws Exception {
+        Class<?> type = new ByteBuddy().subclass(VisibilityBridgeExtension.class)
+                .modifiers(Opcodes.ACC_PUBLIC)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(0));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(SubclassDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
@@ -505,5 +518,9 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         protected void noBridge(Void v) {
             /* empty */
         }
+    }
+
+    public static class VisibilityBridgeExtension extends VisibilityBridge {
+        /* empty */
     }
 }
