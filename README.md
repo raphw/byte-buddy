@@ -10,7 +10,7 @@ runtime code generation for the Java virtual machine
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.svg?branch=master)](https://travis-ci.org/raphw/byte-buddy)
 [![Coverage Status](http://img.shields.io/coveralls/raphw/byte-buddy/master.svg)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
-[![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg) ](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion) 
+[![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg) ](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
 
 Byte Buddy is a code generation library for creating Java classes during the runtime of a Java application and without
 the help of a compiler. Other than the code generation utilities that
@@ -27,8 +27,8 @@ the generated classes can exist without requiring Byte Buddy on the class path. 
 mascot was chosen to be a ghost.
 
 Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
-light-weight library and only depends on the visitor API of the Java byte code parser library 
-[ASM](http://asm.ow2.org/) which does itself 
+light-weight library and only depends on the visitor API of the Java byte code parser library
+[ASM](http://asm.ow2.org/) which does itself
 [not require any further dependencies](http://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom).
 
 At first sight, runtime code generation can appear to be some sort of black magic that should be avoided and only
@@ -49,7 +49,7 @@ of the `ByteBuddy` class which represents a configuration for creating new types
 
 ```java
 Class<?> dynamicType = new ByteBuddy()
-  .subclass(Object.class) 
+  .subclass(Object.class)
   .method(named("toString")).intercept(FixedValue.value("Hello World!"))
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -60,8 +60,8 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
 The default `ByteBuddy` configuration which is used in the above example creates a Java class in the newest version of
 the class file format that is understood by the processing Java virtual machine. As hopefully obvious from
 the example code, the created type will extend the `Object` class and overrides its `toString` method which should
-return a fixed value of `Hello World!`. The method to be overridden is identified by a so-called `ElementMatcher`. In 
-the above example, a predefined element matcher `named(String)` is used which identifies methods by their exact names. 
+return a fixed value of `Hello World!`. The method to be overridden is identified by a so-called `ElementMatcher`. In
+the above example, a predefined element matcher `named(String)` is used which identifies methods by their exact names.
 Byte Buddy comes with numerous predefined and well-tested matchers which are collected in the `ElementMatchers`
 class and which can be easily composed. The creation of custom matchers is however as simple as implementing the
 ([functional](http://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html)) `ElementMatcher` interface.
@@ -73,7 +73,7 @@ implementing the `Implementation` interface, a method could however even be defi
 Finally, the described Java class is created and then loaded into the Java virtual machine. For this purpose, a target
 class loader is required as well as a class loading strategy where we choose a wrapper strategy. The latter creates a
 new child class loader which wraps the given class loader and only knows about the newly created dynamic type.
-Eventually, we can convince ourselves of the result by calling the `toString` method on an instance of the created 
+Eventually, we can convince ourselves of the result by calling the `toString` method on an instance of the created
 class and finding the return value to represent the constant value we expected.
 
 A more complex example
@@ -84,8 +84,8 @@ In reality, a user of such a library wants to perform more complex manipulations
 logic to a compiled Java program. Using Byte Buddy, doing so is however not much harder and the following example
 gives a taste of how method calls can be intercepted.
 
-Byte Buddy describes method implementations by instances of the `Implementation` interface such as `FixedValue` which 
-we used in the above example. By implementing this interface, a user of Byte Buddy can go to the length of defining 
+Byte Buddy describes method implementations by instances of the `Implementation` interface such as `FixedValue` which
+we used in the above example. By implementing this interface, a user of Byte Buddy can go to the length of defining
 custom byte code for a method. Normally, it is however easier to use Byte Buddy's `MethodDelegation` which allows
 to implement an intercepted method in plain Java. Using this implementation is straight forward as it operates on any
 POJO. For example, we can implement the `Comparator` interface by defining the following class which mimics the
@@ -93,36 +93,37 @@ signature of the `Comparator:compare` method we want to implement later:
 
 ```java
 public class ComparisonInterceptor {
-  public int intercept(Object first, Object second) {
-    return first.hashCode() - second.hashCode();
+  public int compare(Object first, Object second) {
+    return ((Comparable) first).compareTo(second);
   }
 }
 ```
 
 Note that the above interceptor does not depend on any Byte Buddy class. This is good news because none of the classes
-that by Byte Buddy generates require Byte Buddy on the class path! We can now implement the `Comparator` interface by 
-passing an instance of the above class to `MethodDelegation`: 
+that by Byte Buddy generates require Byte Buddy on the class path! We can now implement the `Comparator` interface by
+passing an instance of the above class to `MethodDelegation`:
 
 ```java
 Class<? extends Comparator> dynamicType = new ByteBuddy()
-  .subclass(Comparator.class) 
-  .method(named("compare")).intercept(MethodDelegation.to(new ComparisonInterceptor())
+  .subclass(Comparator.class)
+  .method(named("compare")).intercept(MethodDelegation.to(new ComparisonInterceptor()))
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded();
-assertThat(dynamicType.newInstance().compare(3, 1), is(2));
+assertThat(dynamicType.newInstance().compare(42, 20), is(1));
 ```
 
-Note that the hash code of an integer is the integer value such that `3 - 1 = 2` is indeed the expected return value of 
-the `ComparisonInterceptor::compare` method. 
+Our `ComparisonInterceptor::compare` method assumes the first parameter is a `Comparable`, and then returns the result
+of the call to `compareTo` with the second parameter passed in as result. This returns `-1`, `0` or `1` as defined by
+the `Comparator` contract.
 
-Byte Buddy matches the `Comparator::compare` method and delegates its invocation to the provided interceptor. Doing so, 
+Byte Buddy matches the `Comparator::compare` method and delegates its invocation to the provided interceptor. Doing so,
 it figures out a *best match* for an interceptor method as long as no further matching information is provided to
-the `MethodDelegation`. The matching logic is described in detail in the *javadoc* of the `MethodDelegation` and can be 
-customized for specific use-cases. 
+the `MethodDelegation`. The matching logic is described in detail in the *javadoc* of the `MethodDelegation` and can be
+customized for specific use-cases. So the `ComparisonInterceptor` method does not have to be called `compare`.
 
-Interceptors can work with more generic inputs and outputs using annotations. Byte Buddy then simply injects all 
-dependencies that are declared by an interceptor. An example for a more general interceptor would be the following 
+Interceptors can work with more generic inputs and outputs using annotations. Byte Buddy then simply injects all
+dependencies that are declared by an interceptor. An example for a more general interceptor would be the following
 class:
 
 ```java
@@ -135,12 +136,12 @@ public class GeneralInterceptor {
 }
 ```
 
-With the above interceptor, any intercepted method could be matched and processed. When matching the 
-`Comparator:compare`, the two arguments of the method would for example be passed as an array of length two. Also, 
-a reference to `Comparator::compare` would be passed as a second argument such that the interceptor can detect which 
-method it is currently intercepting. By using the `@RuntimeType` annotation on the method, Byte Buddy simply casts 
-the returned value to the return value of the intercepted method such as `int` for `Comparator::compare` where Byte 
-Buddy automatically applies a boxing or an unboxing of primitive types. 
+With the above interceptor, any intercepted method could be matched and processed. When matching the
+`Comparator:compare`, the two arguments of the method would for example be passed as an array of length two. Also,
+a reference to `Comparator::compare` would be passed as a second argument such that the interceptor can detect which
+method it is currently intercepting. By using the `@RuntimeType` annotation on the method, Byte Buddy simply casts
+the returned value to the return value of the intercepted method such as `int` for `Comparator::compare` where Byte
+Buddy automatically applies a boxing or an unboxing of primitive types.
 
 You might think that using these annotations ties your code to Byte Buddy. However, Java ignores annotations in case
 that they are not visible to a class loader. This way, generated code can still exist without Byte Buddy! You can
@@ -154,9 +155,9 @@ Byte Buddy is a comprehensive library and we only scratched the surface of Byte 
 Buddy aims for being easy to use by providing a domain-specific language for creating classes. Most runtime code
 generation can be done by writing readable code and without any knowledge of Java's class file format. If you want
 to learn more about Byte Buddy, you can find such a [tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial).
-Furthermore, Byte Buddy comes with a [detailed in-code documentation](http://bytebuddy.net/javadoc/) and extensive 
+Furthermore, Byte Buddy comes with a [detailed in-code documentation](http://bytebuddy.net/javadoc/) and extensive
 test case coverage which can also serve as example code. Finally, you can find an up-to-date list of articles and
-presentations on Byte Buddy [in the wiki](https://github.com/raphw/byte-buddy/wiki/Web-Resources). When using Byte 
+presentations on Byte Buddy [in the wiki](https://github.com/raphw/byte-buddy/wiki/Web-Resources). When using Byte
 Buddy, make also sure to read the following information on maintaining a project dependency.
 
 Dependency and API evolution
@@ -202,8 +203,8 @@ License and development
 
 Byte Buddy is licensed under the liberal and business-friendly
 [*Apache Licence, Version 2.0*](http://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on
-GitHub. Byte Buddy is further released to the repositories of Maven Central and on JCenter. The project is built 
-using <a href="http://maven.apache.org/">Maven</a>. From your shell, cloning and building the project would go 
+GitHub. Byte Buddy is further released to the repositories of Maven Central and on JCenter. The project is built
+using <a href="http://maven.apache.org/">Maven</a>. From your shell, cloning and building the project would go
 something like this:
 
 ```shell
@@ -213,7 +214,7 @@ mvn package
 ```
 
 On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
-[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI. 
+[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI.
 
 Note that the above build is optimized for its runtime and does not create all artifacts. To build all artifacts,
 including the zero-dependency jar of Byte Buddy, use the `extras` profile:
@@ -222,7 +223,7 @@ including the zero-dependency jar of Byte Buddy, use the `extras` profile:
 mvn package -Pextras
 ```
 
-The zero-dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar 
+The zero-dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar
 file is saved in *byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar*. Additionally, source code and javadoc
 artifacts are built when using this profile.See the [developer page](http://bytebuddy.net/#/develop) for further
 information on building the project.
@@ -231,5 +232,5 @@ Please use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) 
 code, please provide test cases that prove the functionality of your features or that demonstrate a bug fix.
 Furthermore, make sure you are not breaking any existing test cases. If possible, please take the time to write
 some documentation. For feature requests or general feedback, you can also use the
-[issue tracker](https://github.com/raphw/byte-buddy/issues) or contact us on 
+[issue tracker](https://github.com/raphw/byte-buddy/issues) or contact us on
 [our mailing list](https://groups.google.com/forum/#!forum/byte-buddy).
