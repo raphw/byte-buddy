@@ -221,6 +221,8 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isDefaultValue(Object value);
 
+    TypeToken asTypeToken();
+
     interface InDefinedShape extends MethodDescription {
 
         @Override
@@ -547,6 +549,11 @@ public interface MethodDescription extends TypeVariableSource,
                     getExceptionTypes().accept(visitor),
                     getDeclaredAnnotations(),
                     getDefaultValue());
+        }
+
+        @Override
+        public TypeToken asTypeToken() {
+            return new TypeToken(getReturnType().asRawType(), getParameters().asTypeList().asRawTypes());
         }
 
         @Override
@@ -1509,6 +1516,58 @@ public interface MethodDescription extends TypeVariableSource,
                     ", exceptionTypes=" + exceptionTypes +
                     ", annotations=" + annotations +
                     ", defaultValue=" + defaultValue +
+                    '}';
+        }
+
+        public TypeToken asTypeToken() {
+            List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(getParameterTokens().size());
+            for (ParameterDescription.Token parameterToken : getParameterTokens()) {
+                parameterTypes.add(parameterToken.getType().asRawType());
+            }
+            return new TypeToken(getReturnType().asRawType(), parameterTypes);
+        }
+    }
+
+    class TypeToken {
+
+        private final TypeDescription returnType;
+
+        private final List<? extends TypeDescription> parameterTypes;
+
+        public TypeToken(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
+            this.returnType = returnType;
+            this.parameterTypes = parameterTypes;
+        }
+
+        public TypeDescription getReturnType() {
+            return returnType;
+        }
+
+        public List<TypeDescription> getParameterTypes() {
+            return new ArrayList<TypeDescription>(parameterTypes);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            TypeToken typeToken = (TypeToken) other;
+            return returnType.equals(typeToken.returnType)
+                    && parameterTypes.equals(typeToken.parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = returnType.hashCode();
+            result = 31 * result + parameterTypes.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodDescription.TypeToken{" +
+                    "returnType=" + returnType +
+                    ", parameterTypes=" + parameterTypes +
                     '}';
         }
     }

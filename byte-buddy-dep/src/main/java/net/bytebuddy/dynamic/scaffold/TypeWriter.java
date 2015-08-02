@@ -879,7 +879,7 @@ public interface TypeWriter<T> {
                 public static Record of(Record delegate,
                                         TypeDescription instrumentedType,
                                         MethodDescription bridgeTarget,
-                                        Set<MethodDescription.Token> bridges,
+                                        Set<MethodDescription.TypeToken> bridges,
                                         MethodAttributeAppender attributeAppender) {
                     return bridges.isEmpty()
                             ? delegate
@@ -892,14 +892,14 @@ public interface TypeWriter<T> {
 
                 private final MethodDescription bridgeTarget;
 
-                private final Set<MethodDescription.Token> bridges;
+                private final Set<MethodDescription.TypeToken> bridges;
 
                 private final MethodAttributeAppender attributeAppender;
 
                 protected AccessBridgeWrapper(Record delegate,
                                               TypeDescription instrumentedType,
                                               MethodDescription bridgeTarget,
-                                              Set<MethodDescription.Token> bridges,
+                                              Set<MethodDescription.TypeToken> bridges,
                                               MethodAttributeAppender attributeAppender) {
                     this.delegate = delegate;
                     this.instrumentedType = instrumentedType;
@@ -926,8 +926,8 @@ public interface TypeWriter<T> {
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
                     delegate.apply(classVisitor, implementationContext);
-                    for (MethodDescription.Token bridge : bridges) {
-                        MethodDescription bridgeMethod = AccessorBridge.of(bridgeTarget, bridge, instrumentedType);
+                    for (MethodDescription.TypeToken bridge : bridges) {
+                        MethodDescription bridgeMethod = new AccessorBridge(bridgeTarget, bridge, instrumentedType);
                         MethodDescription bridgeTarget = new BridgeTarget(this.bridgeTarget, instrumentedType);
                         MethodVisitor methodVisitor = classVisitor.visitMethod(bridgeMethod.getAdjustedModifiers(true),
                                 bridgeMethod.getInternalName(),
@@ -958,19 +958,13 @@ public interface TypeWriter<T> {
 
                 protected static class AccessorBridge extends MethodDescription.InDefinedShape.AbstractBase {
 
-                    protected static MethodDescription of(MethodDescription methodDescription,
-                                                          MethodDescription.Token bridge,
-                                                          TypeDescription instrumentedType) {
-                        return new AccessorBridge(methodDescription, bridge.accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE), instrumentedType);
-                    }
-
                     private final MethodDescription bridgeTarget;
 
-                    private final MethodDescription.Token bridge;
+                    private final MethodDescription.TypeToken bridge;
 
                     private final TypeDescription instrumentedType;
 
-                    protected AccessorBridge(MethodDescription bridgeTarget, Token bridge, TypeDescription instrumentedType) {
+                    protected AccessorBridge(MethodDescription bridgeTarget, TypeToken bridge, TypeDescription instrumentedType) {
                         this.bridgeTarget = bridgeTarget;
                         this.bridge = bridge;
                         this.instrumentedType = instrumentedType;
@@ -983,8 +977,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                        // TODO: Annotations?
-                        return new ParameterList.ForTokens(this, bridge.getParameterTokens());
+                        return new ParameterList.Explicit.ForTypes(this, bridge.getParameterTypes());
                     }
 
                     @Override
@@ -994,7 +987,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public GenericTypeList getExceptionTypes() {
-                        return bridge.getExceptionTypes();
+                        return bridgeTarget.getExceptionTypes().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE);
                     }
 
                     @Override
@@ -1009,7 +1002,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
-                        return bridgeTarget.getDeclaredAnnotations();
+                        return new AnnotationList.Empty();
                     }
 
                     @Override

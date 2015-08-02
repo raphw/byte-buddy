@@ -268,7 +268,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(1));
-        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(bridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -287,8 +287,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(2));
-        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
-        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -303,7 +303,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(1));
-        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(bridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -322,8 +322,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(2));
-        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
-        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -339,7 +339,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(1));
-        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(bridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -357,8 +357,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(2));
-        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
-        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -372,7 +372,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(1));
-        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(bridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -389,8 +389,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(2));
-        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
-        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -405,7 +405,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(1));
-        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(bridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -424,8 +424,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(2));
-        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
-        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -441,7 +441,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(1));
-        assertThat(methodNode.getBridges().contains(bridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(bridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -459,8 +459,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(2));
-        assertThat(methodNode.getBridges().contains(firstBridgeToken), is(true));
-        assertThat(methodNode.getBridges().contains(secondBridgeToken), is(true));
+        assertThat(methodNode.getBridges().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(methodNode.getBridges().contains(secondBridgeToken.asTypeToken()), is(true));
     }
 
     @Test
@@ -473,7 +473,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(node.getRepresentative(), is(methodDescription));
         assertThat(node.getBridges().size(), is(1));
-        assertThat(node.getBridges().contains(methodDescription.asDefined().asToken()), is(true));
+        assertThat(node.getBridges().contains(methodDescription.asDefined().asTypeToken()), is(true));
         assertThat(node.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(node, is(methodGraph.getSuperGraph().locate(methodDescription.asToken())));
     }
@@ -488,7 +488,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(node.getRepresentative(), is(methodDescription));
         assertThat(node.getBridges().size(), is(1));
-        assertThat(node.getBridges().contains(methodDescription.asDefined().asToken()), is(true));
+        assertThat(node.getBridges().contains(methodDescription.asDefined().asTypeToken()), is(true));
         assertThat(node.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(node, is(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asToken())));
@@ -504,7 +504,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(node.getRepresentative(), is(methodDescription));
         assertThat(node.getBridges().size(), is(1));
-        assertThat(node.getBridges().contains(methodDescription.asDefined().asToken()), is(true));
+        assertThat(node.getBridges().contains(methodDescription.asDefined().asTypeToken()), is(true));
         assertThat(node.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(node, is(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asToken())));
@@ -583,7 +583,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode, is(methodGraph.locate(nonGenericMethod.asDefined().asToken())));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(methodNode.getBridges().size(), is(1));
-        assertThat(methodNode.getBridges().contains(genericMethod.asDefined().asToken()), is(true));
+        assertThat(methodNode.getBridges().contains(genericMethod.asDefined().asTypeToken()), is(true));
         assertThat(methodNode.getRepresentative(), is(genericMethod));
         assertThat(methodNode.getRepresentative(), not(nonGenericMethod));
     }
@@ -602,7 +602,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode, is(methodGraph.locate(nonGenericMethod.asToken())));
         assertThat(methodNode.getVisibility(), is(MethodGraph.Node.Visibility.BRIDGED));
         assertThat(methodNode.getBridges().size(), is(1));
-        assertThat(methodNode.getBridges().contains(genericMethod.asDefined().asToken()), is(true));
+        assertThat(methodNode.getBridges().contains(genericMethod.asDefined().asTypeToken()), is(true));
         assertThat(methodNode.getRepresentative(), is(typeDescription.getSuperType().getDeclaredMethods()
                 .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly()));
     }

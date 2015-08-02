@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -24,10 +23,6 @@ public interface MethodGraph {
         MethodGraph getInterfaceGraph(TypeDescription typeDescription);
 
         class Delegation implements Linked {
-
-            public static Linked forSimpleExtension(MethodGraph methodGraph) {
-                return new Delegation(methodGraph, methodGraph, Collections.<TypeDescription, MethodGraph>emptyMap());
-            }
 
             private final MethodGraph methodGraph;
 
@@ -99,7 +94,7 @@ public interface MethodGraph {
 
         MethodDescription getRepresentative();
 
-        Set<MethodDescription.Token> getBridges();
+        Set<MethodDescription.TypeToken> getBridges();
 
         Visibility getVisibility();
 
@@ -176,7 +171,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public Set<MethodDescription.Token> getBridges() {
+            public Set<MethodDescription.TypeToken> getBridges() {
                 return Collections.emptySet();
             }
 
@@ -201,7 +196,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public Set<MethodDescription.Token> getBridges() {
+            public Set<MethodDescription.TypeToken> getBridges() {
                 throw new IllegalStateException("Cannot resolve bridge method of an illegal node");
             }
 
@@ -364,15 +359,15 @@ public interface MethodGraph {
 
             public interface Harmonizer<S> {
 
-                S wrap(MethodDescription.Token methodToken);
+                S wrap(MethodDescription.TypeToken typeToken);
 
                 enum ForJavaMethod implements Harmonizer<ForJavaMethod.Token> {
 
                     INSTANCE;
 
                     @Override
-                    public Token wrap(MethodDescription.Token methodToken) {
-                        return new Token(methodToken);
+                    public Token wrap(MethodDescription.TypeToken typeToken) {
+                        return new Token(typeToken);
                     }
 
                     @Override
@@ -382,38 +377,27 @@ public interface MethodGraph {
 
                     protected static class Token {
 
-                        private final MethodDescription.Token methodToken;
+                        private final MethodDescription.TypeToken typeToken;
 
-                        protected Token(MethodDescription.Token methodToken) {
-                            this.methodToken = methodToken;
+                        protected Token(MethodDescription.TypeToken typeToken) {
+                            this.typeToken = typeToken;
                         }
 
                         @Override
                         public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (!(other instanceof Token)) return false;
-                            Token forJavaMethod = (Token) other;
-                            List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = forJavaMethod.methodToken.getParameterTokens();
-                            if (tokens.size() != otherTokens.size()) return false;
-                            for (int index = 0; index < tokens.size(); index++) {
-                                if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
-                            }
-                            return true;
+                            return this == other || other instanceof Token
+                                    && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes());
                         }
 
                         @Override
                         public int hashCode() {
-                            int result = 17;
-                            for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                                result = 31 * result + parameterToken.getType().asRawType().hashCode();
-                            }
-                            return result;
+                            return typeToken.getParameterTypes().hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token{" +
-                                    "methodToken=" + methodToken +
+                                    "typeToken=" + typeToken +
                                     '}';
                         }
                     }
@@ -424,8 +408,8 @@ public interface MethodGraph {
                     INSTANCE;
 
                     @Override
-                    public Token wrap(MethodDescription.Token methodToken) {
-                        return new Token(methodToken);
+                    public Token wrap(MethodDescription.TypeToken typeToken) {
+                        return new Token(typeToken);
                     }
 
                     @Override
@@ -435,39 +419,28 @@ public interface MethodGraph {
 
                     protected static class Token {
 
-                        private final MethodDescription.Token methodToken;
+                        private final MethodDescription.TypeToken typeToken;
 
-                        public Token(MethodDescription.Token methodToken) {
-                            this.methodToken = methodToken;
+                        public Token(MethodDescription.TypeToken typeToken) {
+                            this.typeToken = typeToken;
                         }
 
                         @Override
                         public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (!(other instanceof Token)) return false;
-                            Token token = (Token) other;
-                            if (!methodToken.getReturnType().asRawType().equals(token.methodToken.getReturnType().asRawType())) return false;
-                            List<ParameterDescription.Token> tokens = methodToken.getParameterTokens(), otherTokens = token.methodToken.getParameterTokens();
-                            if (tokens.size() != otherTokens.size()) return false;
-                            for (int index = 0; index < tokens.size(); index++) {
-                                if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
-                            }
-                            return true;
+                            return this == other || other instanceof Token
+                                    && typeToken.getReturnType().equals(((Token) other).typeToken.getReturnType())
+                                    && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes());
                         }
 
                         @Override
                         public int hashCode() {
-                            int result = methodToken.getReturnType().asRawType().hashCode();
-                            for (ParameterDescription.Token parameterToken : methodToken.getParameterTokens()) {
-                                result = 31 * result + parameterToken.getType().asRawType().hashCode();
-                            }
-                            return result;
+                            return typeToken.getReturnType().hashCode() + 31 * typeToken.getParameterTypes().hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "MethodGraph.Compiler.Default.Harmonizer.ForJVMMethod.Token{" +
-                                    "methodToken=" + methodToken +
+                                    "typeToken=" + typeToken +
                                     '}';
                         }
                     }
@@ -545,27 +518,27 @@ public interface MethodGraph {
                     return internalName.hashCode();
                 }
 
-                protected static class Detached extends Key<MethodDescription.Token> {
+                protected static class Detached extends Key<MethodDescription.TypeToken> {
 
                     protected static Detached of(MethodDescription.Token methodToken) {
-                        return new Detached(methodToken.getInternalName(), Collections.singleton(methodToken));
+                        return new Detached(methodToken.getInternalName(), Collections.singleton(methodToken.asTypeToken()));
                     }
 
-                    private final Set<MethodDescription.Token> identifiers;
+                    private final Set<MethodDescription.TypeToken> identifiers;
 
-                    protected Detached(String internalName, Set<MethodDescription.Token> identifiers) {
+                    protected Detached(String internalName, Set<MethodDescription.TypeToken> identifiers) {
                         super(internalName);
                         this.identifiers = identifiers;
                     }
 
-                    protected Set<MethodDescription.Token> resolveBridges(MethodDescription.Token excluded) {
-                        Set<MethodDescription.Token> tokens = new HashSet<MethodDescription.Token>(identifiers);
+                    protected Set<MethodDescription.TypeToken> resolveBridges(MethodDescription.TypeToken excluded) {
+                        Set<MethodDescription.TypeToken> tokens = new HashSet<MethodDescription.TypeToken>(identifiers);
                         tokens.remove(excluded);
                         return tokens;
                     }
 
                     @Override
-                    protected Set<MethodDescription.Token> getIdentifiers() {
+                    protected Set<MethodDescription.TypeToken> getIdentifiers() {
                         return identifiers;
                     }
 
@@ -581,67 +554,67 @@ public interface MethodGraph {
                 protected static class Harmonized<V> extends Key<V> {
 
                     protected static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> harmonizer) {
-                        MethodDescription.Token methodToken = methodDescription.asToken();
+                        MethodDescription.TypeToken typeToken = methodDescription.asTypeToken();
                         return new Harmonized<Q>(methodDescription.getInternalName(),
-                                Collections.singletonMap(harmonizer.wrap(methodToken), Collections.<MethodDescription.Token>emptySet()));
+                                Collections.singletonMap(harmonizer.wrap(typeToken), Collections.<MethodDescription.TypeToken>emptySet()));
                     }
 
-                    private final Map<V, Set<MethodDescription.Token>> identifiers;
+                    private final Map<V, Set<MethodDescription.TypeToken>> identifiers;
 
-                    protected Harmonized(String internalName, Map<V, Set<MethodDescription.Token>> identifiers) {
+                    protected Harmonized(String internalName, Map<V, Set<MethodDescription.TypeToken>> identifiers) {
                         super(internalName);
                         this.identifiers = identifiers;
                     }
 
-                    protected Detached detach(MethodDescription.Token methodToken) {
-                        Set<MethodDescription.Token> identifiers = new HashSet<MethodDescription.Token>();
-                        for (Set<MethodDescription.Token> methodTokens : this.identifiers.values()) {
-                            identifiers.addAll(methodTokens);
+                    protected Detached detach(MethodDescription.TypeToken typeToken) {
+                        Set<MethodDescription.TypeToken> identifiers = new HashSet<MethodDescription.TypeToken>();
+                        for (Set<MethodDescription.TypeToken> typeTokens : this.identifiers.values()) {
+                            identifiers.addAll(typeTokens);
                         }
-                        identifiers.add(methodToken);
+                        identifiers.add(typeToken);
                         return new Detached(internalName, identifiers);
                     }
 
                     protected Harmonized<V> combineWith(Key.Harmonized<V> key) {
-                        Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
-                        for (Map.Entry<V, Set<MethodDescription.Token>> entry : key.identifiers.entrySet()) {
-                            Set<MethodDescription.Token> methodTokens = identifiers.get(entry.getKey());
-                            if (methodTokens == null) {
+                        Map<V, Set<MethodDescription.TypeToken>> identifiers = new HashMap<V, Set<MethodDescription.TypeToken>>(this.identifiers);
+                        for (Map.Entry<V, Set<MethodDescription.TypeToken>> entry : key.identifiers.entrySet()) {
+                            Set<MethodDescription.TypeToken> typeTokens = identifiers.get(entry.getKey());
+                            if (typeTokens == null) {
                                 identifiers.put(entry.getKey(), entry.getValue());
                             } else {
-                                methodTokens = new HashSet<MethodDescription.Token>(methodTokens);
-                                methodTokens.addAll(entry.getValue());
-                                identifiers.put(entry.getKey(), methodTokens);
+                                typeTokens = new HashSet<MethodDescription.TypeToken>(typeTokens);
+                                typeTokens.addAll(entry.getValue());
+                                identifiers.put(entry.getKey(), typeTokens);
                             }
                         }
                         return new Harmonized<V>(internalName, identifiers);
                     }
 
                     protected Harmonized<V> extend(MethodDescription.InDefinedShape methodDescription, Harmonizer<V> harmonizer) {
-                        Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
-                        MethodDescription.Token methodToken = methodDescription.asToken();
-                        V identifier = harmonizer.wrap(methodToken);
-                        Set<MethodDescription.Token> methodTokens = identifiers.get(identifier);
-                        if (methodTokens == null) {
-                            identifiers.put(identifier, Collections.singleton(methodToken));
+                        Map<V, Set<MethodDescription.TypeToken>> identifiers = new HashMap<V, Set<MethodDescription.TypeToken>>(this.identifiers);
+                        MethodDescription.TypeToken typeToken = methodDescription.asTypeToken();
+                        V identifier = harmonizer.wrap(typeToken);
+                        Set<MethodDescription.TypeToken> typeTokens = identifiers.get(identifier);
+                        if (typeTokens == null) {
+                            identifiers.put(identifier, Collections.singleton(typeToken));
                         } else {
-                            methodTokens = new HashSet<MethodDescription.Token>(methodTokens);
-                            methodTokens.add(methodToken);
-                            identifiers.put(identifier, methodTokens);
+                            typeTokens = new HashSet<MethodDescription.TypeToken>(typeTokens);
+                            typeTokens.add(typeToken);
+                            identifiers.put(identifier, typeTokens);
                         }
                         return new Harmonized<V>(internalName, identifiers);
                     }
 
                     protected Harmonized<V> inject(Harmonized<V> key) {
-                        Map<V, Set<MethodDescription.Token>> identifiers = new HashMap<V, Set<MethodDescription.Token>>(this.identifiers);
-                        for (Map.Entry<V, Set<MethodDescription.Token>> entry : key.identifiers.entrySet()) {
-                            Set<MethodDescription.Token> methodTokens = identifiers.get(entry.getKey());
-                            if (methodTokens == null) {
+                        Map<V, Set<MethodDescription.TypeToken>> identifiers = new HashMap<V, Set<MethodDescription.TypeToken>>(this.identifiers);
+                        for (Map.Entry<V, Set<MethodDescription.TypeToken>> entry : key.identifiers.entrySet()) {
+                            Set<MethodDescription.TypeToken> typeTokens = identifiers.get(entry.getKey());
+                            if (typeTokens == null) {
                                 identifiers.put(entry.getKey(), entry.getValue());
                             } else {
-                                methodTokens = new HashSet<MethodDescription.Token>(methodTokens);
-                                methodTokens.addAll(entry.getValue());
-                                identifiers.put(entry.getKey(), methodTokens);
+                                typeTokens = new HashSet<MethodDescription.TypeToken>(typeTokens);
+                                typeTokens.addAll(entry.getValue());
+                                identifiers.put(entry.getKey(), typeTokens);
                             }
                         }
                         return new Harmonized<V>(internalName, identifiers);
@@ -747,10 +720,10 @@ public interface MethodGraph {
                     }
 
                     protected MethodGraph asGraph(Merger merger) {
-                        LinkedHashMap<Key<MethodDescription.Token>, Node> entries = new LinkedHashMap<Key<MethodDescription.Token>, Node>(this.entries.size());
+                        LinkedHashMap<Key<MethodDescription.TypeToken>, Node> entries = new LinkedHashMap<Key<MethodDescription.TypeToken>, Node>(this.entries.size());
                         for (Entry<V> entry : this.entries.values()) {
                             Node node = entry.asNode(merger);
-                            entries.put(entry.getKey().detach(node.getRepresentative().asToken()), node);
+                            entries.put(entry.getKey().detach(node.getRepresentative().asTypeToken()), node);
                         }
                         return new Graph(entries);
                     }
@@ -775,9 +748,9 @@ public interface MethodGraph {
 
                     protected static class Graph implements MethodGraph {
 
-                        private final LinkedHashMap<Key<MethodDescription.Token>, Node> entries;
+                        private final LinkedHashMap<Key<MethodDescription.TypeToken>, Node> entries;
 
-                        protected Graph(LinkedHashMap<Key<MethodDescription.Token>, Node> entries) {
+                        protected Graph(LinkedHashMap<Key<MethodDescription.TypeToken>, Node> entries) {
                             this.entries = entries;
                         }
 
@@ -914,7 +887,7 @@ public interface MethodGraph {
 
                             @Override
                             public MethodGraph.Node asNode(Merger merger) {
-                                return new Node(key.detach(methodDescription.asToken()), methodDescription, MethodGraph.Node.Visibility.of(madeVisible));
+                                return new Node(key.detach(methodDescription.asTypeToken()), methodDescription, MethodGraph.Node.Visibility.of(madeVisible));
                             }
 
                             @Override
@@ -969,8 +942,8 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public Set<MethodDescription.Token> getBridges() {
-                                    return key.resolveBridges(methodDescription.asToken());
+                                public Set<MethodDescription.TypeToken> getBridges() {
+                                    return key.resolveBridges(methodDescription.asTypeToken());
                                 }
 
                                 @Override
@@ -1071,7 +1044,7 @@ public interface MethodGraph {
                                 while (iterator.hasNext()) {
                                     methodDescription = merger.merge(methodDescription, iterator.next());
                                 }
-                                return new Node(key.detach(methodDescription.asToken()), methodDescription);
+                                return new Node(key.detach(methodDescription.asTypeToken()), methodDescription);
                             }
 
                             @Override
@@ -1119,8 +1092,8 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public Set<MethodDescription.Token> getBridges() {
-                                    return key.resolveBridges(methodDescription.asToken());
+                                public Set<MethodDescription.TypeToken> getBridges() {
+                                    return key.resolveBridges(methodDescription.asTypeToken());
                                 }
 
                                 @Override
@@ -1196,16 +1169,16 @@ public interface MethodGraph {
     class Simple implements MethodGraph {
 
         public static MethodGraph of(List<? extends MethodDescription> methodDescriptions) {
-            LinkedHashMap<MethodDescription.Token, Node> nodes = new LinkedHashMap<MethodDescription.Token, Node>(methodDescriptions.size());
+            LinkedHashMap<MethodDescription.TypeToken, Node> nodes = new LinkedHashMap<MethodDescription.TypeToken, Node>(methodDescriptions.size());
             for (MethodDescription methodDescription : methodDescriptions) {
-                nodes.put(methodDescription.asToken(), new Node.Simple(methodDescription));
+                nodes.put(methodDescription.asTypeToken(), new Node.Simple(methodDescription));
             }
             return new Simple(nodes);
         }
 
-        private final LinkedHashMap<MethodDescription.Token, Node> nodes;
+        private final LinkedHashMap<MethodDescription.TypeToken, Node> nodes;
 
-        public Simple(LinkedHashMap<MethodDescription.Token, Node> nodes) {
+        public Simple(LinkedHashMap<MethodDescription.TypeToken, Node> nodes) {
             this.nodes = nodes;
         }
 

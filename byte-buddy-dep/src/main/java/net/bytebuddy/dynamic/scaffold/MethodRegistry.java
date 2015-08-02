@@ -489,7 +489,7 @@ public interface MethodRegistry {
                     ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
                     helperMethods = instrumentedType.getDeclaredMethods();
                     for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {
-                        implementations.put(helperMethod, entry.asPreparedEntry(Collections.<MethodDescription.Token>emptySet()));
+                        implementations.put(helperMethod, entry.asPreparedEntry(Collections.<MethodDescription.TypeToken>emptySet()));
                     }
                 }
             }
@@ -519,7 +519,7 @@ public interface MethodRegistry {
             MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
             for (Entry entry : entries) {
                 if (entry.resolve(instrumentedType).matches(typeInitializer)) {
-                    implementations.put(typeInitializer, entry.asPreparedEntry(Collections.<MethodDescription.Token>emptySet()));
+                    implementations.put(typeInitializer, entry.asPreparedEntry(Collections.<MethodDescription.TypeToken>emptySet()));
                     break;
                 }
             }
@@ -582,7 +582,7 @@ public interface MethodRegistry {
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
 
-            protected Prepared.Entry asPreparedEntry(Set<MethodDescription.Token> bridges) {
+            protected Prepared.Entry asPreparedEntry(Set<MethodDescription.TypeToken> bridges) {
                 return new Prepared.Entry(handler, attributeAppenderFactory, bridges);
             }
 
@@ -743,7 +743,7 @@ public interface MethodRegistry {
 
             protected static class Entry {
 
-                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.Token> bridges) {
+                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.TypeToken> bridges) {
                     return new Entry(Handler.ForVisibilityBridge.INSTANCE, new MethodAttributeAppender.ForMethod(bridgeTarget), bridges);
                 }
 
@@ -751,9 +751,9 @@ public interface MethodRegistry {
 
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
-                private final Set<MethodDescription.Token> bridges;
+                private final Set<MethodDescription.TypeToken> bridges;
 
-                protected Entry(Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory, Set<MethodDescription.Token> bridges) {
+                protected Entry(Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory, Set<MethodDescription.TypeToken> bridges) {
                     this.handler = handler;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                     this.bridges = bridges;
@@ -767,7 +767,7 @@ public interface MethodRegistry {
                     return attributeAppenderFactory;
                 }
 
-                public Set<MethodDescription.Token> getBridges() {
+                public Set<MethodDescription.TypeToken> getBridges() {
                     return bridges;
                 }
             }
@@ -880,9 +880,9 @@ public interface MethodRegistry {
 
                 private final MethodAttributeAppender attributeAppender;
 
-                private final Set<MethodDescription.Token> bridges;
+                private final Set<MethodDescription.TypeToken> bridges;
 
-                protected Entry(Handler.Compiled compiledHandler, MethodAttributeAppender attributeAppender, Set<MethodDescription.Token> bridges) {
+                protected Entry(Handler.Compiled compiledHandler, MethodAttributeAppender attributeAppender, Set<MethodDescription.TypeToken> bridges) {
                     this.compiledHandler = compiledHandler;
                     this.attributeAppender = attributeAppender;
                     this.bridges = bridges;

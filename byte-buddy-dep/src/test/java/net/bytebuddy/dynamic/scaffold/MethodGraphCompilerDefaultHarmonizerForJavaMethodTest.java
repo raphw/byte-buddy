@@ -32,120 +32,49 @@ public class MethodGraphCompilerDefaultHarmonizerForJavaMethodTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private GenericTypeDescription first, second;
+    private TypeDescription first, second;
 
-    @Mock
-    private TypeDescription firstRaw, secondRaw;
-
-    @Mock
-    private ParameterDescription.Token firstParameter, secondParameter;
+    private MethodGraph.Compiler.Default.Harmonizer<MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token> harmonizer;
 
     @Before
     public void setUp() throws Exception {
-        when(first.asRawType()).thenReturn(firstRaw);
-        when(second.asRawType()).thenReturn(secondRaw);
-        when(firstParameter.getType()).thenReturn(first);
-        when(secondParameter.getType()).thenReturn(second);
+        harmonizer = MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE;
+    }
+
+    @Test
+    public void testMethodEqualityHashCode() throws Exception {
+        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
+                is(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode()));
     }
 
     @Test
     public void testMethodEquality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)),
-                is(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE))));
+        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
+                is(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first)))));
     }
 
     @Test
-    public void testMethodNameInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)),
-                is(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(BAR,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE))));
+    public void testMethodReturnTypeInequalityHashCode() throws Exception {
+        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
+                is(harmonizer.wrap(new MethodDescription.TypeToken(second, Collections.singletonList(first))).hashCode()));
     }
 
     @Test
-    public void testReturnTypeEquality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)),
-                is(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE))));
+    public void testMethodReturnTypeInequality() throws Exception {
+        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
+                is(harmonizer.wrap(new MethodDescription.TypeToken(second, Collections.singletonList(first)))));
     }
 
     @Test
-    public void testParameterTypeInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)),
-                not(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(secondParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE))));
+    public void testMethodParameterTypesHashCode() throws Exception {
+        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
+                not(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(second))).hashCode()));
     }
 
     @Test
-    public void testParameterTypeLengthInequality() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)),
-                not(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE.wrap(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        mock(GenericTypeDescription.class),
-                        Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE))));
+    public void testMethodParameterTypesEquality() throws Exception {
+        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
+                not(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(second)))));
     }
 
     @Test
@@ -157,19 +86,16 @@ public class MethodGraphCompilerDefaultHarmonizerForJavaMethodTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token.class).create(new ObjectPropertyAssertion.Creator<MethodDescription.Token>() {
-            @Override
-            public MethodDescription.Token create() {
-                MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.asRawType()).thenReturn(typeDescription);
-                ParameterDescription.Token parameterToken = mock(ParameterDescription.Token.class);
-                when(parameterToken.getType()).thenReturn(typeDescription);
-                when(methodToken.getParameterTokens())
-                        .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.singletonList(parameterToken)));
-                return methodToken;
-            }
-        }).applyBasic();
+        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token.class)
+                .create(new ObjectPropertyAssertion.Creator<MethodDescription.TypeToken>() {
+                    @Override
+                    public MethodDescription.TypeToken create() {
+                        MethodDescription.TypeToken typeToken = mock(MethodDescription.TypeToken.class);
+                        when(typeToken.getReturnType()).thenReturn(mock(TypeDescription.class));
+                        when(typeToken.getParameterTypes()).thenReturn(Collections.singletonList(mock(TypeDescription.class)));
+                        return typeToken;
+                    }
+                }).applyBasic();
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.class).apply();
     }
 }
