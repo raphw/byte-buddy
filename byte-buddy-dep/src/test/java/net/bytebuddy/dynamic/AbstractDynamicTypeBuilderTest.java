@@ -272,39 +272,4 @@ public abstract class AbstractDynamicTypeBuilderTest {
             /* empty */
         }
     }
-
-    protected static class MethodCallValidator extends MethodVisitor {
-
-        public static class ClassWrapper implements ClassVisitorWrapper {
-
-            @Override
-            public ClassVisitor wrap(ClassVisitor classVisitor) {
-                return new ClassValidator(classVisitor);
-            }
-        }
-
-        private static class ClassValidator extends ClassVisitor {
-
-            private ClassValidator(ClassVisitor classVisitor) {
-                super(Opcodes.ASM5, classVisitor);
-            }
-
-            @Override
-            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-                return new MethodCallValidator(super.visitMethod(access, name, desc, signature, exceptions));
-            }
-        }
-
-        private MethodCallValidator(MethodVisitor methodVisitor) {
-            super(Opcodes.ASM5, methodVisitor);
-        }
-
-        @Override
-        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            if (!name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
-                assertThat(desc, is("(Ljava/lang/Object;)Ljava/lang/Object;"));
-            }
-            super.visitMethodInsn(opcode, owner, name, desc, itf);
-        }
-    }
 }

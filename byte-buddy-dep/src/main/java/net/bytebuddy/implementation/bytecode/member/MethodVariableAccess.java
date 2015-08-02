@@ -227,7 +227,7 @@ public enum MethodVariableAccess {
                     : new Compound(MethodVariableAccess.REFERENCE.loadOffset(0), this);
         }
 
-        public StackManipulation asBridgeOf(MethodDescription methodDescription) {
+        public MethodLoading asBridgeOf(MethodDescription methodDescription) {
             return new MethodLoading(this.methodDescription, new TypeCastingHandler.ForBridgeTarget(methodDescription));
         }
 

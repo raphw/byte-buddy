@@ -36,10 +36,7 @@ import org.objectweb.asm.commons.RemappingMethodAdapter;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
@@ -873,6 +870,213 @@ public interface TypeWriter<T> {
                         public String getInternalName() {
                             return bridgeTarget.getInternalName();
                         }
+                    }
+                }
+            }
+
+            class AccessBridgeWrapper implements Record {
+
+                public static Record of(Record delegate,
+                                        TypeDescription instrumentedType,
+                                        MethodDescription bridgeTarget,
+                                        Set<MethodDescription.Token> bridges,
+                                        MethodAttributeAppender attributeAppender) {
+                    return bridges.isEmpty()
+                            ? delegate
+                            : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, bridges, attributeAppender);
+                }
+
+                private final Record delegate;
+
+                private final TypeDescription instrumentedType;
+
+                private final MethodDescription bridgeTarget;
+
+                private final Set<MethodDescription.Token> bridges;
+
+                private final MethodAttributeAppender attributeAppender;
+
+                protected AccessBridgeWrapper(Record delegate,
+                                              TypeDescription instrumentedType,
+                                              MethodDescription bridgeTarget,
+                                              Set<MethodDescription.Token> bridges,
+                                              MethodAttributeAppender attributeAppender) {
+                    this.delegate = delegate;
+                    this.instrumentedType = instrumentedType;
+                    this.bridgeTarget = bridgeTarget;
+                    this.bridges = bridges;
+                    this.attributeAppender = attributeAppender;
+                }
+
+                @Override
+                public Sort getSort() {
+                    return delegate.getSort();
+                }
+
+                @Override
+                public ModifierResolver getModifierResolver() {
+                    return delegate.getModifierResolver();
+                }
+
+                @Override
+                public Record prepend(ByteCodeAppender byteCodeAppender) {
+                    return new AccessBridgeWrapper(delegate.prepend(byteCodeAppender), instrumentedType, bridgeTarget, bridges, attributeAppender);
+                }
+
+                @Override
+                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
+                    delegate.apply(classVisitor, implementationContext);
+                    for (MethodDescription.Token bridge : bridges) {
+                        MethodDescription bridgeMethod = AccessorBridge.of(bridgeTarget, bridge, instrumentedType);
+                        MethodDescription bridgeTarget = new BridgeTarget(this.bridgeTarget, instrumentedType);
+                        MethodVisitor methodVisitor = classVisitor.visitMethod(bridgeMethod.getAdjustedModifiers(true),
+                                bridgeMethod.getInternalName(),
+                                bridgeMethod.getDescriptor(),
+                                MethodDescription.NON_GENERIC_SIGNATURE,
+                                bridgeMethod.getExceptionTypes().asRawTypes().toInternalNames());
+                        attributeAppender.apply(methodVisitor, bridgeMethod);
+                        methodVisitor.visitCode();
+                        ByteCodeAppender.Size size = new ByteCodeAppender.Simple(
+                                MethodVariableAccess.allArgumentsOf(bridgeMethod).asBridgeOf(bridgeTarget).prependThisReference(),
+                                MethodInvocation.invoke(bridgeTarget).virtual(instrumentedType),
+                                MethodReturn.returning(bridgeTarget.getReturnType().asRawType())
+                        ).apply(methodVisitor, implementationContext, bridgeMethod);
+                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                        methodVisitor.visitEnd();
+                    }
+                }
+
+                @Override
+                public void applyHead(MethodVisitor methodVisitor) {
+                    delegate.applyHead(methodVisitor);
+                }
+
+                @Override
+                public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                    delegate.applyBody(methodVisitor, implementationContext);
+                }
+
+                protected static class AccessorBridge extends MethodDescription.InDefinedShape.AbstractBase {
+
+                    protected static MethodDescription of(MethodDescription methodDescription,
+                                                          MethodDescription.Token bridge,
+                                                          TypeDescription instrumentedType) {
+                        return new AccessorBridge(methodDescription, bridge.accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE), instrumentedType);
+                    }
+
+                    private final MethodDescription bridgeTarget;
+
+                    private final MethodDescription.Token bridge;
+
+                    private final TypeDescription instrumentedType;
+
+                    protected AccessorBridge(MethodDescription bridgeTarget, Token bridge, TypeDescription instrumentedType) {
+                        this.bridgeTarget = bridgeTarget;
+                        this.bridge = bridge;
+                        this.instrumentedType = instrumentedType;
+                    }
+
+                    @Override
+                    public TypeDescription getDeclaringType() {
+                        return instrumentedType;
+                    }
+
+                    @Override
+                    public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
+                        // TODO: Annotations?
+                        return new ParameterList.ForTokens(this, bridge.getParameterTokens());
+                    }
+
+                    @Override
+                    public GenericTypeDescription getReturnType() {
+                        return bridge.getReturnType();
+                    }
+
+                    @Override
+                    public GenericTypeList getExceptionTypes() {
+                        return bridge.getExceptionTypes();
+                    }
+
+                    @Override
+                    public Object getDefaultValue() {
+                        return MethodDescription.NO_DEFAULT_VALUE;
+                    }
+
+                    @Override
+                    public GenericTypeList getTypeVariables() {
+                        return new GenericTypeList.Empty();
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return bridgeTarget.getDeclaredAnnotations();
+                    }
+
+                    @Override
+                    public int getModifiers() {
+                        return bridgeTarget.getModifiers() | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC;
+                    }
+
+                    @Override
+                    public String getInternalName() {
+                        return bridgeTarget.getInternalName();
+                    }
+                }
+
+                protected static class BridgeTarget extends MethodDescription.InDefinedShape.AbstractBase {
+
+                    private final MethodDescription bridgeTarget;
+
+                    private final TypeDescription instrumentedType;
+
+                    public BridgeTarget(MethodDescription bridgeTarget, TypeDescription instrumentedType) {
+                        this.bridgeTarget = bridgeTarget;
+                        this.instrumentedType = instrumentedType;
+                    }
+
+                    @Override
+                    public TypeDescription getDeclaringType() {
+                        return instrumentedType;
+                    }
+
+                    @Override
+                    public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
+                        return new ParameterList.ForTokens(this, bridgeTarget.getParameters().asTokenList());
+                    }
+
+                    @Override
+                    public GenericTypeDescription getReturnType() {
+                        return bridgeTarget.getReturnType();
+                    }
+
+                    @Override
+                    public GenericTypeList getExceptionTypes() {
+                        return bridgeTarget.getExceptionTypes();
+                    }
+
+                    @Override
+                    public Object getDefaultValue() {
+                        return bridgeTarget.getDefaultValue();
+                    }
+
+                    @Override
+                    public GenericTypeList getTypeVariables() {
+                        return bridgeTarget.getTypeVariables();
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return bridgeTarget.getDeclaredAnnotations();
+                    }
+
+                    @Override
+                    public int getModifiers() {
+                        return bridgeTarget.getModifiers();
+                    }
+
+                    @Override
+                    public String getInternalName() {
+                        return bridgeTarget.getInternalName();
                     }
                 }
             }

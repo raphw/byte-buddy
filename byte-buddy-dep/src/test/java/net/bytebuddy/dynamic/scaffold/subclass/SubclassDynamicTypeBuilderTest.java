@@ -16,10 +16,7 @@ import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
-import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
+import net.bytebuddy.test.utility.*;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -354,7 +351,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     @SuppressWarnings("unchecked")
-    @Ignore("Fails because of missing bridge method")
     public void testBridgeMethodCreation() throws Exception {
         Class<?> dynamicType = create(BridgeRetention.Inner.class)
                 .method(named(FOO)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
@@ -370,15 +366,19 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testBridgeMethodSuperTypeInvocation() throws Exception {
+    public void testBridgeMethodCreationForExistingBridgeMethod() throws Exception {
         Class<?> dynamicType = create(SuperCall.Inner.class)
                 .method(named(FOO)).intercept(SuperMethodCall.INSTANCE)
-                .classVisitor(new MethodCallValidator.ClassWrapper())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
+        assertThat(dynamicType.getDeclaredMethods().length, is(2));
         assertEquals(String.class, dynamicType.getDeclaredMethod(FOO, String.class).getReturnType());
         assertThat(dynamicType.getDeclaredMethod(FOO, String.class).getGenericReturnType(), is((Type) String.class));
+        assertThat(dynamicType.getDeclaredMethod(FOO, String.class).isBridge(), is(false));
+        assertEquals(Object.class, dynamicType.getDeclaredMethod(FOO, Object.class).getReturnType());
+        assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).getGenericReturnType(), is((Type) Object.class));
+        assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).isBridge(), is(true));
         SuperCall<String> superCall = (SuperCall<String>) dynamicType.newInstance();
         assertThat(superCall.foo(FOO), is(FOO));
         superCall.assertOnlyCall(FOO);
@@ -386,7 +386,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testVisibilityBridge() throws Exception {
-        Class<?> type = new ByteBuddy().subclass(VisibilityBridge.class)
+        Class<?> type = create(VisibilityBridge.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
@@ -410,7 +410,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testNoVisibilityBridgeForNonPublicType() throws Exception {
-        Class<?> type = new ByteBuddy().subclass(VisibilityBridge.class)
+        Class<?> type = create(VisibilityBridge.class)
                 .modifiers(0)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
@@ -421,7 +421,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testNoVisibilityBridgeForInheritedType() throws Exception {
-        Class<?> type = new ByteBuddy().subclass(VisibilityBridgeExtension.class)
+        Class<?> type = create(VisibilityBridgeExtension.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)

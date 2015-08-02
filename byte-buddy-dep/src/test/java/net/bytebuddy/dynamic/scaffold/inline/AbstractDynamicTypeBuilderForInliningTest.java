@@ -183,7 +183,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     @Test
     @SuppressWarnings("unchecked")
-    @Ignore("Fails because of missing bridge method")
     public void testBridgeMethodCreation() throws Exception {
         Class<?> dynamicType = create(BridgeRetention.Inner.class)
                 .method(named(FOO)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
@@ -199,15 +198,19 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testBridgeMethodSuperTypeInvocation() throws Exception {
+    public void testBridgeMethodCreationForExistingBridgeMethod() throws Exception {
         Class<?> dynamicType = create(SuperCall.Inner.class)
                 .method(named(FOO)).intercept(SuperMethodCall.INSTANCE)
-                .classVisitor(new MethodCallValidator.ClassWrapper())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
+        assertThat(dynamicType.getDeclaredMethods().length, is(2));
         assertEquals(String.class, dynamicType.getDeclaredMethod(FOO, String.class).getReturnType());
         assertThat(dynamicType.getDeclaredMethod(FOO, String.class).getGenericReturnType(), is((Type) String.class));
+        assertThat(dynamicType.getDeclaredMethod(FOO, String.class).isBridge(), is(false));
+        assertEquals(Object.class, dynamicType.getDeclaredMethod(FOO, Object.class).getReturnType());
+        assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).getGenericReturnType(), is((Type) Object.class));
+        assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).isBridge(), is(true));
         SuperCall<String> superCall = (SuperCall<String>) dynamicType.newInstance();
         assertThat(superCall.foo(FOO), is(FOO));
         superCall.assertOnlyCall(FOO);

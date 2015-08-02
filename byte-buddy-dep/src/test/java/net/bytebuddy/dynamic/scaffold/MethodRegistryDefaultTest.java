@@ -94,6 +94,7 @@ public class MethodRegistryDefaultTest {
         when(implementationTargetFactory.make(typeDescription, methodGraph)).thenReturn(implementationTarget);
         when(firstCompiledHandler.assemble(firstAppender, instrumentedMethod)).thenReturn(firstRecord);
         when(secondCompiledHandler.assemble(secondAppender, instrumentedMethod)).thenReturn(secondRecord);
+        when(typeDescription.asRawType()).thenReturn(typeDescription);
     }
 
     @Test

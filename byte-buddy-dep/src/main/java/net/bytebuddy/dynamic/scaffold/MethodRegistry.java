@@ -489,7 +489,7 @@ public interface MethodRegistry {
                     ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
                     helperMethods = instrumentedType.getDeclaredMethods();
                     for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {
-                        implementations.put(helperMethod, entry.asPreparedEntry());
+                        implementations.put(helperMethod, entry.asPreparedEntry(Collections.<MethodDescription.Token>emptySet()));
                     }
                 }
             }
@@ -501,7 +501,7 @@ public interface MethodRegistry {
                 if (relevanceMatcher.matches(methodDescription)) {
                     for (Entry entry : entries) {
                         if (entry.resolve(instrumentedType).matches(methodDescription)) {
-                            implementations.put(methodDescription, entry.asPreparedEntry());
+                            implementations.put(methodDescription, entry.asPreparedEntry(node.getBridges()));
                             visibilityBridge = false;
                             break;
                         }
@@ -513,20 +513,20 @@ public interface MethodRegistry {
                         && methodDescription.getDeclaringType().asRawType().isPackagePrivate()) {
                     // Visibility bridges are required for public types that inherit a public method from a package-private type.
                     // Checking the last condition contradicts any method that is defined by the instrumented type itself.
-                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription));
+                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getBridges()));
                 }
             }
             MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
             for (Entry entry : entries) {
                 if (entry.resolve(instrumentedType).matches(typeInitializer)) {
-                    implementations.put(typeInitializer, entry.asPreparedEntry());
+                    implementations.put(typeInitializer, entry.asPreparedEntry(Collections.<MethodDescription.Token>emptySet()));
                     break;
                 }
             }
             return new Prepared(implementations,
                     instrumentedType.getLoadedTypeInitializer(),
                     instrumentedType.getTypeInitializer(),
-                    instrumentedType,
+                    instrumentedType.asRawType(),
                     methodGraph);
         }
 
@@ -576,16 +576,14 @@ public interface MethodRegistry {
              * @param handler                  The handler to apply to all matched entries.
              * @param attributeAppenderFactory A method attribute appender factory to apply to all entries.
              */
-            protected Entry(LatentMethodMatcher methodMatcher,
-                            Handler handler,
-                            MethodAttributeAppender.Factory attributeAppenderFactory) {
+            protected Entry(LatentMethodMatcher methodMatcher, Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory) {
                 this.methodMatcher = methodMatcher;
                 this.handler = handler;
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
 
-            protected Prepared.Entry asPreparedEntry() {
-                return new Prepared.Entry(handler, attributeAppenderFactory);
+            protected Prepared.Entry asPreparedEntry(Set<MethodDescription.Token> bridges) {
+                return new Prepared.Entry(handler, attributeAppenderFactory, bridges);
             }
 
             protected Handler getHandler() {
@@ -705,7 +703,7 @@ public interface MethodRegistry {
                         cachedAttributeAppender = entry.getValue().getAppenderFactory().make(instrumentedType);
                         attributeAppenderCache.put(entry.getValue().getAppenderFactory(), cachedAttributeAppender);
                     }
-                    entries.put(entry.getKey(), new Compiled.Entry(cachedHandler, cachedAttributeAppender));
+                    entries.put(entry.getKey(), new Compiled.Entry(cachedHandler, cachedAttributeAppender, entry.getValue().getBridges()));
                 }
                 return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries);
             }
@@ -745,17 +743,20 @@ public interface MethodRegistry {
 
             protected static class Entry {
 
-                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget) {
-                    return new Entry(Handler.ForVisibilityBridge.INSTANCE, new MethodAttributeAppender.ForMethod(bridgeTarget));
+                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.Token> bridges) {
+                    return new Entry(Handler.ForVisibilityBridge.INSTANCE, new MethodAttributeAppender.ForMethod(bridgeTarget), bridges);
                 }
 
                 private final Handler handler;
 
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
-                protected Entry(Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory) {
+                private final Set<MethodDescription.Token> bridges;
+
+                protected Entry(Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory, Set<MethodDescription.Token> bridges) {
                     this.handler = handler;
                     this.attributeAppenderFactory = attributeAppenderFactory;
+                    this.bridges = bridges;
                 }
 
                 protected Handler getHandler() {
@@ -764,6 +765,10 @@ public interface MethodRegistry {
 
                 protected MethodAttributeAppender.Factory getAppenderFactory() {
                     return attributeAppenderFactory;
+                }
+
+                public Set<MethodDescription.Token> getBridges() {
+                    return bridges;
                 }
             }
         }
@@ -836,7 +841,7 @@ public interface MethodRegistry {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
                         ? Record.ForInheritedMethod.INSTANCE
-                        : entry.bind(methodDescription);
+                        : entry.bind(methodDescription, instrumentedType);
             }
 
             @Override
@@ -875,13 +880,20 @@ public interface MethodRegistry {
 
                 private final MethodAttributeAppender attributeAppender;
 
-                protected Entry(Handler.Compiled compiledHandler, MethodAttributeAppender attributeAppender) {
+                private final Set<MethodDescription.Token> bridges;
+
+                protected Entry(Handler.Compiled compiledHandler, MethodAttributeAppender attributeAppender, Set<MethodDescription.Token> bridges) {
                     this.compiledHandler = compiledHandler;
                     this.attributeAppender = attributeAppender;
+                    this.bridges = bridges;
                 }
 
-                protected Record bind(MethodDescription methodDescription) {
-                    return compiledHandler.assemble(attributeAppender, methodDescription);
+                protected Record bind(MethodDescription methodDescription, TypeDescription instrumentedType) {
+                    return Record.AccessBridgeWrapper.of(compiledHandler.assemble(attributeAppender, methodDescription),
+                            instrumentedType,
+                            methodDescription,
+                            bridges,
+                            attributeAppender);
                 }
 
                 @Override
@@ -890,13 +902,15 @@ public interface MethodRegistry {
                     if (other == null || getClass() != other.getClass()) return false;
                     Entry entry = (Entry) other;
                     return compiledHandler.equals(entry.compiledHandler)
-                            && attributeAppender.equals(entry.attributeAppender);
+                            && attributeAppender.equals(entry.attributeAppender)
+                            && bridges.equals(entry.bridges);
                 }
 
                 @Override
                 public int hashCode() {
                     int result = compiledHandler.hashCode();
                     result = 31 * result + attributeAppender.hashCode();
+                    result = 31 * result + bridges.hashCode();
                     return result;
                 }
 
@@ -905,6 +919,7 @@ public interface MethodRegistry {
                     return "MethodRegistry.Default.Compiled.Entry{" +
                             "compiledHandler=" + compiledHandler +
                             ", attributeAppender=" + attributeAppender +
+                            ", bridges=" + bridges +
                             '}';
                 }
             }
