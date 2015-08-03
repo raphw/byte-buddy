@@ -83,6 +83,13 @@ public enum FieldAccess {
                 : INSTANCE.new AccessDispatcher(fieldDescription);
     }
 
+    /**
+     * Creates a field access representation for a given field. If the field's return type derives from its declared shape, the value
+     * is additionally casted to the generically resolved field.
+     *
+     * @param fieldDescription The field to be accessed.
+     * @return A field access definition for the given field.
+     */
     public static Defined forField(FieldDescription fieldDescription) {
         FieldDescription.InDefinedShape declaredField = fieldDescription.asDefined();
         return fieldDescription.getType().asRawType().equals(declaredField.getType().asRawType())
@@ -116,7 +123,7 @@ public enum FieldAccess {
     }
 
     /**
-     * A dispatcher for implementing a read or write access on a field.
+     * A dispatcher for implementing a non-generic read or write access on a field.
      */
     protected class AccessDispatcher implements Defined {
 
@@ -292,16 +299,38 @@ public enum FieldAccess {
         }
     }
 
+    /**
+     * A dispatcher for implementing a generic read or write access on a field.
+     */
     protected static class OfGenericField implements Defined {
 
-        public static Defined of(FieldDescription fieldDescription, Defined fieldAccess) {
+        /**
+         * Creates a generic access dispatcher for a given field.
+         *
+         * @param fieldDescription The field that is being accessed.
+         * @param fieldAccess      A field accessor for the field in its defined shape.
+         * @return A field access dispatcher for the given field.
+         */
+        protected static Defined of(FieldDescription fieldDescription, Defined fieldAccess) {
             return new OfGenericField(fieldDescription.getType().asRawType(), fieldAccess);
         }
 
+        /**
+         * The resolved generic field type.
+         */
         private final TypeDescription targetType;
 
+        /**
+         * An accessor for the field in its defined shape.
+         */
         private final Defined defined;
 
+        /**
+         * Creates a new dispatcher for a generic field.
+         *
+         * @param targetType The resolved generic field type.
+         * @param defined    An accessor for the field in its defined shape.
+         */
         protected OfGenericField(TypeDescription targetType, Defined defined) {
             this.targetType = targetType;
             this.defined = defined;

@@ -531,7 +531,7 @@ public interface MethodGraph {
             }
 
             /**
-             * Analyzes the given type description without checking if it is already presented in the key store
+             * Analyzes the given type description without checking if it is already presented in the key store.
              *
              * @param typeDescription The type to analyze.
              * @param snapshots       A map containing snapshots of key stores for previously analyzed types.
@@ -1003,9 +1003,9 @@ public interface MethodGraph {
                 }
 
                 /**
-                 * A store
+                 * A store for collected methods that are identified by keys.
                  *
-                 * @param <V>
+                 * @param <V> The type of the token used for deciding on method equality.
                  */
                 protected static class Store<V> {
 

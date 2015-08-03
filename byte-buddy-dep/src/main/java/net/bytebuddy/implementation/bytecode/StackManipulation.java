@@ -191,7 +191,7 @@ public interface StackManipulation {
         /**
          * Creates a new compound stack manipulation.
          *
-         * @param stackManipulation The stack manipulations to be composed in the order of their composition.
+         * @param stackManipulations The stack manipulations to be composed in the order of their composition.
          */
         public Compound(List<StackManipulation> stackManipulations) {
             this.stackManipulations = stackManipulations;

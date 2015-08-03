@@ -559,7 +559,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.MethodPool.Record.ForDeclaredMethod.WithBody{" +
+                        return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody{" +
                                 "methodDescription=" + methodDescription +
                                 ", byteCodeAppender=" + byteCodeAppender +
                                 ", methodAttributeAppender=" + methodAttributeAppender +

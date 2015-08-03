@@ -85,6 +85,13 @@ public enum MethodInvocation {
         }
     }
 
+    /**
+     * Creates a method invocation with an implicitly determined invocation type. If the method's return type derives from its declared shape, the value
+     * is additionally casted to the value of the generically resolved method.
+     *
+     * @param methodDescription The method to be invoked.
+     * @return A stack manipulation with implicitly determined invocation type.
+     */
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
         MethodDescription.InDefinedShape declaredMethod = methodDescription.asDefined();
         return declaredMethod.getReturnType().asRawType().equals(methodDescription.getReturnType().asRawType())
@@ -417,17 +424,39 @@ public enum MethodInvocation {
         }
     }
 
+    /**
+     * A method invocation of a generically resolved method.
+     */
     protected static class OfGenericMethod implements WithImplicitInvocationTargetType {
 
-        public static WithImplicitInvocationTargetType of(MethodDescription methodDescription, WithImplicitInvocationTargetType invocation) {
+        /**
+         * Creates a generic access dispatcher for a given method.
+         *
+         * @param methodDescription The generically resolved return type of the method.
+         * @param invocation        The invocation of the method in its defined shape.
+         * @return A method access dispatcher for the given method.
+         */
+        protected static WithImplicitInvocationTargetType of(MethodDescription methodDescription, WithImplicitInvocationTargetType invocation) {
             return new OfGenericMethod(methodDescription.getReturnType().asRawType(), invocation);
         }
 
+        /**
+         * The generically resolved return type of the method.
+         */
         private final TypeDescription targetType;
 
+        /**
+         * The invocation of the method in its defined shape.
+         */
         private final WithImplicitInvocationTargetType invocation;
 
-        public OfGenericMethod(TypeDescription targetType, WithImplicitInvocationTargetType invocation) {
+        /**
+         * Creates a generic method invocation.
+         *
+         * @param targetType The generically resolved return type of the method.
+         * @param invocation The invocation of the method in its defined shape.
+         */
+        protected OfGenericMethod(TypeDescription targetType, WithImplicitInvocationTargetType invocation) {
             this.targetType = targetType;
             this.invocation = invocation;
         }

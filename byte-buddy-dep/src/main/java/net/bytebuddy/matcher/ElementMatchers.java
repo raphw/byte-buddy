@@ -22,7 +22,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
@@ -68,6 +71,13 @@ public final class ElementMatchers {
         return definedField(is(new FieldDescription.ForLoadedField(nonNull(field))));
     }
 
+    /**
+     * Matches a field in its defined shape.
+     *
+     * @param matcher The matcher to apply to the matched field's defined shape.
+     * @param <T>     The matched object's type.
+     * @return A matcher that matches a matched field's defined shape.
+     */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> definedField(ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
         return new DefinedShapeMatcher<T, FieldDescription.InDefinedShape>(nonNull(matcher));
     }
@@ -105,6 +115,13 @@ public final class ElementMatchers {
         return definedMethod(is(new MethodDescription.ForLoadedConstructor(nonNull(constructor))));
     }
 
+    /**
+     * Matches a method in its defined shape.
+     *
+     * @param matcher The matcher to apply to the matched method's defined shape.
+     * @param <T>     The matched object's type.
+     * @return A matcher that matches a matched method's defined shape.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> definedMethod(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
         return new DefinedShapeMatcher<T, MethodDescription.InDefinedShape>(nonNull(matcher));
     }
@@ -120,6 +137,13 @@ public final class ElementMatchers {
         return new TokenMatcher<T, MethodDescription.Token>(is(nonNull(methodToken)));
     }
 
+    /**
+     * Matches a parameter in its defined shape.
+     *
+     * @param matcher The matcher to apply to the matched parameter's defined shape.
+     * @param <T>     The matched object's type.
+     * @return A matcher that matches a matched parameter's defined shape.
+     */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> definedParameter(
             ElementMatcher<? super ParameterDescription.InDefinedShape> matcher) {
         return new DefinedShapeMatcher<T, ParameterDescription.InDefinedShape>(nonNull(matcher));
@@ -341,6 +365,14 @@ public final class ElementMatchers {
         return definedMethod(noneOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value))));
     }
 
+    /**
+     * Creates a matcher that matches none of the given methods as {@link FieldDescription}s
+     * by the {@link java.lang.Object#equals(Object)} method. None of the values must be {@code null}.
+     *
+     * @param value The input values to be compared against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher that checks for the equality with none of the given objects.
+     */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> noneOf(Field... value) {
         return definedField(noneOf(new FieldList.ForLoadedField(nonNull(value))));
     }
@@ -441,12 +473,28 @@ public final class ElementMatchers {
         return new CollectionRawTypeMatcher<T>(matcher);
     }
 
+    /**
+     * Matches a type variable with the given name.
+     *
+     * @param symbol The name of the type variable to be match.
+     * @param <T>    The type of the matched object.
+     * @return A matcher that matches type variables with the given name.
+     */
     public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(String symbol) {
         return isVariable(named(nonNull(symbol)));
     }
 
+    /**
+     * Matches a type variable with the given name.
+     *
+     * @param matcher A matcher for the type variable's name.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches type variables with the given name.
+     */
     public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(ElementMatcher<? super NamedElement> matcher) {
-        return new TypeVariableMatcher<T>(nonNull(matcher));
+        return new TypeSortMatcher<T>(anyOf(GenericTypeDescription.Sort.VARIABLE,
+                GenericTypeDescription.Sort.VARIABLE_DETACHED,
+                GenericTypeDescription.Sort.VARIABLE_SYMBOLIC)).and(matcher);
     }
 
     /**
@@ -1134,6 +1182,12 @@ public final class ElementMatchers {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_INITIALIZER);
     }
 
+    /**
+     * Matches any method that is virtual, i.e. non-constructors that are non-static and non-private.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for virtual methods.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isVirtual() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.VIRTUAL);
     }
@@ -1436,10 +1490,24 @@ public final class ElementMatchers {
         return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
     }
 
+    /**
+     * Matches generic type descriptions of the given sort.
+     *
+     * @param sort The generic type sort to match.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches generic types of the given sort.
+     */
     public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(GenericTypeDescription.Sort sort) {
         return ofSort(is(nonNull(sort)));
     }
 
+    /**
+     * Matches generic type descriptions of the given sort.
+     *
+     * @param matcher A matcher for a generic type's sort.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches generic types of the given sort.
+     */
     public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(ElementMatcher<? super GenericTypeDescription.Sort> matcher) {
         return new TypeSortMatcher<T>(nonNull(matcher));
     }

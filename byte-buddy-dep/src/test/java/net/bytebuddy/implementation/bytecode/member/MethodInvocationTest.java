@@ -59,8 +59,8 @@ public class MethodInvocationTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {StackSize.ZERO},
-//                {StackSize.SINGLE},
-//                {StackSize.DOUBLE}
+                {StackSize.SINGLE},
+                {StackSize.DOUBLE}
         });
     }
 

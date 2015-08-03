@@ -4,7 +4,6 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.MethodVisitor;
 
@@ -399,6 +398,11 @@ public interface MethodAttributeAppender {
             this(new MethodDescription.ForLoadedMethod(method), valueFilter);
         }
 
+        /**
+         * Creates a method attribute appender for the given method that indicates explicit adding of default values.
+         *
+         * @param methodDescription The method description of which the annotations should be copied.
+         */
         public ForMethod(MethodDescription methodDescription) {
             this(methodDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE);
         }
