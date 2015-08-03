@@ -265,6 +265,23 @@ public class MethodDelegation implements Implementation {
         return to(nonNull(delegate), MethodGraph.Compiler.DEFAULT);
     }
 
+    /**
+     * Creates an implementation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+     * selection by explicitly selecting methods with calling the
+     * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     *
+     * @param delegate            A delegate instance which will be injected by a
+     *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+     *                            then delegated to this instance.
+     * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+     * @return A method delegation implementation to the given instance methods.
+     */
     public static MethodDelegation to(Object delegate, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(new ImplementationDelegate.ForStaticField(nonNull(delegate)),
                 defaultParameterBinders(),
@@ -299,6 +316,24 @@ public class MethodDelegation implements Implementation {
         return to(delegate, fieldName, MethodGraph.Compiler.DEFAULT);
     }
 
+    /**
+     * Creates an implementation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+     * selection by explicitly selecting methods with calling the
+     * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     *
+     * @param delegate            A delegate instance which will be injected by a
+     *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+     *                            then delegated to this instance.
+     * @param fieldName           The name of the field for storing the delegate instance.
+     * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+     * @return A method delegation implementation to the given {@code static} methods.
+     */
     public static MethodDelegation to(Object delegate, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(
                 new ImplementationDelegate.ForStaticField(nonNull(delegate), isValidIdentifier(fieldName)),
@@ -361,10 +396,52 @@ public class MethodDelegation implements Implementation {
         return toInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName), MethodGraph.Compiler.DEFAULT);
     }
 
+    /**
+     * Creates an implementation where method calls are delegated to an instance that is manually stored in a field
+     * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
+     * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
+     * method calls within the constructor of the instrumented class which will instead result in a
+     * {@link java.lang.NullPointerException}. Note that this includes methods that were defined by the
+     * {@link java.lang.Object} class. You can narrow this default selection by explicitly selecting methods with
+     * calling the
+     * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     * <p>&nbsp;</p>
+     * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
+     *
+     * @param type                The type of the delegate and the field.
+     * @param fieldName           The name of the field.
+     * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
     public static MethodDelegation toInstanceField(Class<?> type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
         return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName, methodGraphCompiler);
     }
 
+    /**
+     * Creates an implementation where method calls are delegated to an instance that is manually stored in a field
+     * {@code fieldName} that is defined for the instrumented type. The field belongs to any instance of the instrumented
+     * type and must be set manually by the user of the instrumented class. Note that this prevents interception of
+     * method calls within the constructor of the instrumented class which will instead result in a
+     * {@link java.lang.NullPointerException}. Note that this includes methods that were defined by the
+     * {@link java.lang.Object} class. You can narrow this default selection by explicitly selecting methods with
+     * calling the
+     * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     * <p>&nbsp;</p>
+     * The field is typically accessed by reflection or by defining an accessor on the instrumented type.
+     *
+     * @param typeDescription     The type of the delegate and the field.
+     * @param fieldName           The name of the field.
+     * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+     * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
+     */
     public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(
                 new ImplementationDelegate.ForInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName)),
@@ -376,7 +453,7 @@ public class MethodDelegation implements Implementation {
                 methodGraphCompiler.compile(typeDescription)
                         .listNodes()
                         .asMethodList()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+                        .filter(isVirtual()));
     }
 
     /**
