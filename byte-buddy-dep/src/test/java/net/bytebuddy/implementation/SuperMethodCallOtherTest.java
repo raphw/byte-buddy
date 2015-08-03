@@ -68,12 +68,9 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Mock
     private MethodList superTypeMethods;
 
-    private ClassLoader classLoader;
-
     @Before
     public void setUp() throws Exception {
         when(implementationTarget.getTypeDescription()).thenReturn(typeDescription);
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
         when(methodDescription.asToken()).thenReturn(methodToken);
     }
 
@@ -137,9 +134,9 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     public void testUnambiguousDirectDefaultMethod() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
                 SuperMethodCall.INSTANCE,
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD));
+                Class.forName(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().newInstance();
@@ -152,18 +149,18 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     public void testAmbiguousDirectDefaultMethodThrowsException() throws Exception {
         implement(Object.class,
                 SuperMethodCall.INSTANCE,
-                classLoader,
+                getClass().getClassLoader(),
                 not(isDeclaredBy(Object.class)),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
+                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
     }
 
 
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(8)
     public void testNonDeclaredDefaultMethodThrowsException() throws Exception {
-        implement(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
+        implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
                 SuperMethodCall.INSTANCE,
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))));
     }
 

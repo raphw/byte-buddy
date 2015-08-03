@@ -38,7 +38,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     @Override
     @Before
     public void setUp() throws Exception {
-        when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Illegal.INSTANCE);
+        when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.asRawType()).thenReturn(superType);

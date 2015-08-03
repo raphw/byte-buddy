@@ -17,8 +17,6 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.*;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -52,13 +50,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
-
-    private ClassLoader classLoader;
-
-    @Before
-    public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-    }
 
     @Override
     protected DynamicType.Builder<?> createPlain() {
@@ -214,13 +205,13 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethodNonOverridden() throws Exception {
-        Class<?> interfaceType = classLoader.loadClass(DEFAULT_METHOD_INTERFACE);
+        Class<?> interfaceType = Class.forName(DEFAULT_METHOD_INTERFACE);
         Object interfaceMarker = interfaceType.getDeclaredField(INTERFACE_STATIC_FIELD_NAME).get(STATIC_FIELD);
         Method interfaceMethod = interfaceType.getDeclaredMethod(FOO);
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(interfaceType)
                 .make()
-                .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.getDeclaredFields().length, is(0));
         assertThat(dynamicType.getDeclaredMethods().length, is(0));
@@ -230,13 +221,13 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethodOverridden() throws Exception {
-        Class<?> interfaceType = classLoader.loadClass(DEFAULT_METHOD_INTERFACE);
+        Class<?> interfaceType = Class.forName(DEFAULT_METHOD_INTERFACE);
         Method interfaceMethod = interfaceType.getDeclaredMethod(FOO);
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(interfaceType)
                 .method(isDeclaredBy(interfaceType)).intercept(FixedValue.value(BAR))
                 .make()
-                .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.getDeclaredFields().length, is(0));
         assertThat(dynamicType.getDeclaredMethods().length, is(1));
@@ -247,10 +238,10 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @JavaVersionRule.Enforce(8)
     public void testParameterMetaDataSubclassForLoaded() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
-                .subclass(classLoader.loadClass(PARAMETER_NAME_CLASS))
+                .subclass(Class.forName(PARAMETER_NAME_CLASS))
                 .method(named(FOO)).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethods().length, is(1));
         Class<?> executable = Class.forName("java.lang.reflect.Executable");

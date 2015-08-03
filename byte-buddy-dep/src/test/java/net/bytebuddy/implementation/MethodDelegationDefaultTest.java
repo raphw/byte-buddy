@@ -3,7 +3,6 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bind.annotation.Default;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,21 +25,14 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private ClassLoader classLoader;
-
-    @Before
-    public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-    }
-
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDefaultInterface() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(classLoader.loadClass(DELEGATION_TARGET)),
-                classLoader,
+                MethodDelegation.to(Class.forName(DELEGATION_TARGET)),
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(DEFAULT_INTERFACE));
+                Class.forName(DEFAULT_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));
     }
@@ -50,7 +42,7 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
     public void testNoDefaultInterface() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
                 MethodDelegation.to(DelegationNoDefaultInterfaceInterceptor.class),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 DelegationNoDefaultInterface.class);
         DelegationNoDefaultInterface instance = (DelegationNoDefaultInterface) loaded.getLoaded().newInstance();
@@ -61,10 +53,10 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(8)
     public void testDefaultInterfaceSerializableProxy() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(classLoader.loadClass(DELEGATION_TARGET_SERIALIZABLE)),
-                classLoader,
+                MethodDelegation.to(Class.forName(DELEGATION_TARGET_SERIALIZABLE)),
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(DEFAULT_INTERFACE));
+                Class.forName(DEFAULT_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));
     }

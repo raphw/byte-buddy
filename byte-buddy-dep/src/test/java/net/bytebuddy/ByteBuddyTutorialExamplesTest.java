@@ -26,7 +26,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -261,12 +260,11 @@ public class ByteBuddyTutorialExamplesTest {
     @JavaVersionRule.Enforce(8)
     public void testFieldsAndMethodsMethodDefaultCall() throws Exception {
         // This test differs from the tutorial by only conditionally expressing the Java 8 types.
-        ClassLoader classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
         Object instance = new ByteBuddy(ClassFileVersion.JAVA_V8)
                 .subclass(Object.class)
-                .implement(classLoader.loadClass(DEFAULT_METHOD_INTERFACE))
-                .implement(classLoader.loadClass(CONFLICTING_DEFAULT_METHOD_INTERFACE))
-                .method(named("foo")).intercept(DefaultMethodCall.prioritize(classLoader.loadClass(DEFAULT_METHOD_INTERFACE)))
+                .implement(Class.forName(DEFAULT_METHOD_INTERFACE))
+                .implement(Class.forName(CONFLICTING_DEFAULT_METHOD_INTERFACE))
+                .method(named("foo")).intercept(DefaultMethodCall.prioritize(Class.forName(DEFAULT_METHOD_INTERFACE)))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()

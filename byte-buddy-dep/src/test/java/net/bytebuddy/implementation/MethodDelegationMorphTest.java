@@ -4,9 +4,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bind.annotation.Morph;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.hamcrest.CoreMatchers;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -32,13 +30,6 @@ public class MethodDelegationMorphTest extends AbstractImplementationTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
-
-    private ClassLoader classLoader;
-
-    @Before
-    public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-    }
 
     @Test
     public void testMorph() throws Exception {
@@ -118,11 +109,11 @@ public class MethodDelegationMorphTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethodExplicit() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(classLoader.loadClass(DEFAULT_INTERFACE_TARGET_EXPLICIT))
+                MethodDelegation.to(Class.forName(DEFAULT_INTERFACE_TARGET_EXPLICIT))
                         .appendParameterBinder(Morph.Binder.install(Morphing.class)),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(DEFAULT_INTERFACE));
+                Class.forName(DEFAULT_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO, String.class)
                 .invoke(instance, QUX), is((Object) (FOO + BAR)));
@@ -132,11 +123,11 @@ public class MethodDelegationMorphTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethodImplicit() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(classLoader.loadClass(DEFAULT_INTERFACE_TARGET_IMPLICIT))
+                MethodDelegation.to(Class.forName(DEFAULT_INTERFACE_TARGET_IMPLICIT))
                         .appendParameterBinder(Morph.Binder.install(Morphing.class)),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(DEFAULT_INTERFACE));
+                Class.forName(DEFAULT_INTERFACE));
         Object instance = loaded.getLoaded().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO, String.class)
                 .invoke(instance, QUX), is((Object) (FOO + BAR)));
@@ -151,11 +142,13 @@ public class MethodDelegationMorphTest extends AbstractImplementationTest {
         /* empty */
     }
 
+    @SuppressWarnings("unused")
     private interface PackagePrivateMorphing<T> {
 
         T morph(Object... arguments);
     }
 
+    @SuppressWarnings("unused")
     private interface WrongParametersMorphing<T> {
 
         T morph(Object arguments);
@@ -219,6 +212,7 @@ public class MethodDelegationMorphTest extends AbstractImplementationTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class SimpleMorphIllegal {
 
         public static String intercept(@Morph Void morphing) {

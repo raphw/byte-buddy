@@ -35,7 +35,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Override
     @Before
     public void setUp() throws Exception {
-        when(methodGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Illegal.INSTANCE);
+        when(methodGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(methodGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.asRawType()).thenReturn(superType);

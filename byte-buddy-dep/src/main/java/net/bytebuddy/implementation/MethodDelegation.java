@@ -274,8 +274,8 @@ public class MethodDelegation implements Implementation {
                 Assigner.DEFAULT,
                 methodGraphCompiler.compile(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .listNodes()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
-                        .asMethodList());
+                        .asMethodList()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
     }
 
     /**
@@ -309,8 +309,8 @@ public class MethodDelegation implements Implementation {
                 Assigner.DEFAULT,
                 methodGraphCompiler.compile(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .listNodes()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
-                        .asMethodList());
+                        .asMethodList()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
     }
 
     /**
@@ -375,8 +375,8 @@ public class MethodDelegation implements Implementation {
                 Assigner.DEFAULT,
                 methodGraphCompiler.compile(typeDescription)
                         .listNodes()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor())))
-                        .asMethodList());
+                        .asMethodList()
+                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
     }
 
     /**

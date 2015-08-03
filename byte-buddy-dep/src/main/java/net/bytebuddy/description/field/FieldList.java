@@ -16,6 +16,8 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * Implementations represent a list of field descriptions.
+ *
+ * @param <T> The type of field descriptions represented by this list.
  */
 public interface FieldList<T extends FieldDescription> extends FilterableList<T, FieldList<T>> {
 
@@ -35,10 +37,17 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
      */
     ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
 
+    /**
+     * Returns this list of these field descriptions resolved to their defined shape.
+     *
+     * @return A list of fields in their defined shape.
+     */
     FieldList<FieldDescription.InDefinedShape> asDefined();
 
     /**
      * An abstract base implementation of a {@link FieldList}.
+     *
+     * @param <S> The type of field descriptions represented by this list.
      */
     abstract class AbstractBase<S extends FieldDescription> extends FilterableList.AbstractBase<S, FieldList<S>> implements FieldList<S> {
 
@@ -112,6 +121,8 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
 
     /**
      * A wrapper implementation of a field list for a given list of field descriptions.
+     *
+     * @param <S> The type of field descriptions represented by this list.
      */
     class Explicit<S extends FieldDescription> extends AbstractBase<S> {
 

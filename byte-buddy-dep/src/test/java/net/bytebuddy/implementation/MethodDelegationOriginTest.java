@@ -3,8 +3,6 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -26,13 +24,6 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
-
-    private ClassLoader classLoader;
-
-    @Before
-    public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-    }
 
     @Test
     public void testOriginClass() throws Exception {
@@ -73,7 +64,7 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testOriginMethodHandle() throws Throwable {
-        Class<?> originMethodHandle = classLoader.loadClass(ORIGIN_METHOD_HANDLE);
+        Class<?> originMethodHandle = Class.forName(ORIGIN_METHOD_HANDLE);
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(originMethodHandle));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), instanceOf((Class<?>) originMethodHandle.getDeclaredField(TYPE).get(null)));
@@ -82,7 +73,7 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testOriginMethodType() throws Throwable {
-        Class<?> originMethodType = classLoader.loadClass(ORIGIN_METHOD_TYPE);
+        Class<?> originMethodType = Class.forName(ORIGIN_METHOD_TYPE);
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(originMethodType));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), instanceOf((Class<?>) originMethodType.getDeclaredField(TYPE).get(null)));

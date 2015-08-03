@@ -15,9 +15,6 @@ import org.mockito.Mockito;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Collections;
-
-import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.not;
@@ -50,10 +47,10 @@ public abstract class AbstractImplementationTargetTest {
         when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(methodGraph.getSuperGraph()).thenReturn(superGraph);
-        when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Illegal.INSTANCE);
+        when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(methodGraph.getInterfaceGraph(defaultMethodDeclaringType)).thenReturn(defaultGraph);
-        when(defaultGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Illegal.INSTANCE);
+        when(defaultGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(defaultGraph.locate(defaultToken)).thenReturn(new MethodGraph.Node.Simple(defaultMethod));
         when(methodDeclaringType.asRawType()).thenReturn(methodDeclaringType);
         when(invokableMethod.getDeclaringType()).thenReturn(methodDeclaringType);

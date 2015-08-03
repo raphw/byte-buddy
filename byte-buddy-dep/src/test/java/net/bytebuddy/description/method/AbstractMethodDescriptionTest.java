@@ -7,7 +7,6 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.test.packaging.VisibilityMethodTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,8 +34,6 @@ public abstract class AbstractMethodDescriptionTest {
 
     private Constructor<?> firstConstructor, secondConstructor;
 
-    private ClassLoader classLoader;
-
     private static int hashCode(Method method) {
         int hashCode = new TypeDescription.ForLoadedType(method.getDeclaringClass()).hashCode();
         hashCode = 31 * hashCode + method.getName().hashCode();
@@ -57,7 +54,6 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
         firstMethod = Sample.class.getDeclaredMethod("first");
         secondMethod = Sample.class.getDeclaredMethod("second", String.class, long.class);
         thirdMethod = Sample.class.getDeclaredMethod("third", Object[].class, int[].class);
@@ -324,7 +320,7 @@ public abstract class AbstractMethodDescriptionTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testParameterNameAndModifiers() throws Exception {
-        Class<?> type = classLoader.loadClass("net.bytebuddy.test.precompiled.ParameterNames");
+        Class<?> type = Class.forName("net.bytebuddy.test.precompiled.ParameterNames");
         assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(0).isNamed(), is(true));
         assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(1).isNamed(), is(true));
         assertThat(describe(type.getDeclaredMethod("foo", String.class, long.class, int.class)).getParameters().get(2).isNamed(), is(true));
@@ -669,6 +665,7 @@ public abstract class AbstractMethodDescriptionTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class MethodVisibilityType {
 
         public void packagePrivateArgument(PackagePrivateType arg) {

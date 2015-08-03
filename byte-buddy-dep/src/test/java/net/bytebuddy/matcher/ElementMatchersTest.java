@@ -9,7 +9,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,13 +48,6 @@ public class ElementMatchersTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private ClassLoader classLoader;
-
-    @Before
-    public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-    }
-
     @Test
     public void testIs() throws Exception {
         Object value = new Object();
@@ -73,10 +65,10 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsField() throws Exception {
-        assertThat(ElementMatchers.is(ElementMatchersTest.class.getDeclaredField("classLoader"))
-                .matches(new FieldDescription.ForLoadedField(ElementMatchersTest.class.getDeclaredField("classLoader"))), is(true));
-        assertThat(ElementMatchers.is(ElementMatchersTest.class.getDeclaredField("classLoader"))
-                .matches(new FieldDescription.ForLoadedField(ElementMatchersTest.class.getDeclaredField("javaVersionRule"))), is(false));
+        assertThat(ElementMatchers.is(FieldType.class.getDeclaredField("foo"))
+                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(true));
+        assertThat(ElementMatchers.is(FieldType.class.getDeclaredField("bar"))
+                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(false));
     }
 
     @Test
@@ -308,10 +300,12 @@ public class ElementMatchersTest {
 
     @Test
     public void testNoneOfField() throws Exception {
-        assertThat(ElementMatchers.is(ElementMatchersTest.class.getDeclaredField("classLoader"))
-                .matches(new FieldDescription.ForLoadedField(ElementMatchersTest.class.getDeclaredField("classLoader"))), is(true));
-        assertThat(ElementMatchers.is(ElementMatchersTest.class.getDeclaredField("classLoader"))
-                .matches(new FieldDescription.ForLoadedField(ElementMatchersTest.class.getDeclaredField("javaVersionRule"))), is(false));
+        assertThat(ElementMatchers.noneOf(FieldType.class.getDeclaredField("foo"))
+                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(false));
+        assertThat(ElementMatchers.noneOf(FieldType.class.getDeclaredField("bar"))
+                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(true));
+        assertThat(ElementMatchers.noneOf(FieldType.class.getDeclaredField("foo"), FieldType.class.getDeclaredField("bar"))
+                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(false));
     }
 
     @Test
@@ -679,7 +673,7 @@ public class ElementMatchersTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testHasParameter() throws Exception {
-        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(classLoader.loadClass(PARAMETER_NAMES)
+        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(Class.forName(PARAMETER_NAMES)
                 .getDeclaredMethod(FOO, String.class, long.class, int.class));
         assertThat(ElementMatchers.hasParameter(named(FOO)).matches(methodDescription), is(false));
         assertThat(ElementMatchers.hasParameter(named("first")).matches(methodDescription), is(true));
@@ -762,8 +756,8 @@ public class ElementMatchersTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testIsDefaultMethod() throws Exception {
-        assertThat(ElementMatchers.isDefaultMethod().matches(new MethodDescription.ForLoadedMethod(classLoader
-                .loadClass(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO))), is(true));
+        assertThat(ElementMatchers.isDefaultMethod().matches(new MethodDescription.ForLoadedMethod(Class.forName(SINGLE_DEFAULT_METHOD)
+                .getDeclaredMethod(FOO))), is(true));
         assertThat(ElementMatchers.isDefaultMethod()
                 .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
@@ -1025,6 +1019,13 @@ public class ElementMatchersTest {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface OtherAnnotation {
         /* empty */
+    }
+
+    public static class FieldType {
+
+        String foo;
+
+        Object bar;
     }
 
     private static class IsDeclaredBy {

@@ -5,9 +5,7 @@ import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import org.hamcrest.CoreMatchers;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -31,13 +29,6 @@ public class MethodDelegationSuperCallTest extends AbstractImplementationTest {
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
-
-    private ClassLoader classLoader;
-
-    @Before
-    public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-    }
 
     @Test
     public void testRunnableSuperCall() throws Exception {
@@ -82,9 +73,9 @@ public class MethodDelegationSuperCallTest extends AbstractImplementationTest {
     public void testDefaultMethodFallback() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
                 MethodDelegation.to(NonVoidTarget.class),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD));
+                Class.forName(SINGLE_DEFAULT_METHOD));
         Object instance = loaded.getLoaded().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) FOO));
@@ -95,9 +86,9 @@ public class MethodDelegationSuperCallTest extends AbstractImplementationTest {
     public void testDefaultMethodFallbackDisabled() throws Exception {
         implement(Object.class,
                 MethodDelegation.to(NoFallback.class),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD));
+                Class.forName(SINGLE_DEFAULT_METHOD));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -105,10 +96,10 @@ public class MethodDelegationSuperCallTest extends AbstractImplementationTest {
     public void testDefaultMethodFallbackAmbiguous() throws Exception {
         implement(Object.class,
                 MethodDelegation.to(NonVoidTarget.class),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD),
-                classLoader.loadClass(CONFLICTING_INTERFACE));
+                Class.forName(SINGLE_DEFAULT_METHOD),
+                Class.forName(CONFLICTING_INTERFACE));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -202,6 +193,7 @@ public class MethodDelegationSuperCallTest extends AbstractImplementationTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class NoFallback {
 
         @RuntimeType

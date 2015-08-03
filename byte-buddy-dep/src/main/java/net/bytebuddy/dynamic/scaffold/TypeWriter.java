@@ -98,10 +98,21 @@ public interface TypeWriter<T> {
              */
             void apply(ClassVisitor classVisitor);
 
+            /**
+             * A record for a simple field without attributes or a default value.
+             */
             class ForSimpleField implements Record {
 
+                /**
+                 * The implemented field.
+                 */
                 private final FieldDescription fieldDescription;
 
+                /**
+                 * Creates a new record for a simple field.
+                 *
+                 * @param fieldDescription The described field.
+                 */
                 public ForSimpleField(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
                 }
@@ -146,14 +157,32 @@ public interface TypeWriter<T> {
                 }
             }
 
+            /**
+             * A record for a rich field with attributes and a potential default value.
+             */
             class ForRichField implements Record {
 
+                /**
+                 * The attribute appender for the field.
+                 */
                 private final FieldAttributeAppender attributeAppender;
 
+                /**
+                 * The field's default value.
+                 */
                 private final Object defaultValue;
 
+                /**
+                 * The implemented field.
+                 */
                 private final FieldDescription fieldDescription;
 
+                /**
+                 * Creates a record for a rich field.
+                 * @param attributeAppender The attribute appender for the field.
+                 * @param defaultValue The field's default value.
+                 * @param fieldDescription The implemented field.
+                 */
                 public ForRichField(FieldAttributeAppender attributeAppender, Object defaultValue, FieldDescription fieldDescription) {
                     this.attributeAppender = attributeAppender;
                     this.defaultValue = defaultValue;
@@ -346,7 +375,7 @@ public interface TypeWriter<T> {
             /**
              * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
-            enum ForInheritedMethod implements Record {
+            enum ForNonDefinedMethod implements Record {
 
                 /**
                  * The singleton instance.
@@ -385,25 +414,30 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.MethodPool.Record.ForInheritedMethod." + name();
+                    return "TypeWriter.MethodPool.Record.ForNonDefinedMethod." + name();
                 }
             }
 
             /**
              * A base implementation of an abstract entry that defines a method.
              */
-            abstract class ForDeclaredMethod implements Record {
+            abstract class ForDefinedMethod implements Record {
 
-                protected abstract MethodDescription getDeclaredMethod();
+                /**
+                 * Returns the method this record implements.
+                 *
+                 * @return The method this record implements.
+                 */
+                protected abstract MethodDescription getImplementedMethod();
 
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(getModifierResolver().transform(getDeclaredMethod(), getSort().isImplemented()),
-                            getDeclaredMethod().getInternalName(),
-                            getDeclaredMethod().getDescriptor(),
-                            getDeclaredMethod().getGenericSignature(),
-                            getDeclaredMethod().getExceptionTypes().asRawTypes().toInternalNames());
-                    ParameterList<?> parameterList = getDeclaredMethod().getParameters();
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(getModifierResolver().transform(getImplementedMethod(), getSort().isImplemented()),
+                            getImplementedMethod().getInternalName(),
+                            getImplementedMethod().getDescriptor(),
+                            getImplementedMethod().getGenericSignature(),
+                            getImplementedMethod().getExceptionTypes().asRawTypes().toInternalNames());
+                    ParameterList<?> parameterList = getImplementedMethod().getParameters();
                     if (parameterList.hasExplicitMetaData()) {
                         for (ParameterDescription parameterDescription : parameterList) {
                             methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
@@ -417,8 +451,11 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method as byte code.
                  */
-                public static class WithBody extends ForDeclaredMethod {
+                public static class WithBody extends ForDefinedMethod {
 
+                    /**
+                     * The implemented method.
+                     */
                     private final MethodDescription methodDescription;
 
                     /**
@@ -436,6 +473,12 @@ public interface TypeWriter<T> {
                      */
                     private final ModifierResolver modifierResolver;
 
+                    /**
+                     * Creates a new record for an implemented method without attributes or a modifier resolver.
+                     *
+                     * @param methodDescription The implemented method.
+                     * @param byteCodeAppender  The byte code appender to apply.
+                     */
                     public WithBody(MethodDescription methodDescription, ByteCodeAppender byteCodeAppender) {
                         this(methodDescription, byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE, ModifierResolver.Retaining.INSTANCE);
                     }
@@ -443,6 +486,7 @@ public interface TypeWriter<T> {
                     /**
                      * Creates a new entry for a method that defines a method as byte code.
                      *
+                     * @param methodDescription       The implemented method.
                      * @param byteCodeAppender        The byte code appender to apply.
                      * @param methodAttributeAppender The method attribute appender to apply.
                      * @param modifierResolver        The modifier resolver to apply to the implemented method.
@@ -458,7 +502,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected MethodDescription getDeclaredMethod() {
+                    protected MethodDescription getImplementedMethod() {
                         return methodDescription;
                     }
 
@@ -527,8 +571,11 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method but without byte code and without an annotation value.
                  */
-                public static class WithoutBody extends ForDeclaredMethod {
+                public static class WithoutBody extends ForDefinedMethod {
 
+                    /**
+                     * The implemented method.
+                     */
                     private final MethodDescription methodDescription;
 
                     /**
@@ -544,6 +591,7 @@ public interface TypeWriter<T> {
                     /**
                      * Creates a new entry for a method that is defines but does not append byte code, i.e. is native or abstract.
                      *
+                     * @param methodDescription       The implemented method.
                      * @param methodAttributeAppender The method attribute appender to apply.
                      * @param modifierResolver        The modifier resolver to apply to the method that is being created.
                      */
@@ -556,7 +604,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected MethodDescription getDeclaredMethod() {
+                    protected MethodDescription getImplementedMethod() {
                         return methodDescription;
                     }
 
@@ -605,7 +653,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.MethodPool.Record.ForDeclaredMethod.WithoutBody{" +
+                        return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody{" +
                                 "methodDescription=" + methodDescription +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
                                 ", modifierResolver=" + modifierResolver +
@@ -616,8 +664,11 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method with a default annotation value.
                  */
-                public static class WithAnnotationDefaultValue extends ForDeclaredMethod {
+                public static class WithAnnotationDefaultValue extends ForDefinedMethod {
 
+                    /**
+                     * The implemented method.
+                     */
                     private final MethodDescription methodDescription;
 
                     /**
@@ -638,6 +689,7 @@ public interface TypeWriter<T> {
                     /**
                      * Creates a new entry for defining a method with a default annotation value.
                      *
+                     * @param methodDescription       The implemented method.
                      * @param annotationValue         The annotation value to define.
                      * @param methodAttributeAppender The method attribute appender to apply.
                      * @param modifierResolver        The modifier resolver to apply to the method that is being created.
@@ -653,7 +705,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected MethodDescription getDeclaredMethod() {
+                    protected MethodDescription getImplementedMethod() {
                         return methodDescription;
                     }
 
@@ -712,7 +764,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.MethodPool.Record.ForDeclaredMethod.WithAnnotationDefaultValue{" +
+                        return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue{" +
                                 "methodDescription=" + methodDescription +
                                 ", annotationValue=" + annotationValue +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
@@ -721,8 +773,19 @@ public interface TypeWriter<T> {
                     }
                 }
 
-                public static class OfVisibilityBridge extends ForDeclaredMethod implements ByteCodeAppender {
+                /**
+                 * A record for a visibility bridge.
+                 */
+                public static class OfVisibilityBridge extends ForDefinedMethod implements ByteCodeAppender {
 
+                    /**
+                     * Creates a record for a visibility bridge.
+                     *
+                     * @param instrumentedType  The instrumented type.
+                     * @param bridgeTarget      The target method of the visibility bridge.
+                     * @param attributeAppender The attribute appender to apply to the visibility bridge.
+                     * @return A record describing the visibility bridge.
+                     */
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
                         return new OfVisibilityBridge(VisibilityBridge.of(instrumentedType, bridgeTarget),
                                 bridgeTarget,
@@ -730,14 +793,34 @@ public interface TypeWriter<T> {
                                 attributeAppender);
                     }
 
+                    /**
+                     * The visibility bridge.
+                     */
                     private final MethodDescription visibilityBridge;
 
+                    /**
+                     * The method the visibility bridge invokes.
+                     */
                     private final MethodDescription bridgeTarget;
 
+                    /**
+                     * The super type of the instrumented type.
+                     */
                     private final TypeDescription superType;
 
+                    /**
+                     * The attribute appender to apply to the visibility bridge.
+                     */
                     private final MethodAttributeAppender attributeAppender;
 
+                    /**
+                     * Creates a new record for a visibility bridge.
+                     *
+                     * @param visibilityBridge  The visibility bridge.
+                     * @param bridgeTarget      The method the visibility bridge invokes.
+                     * @param superType         The super type of the instrumented type.
+                     * @param attributeAppender The attribute appender to apply to the visibility bridge.
+                     */
                     protected OfVisibilityBridge(MethodDescription visibilityBridge,
                                                  MethodDescription bridgeTarget,
                                                  TypeDescription superType,
@@ -749,7 +832,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected MethodDescription getDeclaredMethod() {
+                    protected MethodDescription getImplementedMethod() {
                         return visibilityBridge;
                     }
 
@@ -765,7 +848,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
-                        return new ForDeclaredMethod.WithBody(visibilityBridge,
+                        return new ForDefinedMethod.WithBody(visibilityBridge,
                                 new ByteCodeAppender.Compound(this, byteCodeAppender),
                                 attributeAppender,
                                 ModifierResolver.Retaining.INSTANCE);
@@ -795,32 +878,66 @@ public interface TypeWriter<T> {
 
                     @Override
                     public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && visibilityBridge.equals(((OfVisibilityBridge) other).visibilityBridge);
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        OfVisibilityBridge that = (OfVisibilityBridge) other;
+                        return visibilityBridge.equals(that.visibilityBridge)
+                                && bridgeTarget.equals(that.bridgeTarget)
+                                && superType.equals(that.superType)
+                                && attributeAppender.equals(that.attributeAppender);
                     }
 
                     @Override
                     public int hashCode() {
-                        return visibilityBridge.hashCode();
+                        int result = visibilityBridge.hashCode();
+                        result = 31 * result + bridgeTarget.hashCode();
+                        result = 31 * result + superType.hashCode();
+                        result = 31 * result + attributeAppender.hashCode();
+                        return result;
                     }
 
                     @Override
                     public String toString() {
-                        return "TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge{" +
-                                "bridgeTarget=" + visibilityBridge +
+                        return "TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge{" +
+                                "visibilityBridge=" + visibilityBridge +
+                                ", bridgeTarget=" + bridgeTarget +
+                                ", superType=" + superType +
+                                ", attributeAppender=" + attributeAppender +
                                 '}';
                     }
 
+                    /**
+                     * A method describing a visibility bridge.
+                     */
                     protected static class VisibilityBridge extends MethodDescription.InDefinedShape.AbstractBase {
 
+                        /**
+                         * Creates a visibility bridge.
+                         *
+                         * @param instrumentedType The instrumented type.
+                         * @param bridgeTarget     The target method of the visibility bridge.
+                         * @return A method description of the visibility bridge.
+                         */
                         protected static MethodDescription of(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
                             return new VisibilityBridge(instrumentedType, bridgeTarget.asToken().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE));
                         }
 
+                        /**
+                         * The instrumented type.
+                         */
                         private final TypeDescription instrumentedType;
 
+                        /**
+                         * A token describing the bridge's raw target.
+                         */
                         private final MethodDescription.Token bridgeTarget;
 
+                        /**
+                         * Creates a new visibility bridge method.
+                         *
+                         * @param instrumentedType The instrumented type.
+                         * @param bridgeTarget     A token describing the bridge's target.
+                         */
                         protected VisibilityBridge(TypeDescription instrumentedType, Token bridgeTarget) {
                             this.instrumentedType = instrumentedType;
                             this.bridgeTarget = bridgeTarget;
@@ -874,8 +991,23 @@ public interface TypeWriter<T> {
                 }
             }
 
+            /**
+             * A wrapper that appends accessor bridges for a method's implementation. The bridges are only added if
+             * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record#apply(ClassVisitor, Implementation.Context)} is invoked such
+             * that bridges are not appended for methods that are rebased or redefined as such types already have bridge methods in place.
+             */
             class AccessBridgeWrapper implements Record {
 
+                /**
+                 * Wrapps the given record in an accessor bridge wrapper if necessary.
+                 *
+                 * @param delegate          The delegate for implementing the bridge's target.
+                 * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
+                 * @param bridgeTarget      The bridge methods' target methods.
+                 * @param bridges           A collection of all tokens representing all bridge methods.
+                 * @param attributeAppender The attribute appender being applied for the bridge target.
+                 * @return The given record wrapped by a bridge method wrapper if necessary.
+                 */
                 public static Record of(Record delegate,
                                         TypeDescription instrumentedType,
                                         MethodDescription bridgeTarget,
@@ -886,16 +1018,40 @@ public interface TypeWriter<T> {
                             : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, bridges, attributeAppender);
                 }
 
+                /**
+                 * The delegate for implementing the bridge's target.
+                 */
                 private final Record delegate;
 
+                /**
+                 * The instrumented type that defines the bridge methods and the bridge target.
+                 */
                 private final TypeDescription instrumentedType;
 
+                /**
+                 * The target of the bridge method.
+                 */
                 private final MethodDescription bridgeTarget;
 
+                /**
+                 * A collection of all tokens representing all bridge methods.
+                 */
                 private final Set<MethodDescription.TypeToken> bridges;
 
+                /**
+                 * The attribute appender being applied for the bridge target.
+                 */
                 private final MethodAttributeAppender attributeAppender;
 
+                /**
+                 * Creates a wrapper for adding accessor bridges.
+                 *
+                 * @param delegate          The delegate for implementing the bridge's target.
+                 * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
+                 * @param bridgeTarget      The target of the bridge method.
+                 * @param bridges           A collection of all tokens representing all bridge methods.
+                 * @param attributeAppender The attribute appender being applied for the bridge target.
+                 */
                 protected AccessBridgeWrapper(Record delegate,
                                               TypeDescription instrumentedType,
                                               MethodDescription bridgeTarget,
@@ -956,14 +1112,66 @@ public interface TypeWriter<T> {
                     delegate.applyBody(methodVisitor, implementationContext);
                 }
 
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    AccessBridgeWrapper that = (AccessBridgeWrapper) other;
+                    return delegate.equals(that.delegate)
+                            && instrumentedType.equals(that.instrumentedType)
+                            && bridgeTarget.equals(that.bridgeTarget)
+                            && bridges.equals(that.bridges)
+                            && attributeAppender.equals(that.attributeAppender);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = delegate.hashCode();
+                    result = 31 * result + instrumentedType.hashCode();
+                    result = 31 * result + bridgeTarget.hashCode();
+                    result = 31 * result + bridges.hashCode();
+                    result = 31 * result + attributeAppender.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.MethodPool.Record.AccessBridgeWrapper{" +
+                            "delegate=" + delegate +
+                            ", instrumentedType=" + instrumentedType +
+                            ", bridgeTarget=" + bridgeTarget +
+                            ", bridges=" + bridges +
+                            ", attributeAppender=" + attributeAppender +
+                            '}';
+                }
+
+                /**
+                 * A method representing an accessor bridge method.
+                 */
                 protected static class AccessorBridge extends MethodDescription.InDefinedShape.AbstractBase {
 
+                    /**
+                     * The target method of the bridge.
+                     */
                     private final MethodDescription bridgeTarget;
 
+                    /**
+                     * The bridge's type token.
+                     */
                     private final MethodDescription.TypeToken bridge;
 
+                    /**
+                     * The instrumented type defining the bridge target.
+                     */
                     private final TypeDescription instrumentedType;
 
+                    /**
+                     * Creates a new accessor bridge method.
+                     *
+                     * @param bridgeTarget     The target method of the bridge.
+                     * @param bridge           The bridge's type token.
+                     * @param instrumentedType The instrumented type defining the bridge target.
+                     */
                     protected AccessorBridge(MethodDescription bridgeTarget, TypeToken bridge, TypeDescription instrumentedType) {
                         this.bridgeTarget = bridgeTarget;
                         this.bridge = bridge;
@@ -1016,13 +1224,28 @@ public interface TypeWriter<T> {
                     }
                 }
 
+                /**
+                 * A method representing a bridge's target method in its defined shape.
+                 */
                 protected static class BridgeTarget extends MethodDescription.InDefinedShape.AbstractBase {
 
+                    /**
+                     * The target method of the bridge.
+                     */
                     private final MethodDescription bridgeTarget;
 
+                    /**
+                     * The instrumented type defining the bridge target.
+                     */
                     private final TypeDescription instrumentedType;
 
-                    public BridgeTarget(MethodDescription bridgeTarget, TypeDescription instrumentedType) {
+                    /**
+                     * Creates a new bridge target.
+                     *
+                     * @param bridgeTarget     The target method of the bridge.
+                     * @param instrumentedType The instrumented type defining the bridge target.
+                     */
+                    protected BridgeTarget(MethodDescription bridgeTarget, TypeDescription instrumentedType) {
                         this.bridgeTarget = bridgeTarget;
                         this.instrumentedType = instrumentedType;
                     }
@@ -1997,7 +2220,8 @@ public interface TypeWriter<T> {
                      * Creates a new code preserving method visitor.
                      *
                      * @param actualMethodVisitor The method visitor of the actual method.
-                     * @param record               The method pool entry to apply.
+                     * @param record              The method pool entry to apply.
+                     * @param resolution          The resolution of the method rebase resolver in use.
                      */
                     protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
                                                           MethodPool.Record record,
@@ -2064,7 +2288,7 @@ public interface TypeWriter<T> {
                      * Creates a new attribute obtaining method visitor.
                      *
                      * @param actualMethodVisitor The method visitor of the actual method.
-                     * @param record               The method pool entry to apply.
+                     * @param record              The method pool entry to apply.
                      */
                     protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Record record) {
                         super(ASM_API_VERSION, actualMethodVisitor);
@@ -2112,6 +2336,8 @@ public interface TypeWriter<T> {
 
                     /**
                      * Creates a new type initializer injection.
+                     *
+                     * @param instrumentedType The instrumented type.
                      */
                     protected TypeInitializerInjection(TypeDescription instrumentedType) {
                         injectorProxyMethod = new TypeInitializerDelegate(instrumentedType, RandomString.make());
@@ -2146,6 +2372,9 @@ public interface TypeWriter<T> {
                 }
             }
 
+            /**
+             * A method containing the original type initializer of a redefined class.
+             */
             protected static class TypeInitializerDelegate extends MethodDescription.InDefinedShape.AbstractBase {
 
                 /**
@@ -2153,10 +2382,22 @@ public interface TypeWriter<T> {
                  */
                 private static final String TYPE_INITIALIZER_PROXY_PREFIX = "classInitializer";
 
+                /**
+                 * The instrumented type that defines this delegate method.
+                 */
                 private final TypeDescription instrumentedType;
 
+                /**
+                 * The suffix to append to the default prefix in order to avoid naming conflicts.
+                 */
                 private final String suffix;
 
+                /**
+                 * Creates a new type initializer delegate.
+                 *
+                 * @param instrumentedType The instrumented type that defines this delegate method.
+                 * @param suffix           The suffix to append to the default prefix in order to avoid naming conflicts.
+                 */
                 protected TypeInitializerDelegate(TypeDescription instrumentedType, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.suffix = suffix;

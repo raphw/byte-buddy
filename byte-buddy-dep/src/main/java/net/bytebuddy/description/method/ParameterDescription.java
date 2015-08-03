@@ -80,11 +80,17 @@ public interface ParameterDescription extends AnnotatedCodeElement,
      */
     int getOffset();
 
+    /**
+     * Represents a parameter in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
+     */
     interface InDefinedShape extends ParameterDescription {
 
         @Override
         MethodDescription.InDefinedShape getDeclaringMethod();
 
+        /**
+         * An abstract base implementation of a parameter description in its defined shape.
+         */
         abstract class AbstractBase extends ParameterDescription.AbstractBase implements InDefinedShape {
 
             @Override

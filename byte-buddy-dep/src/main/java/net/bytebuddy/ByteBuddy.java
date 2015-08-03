@@ -5,13 +5,10 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -118,6 +115,9 @@ public class ByteBuddy {
      */
     protected final Definable<Integer> modifiers;
 
+    /**
+     * The method graph compiler to use.
+     */
     protected final MethodGraph.Compiler methodGraphCompiler;
 
     /**
@@ -180,6 +180,7 @@ public class ByteBuddy {
      * @param methodRegistry                        The currently valid method registry.
      * @param modifiers                             The modifiers to define for any implementation process.
      * @param typeAttributeAppender                 The type attribute appender to apply to any implementation process.
+     * @param methodGraphCompiler                   The method graph compiler to use.
      * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any field
      *                                              definition.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
@@ -274,6 +275,11 @@ public class ByteBuddy {
         return modifiers;
     }
 
+    /**
+     * Returns the method graph compiler that is used.
+     *
+     * @return The method graph compiler that is used.
+     */
     public MethodGraph.Compiler getMethodGraphCompiler() {
         return methodGraphCompiler;
     }
@@ -1060,8 +1066,7 @@ public class ByteBuddy {
      * that are to be applied onto any creation process of a dynamic type.
      *
      * @param classVisitorWrapper The class visitor wrapper to ba appended to the current chain of class visitor wrappers.
-     * @return The same configuration with the given class visitor wrapper to be applied onto any creation process of a dynamic
-     * type.
+     * @return The same configuration with the given class visitor wrapper to be applied onto any creation process of a dynamic type.
      */
     public ByteBuddy withClassVisitor(ClassVisitorWrapper classVisitorWrapper) {
         return new ByteBuddy(classFileVersion,
@@ -1078,6 +1083,12 @@ public class ByteBuddy {
                 defaultMethodAttributeAppenderFactory);
     }
 
+    /**
+     * Defines a new method graph compiler to be used for extracting a type's invokable methods.
+     *
+     * @param methodGraphCompiler The method graph compiler to use.
+     * @return The same configuration with the given method graph compiler to be applied onto any creation process of a dynamic type.
+     */
     public ByteBuddy withMethodGraphCompiler(MethodGraph.Compiler methodGraphCompiler) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
@@ -1148,7 +1159,7 @@ public class ByteBuddy {
      * @return A matched method interception for the given selection.
      */
     public MatchedMethodInterception invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
-        return invokeable(new LatentMethodMatcher.Resolved(nonNull(methodMatcher)));
+        return invokable(new LatentMethodMatcher.Resolved(nonNull(methodMatcher)));
     }
 
     /**
@@ -1157,7 +1168,7 @@ public class ByteBuddy {
      * @param methodMatcher The latent method matcher representing all byte code methods to intercept.
      * @return A matched method interception for the given selection.
      */
-    public MatchedMethodInterception invokeable(LatentMethodMatcher methodMatcher) {
+    public MatchedMethodInterception invokable(LatentMethodMatcher methodMatcher) {
         return new MatchedMethodInterception(nonNull(methodMatcher));
     }
 
@@ -1424,6 +1435,7 @@ public class ByteBuddy {
          * @param methodRegistry                        The currently valid method registry.
          * @param modifiers                             The modifiers to define for any implementation process.
          * @param typeAttributeAppender                 The type attribute appender to apply to any implementation process.
+         * @param methodGraphCompiler                   The method graph compiler to use.
          * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any field
          *                                              definition.
          * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
@@ -1654,6 +1666,7 @@ public class ByteBuddy {
          * @param methodRegistry                        The currently valid method registry.
          * @param modifiers                             The modifiers to define for any implementation process.
          * @param typeAttributeAppender                 The type attribute appender to apply to any implementation process.
+         * @param methodGraphCompiler                   The method graph compiler to use.
          * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any field
          *                                              definition.
          * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
@@ -1761,6 +1774,7 @@ public class ByteBuddy {
          * @param modifiers                             The modifiers to define for any implementation process.
          * @param typeAttributeAppender                 The type attribute appender to apply to any implementation
          *                                              process.
+         * @param methodGraphCompiler                   The method graph compiler to use.
          * @param defaultFieldAttributeAppenderFactory  The field attribute appender to apply as a default for any
          *                                              field definition.
          * @param defaultMethodAttributeAppenderFactory The method attribute appender to apply as a default for any
@@ -2082,8 +2096,8 @@ public class ByteBuddy {
         }
 
         @Override
-        public MatchedMethodInterception invokeable(LatentMethodMatcher methodMatcher) {
-            return materialize().invokeable(methodMatcher);
+        public MatchedMethodInterception invokable(LatentMethodMatcher methodMatcher) {
+            return materialize().invokable(methodMatcher);
         }
 
         @Override

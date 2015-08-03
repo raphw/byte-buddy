@@ -18,6 +18,8 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * Represents a list of parameters of a method or a constructor.
+ *
+ * @param <T> The type of parameter descriptions represented by this list.
  */
 public interface ParameterList<T extends ParameterDescription> extends FilterableList<T, ParameterList<T>> {
 
@@ -44,6 +46,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      */
     ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
 
+    /**
+     * Returns this list of these parameter descriptions resolved to their defined shape.
+     *
+     * @return A list of parameters in their defined shape.
+     */
     ParameterList<ParameterDescription.InDefinedShape> asDefined();
 
     /**
@@ -55,6 +62,8 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
 
     /**
      * An base implementation for a {@link ParameterList}.
+     *
+     * @param <S> The type of parameter descriptions represented by this list.
      */
     abstract class AbstractBase<S extends ParameterDescription> extends FilterableList.AbstractBase<S, ParameterList<S>> implements ParameterList<S> {
 
@@ -296,6 +305,8 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
 
     /**
      * A list of explicitly provided parameter descriptions.
+     *
+     * @param <S> The type of parameter descriptions represented by this list.
      */
     class Explicit<S extends ParameterDescription> extends AbstractBase<S> {
 

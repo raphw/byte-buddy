@@ -652,7 +652,7 @@ public interface Implementation {
                 if (initializerRecord.getSort().isImplemented() && typeInitializer.isDefined()) {
                     initializerRecord = initializerRecord.prepend(typeInitializer);
                 } else if (typeInitializer.isDefined()) {
-                    initializerRecord = new TypeWriter.MethodPool.Record.ForDeclaredMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
+                    initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
                 }
                 initializerRecord.apply(classVisitor, this);
                 for (TypeWriter.MethodPool.Record record : accessorMethods) {
@@ -1060,7 +1060,7 @@ public interface Implementation {
             /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
-            protected abstract static class AbstractDelegationRecord extends TypeWriter.MethodPool.Record.ForDeclaredMethod implements ByteCodeAppender {
+            protected abstract static class AbstractDelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
 
                 protected final MethodDescription methodDescription;
 
@@ -1069,7 +1069,7 @@ public interface Implementation {
                 }
 
                 @Override
-                protected MethodDescription getDeclaredMethod() {
+                protected MethodDescription getImplementedMethod() {
                     return methodDescription;
                 }
 
@@ -1091,7 +1091,7 @@ public interface Implementation {
                 @Override
                 public void applyBody(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, implementationContext, getDeclaredMethod());
+                    Size size = apply(methodVisitor, implementationContext, getImplementedMethod());
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                 }
 

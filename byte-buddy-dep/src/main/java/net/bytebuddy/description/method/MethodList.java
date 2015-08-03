@@ -17,6 +17,8 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * Implementations represent a list of method descriptions.
+ *
+ * @param <T> The type of method descriptions represented by this list.
  */
 public interface MethodList<T extends MethodDescription> extends FilterableList<T, MethodList<T>> {
 
@@ -36,10 +38,17 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      */
     ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
 
+    /**
+     * Returns this list of these method descriptions resolved to their defined shape.
+     *
+     * @return A list of methods in their defined shape.
+     */
     MethodList<MethodDescription.InDefinedShape> asDefined();
 
     /**
      * A base implementation of a {@link MethodList}.
+     *
+     * @param <S> The type of method descriptions represented by this list.
      */
     abstract class AbstractBase<S extends MethodDescription> extends FilterableList.AbstractBase<S, MethodList<S>> implements MethodList<S> {
 
@@ -136,6 +145,8 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
 
     /**
      * A method list that is a wrapper for a given list of method descriptions.
+     *
+     * @param <S> The type of method descriptions represented by this list.
      */
     class Explicit<S extends MethodDescription> extends AbstractBase<S> {
 

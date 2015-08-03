@@ -5,7 +5,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
@@ -66,8 +65,6 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private ClassLoader classLoader;
-
     private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
         return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
     }
@@ -78,21 +75,16 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                 .invoke(lookup, Simple.class, FOO, makeMethodType(String.class));
     }
 
-    @Before
-    public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-    }
-
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapMethod() throws Exception {
-        for (Method method : classLoader.loadClass(STANDARD_ARGUMENT_BOOTSTRAP).getDeclaredMethods()) {
+        for (Method method : Class.forName(STANDARD_ARGUMENT_BOOTSTRAP).getDeclaredMethods()) {
             if (method.getName().equals(FOO)) {
                 continue;
             }
             DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                     InvokeDynamic.bootstrap(method).withoutArguments(),
-                    classLoader,
+                    getClass().getClassLoader(),
                     isDeclaredBy(Simple.class));
             assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
         }
@@ -101,10 +93,10 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapConstructor() throws Exception {
-        for (Constructor<?> constructor : classLoader.loadClass(STANDARD_ARGUMENT_BOOTSTRAP).getDeclaredConstructors()) {
+        for (Constructor<?> constructor : Class.forName(STANDARD_ARGUMENT_BOOTSTRAP).getDeclaredConstructors()) {
             DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                     InvokeDynamic.bootstrap(constructor).withoutArguments(),
-                    classLoader,
+                    getClass().getClassLoader(),
                     isDeclaredBy(Simple.class));
             assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
         }
@@ -113,14 +105,14 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithArrayArgumentsWithoutArguments() throws Exception {
-        Class<?> type = classLoader.loadClass(PARAMETER_BOOTSTRAP);
+        Class<?> type = Class.forName(PARAMETER_BOOTSTRAP);
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
         field.set(null, null);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly())
                         .withoutArguments(),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
@@ -130,7 +122,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithArrayArgumentsWithArguments() throws Exception {
-        Class<?> type = classLoader.loadClass(PARAMETER_BOOTSTRAP);
+        Class<?> type = Class.forName(PARAMETER_BOOTSTRAP);
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
         field.set(null, null);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -138,7 +130,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly(),
                         INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle())
                         .withoutArguments(),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
@@ -156,7 +148,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithExplicitArgumentsWithArguments() throws Exception {
-        Class<?> type = classLoader.loadClass(PARAMETER_BOOTSTRAP);
+        Class<?> type = Class.forName(PARAMETER_BOOTSTRAP);
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
         field.set(null, null);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
@@ -164,7 +156,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly(),
                         INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle())
                         .withoutArguments(),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
@@ -182,14 +174,14 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test(expected = IllegalArgumentException.class)
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithExplicitArgumentsWithoutArgumentsThrowsException() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(classLoader.loadClass(PARAMETER_BOOTSTRAP));
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(PARAMETER_BOOTSTRAP));
         InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly()).withoutArguments();
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapOfMethodsWithParametersPrimitive() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(classLoader.loadClass(ARGUMENT_BOOTSTRAP));
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
         Object value = new Object();
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
@@ -206,7 +198,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                         .withEnumeration(new EnumerationDescription.ForLoadedEnumeration(makeEnum()))
                         .withInstance(JavaInstance.MethodType.of(makeMethodType(CLASS)), JavaInstance.MethodHandle.of(makeMethodHandle()))
                         .withValue(FOO, CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
                 is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + CLASS + makeEnum() + makeMethodType(CLASS)
@@ -216,7 +208,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapOfMethodsWithParametersWrapperConstantPool() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         Object value = new Object();
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
@@ -224,7 +216,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                         .invoke(BAR, String.class)
                         .withValue(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO,
                                 CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
@@ -235,7 +227,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapOfMethodsWithParametersWrapperReference() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         Object value = new Object();
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
@@ -244,7 +236,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                         .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeEnum(), makeMethodType(CLASS))
                         .withReference(makeMethodHandle()).as(JavaType.METHOD_HANDLE.load()) // avoid direct method handle
                         .withReference(value),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(14));
         assertThat(dynamicType.getLoaded().newInstance().foo(),
@@ -255,13 +247,13 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithFieldCreation() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withInstanceField(FOO, String.class),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
         Simple instance = dynamicType.getLoaded().newInstance();
@@ -274,13 +266,13 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithFieldUse() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<SimpleWithField> dynamicType = implement(SimpleWithField.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withField(FOO),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(SimpleWithField.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         SimpleWithField instance = dynamicType.getLoaded().newInstance();
@@ -293,26 +285,26 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithFieldUseInvisible() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         implement(SimpleWithFieldInvisible.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withField(FOO),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(SimpleWithFieldInvisible.class));
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithNullValue() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withNullValue(String.class),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         assertThat(dynamicType.getLoaded().newInstance().foo(), nullValue(String.class));
@@ -321,13 +313,13 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithThisValue() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAZ, String.class)
                         .withThis(Object.class),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         Simple simple = dynamicType.getLoaded().newInstance();
@@ -337,13 +329,13 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithArgument() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<SimpleWithArgument> dynamicType = implement(SimpleWithArgument.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withArgument(0),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(SimpleWithArgument.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         assertThat(dynamicType.getLoaded().newInstance().foo(FOO), is(FOO));
@@ -352,7 +344,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test(expected = IllegalArgumentException.class)
     @JavaVersionRule.Enforce(7)
     public void testNegativeArgumentThrowsException() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                 .invoke(QUX, String.class)
@@ -362,27 +354,27 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(7)
     public void testNonExistentArgumentThrowsException() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         implement(SimpleWithArgument.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withArgument(1),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(SimpleWithArgument.class));
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
     public void testChainedInvocation() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<SimpleWithArgument> dynamicType = implement(SimpleWithArgument.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withArgument(0)
                         .andThen(FixedValue.value(BAZ)),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(SimpleWithArgument.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         assertThat(dynamicType.getLoaded().newInstance().foo(FOO), is(BAZ));
@@ -391,13 +383,13 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithImplicitArgument() throws Exception {
-        Class<?> type = classLoader.loadClass(ARGUMENT_BOOTSTRAP);
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
         DynamicType.Loaded<SimpleWithArgument> dynamicType = implement(SimpleWithArgument.class,
                 InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withMethodArguments(),
-                classLoader,
+                getClass().getClassLoader(),
                 isDeclaredBy(SimpleWithArgument.class));
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         assertThat(dynamicType.getLoaded().newInstance().foo(FOO), is(FOO));
@@ -405,7 +397,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
 
     @SuppressWarnings("unchecked")
     private Enum<?> makeEnum() throws Exception {
-        Class type = classLoader.loadClass(SAMPLE_ENUM);
+        Class type = Class.forName(SAMPLE_ENUM);
         return Enum.valueOf(type, INSTANCE);
     }
 

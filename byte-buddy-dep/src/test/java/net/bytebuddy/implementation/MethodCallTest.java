@@ -47,8 +47,6 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Mock
     private Assigner nonAssigner;
 
-    private ClassLoader classLoader;
-
     private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
         return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
     }
@@ -63,7 +61,6 @@ public class MethodCallTest extends AbstractImplementationTest {
     public void setUp() throws Exception {
         when(nonAssigner.assign(Mockito.any(TypeDescription.class), Mockito.any(TypeDescription.class), Mockito.anyBoolean()))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
     }
 
     @Test
@@ -439,10 +436,10 @@ public class MethodCallTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethod() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodCall.invoke(classLoader.loadClass(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO)).onDefault(),
-                classLoader,
+                MethodCall.invoke(Class.forName(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO)).onDefault(),
+                getClass().getClassLoader(),
                 ElementMatchers.isMethod().and(ElementMatchers.not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD));
+                Class.forName(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().newInstance();
@@ -585,6 +582,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class MethodCallWithField {
 
         public String foo;
@@ -594,6 +592,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class InvisibleMethodCallWithField extends InvisibleBase {
 
         private String foo;
@@ -637,6 +636,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class StaticIncompatibleExternalMethod {
 
         public static String bar(String value) {

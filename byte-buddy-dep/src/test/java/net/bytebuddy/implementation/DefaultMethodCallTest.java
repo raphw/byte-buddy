@@ -6,8 +6,6 @@ import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.PrecompiledTypeClassLoader;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -38,21 +36,14 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private ClassLoader classLoader;
-
-    @Before
-    public void setUp() throws Exception {
-        classLoader = new PrecompiledTypeClassLoader(getClass().getClassLoader());
-    }
-
     @Test
     @JavaVersionRule.Enforce(8)
     public void testUnambiguousDefaultMethod() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
                 DefaultMethodCall.unambiguousOnly(),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD));
+                Class.forName(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().newInstance();
@@ -64,22 +55,22 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
     public void testAmbiguousDefaultMethodThrowsException() throws Exception {
         implement(Object.class,
                 DefaultMethodCall.unambiguousOnly(),
-                classLoader,
+                getClass().getClassLoader(),
                 not(isDeclaredBy(Object.class)),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
+                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
     }
 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testAmbiguousDefaultMethodWithExplicitPreference() throws Exception {
-        Class<?> singleMethodInterface = classLoader.loadClass(SINGLE_DEFAULT_METHOD);
-        Class<?> conflictingInterface = classLoader.loadClass(CONFLICTING_INTERFACE);
+        Class<?> singleMethodInterface = Class.forName(SINGLE_DEFAULT_METHOD);
+        Class<?> conflictingInterface = Class.forName(CONFLICTING_INTERFACE);
         assertConflictChoice(singleMethodInterface, conflictingInterface, FOO, singleMethodInterface);
         assertConflictChoice(singleMethodInterface, conflictingInterface, QUX, conflictingInterface);
         assertConflictChoice(singleMethodInterface, conflictingInterface, FOO, singleMethodInterface, conflictingInterface);
         assertConflictChoice(singleMethodInterface, conflictingInterface, QUX, conflictingInterface, singleMethodInterface);
-        assertConflictChoice(singleMethodInterface, conflictingInterface, FOO, singleMethodInterface, classLoader.loadClass(NON_OVERRIDING_INTERFACE));
-        assertConflictChoice(singleMethodInterface, conflictingInterface, FOO, classLoader.loadClass(NON_OVERRIDING_INTERFACE), singleMethodInterface);
+        assertConflictChoice(singleMethodInterface, conflictingInterface, FOO, singleMethodInterface, Class.forName(NON_OVERRIDING_INTERFACE));
+        assertConflictChoice(singleMethodInterface, conflictingInterface, FOO, Class.forName(NON_OVERRIDING_INTERFACE), singleMethodInterface);
     }
 
     private void assertConflictChoice(Class<?> preferredInterface,
@@ -88,7 +79,7 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
                                       Class<?>... preferredInterfaces) throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
                 DefaultMethodCall.prioritize(preferredInterfaces),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 preferredInterface, secondInterface);
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
@@ -101,38 +92,38 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(8)
     public void testUnrelatedPreferredDefaultMethodThrowsException() throws Exception {
         implement(Object.class,
-                DefaultMethodCall.prioritize(classLoader.loadClass(NON_OVERRIDING_INTERFACE)),
-                classLoader,
+                DefaultMethodCall.prioritize(Class.forName(NON_OVERRIDING_INTERFACE)),
+                getClass().getClassLoader(),
                 not(isDeclaredBy(Object.class)),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
+                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
     }
 
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(8)
     public void testNonDeclaredDefaultMethodThrowsException() throws Exception {
-        implement(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
+        implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
-                classLoader,
+                getClass().getClassLoader(),
                 not(isDeclaredBy(Object.class)));
     }
 
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(8)
     public void testNonDeclaredPreferredDefaultMethodThrowsException() throws Exception {
-        implement(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
-                DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
-                classLoader,
+        implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
+                DefaultMethodCall.prioritize(Class.forName(SINGLE_DEFAULT_METHOD)),
+                getClass().getClassLoader(),
                 not(isDeclaredBy(Object.class)));
     }
 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDeclaredAndImplementedMethod() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
+        DynamicType.Loaded<?> loaded = implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
-                classLoader,
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD));
+                Class.forName(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().newInstance();
@@ -142,21 +133,21 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(8)
     public void testDeclaredAndImplementedAmbiguousMethodThrowsException() throws Exception {
-        implement(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
+        implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
                 DefaultMethodCall.unambiguousOnly(),
-                classLoader,
+                getClass().getClassLoader(),
                 not(isDeclaredBy(Object.class)),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
+                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
     }
 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDeclaredAndImplementedAmbiguousMethodWithPreference() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(classLoader.loadClass(SINGLE_DEFAULT_METHOD_CLASS),
-                DefaultMethodCall.prioritize(classLoader.loadClass(SINGLE_DEFAULT_METHOD)),
-                classLoader,
+        DynamicType.Loaded<?> loaded = implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
+                DefaultMethodCall.prioritize(Class.forName(SINGLE_DEFAULT_METHOD)),
+                getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
-                classLoader.loadClass(SINGLE_DEFAULT_METHOD), classLoader.loadClass(CONFLICTING_INTERFACE));
+                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().newInstance();

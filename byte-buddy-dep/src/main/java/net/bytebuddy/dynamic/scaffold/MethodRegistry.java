@@ -116,7 +116,7 @@ public interface MethodRegistry {
 
             @Override
             public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                return new TypeWriter.MethodPool.Record.ForDeclaredMethod.WithoutBody(methodDescription, attributeAppender, modifierResolver);
+                return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, attributeAppender, modifierResolver);
             }
 
             @Override
@@ -222,7 +222,7 @@ public interface MethodRegistry {
 
                 @Override
                 public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                    return new TypeWriter.MethodPool.Record.ForDeclaredMethod.WithBody(methodDescription,
+                    return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                             byteCodeAppender,
                             attributeAppender,
                             modifierResolver);
@@ -303,7 +303,7 @@ public interface MethodRegistry {
 
             @Override
             public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                return new TypeWriter.MethodPool.Record.ForDeclaredMethod.WithAnnotationDefaultValue(methodDescription,
+                return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                         annotationValue,
                         attributeAppender,
                         modifierResolver);
@@ -354,7 +354,7 @@ public interface MethodRegistry {
 
                 @Override
                 public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                    return TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
+                    return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
                 }
             }
         }
@@ -510,7 +510,7 @@ public interface MethodRegistry {
                 if (visibilityBridge
                         && methodDescription.isPublic()
                         && !(methodDescription.isAbstract() || methodDescription.isFinal())
-                        && !node.getVisibility().isVisible()
+                        && !node.getSort().isMadeVisible()
                         && methodDescription.getDeclaringType().asRawType().isPackagePrivate()) {
                     // Visibility bridges are required for public types that inherit a public method from a package-private type.
                     // Checking the last condition contradicts any method that is defined by the instrumented type itself.
@@ -841,7 +841,7 @@ public interface MethodRegistry {
             public Record target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
-                        ? Record.ForInheritedMethod.INSTANCE
+                        ? Record.ForNonDefinedMethod.INSTANCE
                         : entry.bind(methodDescription, instrumentedType);
             }
 

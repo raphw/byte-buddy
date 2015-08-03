@@ -23,6 +23,11 @@ import java.util.*;
 public interface GenericTypeDescription extends NamedElement, Iterable<GenericTypeDescription> {
 
     /**
+     * Represents a generic type without an owner type.
+     */
+    TypeDescription NO_OWNER_TYPE = null;
+
+    /**
      * Returns the sort of the generic type this instance represents.
      *
      * @return The sort of the generic type.
@@ -51,8 +56,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
      * </p>
      * <p>
      * Only non-generic types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}) and parameterized types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) define a super type. For other generic
-     * types, an {@link IllegalStateException} is thrown.
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) define a super type. For a generic array type,
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}), a description of {@link Object} is returned.
+     * For other generic types, an {@link IllegalStateException} is thrown.
      * </p>
      *
      * @return The generic super type of this type or {@code null} if no such type exists.
@@ -65,8 +71,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
      * </p>
      * <p>
      * Only non-generic types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}) and parameterized types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) define a super type. For other generic
-     * types, an {@link IllegalStateException} is thrown.
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) define a super type. For a generic array type,
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}), a list of {@link java.io.Serializable} and
+     * {@link Cloneable}) is returned. For other generic types, an {@link IllegalStateException} is thrown.
      * </p>
      *
      * @return The generic interface types of this type.
@@ -80,7 +87,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
      * </p>
      * <p>
      * Only non-generic types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}) and parameterized types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) define a super type. For other generic
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) define a super type. For a generic array type,
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}), an empty list is returned. For other generic
      * types, an {@link IllegalStateException} is thrown.
      * </p>
      *
@@ -95,8 +103,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
      * </p>
      * <p>
      * Only non-generic types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}) and parameterized types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) define a super type. For other generic
-     * types, an {@link IllegalStateException} is thrown.
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) define a super type. For a generic array type,
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}), an empty list is returned. For other
+     * generic types, an {@link IllegalStateException} is thrown.
      * </p>
      *
      * @return A list of methods that are declared by this type.
@@ -152,9 +161,10 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
      * </p>
      * <p>
      * Parameters are only well-defined for parameterized types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) and non-generic types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}). For non-generic types, the
-     * returned list is always empty. For all other types, this method throws an {@link IllegalStateException}.
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}), generic array types
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}) and non-generic types
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}). For non-generic and generic array types,
+     * the returned list is always empty. For all other types, this method throws an {@link IllegalStateException}.
      * </p>
      *
      * @return A list of this type's type parameters.
@@ -167,9 +177,10 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
      * </p>
      * <p>
      * An owner type is only well-defined for parameterized types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) and non-generic types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}). Non-generic types do never have an
-     * owner type. For all other types, this method throws an {@link IllegalStateException}.
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) , generic array types
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}) and non-generic types
+     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}). Non-generic types and generic array types do
+     * never have an owner type. For all other types, this method throws an {@link IllegalStateException}.
      * </p>
      *
      * @return This type's owner type or {@code null} if no such owner type exists.
@@ -449,8 +460,14 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
         }
 
+        /**
+         * A visitor that returns the erasure of any visited type. For wildcard types, an exception is thrown.
+         */
         enum TypeErasing implements Visitor<TypeDescription> {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -476,6 +493,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             @Override
             public TypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
                 return typeDescription.asRawType();
+            }
+
+            @Override
+            public String toString() {
+                return "GenericTypeDescription.Visitor.TypeErasing." + name();
             }
         }
 
@@ -1093,7 +1115,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
     }
 
     /**
-     * A base implementation of a generic type description that represents a generic array.
+     * A base implementation of a generic type description that represents a potentially generic array. Instances represent a non-generic type
+     * if the given component type is non-generic.
      */
     abstract class ForGenericArray implements GenericTypeDescription {
 
@@ -1151,7 +1174,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
         @Override
         public GenericTypeDescription getOwnerType() {
-            return null;
+            return NO_OWNER_TYPE;
         }
 
         @Override

@@ -44,12 +44,35 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
      */
     boolean isVisibleTo(TypeDescription typeDescription);
 
+    /**
+     * A type dependant describes an element that is an extension of a type definition, i.e. a field, method or method parameter.
+     *
+     * @param <T> The type dependant's type.
+     * @param <S> The type dependant's token type.
+     */
     interface TypeDependant<T extends TypeDependant<?, S>, S extends ByteCodeElement.Token<S>> {
 
+        /**
+         * Returns this type dependant in its defined shape, i.e. the form it is declared in and without its type variable's resolved.
+         *
+         * @return This type dependant in its defined shape.
+         */
         T asDefined();
 
+        /**
+         * Returns a token representative of this type dependant.
+         *
+         * @return A token representative of this type dependant.
+         */
         S asToken();
 
+        /**
+         * Returns a token representative of this type dependant. All types that are matched by the supplied matcher are replaced by
+         * {@link net.bytebuddy.dynamic.TargetType} descriptions.
+         *
+         * @param targetTypeMatcher A matcher to identify types to be replaced by {@link net.bytebuddy.dynamic.TargetType} descriptions.
+         * @return A token representative of this type dependant.
+         */
         S asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
     }
 
@@ -60,7 +83,13 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
      */
     interface Token<T extends Token<T>> {
 
-        boolean isIdenticalTo(T t);
+        /**
+         * Checks if this token is fully identical to the provided token.
+         *
+         * @param token The token to compare this token with.
+         * @return {@code true} if this token is identical to the given token.
+         */
+        boolean isIdenticalTo(T token);
 
         /**
          * Transforms the types represented by this token by applying the given visitor to them.
@@ -70,8 +99,21 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
          */
         T accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
+        /**
+         * Returns this token with the given modifiers.
+         *
+         * @param modifiers The modifiers to set for this token.
+         * @return A version of this token with the given modifiers.
+         */
         T withModifiers(int modifiers);
 
+        /**
+         * Returns this token with the given modifiers.
+         *
+         * @param modifiers The modifiers to add for this token's modifiers.
+         * @param mask      The modifiers to clear for this token's modifiers.
+         * @return A version of this token with the given modifiers.
+         */
         T withModifiers(int modifiers, int mask);
 
         /**

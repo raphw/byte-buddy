@@ -125,6 +125,11 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean represents(Constructor<?> constructor);
 
+    /**
+     * Verifies if this method describes a virtual method, i.e. a method that is inherited by a sub type of this type.
+     *
+     * @return {@code true} if this method is virtual.
+     */
     boolean isVirtual();
 
     /**
@@ -221,8 +226,16 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isDefaultValue(Object value);
 
+    /**
+     * Returns a type token that represents this method's raw return and parameter types.
+     *
+     * @return A type token that represents this method's raw return and parameter types.
+     */
     TypeToken asTypeToken();
 
+    /**
+     * Represents a method in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
+     */
     interface InDefinedShape extends MethodDescription {
 
         @Override
@@ -231,6 +244,9 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         ParameterList<ParameterDescription.InDefinedShape> getParameters();
 
+        /**
+         * An abstract base implementation of a method description in its defined shape.
+         */
         abstract class AbstractBase extends MethodDescription.AbstractBase implements InDefinedShape {
 
             @Override
@@ -1438,6 +1454,19 @@ public interface MethodDescription extends TypeVariableSource,
             return defaultValue;
         }
 
+        /**
+         * Transforms this method token into a type token.
+         *
+         * @return A type token representing the type's of this method token.
+         */
+        public TypeToken asTypeToken() {
+            List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(getParameterTokens().size());
+            for (ParameterDescription.Token parameterToken : getParameterTokens()) {
+                parameterTypes.add(parameterToken.getType().asRawType());
+            }
+            return new TypeToken(getReturnType().asRawType(), parameterTypes);
+        }
+
         @Override
         public Token withModifiers(int modifiers, int mask) {
             return withModifiers((getModifiers() & ~mask) | modifiers);
@@ -1518,31 +1547,48 @@ public interface MethodDescription extends TypeVariableSource,
                     ", defaultValue=" + defaultValue +
                     '}';
         }
-
-        public TypeToken asTypeToken() {
-            List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(getParameterTokens().size());
-            for (ParameterDescription.Token parameterToken : getParameterTokens()) {
-                parameterTypes.add(parameterToken.getType().asRawType());
-            }
-            return new TypeToken(getReturnType().asRawType(), parameterTypes);
-        }
     }
 
+    /**
+     * A token representing a method's raw type.
+     */
     class TypeToken {
 
+        /**
+         * The represented method's raw return type.
+         */
         private final TypeDescription returnType;
 
+        /**
+         * The represented method's raw parameter types.
+         */
         private final List<? extends TypeDescription> parameterTypes;
 
+        /**
+         * Creates a new type token.
+         *
+         * @param returnType     The represented method's raw return type.
+         * @param parameterTypes The represented method's raw parameter types.
+         */
         public TypeToken(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
             this.returnType = returnType;
             this.parameterTypes = parameterTypes;
         }
 
+        /**
+         * Returns this token's return type.
+         *
+         * @return This token's return type.
+         */
         public TypeDescription getReturnType() {
             return returnType;
         }
 
+        /**
+         * Returns this token's parameter types.
+         *
+         * @return This token's parameter types.
+         */
         public List<TypeDescription> getParameterTypes() {
             return new ArrayList<TypeDescription>(parameterTypes);
         }

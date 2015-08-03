@@ -26,6 +26,12 @@ public abstract class AbstractPackageDescriptionTest {
     }
 
     @Test
+    public void testPackageContains() throws Exception {
+        assertThat(describe(Child.class).contains(new TypeDescription.ForLoadedType(Child.class)), is(true));
+        assertThat(describe(Object.class).contains(new TypeDescription.ForLoadedType(Child.class)), is(false));
+    }
+
+    @Test
     public void testHashCode() throws Exception {
         assertThat(describe(Child.class).hashCode(), is(Child.class.getPackage().hashCode()));
         assertThat(describe(Child.class).hashCode(), is(describe(Child.class).hashCode()));

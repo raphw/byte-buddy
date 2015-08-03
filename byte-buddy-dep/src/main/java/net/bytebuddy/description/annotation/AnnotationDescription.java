@@ -68,6 +68,11 @@ public interface AnnotationDescription {
      */
     <T extends Annotation> Loadable<T> prepare(Class<T> annotationType);
 
+    /**
+     * Returns this annotation's retention policy.
+     *
+     * @return This annotation's retention policy.
+     */
     RetentionPolicy getRetention();
 
     /**

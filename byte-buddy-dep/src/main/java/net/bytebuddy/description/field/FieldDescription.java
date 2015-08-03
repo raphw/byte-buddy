@@ -26,6 +26,9 @@ public interface FieldDescription extends ByteCodeElement,
         NamedElement.WithGenericName,
         ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
 
+    /**
+     * A representative of a field's non-set default value.
+     */
     Object NO_DEFAULT_VALUE = null;
 
     /**
@@ -35,11 +38,17 @@ public interface FieldDescription extends ByteCodeElement,
      */
     GenericTypeDescription getType();
 
+    /**
+     * Represents a field in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
+     */
     interface InDefinedShape extends FieldDescription {
 
         @Override
         TypeDescription getDeclaringType();
 
+        /**
+         * An abstract base implementation of a field description in its defined shape.
+         */
         abstract class AbstractBase extends FieldDescription.AbstractBase implements InDefinedShape {
 
             @Override

@@ -1,8 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -37,38 +35,38 @@ public class MethodGraphCompilerDefaultHarmonizerForJVMMethodTest {
 
     @Test
     public void testMethodEqualityHashCode() throws Exception {
-        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
-                is(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode()));
+        assertThat(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
+                is(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode()));
     }
 
     @Test
     public void testMethodEquality() throws Exception {
-        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
-                is(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first)))));
+        assertThat(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
+                is(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(first)))));
     }
 
     @Test
     public void testMethodReturnTypeInequalityHashCode() throws Exception {
-        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
-                not(harmonizer.wrap(new MethodDescription.TypeToken(second, Collections.singletonList(first))).hashCode()));
+        assertThat(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
+                not(harmonizer.harmonize(new MethodDescription.TypeToken(second, Collections.singletonList(first))).hashCode()));
     }
 
     @Test
     public void testMethodReturnTypeInequality() throws Exception {
-        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
-                not(harmonizer.wrap(new MethodDescription.TypeToken(second, Collections.singletonList(first)))));
+        assertThat(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
+                not(harmonizer.harmonize(new MethodDescription.TypeToken(second, Collections.singletonList(first)))));
     }
 
     @Test
     public void testMethodParameterTypesHashCode() throws Exception {
-        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
-                not(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(second))).hashCode()));
+        assertThat(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(first))).hashCode(),
+                not(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(second))).hashCode()));
     }
 
     @Test
     public void testMethodParameterTypesEquality() throws Exception {
-        assertThat(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
-                not(harmonizer.wrap(new MethodDescription.TypeToken(first, Collections.singletonList(second)))));
+        assertThat(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(first))),
+                not(harmonizer.harmonize(new MethodDescription.TypeToken(first, Collections.singletonList(second)))));
     }
 
     @Test

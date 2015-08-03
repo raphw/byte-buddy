@@ -280,7 +280,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForInheritedMethod.class));
+        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForNonDefinedMethod.class));
     }
 
     @Test
@@ -316,7 +316,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDeclaredMethod.OfVisibilityBridge.class));
+        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class));
     }
 
     @Test
