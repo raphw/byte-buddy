@@ -511,6 +511,235 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    public void testDuplicateNameClass() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameClass.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
+        MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(0));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameClassExtension() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameClass.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 4));
+        MethodDescription objectMethod = typeDescription.getSuperType().getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(0));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription integerMethod = typeDescription.getSuperType().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asToken());
+        assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(integerNode.getRepresentative(), is(integerMethod));
+        assertThat(integerNode.getBridges().size(), is(0));
+        assertThat(integerNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameInterface() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameInterface.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(2));
+        MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(0));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameInterfaceImplementation() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameInterface.InnerClass.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 4));
+        MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(0));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription integerMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asToken());
+        assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(integerNode.getRepresentative(), is(integerMethod));
+        assertThat(integerNode.getBridges().size(), is(0));
+        assertThat(integerNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameInterfaceExtension() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameInterface.InnerInterface.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(3));
+        MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(0));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription integerMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asToken());
+        assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(integerNode.getRepresentative(), is(integerMethod));
+        assertThat(integerNode.getBridges().size(), is(0));
+        assertThat(integerNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameGenericClass() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericClass.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
+        MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(0));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameGenericClassExtension() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericClass.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 4));
+        MethodDescription objectMethod = typeDescription.getSuperType().getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(1));
+        assertThat(objectNode.getBridges().contains(objectMethod.asDefined().asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription integerMethod = typeDescription.getSuperType().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asToken());
+        assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(integerNode.getRepresentative(), is(integerMethod));
+        assertThat(integerNode.getBridges().size(), is(0));
+        assertThat(integerNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameGenericInterface() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericInterface.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(2));
+        MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(0));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameGenericInterfaceImplementation() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericInterface.InnerClass.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 4));
+        MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(1));
+        assertThat(objectNode.getBridges().contains(objectMethod.asDefined().asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription integerMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asToken());
+        assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(integerNode.getRepresentative(), is(integerMethod));
+        assertThat(integerNode.getBridges().size(), is(0));
+        assertThat(integerNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    public void testDuplicateNameGenericInterfaceExtension() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericInterface.InnerInterface.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(3));
+        MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
+        MethodGraph.Node objectNode = methodGraph.locate(objectMethod.asToken());
+        assertThat(objectNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(objectNode.getRepresentative(), is(objectMethod));
+        assertThat(objectNode.getBridges().size(), is(1));
+        assertThat(objectNode.getBridges().contains(objectMethod.asDefined().asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription integerMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
+        MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asToken());
+        assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(integerNode.getRepresentative(), is(integerMethod));
+        assertThat(integerNode.getBridges().size(), is(0));
+        assertThat(integerNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+        MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
+        MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asToken());
+        assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(voidNode.getRepresentative(), is(voidMethod));
+        assertThat(voidNode.getBridges().size(), is(0));
+        assertThat(voidNode.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
     public void testVisibilityBridge() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(VisibilityBridgeTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
@@ -870,6 +1099,7 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class GenericNonOverriddenClassBase<T> {
 
         public T foo(T t) {
@@ -891,6 +1121,79 @@ public class MethodGraphCompilerDefaultTest {
 
         abstract class InnerClass implements GenericNonOverriddenInterfaceBase<Void> {
             /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DuplicateNameClass {
+
+        public void foo(Object o) {
+            /* empty */
+        }
+
+        public void foo(Integer o) {
+            /* empty */
+        }
+
+        public static class Inner extends DuplicateNameClass {
+
+            public void foo(Void o) {
+                /* empty */
+            }
+        }
+    }
+
+    public interface DuplicateNameInterface {
+
+        void foo(Object o);
+
+        void foo(Integer o);
+
+        interface InnerInterface extends DuplicateNameInterface {
+
+            void foo(Void o);
+        }
+
+        abstract class InnerClass implements DuplicateNameInterface {
+
+            public abstract void foo(Void o);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DuplicateNameGenericClass<T> {
+
+        public void foo(T o) {
+            /* empty */
+        }
+
+        public void foo(Integer o) {
+            /* empty */
+        }
+
+        public static class Inner extends DuplicateNameGenericClass<String> {
+
+            public void foo(Void o) {
+                /* empty */
+            }
+        }
+    }
+
+    public interface DuplicateNameGenericInterface<T> {
+
+        void foo(T o);
+
+        void foo(Integer o);
+
+        interface InnerInterface extends DuplicateNameGenericInterface<String> {
+
+            void foo(Void o);
+        }
+
+        @SuppressWarnings("unused")
+        abstract class InnerClass implements DuplicateNameGenericInterface<String> {
+
+            public abstract void foo(Void o);
         }
     }
 
