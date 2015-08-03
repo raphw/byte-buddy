@@ -281,6 +281,21 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertThat(type.getDeclaredMethods().length, is(0));
     }
 
+    @Test
+    public void testNoVisibilityBridgeForAbstractMethod() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class, VisibilityBridgeAbstractMethod.class),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT);
+        Class<?> type = create(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class)
+                .modifiers(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
+                .make()
+                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(0));
+    }
+
     public @interface Baz {
 
         String foo();
@@ -318,11 +333,15 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
             return value;
         }
 
-        void noBridge() {
+        void qux() {
             /* empty */
         }
 
-        protected void noBridge(Void v) {
+        protected void baz() {
+            /* empty */
+        }
+
+        public final void foobar() {
             /* empty */
         }
     }
@@ -332,6 +351,15 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     }
 
     public static class PublicVisibilityBridgeExtension extends VisibilityBridge {
+        /* empty */
+    }
+
+    abstract static class VisibilityBridgeAbstractMethod {
+
+        public abstract void foo();
+    }
+
+    abstract static class PackagePrivateVisibilityBridgeExtensionAbstractMethod extends VisibilityBridgeAbstractMethod {
         /* empty */
     }
 }

@@ -509,6 +509,7 @@ public interface MethodRegistry {
                 }
                 if (visibilityBridge
                         && methodDescription.isPublic()
+                        && !(methodDescription.isAbstract() || methodDescription.isFinal())
                         && !node.getVisibility().isVisible()
                         && methodDescription.getDeclaringType().asRawType().isPackagePrivate()) {
                     // Visibility bridges are required for public types that inherit a public method from a package-private type.

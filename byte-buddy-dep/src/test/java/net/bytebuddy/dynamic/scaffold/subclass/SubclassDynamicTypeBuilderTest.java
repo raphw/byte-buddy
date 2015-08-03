@@ -431,6 +431,17 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
+    public void testNoVisibilityBridgeForAbstractMethod() throws Exception {
+        Class<?> type = create(VisibilityBridgeAbstractMethod.class)
+                .modifiers(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(0));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(SubclassDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
@@ -511,13 +522,22 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
             return value;
         }
 
-        void noBridge() {
+        void qux() {
             /* empty */
         }
 
-        protected void noBridge(Void v) {
+        protected void baz() {
             /* empty */
         }
+
+        public final void foobar() {
+            /* empty */
+        }
+    }
+
+    abstract static class VisibilityBridgeAbstractMethod {
+
+        public abstract void foo();
     }
 
     public static class VisibilityBridgeExtension extends VisibilityBridge {
