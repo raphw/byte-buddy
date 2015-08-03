@@ -155,7 +155,7 @@ public class ByteBuddy {
                 new NamingStrategy.Unbound.Default(BYTE_BUDDY_DEFAULT_PREFIX),
                 new AuxiliaryType.NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_SUFFIX),
                 new TypeList.Empty(),
-                isDefaultFinalizer().or(isSynthetic().and(not(isVisibilityBridge()))),
+                isSynthetic().or(isDefaultFinalizer()),
                 new ClassVisitorWrapper.Chain(),
                 new MethodRegistry.Default(),
                 new Definable.Undefined<Integer>(),

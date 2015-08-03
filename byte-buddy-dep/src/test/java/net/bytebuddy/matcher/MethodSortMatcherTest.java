@@ -47,8 +47,6 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
                 {MethodSortMatcher.Sort.METHOD, MockEngine.METHOD},
                 {MethodSortMatcher.Sort.VIRTUAL, MockEngine.VIRTUAL},
                 {MethodSortMatcher.Sort.TYPE_INITIALIZER, MockEngine.TYPE_INITIALIZER},
-                {MethodSortMatcher.Sort.TYPE_BRIDGE, MockEngine.TYPE_BRIDGE},
-                {MethodSortMatcher.Sort.VISIBILITY_BRIDGE, MockEngine.VISIBILITY_BRIDGE}
         });
     }
 
@@ -107,64 +105,6 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
             @Override
             protected void prepare(MethodDescription target) {
                 when(target.isTypeInitializer()).thenReturn(true);
-            }
-        },
-
-        TYPE_BRIDGE {
-            @Override
-            @SuppressWarnings("unchecked")
-            protected void prepare(MethodDescription target) {
-                when(target.isBridge()).thenReturn(true);
-                TypeDescription declaringType = mock(TypeDescription.class);
-                when(declaringType.asRawType()).thenReturn(declaringType);
-                when(target.getDeclaringType()).thenReturn(declaringType);
-                TypeDescription superType = mock(TypeDescription.class);
-                when(superType.asRawType()).thenReturn(superType);
-                when(superType.iterator()).thenReturn(new GenericTypeDescription.SuperTypeIterator(superType));
-                when(declaringType.getSuperType()).thenReturn(superType);
-                MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
-                when(methodDescription.asDefined()).thenReturn(methodDescription);
-                MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
-                when(methodDescription.asToken()).thenReturn(methodToken);
-                when(target.asToken()).thenReturn(methodToken);
-                when(methodDescription.getInternalName()).thenReturn(FOO);
-                when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
-                MethodDescription.InDefinedShape bridgeTarget = mock(MethodDescription.InDefinedShape.class);
-                when(bridgeTarget.getSourceCodeName()).thenReturn(FOO);
-                when(bridgeTarget.getParameters()).thenReturn(new ParameterList.Empty());
-                when(declaringType.getDeclaredMethods())
-                        .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(bridgeTarget)));
-                when(superType.getDeclaredMethods())
-                        .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)));
-            }
-        },
-
-        VISIBILITY_BRIDGE {
-            @Override
-            @SuppressWarnings("unchecked")
-            protected void prepare(MethodDescription target) {
-                when(target.isBridge()).thenReturn(true);
-                TypeDescription declaringType = mock(TypeDescription.class);
-                when(declaringType.asRawType()).thenReturn(declaringType);
-                when(target.getDeclaringType()).thenReturn(declaringType);
-                TypeDescription superType = mock(TypeDescription.class);
-                when(superType.asRawType()).thenReturn(superType);
-                when(superType.iterator()).thenReturn(new GenericTypeDescription.SuperTypeIterator(superType));
-                when(declaringType.getSuperType()).thenReturn(superType);
-                MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
-                when(methodDescription.asDefined()).thenReturn(methodDescription);
-                MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
-                when(methodDescription.asToken()).thenReturn(methodToken);
-                when(target.asToken()).thenReturn(methodToken);
-                when(methodDescription.getInternalName()).thenReturn(FOO);
-                when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
-                MethodDescription.InDefinedShape bridgeTarget = mock(MethodDescription.InDefinedShape.class);
-                when(bridgeTarget.getSourceCodeName()).thenReturn(BAR);
-                when(bridgeTarget.getParameters()).thenReturn(new ParameterList.Empty());
-                when(declaringType.getDeclaredMethods())
-                        .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(bridgeTarget)));
-                when(superType.getDeclaredMethods())
-                        .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)));
             }
         };
 

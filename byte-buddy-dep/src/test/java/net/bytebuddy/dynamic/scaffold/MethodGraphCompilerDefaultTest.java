@@ -3,8 +3,11 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -13,6 +16,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class MethodGraphCompilerDefaultTest {
+
+    private static final String TYPE_VARIABLE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.TypeVariableInterfaceBridge";
+
+    private static final String RETURN_TYPE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.ReturnTypeInterfaceBridge";
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
     public void testTrivialJavaHierarchy() throws Exception {
@@ -508,6 +518,36 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
         assertThat(node, is(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asToken())));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testTypeVariableInterfaceBridge() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(TYPE_VARIABLE_INTERFACE_BRIDGE));
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getBridges().size(), is(1));
+        assertThat(node.getBridges().contains(typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly().asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testReturnTypeInterfaceBridge() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(RETURN_TYPE_INTERFACE_BRIDGE));
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(returns(String.class)).getOnly();
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getBridges().size(), is(1));
+        assertThat(node.getBridges().contains(typeDescription.getDeclaredMethods().filter(returns(Object.class)).getOnly().asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(MethodGraph.Node.Visibility.PLAIN));
     }
 
     @Test

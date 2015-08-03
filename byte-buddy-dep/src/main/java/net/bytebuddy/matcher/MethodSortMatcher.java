@@ -1,9 +1,6 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-
-import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Matches a method description by its general characteristics which are represented as a
@@ -91,40 +88,6 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
             @Override
             protected boolean isSort(MethodDescription target) {
                 return target.isVirtual();
-            }
-        },
-
-        /**
-         * Matches method descriptions that represent bridge methods that are implemented in order to increase
-         * a method's visibility in a subtype.
-         */
-        VISIBILITY_BRIDGE("isVisibilityBridge()") {
-            @Override
-            protected boolean isSort(MethodDescription target) {
-                if (target.isBridge()) {
-                    if (target.getDeclaringType().asRawType().isInterface()) {
-                        return false;
-                    }
-                    for (GenericTypeDescription currentType : target.getDeclaringType().getSuperType()) {
-                        for (MethodDescription methodDescription : currentType.getDeclaredMethods()) {
-                            if (methodDescription.asDefined().asToken().equals(target.asToken())) {
-                                return !methodDescription.isBridge() && target.getDeclaringType().asRawType().getDeclaredMethods()
-                                        .filter(not(isBridge())
-                                                .and(hasMethodName(methodDescription.getInternalName()))
-                                                .and(takesArguments(methodDescription.getParameters().asTypeList().asRawTypes())))
-                                        .isEmpty();
-                            }
-                        }
-                    }
-                }
-                return false;
-            }
-        },
-
-        TYPE_BRIDGE("isTypeBridge()") {
-            @Override
-            protected boolean isSort(MethodDescription target) {
-                return target.isBridge() && !VISIBILITY_BRIDGE.isSort(target);
             }
         },
 

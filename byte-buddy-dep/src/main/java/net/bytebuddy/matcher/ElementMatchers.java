@@ -1134,14 +1134,6 @@ public final class ElementMatchers {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_INITIALIZER);
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isTypeBridge() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.TYPE_BRIDGE);
-    }
-
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isVisibilityBridge() {
-        return new MethodSortMatcher<T>(MethodSortMatcher.Sort.VISIBILITY_BRIDGE);
-    }
-
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isVirtual() {
         return new MethodSortMatcher<T>(MethodSortMatcher.Sort.VIRTUAL);
     }
