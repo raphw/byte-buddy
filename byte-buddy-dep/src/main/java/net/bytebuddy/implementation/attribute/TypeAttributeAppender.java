@@ -87,62 +87,6 @@ public interface TypeAttributeAppender {
     }
 
     /**
-     * An attribute appender that appends a single annotation to a given type. The visibility for the annotation
-     * will be inferred from the annotation's {@link java.lang.annotation.RetentionPolicy}.
-     */
-    class ForAnnotation implements TypeAttributeAppender {
-
-        /**
-         * The annotations to write to the given type.
-         */
-        private final List<? extends AnnotationDescription> annotations;
-
-        /**
-         * The value filter to apply for discovering which values of an annotation should be written.
-         */
-        private final AnnotationAppender.ValueFilter valueFilter;
-
-        /**
-         * Creates a new annotation attribute appender for explicit annotation values.
-         *
-         * @param annotations The annotations to write to the given type.
-         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
-         */
-        public ForAnnotation(List<? extends AnnotationDescription> annotations, AnnotationAppender.ValueFilter valueFilter) {
-            this.annotations = annotations;
-            this.valueFilter = valueFilter;
-        }
-
-        @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
-            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
-            for (AnnotationDescription annotation : annotations) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-            }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && annotations.equals(((ForAnnotation) other).annotations)
-                    && valueFilter.equals(((ForAnnotation) other).valueFilter);
-        }
-
-        @Override
-        public int hashCode() {
-            return annotations.hashCode() + 31 * valueFilter.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.ForAnnotation{" +
-                    "annotations=" + annotations +
-                    ", valueFilter=" + valueFilter +
-                    '}';
-        }
-    }
-
-    /**
      * Writes all annotations that are declared for a given Java type to the target type.
      */
     class ForType implements TypeAttributeAppender {
@@ -202,6 +146,62 @@ public interface TypeAttributeAppender {
         public String toString() {
             return "TypeAttributeAppender.ForType{" +
                     "typeDescription=" + typeDescription +
+                    ", valueFilter=" + valueFilter +
+                    '}';
+        }
+    }
+
+    /**
+     * An attribute appender that appends a single annotation to a given type. The visibility for the annotation
+     * will be inferred from the annotation's {@link java.lang.annotation.RetentionPolicy}.
+     */
+    class ForAnnotation implements TypeAttributeAppender {
+
+        /**
+         * The annotations to write to the given type.
+         */
+        private final List<? extends AnnotationDescription> annotations;
+
+        /**
+         * The value filter to apply for discovering which values of an annotation should be written.
+         */
+        private final AnnotationAppender.ValueFilter valueFilter;
+
+        /**
+         * Creates a new annotation attribute appender for explicit annotation values.
+         *
+         * @param annotations The annotations to write to the given type.
+         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
+         */
+        public ForAnnotation(List<? extends AnnotationDescription> annotations, AnnotationAppender.ValueFilter valueFilter) {
+            this.annotations = annotations;
+            this.valueFilter = valueFilter;
+        }
+
+        @Override
+        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
+            for (AnnotationDescription annotation : annotations) {
+                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+            }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && annotations.equals(((ForAnnotation) other).annotations)
+                    && valueFilter.equals(((ForAnnotation) other).valueFilter);
+        }
+
+        @Override
+        public int hashCode() {
+            return annotations.hashCode() + 31 * valueFilter.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TypeAttributeAppender.ForAnnotation{" +
+                    "annotations=" + annotations +
                     ", valueFilter=" + valueFilter +
                     '}';
         }

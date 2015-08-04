@@ -29,32 +29,6 @@ public interface MethodAttributeAppender {
     void apply(MethodVisitor methodVisitor, MethodDescription methodDescription);
 
     /**
-     * A method attribute appender that does not append any attributes.
-     */
-    enum NoOp implements MethodAttributeAppender, Factory {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public MethodAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            /* do nothing */
-        }
-
-        @Override
-        public String toString() {
-            return "MethodAttributeAppender.NoOp." + name();
-        }
-    }
-
-    /**
      * A factory that creates method attribute appenders for a given type.
      */
     interface Factory {
@@ -117,10 +91,36 @@ public interface MethodAttributeAppender {
     }
 
     /**
+     * A method attribute appender that does not append any attributes.
+     */
+    enum NoOp implements MethodAttributeAppender, Factory {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            /* do nothing */
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.NoOp." + name();
+        }
+    }
+
+    /**
      * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
      * method that is being created. This includes method and parameter annotations.
      */
-    class ForInstrumentedMethod implements MethodAttributeAppender, Factory {
+    class ForInstrumentedMethod implements Factory {
 
         /**
          * The value filter to apply for discovering which values of an annotation should be written.
@@ -137,23 +137,8 @@ public interface MethodAttributeAppender {
         }
 
         @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor), valueFilter);
-            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
-                methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-            }
-            int index = 0;
-            for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++), valueFilter);
-                for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
-                    parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-                }
-            }
-        }
-
-        @Override
         public MethodAttributeAppender make(TypeDescription typeDescription) {
-            return this;
+            return new Appender(typeDescription, valueFilter);
         }
 
         @Override
@@ -172,6 +157,76 @@ public interface MethodAttributeAppender {
             return "MethodAttributeAppender.ForInstrumentedMethod{" +
                     "valueFilter=" + valueFilter +
                     '}';
+        }
+
+        /**
+         * An appender for an instrumented method that only appends the intercepted method's annotations if it is not already declared by the
+         * instrumented type, i.e. it is defined explicitly.
+         */
+        protected static class Appender implements MethodAttributeAppender {
+
+            /**
+             * The instrumented type.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * The value filter to apply for discovering which values of an annotation should be written.
+             */
+            private final AnnotationAppender.ValueFilter valueFilter;
+
+            /**
+             * Creates a new appender.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param valueFilter      The value filter to apply for discovering which values of an annotation should be written.
+             */
+            protected Appender(TypeDescription instrumentedType, AnnotationAppender.ValueFilter valueFilter) {
+                this.instrumentedType = instrumentedType;
+                this.valueFilter = valueFilter;
+            }
+
+            @Override
+            public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+                if (methodDescription.getDeclaringType().equals(instrumentedType)) {
+                    return;
+                }
+                AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor), valueFilter);
+                for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
+                    methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                }
+                int index = 0;
+                for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
+                    AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++), valueFilter);
+                    for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
+                        parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                    }
+                }
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Appender appender = (Appender) other;
+                return instrumentedType.equals(appender.instrumentedType)
+                        && valueFilter.equals(appender.valueFilter);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentedType.hashCode();
+                result = 31 * result + valueFilter.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodAttributeAppender.ForInstrumentedMethod.Appender{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", valueFilter=" + valueFilter +
+                        '}';
+            }
         }
     }
 
