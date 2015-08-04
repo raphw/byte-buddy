@@ -267,6 +267,12 @@ public interface TypeWriter<T> {
              */
             Sort getSort();
 
+            /**
+             * Returns the method that is implemented where the returned method ressembles a potential transformation. An implemented
+             * method is only defined if a method is not {@link Record.Sort#SKIPPED}.
+             *
+             * @return The implemented method.
+             */
             MethodDescription getImplementedMethod();
 
             /**
@@ -906,7 +912,7 @@ public interface TypeWriter<T> {
 
                         @Override
                         public int getModifiers() {
-                            return bridgeTarget.getModifiers() | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE;
+                            return (bridgeTarget.getModifiers() | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE) & ~Opcodes.ACC_NATIVE;
                         }
 
                         @Override
@@ -939,7 +945,7 @@ public interface TypeWriter<T> {
                                         MethodDescription bridgeTarget,
                                         Set<MethodDescription.TypeToken> bridgeTypes,
                                         MethodAttributeAppender attributeAppender) {
-                    return bridgeTypes.isEmpty()
+                    return bridgeTypes.isEmpty() || (instrumentedType.isInterface() && !delegate.getSort().isImplemented())
                             ? delegate
                             : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, bridgeTypes, attributeAppender);
                 }
@@ -1141,7 +1147,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public int getModifiers() {
-                        return bridgeTarget.getModifiers() | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC;
+                        return (bridgeTarget.getModifiers() | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC) & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE);
                     }
 
                     @Override

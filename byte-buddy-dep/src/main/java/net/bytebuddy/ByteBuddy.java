@@ -1420,6 +1420,9 @@ public class ByteBuddy {
          */
         protected final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+        /**
+         * The method transformer to apply.
+         */
         protected final MethodTransformer methodTransformer;
 
         /**
@@ -1445,6 +1448,7 @@ public class ByteBuddy {
          * @param methodMatcher                         The method matcher representing the current method selection.
          * @param handler                               The handler for the entry that is to be registered.
          * @param attributeAppenderFactory              The method attribute appender factory that was defined for the current method selection.
+         * @param methodTransformer                     The method transformer to apply.
          */
         protected MethodAnnotationTarget(ClassFileVersion classFileVersion,
                                          NamingStrategy.Unbound namingStrategy,

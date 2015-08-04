@@ -219,6 +219,25 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     }
 
     @Test
+    public void testBridgeMethodForAbstractMethod() throws Exception {
+        Class<?> dynamicType = create(AbstractGenericType.Inner.class)
+                .modifiers(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC)
+                .method(named(FOO)).withoutCode()
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(dynamicType.getDeclaredMethods().length, is(2));
+        assertEquals(Void.class, dynamicType.getDeclaredMethod(FOO, Void.class).getReturnType());
+        assertThat(dynamicType.getDeclaredMethod(FOO, Void.class).getGenericReturnType(), is((Type) Void.class));
+        assertThat(dynamicType.getDeclaredMethod(FOO, Void.class).isBridge(), is(false));
+        assertThat(Modifier.isAbstract(dynamicType.getDeclaredMethod(FOO, Void.class).getModifiers()), is(true));
+        assertEquals(Object.class, dynamicType.getDeclaredMethod(FOO, Object.class).getReturnType());
+        assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).getGenericReturnType(), is((Type) Object.class));
+        assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).isBridge(), is(true));
+        assertThat(Modifier.isAbstract(dynamicType.getDeclaredMethod(FOO, Object.class).getModifiers()), is(false));
+    }
+
+    @Test
     public void testVisibilityBridge() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
@@ -383,6 +402,15 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
         public String foo() {
             return null;
+        }
+    }
+
+    public abstract static class AbstractGenericType<T> {
+
+        public abstract T foo(T t);
+
+        public abstract static class Inner extends AbstractGenericType<Void> {
+            /* empty */
         }
     }
 }

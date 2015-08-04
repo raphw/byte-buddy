@@ -27,6 +27,7 @@ public interface MethodRegistry {
      * @param methodMatcher            A matcher to identify all entries that are to be matched.
      * @param handler                  The handler to instrument any matched method.
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
+     * @param methodTransformer        The method transformer to be applied to implemented methods.
      * @return A mutated version of this method registry.
      */
     MethodRegistry prepend(LatentMethodMatcher methodMatcher,
@@ -40,6 +41,7 @@ public interface MethodRegistry {
      * @param methodMatcher            A matcher to identify all entries that are to be matched.
      * @param handler                  The handler to instrument any matched method.
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
+     * @param methodTransformer        The method transformer to be applied to implemented methods.
      * @return A mutated version of this method registry.
      */
     MethodRegistry append(LatentMethodMatcher methodMatcher,
@@ -98,6 +100,9 @@ public interface MethodRegistry {
          */
         enum ForAbstractMethod implements Handler, Compiled {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -134,7 +139,7 @@ public interface MethodRegistry {
             /**
              * Creates a new handler for implementing a method with byte code.
              *
-             * @param implementation   The implementation to apply.
+             * @param implementation The implementation to apply.
              */
             public ForImplementation(Implementation implementation) {
                 this.implementation = implementation;
@@ -225,7 +230,7 @@ public interface MethodRegistry {
             /**
              * Creates a handler for defining a default annotation value for a method.
              *
-             * @param annotationValue  The annotation value to set as a default value.
+             * @param annotationValue The annotation value to set as a default value.
              */
             protected ForAnnotationValue(Object annotationValue) {
                 this.annotationValue = annotationValue;
@@ -234,7 +239,7 @@ public interface MethodRegistry {
             /**
              * Represents the given value as an annotation default value handler after validating its suitability.
              *
-             * @param annotationValue  The annotation value to represent.
+             * @param annotationValue The annotation value to represent.
              * @return A handler for setting the given value as a default value for instrumented methods.
              */
             public static Handler of(Object annotationValue) {
@@ -561,6 +566,9 @@ public interface MethodRegistry {
              */
             private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+            /**
+             * The method transformer to be applied to implemented methods.
+             */
             private final MethodTransformer methodTransformer;
 
             /**
@@ -569,6 +577,7 @@ public interface MethodRegistry {
              * @param methodMatcher            The latent method matcher that this entry represents.
              * @param handler                  The handler to apply to all matched entries.
              * @param attributeAppenderFactory A method attribute appender factory to apply to all entries.
+             * @param methodTransformer        The method transformer to be applied to implemented methods.
              */
             protected Entry(LatentMethodMatcher methodMatcher,
                             Handler handler,
@@ -583,6 +592,8 @@ public interface MethodRegistry {
             /**
              * Transforms this entry into a prepared state.
              *
+             * @param methodDescription The non-transformed method to be implemented.
+             * @param methodTypes       The method types this method represents.
              * @return A prepared version of this entry.
              */
             protected Prepared.Entry asPreparedEntry(MethodDescription methodDescription, Set<MethodDescription.TypeToken> methodTypes) {
@@ -789,8 +800,14 @@ public interface MethodRegistry {
                  */
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+                /**
+                 * The method this entry represents.
+                 */
                 private final MethodDescription methodDescription;
 
+                /**
+                 * The method's type tokens.
+                 */
                 private final Set<MethodDescription.TypeToken> typeTokens;
 
                 /**
@@ -798,7 +815,8 @@ public interface MethodRegistry {
                  *
                  * @param handler                  The handler for implementing methods.
                  * @param attributeAppenderFactory A attribute appender factory for appending attributes for any implemented method.
-                 * @param typeTokens                  A set of bridges representing the bridge methods of this method.
+                 * @param methodDescription        The method this entry represents.
+                 * @param typeTokens               A set of bridges representing the bridge methods of this method.
                  */
                 protected Entry(Handler handler,
                                 MethodAttributeAppender.Factory attributeAppenderFactory,
@@ -828,10 +846,20 @@ public interface MethodRegistry {
                     return attributeAppenderFactory;
                 }
 
+                /**
+                 * Returns the method description this entry represents.
+                 *
+                 * @return The method description this entry represents.
+                 */
                 protected MethodDescription getMethodDescription() {
                     return methodDescription;
                 }
 
+                /**
+                 * Resolves the type tokens of all bridge methods that are required to be implemented for this entry.
+                 *
+                 * @return A set of type tokens representing the bridge methods required for implementing this type.
+                 */
                 protected Set<MethodDescription.TypeToken> resolveBridgeTypes() {
                     HashSet<MethodDescription.TypeToken> typeTokens = new HashSet<MethodDescription.TypeToken>(this.typeTokens);
                     typeTokens.remove(methodDescription.asTypeToken());
@@ -971,26 +999,55 @@ public interface MethodRegistry {
                         '}';
             }
 
+            /**
+             * An entry of a compiled method registry.
+             */
             protected static class Entry {
 
+                /**
+                 * The handler to be used for implementing a method.
+                 */
                 private final Handler.Compiled handler;
 
+                /**
+                 * The attribute appender of a compiled method.
+                 */
                 private final MethodAttributeAppender attributeAppender;
 
+                /**
+                 * The method to be implemented including potential transformations.
+                 */
                 private final MethodDescription methodDescription;
 
+                /**
+                 * The type tokens representing all bridge methods for the method.
+                 */
                 private final Set<MethodDescription.TypeToken> bridgeTypes;
 
-                public Entry(Handler.Compiled handler,
-                             MethodAttributeAppender attributeAppender,
-                             MethodDescription methodDescription,
-                             Set<MethodDescription.TypeToken> bridgeTypes) {
+                /**
+                 * Creates a new entry for a compiled method registry.
+                 *
+                 * @param handler           The handler to be used for implementing a method.
+                 * @param attributeAppender The attribute appender of a compiled method.
+                 * @param methodDescription The method to be implemented including potential transformations.
+                 * @param bridgeTypes       The type tokens representing all bridge methods for the method.
+                 */
+                protected Entry(Handler.Compiled handler,
+                                MethodAttributeAppender attributeAppender,
+                                MethodDescription methodDescription,
+                                Set<MethodDescription.TypeToken> bridgeTypes) {
                     this.handler = handler;
                     this.attributeAppender = attributeAppender;
                     this.methodDescription = methodDescription;
                     this.bridgeTypes = bridgeTypes;
                 }
 
+                /**
+                 * Transforms this entry into a method record.
+                 *
+                 * @param instrumentedType The instrumented type to bind.
+                 * @return A record representing this entry's properties.
+                 */
                 protected Record bind(TypeDescription instrumentedType) {
                     return TypeWriter.MethodPool.Record.AccessBridgeWrapper.of(handler.assemble(methodDescription, attributeAppender),
                             instrumentedType,

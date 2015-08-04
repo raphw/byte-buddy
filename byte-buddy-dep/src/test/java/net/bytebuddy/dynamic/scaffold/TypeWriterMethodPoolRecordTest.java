@@ -111,17 +111,22 @@ public class TypeWriterMethodPoolRecordTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testSkippedMethodCannotGetImplementedMethod() throws Exception {
+        TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.getImplementedMethod();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotBePrepended() throws Exception {
         TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.prepend(byteCodeAppender);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testSkippedMethodCannotBeAppliedBody() throws Exception {
+    public void testSkippedMethodCannotApplyBody() throws Exception {
         TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.applyBody(methodVisitor, implementationContext);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testSkippedMethodCannotBeAppliedHead() throws Exception {
+    public void testSkippedMethodCannotApplyHead() throws Exception {
         TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.applyHead(methodVisitor);
     }
 

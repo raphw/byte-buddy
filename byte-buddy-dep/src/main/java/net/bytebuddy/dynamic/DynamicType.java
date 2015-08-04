@@ -691,7 +691,8 @@ public interface DynamicType {
             /**
              * Intercepts the currently selected method by a given implementation.
              *
-             * @param implementation An implementation to apply to the currently selected method.
+             * @param implementation    An implementation to apply to the currently selected method.
+             * @param methodTransformer The method transformer to apply.
              * @return A builder which will intercept the currently selected methods by the given implementation.
              */
             MethodAnnotationTarget<S> intercept(Implementation implementation, MethodTransformer methodTransformer);
@@ -706,6 +707,7 @@ public interface DynamicType {
             /**
              * Implements the currently selected methods as {@code abstract} methods.
              *
+             * @param methodTransformer The method transformer to apply.
              * @return A builder which will implement the currently selected methods as {@code abstract} methods.
              */
             MethodAnnotationTarget<S> withoutCode(MethodTransformer methodTransformer);
@@ -722,8 +724,9 @@ public interface DynamicType {
             /**
              * Defines a default annotation value to set for any matched method.
              *
-             * @param value The value that the annotation property should set as a default.
-             * @param type  The type of the annotation property.
+             * @param value             The value that the annotation property should set as a default.
+             * @param type              The type of the annotation property.
+             * @param methodTransformer The method transformer to apply.
              * @return A builder which defines the given default value for all matched methods.
              */
             MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type, MethodTransformer methodTransformer);
@@ -745,7 +748,8 @@ public interface DynamicType {
              * instances, annotations as {@link AnnotationDescription} instances and
              * {@link Class} values as {@link TypeDescription} instances. Other values are handed in their raw format or as their wrapper types.
              *
-             * @param value A non-loaded value that the annotation property should set as a default.
+             * @param value             A non-loaded value that the annotation property should set as a default.
+             * @param methodTransformer The method transformer to apply.
              * @return A builder which defines the given default value for all matched methods.
              */
             MethodAnnotationTarget<S> withDefaultValue(Object value, MethodTransformer methodTransformer);
@@ -2535,6 +2539,9 @@ public interface DynamicType {
                  */
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+                /**
+                 * The method transformer to apply.
+                 */
                 private final MethodTransformer methodTransformer;
 
                 /**
@@ -2544,6 +2551,7 @@ public interface DynamicType {
                  * @param methodTokens             A list of all method tokens that were previously defined.
                  * @param handler                  The handler to apply to any matched method.
                  * @param attributeAppenderFactory The method attribute appender factory to be applied to the matched methods.
+                 * @param methodTransformer        The method transformer to apply.
                  */
                 protected DefaultMethodAnnotationTarget(LatentMethodMatcher methodMatcher,
                                                         List<MethodDescription.Token> methodTokens,

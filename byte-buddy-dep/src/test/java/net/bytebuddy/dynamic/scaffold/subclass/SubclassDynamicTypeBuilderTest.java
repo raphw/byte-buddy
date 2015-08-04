@@ -16,7 +16,10 @@ import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
-import net.bytebuddy.test.utility.*;
+import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.DebuggingWrapper;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -26,7 +29,9 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
@@ -376,6 +381,25 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
+    public void testBridgeMethodForAbstractMethod() throws Exception {
+        Class<?> dynamicType = create(AbstractGenericType.Inner.class)
+                .modifiers(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC)
+                .method(named(FOO)).withoutCode()
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(dynamicType.getDeclaredMethods().length, is(2));
+        assertEquals(Void.class, dynamicType.getDeclaredMethod(FOO, Void.class).getReturnType());
+        assertThat(dynamicType.getDeclaredMethod(FOO, Void.class).getGenericReturnType(), is((Type) Void.class));
+        assertThat(dynamicType.getDeclaredMethod(FOO, Void.class).isBridge(), is(false));
+        assertThat(Modifier.isAbstract(dynamicType.getDeclaredMethod(FOO, Void.class).getModifiers()), is(true));
+        assertEquals(Object.class, dynamicType.getDeclaredMethod(FOO, Object.class).getReturnType());
+        assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).getGenericReturnType(), is((Type) Object.class));
+        assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).isBridge(), is(true));
+        assertThat(Modifier.isAbstract(dynamicType.getDeclaredMethod(FOO, Object.class).getModifiers()), is(false));
+    }
+
+    @Test
     public void testVisibilityBridge() throws Exception {
         Class<?> type = create(VisibilityBridge.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
@@ -533,5 +557,14 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     public static class VisibilityBridgeExtension extends VisibilityBridge {
         /* empty */
+    }
+
+    public abstract static class AbstractGenericType<T> {
+
+        public abstract T foo(T t);
+
+        public abstract static class Inner extends AbstractGenericType<Void> {
+            /* empty */
+        }
     }
 }
