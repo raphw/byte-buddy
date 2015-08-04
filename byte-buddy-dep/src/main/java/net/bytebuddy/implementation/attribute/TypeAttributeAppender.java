@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.objectweb.asm.ClassVisitor;
 
 import java.util.Arrays;
@@ -15,10 +16,12 @@ public interface TypeAttributeAppender {
     /**
      * Applies this type attribute appender.
      *
-     * @param classVisitor    The class visitor to which the annotations of this visitor should be written to.
-     * @param typeDescription A description of the instrumented type that is target of the ongoing instrumentation.
+     * @param classVisitor     The class visitor to which the annotations of this visitor should be written to.
+     * @param instrumentedType A description of the instrumented type that is target of the ongoing instrumentation.
+     * @param targetType       The target type of the instrumentation, i.e. the super class type for a super class creation
+     *                         or the type being redefined.
      */
-    void apply(ClassVisitor classVisitor, TypeDescription typeDescription);
+    void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType);
 
     /**
      * A type attribute appender that does not append any attributes.
@@ -31,7 +34,7 @@ public interface TypeAttributeAppender {
         INSTANCE;
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
             /* do nothing */
         }
 
@@ -46,7 +49,7 @@ public interface TypeAttributeAppender {
      * instrumented type this type attribute appender is applied onto. The visibility for the annotation
      * will be inferred from the annotations' {@link java.lang.annotation.RetentionPolicy}.
      */
-    class ForSuperType implements TypeAttributeAppender {
+    class ForInstrumentedType implements TypeAttributeAppender {
 
         /**
          * The value filter to apply for discovering which values of an annotation should be written.
@@ -58,21 +61,24 @@ public interface TypeAttributeAppender {
          *
          * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForSuperType(AnnotationAppender.ValueFilter valueFilter) {
+        public ForInstrumentedType(AnnotationAppender.ValueFilter valueFilter) {
             this.valueFilter = valueFilter;
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
+            if (!instrumentedType.getSuperType().equals(targetType)) {
+                return; // Takes into account that types can be renamed. This check is more reliable.
+            }
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
-            for (AnnotationDescription annotation : typeDescription.getSuperType().asRawType().getDeclaredAnnotations()) {
+            for (AnnotationDescription annotation : targetType.asRawType().getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }
 
         @Override
         public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass()) && valueFilter.equals(((ForSuperType) other).valueFilter);
+            return this == other || !(other == null || getClass() != other.getClass()) && valueFilter.equals(((ForInstrumentedType) other).valueFilter);
         }
 
         @Override
@@ -82,7 +88,7 @@ public interface TypeAttributeAppender {
 
         @Override
         public String toString() {
-            return "TypeAttributeAppender.ForSuperType{valueFilter=" + valueFilter + "}";
+            return "TypeAttributeAppender.ForInstrumentedType{valueFilter=" + valueFilter + "}";
         }
     }
 
@@ -123,7 +129,7 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
             for (AnnotationDescription annotation : this.typeDescription.getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
@@ -179,7 +185,7 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
             for (AnnotationDescription annotation : annotations) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
@@ -227,9 +233,9 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription typeDescription) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
             for (TypeAttributeAppender typeAttributeAppender : this.typeAttributeAppender) {
-                typeAttributeAppender.apply(classVisitor, typeDescription);
+                typeAttributeAppender.apply(classVisitor, instrumentedType, targetType);
             }
         }
 

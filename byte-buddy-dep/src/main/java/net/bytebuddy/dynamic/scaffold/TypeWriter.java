@@ -2044,7 +2044,7 @@ public interface TypeWriter<T> {
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperType().asRawType()).getInternalName(),
                             instrumentedType.getInterfaces().asRawTypes().toInternalNames());
-                    attributeAppender.apply(this, instrumentedType);
+                    attributeAppender.apply(this, instrumentedType, targetType);
                 }
 
                 @Override
@@ -2545,7 +2545,7 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.OBJECT
                                 : instrumentedType.getSuperType().asRawType()).getInternalName(),
                         instrumentedType.getInterfaces().asRawTypes().toInternalNames());
-                attributeAppender.apply(classVisitor, instrumentedType);
+                attributeAppender.apply(classVisitor, instrumentedType, instrumentedType.getSuperType());
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor);
                 }

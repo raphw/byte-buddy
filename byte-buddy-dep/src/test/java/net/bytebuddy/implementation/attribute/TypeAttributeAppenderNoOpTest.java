@@ -14,9 +14,10 @@ public class TypeAttributeAppenderNoOpTest extends AbstractTypeAttributeAppender
 
     @Test
     public void testNoOp() throws Exception {
-        TypeAttributeAppender.NoOp.INSTANCE.apply(classVisitor, typeDescription);
+        TypeAttributeAppender.NoOp.INSTANCE.apply(classVisitor, typeDescription, targetType);
         verifyZeroInteractions(classVisitor);
         verifyZeroInteractions(typeDescription);
+        verifyZeroInteractions(targetType);
     }
 
     @Test

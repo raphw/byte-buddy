@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
@@ -12,4 +13,7 @@ public abstract class AbstractTypeAttributeAppenderTest extends AbstractAttribut
 
     @Mock
     protected TypeDescription typeDescription;
+
+    @Mock
+    protected GenericTypeDescription targetType;
 }
