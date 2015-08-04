@@ -106,7 +106,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     public String toString() {
         return "SubclassImplementationTarget{" +
                 "superConstructors=" + superConstructors +
-                ", originTypeIdentifier=" + originTypeResolver +
+                ", originTypeResolver=" + originTypeResolver +
                 ", instrumentedType=" + instrumentedType +
                 ", methodGraph=" + methodGraph +
                 '}';
@@ -190,7 +190,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         @Override
         public String toString() {
             return "SubclassImplementationTarget.Factory{" +
-                    "originTypeIdentifier=" + originTypeResolver +
+                    "originTypeResolver=" + originTypeResolver +
                     '}';
         }
     }
