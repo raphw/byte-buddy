@@ -491,7 +491,9 @@ public interface MethodRegistry {
                 }
             }
             MethodGraph.Linked methodGraph = methodGraphCompiler.compile(instrumentedType);
-            ElementMatcher<? super MethodDescription> relevanceMatcher = not(anyOf(implementations.keySet())).and(methodFilter.resolve(instrumentedType));
+            // Casting required for Java 6 compiler.
+            ElementMatcher<? super MethodDescription> relevanceMatcher = (ElementMatcher<? super MethodDescription>) not(anyOf(implementations.keySet()))
+                    .and(methodFilter.resolve(instrumentedType));
             for (MethodGraph.Node node : methodGraph.listNodes()) {
                 MethodDescription methodDescription = node.getRepresentative();
                 boolean visibilityBridge = instrumentedType.isPublic() && !instrumentedType.isInterface();
