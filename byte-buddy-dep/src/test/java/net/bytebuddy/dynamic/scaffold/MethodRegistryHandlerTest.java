@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -15,6 +16,7 @@ import org.objectweb.asm.ClassVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MethodRegistryHandlerTest {
@@ -81,11 +83,18 @@ public class MethodRegistryHandlerTest {
         assertThat(record.getModifierResolver(), is(modifierResolver));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testVisibilityBridgeHandlerPreparationThrowsException() throws Exception {
+        MethodRegistry.Handler.ForVisibilityBridge.INSTANCE.prepare(mock(InstrumentedType.class));
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodRegistry.Handler.ForAbstractMethod.class).apply();
         ObjectPropertyAssertion.of(MethodRegistry.Handler.ForImplementation.class).apply();
         ObjectPropertyAssertion.of(MethodRegistry.Handler.ForImplementation.Compiled.class).apply();
         ObjectPropertyAssertion.of(MethodRegistry.Handler.ForAnnotationValue.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForVisibilityBridge.class).apply();
+        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForVisibilityBridge.Compiled.class).apply();
     }
 }

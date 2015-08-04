@@ -1356,9 +1356,9 @@ public interface Implementation {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || !(o == null || getClass() != o.getClass())
-                    && Arrays.equals(implementation, ((Compound) o).implementation);
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && Arrays.equals(implementation, ((Compound) other).implementation);
         }
 
         @Override

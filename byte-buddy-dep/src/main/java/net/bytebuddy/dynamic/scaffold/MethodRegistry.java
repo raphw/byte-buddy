@@ -44,8 +44,9 @@ public interface MethodRegistry {
     /**
      * Prepares this method registry.
      *
-     * @param instrumentedType The instrumented type that should be created.
-     * @param methodFilter     A filter that only matches methods that should be instrumented.
+     * @param instrumentedType    The instrumented type that should be created.
+     * @param methodGraphCompiler The method graph compiler to be used for analyzing the fully assembled instrumented type.
+     * @param methodFilter        A filter that only matches methods that should be instrumented.
      * @return A prepared version of this method registry.
      */
     Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMethodMatcher methodFilter);
@@ -80,6 +81,7 @@ public interface MethodRegistry {
              * Assembles this compiled entry with a method attribute appender.
              *
              * @param attributeAppender The method attribute appender to apply together with this handler.
+             * @param methodDescription The method description to apply with this handler.
              * @return A method pool entry representing this handler and the given attribute appender.
              */
             TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription);
@@ -330,13 +332,19 @@ public interface MethodRegistry {
             }
         }
 
+        /**
+         * A handler for implementing a visibility bridge.
+         */
         enum ForVisibilityBridge implements Handler {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
+                throw new IllegalStateException("A visibility bridge handler must not apply any preparations");
             }
 
             @Override
@@ -344,10 +352,26 @@ public interface MethodRegistry {
                 return new Compiled(implementationTarget.getTypeDescription());
             }
 
+            @Override
+            public String toString() {
+                return "MethodRegistry.Handler.ForVisibilityBridge." + name();
+            }
+
+            /**
+             * A compiled handler for a visibility bridge handler.
+             */
             protected static class Compiled implements Handler.Compiled {
 
+                /**
+                 * The instrumented type.
+                 */
                 private final TypeDescription instrumentedType;
 
+                /**
+                 * Creates a new compiled handler for a visibility bridge.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 */
                 protected Compiled(TypeDescription instrumentedType) {
                     this.instrumentedType = instrumentedType;
                 }
@@ -355,6 +379,24 @@ public interface MethodRegistry {
                 @Override
                 public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
                     return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && instrumentedType.equals(((Compiled) other).instrumentedType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return instrumentedType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodRegistry.Handler.ForVisibilityBridge.Compiled{" +
+                            "instrumentedType=" + instrumentedType +
+                            '}';
                 }
             }
         }
@@ -583,10 +625,21 @@ public interface MethodRegistry {
                 this.attributeAppenderFactory = attributeAppenderFactory;
             }
 
+            /**
+             * Transforms this entry into a prepared state.
+             *
+             * @param bridges The bridges to be appended to this entry.
+             * @return A prepared version of this entry.
+             */
             protected Prepared.Entry asPreparedEntry(Set<MethodDescription.TypeToken> bridges) {
                 return new Prepared.Entry(handler, attributeAppenderFactory, bridges);
             }
 
+            /**
+             * Returns this entry's handler.
+             *
+             * @return The handler of this entry.
+             */
             protected Handler getHandler() {
                 return handler;
             }
@@ -644,8 +697,14 @@ public interface MethodRegistry {
              */
             private final InstrumentedType.TypeInitializer typeInitializer;
 
+            /**
+             * The instrumented type.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * A method graph describing the instrumented type.
+             */
             private final MethodGraph.Linked methodGraph;
 
             /**
@@ -654,6 +713,8 @@ public interface MethodRegistry {
              * @param implementations       A map of all method descriptions mapped to their handling entries.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type initializer of the instrumented type.
+             * @param instrumentedType      The instrumented type.
+             * @param methodGraph           A method graph describing the instrumented type.
              */
             protected Prepared(LinkedHashMap<MethodDescription, Entry> implementations,
                                LoadedTypeInitializer loadedTypeInitializer,
@@ -742,34 +803,102 @@ public interface MethodRegistry {
                         '}';
             }
 
+            /**
+             * An entry of a prepared method registry.
+             */
             protected static class Entry {
 
+                /**
+                 * Creates an entry for a visibility bridge.
+                 *
+                 * @param bridgeTarget The bridge method's target.
+                 * @param bridges      The type tokens describing all bridges.
+                 * @return An entry representing a visibility bridge.
+                 */
                 protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.TypeToken> bridges) {
                     return new Entry(Handler.ForVisibilityBridge.INSTANCE, new MethodAttributeAppender.ForMethod(bridgeTarget), bridges);
                 }
 
+                /**
+                 * The handler for implementing methods.
+                 */
                 private final Handler handler;
 
+                /**
+                 * A attribute appender factory for appending attributes for any implemented method.
+                 */
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+                /**
+                 * A set of bridges representing the bridge methods of this method.
+                 */
                 private final Set<MethodDescription.TypeToken> bridges;
 
+                /**
+                 * Creates a new prepared entry.
+                 *
+                 * @param handler                  The handler for implementing methods.
+                 * @param attributeAppenderFactory A attribute appender factory for appending attributes for any implemented method.
+                 * @param bridges                  A set of bridges representing the bridge methods of this method.
+                 */
                 protected Entry(Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory, Set<MethodDescription.TypeToken> bridges) {
                     this.handler = handler;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                     this.bridges = bridges;
                 }
 
+                /**
+                 * Returns this entry's handler.
+                 *
+                 * @return The entry's handler.
+                 */
                 protected Handler getHandler() {
                     return handler;
                 }
 
+                /**
+                 * Returns this entry's attribute appender factory.
+                 *
+                 * @return This entry's attribute appender factory.
+                 */
                 protected MethodAttributeAppender.Factory getAppenderFactory() {
                     return attributeAppenderFactory;
                 }
 
-                public Set<MethodDescription.TypeToken> getBridges() {
+                /**
+                 * A set of bridges for the implemented method.
+                 *
+                 * @return A set of bridges for the implemented method.
+                 */
+                protected Set<MethodDescription.TypeToken> getBridges() {
                     return bridges;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Entry entry = (Entry) other;
+                    return handler.equals(entry.handler)
+                            && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
+                            && bridges.equals(entry.bridges);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = handler.hashCode();
+                    result = 31 * result + attributeAppenderFactory.hashCode();
+                    result = 31 * result + bridges.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodRegistry.Default.Prepared.Entry{" +
+                            "handler=" + handler +
+                            ", attributeAppenderFactory=" + attributeAppenderFactory +
+                            ", bridges=" + bridges +
+                            '}';
                 }
             }
         }
@@ -875,20 +1004,46 @@ public interface MethodRegistry {
                         '}';
             }
 
+            /**
+             * An entry of a compiled method registry.
+             */
             protected static class Entry {
 
+                /**
+                 * The compiled handler to be used for any implemented method.
+                 */
                 private final Handler.Compiled compiledHandler;
 
+                /**
+                 * The attribute appender to be used for any implemented method.
+                 */
                 private final MethodAttributeAppender attributeAppender;
 
+                /**
+                 * The bridges added to any implemented method.
+                 */
                 private final Set<MethodDescription.TypeToken> bridges;
 
+                /**
+                 * Creates a new entry of a compiled method registry.
+                 *
+                 * @param compiledHandler   The compiled handler to be used for any implemented method.
+                 * @param attributeAppender The attribute appender to be used for any implemented method.
+                 * @param bridges           The bridges added to any implemented method.
+                 */
                 protected Entry(Handler.Compiled compiledHandler, MethodAttributeAppender attributeAppender, Set<MethodDescription.TypeToken> bridges) {
                     this.compiledHandler = compiledHandler;
                     this.attributeAppender = attributeAppender;
                     this.bridges = bridges;
                 }
 
+                /**
+                 * Binds this entry to the provided method description.
+                 *
+                 * @param methodDescription The method to be bound.
+                 * @param instrumentedType  The instrumented type.
+                 * @return A record for implementing the provided method for the instrumented type.
+                 */
                 protected Record bind(MethodDescription methodDescription, TypeDescription instrumentedType) {
                     return Record.AccessBridgeWrapper.of(compiledHandler.assemble(attributeAppender, methodDescription),
                             instrumentedType,

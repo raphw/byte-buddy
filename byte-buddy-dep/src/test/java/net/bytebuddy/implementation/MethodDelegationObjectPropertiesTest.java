@@ -78,8 +78,8 @@ public class MethodDelegationObjectPropertiesTest {
         }
 
         @Override
-        public boolean equals(Object obj) {
-            return obj != null && obj.getClass() == getClass();
+        public boolean equals(Object other) {
+            return other != null && other.getClass() == getClass();
         }
 
         @Override
@@ -95,8 +95,8 @@ public class MethodDelegationObjectPropertiesTest {
         }
 
         @Override
-        public boolean equals(Object obj) {
-            return obj != null && obj.getClass() == getClass();
+        public boolean equals(Object other) {
+            return other != null && other.getClass() == getClass();
         }
 
         @Override

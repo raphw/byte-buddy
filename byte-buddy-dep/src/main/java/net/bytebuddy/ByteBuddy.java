@@ -1338,9 +1338,9 @@ public class ByteBuddy {
             }
 
             @Override
-            public boolean equals(Object o) {
-                return this == o || !(o == null || getClass() != o.getClass())
-                        && value.equals(((Defined) o).value);
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && value.equals(((Defined) other).value);
             }
 
             @Override

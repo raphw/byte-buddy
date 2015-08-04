@@ -1100,8 +1100,8 @@ public class ElementMatchersTest {
         }
 
         @Override
-        public boolean equals(Object obj) {
-            return super.equals(obj);
+        public boolean equals(Object other) {
+            return super.equals(other);
         }
 
         @Override
