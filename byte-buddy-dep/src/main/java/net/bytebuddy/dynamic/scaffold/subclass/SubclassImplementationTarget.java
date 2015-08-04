@@ -148,7 +148,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
 
         @Override
         public String toString() {
-            return "SubclassImplementationTarget.OriginTypeIdentifier." + name();
+            return "SubclassImplementationTarget.OriginTypeResolver." + name();
         }
     }
 

@@ -122,7 +122,6 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(SubclassImplementationTarget.class).apply();
         ObjectPropertyAssertion.of(SubclassImplementationTarget.OriginTypeResolver.class).apply();
