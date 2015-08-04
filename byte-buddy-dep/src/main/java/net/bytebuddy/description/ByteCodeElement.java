@@ -100,23 +100,6 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         T accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
 
         /**
-         * Returns this token with the given modifiers.
-         *
-         * @param modifiers The modifiers to set for this token.
-         * @return A version of this token with the given modifiers.
-         */
-        T withModifiers(int modifiers);
-
-        /**
-         * Returns this token with the given modifiers.
-         *
-         * @param modifiers The modifiers to add for this token's modifiers.
-         * @param mask      The modifiers to clear for this token's modifiers.
-         * @return A version of this token with the given modifiers.
-         */
-        T withModifiers(int modifiers, int mask);
-
-        /**
          * A list of tokens.
          *
          * @param <S> The actual token type.

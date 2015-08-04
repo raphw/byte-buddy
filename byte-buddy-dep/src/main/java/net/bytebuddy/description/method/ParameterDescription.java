@@ -833,20 +833,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
-        public Token withModifiers(int modifiers) {
-            return new Token(getType(),
-                    getAnnotations(),
-                    getName(),
-                    modifiers);
-        }
-
-        @Override
-        public Token withModifiers(int modifiers, int mask) {
-            Integer current = getModifiers();
-            return withModifiers(((current == null ? 0 : current) & ~mask) | modifiers);
-        }
-
-        @Override
         public boolean isIdenticalTo(Token token) {
             return getType().equals(token.getType())
                     && getAnnotations().equals(token.getAnnotations())

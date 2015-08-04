@@ -140,14 +140,6 @@ public class FieldDescriptionTokenTest {
     }
 
     @Test
-    public void testModifierTransformation() throws Exception {
-        assertThat(new FieldDescription.Token(FOO,
-                MODIFIERS,
-                mock(GenericTypeDescription.class),
-                Collections.singletonList(mock(AnnotationDescription.class))).withModifiers(UPDATE, MASK).getModifiers(), is((MODIFIERS & ~MASK) | UPDATE));
-    }
-
-    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldDescription.Token.class).applyBasic();
     }

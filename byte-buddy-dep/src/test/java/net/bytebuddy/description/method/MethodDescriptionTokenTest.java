@@ -473,18 +473,6 @@ public class MethodDescriptionTokenTest {
     }
 
     @Test
-    public void testModifierTransformation() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                firstDefault).withModifiers(UPDATE, MASK).getModifiers(), is((MODIFIERS & ~MASK) | UPDATE));
-    }
-
-    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodDescription.Token.class).applyBasic();
     }

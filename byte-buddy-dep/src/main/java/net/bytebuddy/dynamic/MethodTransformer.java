@@ -14,12 +14,29 @@ import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
+/**
+ * A method transformer allows to transform a method prior to its definition. This way, previously defined methods
+ * can be substituted by a different method description. It is the responsibility of the method transformer that
+ * the substitute method remains compatible to the substituted method.
+ */
 public interface MethodTransformer {
 
+    /**
+     * Transforms a method.
+     *
+     * @param methodDescription The method to be transformed.
+     * @return The transformed method.
+     */
     MethodDescription transform(MethodDescription methodDescription);
 
+    /**
+     * A method transformer that returns the original method.
+     */
     enum Retaining implements MethodTransformer {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -33,14 +50,32 @@ public interface MethodTransformer {
         }
     }
 
+    /**
+     * A method transformer that modifies method properties by applying a {@link net.bytebuddy.dynamic.MethodTransformer.Transforming.Transformer}.
+     */
     class Transforming implements MethodTransformer {
 
+        /**
+         * Creates a transformer that enforces the supplied modifier contributors. All ranges of each contributor is first cleared and then overridden
+         * by the specified modifiers in the order they are supplied.
+         *
+         * @param modifierTransformer The modifier transformers in their application order.
+         * @return A method transformer where each method's modifiers are adapted to the given modifiers.
+         */
         public static MethodTransformer modifiers(ModifierContributor.ForMethod... modifierTransformer) {
             return new Transforming(new Transformer.ForModifierTransformation(Arrays.asList(nonNull(modifierTransformer))));
         }
 
+        /**
+         * The transformer to be applied.
+         */
         private final Transformer transformer;
 
+        /**
+         * Creates a new transforming method transformer.
+         *
+         * @param transformer The transformer to be applied.
+         */
         public Transforming(Transformer transformer) {
             this.transformer = transformer;
         }
@@ -68,24 +103,80 @@ public interface MethodTransformer {
                     '}';
         }
 
+        /**
+         * A transformer is responsible for transforming a method's properties.
+         *
+         * @see net.bytebuddy.dynamic.MethodTransformer.Transforming.Transformer.AbstractBase
+         */
         public interface Transformer {
 
+            /**
+             * Transforms a method's return type.
+             *
+             * @param methodDescription The method being transformed.
+             * @return The transformed return type.
+             */
             GenericTypeDescription resolveReturnType(MethodDescription methodDescription);
 
+            /**
+             * Transforms a method's parameters.
+             *
+             * @param methodDescription The method being transformed.
+             * @return The transformed parameters.
+             */
             ParameterList<?> resolveParameters(MethodDescription methodDescription);
 
+            /**
+             * Transforms a method's exception types.
+             *
+             * @param methodDescription The method being transformed.
+             * @return The transformed exception types.
+             */
             GenericTypeList resolveExceptionTypes(MethodDescription methodDescription);
 
+            /**
+             * Transforms a method's annotations.
+             *
+             * @param methodDescription The method being transformed.
+             * @return The transformed annotations.
+             */
             AnnotationList resolveAnnotations(MethodDescription methodDescription);
 
+            /**
+             * Transforms a method's modifiers.
+             *
+             * @param methodDescription The method being transformed.
+             * @return The transformed modifiers.
+             */
             int resolveModifiers(MethodDescription methodDescription);
 
+            /**
+             * Transforms a method define shape's parameters.
+             *
+             * @param methodDescription The method being transformed.
+             * @return The transformed return type.
+             */
             GenericTypeDescription resolveReturnType(MethodDescription.InDefinedShape methodDescription);
 
+            /**
+             * Transforms a method defined shape's parameters.
+             *
+             * @param methodDescription The method being transformed.
+             * @return The transformed parameters.
+             */
             ParameterList<ParameterDescription.InDefinedShape> resolveParameters(MethodDescription.InDefinedShape methodDescription);
 
+            /**
+             * Transforms a method defined shape's exception types.
+             *
+             * @param methodDescription The method being transformed.
+             * @return The transformed exception types.
+             */
             GenericTypeList resolveExceptionTypes(MethodDescription.InDefinedShape methodDescription);
 
+            /**
+             * An adapter implementation of a transformer that simply returns the untransformed value for each transformation.
+             */
             class AbstractBase implements Transformer {
 
                 @Override
@@ -129,10 +220,21 @@ public interface MethodTransformer {
                 }
             }
 
+            /**
+             * A transformer that changes a method's modifiers to imply the instances modifier contributors.
+             */
             class ForModifierTransformation extends AbstractBase {
 
+                /**
+                 * The modifier contributors to apply on each transformation.
+                 */
                 private final List<? extends ModifierContributor.ForMethod> modifierContributors;
 
+                /**
+                 * Creates a new modifier transformation.
+                 *
+                 * @param modifierContributors The modifier contributors to apply on each transformation in their application order.
+                 */
                 public ForModifierTransformation(List<? extends ModifierContributor.ForMethod> modifierContributors) {
                     this.modifierContributors = modifierContributors;
                 }
@@ -159,19 +261,34 @@ public interface MethodTransformer {
 
                 @Override
                 public String toString() {
-                    return "MethodTransformer.Altering.Transformer.ForModifierTransformation{" +
+                    return "MethodTransformer.Transforming.Transformer.ForModifierTransformation{" +
                             "modifierContributors=" + modifierContributors +
                             '}';
                 }
             }
         }
 
+        /**
+         * A representation of a transformed method.
+         */
         protected static class TransformedMethod extends MethodDescription.AbstractBase {
 
+            /**
+             * The original method that is being transformed.
+             */
             private final MethodDescription methodDescription;
 
+            /**
+             * The transformer to be applied.
+             */
             private final Transformer transformer;
 
+            /**
+             * Creates a new transformed method.
+             *
+             * @param methodDescription The original method that is being transformed.
+             * @param transformer       The transformer to be applied.
+             */
             protected TransformedMethod(MethodDescription methodDescription, Transformer transformer) {
                 this.methodDescription = methodDescription;
                 this.transformer = transformer;
@@ -227,13 +344,28 @@ public interface MethodTransformer {
                 return methodDescription.getInternalName();
             }
 
+            /**
+             * Representation of a transformed method in its defined shape.
+             */
             protected static class InDefinedShape extends MethodDescription.InDefinedShape.AbstractBase {
 
+                /**
+                 * The transformed method.
+                 */
                 private final MethodDescription.InDefinedShape methodDescription;
 
+                /**
+                 * The transformer to be applied.
+                 */
                 private final Transformer transformer;
 
-                public InDefinedShape(MethodDescription.InDefinedShape methodDescription, Transformer transformer) {
+                /**
+                 * Creates a new transformed method in its defined shape.
+                 *
+                 * @param methodDescription The transformed method.
+                 * @param transformer       The transformer to be applied.
+                 */
+                protected InDefinedShape(MethodDescription.InDefinedShape methodDescription, Transformer transformer) {
                     this.methodDescription = methodDescription;
                     this.transformer = transformer;
                 }

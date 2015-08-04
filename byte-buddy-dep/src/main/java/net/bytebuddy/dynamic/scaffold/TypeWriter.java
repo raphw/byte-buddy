@@ -178,9 +178,10 @@ public interface TypeWriter<T> {
 
                 /**
                  * Creates a record for a rich field.
+                 *
                  * @param attributeAppender The attribute appender for the field.
-                 * @param defaultValue The field's default value.
-                 * @param fieldDescription The implemented field.
+                 * @param defaultValue      The field's default value.
+                 * @param fieldDescription  The implemented field.
                  */
                 public ForRichField(FieldAttributeAppender attributeAppender, Object defaultValue, FieldDescription fieldDescription) {
                     this.attributeAppender = attributeAppender;
@@ -929,7 +930,7 @@ public interface TypeWriter<T> {
                  * @param delegate          The delegate for implementing the bridge's target.
                  * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
                  * @param bridgeTarget      The bridge methods' target methods.
-                 * @param bridgeTypes           A collection of all tokens representing all bridge methods.
+                 * @param bridgeTypes       A collection of all tokens representing all bridge methods.
                  * @param attributeAppender The attribute appender being applied for the bridge target.
                  * @return The given record wrapped by a bridge method wrapper if necessary.
                  */
@@ -974,7 +975,7 @@ public interface TypeWriter<T> {
                  * @param delegate          The delegate for implementing the bridge's target.
                  * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
                  * @param bridgeTarget      The target of the bridge method.
-                 * @param bridgeTypes           A collection of all tokens representing all bridge methods.
+                 * @param bridgeTypes       A collection of all tokens representing all bridge methods.
                  * @param attributeAppender The attribute appender being applied for the bridge target.
                  */
                 protected AccessBridgeWrapper(Record delegate,
@@ -1094,7 +1095,7 @@ public interface TypeWriter<T> {
                      * Creates a new accessor bridge method.
                      *
                      * @param bridgeTarget     The target method of the bridge.
-                     * @param bridgeType           The bridge's type token.
+                     * @param bridgeType       The bridge's type token.
                      * @param instrumentedType The instrumented type defining the bridge target.
                      */
                     protected AccessorBridge(MethodDescription bridgeTarget, TypeToken bridgeType, TypeDescription instrumentedType) {
@@ -2087,14 +2088,15 @@ public interface TypeWriter<T> {
                                 methodDescription.getGenericSignature(),
                                 methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     }
-                    MethodVisitor methodVisitor = super.visitMethod(methodDescription.getAdjustedModifiers(record.getSort().isImplemented()),
-                            methodDescription.getInternalName(),
-                            methodDescription.getDescriptor(),
-                            methodDescription.getGenericSignature(),
-                            methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
+                    MethodDescription implementedMethod = record.getImplementedMethod();
+                    MethodVisitor methodVisitor = super.visitMethod(implementedMethod.getAdjustedModifiers(record.getSort().isImplemented()),
+                            implementedMethod.getInternalName(),
+                            implementedMethod.getDescriptor(),
+                            implementedMethod.getGenericSignature(),
+                            implementedMethod.getExceptionTypes().asRawTypes().toInternalNames());
                     return abstractOrigin
                             ? new AttributeObtainingMethodVisitor(methodVisitor, record)
-                            : new CodePreservingMethodVisitor(methodVisitor, record, methodRebaseResolver.resolve(methodDescription.asDefined()));
+                            : new CodePreservingMethodVisitor(methodVisitor, record, methodRebaseResolver.resolve(implementedMethod.asDefined()));
                 }
 
                 @Override

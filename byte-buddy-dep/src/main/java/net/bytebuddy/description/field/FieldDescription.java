@@ -448,20 +448,6 @@ public interface FieldDescription extends ByteCodeElement,
                     getAnnotations());
         }
 
-
-        @Override
-        public Token withModifiers(int modifiers, int mask) {
-            return withModifiers((getModifiers() & ~mask) | modifiers);
-        }
-
-        @Override
-        public Token withModifiers(int modifiers) {
-            return new Token(getName(),
-                    modifiers,
-                    getType(),
-                    getAnnotations());
-        }
-
         @Override
         public boolean isIdenticalTo(Token token) {
             return getName().equals(token.getName())

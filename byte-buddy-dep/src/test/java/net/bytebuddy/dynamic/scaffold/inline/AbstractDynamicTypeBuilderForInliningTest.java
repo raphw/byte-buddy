@@ -1,10 +1,12 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
@@ -296,6 +298,20 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertThat(type.getDeclaredMethods().length, is(0));
     }
 
+    @Test
+    public void testMethodTransformationExistingMethod() throws Exception {
+        Class<?> type = create(Transform.class)
+                .method(named(FOO))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE),
+                        MethodTransformer.Transforming.modifiers(MethodManifestation.FINAL))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Method foo = type.getDeclaredMethod(FOO);
+        assertThat(foo.invoke(type.newInstance()), is((Object) FOO));
+        assertThat(foo.getModifiers(), is(Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC));
+    }
+
     public @interface Baz {
 
         String foo();
@@ -361,5 +377,12 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     abstract static class PackagePrivateVisibilityBridgeExtensionAbstractMethod extends VisibilityBridgeAbstractMethod {
         /* empty */
+    }
+
+    public static class Transform {
+
+        public String foo() {
+            return null;
+        }
     }
 }

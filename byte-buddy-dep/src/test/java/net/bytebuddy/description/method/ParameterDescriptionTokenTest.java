@@ -213,14 +213,6 @@ public class ParameterDescriptionTokenTest {
     }
 
     @Test
-    public void testModifierTransformation() throws Exception {
-        assertThat(new ParameterDescription.Token(first,
-                Collections.singletonList(firstAnnotation),
-                FOO,
-                MODIFIERS).withModifiers(UPDATE, MASK).getModifiers(), is((MODIFIERS & ~MASK) | UPDATE));
-    }
-
-    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ParameterDescription.Token.class).create(new ObjectPropertyAssertion.Creator<Integer>() {
             @Override
