@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -485,7 +486,7 @@ public interface MethodRegistry {
                     ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
                     helperMethods = instrumentedType.getDeclaredMethods();
                     for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {
-                        implementations.put(helperMethod, entry.asPreparedEntry(helperMethod, Collections.<MethodDescription.TypeToken>emptySet()));
+                        implementations.put(helperMethod, entry.asSupplementaryEntry(helperMethod));
                     }
                 }
             }
@@ -598,6 +599,19 @@ public interface MethodRegistry {
              */
             protected Prepared.Entry asPreparedEntry(MethodDescription methodDescription, Set<MethodDescription.TypeToken> methodTypes) {
                 return new Prepared.Entry(handler, attributeAppenderFactory, methodTransformer.transform(methodDescription), methodTypes);
+            }
+
+            /**
+             * Returns a prepared entry for a supplementary method.
+             *
+             * @param methodDescription The method to be implemented.
+             * @return An entry for a supplementary entry that is defined by a method implementation instance.
+             */
+            protected Prepared.Entry asSupplementaryEntry(MethodDescription methodDescription) {
+                return new Prepared.Entry(handler,
+                        new MethodAttributeAppender.ForMethod(methodDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
+                        methodDescription,
+                        Collections.<MethodDescription.TypeToken>emptySet());
             }
 
             /**
@@ -787,7 +801,10 @@ public interface MethodRegistry {
                  * @return An entry representing a visibility bridge.
                  */
                 protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.TypeToken> bridges) {
-                    return new Entry(Handler.ForVisibilityBridge.INSTANCE, new MethodAttributeAppender.ForMethod(bridgeTarget), bridgeTarget, bridges);
+                    return new Entry(Handler.ForVisibilityBridge.INSTANCE,
+                            new MethodAttributeAppender.ForMethod(bridgeTarget, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
+                            bridgeTarget,
+                            bridges);
                 }
 
                 /**

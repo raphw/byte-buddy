@@ -98,7 +98,7 @@ public interface TypeWriter<T> {
             void apply(ClassVisitor classVisitor);
 
             /**
-             * A record for a simple field without attributes or a default value.
+             * A record for a simple field without a default value where all of the field's declared annotations are appended.
              */
             class ForSimpleField implements Record {
 
@@ -118,7 +118,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public FieldAttributeAppender getFieldAppender() {
-                    return FieldAttributeAppender.NoOp.INSTANCE;
+                    return new FieldAttributeAppender.ForField(fieldDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE);
                 }
 
                 @Override
@@ -128,11 +128,13 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor) {
-                    classVisitor.visitField(fieldDescription.getModifiers(),
+                    FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
-                            FieldDescription.NO_DEFAULT_VALUE).visitEnd();
+                            FieldDescription.NO_DEFAULT_VALUE);
+                    getFieldAppender().apply(fieldVisitor, fieldDescription);
+                    fieldVisitor.visitEnd();
                 }
 
                 @Override

@@ -1,6 +1,8 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -70,6 +72,7 @@ public class TypeWriterFieldPoolRecordTest {
 
     @Test
     public void testSimpleFieldEntryWritesField() throws Exception {
+        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
         record.apply(classVisitor);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, null);
@@ -81,7 +84,8 @@ public class TypeWriterFieldPoolRecordTest {
     @Test
     public void testSimpleFieldEntryProperties() throws Exception {
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(fieldDescription,
+                AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
         assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
     }
 

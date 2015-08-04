@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -49,7 +50,8 @@ public class FieldRegistryDefaultTest {
                 .compile(instrumentedType)
                 .target(unknownField);
         assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(unknownField,
+                AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
     }
 
     @Test
@@ -60,7 +62,8 @@ public class FieldRegistryDefaultTest {
         assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));
         assertThat(fieldPool.target(knownField).getDefaultValue(), is(defaultValue));
         assertThat(fieldPool.target(unknownField).getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
-        assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+        assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(unknownField,
+                AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
     }
 
     @Test

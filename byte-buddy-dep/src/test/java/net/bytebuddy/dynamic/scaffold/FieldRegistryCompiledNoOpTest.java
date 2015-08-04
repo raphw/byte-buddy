@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -21,10 +22,16 @@ public class FieldRegistryCompiledNoOpTest {
     private FieldDescription fieldDescription;
 
     @Test
-    public void testReturnsNoOp() throws Exception {
+    public void testReturnsNullDefaultValue() throws Exception {
         TypeWriter.FieldPool.Record record = FieldRegistry.Compiled.NoOp.INSTANCE.target(fieldDescription);
         assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
+    }
+
+    @Test
+    public void testReturnsFieldAttributeAppender() throws Exception {
+        TypeWriter.FieldPool.Record record = FieldRegistry.Compiled.NoOp.INSTANCE.target(fieldDescription);
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(fieldDescription,
+                AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
     }
 
     @Test

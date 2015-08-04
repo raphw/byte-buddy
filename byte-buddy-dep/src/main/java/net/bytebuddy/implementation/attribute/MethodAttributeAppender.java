@@ -399,15 +399,6 @@ public interface MethodAttributeAppender {
         }
 
         /**
-         * Creates a method attribute appender for the given method that indicates explicit adding of default values.
-         *
-         * @param methodDescription The method description of which the annotations should be copied.
-         */
-        public ForMethod(MethodDescription methodDescription) {
-            this(methodDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE);
-        }
-
-        /**
          * Creates an that copies the annotations of a given method description to its target.
          *
          * @param methodDescription The method description of which the annotations should be copied.

@@ -1,23 +1,35 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -36,7 +48,9 @@ import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractDynamicTypeBuilderTest {
 
-    private static final String FOO = "foo", BAR = "bar", TO_STRING = "toString";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", TO_STRING = "toString";
+
+    private static final int MODIFIERS = Opcodes.ACC_PUBLIC;
 
     private static final boolean BOOLEAN_VALUE = true;
 
@@ -229,6 +243,59 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
+    @Test
+    public void testPreparedField() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(SampleAnnotation.class),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT);
+        Class<?> type = createPlain()
+                .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(new PreparedField())
+                .make()
+                .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredFields().length, is(1));
+        assertThat(type.getDeclaredField(FOO).getName(), is(FOO));
+        assertEquals(Object.class, type.getDeclaredField(FOO).getType());
+        assertThat(type.getDeclaredField(FOO).getModifiers(), is(MODIFIERS));
+        assertThat(type.getDeclaredField(FOO).getAnnotations().length, is(1));
+        Annotation annotation = type.getDeclaredField(FOO).getAnnotations()[0];
+        assertThat(annotation.annotationType().getName(), is(SampleAnnotation.class.getName()));
+        Method foo = annotation.annotationType().getDeclaredMethod(FOO);
+        assertThat(foo.invoke(annotation), is((Object) BAR));
+    }
+
+    @Test
+    public void testPreparedMethod() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(SampleAnnotation.class),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT);
+        Class<?> type = createPlain()
+                .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(new PreparedMethod())
+                .make()
+                .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethods().length, is(2));
+        assertThat(type.getDeclaredMethod(FOO, Object.class).getName(), is(FOO));
+        assertEquals(Object.class, type.getDeclaredMethod(FOO, Object.class).getReturnType());
+        assertThat(type.getDeclaredMethod(FOO, Object.class).getParameterTypes().length, is(1));
+        assertEquals(Object.class, type.getDeclaredMethod(FOO, Object.class).getParameterTypes()[0]);
+        assertThat(type.getDeclaredMethod(FOO, Object.class).getModifiers(), is(MODIFIERS));
+        assertThat(type.getDeclaredMethod(FOO, Object.class).getAnnotations().length, is(1));
+        Annotation methodAnnotation = type.getDeclaredMethod(FOO, Object.class).getAnnotations()[0];
+        assertThat(methodAnnotation.annotationType().getName(), is(SampleAnnotation.class.getName()));
+        Method methodMethod = methodAnnotation.annotationType().getDeclaredMethod(FOO);
+        assertThat(methodMethod.invoke(methodAnnotation), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(FOO, Object.class).getParameterAnnotations()[0].length, is(1));
+        Annotation parameterAnnotation = type.getDeclaredMethod(FOO, Object.class).getParameterAnnotations()[0][0];
+        assertThat(parameterAnnotation.annotationType().getName(), is(SampleAnnotation.class.getName()));
+        Method parameterMethod = parameterAnnotation.annotationType().getDeclaredMethod(FOO);
+        assertThat(parameterMethod.invoke(parameterAnnotation), is((Object) QUX));
+    }
+
     public static class Foo {
         /* empty */
     }
@@ -264,5 +331,47 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public static class Inner extends SuperCall<String> {
             /* empty */
         }
+    }
+
+    private static class PreparedField implements Implementation {
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType.withField(new FieldDescription.Token(FOO,
+                    MODIFIERS,
+                    TypeDescription.OBJECT,
+                    Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make())));
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE);
+        }
+    }
+
+    private static class PreparedMethod implements Implementation {
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType.withMethod(new MethodDescription.Token(FOO,
+                    MODIFIERS,
+                    Collections.<GenericTypeDescription>emptyList(),
+                    TypeDescription.OBJECT,
+                    Collections.singletonList(new ParameterDescription.Token(TypeDescription.OBJECT,
+                            Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, QUX).make()))),
+                    Collections.singletonList(new TypeDescription.ForLoadedType(Exception.class)),
+                    Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make()),
+                    MethodDescription.NO_DEFAULT_VALUE));
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE);
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface SampleAnnotation {
+        String foo();
     }
 }
