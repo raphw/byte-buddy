@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -48,7 +49,8 @@ public class ConstructorStrategyDefaultTest {
     public void setUp() throws Exception {
         when(methodRegistry.append(any(LatentMethodMatcher.class),
                 any(MethodRegistry.Handler.class),
-                any(MethodAttributeAppender.Factory.class))).thenReturn(methodRegistry);
+                any(MethodAttributeAppender.Factory.class),
+                any(MethodTransformer.class))).thenReturn(methodRegistry);
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn((MethodList) methodList);
         when(superType.asRawType()).thenReturn(superType);
@@ -70,7 +72,10 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(instrumentedType),
                 is((List<MethodDescription.Token>) filteredMethodTokenList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
-        verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
+        verify(methodRegistry).append(any(LatentMethodMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(methodAttributeAppenderFactory),
+                eq(MethodTransformer.Retaining.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
@@ -83,7 +88,10 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.extractConstructors(instrumentedType),
                 is((List<MethodDescription.Token>) filteredMethodTokenList));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
-        verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
+        verify(methodRegistry).append(any(LatentMethodMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(methodAttributeAppenderFactory),
+                eq(MethodTransformer.Retaining.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
@@ -97,7 +105,10 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType),
                 is((List<MethodDescription.Token>) filteredMethodTokenList));
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry, methodAttributeAppenderFactory), is(methodRegistry));
-        verify(methodRegistry).append(any(LatentMethodMatcher.class), any(MethodRegistry.Handler.class), eq(methodAttributeAppenderFactory));
+        verify(methodRegistry).append(any(LatentMethodMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(methodAttributeAppenderFactory),
+                eq(MethodTransformer.Retaining.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);

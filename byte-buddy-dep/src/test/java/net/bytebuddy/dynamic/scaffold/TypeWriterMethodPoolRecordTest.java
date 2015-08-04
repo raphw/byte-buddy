@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeList;
-import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -72,9 +71,6 @@ public class TypeWriterMethodPoolRecordTest {
     private ParameterDescription parameterDescription;
 
     @Mock
-    private ModifierResolver modifierResolver;
-
-    @Mock
     private TypeWriter.MethodPool.Record delegate;
 
     @Mock
@@ -90,7 +86,6 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.getDescriptor()).thenReturn(BAR);
         when(methodDescription.getGenericSignature()).thenReturn(QUX);
         when(methodDescription.getExceptionTypes()).thenReturn(exceptionTypes);
-        when(modifierResolver.transform(eq(methodDescription), anyBoolean())).thenReturn(MODIFIERS);
         when(methodDescription.getAdjustedModifiers(anyBoolean())).thenReturn(MODIFIERS);
         when(exceptionTypes.asRawTypes()).thenReturn(rawExceptionTypes);
         when(rawExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ});
@@ -132,9 +127,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testDefinedMethod() throws Exception {
-        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription,
-                methodAttributeAppender,
-                modifierResolver);
+        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
         record.apply(classVisitor, implementationContext);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -150,9 +143,7 @@ public class TypeWriterMethodPoolRecordTest {
     public void testDefinedMethodHeadOnly() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription,
-                methodAttributeAppender,
-                modifierResolver);
+        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, methodAttributeAppender);
         record.applyHead(methodVisitor);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -163,9 +154,7 @@ public class TypeWriterMethodPoolRecordTest {
     public void testDefinedMethodBodyOnly() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription,
-                methodAttributeAppender,
-                modifierResolver);
+        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, methodAttributeAppender);
         record.applyBody(methodVisitor, implementationContext);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -176,9 +165,7 @@ public class TypeWriterMethodPoolRecordTest {
     public void testDefinedMethodWithParameters() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription,
-                methodAttributeAppender,
-                modifierResolver);
+        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
         record.apply(classVisitor, implementationContext);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -193,7 +180,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test(expected = IllegalStateException.class)
     public void testDefinedMethodPrepended() throws Exception {
-        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, methodAttributeAppender, modifierResolver).prepend(otherAppender);
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, methodAttributeAppender).prepend(otherAppender);
     }
 
     @Test
@@ -202,8 +189,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 FOO,
-                methodAttributeAppender,
-                modifierResolver);
+                methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
         record.apply(classVisitor, implementationContext);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -227,8 +213,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 FOO,
-                methodAttributeAppender,
-                modifierResolver);
+                methodAttributeAppender);
         record.applyHead(methodVisitor);
         verify(methodVisitor).visitAnnotationDefault();
         verifyNoMoreInteractions(methodVisitor);
@@ -245,8 +230,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(parameterDescription.isNamed()).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 FOO,
-                methodAttributeAppender,
-                modifierResolver);
+                methodAttributeAppender);
         record.applyBody(methodVisitor, implementationContext);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -262,8 +246,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 FOO,
-                methodAttributeAppender,
-                modifierResolver);
+                methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
         record.apply(classVisitor, implementationContext);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -282,27 +265,22 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test(expected = IllegalStateException.class)
     public void testDefaultValueMethodPrepended() throws Exception {
-        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
-                FOO,
-                methodAttributeAppender,
-                modifierResolver).prepend(otherAppender);
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, FOO, methodAttributeAppender)
+                .prepend(otherAppender);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNoDefaultValue() throws Exception {
         when(methodDescription.isDefaultValue(FOO)).thenReturn(false);
-        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
-                FOO,
-                methodAttributeAppender,
-                modifierResolver).apply(classVisitor, implementationContext);
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, FOO, methodAttributeAppender)
+                .apply(classVisitor, implementationContext);
     }
 
     @Test
     public void testImplementedMethod() throws Exception {
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                 byteCodeAppender,
-                methodAttributeAppender,
-                modifierResolver);
+                methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
         record.apply(classVisitor, implementationContext);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -324,8 +302,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(parameterDescription.isNamed()).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                 byteCodeAppender,
-                methodAttributeAppender,
-                modifierResolver);
+                methodAttributeAppender);
         record.applyHead(methodVisitor);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -339,8 +316,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(parameterDescription.isNamed()).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                 byteCodeAppender,
-                methodAttributeAppender,
-                modifierResolver);
+                methodAttributeAppender);
         record.applyBody(methodVisitor, implementationContext);
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitMaxs(ONE, TWO);
@@ -357,8 +333,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(parameterDescription.isNamed()).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                 byteCodeAppender,
-                methodAttributeAppender,
-                modifierResolver);
+                methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
         record.apply(classVisitor, implementationContext);
         verify(classVisitor).visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ});
@@ -379,8 +354,7 @@ public class TypeWriterMethodPoolRecordTest {
     public void testImplementedMethodPrepended() throws Exception {
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                 byteCodeAppender,
-                methodAttributeAppender,
-                modifierResolver)
+                methodAttributeAppender)
                 .prepend(otherAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
         record.apply(classVisitor, implementationContext);
@@ -405,7 +379,6 @@ public class TypeWriterMethodPoolRecordTest {
                 bridgeTarget,
                 superType,
                 methodAttributeAppender);
-        assertThat(record.getModifierResolver(), instanceOf(ModifierResolver.Retaining.class));
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
     }
 
@@ -420,14 +393,12 @@ public class TypeWriterMethodPoolRecordTest {
     @Test
     public void testAccessorBridgeProperties() throws Exception {
         when(delegate.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED);
-        when(delegate.getModifierResolver()).thenReturn(modifierResolver);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.AccessBridgeWrapper(delegate,
                 instrumentedType,
                 bridgeTarget,
                 Collections.singleton(typeToken),
                 methodAttributeAppender);
         assertThat(record.getSort(), Is.is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
-        assertThat(record.getModifierResolver(), Is.is(modifierResolver));
     }
 
     @Test

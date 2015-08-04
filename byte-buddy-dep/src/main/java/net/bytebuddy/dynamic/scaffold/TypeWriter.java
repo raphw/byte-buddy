@@ -15,7 +15,6 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -267,12 +266,7 @@ public interface TypeWriter<T> {
              */
             Sort getSort();
 
-            /**
-             * Returns this entry's modifier transformer.
-             *
-             * @return The modifier transformer of this entry.
-             */
-            ModifierResolver getModifierResolver();
+            MethodDescription getImplementedMethod();
 
             /**
              * Prepends the given method appender to this entry.
@@ -398,8 +392,8 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public ModifierResolver getModifierResolver() {
-                    throw new IllegalStateException("Cannot transform modifier for method that should be skipped");
+                public MethodDescription getImplementedMethod() {
+                    throw new IllegalStateException("A method that is not defined cannot be extracted");
                 }
 
                 @Override
@@ -423,16 +417,9 @@ public interface TypeWriter<T> {
              */
             abstract class ForDefinedMethod implements Record {
 
-                /**
-                 * Returns the method this record implements.
-                 *
-                 * @return The method this record implements.
-                 */
-                protected abstract MethodDescription getImplementedMethod();
-
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(getModifierResolver().transform(getImplementedMethod(), getSort().isImplemented()),
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(getImplementedMethod().getAdjustedModifiers(getSort().isImplemented()),
                             getImplementedMethod().getInternalName(),
                             getImplementedMethod().getDescriptor(),
                             getImplementedMethod().getGenericSignature(),
@@ -469,18 +456,13 @@ public interface TypeWriter<T> {
                     private final MethodAttributeAppender methodAttributeAppender;
 
                     /**
-                     * The modifier resolver to apply to the implemented method.
-                     */
-                    private final ModifierResolver modifierResolver;
-
-                    /**
                      * Creates a new record for an implemented method without attributes or a modifier resolver.
                      *
                      * @param methodDescription The implemented method.
                      * @param byteCodeAppender  The byte code appender to apply.
                      */
                     public WithBody(MethodDescription methodDescription, ByteCodeAppender byteCodeAppender) {
-                        this(methodDescription, byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE, ModifierResolver.Retaining.INSTANCE);
+                        this(methodDescription, byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE);
                     }
 
                     /**
@@ -489,31 +471,21 @@ public interface TypeWriter<T> {
                      * @param methodDescription       The implemented method.
                      * @param byteCodeAppender        The byte code appender to apply.
                      * @param methodAttributeAppender The method attribute appender to apply.
-                     * @param modifierResolver        The modifier resolver to apply to the implemented method.
                      */
-                    public WithBody(MethodDescription methodDescription,
-                                    ByteCodeAppender byteCodeAppender,
-                                    MethodAttributeAppender methodAttributeAppender,
-                                    ModifierResolver modifierResolver) {
+                    public WithBody(MethodDescription methodDescription, ByteCodeAppender byteCodeAppender, MethodAttributeAppender methodAttributeAppender) {
                         this.methodDescription = methodDescription;
                         this.byteCodeAppender = byteCodeAppender;
                         this.methodAttributeAppender = methodAttributeAppender;
-                        this.modifierResolver = modifierResolver;
                     }
 
                     @Override
-                    protected MethodDescription getImplementedMethod() {
+                    public MethodDescription getImplementedMethod() {
                         return methodDescription;
                     }
 
                     @Override
                     public Sort getSort() {
                         return Sort.IMPLEMENTED;
-                    }
-
-                    @Override
-                    public ModifierResolver getModifierResolver() {
-                        return modifierResolver;
                     }
 
                     @Override
@@ -531,10 +503,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
-                        return new WithBody(methodDescription,
-                                new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender),
-                                methodAttributeAppender,
-                                modifierResolver);
+                        return new WithBody(methodDescription, new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender), methodAttributeAppender);
                     }
 
                     @Override
@@ -544,8 +513,7 @@ public interface TypeWriter<T> {
                         WithBody withBody = (WithBody) other;
                         return methodDescription.equals(withBody.methodDescription)
                                 && byteCodeAppender.equals(withBody.byteCodeAppender)
-                                && methodAttributeAppender.equals(withBody.methodAttributeAppender)
-                                && modifierResolver.equals(withBody.modifierResolver);
+                                && methodAttributeAppender.equals(withBody.methodAttributeAppender);
                     }
 
                     @Override
@@ -553,7 +521,6 @@ public interface TypeWriter<T> {
                         int result = methodDescription.hashCode();
                         result = 31 * result + byteCodeAppender.hashCode();
                         result = 31 * result + methodAttributeAppender.hashCode();
-                        result = 31 * result + modifierResolver.hashCode();
                         return result;
                     }
 
@@ -563,7 +530,6 @@ public interface TypeWriter<T> {
                                 "methodDescription=" + methodDescription +
                                 ", byteCodeAppender=" + byteCodeAppender +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
-                                ", modifierResolver=" + modifierResolver +
                                 '}';
                     }
                 }
@@ -584,38 +550,24 @@ public interface TypeWriter<T> {
                     private final MethodAttributeAppender methodAttributeAppender;
 
                     /**
-                     * The modifier resolver to apply to the method that is being created.
-                     */
-                    private final ModifierResolver modifierResolver;
-
-                    /**
                      * Creates a new entry for a method that is defines but does not append byte code, i.e. is native or abstract.
                      *
                      * @param methodDescription       The implemented method.
                      * @param methodAttributeAppender The method attribute appender to apply.
-                     * @param modifierResolver        The modifier resolver to apply to the method that is being created.
                      */
-                    public WithoutBody(MethodDescription methodDescription,
-                                       MethodAttributeAppender methodAttributeAppender,
-                                       ModifierResolver modifierResolver) {
+                    public WithoutBody(MethodDescription methodDescription, MethodAttributeAppender methodAttributeAppender) {
                         this.methodDescription = methodDescription;
                         this.methodAttributeAppender = methodAttributeAppender;
-                        this.modifierResolver = modifierResolver;
                     }
 
                     @Override
-                    protected MethodDescription getImplementedMethod() {
+                    public MethodDescription getImplementedMethod() {
                         return methodDescription;
                     }
 
                     @Override
                     public Sort getSort() {
                         return Sort.DEFINED;
-                    }
-
-                    @Override
-                    public ModifierResolver getModifierResolver() {
-                        return modifierResolver;
                     }
 
                     @Override
@@ -639,15 +591,13 @@ public interface TypeWriter<T> {
                         if (other == null || getClass() != other.getClass()) return false;
                         WithoutBody that = (WithoutBody) other;
                         return methodDescription.equals(that.methodDescription)
-                                && methodAttributeAppender.equals(that.methodAttributeAppender)
-                                && modifierResolver.equals(that.modifierResolver);
+                                && methodAttributeAppender.equals(that.methodAttributeAppender);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = methodDescription.hashCode();
                         result = 31 * result + methodAttributeAppender.hashCode();
-                        result = 31 * result + modifierResolver.hashCode();
                         return result;
                     }
 
@@ -656,7 +606,6 @@ public interface TypeWriter<T> {
                         return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody{" +
                                 "methodDescription=" + methodDescription +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
-                                ", modifierResolver=" + modifierResolver +
                                 '}';
                     }
                 }
@@ -682,41 +631,28 @@ public interface TypeWriter<T> {
                     private final MethodAttributeAppender methodAttributeAppender;
 
                     /**
-                     * The modifier resolver to apply to the method that is being created.
-                     */
-                    private final ModifierResolver modifierResolver;
-
-                    /**
                      * Creates a new entry for defining a method with a default annotation value.
                      *
                      * @param methodDescription       The implemented method.
                      * @param annotationValue         The annotation value to define.
                      * @param methodAttributeAppender The method attribute appender to apply.
-                     * @param modifierResolver        The modifier resolver to apply to the method that is being created.
                      */
                     public WithAnnotationDefaultValue(MethodDescription methodDescription,
                                                       Object annotationValue,
-                                                      MethodAttributeAppender methodAttributeAppender,
-                                                      ModifierResolver modifierResolver) {
+                                                      MethodAttributeAppender methodAttributeAppender) {
                         this.methodDescription = methodDescription;
                         this.annotationValue = annotationValue;
                         this.methodAttributeAppender = methodAttributeAppender;
-                        this.modifierResolver = modifierResolver;
                     }
 
                     @Override
-                    protected MethodDescription getImplementedMethod() {
+                    public MethodDescription getImplementedMethod() {
                         return methodDescription;
                     }
 
                     @Override
                     public Sort getSort() {
                         return Sort.DEFINED;
-                    }
-
-                    @Override
-                    public ModifierResolver getModifierResolver() {
-                        return modifierResolver;
                     }
 
                     @Override
@@ -749,8 +685,7 @@ public interface TypeWriter<T> {
                         WithAnnotationDefaultValue that = (WithAnnotationDefaultValue) other;
                         return methodDescription.equals(that.methodDescription)
                                 && annotationValue.equals(that.annotationValue)
-                                && methodAttributeAppender.equals(that.methodAttributeAppender)
-                                && modifierResolver.equals(that.modifierResolver);
+                                && methodAttributeAppender.equals(that.methodAttributeAppender);
                     }
 
                     @Override
@@ -758,7 +693,6 @@ public interface TypeWriter<T> {
                         int result = methodDescription.hashCode();
                         result = 31 * result + annotationValue.hashCode();
                         result = 31 * result + methodAttributeAppender.hashCode();
-                        result = 31 * result + modifierResolver.hashCode();
                         return result;
                     }
 
@@ -768,7 +702,6 @@ public interface TypeWriter<T> {
                                 "methodDescription=" + methodDescription +
                                 ", annotationValue=" + annotationValue +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
-                                ", modifierResolver=" + modifierResolver +
                                 '}';
                     }
                 }
@@ -832,7 +765,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected MethodDescription getImplementedMethod() {
+                    public MethodDescription getImplementedMethod() {
                         return visibilityBridge;
                     }
 
@@ -842,16 +775,8 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public ModifierResolver getModifierResolver() {
-                        return ModifierResolver.Retaining.INSTANCE;
-                    }
-
-                    @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
-                        return new ForDefinedMethod.WithBody(visibilityBridge,
-                                new ByteCodeAppender.Compound(this, byteCodeAppender),
-                                attributeAppender,
-                                ModifierResolver.Retaining.INSTANCE);
+                        return new ForDefinedMethod.WithBody(visibilityBridge, new ByteCodeAppender.Compound(this, byteCodeAppender), attributeAppender);
                     }
 
                     @Override
@@ -1070,8 +995,8 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public ModifierResolver getModifierResolver() {
-                    return delegate.getModifierResolver();
+                public MethodDescription getImplementedMethod() {
+                    return bridgeTarget;
                 }
 
                 @Override
@@ -2162,7 +2087,7 @@ public interface TypeWriter<T> {
                                 methodDescription.getGenericSignature(),
                                 methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
                     }
-                    MethodVisitor methodVisitor = super.visitMethod(record.getModifierResolver().transform(methodDescription, record.getSort().isImplemented()),
+                    MethodVisitor methodVisitor = super.visitMethod(methodDescription.getAdjustedModifiers(record.getSort().isImplemented()),
                             methodDescription.getInternalName(),
                             methodDescription.getDescriptor(),
                             methodDescription.getGenericSignature(),

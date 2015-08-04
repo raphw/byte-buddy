@@ -3,7 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ModifierResolver;
+import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -29,7 +29,10 @@ public interface MethodRegistry {
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
      * @return A mutated version of this method registry.
      */
-    MethodRegistry prepend(LatentMethodMatcher methodMatcher, Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory);
+    MethodRegistry prepend(LatentMethodMatcher methodMatcher,
+                           Handler handler,
+                           MethodAttributeAppender.Factory attributeAppenderFactory,
+                           MethodTransformer methodTransformer);
 
     /**
      * Appends the given method definition to this method registry, i.e. this configuration is applied last.
@@ -39,7 +42,10 @@ public interface MethodRegistry {
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
      * @return A mutated version of this method registry.
      */
-    MethodRegistry append(LatentMethodMatcher methodMatcher, Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory);
+    MethodRegistry append(LatentMethodMatcher methodMatcher,
+                          Handler handler,
+                          MethodAttributeAppender.Factory attributeAppenderFactory,
+                          MethodTransformer methodTransformer);
 
     /**
      * Prepares this method registry.
@@ -80,31 +86,19 @@ public interface MethodRegistry {
             /**
              * Assembles this compiled entry with a method attribute appender.
              *
-             * @param attributeAppender The method attribute appender to apply together with this handler.
              * @param methodDescription The method description to apply with this handler.
+             * @param attributeAppender The method attribute appender to apply together with this handler.
              * @return A method pool entry representing this handler and the given attribute appender.
              */
-            TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription);
+            TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender);
         }
 
         /**
          * A handler for defining an abstract or native method.
          */
-        class ForAbstractMethod implements Handler, Compiled {
+        enum ForAbstractMethod implements Handler, Compiled {
 
-            /**
-             * The transformer to apply to the modifier of this method.
-             */
-            private final ModifierResolver modifierResolver;
-
-            /**
-             * Creates a new handler for defining an abstract method.
-             *
-             * @param modifierResolver The transformer to apply to the modifier of this method.
-             */
-            public ForAbstractMethod(ModifierResolver modifierResolver) {
-                this.modifierResolver = modifierResolver;
-            }
+            INSTANCE;
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
@@ -117,26 +111,13 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, attributeAppender, modifierResolver);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && modifierResolver.equals(((ForAbstractMethod) other).modifierResolver);
-            }
-
-            @Override
-            public int hashCode() {
-                return modifierResolver.hashCode();
+            public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
+                return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, attributeAppender);
             }
 
             @Override
             public String toString() {
-                return "MethodRegistry.Handler.ForAbstractMethod{" +
-                        "modifierResolver=" + modifierResolver +
-                        '}';
+                return "MethodRegistry.Handler.ForAbstractMethod." + name();
             }
         }
 
@@ -151,19 +132,12 @@ public interface MethodRegistry {
             private final Implementation implementation;
 
             /**
-             * The transformer to apply to the modifier of this method.
-             */
-            private final ModifierResolver modifierResolver;
-
-            /**
              * Creates a new handler for implementing a method with byte code.
              *
              * @param implementation   The implementation to apply.
-             * @param modifierResolver The transformer to apply to the modifier of this method.
              */
-            public ForImplementation(Implementation implementation, ModifierResolver modifierResolver) {
+            public ForImplementation(Implementation implementation) {
                 this.implementation = implementation;
-                this.modifierResolver = modifierResolver;
             }
 
             @Override
@@ -173,26 +147,24 @@ public interface MethodRegistry {
 
             @Override
             public Compiled compile(Implementation.Target implementationTarget) {
-                return new Compiled(implementation.appender(implementationTarget), modifierResolver);
+                return new Compiled(implementation.appender(implementationTarget));
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && implementation.equals(((ForImplementation) other).implementation)
-                        && modifierResolver.equals(((ForImplementation) other).modifierResolver);
+                        && implementation.equals(((ForImplementation) other).implementation);
             }
 
             @Override
             public int hashCode() {
-                return implementation.hashCode() + 31 * modifierResolver.hashCode();
+                return implementation.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodRegistry.Handler.ForImplementation{" +
                         "implementation=" + implementation +
-                        ", modifierResolver=" + modifierResolver +
                         '}';
             }
 
@@ -207,46 +179,34 @@ public interface MethodRegistry {
                 private final ByteCodeAppender byteCodeAppender;
 
                 /**
-                 * The transformer to apply to the modifier of this method.
-                 */
-                private final ModifierResolver modifierResolver;
-
-                /**
                  * Creates a new compiled handler for a method implementation.
                  *
                  * @param byteCodeAppender The byte code appender to apply.
-                 * @param modifierResolver The transformer to apply to the modifier of this method.
                  */
-                protected Compiled(ByteCodeAppender byteCodeAppender, ModifierResolver modifierResolver) {
+                protected Compiled(ByteCodeAppender byteCodeAppender) {
                     this.byteCodeAppender = byteCodeAppender;
-                    this.modifierResolver = modifierResolver;
                 }
 
                 @Override
-                public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                    return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
-                            byteCodeAppender,
-                            attributeAppender,
-                            modifierResolver);
+                public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
+                    return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription, byteCodeAppender, attributeAppender);
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && byteCodeAppender.equals(((Compiled) other).byteCodeAppender)
-                            && modifierResolver.equals(((Compiled) other).modifierResolver);
+                            && byteCodeAppender.equals(((Compiled) other).byteCodeAppender);
                 }
 
                 @Override
                 public int hashCode() {
-                    return byteCodeAppender.hashCode() + 31 * modifierResolver.hashCode();
+                    return byteCodeAppender.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "MethodRegistry.Handler.ForImplementation.Compiled{" +
                             "byteCodeAppender=" + byteCodeAppender +
-                            ", modifierResolver=" + modifierResolver +
                             '}';
                 }
             }
@@ -263,34 +223,26 @@ public interface MethodRegistry {
             private final Object annotationValue;
 
             /**
-             * The transformer to apply to the modifier of this method.
-             */
-            private final ModifierResolver modifierResolver;
-
-            /**
              * Creates a handler for defining a default annotation value for a method.
              *
              * @param annotationValue  The annotation value to set as a default value.
-             * @param modifierResolver The transformer to apply to the modifier of this method.
              */
-            protected ForAnnotationValue(Object annotationValue, ModifierResolver modifierResolver) {
+            protected ForAnnotationValue(Object annotationValue) {
                 this.annotationValue = annotationValue;
-                this.modifierResolver = modifierResolver;
             }
 
             /**
              * Represents the given value as an annotation default value handler after validating its suitability.
              *
              * @param annotationValue  The annotation value to represent.
-             * @param modifierResolver The transformer to apply to the modifier of this method.
              * @return A handler for setting the given value as a default value for instrumented methods.
              */
-            public static Handler of(Object annotationValue, ModifierResolver modifierResolver) {
+            public static Handler of(Object annotationValue) {
                 TypeDescription typeDescription = new TypeDescription.ForLoadedType(annotationValue.getClass());
                 if (!typeDescription.isAnnotationValue() && !typeDescription.isPrimitiveWrapper()) {
                     throw new IllegalArgumentException("Does not describe an annotation value: " + annotationValue);
                 }
-                return new ForAnnotationValue(annotationValue, modifierResolver);
+                return new ForAnnotationValue(annotationValue);
             }
 
             @Override
@@ -304,30 +256,25 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
-                return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
-                        annotationValue,
-                        attributeAppender,
-                        modifierResolver);
+            public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
+                return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, annotationValue, attributeAppender);
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && annotationValue.equals(((ForAnnotationValue) other).annotationValue)
-                        && modifierResolver.equals(((ForAnnotationValue) other).modifierResolver);
+                        && annotationValue.equals(((ForAnnotationValue) other).annotationValue);
             }
 
             @Override
             public int hashCode() {
-                return annotationValue.hashCode() + 31 * modifierResolver.hashCode();
+                return annotationValue.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodRegistry.Handler.ForAnnotationValue{" +
                         "annotationValue=" + annotationValue +
-                        ", modifierResolver=" + modifierResolver +
                         '}';
             }
         }
@@ -377,7 +324,7 @@ public interface MethodRegistry {
                 }
 
                 @Override
-                public TypeWriter.MethodPool.Record assemble(MethodAttributeAppender attributeAppender, MethodDescription methodDescription) {
+                public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
                     return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
                 }
 
@@ -507,15 +454,17 @@ public interface MethodRegistry {
         @Override
         public MethodRegistry prepend(LatentMethodMatcher methodMatcher,
                                       Handler handler,
-                                      MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return new Default(join(new Entry(methodMatcher, handler, attributeAppenderFactory), entries));
+                                      MethodAttributeAppender.Factory attributeAppenderFactory,
+                                      MethodTransformer methodTransformer) {
+            return new Default(join(new Entry(methodMatcher, handler, attributeAppenderFactory, methodTransformer), entries));
         }
 
         @Override
         public MethodRegistry append(LatentMethodMatcher methodMatcher,
                                      Handler handler,
-                                     MethodAttributeAppender.Factory attributeAppenderFactory) {
-            return new Default(join(entries, new Entry(methodMatcher, handler, attributeAppenderFactory)));
+                                     MethodAttributeAppender.Factory attributeAppenderFactory,
+                                     MethodTransformer methodTransformer) {
+            return new Default(join(entries, new Entry(methodMatcher, handler, attributeAppenderFactory, methodTransformer)));
         }
 
         @Override
@@ -531,7 +480,7 @@ public interface MethodRegistry {
                     ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
                     helperMethods = instrumentedType.getDeclaredMethods();
                     for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {
-                        implementations.put(helperMethod, entry.asPreparedEntry(Collections.<MethodDescription.TypeToken>emptySet()));
+                        implementations.put(helperMethod, entry.asPreparedEntry(helperMethod, Collections.<MethodDescription.TypeToken>emptySet()));
                     }
                 }
             }
@@ -543,7 +492,7 @@ public interface MethodRegistry {
                 if (relevanceMatcher.matches(methodDescription)) {
                     for (Entry entry : entries) {
                         if (entry.resolve(instrumentedType).matches(methodDescription)) {
-                            implementations.put(methodDescription, entry.asPreparedEntry(node.getBridges()));
+                            implementations.put(methodDescription, entry.asPreparedEntry(methodDescription, node.getBridges()));
                             visibilityBridge = false;
                             break;
                         }
@@ -562,7 +511,7 @@ public interface MethodRegistry {
             MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
             for (Entry entry : entries) {
                 if (entry.resolve(instrumentedType).matches(typeInitializer)) {
-                    implementations.put(typeInitializer, entry.asPreparedEntry(Collections.<MethodDescription.TypeToken>emptySet()));
+                    implementations.put(typeInitializer, entry.asPreparedEntry(typeInitializer, Collections.<MethodDescription.TypeToken>emptySet()));
                     break;
                 }
             }
@@ -612,6 +561,8 @@ public interface MethodRegistry {
              */
             private final MethodAttributeAppender.Factory attributeAppenderFactory;
 
+            private final MethodTransformer methodTransformer;
+
             /**
              * Creates a new entry.
              *
@@ -619,10 +570,14 @@ public interface MethodRegistry {
              * @param handler                  The handler to apply to all matched entries.
              * @param attributeAppenderFactory A method attribute appender factory to apply to all entries.
              */
-            protected Entry(LatentMethodMatcher methodMatcher, Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory) {
+            protected Entry(LatentMethodMatcher methodMatcher,
+                            Handler handler,
+                            MethodAttributeAppender.Factory attributeAppenderFactory,
+                            MethodTransformer methodTransformer) {
                 this.methodMatcher = methodMatcher;
                 this.handler = handler;
                 this.attributeAppenderFactory = attributeAppenderFactory;
+                this.methodTransformer = methodTransformer;
             }
 
             /**
@@ -631,8 +586,8 @@ public interface MethodRegistry {
              * @param bridges The bridges to be appended to this entry.
              * @return A prepared version of this entry.
              */
-            protected Prepared.Entry asPreparedEntry(Set<MethodDescription.TypeToken> bridges) {
-                return new Prepared.Entry(handler, attributeAppenderFactory, bridges);
+            protected Prepared.Entry asPreparedEntry(MethodDescription methodDescription, Set<MethodDescription.TypeToken> bridges) {
+                return new Prepared.Entry(handler, attributeAppenderFactory, methodTransformer.transform(methodDescription), bridges);
             }
 
             /**
@@ -656,7 +611,8 @@ public interface MethodRegistry {
                 Entry entry = (Entry) other;
                 return methodMatcher.equals(entry.methodMatcher)
                         && handler.equals(entry.handler)
-                        && attributeAppenderFactory.equals(entry.attributeAppenderFactory);
+                        && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
+                        && methodTransformer.equals(entry.methodTransformer);
             }
 
             @Override
@@ -664,6 +620,7 @@ public interface MethodRegistry {
                 int result = methodMatcher.hashCode();
                 result = 31 * result + handler.hashCode();
                 result = 31 * result + attributeAppenderFactory.hashCode();
+                result = 31 * result + methodTransformer.hashCode();
                 return result;
             }
 
@@ -673,6 +630,7 @@ public interface MethodRegistry {
                         "methodMatcher=" + methodMatcher +
                         ", handler=" + handler +
                         ", attributeAppenderFactory=" + attributeAppenderFactory +
+                        ", methodTransformer=" + methodTransformer +
                         '}';
             }
         }
@@ -765,7 +723,10 @@ public interface MethodRegistry {
                         cachedAttributeAppender = entry.getValue().getAppenderFactory().make(instrumentedType);
                         attributeAppenderCache.put(entry.getValue().getAppenderFactory(), cachedAttributeAppender);
                     }
-                    entries.put(entry.getKey(), new Compiled.Entry(cachedHandler, cachedAttributeAppender, entry.getValue().getBridges()));
+                    entries.put(entry.getKey(), new Compiled.Entry(cachedHandler,
+                            cachedAttributeAppender,
+                            entry.getValue().getMethodDescription(),
+                            entry.getValue().getBridges()));
                 }
                 return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries);
             }
@@ -816,7 +777,7 @@ public interface MethodRegistry {
                  * @return An entry representing a visibility bridge.
                  */
                 protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.TypeToken> bridges) {
-                    return new Entry(Handler.ForVisibilityBridge.INSTANCE, new MethodAttributeAppender.ForMethod(bridgeTarget), bridges);
+                    return new Entry(Handler.ForVisibilityBridge.INSTANCE, new MethodAttributeAppender.ForMethod(bridgeTarget), bridgeTarget, bridges);
                 }
 
                 /**
@@ -828,6 +789,8 @@ public interface MethodRegistry {
                  * A attribute appender factory for appending attributes for any implemented method.
                  */
                 private final MethodAttributeAppender.Factory attributeAppenderFactory;
+
+                private final MethodDescription methodDescription;
 
                 /**
                  * A set of bridges representing the bridge methods of this method.
@@ -841,9 +804,13 @@ public interface MethodRegistry {
                  * @param attributeAppenderFactory A attribute appender factory for appending attributes for any implemented method.
                  * @param bridges                  A set of bridges representing the bridge methods of this method.
                  */
-                protected Entry(Handler handler, MethodAttributeAppender.Factory attributeAppenderFactory, Set<MethodDescription.TypeToken> bridges) {
+                protected Entry(Handler handler,
+                                MethodAttributeAppender.Factory attributeAppenderFactory,
+                                MethodDescription methodDescription,
+                                Set<MethodDescription.TypeToken> bridges) {
                     this.handler = handler;
                     this.attributeAppenderFactory = attributeAppenderFactory;
+                    this.methodDescription = methodDescription;
                     this.bridges = bridges;
                 }
 
@@ -865,6 +832,10 @@ public interface MethodRegistry {
                     return attributeAppenderFactory;
                 }
 
+                protected MethodDescription getMethodDescription() {
+                    return methodDescription;
+                }
+
                 /**
                  * A set of bridges for the implemented method.
                  *
@@ -881,6 +852,7 @@ public interface MethodRegistry {
                     Entry entry = (Entry) other;
                     return handler.equals(entry.handler)
                             && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
+                            && methodDescription.equals(entry.methodDescription)
                             && bridges.equals(entry.bridges);
                 }
 
@@ -888,6 +860,7 @@ public interface MethodRegistry {
                 public int hashCode() {
                     int result = handler.hashCode();
                     result = 31 * result + attributeAppenderFactory.hashCode();
+                    result = 31 * result + methodDescription.hashCode();
                     result = 31 * result + bridges.hashCode();
                     return result;
                 }
@@ -897,6 +870,7 @@ public interface MethodRegistry {
                     return "MethodRegistry.Default.Prepared.Entry{" +
                             "handler=" + handler +
                             ", attributeAppenderFactory=" + attributeAppenderFactory +
+                            ", methodDescription=" + methodDescription +
                             ", bridges=" + bridges +
                             '}';
                 }
@@ -971,7 +945,7 @@ public interface MethodRegistry {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
                         ? Record.ForNonDefinedMethod.INSTANCE
-                        : entry.bind(methodDescription, instrumentedType);
+                        : entry.bind(instrumentedType);
             }
 
             @Override
@@ -1004,48 +978,28 @@ public interface MethodRegistry {
                         '}';
             }
 
-            /**
-             * An entry of a compiled method registry.
-             */
             protected static class Entry {
 
-                /**
-                 * The compiled handler to be used for any implemented method.
-                 */
-                private final Handler.Compiled compiledHandler;
+                private final Handler.Compiled handler;
 
-                /**
-                 * The attribute appender to be used for any implemented method.
-                 */
                 private final MethodAttributeAppender attributeAppender;
 
-                /**
-                 * The bridges added to any implemented method.
-                 */
+                private final MethodDescription methodDescription;
+
                 private final Set<MethodDescription.TypeToken> bridges;
 
-                /**
-                 * Creates a new entry of a compiled method registry.
-                 *
-                 * @param compiledHandler   The compiled handler to be used for any implemented method.
-                 * @param attributeAppender The attribute appender to be used for any implemented method.
-                 * @param bridges           The bridges added to any implemented method.
-                 */
-                protected Entry(Handler.Compiled compiledHandler, MethodAttributeAppender attributeAppender, Set<MethodDescription.TypeToken> bridges) {
-                    this.compiledHandler = compiledHandler;
+                public Entry(Handler.Compiled handler,
+                             MethodAttributeAppender attributeAppender,
+                             MethodDescription methodDescription,
+                             Set<MethodDescription.TypeToken> bridges) {
+                    this.handler = handler;
                     this.attributeAppender = attributeAppender;
+                    this.methodDescription = methodDescription;
                     this.bridges = bridges;
                 }
 
-                /**
-                 * Binds this entry to the provided method description.
-                 *
-                 * @param methodDescription The method to be bound.
-                 * @param instrumentedType  The instrumented type.
-                 * @return A record for implementing the provided method for the instrumented type.
-                 */
-                protected Record bind(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                    return Record.AccessBridgeWrapper.of(compiledHandler.assemble(attributeAppender, methodDescription),
+                protected Record bind(TypeDescription instrumentedType) {
+                    return TypeWriter.MethodPool.Record.AccessBridgeWrapper.of(handler.assemble(methodDescription, attributeAppender),
                             instrumentedType,
                             methodDescription,
                             bridges,
@@ -1057,15 +1011,17 @@ public interface MethodRegistry {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     Entry entry = (Entry) other;
-                    return compiledHandler.equals(entry.compiledHandler)
+                    return handler.equals(entry.handler)
                             && attributeAppender.equals(entry.attributeAppender)
+                            && methodDescription.equals(entry.methodDescription)
                             && bridges.equals(entry.bridges);
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = compiledHandler.hashCode();
+                    int result = handler.hashCode();
                     result = 31 * result + attributeAppender.hashCode();
+                    result = 31 * result + methodDescription.hashCode();
                     result = 31 * result + bridges.hashCode();
                     return result;
                 }
@@ -1073,8 +1029,9 @@ public interface MethodRegistry {
                 @Override
                 public String toString() {
                     return "MethodRegistry.Default.Compiled.Entry{" +
-                            "compiledHandler=" + compiledHandler +
+                            "handler=" + handler +
                             ", attributeAppender=" + attributeAppender +
+                            ", methodDescription=" + methodDescription +
                             ", bridges=" + bridges +
                             '}';
                 }

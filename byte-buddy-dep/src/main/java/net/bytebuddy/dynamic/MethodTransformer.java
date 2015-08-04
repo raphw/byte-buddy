@@ -35,7 +35,7 @@ public interface MethodTransformer {
 
     class Transforming implements MethodTransformer {
 
-        public static MethodTransformer enforce(ModifierContributor.ForMethod... modifierTransformer) {
+        public static MethodTransformer modifiers(ModifierContributor.ForMethod... modifierTransformer) {
             return new Transforming(new Transformer.ForModifierTransformation(Arrays.asList(nonNull(modifierTransformer))));
         }
 

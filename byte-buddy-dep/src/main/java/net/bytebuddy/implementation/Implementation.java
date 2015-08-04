@@ -10,7 +10,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.ModifierResolver;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
@@ -1107,18 +1106,13 @@ public interface Implementation {
                 }
 
                 @Override
-                protected MethodDescription getImplementedMethod() {
+                public MethodDescription getImplementedMethod() {
                     return methodDescription;
                 }
 
                 @Override
                 public Sort getSort() {
                     return Sort.IMPLEMENTED;
-                }
-
-                @Override
-                public ModifierResolver getModifierResolver() {
-                    return ModifierResolver.Retaining.INSTANCE;
                 }
 
                 @Override
@@ -1135,7 +1129,7 @@ public interface Implementation {
 
                 @Override
                 public TypeWriter.MethodPool.Record prepend(ByteCodeAppender byteCodeAppender) {
-                    throw new UnsupportedOperationException("Cannot prepend code to a delegator");
+                    throw new UnsupportedOperationException("Cannot prepend code to a delegation");
                 }
 
                 @Override
