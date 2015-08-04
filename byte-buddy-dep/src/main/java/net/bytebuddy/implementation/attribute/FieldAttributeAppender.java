@@ -24,6 +24,32 @@ public interface FieldAttributeAppender {
     void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription);
 
     /**
+     * A field attribute appender that does not append any attributes.
+     */
+    enum NoOp implements FieldAttributeAppender, Factory {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public FieldAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
+            /* do nothing */
+        }
+
+        @Override
+        public String toString() {
+            return "FieldAttributeAppender.NoOp." + name();
+        }
+    }
+
+    /**
      * A factory that creates field attribute appenders for a given type.
      */
     interface Factory {
@@ -82,32 +108,6 @@ public interface FieldAttributeAppender {
             public String toString() {
                 return "FieldAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
             }
-        }
-    }
-
-    /**
-     * A field attribute appender that does not append any attributes.
-     */
-    enum NoOp implements FieldAttributeAppender, Factory {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public FieldAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            /* do nothing */
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.NoOp." + name();
         }
     }
 

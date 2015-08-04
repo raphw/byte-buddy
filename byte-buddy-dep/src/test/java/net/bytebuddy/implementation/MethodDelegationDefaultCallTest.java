@@ -4,7 +4,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bind.annotation.DefaultCall;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;

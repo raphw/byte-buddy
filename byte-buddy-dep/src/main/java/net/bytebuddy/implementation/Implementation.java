@@ -93,31 +93,6 @@ public interface Implementation {
         TypeDescription getTypeDescription();
 
         /**
-         * An abstract base implementation of a valid special method invocation.
-         */
-        abstract class AbstractBase implements SpecialMethodInvocation {
-
-            @Override
-            public boolean isValid() {
-                return true;
-            }
-
-            @Override
-            public int hashCode() {
-                return 31 * getMethodDescription().asToken().hashCode() + getTypeDescription().hashCode();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof SpecialMethodInvocation)) return false;
-                SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
-                return getMethodDescription().asToken().equals(specialMethodInvocation.getMethodDescription().asToken())
-                        && getTypeDescription().equals(((SpecialMethodInvocation) other).getTypeDescription());
-            }
-        }
-
-        /**
          * A canonical implementation of an illegal {@link Implementation.SpecialMethodInvocation}.
          */
         enum Illegal implements SpecialMethodInvocation {
@@ -150,6 +125,31 @@ public interface Implementation {
             @Override
             public String toString() {
                 return "Implementation.SpecialMethodInvocation.Illegal." + name();
+            }
+        }
+
+        /**
+         * An abstract base implementation of a valid special method invocation.
+         */
+        abstract class AbstractBase implements SpecialMethodInvocation {
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * getMethodDescription().asToken().hashCode() + getTypeDescription().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (!(other instanceof SpecialMethodInvocation)) return false;
+                SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
+                return getMethodDescription().asToken().equals(specialMethodInvocation.getMethodDescription().asToken())
+                        && getTypeDescription().equals(((SpecialMethodInvocation) other).getTypeDescription());
             }
         }
 

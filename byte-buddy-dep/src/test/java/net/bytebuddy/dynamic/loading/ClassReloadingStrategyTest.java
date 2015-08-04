@@ -137,6 +137,7 @@ public class ClassReloadingStrategyTest {
             return FOO;
         }
     }
+
     public static class Bar {
 
         public String foo() {

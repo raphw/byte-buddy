@@ -82,21 +82,6 @@ public interface MethodRegistry {
         Handler.Compiled compile(Implementation.Target implementationTarget);
 
         /**
-         * A compiled handler for implementing a method.
-         */
-        interface Compiled {
-
-            /**
-             * Assembles this compiled entry with a method attribute appender.
-             *
-             * @param methodDescription The method description to apply with this handler.
-             * @param attributeAppender The method attribute appender to apply together with this handler.
-             * @return A method pool entry representing this handler and the given attribute appender.
-             */
-            TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender);
-        }
-
-        /**
          * A handler for defining an abstract or native method.
          */
         enum ForAbstractMethod implements Handler, Compiled {
@@ -125,6 +110,90 @@ public interface MethodRegistry {
             public String toString() {
                 return "MethodRegistry.Handler.ForAbstractMethod." + name();
             }
+        }
+
+        /**
+         * A handler for implementing a visibility bridge.
+         */
+        enum ForVisibilityBridge implements Handler {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                throw new IllegalStateException("A visibility bridge handler must not apply any preparations");
+            }
+
+            @Override
+            public Compiled compile(Implementation.Target implementationTarget) {
+                return new Compiled(implementationTarget.getTypeDescription());
+            }
+
+            @Override
+            public String toString() {
+                return "MethodRegistry.Handler.ForVisibilityBridge." + name();
+            }
+
+            /**
+             * A compiled handler for a visibility bridge handler.
+             */
+            protected static class Compiled implements Handler.Compiled {
+
+                /**
+                 * The instrumented type.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
+                 * Creates a new compiled handler for a visibility bridge.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 */
+                protected Compiled(TypeDescription instrumentedType) {
+                    this.instrumentedType = instrumentedType;
+                }
+
+                @Override
+                public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
+                    return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && instrumentedType.equals(((Compiled) other).instrumentedType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return instrumentedType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodRegistry.Handler.ForVisibilityBridge.Compiled{" +
+                            "instrumentedType=" + instrumentedType +
+                            '}';
+                }
+            }
+        }
+
+        /**
+         * A compiled handler for implementing a method.
+         */
+        interface Compiled {
+
+            /**
+             * Assembles this compiled entry with a method attribute appender.
+             *
+             * @param methodDescription The method description to apply with this handler.
+             * @param attributeAppender The method attribute appender to apply together with this handler.
+             * @return A method pool entry representing this handler and the given attribute appender.
+             */
+            TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender);
         }
 
         /**
@@ -282,75 +351,6 @@ public interface MethodRegistry {
                 return "MethodRegistry.Handler.ForAnnotationValue{" +
                         "annotationValue=" + annotationValue +
                         '}';
-            }
-        }
-
-        /**
-         * A handler for implementing a visibility bridge.
-         */
-        enum ForVisibilityBridge implements Handler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                throw new IllegalStateException("A visibility bridge handler must not apply any preparations");
-            }
-
-            @Override
-            public Compiled compile(Implementation.Target implementationTarget) {
-                return new Compiled(implementationTarget.getTypeDescription());
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.Handler.ForVisibilityBridge." + name();
-            }
-
-            /**
-             * A compiled handler for a visibility bridge handler.
-             */
-            protected static class Compiled implements Handler.Compiled {
-
-                /**
-                 * The instrumented type.
-                 */
-                private final TypeDescription instrumentedType;
-
-                /**
-                 * Creates a new compiled handler for a visibility bridge.
-                 *
-                 * @param instrumentedType The instrumented type.
-                 */
-                protected Compiled(TypeDescription instrumentedType) {
-                    this.instrumentedType = instrumentedType;
-                }
-
-                @Override
-                public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
-                    return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && instrumentedType.equals(((Compiled) other).instrumentedType);
-                }
-
-                @Override
-                public int hashCode() {
-                    return instrumentedType.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodRegistry.Handler.ForVisibilityBridge.Compiled{" +
-                            "instrumentedType=" + instrumentedType +
-                            '}';
-                }
             }
         }
     }
@@ -794,20 +794,6 @@ public interface MethodRegistry {
             protected static class Entry {
 
                 /**
-                 * Creates an entry for a visibility bridge.
-                 *
-                 * @param bridgeTarget The bridge method's target.
-                 * @param bridges      The type tokens describing all bridges.
-                 * @return An entry representing a visibility bridge.
-                 */
-                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.TypeToken> bridges) {
-                    return new Entry(Handler.ForVisibilityBridge.INSTANCE,
-                            new MethodAttributeAppender.ForMethod(bridgeTarget, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
-                            bridgeTarget,
-                            bridges);
-                }
-
-                /**
                  * The handler for implementing methods.
                  */
                 private final Handler handler;
@@ -843,6 +829,20 @@ public interface MethodRegistry {
                     this.attributeAppenderFactory = attributeAppenderFactory;
                     this.methodDescription = methodDescription;
                     this.typeTokens = typeTokens;
+                }
+
+                /**
+                 * Creates an entry for a visibility bridge.
+                 *
+                 * @param bridgeTarget The bridge method's target.
+                 * @param bridges      The type tokens describing all bridges.
+                 * @return An entry representing a visibility bridge.
+                 */
+                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.TypeToken> bridges) {
+                    return new Entry(Handler.ForVisibilityBridge.INSTANCE,
+                            new MethodAttributeAppender.ForMethod(bridgeTarget, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
+                            bridgeTarget,
+                            bridges);
                 }
 
                 /**

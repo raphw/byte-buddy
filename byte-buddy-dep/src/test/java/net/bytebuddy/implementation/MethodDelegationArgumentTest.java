@@ -23,6 +23,18 @@ public class MethodDelegationArgumentTest extends AbstractImplementationTest {
         assertThat(instance.foo(FOO, BAR), is((Object) (QUX + FOO + BAR)));
     }
 
+    @Test
+    public void testHierarchyDelegation() throws Exception {
+        new ByteBuddy()
+                .subclass(Baz.class)
+                .method(named("foo"))
+                .intercept(MethodDelegation.to(new Qux()))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .newInstance();
+    }
+
     public static class Foo {
 
         public Object foo(String s, Integer i) {
@@ -39,18 +51,6 @@ public class MethodDelegationArgumentTest extends AbstractImplementationTest {
         public static String baz(String s, Object o) {
             return BAZ + s + o;
         }
-    }
-
-    @Test
-    public void testHierarchyDelegation() throws Exception {
-        new ByteBuddy()
-                .subclass(Baz.class)
-                .method(named("foo"))
-                .intercept(MethodDelegation.to(new Qux()))
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded()
-                .newInstance();
     }
 
     public static class Baz {

@@ -188,6 +188,92 @@ public enum MethodInvocation {
     }
 
     /**
+     * A method invocation of a generically resolved method.
+     */
+    protected static class OfGenericMethod implements WithImplicitInvocationTargetType {
+
+        /**
+         * The generically resolved return type of the method.
+         */
+        private final TypeDescription targetType;
+
+        /**
+         * The invocation of the method in its defined shape.
+         */
+        private final WithImplicitInvocationTargetType invocation;
+
+        /**
+         * Creates a generic method invocation.
+         *
+         * @param targetType The generically resolved return type of the method.
+         * @param invocation The invocation of the method in its defined shape.
+         */
+        protected OfGenericMethod(TypeDescription targetType, WithImplicitInvocationTargetType invocation) {
+            this.targetType = targetType;
+            this.invocation = invocation;
+        }
+
+        /**
+         * Creates a generic access dispatcher for a given method.
+         *
+         * @param methodDescription The generically resolved return type of the method.
+         * @param invocation        The invocation of the method in its defined shape.
+         * @return A method access dispatcher for the given method.
+         */
+        protected static WithImplicitInvocationTargetType of(MethodDescription methodDescription, WithImplicitInvocationTargetType invocation) {
+            return new OfGenericMethod(methodDescription.getReturnType().asRawType(), invocation);
+        }
+
+        @Override
+        public StackManipulation virtual(TypeDescription invocationTarget) {
+            return new StackManipulation.Compound(invocation.virtual(invocationTarget), TypeCasting.to(targetType));
+        }
+
+        @Override
+        public StackManipulation special(TypeDescription invocationTarget) {
+            return new StackManipulation.Compound(invocation.special(invocationTarget), TypeCasting.to(targetType));
+        }
+
+        @Override
+        public StackManipulation dynamic(String methodName, TypeDescription returnType, List<? extends TypeDescription> methodType, List<?> arguments) {
+            return invocation.dynamic(methodName, returnType, methodType, arguments);
+        }
+
+        @Override
+        public boolean isValid() {
+            return invocation.isValid();
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return new Compound(invocation, TypeCasting.to(targetType)).apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            OfGenericMethod that = (OfGenericMethod) other;
+            return targetType.equals(that.targetType) && invocation.equals(that.invocation);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = targetType.hashCode();
+            result = 31 * result + invocation.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodInvocation.OfGenericMethod{" +
+                    "targetType=" + targetType +
+                    ", invocation=" + invocation +
+                    '}';
+        }
+    }
+
+    /**
      * An implementation of a method invoking stack manipulation.
      */
     protected class Invocation implements WithImplicitInvocationTargetType {
@@ -420,92 +506,6 @@ public enum MethodInvocation {
                     ", parameterTypes=" + parameterTypes +
                     ", bootstrapMethod=" + bootstrapMethod +
                     ", arguments=" + arguments +
-                    '}';
-        }
-    }
-
-    /**
-     * A method invocation of a generically resolved method.
-     */
-    protected static class OfGenericMethod implements WithImplicitInvocationTargetType {
-
-        /**
-         * Creates a generic access dispatcher for a given method.
-         *
-         * @param methodDescription The generically resolved return type of the method.
-         * @param invocation        The invocation of the method in its defined shape.
-         * @return A method access dispatcher for the given method.
-         */
-        protected static WithImplicitInvocationTargetType of(MethodDescription methodDescription, WithImplicitInvocationTargetType invocation) {
-            return new OfGenericMethod(methodDescription.getReturnType().asRawType(), invocation);
-        }
-
-        /**
-         * The generically resolved return type of the method.
-         */
-        private final TypeDescription targetType;
-
-        /**
-         * The invocation of the method in its defined shape.
-         */
-        private final WithImplicitInvocationTargetType invocation;
-
-        /**
-         * Creates a generic method invocation.
-         *
-         * @param targetType The generically resolved return type of the method.
-         * @param invocation The invocation of the method in its defined shape.
-         */
-        protected OfGenericMethod(TypeDescription targetType, WithImplicitInvocationTargetType invocation) {
-            this.targetType = targetType;
-            this.invocation = invocation;
-        }
-
-        @Override
-        public StackManipulation virtual(TypeDescription invocationTarget) {
-            return new StackManipulation.Compound(invocation.virtual(invocationTarget), TypeCasting.to(targetType));
-        }
-
-        @Override
-        public StackManipulation special(TypeDescription invocationTarget) {
-            return new StackManipulation.Compound(invocation.special(invocationTarget), TypeCasting.to(targetType));
-        }
-
-        @Override
-        public StackManipulation dynamic(String methodName, TypeDescription returnType, List<? extends TypeDescription> methodType, List<?> arguments) {
-            return invocation.dynamic(methodName, returnType, methodType, arguments);
-        }
-
-        @Override
-        public boolean isValid() {
-            return invocation.isValid();
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            return new Compound(invocation, TypeCasting.to(targetType)).apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            OfGenericMethod that = (OfGenericMethod) other;
-            return targetType.equals(that.targetType) && invocation.equals(that.invocation);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = targetType.hashCode();
-            result = 31 * result + invocation.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.OfGenericMethod{" +
-                    "targetType=" + targetType +
-                    ", invocation=" + invocation +
                     '}';
         }
     }

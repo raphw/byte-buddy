@@ -126,81 +126,6 @@ public enum MethodVariableAccess {
     }
 
     /**
-     * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
-     */
-    protected class OffsetLoading implements StackManipulation {
-
-        /**
-         * The index of the local variable array from which the variable should be loaded.
-         */
-        private final int offset;
-
-        /**
-         * Creates a new argument loading stack manipulation.
-         *
-         * @param offset The index of the local variable array from which the variable should be loaded.
-         */
-        protected OffsetLoading(int offset) {
-            this.offset = offset;
-        }
-
-        @Override
-        public boolean isValid() {
-            return true;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            switch (offset) {
-                case 0:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset);
-                    break;
-                case 1:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 1);
-                    break;
-                case 2:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 2);
-                    break;
-                case 3:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 3);
-                    break;
-                default:
-                    methodVisitor.visitVarInsn(loadOpcode, offset);
-                    break;
-            }
-            return size;
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private MethodVariableAccess getMethodVariableAccess() {
-            return MethodVariableAccess.this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && MethodVariableAccess.this == ((OffsetLoading) other).getMethodVariableAccess()
-                    && offset == ((OffsetLoading) other).offset;
-        }
-
-        @Override
-        public int hashCode() {
-            return MethodVariableAccess.this.hashCode() + 31 * offset;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodVariableAccess.OffsetLoading{" +
-                    "methodVariableAccess=" + MethodVariableAccess.this +
-                    " ,offset=" + offset + '}';
-        }
-    }
-
-    /**
      * A stack manipulation that loads all parameters of a given method onto the operand stack.
      */
     public static class MethodLoading implements StackManipulation {
@@ -371,6 +296,81 @@ public enum MethodVariableAccess {
                             '}';
                 }
             }
+        }
+    }
+
+    /**
+     * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
+     */
+    protected class OffsetLoading implements StackManipulation {
+
+        /**
+         * The index of the local variable array from which the variable should be loaded.
+         */
+        private final int offset;
+
+        /**
+         * Creates a new argument loading stack manipulation.
+         *
+         * @param offset The index of the local variable array from which the variable should be loaded.
+         */
+        protected OffsetLoading(int offset) {
+            this.offset = offset;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            switch (offset) {
+                case 0:
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset);
+                    break;
+                case 1:
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 1);
+                    break;
+                case 2:
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 2);
+                    break;
+                case 3:
+                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 3);
+                    break;
+                default:
+                    methodVisitor.visitVarInsn(loadOpcode, offset);
+                    break;
+            }
+            return size;
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private MethodVariableAccess getMethodVariableAccess() {
+            return MethodVariableAccess.this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && MethodVariableAccess.this == ((OffsetLoading) other).getMethodVariableAccess()
+                    && offset == ((OffsetLoading) other).offset;
+        }
+
+        @Override
+        public int hashCode() {
+            return MethodVariableAccess.this.hashCode() + 31 * offset;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodVariableAccess.OffsetLoading{" +
+                    "methodVariableAccess=" + MethodVariableAccess.this +
+                    " ,offset=" + offset + '}';
         }
     }
 }

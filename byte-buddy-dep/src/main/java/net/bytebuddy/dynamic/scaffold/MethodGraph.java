@@ -33,6 +33,47 @@ public interface MethodGraph {
     NodeList listNodes();
 
     /**
+     * A canonical implementation of an empty method graph.
+     */
+    enum Empty implements MethodGraph.Linked, MethodGraph.Compiler {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Node locate(MethodDescription.Token methodToken) {
+            return Node.Unresolved.INSTANCE;
+        }
+
+        @Override
+        public NodeList listNodes() {
+            return new NodeList(Collections.<Node>emptyList());
+        }
+
+        @Override
+        public MethodGraph getSuperGraph() {
+            return this;
+        }
+
+        @Override
+        public MethodGraph getInterfaceGraph(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public Linked compile(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodGraph.Empty." + name();
+        }
+    }
+
+    /**
      * A linked method graph represents a view that additionally exposes information of a given type's super type view and a
      * view on this graph's directly implemented interfaces.
      */
@@ -252,6 +293,37 @@ public interface MethodGraph {
         }
 
         /**
+         * A canonical implementation of an unresolved node.
+         */
+        enum Unresolved implements Node {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Sort getSort() {
+                return Sort.UNRESOLVED;
+            }
+
+            @Override
+            public MethodDescription getRepresentative() {
+                throw new IllegalStateException("Cannot resolve the method of an illegal node");
+            }
+
+            @Override
+            public Set<MethodDescription.TypeToken> getMethodTypes() {
+                throw new IllegalStateException("Cannot resolve bridge method of an illegal node");
+            }
+
+            @Override
+            public String toString() {
+                return "MethodGraph.Node.Unresolved." + name();
+            }
+        }
+
+        /**
          * A simple implementation of a resolved node of a method without bridges.
          */
         class Simple implements Node {
@@ -304,85 +376,6 @@ public interface MethodGraph {
                         '}';
             }
         }
-
-        /**
-         * A canonical implementation of an unresolved node.
-         */
-        enum Unresolved implements Node {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public Sort getSort() {
-                return Sort.UNRESOLVED;
-            }
-
-            @Override
-            public MethodDescription getRepresentative() {
-                throw new IllegalStateException("Cannot resolve the method of an illegal node");
-            }
-
-            @Override
-            public Set<MethodDescription.TypeToken> getMethodTypes() {
-                throw new IllegalStateException("Cannot resolve bridge method of an illegal node");
-            }
-
-            @Override
-            public String toString() {
-                return "MethodGraph.Node.Unresolved." + name();
-            }
-        }
-    }
-
-    /**
-     * A list of nodes.
-     */
-    class NodeList extends FilterableList.AbstractBase<Node, NodeList> {
-
-        /**
-         * The represented nodes.
-         */
-        private final List<? extends Node> nodes;
-
-        /**
-         * Creates a list of nodes.
-         *
-         * @param nodes The represented nodes.
-         */
-        public NodeList(List<? extends Node> nodes) {
-            this.nodes = nodes;
-        }
-
-        @Override
-        public Node get(int index) {
-            return nodes.get(index);
-        }
-
-        @Override
-        public int size() {
-            return nodes.size();
-        }
-
-        @Override
-        protected NodeList wrap(List<Node> values) {
-            return new NodeList(values);
-        }
-
-        /**
-         * Transforms this list of nodes into a list of the node's representatives.
-         *
-         * @return A list of these node's representatives.
-         */
-        public MethodList<?> asMethodList() {
-            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(size());
-            for (Node node : nodes) {
-                methodDescriptions.add(node.getRepresentative());
-            }
-            return new MethodList.Explicit<MethodDescription>(methodDescriptions);
-        }
     }
 
     /**
@@ -409,6 +402,27 @@ public interface MethodGraph {
          * @param <T> The type of the harmonizer token to be used for linking methods of different types.
          */
         class Default<T> implements Compiler {
+
+            /**
+             * The harmonizer to be used.
+             */
+            private final Harmonizer<T> harmonizer;
+
+            /**
+             * The merger to be used.
+             */
+            private final Merger merger;
+
+            /**
+             * Creates a new default method graph compiler.
+             *
+             * @param harmonizer The harmonizer to be used.
+             * @param merger     The merger to be used.
+             */
+            protected Default(Harmonizer<T> harmonizer, Merger merger) {
+                this.harmonizer = harmonizer;
+                this.merger = merger;
+            }
 
             /**
              * Creates a default compiler using the given harmonizer and merger.
@@ -452,27 +466,6 @@ public interface MethodGraph {
              */
             public static Compiler forJVMHierarchy() {
                 return of(Harmonizer.ForJVMMethod.INSTANCE, Merger.Directional.LEFT);
-            }
-
-            /**
-             * The harmonizer to be used.
-             */
-            private final Harmonizer<T> harmonizer;
-
-            /**
-             * The merger to be used.
-             */
-            private final Merger merger;
-
-            /**
-             * Creates a new default method graph compiler.
-             *
-             * @param harmonizer The harmonizer to be used.
-             * @param merger     The merger to be used.
-             */
-            protected Default(Harmonizer<T> harmonizer, Merger merger) {
-                this.harmonizer = harmonizer;
-                this.merger = merger;
             }
 
             @Override
@@ -845,20 +838,6 @@ public interface MethodGraph {
                 protected static class Harmonized<V> extends Key<V> {
 
                     /**
-                     * Creates a new harmonized key for the given method description.
-                     *
-                     * @param methodDescription The method description to represent as a harmonized key.
-                     * @param harmonizer        The harmonizer to use.
-                     * @param <Q>               The type of the token yielded by a harmonizer.
-                     * @return A harmonized key representing the provided method.
-                     */
-                    protected static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> harmonizer) {
-                        MethodDescription.TypeToken typeToken = methodDescription.asTypeToken();
-                        return new Harmonized<Q>(methodDescription.getInternalName(),
-                                Collections.singletonMap(harmonizer.harmonize(typeToken), Collections.<MethodDescription.TypeToken>emptySet()));
-                    }
-
-                    /**
                      * A mapping of identifiers to the type tokens they represent.
                      */
                     private final Map<V, Set<MethodDescription.TypeToken>> identifiers;
@@ -872,6 +851,20 @@ public interface MethodGraph {
                     protected Harmonized(String internalName, Map<V, Set<MethodDescription.TypeToken>> identifiers) {
                         super(internalName);
                         this.identifiers = identifiers;
+                    }
+
+                    /**
+                     * Creates a new harmonized key for the given method description.
+                     *
+                     * @param methodDescription The method description to represent as a harmonized key.
+                     * @param harmonizer        The harmonizer to use.
+                     * @param <Q>               The type of the token yielded by a harmonizer.
+                     * @return A harmonized key representing the provided method.
+                     */
+                    protected static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> harmonizer) {
+                        MethodDescription.TypeToken typeToken = methodDescription.asTypeToken();
+                        return new Harmonized<Q>(methodDescription.getInternalName(),
+                                Collections.singletonMap(harmonizer.harmonize(typeToken), Collections.<MethodDescription.TypeToken>emptySet()));
                     }
 
                     /**
@@ -952,16 +945,6 @@ public interface MethodGraph {
                 protected static class Detached extends Key<MethodDescription.TypeToken> {
 
                     /**
-                     * Creates a new detached key of the given method token.
-                     *
-                     * @param methodToken The method token to represent as a key.
-                     * @return A detached key representing the given method token..
-                     */
-                    protected static Detached of(MethodDescription.Token methodToken) {
-                        return new Detached(methodToken.getInternalName(), Collections.singleton(methodToken.asTypeToken()));
-                    }
-
-                    /**
                      * The type tokens represented by this key.
                      */
                     private final Set<MethodDescription.TypeToken> identifiers;
@@ -975,6 +958,16 @@ public interface MethodGraph {
                     protected Detached(String internalName, Set<MethodDescription.TypeToken> identifiers) {
                         super(internalName);
                         this.identifiers = identifiers;
+                    }
+
+                    /**
+                     * Creates a new detached key of the given method token.
+                     *
+                     * @param methodToken The method token to represent as a key.
+                     * @return A detached key representing the given method token..
+                     */
+                    protected static Detached of(MethodDescription.Token methodToken) {
+                        return new Detached(methodToken.getInternalName(), Collections.singleton(methodToken.asTypeToken()));
                     }
 
                     @Override
@@ -1025,6 +1018,38 @@ public interface MethodGraph {
                     }
 
                     /**
+                     * Combines the two given stores.
+                     *
+                     * @param left  The left store to be combined.
+                     * @param right The right store to be combined.
+                     * @param <W>   The type of the harmonized key of both stores.
+                     * @return An entry representing the combination of both stores.
+                     */
+                    private static <W> Entry<W> combine(Entry<W> left, Entry<W> right) {
+                        Set<MethodDescription> leftMethods = left.getCandidates(), rightMethods = right.getCandidates();
+                        LinkedHashSet<MethodDescription> combined = new LinkedHashSet<MethodDescription>(leftMethods.size() + rightMethods.size());
+                        combined.addAll(leftMethods);
+                        combined.addAll(rightMethods);
+                        for (MethodDescription leftMethod : leftMethods) {
+                            TypeDescription leftType = leftMethod.getDeclaringType().asRawType();
+                            for (MethodDescription rightMethod : rightMethods) {
+                                TypeDescription rightType = rightMethod.getDeclaringType().asRawType();
+                                if (leftType.isAssignableTo(rightType)) {
+                                    combined.remove(rightMethod);
+                                    break;
+                                } else if (leftType.isAssignableFrom(rightType)) {
+                                    combined.remove(leftMethod);
+                                    break;
+                                }
+                            }
+                        }
+                        Key.Harmonized<W> key = left.getKey().combineWith(right.getKey());
+                        return combined.size() == 1
+                                ? new Entry.Resolved<W>(key, combined.iterator().next(), false)
+                                : new Entry.Ambiguous<W>(key, combined);
+                    }
+
+                    /**
                      * Registers a new top level method within this store.
                      *
                      * @param methodDescription The method to register.
@@ -1070,38 +1095,6 @@ public interface MethodGraph {
                                 : combine(previousEntry, entry);
                         entries.put(injectedEntry.getKey(), injectedEntry);
                         return new Store<V>(entries);
-                    }
-
-                    /**
-                     * Combines the two given stores.
-                     *
-                     * @param left  The left store to be combined.
-                     * @param right The right store to be combined.
-                     * @param <W>   The type of the harmonized key of both stores.
-                     * @return An entry representing the combination of both stores.
-                     */
-                    private static <W> Entry<W> combine(Entry<W> left, Entry<W> right) {
-                        Set<MethodDescription> leftMethods = left.getCandidates(), rightMethods = right.getCandidates();
-                        LinkedHashSet<MethodDescription> combined = new LinkedHashSet<MethodDescription>(leftMethods.size() + rightMethods.size());
-                        combined.addAll(leftMethods);
-                        combined.addAll(rightMethods);
-                        for (MethodDescription leftMethod : leftMethods) {
-                            TypeDescription leftType = leftMethod.getDeclaringType().asRawType();
-                            for (MethodDescription rightMethod : rightMethods) {
-                                TypeDescription rightType = rightMethod.getDeclaringType().asRawType();
-                                if (leftType.isAssignableTo(rightType)) {
-                                    combined.remove(rightMethod);
-                                    break;
-                                } else if (leftType.isAssignableFrom(rightType)) {
-                                    combined.remove(leftMethod);
-                                    break;
-                                }
-                            }
-                        }
-                        Key.Harmonized<W> key = left.getKey().combineWith(right.getKey());
-                        return combined.size() == 1
-                                ? new Entry.Resolved<W>(key, combined.iterator().next(), false)
-                                : new Entry.Ambiguous<W>(key, combined);
                     }
 
                     /**
@@ -1165,57 +1158,6 @@ public interface MethodGraph {
                         return "MethodGraph.Compiler.Default.Key.Store{" +
                                 "entries=" + entries +
                                 '}';
-                    }
-
-                    /**
-                     * A graph implementation based on a key store.
-                     */
-                    protected static class Graph implements MethodGraph {
-
-                        /**
-                         * A mapping of a node's type tokens to the represented node.
-                         */
-                        private final LinkedHashMap<Key<MethodDescription.TypeToken>, Node> entries;
-
-                        /**
-                         * Creates a new graph.
-                         *
-                         * @param entries A mapping of a node's type tokens to the represented node.
-                         */
-                        protected Graph(LinkedHashMap<Key<MethodDescription.TypeToken>, Node> entries) {
-                            this.entries = entries;
-                        }
-
-                        @Override
-                        public Node locate(MethodDescription.Token methodToken) {
-                            Node node = entries.get(Detached.of(methodToken));
-                            return node == null
-                                    ? Node.Unresolved.INSTANCE
-                                    : node;
-                        }
-
-                        @Override
-                        public NodeList listNodes() {
-                            return new NodeList(new ArrayList<Node>(entries.values()));
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && entries.equals(((Graph) other).entries);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return entries.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "MethodGraph.Compiler.Default.Key.Store.Graph{" +
-                                    "entries=" + entries +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -1514,6 +1456,17 @@ public interface MethodGraph {
                             private final LinkedHashSet<MethodDescription> methodDescriptions;
 
                             /**
+                             * Creates a new ambiguous entry.
+                             *
+                             * @param key                The harmonized key this entry represents.
+                             * @param methodDescriptions A set of ambiguous methods that this entry represents.
+                             */
+                            protected Ambiguous(Harmonized<U> key, LinkedHashSet<MethodDescription> methodDescriptions) {
+                                this.key = key;
+                                this.methodDescriptions = methodDescriptions;
+                            }
+
+                            /**
                              * Creates a new ambiguous entry if both provided entries are not considered to be a bridge of one another.
                              *
                              * @param key   The key of the entry to be created.
@@ -1526,17 +1479,6 @@ public interface MethodGraph {
                                 return left.isBridge() ^ right.isBridge()
                                         ? new Resolved<Q>(key, left.isBridge() ? right : left, false)
                                         : new Ambiguous<Q>(key, new LinkedHashSet<MethodDescription>(Arrays.asList(left, right)));
-                            }
-
-                            /**
-                             * Creates a new ambiguous entry.
-                             *
-                             * @param key                The harmonized key this entry represents.
-                             * @param methodDescriptions A set of ambiguous methods that this entry represents.
-                             */
-                            protected Ambiguous(Harmonized<U> key, LinkedHashSet<MethodDescription> methodDescriptions) {
-                                this.key = key;
-                                this.methodDescriptions = methodDescriptions;
                             }
 
                             @Override
@@ -1628,8 +1570,7 @@ public interface MethodGraph {
                                 private final MethodDescription methodDescription;
 
                                 /**
-                                 *
-                                 * @param key The detached key representing this node.
+                                 * @param key               The detached key representing this node.
                                  * @param methodDescription The representative method of this node.
                                  */
                                 protected Node(Detached key, MethodDescription methodDescription) {
@@ -1677,49 +1618,107 @@ public interface MethodGraph {
                             }
                         }
                     }
+
+                    /**
+                     * A graph implementation based on a key store.
+                     */
+                    protected static class Graph implements MethodGraph {
+
+                        /**
+                         * A mapping of a node's type tokens to the represented node.
+                         */
+                        private final LinkedHashMap<Key<MethodDescription.TypeToken>, Node> entries;
+
+                        /**
+                         * Creates a new graph.
+                         *
+                         * @param entries A mapping of a node's type tokens to the represented node.
+                         */
+                        protected Graph(LinkedHashMap<Key<MethodDescription.TypeToken>, Node> entries) {
+                            this.entries = entries;
+                        }
+
+                        @Override
+                        public Node locate(MethodDescription.Token methodToken) {
+                            Node node = entries.get(Detached.of(methodToken));
+                            return node == null
+                                    ? Node.Unresolved.INSTANCE
+                                    : node;
+                        }
+
+                        @Override
+                        public NodeList listNodes() {
+                            return new NodeList(new ArrayList<Node>(entries.values()));
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && entries.equals(((Graph) other).entries);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return entries.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "MethodGraph.Compiler.Default.Key.Store.Graph{" +
+                                    "entries=" + entries +
+                                    '}';
+                        }
+                    }
                 }
             }
         }
     }
 
     /**
-     * A canonical implementation of an empty method graph.
+     * A list of nodes.
      */
-    enum Empty implements MethodGraph.Linked, MethodGraph.Compiler {
+    class NodeList extends FilterableList.AbstractBase<Node, NodeList> {
 
         /**
-         * The singleton instance.
+         * The represented nodes.
          */
-        INSTANCE;
+        private final List<? extends Node> nodes;
 
-        @Override
-        public Node locate(MethodDescription.Token methodToken) {
-            return Node.Unresolved.INSTANCE;
+        /**
+         * Creates a list of nodes.
+         *
+         * @param nodes The represented nodes.
+         */
+        public NodeList(List<? extends Node> nodes) {
+            this.nodes = nodes;
         }
 
         @Override
-        public NodeList listNodes() {
-            return new NodeList(Collections.<Node>emptyList());
+        public Node get(int index) {
+            return nodes.get(index);
         }
 
         @Override
-        public MethodGraph getSuperGraph() {
-            return this;
+        public int size() {
+            return nodes.size();
         }
 
         @Override
-        public MethodGraph getInterfaceGraph(TypeDescription typeDescription) {
-            return this;
+        protected NodeList wrap(List<Node> values) {
+            return new NodeList(values);
         }
 
-        @Override
-        public Linked compile(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodGraph.Empty." + name();
+        /**
+         * Transforms this list of nodes into a list of the node's representatives.
+         *
+         * @return A list of these node's representatives.
+         */
+        public MethodList<?> asMethodList() {
+            List<MethodDescription> methodDescriptions = new ArrayList<MethodDescription>(size());
+            for (Node node : nodes) {
+                methodDescriptions.add(node.getRepresentative());
+            }
+            return new MethodList.Explicit<MethodDescription>(methodDescriptions);
         }
     }
 
@@ -1727,20 +1726,6 @@ public interface MethodGraph {
      * A simple implementation of a method graph.
      */
     class Simple implements MethodGraph {
-
-        /**
-         * Returns a method graph that contains all of the provided methods as simple nodes.
-         *
-         * @param methodDescriptions A list of method descriptions to be represented as simple nodes.
-         * @return A method graph that represents all of the provided methods as simple nodes.
-         */
-        public static MethodGraph of(List<? extends MethodDescription> methodDescriptions) {
-            LinkedHashMap<MethodDescription.Token, Node> nodes = new LinkedHashMap<MethodDescription.Token, Node>(methodDescriptions.size());
-            for (MethodDescription methodDescription : methodDescriptions) {
-                nodes.put(methodDescription.asToken(), new Node.Simple(methodDescription));
-            }
-            return new Simple(nodes);
-        }
 
         /**
          * The nodes represented by this method graph.
@@ -1754,6 +1739,20 @@ public interface MethodGraph {
          */
         public Simple(LinkedHashMap<MethodDescription.Token, Node> nodes) {
             this.nodes = nodes;
+        }
+
+        /**
+         * Returns a method graph that contains all of the provided methods as simple nodes.
+         *
+         * @param methodDescriptions A list of method descriptions to be represented as simple nodes.
+         * @return A method graph that represents all of the provided methods as simple nodes.
+         */
+        public static MethodGraph of(List<? extends MethodDescription> methodDescriptions) {
+            LinkedHashMap<MethodDescription.Token, Node> nodes = new LinkedHashMap<MethodDescription.Token, Node>(methodDescriptions.size());
+            for (MethodDescription methodDescription : methodDescriptions) {
+                nodes.put(methodDescription.asToken(), new Node.Simple(methodDescription));
+            }
+            return new Simple(nodes);
         }
 
         @Override

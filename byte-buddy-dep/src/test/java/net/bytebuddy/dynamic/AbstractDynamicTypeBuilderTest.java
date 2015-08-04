@@ -15,14 +15,12 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
@@ -296,6 +294,12 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(parameterMethod.invoke(parameterAnnotation), is((Object) QUX));
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface SampleAnnotation {
+
+        String foo();
+    }
+
     public static class Foo {
         /* empty */
     }
@@ -368,10 +372,5 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public ByteCodeAppender appender(Target implementationTarget) {
             return new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE);
         }
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface SampleAnnotation {
-        String foo();
     }
 }

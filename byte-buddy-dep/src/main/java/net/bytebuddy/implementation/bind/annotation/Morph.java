@@ -358,12 +358,12 @@ public @interface Morph {
             /**
              * Creates a new redirection proxy.
              *
-             * @param morphingType              The interface type that is implemented by the generated proxy.
-             * @param instrumentedType          The type that is instrumented on which the super method is invoked.
-             * @param specialMethodInvocation   The special method invocation to be executed by the morphing type via
-             *                                  an accessor on the instrumented type.
-             * @param assigner                  The assigner to use.
-             * @param serializableProxy         {@code true} if the proxy should be serializable.
+             * @param morphingType            The interface type that is implemented by the generated proxy.
+             * @param instrumentedType        The type that is instrumented on which the super method is invoked.
+             * @param specialMethodInvocation The special method invocation to be executed by the morphing type via
+             *                                an accessor on the instrumented type.
+             * @param assigner                The assigner to use.
+             * @param serializableProxy       {@code true} if the proxy should be serializable.
              */
             protected RedirectionProxy(TypeDescription morphingType,
                                        TypeDescription instrumentedType,

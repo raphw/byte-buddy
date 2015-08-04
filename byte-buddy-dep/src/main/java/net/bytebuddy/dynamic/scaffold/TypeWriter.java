@@ -721,21 +721,6 @@ public interface TypeWriter<T> {
                 public static class OfVisibilityBridge extends ForDefinedMethod implements ByteCodeAppender {
 
                     /**
-                     * Creates a record for a visibility bridge.
-                     *
-                     * @param instrumentedType  The instrumented type.
-                     * @param bridgeTarget      The target method of the visibility bridge.
-                     * @param attributeAppender The attribute appender to apply to the visibility bridge.
-                     * @return A record describing the visibility bridge.
-                     */
-                    public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
-                        return new OfVisibilityBridge(VisibilityBridge.of(instrumentedType, bridgeTarget),
-                                bridgeTarget,
-                                instrumentedType.getSuperType().asRawType(),
-                                attributeAppender);
-                    }
-
-                    /**
                      * The visibility bridge.
                      */
                     private final MethodDescription visibilityBridge;
@@ -771,6 +756,21 @@ public interface TypeWriter<T> {
                         this.bridgeTarget = bridgeTarget;
                         this.superType = superType;
                         this.attributeAppender = attributeAppender;
+                    }
+
+                    /**
+                     * Creates a record for a visibility bridge.
+                     *
+                     * @param instrumentedType  The instrumented type.
+                     * @param bridgeTarget      The target method of the visibility bridge.
+                     * @param attributeAppender The attribute appender to apply to the visibility bridge.
+                     * @return A record describing the visibility bridge.
+                     */
+                    public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
+                        return new OfVisibilityBridge(VisibilityBridge.of(instrumentedType, bridgeTarget),
+                                bridgeTarget,
+                                instrumentedType.getSuperType().asRawType(),
+                                attributeAppender);
                     }
 
                     @Override
@@ -846,17 +846,6 @@ public interface TypeWriter<T> {
                     protected static class VisibilityBridge extends MethodDescription.InDefinedShape.AbstractBase {
 
                         /**
-                         * Creates a visibility bridge.
-                         *
-                         * @param instrumentedType The instrumented type.
-                         * @param bridgeTarget     The target method of the visibility bridge.
-                         * @return A method description of the visibility bridge.
-                         */
-                        protected static MethodDescription of(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
-                            return new VisibilityBridge(instrumentedType, bridgeTarget.asToken().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE));
-                        }
-
-                        /**
                          * The instrumented type.
                          */
                         private final TypeDescription instrumentedType;
@@ -875,6 +864,17 @@ public interface TypeWriter<T> {
                         protected VisibilityBridge(TypeDescription instrumentedType, Token bridgeTarget) {
                             this.instrumentedType = instrumentedType;
                             this.bridgeTarget = bridgeTarget;
+                        }
+
+                        /**
+                         * Creates a visibility bridge.
+                         *
+                         * @param instrumentedType The instrumented type.
+                         * @param bridgeTarget     The target method of the visibility bridge.
+                         * @return A method description of the visibility bridge.
+                         */
+                        protected static MethodDescription of(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
+                            return new VisibilityBridge(instrumentedType, bridgeTarget.asToken().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE));
                         }
 
                         @Override
@@ -933,26 +933,6 @@ public interface TypeWriter<T> {
             class AccessBridgeWrapper implements Record {
 
                 /**
-                 * Wrapps the given record in an accessor bridge wrapper if necessary.
-                 *
-                 * @param delegate          The delegate for implementing the bridge's target.
-                 * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
-                 * @param bridgeTarget      The bridge methods' target methods.
-                 * @param bridgeTypes       A collection of all tokens representing all bridge methods.
-                 * @param attributeAppender The attribute appender being applied for the bridge target.
-                 * @return The given record wrapped by a bridge method wrapper if necessary.
-                 */
-                public static Record of(Record delegate,
-                                        TypeDescription instrumentedType,
-                                        MethodDescription bridgeTarget,
-                                        Set<MethodDescription.TypeToken> bridgeTypes,
-                                        MethodAttributeAppender attributeAppender) {
-                    return bridgeTypes.isEmpty() || (instrumentedType.isInterface() && !delegate.getSort().isImplemented())
-                            ? delegate
-                            : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, bridgeTypes, attributeAppender);
-                }
-
-                /**
                  * The delegate for implementing the bridge's target.
                  */
                 private final Record delegate;
@@ -996,6 +976,26 @@ public interface TypeWriter<T> {
                     this.bridgeTarget = bridgeTarget;
                     this.bridgeTypes = bridgeTypes;
                     this.attributeAppender = attributeAppender;
+                }
+
+                /**
+                 * Wrapps the given record in an accessor bridge wrapper if necessary.
+                 *
+                 * @param delegate          The delegate for implementing the bridge's target.
+                 * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
+                 * @param bridgeTarget      The bridge methods' target methods.
+                 * @param bridgeTypes       A collection of all tokens representing all bridge methods.
+                 * @param attributeAppender The attribute appender being applied for the bridge target.
+                 * @return The given record wrapped by a bridge method wrapper if necessary.
+                 */
+                public static Record of(Record delegate,
+                                        TypeDescription instrumentedType,
+                                        MethodDescription bridgeTarget,
+                                        Set<MethodDescription.TypeToken> bridgeTypes,
+                                        MethodAttributeAppender attributeAppender) {
+                    return bridgeTypes.isEmpty() || (instrumentedType.isInterface() && !delegate.getSort().isImplemented())
+                            ? delegate
+                            : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, bridgeTypes, attributeAppender);
                 }
 
                 @Override
@@ -1982,6 +1982,185 @@ public interface TypeWriter<T> {
             }
 
             /**
+             * A method containing the original type initializer of a redefined class.
+             */
+            protected static class TypeInitializerDelegate extends MethodDescription.InDefinedShape.AbstractBase {
+
+                /**
+                 * A prefix for the name of the method that represents the original type initializer.
+                 */
+                private static final String TYPE_INITIALIZER_PROXY_PREFIX = "classInitializer";
+
+                /**
+                 * The instrumented type that defines this delegate method.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
+                 * The suffix to append to the default prefix in order to avoid naming conflicts.
+                 */
+                private final String suffix;
+
+                /**
+                 * Creates a new type initializer delegate.
+                 *
+                 * @param instrumentedType The instrumented type that defines this delegate method.
+                 * @param suffix           The suffix to append to the default prefix in order to avoid naming conflicts.
+                 */
+                protected TypeInitializerDelegate(TypeDescription instrumentedType, String suffix) {
+                    this.instrumentedType = instrumentedType;
+                    this.suffix = suffix;
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
+                    return new ParameterList.Empty();
+                }
+
+                @Override
+                public GenericTypeDescription getReturnType() {
+                    return TypeDescription.VOID;
+                }
+
+                @Override
+                public GenericTypeList getExceptionTypes() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return MethodDescription.NO_DEFAULT_VALUE;
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return new GenericTypeList.Empty();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+                }
+
+                @Override
+                public String getInternalName() {
+                    return String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, suffix);
+                }
+            }
+
+            /**
+             * A remapper adapter that does not attempt to reorder method frames which is never the case for a renaming. This
+             * adaption might not longer be necessary in the future:
+             * <a href="http://forge.ow2.org/tracker/index.php?func=detail&aid=317576&group_id=23&atid=100023">ASM #317576</a>.
+             */
+            protected static class FramePreservingRemapper extends RemappingClassAdapter {
+
+                /**
+                 * Creates a new frame preserving class remapper.
+                 *
+                 * @param classVisitor The class visitor that is responsible for writing the class.
+                 * @param remapper     The remapper to use for renaming the instrumented type.
+                 */
+                protected FramePreservingRemapper(ClassVisitor classVisitor, Remapper remapper) {
+                    super(ASM_API_VERSION, classVisitor, remapper);
+                }
+
+                /**
+                 * Creates a class visitor that renames the instrumented type from the original name to the target name if those
+                 * names are not equal.
+                 *
+                 * @param originalName The instrumented type's original name.
+                 * @param targetName   The instrumented type's actual name.
+                 * @param classVisitor The class visitor that is responsible for creating the type.
+                 * @return An appropriate class visitor.
+                 */
+                public static ClassVisitor of(String originalName, String targetName, ClassVisitor classVisitor) {
+                    return originalName.equals(targetName)
+                            ? classVisitor
+                            : new FramePreservingRemapper(classVisitor, new SimpleRemapper(originalName, targetName));
+                }
+
+                @Override
+                protected MethodVisitor createRemappingMethodAdapter(int modifiers, String adaptedDescriptor, MethodVisitor methodVisitor) {
+                    return new FramePreservingMethodRemapper(modifiers, adaptedDescriptor, methodVisitor, remapper);
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.Default.ForInlining.FramePreservingRemapper{" +
+                            "}";
+                }
+
+                /**
+                 * A method remapper that does not delegate to its underlying variable sorting mechanism as this is never required for
+                 * renaming a type. This way, it is not required to hand expanded method frames to this visitor what is otherwise
+                 * required for more general remappings that sort local variables.
+                 */
+                protected static class FramePreservingMethodRemapper extends RemappingMethodAdapter {
+
+                    /**
+                     * Creates a new frame preserving method remapper.
+                     *
+                     * @param modifiers     The method's modifiers.
+                     * @param descriptor    The descriptor of the method.
+                     * @param methodVisitor The method visitor that is responsible for writing the method.
+                     * @param remapper      The remapper to use for renaming the instrumented type.
+                     */
+                    public FramePreservingMethodRemapper(int modifiers, String descriptor, MethodVisitor methodVisitor, Remapper remapper) {
+                        super(ASM_API_VERSION, modifiers, descriptor, methodVisitor, remapper);
+                    }
+
+                    @Override
+                    public void visitFrame(int type, int sizeLocal, Object[] local, int sizeStack, Object[] stack) {
+                        mv.visitFrame(type, sizeLocal, remapEntries(sizeLocal, local), sizeStack, remapEntries(sizeStack, stack));
+                    }
+
+                    /**
+                     * Remaps a stack map.
+                     *
+                     * @param size  The size of the stack map.
+                     * @param entry The stack map's entries.
+                     * @return The remapped entries.
+                     */
+                    private Object[] remapEntries(int size, Object[] entry) {
+                        for (int index = 0; index < size; index++) {
+                            if (entry[index] instanceof String) {
+                                Object[] newEntry = new Object[size];
+                                if (index > 0) {
+                                    System.arraycopy(entry, 0, newEntry, 0, index);
+                                }
+                                do {
+                                    Object frame = entry[index];
+                                    newEntry[index++] = frame instanceof String
+                                            ? remapper.mapType((String) frame)
+                                            : frame;
+                                } while (index < size);
+                                return newEntry;
+                            }
+                        }
+                        return entry;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ForInlining.FramePreservingRemapper.FramePreservingMethodRemapper{" +
+                                "remapper=" + remapper +
+                                "}";
+                    }
+                }
+            }
+
+            /**
              * A class visitor which is capable of applying a redefinition of an existing class file.
              */
             protected class RedefinitionClassVisitor extends ClassVisitor {
@@ -2303,185 +2482,6 @@ public interface TypeWriter<T> {
                                 "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
                                 ", injectorProxyMethod=" + injectorProxyMethod +
                                 '}';
-                    }
-                }
-            }
-
-            /**
-             * A method containing the original type initializer of a redefined class.
-             */
-            protected static class TypeInitializerDelegate extends MethodDescription.InDefinedShape.AbstractBase {
-
-                /**
-                 * A prefix for the name of the method that represents the original type initializer.
-                 */
-                private static final String TYPE_INITIALIZER_PROXY_PREFIX = "classInitializer";
-
-                /**
-                 * The instrumented type that defines this delegate method.
-                 */
-                private final TypeDescription instrumentedType;
-
-                /**
-                 * The suffix to append to the default prefix in order to avoid naming conflicts.
-                 */
-                private final String suffix;
-
-                /**
-                 * Creates a new type initializer delegate.
-                 *
-                 * @param instrumentedType The instrumented type that defines this delegate method.
-                 * @param suffix           The suffix to append to the default prefix in order to avoid naming conflicts.
-                 */
-                protected TypeInitializerDelegate(TypeDescription instrumentedType, String suffix) {
-                    this.instrumentedType = instrumentedType;
-                    this.suffix = suffix;
-                }
-
-                @Override
-                public TypeDescription getDeclaringType() {
-                    return instrumentedType;
-                }
-
-                @Override
-                public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Empty();
-                }
-
-                @Override
-                public GenericTypeDescription getReturnType() {
-                    return TypeDescription.VOID;
-                }
-
-                @Override
-                public GenericTypeList getExceptionTypes() {
-                    return new GenericTypeList.Empty();
-                }
-
-                @Override
-                public Object getDefaultValue() {
-                    return MethodDescription.NO_DEFAULT_VALUE;
-                }
-
-                @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty();
-                }
-
-                @Override
-                public int getModifiers() {
-                    return Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
-                }
-
-                @Override
-                public String getInternalName() {
-                    return String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, suffix);
-                }
-            }
-
-            /**
-             * A remapper adapter that does not attempt to reorder method frames which is never the case for a renaming. This
-             * adaption might not longer be necessary in the future:
-             * <a href="http://forge.ow2.org/tracker/index.php?func=detail&aid=317576&group_id=23&atid=100023">ASM #317576</a>.
-             */
-            protected static class FramePreservingRemapper extends RemappingClassAdapter {
-
-                /**
-                 * Creates a class visitor that renames the instrumented type from the original name to the target name if those
-                 * names are not equal.
-                 *
-                 * @param originalName The instrumented type's original name.
-                 * @param targetName   The instrumented type's actual name.
-                 * @param classVisitor The class visitor that is responsible for creating the type.
-                 * @return An appropriate class visitor.
-                 */
-                public static ClassVisitor of(String originalName, String targetName, ClassVisitor classVisitor) {
-                    return originalName.equals(targetName)
-                            ? classVisitor
-                            : new FramePreservingRemapper(classVisitor, new SimpleRemapper(originalName, targetName));
-                }
-
-                /**
-                 * Creates a new frame preserving class remapper.
-                 *
-                 * @param classVisitor The class visitor that is responsible for writing the class.
-                 * @param remapper     The remapper to use for renaming the instrumented type.
-                 */
-                protected FramePreservingRemapper(ClassVisitor classVisitor, Remapper remapper) {
-                    super(ASM_API_VERSION, classVisitor, remapper);
-                }
-
-                @Override
-                protected MethodVisitor createRemappingMethodAdapter(int modifiers, String adaptedDescriptor, MethodVisitor methodVisitor) {
-                    return new FramePreservingMethodRemapper(modifiers, adaptedDescriptor, methodVisitor, remapper);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.Default.ForInlining.FramePreservingRemapper{" +
-                            "}";
-                }
-
-                /**
-                 * A method remapper that does not delegate to its underlying variable sorting mechanism as this is never required for
-                 * renaming a type. This way, it is not required to hand expanded method frames to this visitor what is otherwise
-                 * required for more general remappings that sort local variables.
-                 */
-                protected static class FramePreservingMethodRemapper extends RemappingMethodAdapter {
-
-                    /**
-                     * Creates a new frame preserving method remapper.
-                     *
-                     * @param modifiers     The method's modifiers.
-                     * @param descriptor    The descriptor of the method.
-                     * @param methodVisitor The method visitor that is responsible for writing the method.
-                     * @param remapper      The remapper to use for renaming the instrumented type.
-                     */
-                    public FramePreservingMethodRemapper(int modifiers, String descriptor, MethodVisitor methodVisitor, Remapper remapper) {
-                        super(ASM_API_VERSION, modifiers, descriptor, methodVisitor, remapper);
-                    }
-
-                    @Override
-                    public void visitFrame(int type, int sizeLocal, Object[] local, int sizeStack, Object[] stack) {
-                        mv.visitFrame(type, sizeLocal, remapEntries(sizeLocal, local), sizeStack, remapEntries(sizeStack, stack));
-                    }
-
-                    /**
-                     * Remaps a stack map.
-                     *
-                     * @param size  The size of the stack map.
-                     * @param entry The stack map's entries.
-                     * @return The remapped entries.
-                     */
-                    private Object[] remapEntries(int size, Object[] entry) {
-                        for (int index = 0; index < size; index++) {
-                            if (entry[index] instanceof String) {
-                                Object[] newEntry = new Object[size];
-                                if (index > 0) {
-                                    System.arraycopy(entry, 0, newEntry, 0, index);
-                                }
-                                do {
-                                    Object frame = entry[index];
-                                    newEntry[index++] = frame instanceof String
-                                            ? remapper.mapType((String) frame)
-                                            : frame;
-                                } while (index < size);
-                                return newEntry;
-                            }
-                        }
-                        return entry;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ForInlining.FramePreservingRemapper.FramePreservingMethodRemapper{" +
-                                "remapper=" + remapper +
-                                "}";
                     }
                 }
             }

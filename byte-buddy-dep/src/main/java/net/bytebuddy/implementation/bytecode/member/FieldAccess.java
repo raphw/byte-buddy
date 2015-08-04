@@ -123,6 +123,77 @@ public enum FieldAccess {
     }
 
     /**
+     * A dispatcher for implementing a generic read or write access on a field.
+     */
+    protected static class OfGenericField implements Defined {
+
+        /**
+         * The resolved generic field type.
+         */
+        private final TypeDescription targetType;
+
+        /**
+         * An accessor for the field in its defined shape.
+         */
+        private final Defined defined;
+
+        /**
+         * Creates a new dispatcher for a generic field.
+         *
+         * @param targetType The resolved generic field type.
+         * @param defined    An accessor for the field in its defined shape.
+         */
+        protected OfGenericField(TypeDescription targetType, Defined defined) {
+            this.targetType = targetType;
+            this.defined = defined;
+        }
+
+        /**
+         * Creates a generic access dispatcher for a given field.
+         *
+         * @param fieldDescription The field that is being accessed.
+         * @param fieldAccess      A field accessor for the field in its defined shape.
+         * @return A field access dispatcher for the given field.
+         */
+        protected static Defined of(FieldDescription fieldDescription, Defined fieldAccess) {
+            return new OfGenericField(fieldDescription.getType().asRawType(), fieldAccess);
+        }
+
+        @Override
+        public StackManipulation getter() {
+            return new StackManipulation.Compound(defined.getter(), TypeCasting.to(targetType));
+        }
+
+        @Override
+        public StackManipulation putter() {
+            return defined.putter();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            OfGenericField that = (OfGenericField) other;
+            return targetType.equals(that.targetType) && defined.equals(that.defined);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = targetType.hashCode();
+            result = 31 * result + defined.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "FieldAccess.OfGenericField{" +
+                    "targetType=" + targetType +
+                    ", defined=" + defined +
+                    '}';
+        }
+    }
+
+    /**
      * A dispatcher for implementing a non-generic read or write access on a field.
      */
     protected class AccessDispatcher implements Defined {
@@ -296,77 +367,6 @@ public enum FieldAccess {
             private AccessDispatcher getAccessDispatcher() {
                 return AccessDispatcher.this;
             }
-        }
-    }
-
-    /**
-     * A dispatcher for implementing a generic read or write access on a field.
-     */
-    protected static class OfGenericField implements Defined {
-
-        /**
-         * Creates a generic access dispatcher for a given field.
-         *
-         * @param fieldDescription The field that is being accessed.
-         * @param fieldAccess      A field accessor for the field in its defined shape.
-         * @return A field access dispatcher for the given field.
-         */
-        protected static Defined of(FieldDescription fieldDescription, Defined fieldAccess) {
-            return new OfGenericField(fieldDescription.getType().asRawType(), fieldAccess);
-        }
-
-        /**
-         * The resolved generic field type.
-         */
-        private final TypeDescription targetType;
-
-        /**
-         * An accessor for the field in its defined shape.
-         */
-        private final Defined defined;
-
-        /**
-         * Creates a new dispatcher for a generic field.
-         *
-         * @param targetType The resolved generic field type.
-         * @param defined    An accessor for the field in its defined shape.
-         */
-        protected OfGenericField(TypeDescription targetType, Defined defined) {
-            this.targetType = targetType;
-            this.defined = defined;
-        }
-
-        @Override
-        public StackManipulation getter() {
-            return new StackManipulation.Compound(defined.getter(), TypeCasting.to(targetType));
-        }
-
-        @Override
-        public StackManipulation putter() {
-            return defined.putter();
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            OfGenericField that = (OfGenericField) other;
-            return targetType.equals(that.targetType) && defined.equals(that.defined);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = targetType.hashCode();
-            result = 31 * result + defined.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAccess.OfGenericField{" +
-                    "targetType=" + targetType +
-                    ", defined=" + defined +
-                    '}';
         }
     }
 }

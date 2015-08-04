@@ -29,6 +29,32 @@ public interface MethodAttributeAppender {
     void apply(MethodVisitor methodVisitor, MethodDescription methodDescription);
 
     /**
+     * A method attribute appender that does not append any attributes.
+     */
+    enum NoOp implements MethodAttributeAppender, Factory {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+            /* do nothing */
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.NoOp." + name();
+        }
+    }
+
+    /**
      * A factory that creates method attribute appenders for a given type.
      */
     interface Factory {
@@ -87,32 +113,6 @@ public interface MethodAttributeAppender {
             public String toString() {
                 return "MethodAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
             }
-        }
-    }
-
-    /**
-     * A method attribute appender that does not append any attributes.
-     */
-    enum NoOp implements MethodAttributeAppender, Factory {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public MethodAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            /* do nothing */
-        }
-
-        @Override
-        public String toString() {
-            return "MethodAttributeAppender.NoOp." + name();
         }
     }
 

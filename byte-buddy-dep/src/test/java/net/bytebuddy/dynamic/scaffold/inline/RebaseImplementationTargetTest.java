@@ -152,6 +152,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
+
     @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {

@@ -123,7 +123,7 @@ public class MethodGraphCompilerDefaultKeyTest {
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.class).apply();
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.Node.class).apply();
     }
-    
+
     protected static class PseudoKey extends MethodGraph.Compiler.Default.Key<SampleKey> {
 
         private final Set<SampleKey> identifiers;
@@ -138,7 +138,7 @@ public class MethodGraphCompilerDefaultKeyTest {
             return identifiers;
         }
     }
-    
+
     public static class SampleKey {
         /* empty */
     }

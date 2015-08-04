@@ -56,17 +56,6 @@ public interface MethodTransformer {
     class Transforming implements MethodTransformer {
 
         /**
-         * Creates a transformer that enforces the supplied modifier contributors. All ranges of each contributor is first cleared and then overridden
-         * by the specified modifiers in the order they are supplied.
-         *
-         * @param modifierTransformer The modifier transformers in their application order.
-         * @return A method transformer where each method's modifiers are adapted to the given modifiers.
-         */
-        public static MethodTransformer modifiers(ModifierContributor.ForMethod... modifierTransformer) {
-            return new Transforming(new Transformer.ForModifierTransformation(Arrays.asList(nonNull(modifierTransformer))));
-        }
-
-        /**
          * The transformer to be applied.
          */
         private final Transformer transformer;
@@ -78,6 +67,17 @@ public interface MethodTransformer {
          */
         public Transforming(Transformer transformer) {
             this.transformer = transformer;
+        }
+
+        /**
+         * Creates a transformer that enforces the supplied modifier contributors. All ranges of each contributor is first cleared and then overridden
+         * by the specified modifiers in the order they are supplied.
+         *
+         * @param modifierTransformer The modifier transformers in their application order.
+         * @return A method transformer where each method's modifiers are adapted to the given modifiers.
+         */
+        public static MethodTransformer modifiers(ModifierContributor.ForMethod... modifierTransformer) {
+            return new Transforming(new Transformer.ForModifierTransformation(Arrays.asList(nonNull(modifierTransformer))));
         }
 
         @Override

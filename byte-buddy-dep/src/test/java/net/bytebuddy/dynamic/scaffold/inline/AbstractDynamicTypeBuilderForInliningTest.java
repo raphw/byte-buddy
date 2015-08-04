@@ -19,18 +19,21 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.ProtectionDomain;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static junit.framework.TestCase.assertEquals;
@@ -336,6 +339,11 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         String foo();
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface FooBar {
+        /* empty */
+    }
+
     public static class Qux {
 
         public static final String foo;
@@ -349,11 +357,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         public static void invoke() {
             bar = BAR;
         }
-    }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface FooBar {
-        /* empty */
     }
 
     @SuppressWarnings("unused")

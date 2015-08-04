@@ -9,7 +9,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -1021,6 +1020,25 @@ public class ElementMatchersTest {
         /* empty */
     }
 
+    public interface GenericMethodType<T extends Exception> {
+
+        T foo(T t) throws T;
+
+        interface Inner extends GenericMethodType<RuntimeException> {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public interface GenericDeclaredBy<T> {
+
+        void foo();
+
+        interface Inner extends GenericDeclaredBy<String> {
+            /* empty */
+        }
+    }
+
     public static class FieldType {
 
         String foo;
@@ -1233,15 +1251,6 @@ public class ElementMatchersTest {
         }
     }
 
-    public interface GenericMethodType<T extends Exception> {
-
-        T foo(T t) throws T;
-
-        interface Inner extends GenericMethodType<RuntimeException> {
-            /* empty */
-        }
-    }
-
     @SuppressWarnings("unused")
     public static class GenericConstructorType<T extends Exception> {
 
@@ -1254,16 +1263,6 @@ public class ElementMatchersTest {
             public Inner(RuntimeException e) throws RuntimeException {
                 super(e);
             }
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public interface GenericDeclaredBy<T> {
-
-        void foo();
-
-        interface Inner extends GenericDeclaredBy<String> {
-            /* empty */
         }
     }
 }

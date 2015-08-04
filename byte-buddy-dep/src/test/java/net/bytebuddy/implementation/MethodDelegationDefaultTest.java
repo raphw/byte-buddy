@@ -3,7 +3,6 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bind.annotation.Default;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;

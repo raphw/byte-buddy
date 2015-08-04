@@ -892,44 +892,21 @@ public class MethodGraphCompilerDefaultTest {
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.class).apply();
     }
 
-    public static class SimpleClass {
-        /* empty */
-    }
-
     public interface SimpleInterface {
         /* empty */
-    }
-
-    public static class ClassBase {
-
-        public void foo() {
-            /* empty */
-        }
-
-        static class Inner extends ClassBase {
-
-            @Override
-            public void foo() {
-                /* empty */
-            }
-        }
     }
 
     public interface InterfaceBase {
 
         void foo();
 
-        abstract class InnerClass implements InterfaceBase {
-            /* empty */
-        }
-
         interface InnerInterface extends InterfaceBase {
             /* empty */
         }
-    }
 
-    public static class ClassAndInterfaceInheritance extends ClassBase implements InterfaceBase {
-        /* empty */
+        abstract class InnerClass implements InterfaceBase {
+            /* empty */
+        }
     }
 
     public interface AmbiguousInterfaceBase {
@@ -940,22 +917,10 @@ public class MethodGraphCompilerDefaultTest {
             /* empty */
         }
 
-        abstract class ClassTarget implements InterfaceBase, AmbiguousInterfaceBase {
-            /* empty */
-        }
-
         interface DominantIntermediate extends InterfaceBase, AmbiguousInterfaceBase {
 
             @Override
             void foo();
-        }
-
-        abstract class DominantClassBase implements DominantIntermediate {
-            /* empty */
-        }
-
-        abstract class DominantClassTarget extends DominantClassBase implements InterfaceBase {
-            /* empty */
         }
 
         interface DominantInterfaceTargetLeft extends InterfaceBase, DominantIntermediate {
@@ -975,7 +940,7 @@ public class MethodGraphCompilerDefaultTest {
             /* empty */
         }
 
-        interface NonDominantIntermediateRight extends NonDominantAmbiguous,InterfaceBase {
+        interface NonDominantIntermediateRight extends NonDominantAmbiguous, InterfaceBase {
             /* empty */
         }
 
@@ -986,6 +951,172 @@ public class MethodGraphCompilerDefaultTest {
         interface NonDominantTargetRight extends DominantIntermediate, NonDominantIntermediateRight {
             /* empty */
         }
+
+        abstract class ClassTarget implements InterfaceBase, AmbiguousInterfaceBase {
+            /* empty */
+        }
+
+        abstract class DominantClassBase implements DominantIntermediate {
+            /* empty */
+        }
+
+        abstract class DominantClassTarget extends DominantClassBase implements InterfaceBase {
+            /* empty */
+        }
+    }
+
+    public interface GenericInterfaceBase<T> {
+
+        void foo(T t);
+
+        interface Inner extends GenericInterfaceBase<Void> {
+
+            @Override
+            void foo(Void t);
+        }
+
+        interface Intermediate<T extends Number> extends GenericInterfaceBase<T> {
+
+            @Override
+            void foo(T t);
+
+            interface Inner extends Intermediate<Integer> {
+
+                @Override
+                void foo(Integer t);
+            }
+        }
+    }
+
+    public interface ReturnTypeInterfaceBase {
+
+        Object foo();
+
+        interface Inner extends ReturnTypeInterfaceBase {
+
+            @Override
+            Void foo();
+        }
+
+        interface Intermediate extends ReturnTypeInterfaceBase {
+
+            @Override
+            Number foo();
+
+            interface Inner extends Intermediate {
+
+                @Override
+                Integer foo();
+            }
+        }
+    }
+
+    public interface GenericWithReturnTypeInterfaceBase<T> {
+
+        Object foo(T t);
+
+        interface Inner extends GenericWithReturnTypeInterfaceBase<Void> {
+
+            @Override
+            Void foo(Void t);
+        }
+
+        interface Intermediate<T extends Number> extends GenericWithReturnTypeInterfaceBase<T> {
+
+            @Override
+            Number foo(T t);
+
+            interface Inner extends Intermediate<Integer> {
+
+                @Override
+                Integer foo(Integer t);
+            }
+        }
+    }
+
+    public interface GenericNonOverriddenInterfaceBase<T> {
+
+        T foo(T t);
+
+        interface InnerInterface extends GenericNonOverriddenInterfaceBase<Void> {
+            /* empty */
+        }
+
+        abstract class InnerClass implements GenericNonOverriddenInterfaceBase<Void> {
+            /* empty */
+        }
+    }
+
+    public interface DuplicateNameInterface {
+
+        void foo(Object o);
+
+        void foo(Integer o);
+
+        interface InnerInterface extends DuplicateNameInterface {
+
+            void foo(Void o);
+        }
+
+        abstract class InnerClass implements DuplicateNameInterface {
+
+            public abstract void foo(Void o);
+        }
+    }
+
+    public interface DuplicateNameGenericInterface<T> {
+
+        void foo(T o);
+
+        void foo(Integer o);
+
+        interface InnerInterface extends DuplicateNameGenericInterface<String> {
+
+            void foo(Void o);
+        }
+
+        @SuppressWarnings("unused")
+        abstract class InnerClass implements DuplicateNameGenericInterface<String> {
+
+            public abstract void foo(Void o);
+        }
+    }
+
+    public interface MethodInterfaceConvergenceFirstBase<T> {
+
+        T foo();
+    }
+
+    public interface MethodInterfaceConvergenceSecondBase {
+
+        Void foo();
+    }
+
+    public interface MethodInterfaceConvergenceTarget extends MethodInterfaceConvergenceFirstBase<Void>, MethodInterfaceConvergenceSecondBase {
+        /* empty */
+    }
+
+    public static class SimpleClass {
+        /* empty */
+    }
+
+    public static class ClassBase {
+
+        public void foo() {
+            /* empty */
+        }
+
+        static class Inner extends ClassBase {
+
+            @Override
+            public void foo() {
+                /* empty */
+            }
+        }
+    }
+
+    public static class ClassAndInterfaceInheritance extends ClassBase implements InterfaceBase {
+        /* empty */
     }
 
     public static class GenericClassBase<T> {
@@ -1050,52 +1181,6 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    public interface GenericInterfaceBase<T> {
-
-        void foo(T t);
-
-        interface Inner extends GenericInterfaceBase<Void> {
-
-            @Override
-            void foo(Void t);
-        }
-
-        interface Intermediate<T extends Number> extends GenericInterfaceBase<T> {
-
-            @Override
-            void foo(T t);
-
-            interface Inner extends Intermediate<Integer> {
-
-                @Override
-                void foo(Integer t);
-            }
-        }
-    }
-
-    public interface ReturnTypeInterfaceBase {
-
-        Object foo();
-
-        interface Inner extends ReturnTypeInterfaceBase {
-
-            @Override
-            Void foo();
-        }
-
-        interface Intermediate extends ReturnTypeInterfaceBase {
-
-            @Override
-            Number foo();
-
-            interface Inner extends Intermediate {
-
-                @Override
-                Integer foo();
-            }
-        }
-    }
-
     public static class GenericWithReturnTypeClassBase<T> {
 
         public Object foo(T t) {
@@ -1127,29 +1212,6 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    public interface GenericWithReturnTypeInterfaceBase<T> {
-
-        Object foo(T t);
-
-        interface Inner extends GenericWithReturnTypeInterfaceBase<Void> {
-
-            @Override
-            Void foo(Void t);
-        }
-
-        interface Intermediate<T extends Number> extends GenericWithReturnTypeInterfaceBase<T> {
-
-            @Override
-            Number foo(T t);
-
-            interface Inner extends Intermediate<Integer> {
-
-                @Override
-                Integer foo(Integer t);
-            }
-        }
-    }
-
     @SuppressWarnings("unused")
     public static class GenericNonOverriddenClassBase<T> {
 
@@ -1158,19 +1220,6 @@ public class MethodGraphCompilerDefaultTest {
         }
 
         public class Inner extends GenericNonOverriddenClassBase<Void> {
-            /* empty */
-        }
-    }
-
-    public interface GenericNonOverriddenInterfaceBase<T> {
-
-        T foo(T t);
-
-        interface InnerInterface extends GenericNonOverriddenInterfaceBase<Void> {
-            /* empty */
-        }
-
-        abstract class InnerClass implements GenericNonOverriddenInterfaceBase<Void> {
             /* empty */
         }
     }
@@ -1194,23 +1243,6 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    public interface DuplicateNameInterface {
-
-        void foo(Object o);
-
-        void foo(Integer o);
-
-        interface InnerInterface extends DuplicateNameInterface {
-
-            void foo(Void o);
-        }
-
-        abstract class InnerClass implements DuplicateNameInterface {
-
-            public abstract void foo(Void o);
-        }
-    }
-
     @SuppressWarnings("unused")
     public static class DuplicateNameGenericClass<T> {
 
@@ -1227,24 +1259,6 @@ public class MethodGraphCompilerDefaultTest {
             public void foo(Void o) {
                 /* empty */
             }
-        }
-    }
-
-    public interface DuplicateNameGenericInterface<T> {
-
-        void foo(T o);
-
-        void foo(Integer o);
-
-        interface InnerInterface extends DuplicateNameGenericInterface<String> {
-
-            void foo(Void o);
-        }
-
-        @SuppressWarnings("unused")
-        abstract class InnerClass implements DuplicateNameGenericInterface<String> {
-
-            public abstract void foo(Void o);
         }
     }
 
@@ -1295,20 +1309,6 @@ public class MethodGraphCompilerDefaultTest {
                 return null;
             }
         }
-    }
-
-    public interface MethodInterfaceConvergenceFirstBase<T> {
-
-        T foo();
-    }
-
-    public interface MethodInterfaceConvergenceSecondBase {
-
-        Void foo();
-    }
-
-    public interface MethodInterfaceConvergenceTarget extends MethodInterfaceConvergenceFirstBase<Void>, MethodInterfaceConvergenceSecondBase {
-        /* empty */
     }
 
     static class MethodConvergenceVisibilityBridgeBase<T> {
