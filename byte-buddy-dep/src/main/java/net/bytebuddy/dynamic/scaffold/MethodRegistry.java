@@ -492,7 +492,7 @@ public interface MethodRegistry {
                 if (relevanceMatcher.matches(methodDescription)) {
                     for (Entry entry : entries) {
                         if (entry.resolve(instrumentedType).matches(methodDescription)) {
-                            implementations.put(methodDescription, entry.asPreparedEntry(methodDescription, node.getBridges()));
+                            implementations.put(methodDescription, entry.asPreparedEntry(methodDescription, node.getMethodTypes()));
                             visibilityBridge = false;
                             break;
                         }
@@ -505,7 +505,7 @@ public interface MethodRegistry {
                         && methodDescription.getDeclaringType().asRawType().isPackagePrivate()) {
                     // Visibility bridges are required for public types that inherit a public method from a package-private type.
                     // Checking the last condition contradicts any method that is defined by the instrumented type itself.
-                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getBridges()));
+                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getMethodTypes()));
                 }
             }
             MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
@@ -583,11 +583,10 @@ public interface MethodRegistry {
             /**
              * Transforms this entry into a prepared state.
              *
-             * @param bridges The bridges to be appended to this entry.
              * @return A prepared version of this entry.
              */
-            protected Prepared.Entry asPreparedEntry(MethodDescription methodDescription, Set<MethodDescription.TypeToken> bridges) {
-                return new Prepared.Entry(handler, attributeAppenderFactory, methodTransformer.transform(methodDescription), bridges);
+            protected Prepared.Entry asPreparedEntry(MethodDescription methodDescription, Set<MethodDescription.TypeToken> methodTypes) {
+                return new Prepared.Entry(handler, attributeAppenderFactory, methodTransformer.transform(methodDescription), methodTypes);
             }
 
             /**
@@ -726,7 +725,7 @@ public interface MethodRegistry {
                     entries.put(entry.getKey(), new Compiled.Entry(cachedHandler,
                             cachedAttributeAppender,
                             entry.getValue().getMethodDescription(),
-                            entry.getValue().getBridges()));
+                            entry.getValue().resolveBridgeTypes()));
                 }
                 return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries);
             }
@@ -792,26 +791,23 @@ public interface MethodRegistry {
 
                 private final MethodDescription methodDescription;
 
-                /**
-                 * A set of bridges representing the bridge methods of this method.
-                 */
-                private final Set<MethodDescription.TypeToken> bridges;
+                private final Set<MethodDescription.TypeToken> typeTokens;
 
                 /**
                  * Creates a new prepared entry.
                  *
                  * @param handler                  The handler for implementing methods.
                  * @param attributeAppenderFactory A attribute appender factory for appending attributes for any implemented method.
-                 * @param bridges                  A set of bridges representing the bridge methods of this method.
+                 * @param typeTokens                  A set of bridges representing the bridge methods of this method.
                  */
                 protected Entry(Handler handler,
                                 MethodAttributeAppender.Factory attributeAppenderFactory,
                                 MethodDescription methodDescription,
-                                Set<MethodDescription.TypeToken> bridges) {
+                                Set<MethodDescription.TypeToken> typeTokens) {
                     this.handler = handler;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                     this.methodDescription = methodDescription;
-                    this.bridges = bridges;
+                    this.typeTokens = typeTokens;
                 }
 
                 /**
@@ -836,13 +832,10 @@ public interface MethodRegistry {
                     return methodDescription;
                 }
 
-                /**
-                 * A set of bridges for the implemented method.
-                 *
-                 * @return A set of bridges for the implemented method.
-                 */
-                protected Set<MethodDescription.TypeToken> getBridges() {
-                    return bridges;
+                protected Set<MethodDescription.TypeToken> resolveBridgeTypes() {
+                    HashSet<MethodDescription.TypeToken> typeTokens = new HashSet<MethodDescription.TypeToken>(this.typeTokens);
+                    typeTokens.remove(methodDescription.asTypeToken());
+                    return typeTokens;
                 }
 
                 @Override
@@ -853,7 +846,7 @@ public interface MethodRegistry {
                     return handler.equals(entry.handler)
                             && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
                             && methodDescription.equals(entry.methodDescription)
-                            && bridges.equals(entry.bridges);
+                            && typeTokens.equals(entry.typeTokens);
                 }
 
                 @Override
@@ -861,7 +854,7 @@ public interface MethodRegistry {
                     int result = handler.hashCode();
                     result = 31 * result + attributeAppenderFactory.hashCode();
                     result = 31 * result + methodDescription.hashCode();
-                    result = 31 * result + bridges.hashCode();
+                    result = 31 * result + typeTokens.hashCode();
                     return result;
                 }
 
@@ -871,7 +864,7 @@ public interface MethodRegistry {
                             "handler=" + handler +
                             ", attributeAppenderFactory=" + attributeAppenderFactory +
                             ", methodDescription=" + methodDescription +
-                            ", bridges=" + bridges +
+                            ", typeTokens=" + typeTokens +
                             '}';
                 }
             }
@@ -986,23 +979,23 @@ public interface MethodRegistry {
 
                 private final MethodDescription methodDescription;
 
-                private final Set<MethodDescription.TypeToken> bridges;
+                private final Set<MethodDescription.TypeToken> bridgeTypes;
 
                 public Entry(Handler.Compiled handler,
                              MethodAttributeAppender attributeAppender,
                              MethodDescription methodDescription,
-                             Set<MethodDescription.TypeToken> bridges) {
+                             Set<MethodDescription.TypeToken> bridgeTypes) {
                     this.handler = handler;
                     this.attributeAppender = attributeAppender;
                     this.methodDescription = methodDescription;
-                    this.bridges = bridges;
+                    this.bridgeTypes = bridgeTypes;
                 }
 
                 protected Record bind(TypeDescription instrumentedType) {
                     return TypeWriter.MethodPool.Record.AccessBridgeWrapper.of(handler.assemble(methodDescription, attributeAppender),
                             instrumentedType,
                             methodDescription,
-                            bridges,
+                            bridgeTypes,
                             attributeAppender);
                 }
 
@@ -1014,7 +1007,7 @@ public interface MethodRegistry {
                     return handler.equals(entry.handler)
                             && attributeAppender.equals(entry.attributeAppender)
                             && methodDescription.equals(entry.methodDescription)
-                            && bridges.equals(entry.bridges);
+                            && bridgeTypes.equals(entry.bridgeTypes);
                 }
 
                 @Override
@@ -1022,7 +1015,7 @@ public interface MethodRegistry {
                     int result = handler.hashCode();
                     result = 31 * result + attributeAppender.hashCode();
                     result = 31 * result + methodDescription.hashCode();
-                    result = 31 * result + bridges.hashCode();
+                    result = 31 * result + bridgeTypes.hashCode();
                     return result;
                 }
 
@@ -1032,7 +1025,7 @@ public interface MethodRegistry {
                             "handler=" + handler +
                             ", attributeAppender=" + attributeAppender +
                             ", methodDescription=" + methodDescription +
-                            ", bridges=" + bridges +
+                            ", bridgeTypes=" + bridgeTypes +
                             '}';
                 }
             }

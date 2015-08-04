@@ -15,7 +15,7 @@ public class MethodGraphNodeUnresolvedTest {
 
     @Test(expected = IllegalStateException.class)
     public void testBridgesThrowsException() throws Exception {
-        MethodGraph.Node.Unresolved.INSTANCE.getBridges();
+        MethodGraph.Node.Unresolved.INSTANCE.getMethodTypes();
     }
 
     @Test(expected = IllegalStateException.class)

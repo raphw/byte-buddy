@@ -929,18 +929,18 @@ public interface TypeWriter<T> {
                  * @param delegate          The delegate for implementing the bridge's target.
                  * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
                  * @param bridgeTarget      The bridge methods' target methods.
-                 * @param bridges           A collection of all tokens representing all bridge methods.
+                 * @param bridgeTypes           A collection of all tokens representing all bridge methods.
                  * @param attributeAppender The attribute appender being applied for the bridge target.
                  * @return The given record wrapped by a bridge method wrapper if necessary.
                  */
                 public static Record of(Record delegate,
                                         TypeDescription instrumentedType,
                                         MethodDescription bridgeTarget,
-                                        Set<MethodDescription.TypeToken> bridges,
+                                        Set<MethodDescription.TypeToken> bridgeTypes,
                                         MethodAttributeAppender attributeAppender) {
-                    return bridges.isEmpty()
+                    return bridgeTypes.isEmpty()
                             ? delegate
-                            : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, bridges, attributeAppender);
+                            : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, bridgeTypes, attributeAppender);
                 }
 
                 /**
@@ -961,7 +961,7 @@ public interface TypeWriter<T> {
                 /**
                  * A collection of all tokens representing all bridge methods.
                  */
-                private final Set<MethodDescription.TypeToken> bridges;
+                private final Set<MethodDescription.TypeToken> bridgeTypes;
 
                 /**
                  * The attribute appender being applied for the bridge target.
@@ -974,18 +974,18 @@ public interface TypeWriter<T> {
                  * @param delegate          The delegate for implementing the bridge's target.
                  * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
                  * @param bridgeTarget      The target of the bridge method.
-                 * @param bridges           A collection of all tokens representing all bridge methods.
+                 * @param bridgeTypes           A collection of all tokens representing all bridge methods.
                  * @param attributeAppender The attribute appender being applied for the bridge target.
                  */
                 protected AccessBridgeWrapper(Record delegate,
                                               TypeDescription instrumentedType,
                                               MethodDescription bridgeTarget,
-                                              Set<MethodDescription.TypeToken> bridges,
+                                              Set<MethodDescription.TypeToken> bridgeTypes,
                                               MethodAttributeAppender attributeAppender) {
                     this.delegate = delegate;
                     this.instrumentedType = instrumentedType;
                     this.bridgeTarget = bridgeTarget;
-                    this.bridges = bridges;
+                    this.bridgeTypes = bridgeTypes;
                     this.attributeAppender = attributeAppender;
                 }
 
@@ -1001,14 +1001,14 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Record prepend(ByteCodeAppender byteCodeAppender) {
-                    return new AccessBridgeWrapper(delegate.prepend(byteCodeAppender), instrumentedType, bridgeTarget, bridges, attributeAppender);
+                    return new AccessBridgeWrapper(delegate.prepend(byteCodeAppender), instrumentedType, bridgeTarget, bridgeTypes, attributeAppender);
                 }
 
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
                     delegate.apply(classVisitor, implementationContext);
-                    for (MethodDescription.TypeToken bridge : bridges) {
-                        MethodDescription bridgeMethod = new AccessorBridge(bridgeTarget, bridge, instrumentedType);
+                    for (MethodDescription.TypeToken bridgeType : bridgeTypes) {
+                        MethodDescription bridgeMethod = new AccessorBridge(bridgeTarget, bridgeType, instrumentedType);
                         MethodDescription bridgeTarget = new BridgeTarget(this.bridgeTarget, instrumentedType);
                         MethodVisitor methodVisitor = classVisitor.visitMethod(bridgeMethod.getAdjustedModifiers(true),
                                 bridgeMethod.getInternalName(),
@@ -1045,7 +1045,7 @@ public interface TypeWriter<T> {
                     return delegate.equals(that.delegate)
                             && instrumentedType.equals(that.instrumentedType)
                             && bridgeTarget.equals(that.bridgeTarget)
-                            && bridges.equals(that.bridges)
+                            && bridgeTypes.equals(that.bridgeTypes)
                             && attributeAppender.equals(that.attributeAppender);
                 }
 
@@ -1054,7 +1054,7 @@ public interface TypeWriter<T> {
                     int result = delegate.hashCode();
                     result = 31 * result + instrumentedType.hashCode();
                     result = 31 * result + bridgeTarget.hashCode();
-                    result = 31 * result + bridges.hashCode();
+                    result = 31 * result + bridgeTypes.hashCode();
                     result = 31 * result + attributeAppender.hashCode();
                     return result;
                 }
@@ -1065,7 +1065,7 @@ public interface TypeWriter<T> {
                             "delegate=" + delegate +
                             ", instrumentedType=" + instrumentedType +
                             ", bridgeTarget=" + bridgeTarget +
-                            ", bridges=" + bridges +
+                            ", bridgeTypes=" + bridgeTypes +
                             ", attributeAppender=" + attributeAppender +
                             '}';
                 }
@@ -1083,7 +1083,7 @@ public interface TypeWriter<T> {
                     /**
                      * The bridge's type token.
                      */
-                    private final MethodDescription.TypeToken bridge;
+                    private final MethodDescription.TypeToken bridgeType;
 
                     /**
                      * The instrumented type defining the bridge target.
@@ -1094,12 +1094,12 @@ public interface TypeWriter<T> {
                      * Creates a new accessor bridge method.
                      *
                      * @param bridgeTarget     The target method of the bridge.
-                     * @param bridge           The bridge's type token.
+                     * @param bridgeType           The bridge's type token.
                      * @param instrumentedType The instrumented type defining the bridge target.
                      */
-                    protected AccessorBridge(MethodDescription bridgeTarget, TypeToken bridge, TypeDescription instrumentedType) {
+                    protected AccessorBridge(MethodDescription bridgeTarget, TypeToken bridgeType, TypeDescription instrumentedType) {
                         this.bridgeTarget = bridgeTarget;
-                        this.bridge = bridge;
+                        this.bridgeType = bridgeType;
                         this.instrumentedType = instrumentedType;
                     }
 
@@ -1110,12 +1110,12 @@ public interface TypeWriter<T> {
 
                     @Override
                     public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                        return new ParameterList.Explicit.ForTypes(this, bridge.getParameterTypes());
+                        return new ParameterList.Explicit.ForTypes(this, bridgeType.getParameterTypes());
                     }
 
                     @Override
                     public GenericTypeDescription getReturnType() {
-                        return bridge.getReturnType();
+                        return bridgeType.getReturnType();
                     }
 
                     @Override

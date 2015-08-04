@@ -158,11 +158,12 @@ public interface MethodGraph {
         MethodDescription getRepresentative();
 
         /**
-         * Returns a set of type tokens representing the bridges for this node's method.
+         * Returns a set of type tokens that this method represents. This set contains the actual method's type including the
+         * types of all bridge methods.
          *
-         * @return A set of type tokens representing the bridges for this node's method
+         * @return A set of type tokens that this method represents.
          */
-        Set<MethodDescription.TypeToken> getBridges();
+        Set<MethodDescription.TypeToken> getMethodTypes();
 
         /**
          * Represents a {@link net.bytebuddy.dynamic.scaffold.MethodGraph.Node}'s state.
@@ -280,7 +281,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public Set<MethodDescription.TypeToken> getBridges() {
+            public Set<MethodDescription.TypeToken> getMethodTypes() {
                 return Collections.emptySet();
             }
 
@@ -325,7 +326,7 @@ public interface MethodGraph {
             }
 
             @Override
-            public Set<MethodDescription.TypeToken> getBridges() {
+            public Set<MethodDescription.TypeToken> getMethodTypes() {
                 throw new IllegalStateException("Cannot resolve bridge method of an illegal node");
             }
 
@@ -976,18 +977,6 @@ public interface MethodGraph {
                         this.identifiers = identifiers;
                     }
 
-                    /**
-                     * Resolves the bridge methods this key implies.
-                     *
-                     * @param excluded The type token representing the actual method which does not imply a visibility bridge.
-                     * @return The bridge methods this key implies.
-                     */
-                    protected Set<MethodDescription.TypeToken> resolveBridges(MethodDescription.TypeToken excluded) {
-                        Set<MethodDescription.TypeToken> tokens = new HashSet<MethodDescription.TypeToken>(identifiers);
-                        tokens.remove(excluded);
-                        return tokens;
-                    }
-
                     @Override
                     protected Set<MethodDescription.TypeToken> getIdentifiers() {
                         return identifiers;
@@ -1474,8 +1463,8 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public Set<MethodDescription.TypeToken> getBridges() {
-                                    return key.resolveBridges(methodDescription.asTypeToken());
+                                public Set<MethodDescription.TypeToken> getMethodTypes() {
+                                    return key.getIdentifiers();
                                 }
 
                                 @Override
@@ -1659,8 +1648,8 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public Set<MethodDescription.TypeToken> getBridges() {
-                                    return key.resolveBridges(methodDescription.asTypeToken());
+                                public Set<MethodDescription.TypeToken> getMethodTypes() {
+                                    return key.getIdentifiers();
                                 }
 
                                 @Override

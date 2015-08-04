@@ -26,7 +26,7 @@ public class MethodGraphNodeSimpleTest {
 
     @Test
     public void testBridgesEmpty() throws Exception {
-        assertThat(new MethodGraph.Node.Simple(methodDescription).getBridges().size(), is(0));
+        assertThat(new MethodGraph.Node.Simple(methodDescription).getMethodTypes().size(), is(0));
     }
 
     @Test
