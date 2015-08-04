@@ -326,6 +326,12 @@ public interface DynamicType {
          */
         Builder<T> classVisitor(ClassVisitorWrapper classVisitorWrapper);
 
+        /**
+         * Defines the given method graph compiler to be used for analyzing the structure of types.
+         *
+         * @param methodGraphCompiler The method graph compiler to be used.
+         * @return A builder that will apply the given method graph compiler.
+         */
         Builder<T> methodGraphCompiler(MethodGraph.Compiler methodGraphCompiler);
 
         /**
@@ -1213,6 +1219,9 @@ public interface DynamicType {
              */
             protected final MethodRegistry methodRegistry;
 
+            /**
+             * The method graph compiler to be used.
+             */
             protected final MethodGraph.Compiler methodGraphCompiler;
 
             /**
@@ -1251,6 +1260,7 @@ public interface DynamicType {
              * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
              * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
              * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+             * @param methodGraphCompiler                   The method graph compiler to be used.
              * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
              *                                              no specific appender was specified for a given field.
              * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
@@ -1732,6 +1742,7 @@ public interface DynamicType {
              * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
              * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
              * @param methodRegistry                        The method registry to apply to the dynamic type creation.
+             * @param methodGraphCompiler                   The method graph compiler to be used.
              * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
              *                                              no specific appender was specified for a given field.
              * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default

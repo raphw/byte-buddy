@@ -97,6 +97,12 @@ public enum MethodVariableAccess {
         }
     }
 
+    /**
+     * Loads all arguments of the provided method onto the operand stack.
+     *
+     * @param methodDescription The method for which all parameters are to be loaded onto the operand stack.
+     * @return A stack manipulation that loads all parameters of the provided method onto the operand stack.
+     */
     public static MethodLoading allArgumentsOf(MethodDescription methodDescription) {
         return new MethodLoading(methodDescription, MethodLoading.TypeCastingHandler.NoOp.INSTANCE);
     }
@@ -194,13 +200,28 @@ public enum MethodVariableAccess {
         }
     }
 
+    /**
+     * A stack manipulation that loads all parameters of a given method onto the operand stack.
+     */
     public static class MethodLoading implements StackManipulation {
 
+        /**
+         * The method for which all parameters are loaded onto the operand stack.
+         */
         private final MethodDescription methodDescription;
 
+        /**
+         * A type casting handler which is capable of transforming all method parameters.
+         */
         private final TypeCastingHandler typeCastingHandler;
 
-        public MethodLoading(MethodDescription methodDescription, TypeCastingHandler typeCastingHandler) {
+        /**
+         * Creates a new method loading stack manipulation.
+         *
+         * @param methodDescription  The method for which all parameters are loaded onto the operand stack.
+         * @param typeCastingHandler A type casting handler which is capable of transforming all method parameters.
+         */
+        protected MethodLoading(MethodDescription methodDescription, TypeCastingHandler typeCastingHandler) {
             this.methodDescription = methodDescription;
             this.typeCastingHandler = typeCastingHandler;
         }
@@ -221,14 +242,27 @@ public enum MethodVariableAccess {
             return new Compound(stackManipulations).apply(methodVisitor, implementationContext);
         }
 
+        /**
+         * Prepends a reference to the {@code this} instance to the loaded parameters if the represented method is non-static.
+         *
+         * @return A stack manipulation that loads all method parameters onto the operand stack while additionally loading a reference
+         * to {@code this} if the represented is non-static. Any potential parameter transformation is preserved.
+         */
         public StackManipulation prependThisReference() {
             return methodDescription.isStatic()
                     ? this
                     : new Compound(MethodVariableAccess.REFERENCE.loadOffset(0), this);
         }
 
-        public MethodLoading asBridgeOf(MethodDescription methodDescription) {
-            return new MethodLoading(this.methodDescription, new TypeCastingHandler.ForBridgeTarget(methodDescription));
+        /**
+         * Applies a transformation to all loaded arguments of the method being loaded to be casted to the corresponding parameter of
+         * the provided method. This way, the parameters can be used for invoking a bridge target method.
+         *
+         * @param bridgeTarget The method that is the target of the bridge method for which the parameters are being loaded.
+         * @return A stack manipulation that loads all parameters casted to the types of the supplied bridge target.
+         */
+        public MethodLoading asBridgeOf(MethodDescription bridgeTarget) {
+            return new MethodLoading(methodDescription, new TypeCastingHandler.ForBridgeTarget(bridgeTarget));
         }
 
         @Override
@@ -254,12 +288,28 @@ public enum MethodVariableAccess {
                     '}';
         }
 
+        /**
+         * A type casting handler allows a type transformation of all arguments of a method after loading them onto the operand stack.
+         */
         protected interface TypeCastingHandler {
 
+            /**
+             * Yields a stack transformation to transform the given argument of the method for which the arguments are loaded onto the operand stack.
+             *
+             * @param parameterType The parameter type that is to be transformed.
+             * @param index         The index of the transformed parameter.
+             * @return A transformation to apply after loading the parameter onto the operand stack.
+             */
             StackManipulation ofIndex(TypeDescription parameterType, int index);
 
+            /**
+             * A non-operative type casting handler.
+             */
             enum NoOp implements TypeCastingHandler {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -273,10 +323,22 @@ public enum MethodVariableAccess {
                 }
             }
 
+            /**
+             * A type casting handler that casts all parameters of a method to the parameter types of a compatible method
+             * with covariant parameter types. This allows a convenient implementation of bridge methods.
+             */
             class ForBridgeTarget implements TypeCastingHandler {
 
+                /**
+                 * The target of the method bridge.
+                 */
                 private final MethodDescription bridgeTarget;
 
+                /**
+                 * Creates a new type casting handler for a bridge target.
+                 *
+                 * @param bridgeTarget The target of the method bridge.
+                 */
                 public ForBridgeTarget(MethodDescription bridgeTarget) {
                     this.bridgeTarget = bridgeTarget;
                 }

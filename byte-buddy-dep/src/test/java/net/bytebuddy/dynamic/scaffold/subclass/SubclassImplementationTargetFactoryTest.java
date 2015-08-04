@@ -34,7 +34,7 @@ public class SubclassImplementationTargetFactoryTest {
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.asRawType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        factory = new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE);
+        factory = new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE);
     }
 
     @Test
@@ -44,13 +44,13 @@ public class SubclassImplementationTargetFactoryTest {
 
     @Test
     public void testOriginTypeSuperType() throws Exception {
-        assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE)
+        assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE)
                 .make(instrumentedType, methodGraph).getOriginType(), is(superType));
     }
 
     @Test
     public void testOriginTypeLevelType() throws Exception {
-        assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeIdentifier.LEVEL_TYPE)
+        assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE)
                 .make(instrumentedType, methodGraph).getOriginType(), is(instrumentedType));
     }
 

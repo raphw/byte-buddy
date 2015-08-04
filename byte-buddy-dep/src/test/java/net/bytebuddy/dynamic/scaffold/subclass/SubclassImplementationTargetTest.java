@@ -61,7 +61,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
 
     @Override
     protected Implementation.Target makeImplementationTarget() {
-        return new SubclassImplementationTarget(instrumentedType, methodGraph, SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE);
+        return new SubclassImplementationTarget(instrumentedType, methodGraph, SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE);
     }
 
     @Test
@@ -110,14 +110,14 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     public void testSuperTypeOrigin() throws Exception {
         assertThat(new SubclassImplementationTarget(instrumentedType,
                 methodGraph,
-                SubclassImplementationTarget.OriginTypeIdentifier.SUPER_TYPE).getOriginType(), is(superType));
+                SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE).getOriginType(), is(superType));
     }
 
     @Test
     public void testLevelTypeOrigin() throws Exception {
         assertThat(new SubclassImplementationTarget(instrumentedType,
                         methodGraph,
-                        SubclassImplementationTarget.OriginTypeIdentifier.LEVEL_TYPE).getOriginType(),
+                        SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE).getOriginType(),
                 is(instrumentedType));
     }
 
@@ -125,6 +125,6 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(SubclassImplementationTarget.class).apply();
-        ObjectPropertyAssertion.of(SubclassImplementationTarget.OriginTypeIdentifier.class).apply();
+        ObjectPropertyAssertion.of(SubclassImplementationTarget.OriginTypeResolver.class).apply();
     }
 }

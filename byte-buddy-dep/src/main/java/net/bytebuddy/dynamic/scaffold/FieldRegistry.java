@@ -23,6 +23,7 @@ public interface FieldRegistry {
     /**
      * Creates a new field registry with the given attribute appender registered for the supplied field matcher.
      *
+     * @param fieldToken               A token identifying the field for which this entry is valid.
      * @param attributeAppenderFactory The field attribute appender factory to be registered for this field.
      * @param defaultValue             The field's default value or {@code null} if no such default value is set.
      * @return A new field registry that knows about the new field registration.
@@ -212,7 +213,7 @@ public interface FieldRegistry {
             /**
              * Creates a new compiled default field registry.
              *
-             * @param entries  A map of entries by field names.
+             * @param entries A map of entries by field names.
              */
             public Compiled(Map<FieldDescription.Token, Entry> entries) {
                 this.entries = entries;
@@ -244,17 +245,38 @@ public interface FieldRegistry {
                         '}';
             }
 
+            /**
+             * An entry of a compiled field registry.
+             */
             protected static class Entry {
 
+                /**
+                 * The attribute appender to be applied to any bound field.
+                 */
                 private final FieldAttributeAppender attributeAppender;
 
+                /**
+                 * The default value to be set for any bound field or {@code null} if no default value should be set.
+                 */
                 private final Object defaultValue;
 
+                /**
+                 * Creates a new entry.
+                 *
+                 * @param attributeAppender The attribute appender to be applied to any bound field.
+                 * @param defaultValue      The default value to be set for any bound field or {@code null} if no default value should be set.
+                 */
                 protected Entry(FieldAttributeAppender attributeAppender, Object defaultValue) {
                     this.attributeAppender = attributeAppender;
                     this.defaultValue = defaultValue;
                 }
 
+                /**
+                 * Binds this entry to the provided field description.
+                 *
+                 * @param fieldDescription The field description to be bound to this entry.
+                 * @return A record representing the binding of this entry to the provided field.
+                 */
                 protected Record bind(FieldDescription fieldDescription) {
                     return new Record.ForRichField(attributeAppender, defaultValue, fieldDescription);
                 }

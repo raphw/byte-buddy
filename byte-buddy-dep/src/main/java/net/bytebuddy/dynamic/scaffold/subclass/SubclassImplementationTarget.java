@@ -26,9 +26,16 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     /**
      * The origin type identifier to use.
      */
-    protected final OriginTypeIdentifier originTypeIdentifier;
+    protected final OriginTypeResolver originTypeResolver;
 
-    protected SubclassImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, OriginTypeIdentifier originTypeIdentifier) {
+    /**
+     * Creates a new subclass implementation target.
+     *
+     * @param instrumentedType   The instrumented type.
+     * @param methodGraph        A method graph of the instrumented type.
+     * @param originTypeResolver A resolver for the origin type.
+     */
+    protected SubclassImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, OriginTypeResolver originTypeResolver) {
         super(instrumentedType, methodGraph);
         GenericTypeDescription superType = instrumentedType.getSuperType();
         MethodList<?> superConstructors = superType == null
@@ -38,7 +45,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.asToken(), superConstructor);
         }
-        this.originTypeIdentifier = originTypeIdentifier;
+        this.originTypeResolver = originTypeResolver;
     }
 
     @Override
@@ -48,6 +55,12 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                 : invokeMethod(methodToken);
     }
 
+    /**
+     * Resolves a special method invocation for a constructor invocation.
+     *
+     * @param methodToken A token describing the constructor to be invoked.
+     * @return A special method invocation for a constructor representing the given method token, if available.
+     */
     private Implementation.SpecialMethodInvocation invokeConstructor(MethodDescription.Token methodToken) {
         MethodDescription methodDescription = superConstructors.get(methodToken);
         return methodDescription == null
@@ -55,6 +68,12 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                 : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asRawType());
     }
 
+    /**
+     * Resolves a special method invocation for a non-constructor invocation.
+     *
+     * @param methodToken A token describing the method to be invoked.
+     * @return A special method invocation for a method representing the given method token, if available.
+     */
     private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.Token methodToken) {
         MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(methodToken);
         return methodNode.getSort().isUnique()
@@ -64,7 +83,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
 
     @Override
     public TypeDescription getOriginType() {
-        return originTypeIdentifier.identify(instrumentedType);
+        return originTypeResolver.identify(instrumentedType);
     }
 
     @Override
@@ -72,14 +91,14 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
                 && superConstructors.equals(((SubclassImplementationTarget) other).superConstructors)
-                && originTypeIdentifier == ((SubclassImplementationTarget) other).originTypeIdentifier;
+                && originTypeResolver == ((SubclassImplementationTarget) other).originTypeResolver;
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + superConstructors.hashCode();
-        result = 31 * result + originTypeIdentifier.hashCode();
+        result = 31 * result + originTypeResolver.hashCode();
         return result;
     }
 
@@ -87,7 +106,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     public String toString() {
         return "SubclassImplementationTarget{" +
                 "superConstructors=" + superConstructors +
-                ", originTypeIdentifier=" + originTypeIdentifier +
+                ", originTypeIdentifier=" + originTypeResolver +
                 ", instrumentedType=" + instrumentedType +
                 ", methodGraph=" + methodGraph +
                 '}';
@@ -97,7 +116,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      * Responsible for identifying the origin type that an implementation target represents when
      * {@link Implementation.Target#getOriginType()} is invoked.
      */
-    public enum OriginTypeIdentifier {
+    public enum OriginTypeResolver {
 
         /**
          * Identifies the super type of an instrumented type as the origin type.
@@ -141,32 +160,37 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         /**
          * The origin type identifier to use.
          */
-        private final OriginTypeIdentifier originTypeIdentifier;
+        private final OriginTypeResolver originTypeResolver;
 
-        public Factory(OriginTypeIdentifier originTypeIdentifier) {
-            this.originTypeIdentifier = originTypeIdentifier;
+        /**
+         * Creates a factory for creating a subclass implementation target.
+         *
+         * @param originTypeResolver The origin type identifier to use.
+         */
+        public Factory(OriginTypeResolver originTypeResolver) {
+            this.originTypeResolver = originTypeResolver;
         }
 
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
-            return new SubclassImplementationTarget(instrumentedType, methodGraph, originTypeIdentifier);
+            return new SubclassImplementationTarget(instrumentedType, methodGraph, originTypeResolver);
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && originTypeIdentifier == ((Factory) other).originTypeIdentifier;
+                    && originTypeResolver == ((Factory) other).originTypeResolver;
         }
 
         @Override
         public int hashCode() {
-            return originTypeIdentifier.hashCode();
+            return originTypeResolver.hashCode();
         }
 
         @Override
         public String toString() {
             return "SubclassImplementationTarget.Factory{" +
-                    "originTypeIdentifier=" + originTypeIdentifier +
+                    "originTypeIdentifier=" + originTypeResolver +
                     '}';
         }
     }

@@ -28,7 +28,9 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     /**
      * Creates a rebase implementation target.
      *
-     * @param methodRebaseResolver        A method rebase resolver to be used when calling a rebased method.
+     * @param instrumentedType     The instrumented type.
+     * @param methodGraph          A method graph of the instrumented type.
+     * @param methodRebaseResolver A method rebase resolver to be used when calling a rebased method.
      */
     protected RebaseImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, MethodRebaseResolver methodRebaseResolver) {
         super(instrumentedType, methodGraph);
@@ -43,6 +45,12 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
+    /**
+     * Invokes a method on the super type or a rebased method.
+     *
+     * @param methodDescription The method to be invoked.
+     * @return A special method invocation for invoking the provided method.
+     */
     private Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
         return methodDescription.getDeclaringType().equals(instrumentedType)
                 ? invokeSuper(methodRebaseResolver.resolve(methodDescription.asDefined()))
@@ -115,12 +123,27 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
          */
         private final StackManipulation stackManipulation;
 
+        /**
+         * Creates a new rebased method invocation.
+         *
+         * @param methodDescription The method to invoke via a special method invocation.
+         * @param instrumentedType  The instrumented type on which the method should be invoked on.
+         * @param stackManipulation The stack manipulation to execute in order to invoke the rebased method.
+         */
         protected RebasedMethodInvocation(MethodDescription methodDescription, TypeDescription instrumentedType, StackManipulation stackManipulation) {
             this.methodDescription = methodDescription;
             this.instrumentedType = instrumentedType;
             this.stackManipulation = stackManipulation;
         }
 
+        /**
+         * Creates a special method invocation for the given method.
+         *
+         * @param resolvedMethod      The rebased method to be invoked.
+         * @param instrumentedType    The instrumented type on which the method is to be invoked if it is non-static.
+         * @param additionalArguments Any additional arguments that are to be provided to the rebased method.
+         * @return A special method invocation of the rebased method.
+         */
         protected static Implementation.SpecialMethodInvocation of(MethodDescription resolvedMethod,
                                                                    TypeDescription instrumentedType,
                                                                    StackManipulation additionalArguments) {
@@ -170,8 +193,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         /**
          * Creates a new factory for a rebase implementation target.
          *
-         * @param bridgeMethodResolverFactory The bridge method resolver factory to use.
-         * @param methodRebaseResolver        The method rebase resolver to use.
+         * @param methodRebaseResolver The method rebase resolver to use.
          */
         public Factory(MethodRebaseResolver methodRebaseResolver) {
             this.methodRebaseResolver = methodRebaseResolver;

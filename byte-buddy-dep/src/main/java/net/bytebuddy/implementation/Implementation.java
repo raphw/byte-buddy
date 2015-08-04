@@ -94,6 +94,31 @@ public interface Implementation {
         TypeDescription getTypeDescription();
 
         /**
+         * An abstract base implementation of a valid special method invocation.
+         */
+        abstract class AbstractBase implements SpecialMethodInvocation {
+
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * getMethodDescription().asToken().hashCode() + getTypeDescription().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (!(other instanceof SpecialMethodInvocation)) return false;
+                SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
+                return getMethodDescription().asToken().equals(specialMethodInvocation.getMethodDescription().asToken())
+                        && getTypeDescription().equals(((SpecialMethodInvocation) other).getTypeDescription());
+            }
+        }
+
+        /**
          * A canonical implementation of an illegal {@link Implementation.SpecialMethodInvocation}.
          */
         enum Illegal implements SpecialMethodInvocation {
@@ -126,28 +151,6 @@ public interface Implementation {
             @Override
             public String toString() {
                 return "Implementation.SpecialMethodInvocation.Illegal." + name();
-            }
-        }
-
-        abstract class AbstractBase implements SpecialMethodInvocation {
-
-            @Override
-            public boolean isValid() {
-                return true;
-            }
-
-            @Override
-            public int hashCode() {
-                return 31 * getMethodDescription().asToken().hashCode() + getTypeDescription().hashCode();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof SpecialMethodInvocation)) return false;
-                SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
-                return getMethodDescription().asToken().equals(specialMethodInvocation.getMethodDescription().asToken())
-                        && getTypeDescription().equals(((SpecialMethodInvocation) other).getTypeDescription());
             }
         }
 
@@ -270,6 +273,14 @@ public interface Implementation {
          */
         SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken);
 
+        /**
+         * Invokes a dominant method, i.e. if the method token can be invoked as a super method invocation, this invocation is considered dominant.
+         * Alternatively, a method invocation is attempted on an interface type as a default method invocation only if this invocation is not ambiguous
+         * for several interfaces.
+         *
+         * @param methodToken The method token representing the method to be invoked.
+         * @return A special method invocation for a method representing the method token.
+         */
         SpecialMethodInvocation invokeDominant(MethodDescription.Token methodToken);
 
         /**
@@ -277,6 +288,13 @@ public interface Implementation {
          */
         interface Factory {
 
+            /**
+             * Creates an implementation target.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param methodGraph      A method graph of the instrumented type.
+             * @return An implementation target for the instrumented type.
+             */
             Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph);
         }
 
@@ -285,10 +303,22 @@ public interface Implementation {
          */
         abstract class AbstractBase implements Target {
 
+            /**
+             * The instrumented type.
+             */
             protected final TypeDescription instrumentedType;
 
+            /**
+             * The instrumented type's method graph.
+             */
             protected final MethodGraph.Linked methodGraph;
 
+            /**
+             * Creates a new implementation target.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param methodGraph      The instrumented type's method graph.
+             */
             protected AbstractBase(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
                 this.instrumentedType = instrumentedType;
                 this.methodGraph = methodGraph;
@@ -1062,8 +1092,16 @@ public interface Implementation {
              */
             protected abstract static class AbstractDelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
 
+                /**
+                 * The delegation method.
+                 */
                 protected final MethodDescription methodDescription;
 
+                /**
+                 * Creates a new delegation record.
+                 *
+                 * @param methodDescription The delegation method.
+                 */
                 protected AbstractDelegationRecord(MethodDescription methodDescription) {
                     this.methodDescription = methodDescription;
                 }
@@ -1126,8 +1164,8 @@ public interface Implementation {
                 /**
                  * Creates a new accessor method delegation.
                  *
-                 * @param accessorMethodInvocation The stack manipulation that represents the requested special method
-                 *                                 invocation.
+                 * @param methodDescription        The accessor method.
+                 * @param accessorMethodInvocation The stack manipulation that represents the requested special method invocation.
                  */
                 protected AccessorMethodDelegation(MethodDescription methodDescription, StackManipulation accessorMethodInvocation) {
                     super(methodDescription);
@@ -1178,7 +1216,8 @@ public interface Implementation {
                 /**
                  * Creates a new field getter implementation.
                  *
-                 * @param fieldDescription The field to read.
+                 * @param methodDescription The delegation method.
+                 * @param fieldDescription  The field to read.
                  */
                 protected FieldGetterDelegation(MethodDescription methodDescription, FieldDescription fieldDescription) {
                     super(methodDescription);
@@ -1232,7 +1271,8 @@ public interface Implementation {
                 /**
                  * Creates a new field setter.
                  *
-                 * @param fieldDescription The field to write to.
+                 * @param methodDescription The field accessor method.
+                 * @param fieldDescription  The field to write to.
                  */
                 protected FieldSetterDelegation(MethodDescription methodDescription, FieldDescription fieldDescription) {
                     super(methodDescription);
