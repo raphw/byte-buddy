@@ -1,6 +1,8 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
@@ -14,6 +16,8 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.io.Serializable;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Collections;
 
 public class TypeWriterDefaultTest {
@@ -53,8 +57,17 @@ public class TypeWriterDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testStaticAbstractMethodAssertion() throws Exception {
         new ByteBuddy()
-                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .subclass(Object.class)
                 .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList(), Ownership.STATIC)
+                .withoutCode()
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPrivateAbstractMethodAssertion() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList(), Visibility.PRIVATE)
                 .withoutCode()
                 .make();
     }
@@ -119,9 +132,8 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @JavaVersionRule.Enforce(value = 8, type = JavaVersionRule.Type.LESS_THEN)
     public void testStaticMethodOnInterfaceAssertion() throws Exception {
-        new ByteBuddy()
+        new ByteBuddy(ClassFileVersion.JAVA_V6)
                 .makeInterface()
                 .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
                 .withoutCode()
@@ -139,9 +151,8 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @JavaVersionRule.Enforce(value = 8, type = JavaVersionRule.Type.LESS_THEN)
     public void testStaticMethodOnAnnotationAssertion() throws Exception {
-        new ByteBuddy()
+        new ByteBuddy(ClassFileVersion.JAVA_V6)
                 .makeAnnotation()
                 .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
                 .intercept(StubMethod.INSTANCE)
@@ -159,7 +170,7 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAnnotationOnClassAssertion() throws Exception {
+    public void testAnnotationDefaultValueOnClassAssertion() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class)
                 .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList())
@@ -168,17 +179,7 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAnnotationOnAbstractClassAssertion() throws Exception {
-        new ByteBuddy()
-                .subclass(Object.class)
-                .modifiers(TypeManifestation.ABSTRACT)
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList())
-                .withDefaultValue(BAR)
-                .make();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testAnnotationOnInterfaceClassAssertion() throws Exception {
+    public void testAnnotationDefaultValueOnInterfaceClassAssertion() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class)
                 .modifiers(TypeManifestation.INTERFACE)
@@ -238,6 +239,40 @@ public class TypeWriterDefaultTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationPreJava5TypeAssertion() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .makeAnnotation()
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationOnTypePreJava5TypeAssertion() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .subclass(Object.class)
+                .annotateType(AnnotationDescription.Builder.forType(Foo.class).make())
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationOnFieldPreJava5TypeAssertion() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .subclass(Object.class)
+                .defineField(FOO, Void.class)
+                .annotateField(AnnotationDescription.Builder.forType(Foo.class).make())
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationOnMethodPreJava5TypeAssertion() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .subclass(Object.class)
+                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList())
+                .intercept(StubMethod.INSTANCE)
+                .annotateMethod(AnnotationDescription.Builder.forType(Foo.class).make())
+                .make();
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
@@ -251,10 +286,18 @@ public class TypeWriterDefaultTest {
                     }
                 }).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingFieldVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForAnnotation.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForInterface.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClass.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForPackageType.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClassFileVersion.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.Compound.class).apply();
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Foo {
+        /* empty */
     }
 }

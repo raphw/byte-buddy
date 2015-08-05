@@ -24,40 +24,36 @@ public class ClassFileVersionKnownVersionsTest {
 
     private final int minorVersion;
 
-    private final boolean supportsGenerics;
+    private final boolean atLeastJava5;
 
-    private final boolean supportsAnnotations;
-
-    private final boolean supportsDefaultMethods;
+    private final boolean atLeastJava8;
 
     public ClassFileVersionKnownVersionsTest(int javaVersion,
                                              int minorMajorVersion,
                                              int majorVersion,
                                              int minorVersion,
-                                             boolean supportsGenerics,
-                                             boolean supportsAnnotations,
-                                             boolean supportsDefaultMethods) {
+                                             boolean atLeastJava5,
+                                             boolean atLeastJava8) {
         this.javaVersion = javaVersion;
         this.minorMajorVersion = minorMajorVersion;
         this.majorVersion = majorVersion;
         this.minorVersion = minorVersion;
-        this.supportsGenerics = supportsGenerics;
-        this.supportsAnnotations = supportsAnnotations;
-        this.supportsDefaultMethods = supportsDefaultMethods;
+        this.atLeastJava5 = atLeastJava5;
+        this.atLeastJava8 = atLeastJava8;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {1, Opcodes.V1_1, 45, 3, false, false, false},
-                {2, Opcodes.V1_2, 46, 0, false, false, false},
-                {3, Opcodes.V1_3, 47, 0, false, false, false},
-                {4, Opcodes.V1_4, 48, 0, false, false, false},
-                {5, Opcodes.V1_5, 49, 0, true, true, false},
-                {6, Opcodes.V1_6, 50, 0, true, true, false},
-                {7, Opcodes.V1_7, 51, 0, true, true, false},
-                {8, Opcodes.V1_8, 52, 0, true, true, true},
-                {9, Opcodes.V1_8, 52, 0, true, true, true}
+                {1, Opcodes.V1_1, 45, 3, false, false},
+                {2, Opcodes.V1_2, 46, 0, false, false},
+                {3, Opcodes.V1_3, 47, 0, false, false},
+                {4, Opcodes.V1_4, 48, 0, false, false},
+                {5, Opcodes.V1_5, 49, 0, true, false},
+                {6, Opcodes.V1_6, 50, 0, true, false},
+                {7, Opcodes.V1_7, 51, 0, true, false},
+                {8, Opcodes.V1_8, 52, 0, true, true},
+                {9, Opcodes.V1_8, 52, 0, true, true}
         });
     }
 
@@ -77,18 +73,13 @@ public class ClassFileVersionKnownVersionsTest {
     }
 
     @Test
-    public void testSupportsGenerics() throws Exception {
-        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).isSupportsGenerics(), is(supportsGenerics));
+    public void testAtLeastJava5() throws Exception {
+        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).isAtLeastJava5(), is(atLeastJava5));
     }
 
     @Test
-    public void testSupportsAnnotations() throws Exception {
-        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).isSupportsAnnotations(), is(supportsAnnotations));
-    }
-
-    @Test
-    public void testSupportsDefaultMethods() throws Exception {
-        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).isSupportsDefaultMethods(), is(supportsDefaultMethods));
+    public void testAtLeastJava8() throws Exception {
+        assertThat(ClassFileVersion.forKnownJavaVersion(javaVersion).isAtLeastJava8(), is(atLeastJava8));
     }
 
     @Test

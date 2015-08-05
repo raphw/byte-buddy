@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
-import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -1537,31 +1536,49 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public void visit(int version, int modifier, String name, String signature, String superName, String[] interfaces) {
+            public void visit(int version, int modifiers, String name, String signature, String superName, String[] interfaces) {
                 ClassFileVersion classFileVersion = new ClassFileVersion(version);
-                if (name.endsWith("/" + PackageDescription.PACKAGE_CLASS_NAME)) {
-                    constraint = Constraint.PACKAGE_CLASS;
-                } else if ((modifier & Opcodes.ACC_ANNOTATION) != ModifierReviewable.EMPTY_MASK) {
-                    constraint = classFileVersion.isSupportsDefaultMethods()
-                            ? Constraint.JAVA8_ANNOTATION
-                            : Constraint.ANNOTATION;
-                } else if ((modifier & Opcodes.ACC_INTERFACE) != ModifierReviewable.EMPTY_MASK) {
-                    constraint = classFileVersion.isSupportsDefaultMethods()
-                            ? Constraint.JAVA8_INTERFACE
-                            : Constraint.INTERFACE;
-                } else if ((modifier & Opcodes.ACC_ABSTRACT) != ModifierReviewable.EMPTY_MASK) {
-                    constraint = Constraint.ABSTRACT_CLASS;
+                List<Constraint> constraints = new LinkedList<Constraint>();
+                constraints.add(new Constraint.ForClassFileVersion(classFileVersion));
+                if (name.endsWith('/' + PackageDescription.PACKAGE_CLASS_NAME)) {
+                    constraints.add(Constraint.ForPackageType.INSTANCE);
+                } else if ((modifiers & Opcodes.ACC_ANNOTATION) != 0) {
+                    if (!classFileVersion.isAtLeastJava5()) {
+                        throw new IllegalStateException("Cannot define an annotation type for class file version " + classFileVersion);
+                    }
+                    constraints.add(classFileVersion.isAtLeastJava8()
+                            ? Constraint.ForAnnotation.JAVA_8
+                            : Constraint.ForAnnotation.CLASSIC);
+                } else if ((modifiers & Opcodes.ACC_INTERFACE) != 0) {
+                    constraints.add(classFileVersion.isAtLeastJava8()
+                            ? Constraint.ForInterface.JAVA_8
+                            : Constraint.ForInterface.CLASSIC);
+                } else if ((modifiers & Opcodes.ACC_ABSTRACT) != 0) {
+                    constraints.add(Constraint.ForClass.ABSTRACT);
                 } else {
-                    constraint = Constraint.MANIFEST_CLASS;
+                    constraints.add(Constraint.ForClass.MANIFEST);
                 }
-                constraint.assertPackage(modifier, interfaces);
-                super.visit(version, modifier, name, signature, superName, interfaces);
+                constraint = new Constraint.Compound(constraints);
+                constraint.assertType(modifiers, interfaces != null, signature != null);
+                super.visit(version, modifiers, name, signature, superName, interfaces);
             }
 
             @Override
-            public FieldVisitor visitField(int modifiers, String name, String desc, String signature, Object defaultValue) {
-                constraint.assertField(name, (modifiers & Opcodes.ACC_PUBLIC) != 0, (modifiers & Opcodes.ACC_STATIC) != 0);
-                return super.visitField(modifiers, name, desc, signature, defaultValue);
+            public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                constraint.assertAnnotation();
+                return super.visitAnnotation(descriptor, visible);
+            }
+
+            @Override
+            public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                constraint.assertTypeAnnotation();
+                return super.visitTypeAnnotation(typeReference, typePath, descriptor, visible);
+            }
+
+            @Override
+            public FieldVisitor visitField(int modifiers, String name, String descriptor, String signature, Object defaultValue) {
+                constraint.assertField(name, (modifiers & Opcodes.ACC_PUBLIC) != 0, (modifiers & Opcodes.ACC_STATIC) != 0, signature != null);
+                return new ValidatingFieldVisitor(super.visitField(modifiers, name, descriptor, signature, defaultValue));
             }
 
             @Override
@@ -1570,7 +1587,11 @@ public interface TypeWriter<T> {
                         (modifiers & Opcodes.ACC_ABSTRACT) != 0,
                         (modifiers & Opcodes.ACC_PUBLIC) != 0,
                         (modifiers & Opcodes.ACC_STATIC) != 0,
-                        !descriptor.startsWith(NO_PARAMETERS) || descriptor.endsWith(RETURNS_VOID));
+                        !descriptor.startsWith(NO_PARAMETERS) || descriptor.endsWith(RETURNS_VOID),
+                        name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                                || name.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)
+                                || (modifiers & Opcodes.ACC_PRIVATE) != 0,
+                        signature != null);
                 return new ValidatingMethodVisitor(super.visitMethod(modifiers, name, descriptor, signature, exceptions), name);
             }
 
@@ -1584,193 +1605,553 @@ public interface TypeWriter<T> {
             /**
              * A constraint for members that are legal for a given type.
              */
-            protected enum Constraint {
-
-                /**
-                 * Constraints for a non-abstract class.
-                 */
-                MANIFEST_CLASS("non-abstract class", true, true, true, true, false, true, false, true),
-
-                /**
-                 * Constraints for an abstract class.
-                 */
-                ABSTRACT_CLASS("abstract class", true, true, true, true, true, true, false, true),
-
-                /**
-                 * Constrains for an interface type before Java 8.
-                 */
-                INTERFACE("interface (Java 7-)", false, false, false, false, true, false, false, true),
-
-                /**
-                 * Constrains for an interface type since Java 8.
-                 */
-                JAVA8_INTERFACE("interface (Java 8+)", false, false, false, true, true, true, false, true),
-
-                /**
-                 * Constrains for an annotation type before Java 8.
-                 */
-                ANNOTATION("annotation (Java 7-)", false, false, false, false, true, false, true, true),
-
-                /**
-                 * Constrains for an annotation type since Java 8.
-                 */
-                JAVA8_ANNOTATION("annotation (Java 8+)", false, false, false, true, true, true, true, true),
-
-                /**
-                 * Constraints for a package type, i.e. a class named {@code package-info}.
-                 */
-                PACKAGE_CLASS("package definition", false, false, false, false, false, false, false, false);
-
-                /**
-                 * A name to represent the type being validated within an error message.
-                 */
-                private final String sortName;
-
-                /**
-                 * Determines if a sort allows constructors.
-                 */
-                private final boolean allowsConstructor;
-
-                /**
-                 * Determines if a sort allows non-public members.
-                 */
-                private final boolean allowsNonPublic;
-
-                /**
-                 * Determines if a sort allows non-static fields.
-                 */
-                private final boolean allowsNonStaticFields;
-
-                /**
-                 * Determines if a sort allows static methods.
-                 */
-                private final boolean allowsStaticMethods;
-
-                /**
-                 * Determines if a sort allows abstract methods.
-                 */
-                private final boolean allowsAbstract;
-
-                /**
-                 * Determines if a sort allows non-abstract methods.
-                 */
-                private final boolean allowsNonAbstract;
-
-                /**
-                 * Determines if a sort allows the definition of annotation default values.
-                 */
-                private final boolean allowsDefaultValue;
-
-                /**
-                 * Determines if a sort allows the type a shape that does not resemble a package description.
-                 */
-                private final boolean allowsNonPackage;
-
-                /**
-                 * Creates a new constraint.
-                 *
-                 * @param sortName              A name to represent the type being validated within an error message.
-                 * @param allowsConstructor     Determines if a sort allows constructors.
-                 * @param allowsNonPublic       Determines if a sort allows non-public members.
-                 * @param allowsNonStaticFields Determines if a sort allows non-static fields.
-                 * @param allowsStaticMethods   Determines if a sort allows static methods.
-                 * @param allowsAbstract        Determines if a sort allows abstract methods.
-                 * @param allowsNonAbstract     Determines if a sort allows non-abstract methods.
-                 * @param allowsDefaultValue    Determines if a sort allows the definition of annotation default values.
-                 * @param allowsNonPackage      Determines if a sort allows the type a shape that does not resemble a package description.
-                 */
-                Constraint(String sortName,
-                           boolean allowsConstructor,
-                           boolean allowsNonPublic,
-                           boolean allowsNonStaticFields,
-                           boolean allowsStaticMethods,
-                           boolean allowsAbstract,
-                           boolean allowsNonAbstract,
-                           boolean allowsDefaultValue,
-                           boolean allowsNonPackage) {
-                    this.sortName = sortName;
-                    this.allowsConstructor = allowsConstructor;
-                    this.allowsNonPublic = allowsNonPublic;
-                    this.allowsNonStaticFields = allowsNonStaticFields;
-                    this.allowsStaticMethods = allowsStaticMethods;
-                    this.allowsAbstract = allowsAbstract;
-                    this.allowsNonAbstract = allowsNonAbstract;
-                    this.allowsDefaultValue = allowsDefaultValue;
-                    this.allowsNonPackage = allowsNonPackage;
-                }
+            protected interface Constraint {
 
                 /**
                  * Asserts a field for being valid.
                  *
-                 * @param name     The name of the field.
-                 * @param isPublic {@code true} if this field is public.
-                 * @param isStatic {@code true} if this field is static.
+                 * @param name      The name of the field.
+                 * @param isPublic  {@code true} if this field is public.
+                 * @param isStatic  {@code true} if this field is static.
+                 * @param isGeneric {@code true} if this method defines a generic signature.
                  */
-                protected void assertField(String name, boolean isPublic, boolean isStatic) {
-                    if (!isPublic && !allowsNonPublic) {
-                        throw new IllegalStateException("Cannot define non-public field " + name + " for " + sortName);
-                    } else if (!isStatic && !allowsNonStaticFields) {
-                        throw new IllegalStateException("Cannot define for non-static field " + name + " for " + sortName);
-                    }
-                }
+                void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric);
 
                 /**
                  * Asserts a method for being valid.
                  *
-                 * @param name                  The name of the method.
-                 * @param isAbstract            {@code true} if the method is abstract.
-                 * @param isPublic              {@code true} if this method is public.
-                 * @param isStatic              {@code true} if this method is static.
-                 * @param isDefaultIncompatible {@code true} if a method's signature cannot describe an annotation property method.
+                 * @param name                       The name of the method.
+                 * @param isAbstract                 {@code true} if the method is abstract.
+                 * @param isPublic                   {@code true} if this method is public.
+                 * @param isStatic                   {@code true} if this method is static.
+                 * @param isDefaultValueIncompatible {@code true} if a method's signature cannot describe an annotation property method.
+                 * @param isNonStaticNonVirtual      {@code true} if the method is non-virtual and non-static, i.e. a constructor, type initializer or private.
+                 * @param isGeneric                  {@code true} if this method defines a generic signature.
                  */
-                protected void assertMethod(String name, boolean isAbstract, boolean isPublic, boolean isStatic, boolean isDefaultIncompatible) {
-                    if (!allowsConstructor && name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
-                        throw new IllegalStateException("Cannot define constructor for " + sortName);
-                    } else if (isStatic && isAbstract) {
-                        throw new IllegalStateException("Cannot define static method " + name + " to be abstract");
-                    } else if (isAbstract && name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
-                        throw new IllegalStateException("Cannot define abstract constructor " + name);
-                    } else if (!isPublic && !allowsNonPublic) {
-                        throw new IllegalStateException("Cannot define non-public method " + name + " for " + sortName);
-                    } else if (isStatic && !allowsStaticMethods) {
-                        throw new IllegalStateException("Cannot define static method " + name + " for " + sortName);
-                    } else if (!isStatic && isAbstract && !allowsAbstract) {
-                        throw new IllegalStateException("Cannot define abstract method " + name + " for " + sortName);
-                    } else if (!isAbstract && !allowsNonAbstract) {
-                        throw new IllegalStateException("Cannot define non-abstract method " + name + " for " + sortName);
-                    } else if (!isStatic && isDefaultIncompatible && allowsDefaultValue) {
-                        throw new IllegalStateException("The signature of " + name + " is not compatible for a property of " + sortName);
-                    }
-                }
+                void assertMethod(String name,
+                                  boolean isAbstract,
+                                  boolean isPublic,
+                                  boolean isStatic,
+                                  boolean isDefaultValueIncompatible,
+                                  boolean isNonStaticNonVirtual,
+                                  boolean isGeneric);
+
+                /**
+                 * Asserts the legitimacy of an annotation for the instrumented type.
+                 */
+                void assertAnnotation();
+
+                /**
+                 * Asserts the legitimacy of a type annotation for the instrumented type.
+                 */
+                void assertTypeAnnotation();
 
                 /**
                  * Asserts if a default value is legal for a method.
                  *
                  * @param name The name of the method.
                  */
-                protected void assertDefault(String name) {
-                    if (!allowsDefaultValue) {
-                        throw new IllegalStateException("Cannot define define default value on " + name + " for " + sortName);
-                    }
-                }
+                void assertDefaultValue(String name);
 
                 /**
                  * Asserts if the type can legally represent a package description.
                  *
-                 * @param modifier   The modifier that is to be written to the type.
-                 * @param interfaces The interfaces that are to be appended to the type.
+                 * @param modifier          The modifier that is to be written to the type.
+                 * @param definesInterfaces {@code true} if this type implements at least one interface.
+                 * @param isGeneric         {@code true} if this type defines a generic type signature.
                  */
-                protected void assertPackage(int modifier, String[] interfaces) {
-                    if (!allowsNonPackage && modifier != PackageDescription.PACKAGE_MODIFIERS) {
-                        throw new IllegalStateException("Cannot alter modifier for " + sortName);
-                    } else if (!allowsNonPackage && interfaces != null) {
-                        throw new IllegalStateException("Cannot implement interface for " + sortName);
+                void assertType(int modifier, boolean definesInterfaces, boolean isGeneric);
+
+                /**
+                 * Represents the constraint of a class type.
+                 */
+                enum ForClass implements Constraint {
+
+                    /**
+                     * Represents the constrainsts of a non-abstract class.
+                     */
+                    MANIFEST(true),
+
+                    /**
+                     * Represents the constrainsts of an abstract class.
+                     */
+                    ABSTRACT(false);
+
+                    /**
+                     * {@code true} if this instance represents the constraints a non-abstract class.
+                     */
+                    private final boolean manifestType;
+
+                    /**
+                     * Creates a new constraint for a class.
+                     *
+                     * @param manifestType {@code true} if this instance represents a non-abstract class.
+                     */
+                    ForClass(boolean manifestType) {
+                        this.manifestType = manifestType;
                     }
+
+                    @Override
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertMethod(String name,
+                                             boolean isAbstract,
+                                             boolean isPublic,
+                                             boolean isStatic,
+                                             boolean isDefaultValueIncompatible,
+                                             boolean isNonStaticNonVirtual,
+                                             boolean isGeneric) {
+                        if (isAbstract && manifestType) {
+                            throw new IllegalStateException("Cannot define abstract method '" + name + "' for non-abstract class");
+                        }
+                    }
+
+                    @Override
+                    public void assertAnnotation() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertTypeAnnotation() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertDefaultValue(String name) {
+                        throw new IllegalStateException("Cannot define default value for '" + name + "' for non-annotation type");
+                    }
+
+                    @Override
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClass." + name();
+                    }
+                }
+
+                /**
+                 * Represents the constraint of a package type.
+                 */
+                enum ForPackageType implements Constraint {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                        throw new IllegalStateException("Cannot define a field for a package description type");
+                    }
+
+                    @Override
+                    public void assertMethod(String name,
+                                             boolean isAbstract,
+                                             boolean isPublic,
+                                             boolean isStatic,
+                                             boolean isDefaultValueIncompatible,
+                                             boolean isNonStaticNonVirtual,
+                                             boolean isGeneric) {
+                        throw new IllegalStateException("Cannot define a method for a package description type");
+                    }
+
+                    @Override
+                    public void assertAnnotation() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertTypeAnnotation() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertDefaultValue(String name) {
+                        /* do nothing, implicit by forbidding methods */
+                    }
+
+                    @Override
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                        if (modifier != PackageDescription.PACKAGE_MODIFIERS) {
+                            throw new IllegalStateException("A package description type must define " + PackageDescription.PACKAGE_MODIFIERS + " as modifier");
+                        } else if (definesInterfaces) {
+                            throw new IllegalStateException("Cannot implement interface for package type");
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForPackageType." + name();
+                    }
+                }
+
+                /**
+                 * Represents the constraint of an interface type.
+                 */
+                enum ForInterface implements Constraint {
+
+                    /**
+                     * An interface type with the constrains for the Java versions 5 to 7.
+                     */
+                    CLASSIC(true),
+
+                    /**
+                     * An interface type with the constrains for the Java versions 8+.
+                     */
+                    JAVA_8(false);
+
+                    /**
+                     * {@code true} if this instance represents a classic interface type (pre Java 8).
+                     */
+                    private final boolean classic;
+
+                    /**
+                     * Creates a constraint for an interface type.
+                     *
+                     * @param classic {@code true} if this instance represents a classic interface (pre Java 8).
+                     */
+                    ForInterface(boolean classic) {
+                        this.classic = classic;
+                    }
+
+                    @Override
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                        if (!isStatic || !isPublic) {
+                            throw new IllegalStateException("Cannot define non-static or non-public field '" + name + "' for interface type");
+                        }
+                    }
+
+                    @Override
+                    public void assertMethod(String name,
+                                             boolean isAbstract,
+                                             boolean isPublic,
+                                             boolean isStatic,
+                                             boolean isDefaultValueIncompatible,
+                                             boolean isNonStaticNonVirtual,
+                                             boolean isGeneric) {
+                        if (!isPublic || isNonStaticNonVirtual) {
+                            throw new IllegalStateException("Cannot define non-public or non-virtual method '" + name + "' for annotation type");
+                        } else if (classic && isStatic) {
+                            throw new IllegalStateException("Cannot define static method '" + name + "' for a pre-Java 8 interface type");
+                        } else if (!isAbstract && (classic || isDefaultValueIncompatible)) {
+                            throw new IllegalStateException("Cannot define default method '" + name + "' for "
+                                    + (isDefaultValueIncompatible ? "method sort" : "pre-Java 8 interface type"));
+                        }
+                    }
+
+                    @Override
+                    public void assertAnnotation() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertTypeAnnotation() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertDefaultValue(String name) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForInterface." + name();
+                    }
+                }
+
+                /**
+                 * Represents the constraint of an annotation type.
+                 */
+                enum ForAnnotation implements Constraint {
+
+                    /**
+                     * An annotation type with the constrains for the Java versions 5 to 7.
+                     */
+                    CLASSIC(true),
+
+                    /**
+                     * An annotation type with the constrains for the Java versions 8+.
+                     */
+                    JAVA_8(false);
+
+                    /**
+                     * {@code true} if this instance represents a classic annotation type (pre Java 8).
+                     */
+                    private final boolean classic;
+
+                    /**
+                     * Creates a constraint for an annotation type.
+                     *
+                     * @param classic {@code true} if this instance represents a classic annotation type (pre Java 8).
+                     */
+                    ForAnnotation(boolean classic) {
+                        this.classic = classic;
+                    }
+
+                    @Override
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                        if (!isStatic || !isPublic) {
+                            throw new IllegalStateException("Cannot define non-static or non-public field '" + name + "' for annotation type");
+                        }
+                    }
+
+                    @Override
+                    public void assertMethod(String name,
+                                             boolean isAbstract,
+                                             boolean isPublic,
+                                             boolean isStatic,
+                                             boolean isDefaultValueIncompatible,
+                                             boolean isNonStaticNonVirtual,
+                                             boolean isGeneric) {
+                        if (!isPublic || isNonStaticNonVirtual) {
+                            throw new IllegalStateException("Cannot define non-public, non-abstract or non-virtual method '" + name + "' for annotation type");
+                        } else if (classic && isStatic) {
+                            throw new IllegalStateException("Cannot define static method '" + name + "' for a pre-Java 8 annotation type");
+                        } else if (!isStatic && isDefaultValueIncompatible) {
+                            throw new IllegalStateException("Cannot define method '" + name + "' with the given signature as an annotation type method");
+                        }
+                    }
+
+                    @Override
+                    public void assertAnnotation() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertTypeAnnotation() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertDefaultValue(String name) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                        if ((modifier & Opcodes.ACC_INTERFACE) == 0) {
+                            throw new IllegalStateException("Cannot define annotation type without interface modifier");
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForAnnotation." + name();
+                    }
+                }
+
+                /**
+                 * Represents the constraint implied by a class file version.
+                 */
+                class ForClassFileVersion implements Constraint {
+
+                    /**
+                     * The enforced class file version.
+                     */
+                    private final ClassFileVersion classFileVersion;
+
+                    /**
+                     * Creates a new constraint for the given class file version.
+                     *
+                     * @param classFileVersion The enforced class file version.
+                     */
+                    public ForClassFileVersion(ClassFileVersion classFileVersion) {
+                        this.classFileVersion = classFileVersion;
+                    }
+
+                    @Override
+                    public void assertType(int modifiers, boolean definesInterfaces, boolean isGeneric) {
+                        if ((modifiers & Opcodes.ACC_ANNOTATION) != 0 && !classFileVersion.isAtLeastJava5()) {
+                            throw new IllegalStateException("Cannot define annotation type for class file version " + classFileVersion);
+                        } else if (isGeneric && !classFileVersion.isAtLeastJava5()) {
+                            throw new IllegalStateException("Cannot define a generic type for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                        if (isGeneric && !classFileVersion.isAtLeastJava5()) {
+                            throw new IllegalStateException("Cannot define generic method '" + name + "' for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertMethod(String name,
+                                             boolean isAbstract,
+                                             boolean isPublic,
+                                             boolean isStatic,
+                                             boolean isDefaultValueIncompatible,
+                                             boolean isNonStaticNonVirtual,
+                                             boolean isGeneric) {
+                        if (isGeneric && !classFileVersion.isAtLeastJava5()) {
+                            throw new IllegalStateException("Cannot define generic method '" + name + "' for class file version " + classFileVersion);
+                        } else if ((isStatic || isNonStaticNonVirtual) && isAbstract) {
+                            throw new IllegalStateException("Cannot define static or non-virtual method '" + name + "' to be abstract");
+                        }
+                    }
+
+                    @Override
+                    public void assertAnnotation() {
+                        if (!classFileVersion.isAtLeastJava5()) {
+                            throw new IllegalStateException("Cannot write annotations for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertTypeAnnotation() {
+                        if (!classFileVersion.isAtLeastJava8()) {
+                            throw new IllegalStateException("Cannot write type annotations for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertDefaultValue(String name) {
+                        /* do nothing, implicitly checked by type assertion */
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && classFileVersion.equals(((ForClassFileVersion) other).classFileVersion);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return classFileVersion.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClassFileVersion{" +
+                                "classFileVersion=" + classFileVersion +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A constraint implementation that summarizes several constraints.
+                 */
+                class Compound implements Constraint {
+
+                    /**
+                     * A list of constraints that is enforced in the given order.
+                     */
+                    private final List<? extends Constraint> constraints;
+
+                    /**
+                     * Creates a new compound constraint.
+                     *
+                     * @param constraints A list of constraints that is enforced in the given order.
+                     */
+                    public Compound(List<? extends Constraint> constraints) {
+                        this.constraints = constraints;
+                    }
+
+                    @Override
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertField(name, isPublic, isStatic, isGeneric);
+                        }
+                    }
+
+                    @Override
+                    public void assertMethod(String name,
+                                             boolean isAbstract,
+                                             boolean isPublic,
+                                             boolean isStatic,
+                                             boolean isDefaultValueIncompatible,
+                                             boolean isNonStaticNonVirtual,
+                                             boolean isGeneric) {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertMethod(name, isAbstract, isPublic, isStatic, isDefaultValueIncompatible, isNonStaticNonVirtual, isGeneric);
+                        }
+                    }
+
+                    @Override
+                    public void assertDefaultValue(String name) {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertDefaultValue(name);
+                        }
+                    }
+
+                    @Override
+                    public void assertAnnotation() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertAnnotation();
+                        }
+                    }
+
+                    @Override
+                    public void assertTypeAnnotation() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertTypeAnnotation();
+                        }
+                    }
+
+                    @Override
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertType(modifier, definesInterfaces, isGeneric);
+                        }
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && constraints.equals(((Compound) other).constraints);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return constraints.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.Compound{" +
+                                "constraints=" + constraints +
+                                '}';
+                    }
+                }
+            }
+
+            /**
+             * A field validator for checking default values.
+             */
+            protected class ValidatingFieldVisitor extends FieldVisitor {
+
+                /**
+                 * Creates a validating field visitor.
+                 *
+                 * @param fieldVisitor The field visitor to which any calls are delegated to.
+                 */
+                protected ValidatingFieldVisitor(FieldVisitor fieldVisitor) {
+                    super(ASM_API_VERSION, fieldVisitor);
+                }
+
+                @Override
+                public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                    constraint.assertAnnotation();
+                    return super.visitAnnotation(desc, visible);
                 }
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.Default.ValidatingClassVisitor.Constraint." + name();
+                    return "TypeWriter.Default.ValidatingClassVisitor.ValidatingFieldVisitor{" +
+                            "classVisitor=" + ValidatingClassVisitor.this +
+                            '}';
                 }
             }
 
@@ -1796,8 +2177,14 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                    constraint.assertAnnotation();
+                    return super.visitAnnotation(desc, visible);
+                }
+
+                @Override
                 public AnnotationVisitor visitAnnotationDefault() {
-                    constraint.assertDefault(name);
+                    constraint.assertDefaultValue(name);
                     return super.visitAnnotationDefault();
                 }
 
