@@ -75,7 +75,7 @@ public class ConstructorStrategyDefaultTest {
         verify(methodRegistry).append(any(LatentMethodMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(methodAttributeAppenderFactory),
-                eq(MethodTransformer.Retaining.INSTANCE));
+                eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
@@ -91,7 +91,7 @@ public class ConstructorStrategyDefaultTest {
         verify(methodRegistry).append(any(LatentMethodMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(methodAttributeAppenderFactory),
-                eq(MethodTransformer.Retaining.INSTANCE));
+                eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);
@@ -108,7 +108,7 @@ public class ConstructorStrategyDefaultTest {
         verify(methodRegistry).append(any(LatentMethodMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(methodAttributeAppenderFactory),
-                eq(MethodTransformer.Retaining.INSTANCE));
+                eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();
         verifyNoMoreInteractions(instrumentedType);

@@ -8,16 +8,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 
-public class MethodTransformerRetainingTest {
+public class MethodTransformerNoOpTest {
 
     @Test
     public void testTransformation() throws Exception {
         MethodDescription methodDescription = mock(MethodDescription.class);
-        assertThat(MethodTransformer.Retaining.INSTANCE.transform(methodDescription), is(methodDescription));
+        assertThat(MethodTransformer.NoOp.INSTANCE.transform(methodDescription), is(methodDescription));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodTransformer.Retaining.class).apply();
+        ObjectPropertyAssertion.of(MethodTransformer.NoOp.class).apply();
     }
 }

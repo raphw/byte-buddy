@@ -2295,7 +2295,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Implementation implementation) {
-                    return intercept(implementation, MethodTransformer.Retaining.INSTANCE);
+                    return intercept(implementation, MethodTransformer.NoOp.INSTANCE);
                 }
 
                 @Override
@@ -2309,7 +2309,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
-                    return withoutCode(MethodTransformer.Retaining.INSTANCE);
+                    return withoutCode(MethodTransformer.NoOp.INSTANCE);
                 }
 
                 @Override
@@ -2323,7 +2323,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
-                    return withDefaultValue(value, type, MethodTransformer.Retaining.INSTANCE);
+                    return withDefaultValue(value, type, MethodTransformer.NoOp.INSTANCE);
                 }
 
                 @Override
@@ -2334,7 +2334,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
-                    return withDefaultValue(value, MethodTransformer.Retaining.INSTANCE);
+                    return withDefaultValue(value, MethodTransformer.NoOp.INSTANCE);
                 }
 
                 @Override

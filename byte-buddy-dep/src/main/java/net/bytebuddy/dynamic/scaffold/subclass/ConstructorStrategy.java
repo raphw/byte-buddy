@@ -91,7 +91,7 @@ public interface ConstructorStrategy {
                 return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory,
-                        MethodTransformer.Retaining.INSTANCE);
+                        MethodTransformer.NoOp.INSTANCE);
             }
         },
 
@@ -115,7 +115,7 @@ public interface ConstructorStrategy {
                 return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory,
-                        MethodTransformer.Retaining.INSTANCE);
+                        MethodTransformer.NoOp.INSTANCE);
             }
         },
 
@@ -138,7 +138,7 @@ public interface ConstructorStrategy {
                 return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory,
-                        MethodTransformer.Retaining.INSTANCE);
+                        MethodTransformer.NoOp.INSTANCE);
             }
         };
 

@@ -2368,7 +2368,7 @@ public class ByteBuddy {
                     methodMatcher,
                     new MethodRegistry.Handler.ForImplementation(nonNull(implementation)),
                     MethodAttributeAppender.NoOp.INSTANCE,
-                    MethodTransformer.Retaining.INSTANCE);
+                    MethodTransformer.NoOp.INSTANCE);
         }
 
         @Override
@@ -2388,7 +2388,7 @@ public class ByteBuddy {
                     methodMatcher,
                     MethodRegistry.Handler.ForAbstractMethod.INSTANCE,
                     MethodAttributeAppender.NoOp.INSTANCE,
-                    MethodTransformer.Retaining.INSTANCE);
+                    MethodTransformer.NoOp.INSTANCE);
         }
 
         @Override
@@ -2413,7 +2413,7 @@ public class ByteBuddy {
                     methodMatcher,
                     MethodRegistry.Handler.ForAnnotationValue.of(value),
                     MethodAttributeAppender.NoOp.INSTANCE,
-                    MethodTransformer.Retaining.INSTANCE);
+                    MethodTransformer.NoOp.INSTANCE);
         }
 
         /**

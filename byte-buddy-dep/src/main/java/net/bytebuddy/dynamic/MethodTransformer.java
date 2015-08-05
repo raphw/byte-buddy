@@ -32,7 +32,7 @@ public interface MethodTransformer {
     /**
      * A method transformer that returns the original method.
      */
-    enum Retaining implements MethodTransformer {
+    enum NoOp implements MethodTransformer {
 
         /**
          * The singleton instance.
@@ -46,7 +46,7 @@ public interface MethodTransformer {
 
         @Override
         public String toString() {
-            return "MethodTransformer.Retaining." + name();
+            return "MethodTransformer.NoOp." + name();
         }
     }
 
@@ -415,6 +415,62 @@ public interface MethodTransformer {
                     return methodDescription.getInternalName();
                 }
             }
+        }
+    }
+
+    /**
+     * A method transformer that applies several method transformers in a row.
+     */
+    class Compound implements MethodTransformer {
+
+        /**
+         * The method transformers in their application order.
+         */
+        private final List<? extends MethodTransformer> methodTransformers;
+
+        /**
+         * Creates a new compound method transformer.
+         *
+         * @param methodTransformer The method transformers in their application order.
+         */
+        public Compound(MethodTransformer... methodTransformer) {
+            this(Arrays.asList(methodTransformer));
+        }
+
+        /**
+         * Creates a new compound method transformer.
+         *
+         * @param methodTransformers The method transformers in their application order.
+         */
+        public Compound(List<? extends MethodTransformer> methodTransformers) {
+            this.methodTransformers = methodTransformers;
+        }
+
+        @Override
+        public MethodDescription transform(MethodDescription methodDescription) {
+            MethodDescription transformed = methodDescription;
+            for (MethodTransformer methodTransformer : methodTransformers) {
+                transformed = methodTransformer.transform(transformed);
+            }
+            return transformed;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || other != null && getClass() == other.getClass()
+                    && methodTransformers.equals(((Compound) other).methodTransformers);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodTransformers.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodTransformer.Compound{" +
+                    "methodTransformers=" + methodTransformers +
+                    '}';
         }
     }
 }
