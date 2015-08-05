@@ -362,7 +362,7 @@ public class MethodCallProxy implements AuxiliaryType {
                         MethodInvocation.invoke(accessorMethod),
                         assigner.assign(accessorMethod.getReturnType().asRawType(),
                                 instrumentedMethod.getReturnType().asRawType(),
-                                Assigner.DYNAMICALLY_TYPED),
+                                Assigner.Typing.DYNAMIC),
                         MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

@@ -245,7 +245,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
 
         @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean dynamicallyTyped) {
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, Assigner.Typing typing) {
             return new Compound(
                     primitiveUnboxingDelegate,
                     PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
@@ -266,13 +266,13 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
          * Attempts to unbox the represented type in order to assign the unboxed value to the given target type
          * while using the assigner that is provided by the method call.
          *
-         * @param targetType       The type that is the desired outcome of the assignment.
-         * @param assigner         The assigner used to assign the unboxed type to the target type.
-         * @param dynamicallyTyped If {@code true}, unsafe castings are allowed for this assignment.
+         * @param targetType The type that is the desired outcome of the assignment.
+         * @param assigner   The assigner used to assign the unboxed type to the target type.
+         * @param typing     Determines if a type-casting should be attempted for incompatible types.
          * @return A stack manipulation representing this assignment if such an assignment is possible. An illegal
          * assignment otherwise.
          */
-        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean dynamicallyTyped);
+        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, Assigner.Typing typing);
     }
 
     /**
@@ -297,10 +297,10 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
 
         @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, boolean dynamicallyTyped) {
+        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, Assigner.Typing typing) {
             PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(targetType);
             return new Compound(
-                    assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, dynamicallyTyped),
+                    assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, typing),
                     primitiveUnboxingDelegate);
         }
 

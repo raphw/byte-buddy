@@ -7,6 +7,7 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.ArgumentTypeResolver;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -105,7 +106,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         verify(source, atLeast(1)).getParameters();
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(sourceType, targetType, dynamicallyTyped);
+        verify(assigner).assign(sourceType, targetType, Assigner.Typing.of(dynamicallyTyped));
         verifyNoMoreInteractions(assigner);
     }
 

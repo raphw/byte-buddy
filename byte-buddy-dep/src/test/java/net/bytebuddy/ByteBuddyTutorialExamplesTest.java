@@ -392,8 +392,7 @@ public class ByteBuddyTutorialExamplesTest {
         assertThat(new ByteBuddy()
                 .subclass(Object.class)
                 .method(named("toString"))
-                .intercept(FixedValue.value(42)
-                        .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), false))
+                .intercept(FixedValue.value(42).withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), Assigner.Typing.STATIC))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -470,9 +469,7 @@ public class ByteBuddyTutorialExamplesTest {
         INSTANCE;
 
         @Override
-        public StackManipulation assign(TypeDescription sourceType,
-                                        TypeDescription targetType,
-                                        boolean dynamicallyTyped) {
+        public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
             if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
                 MethodDescription toStringMethod = TypeDescription.OBJECT.getDeclaredMethods()
                         .filter(named("toString"))

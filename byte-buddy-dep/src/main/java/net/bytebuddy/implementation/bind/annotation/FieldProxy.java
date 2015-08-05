@@ -476,7 +476,7 @@ public @interface FieldProxy {
                                 MethodInvocation.invoke(getterMethod),
                                 assigner.assign(getterMethod.getReturnType().asRawType(),
                                         instrumentedMethod.getReturnType().asRawType(),
-                                        Assigner.DYNAMICALLY_TYPED),
+                                        Assigner.Typing.DYNAMIC),
                                 MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -618,7 +618,7 @@ public @interface FieldProxy {
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodVariableAccess.forType(parameterType).loadOffset(1),
-                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getType().asRawType(), Assigner.DYNAMICALLY_TYPED),
+                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getType().asRawType(), Assigner.Typing.DYNAMIC),
                                 MethodInvocation.invoke(setterMethod),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext);

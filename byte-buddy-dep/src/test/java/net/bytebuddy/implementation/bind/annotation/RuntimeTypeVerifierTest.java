@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,7 +38,7 @@ public class RuntimeTypeVerifierTest {
     @Test
     public void testCheckElementValid() throws Exception {
         when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
-        assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(true));
+        assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(Assigner.Typing.DYNAMIC));
         verify(annotatedCodeElement).getDeclaredAnnotations();
         verifyNoMoreInteractions(annotatedCodeElement);
     }
@@ -45,7 +46,7 @@ public class RuntimeTypeVerifierTest {
     @Test
     public void testCheckElementInvalid() throws Exception {
         when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation());
-        assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(false));
+        assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(Assigner.Typing.STATIC));
         verify(annotatedCodeElement).getDeclaredAnnotations();
         verifyNoMoreInteractions(annotatedCodeElement);
     }

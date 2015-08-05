@@ -93,7 +93,7 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(nonAssigner.assign(Mockito.any(TypeDescription.class), Mockito.any(TypeDescription.class), Mockito.anyBoolean()))
+        when(nonAssigner.assign(Mockito.any(TypeDescription.class), Mockito.any(TypeDescription.class), Mockito.any(Assigner.Typing.class)))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
     }
 
@@ -127,7 +127,7 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNonAssignable() throws Exception {
-        implement(Foo.class, MethodCall.invokeSuper().with(value).withAssigner(nonAssigner, false));
+        implement(Foo.class, MethodCall.invokeSuper().with(value).withAssigner(nonAssigner, Assigner.Typing.STATIC));
     }
 
     public enum Bar {

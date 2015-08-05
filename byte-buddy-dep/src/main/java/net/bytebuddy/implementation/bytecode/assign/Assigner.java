@@ -20,25 +20,72 @@ public interface Assigner {
     Assigner DEFAULT = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
 
     /**
-     * Indicates to an {@link net.bytebuddy.implementation.bytecode.assign.Assigner} that a value should be typed statically.
-     */
-    boolean STATICALLY_TYPED = false;
-
-    /**
-     * Indicates to an {@link net.bytebuddy.implementation.bytecode.assign.Assigner} that a value should be casted at runtime.
-     */
-    boolean DYNAMICALLY_TYPED = true;
-
-    /**
-     * @param sourceType       The original type that is to be transformed into the {@code targetType}.
-     * @param targetType       The target type into which the {@code sourceType} is to be converted.
-     * @param dynamicallyTyped A hint whether the assignment should consider the runtime type of the source type,
-     *                         i.e. if type down or cross castings are allowed. If this hint is set, this is
-     *                         also an indication that {@code void} to non-{@code void} assignments are permitted.
+     * @param sourceType The original type that is to be transformed into the {@code targetType}.
+     * @param targetType The target type into which the {@code sourceType} is to be converted.
+     * @param typing     A hint whether the assignment should consider the runtime type of the source type,
+     *                   i.e. if type down or cross castings are allowed. If this hint is set, this is
+     *                   also an indication that {@code void} to non-{@code void} assignments are permitted.
      * @return A stack manipulation that transforms the {@code sourceType} into the {@code targetType} if this
      * is possible. An illegal stack manipulation otherwise.
      */
-    StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean dynamicallyTyped);
+    StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing);
+
+    /**
+     * Indicates for a type assignment, if a type casting should be applied in case that two types are not statically assignable.
+     * Also, a dynamic typing indicates that void values are assignable to other types by assigning the target type's default value.
+     */
+    enum Typing {
+
+        /**
+         * Requires static typing.
+         */
+        STATIC(false),
+
+        /**
+         * Allows dynamic typing.
+         */
+        DYNAMIC(true);
+
+        /**
+         * {@code true} if dynamic typing is a legitimate choice.
+         */
+        private final boolean dynamic;
+
+        /**
+         * Creates a new typing hint.
+         *
+         * @param dynamic {@code true} if dynamic typing is a legitimate choice.
+         */
+        Typing(boolean dynamic) {
+            this.dynamic = dynamic;
+        }
+
+        /**
+         * Resolves a typing constant for the presented boolean where {@code true} indicates that dynamic typing is a legitimate choice.
+         *
+         * @param dynamic An indicator for if dynamic typing is a legitimate choice.
+         * @return A corresponding typing constant.
+         */
+        public static Typing of(boolean dynamic) {
+            return dynamic
+                    ? DYNAMIC
+                    : STATIC;
+        }
+
+        /**
+         * Checks if this instance's typing behavior permits dynamic typing.
+         *
+         * @return {@code true} if dynamic typing is a legitimate choice.
+         */
+        public boolean isDynamic() {
+            return dynamic;
+        }
+
+        @Override
+        public String toString() {
+            return "Assigner.Typing." + name();
+        }
+    }
 
     /**
      * An assigner that only allows to assign types if they are equal to another.
@@ -51,9 +98,7 @@ public interface Assigner {
         INSTANCE;
 
         @Override
-        public StackManipulation assign(TypeDescription sourceType,
-                                        TypeDescription targetType,
-                                        boolean dynamicallyTyped) {
+        public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
             return sourceType.equals(targetType)
                     ? StackManipulation.LegalTrivial.INSTANCE
                     : StackManipulation.Illegal.INSTANCE;
@@ -76,9 +121,7 @@ public interface Assigner {
         INSTANCE;
 
         @Override
-        public StackManipulation assign(TypeDescription sourceType,
-                                        TypeDescription targetType,
-                                        boolean dynamicallyTyped) {
+        public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
             return StackManipulation.Illegal.INSTANCE;
         }
 

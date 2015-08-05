@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(assigner).assign(instrumentedType, parameterType, false);
+        verify(assigner).assign(instrumentedType, parameterType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
@@ -65,7 +66,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(assigner).assign(instrumentedType, parameterType, true);
+        verify(assigner).assign(instrumentedType, parameterType, Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
@@ -76,12 +77,12 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         when(stackManipulation.isValid()).thenReturn(false);
         when(target.getType()).thenReturn(parameterType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
+        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
-        verify(assigner).assign(instrumentedType, parameterType, false);
+        verify(assigner).assign(instrumentedType, parameterType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();

@@ -32,7 +32,7 @@ public @interface StubValue {
     /**
      * Binds the {@link net.bytebuddy.implementation.bind.annotation.StubValue} annotation.
      */
-    static enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StubValue> {
+    enum Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<StubValue> {
 
         /**
          * The singleton instance.
@@ -56,7 +56,7 @@ public @interface StubValue {
             StackManipulation stackManipulation = source.getReturnType().asRawType().represents(void.class)
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(DefaultValue.of(source.getReturnType().asRawType()),
-                    assigner.assign(source.getReturnType().asRawType(), TypeDescription.OBJECT, Assigner.STATICALLY_TYPED));
+                    assigner.assign(source.getReturnType().asRawType(), TypeDescription.OBJECT, Assigner.Typing.STATIC));
             return stackManipulation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation)
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

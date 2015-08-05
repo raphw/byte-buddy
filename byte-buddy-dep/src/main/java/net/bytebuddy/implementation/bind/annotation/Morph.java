@@ -681,7 +681,7 @@ public @interface Morph {
                             parameterLoading[index] = new StackManipulation.Compound(arrayReference,
                                     IntegerConstant.forValue(index),
                                     ArrayAccess.REFERENCE.load(),
-                                    assigner.assign(TypeDescription.OBJECT, parameterType, Assigner.DYNAMICALLY_TYPED));
+                                    assigner.assign(TypeDescription.OBJECT, parameterType, Assigner.Typing.DYNAMIC));
                             index++;
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
@@ -696,7 +696,7 @@ public @interface Morph {
                                 MethodInvocation.invoke(accessorMethod),
                                 assigner.assign(accessorMethod.getReturnType().asRawType(),
                                         instrumentedMethod.getReturnType().asRawType(),
-                                        Assigner.DYNAMICALLY_TYPED),
+                                        Assigner.Typing.DYNAMIC),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 
 import java.lang.annotation.*;
 
@@ -39,10 +40,10 @@ public @interface RuntimeType {
          * Checks if an annotated element should be assigned a value by considering the runtime type.
          *
          * @param annotatedCodeElement The annotated element of interest.
-         * @return {@code true} if the runtime type should be considered for binding the annotated element's value.
+         * @return Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
-        public static boolean check(AnnotatedCodeElement annotatedCodeElement) {
-            return annotatedCodeElement.getDeclaredAnnotations().isAnnotationPresent(RuntimeType.class);
+        public static Assigner.Typing check(AnnotatedCodeElement annotatedCodeElement) {
+            return Assigner.Typing.of(annotatedCodeElement.getDeclaredAnnotations().isAnnotationPresent(RuntimeType.class));
         }
     }
 }

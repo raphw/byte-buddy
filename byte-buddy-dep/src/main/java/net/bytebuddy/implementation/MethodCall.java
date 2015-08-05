@@ -39,11 +39,6 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
 public class MethodCall implements Implementation {
 
     /**
-     * Indicates that an assignment should only consider the static type of a variable.
-     */
-    private static final boolean DO_NOT_CONSIDER_RUNTIME_TYPE = false;
-
-    /**
      * The method locator to use.
      */
     protected final MethodLocator methodLocator;
@@ -74,10 +69,9 @@ public class MethodCall implements Implementation {
     protected final Assigner assigner;
 
     /**
-     * {@code true} if a return value of the called method should be attempted to be type-casted to the return
-     * type of the instrumented method.
+     * Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected final boolean dynamicallyTyped;
+    protected final Assigner.Typing typing;
 
     /**
      * Creates a new method call implementation.
@@ -89,8 +83,7 @@ public class MethodCall implements Implementation {
      * @param methodInvoker      The method invoker to use.
      * @param terminationHandler The termination handler to use.
      * @param assigner           The assigner to use.
-     * @param dynamicallyTyped   {@code true} if a return value of the called method should be attempted
-     *                           to be type-casted to the return type of the instrumented method.
+     * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
     protected MethodCall(MethodLocator methodLocator,
                          TargetHandler targetHandler,
@@ -98,14 +91,14 @@ public class MethodCall implements Implementation {
                          MethodInvoker methodInvoker,
                          TerminationHandler terminationHandler,
                          Assigner assigner,
-                         boolean dynamicallyTyped) {
+                         Assigner.Typing typing) {
         this.methodLocator = methodLocator;
         this.targetHandler = targetHandler;
         this.argumentLoaders = argumentLoaders;
         this.methodInvoker = methodInvoker;
         this.terminationHandler = terminationHandler;
         this.assigner = assigner;
-        this.dynamicallyTyped = dynamicallyTyped;
+        this.typing = typing;
     }
 
     /**
@@ -179,7 +172,7 @@ public class MethodCall implements Implementation {
                 MethodInvoker.ForStandardInvocation.INSTANCE,
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 Assigner.DEFAULT,
-                DO_NOT_CONSIDER_RUNTIME_TYPE);
+                Assigner.Typing.STATIC);
     }
 
     /**
@@ -211,7 +204,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -232,7 +225,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -253,7 +246,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -274,7 +267,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -298,7 +291,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -323,7 +316,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -339,7 +332,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -355,7 +348,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -385,7 +378,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -406,8 +399,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
-
+                typing);
     }
 
     /**
@@ -417,19 +409,18 @@ public class MethodCall implements Implementation {
      * {@link net.bytebuddy.implementation.MethodCall#andThen(Implementation)} such
      * that a return value of this method call is discarded.
      *
-     * @param assigner         The assigner to use.
-     * @param dynamicallyTyped {@code true} if the return value assignment should attempt a type casting when
-     *                         assigning incompatible values.
+     * @param assigner The assigner to use.
+     * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
      * @return This method call using the provided assigner.
      */
-    public MethodCall withAssigner(Assigner assigner, boolean dynamicallyTyped) {
+    public MethodCall withAssigner(Assigner assigner, Assigner.Typing typing) {
         return new MethodCall(methodLocator,
                 targetHandler,
                 argumentLoaders,
                 methodInvoker,
                 terminationHandler,
                 nonNull(assigner),
-                dynamicallyTyped);
+                nonNull(typing));
     }
 
     /**
@@ -446,7 +437,7 @@ public class MethodCall implements Implementation {
                 methodInvoker,
                 TerminationHandler.ForChainedInvocation.INSTANCE,
                 assigner,
-                dynamicallyTyped), nonNull(implementation));
+                typing), nonNull(implementation));
     }
 
     @Override
@@ -467,7 +458,7 @@ public class MethodCall implements Implementation {
         if (this == other) return true;
         if (!(other instanceof MethodCall)) return false;
         MethodCall that = (MethodCall) other;
-        return dynamicallyTyped == that.dynamicallyTyped
+        return typing == that.typing
                 && argumentLoaders.equals(that.argumentLoaders)
                 && assigner.equals(that.assigner)
                 && methodInvoker.equals(that.methodInvoker)
@@ -484,7 +475,7 @@ public class MethodCall implements Implementation {
         result = 31 * result + methodInvoker.hashCode();
         result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + assigner.hashCode();
-        result = 31 * result + (dynamicallyTyped ? 1 : 0);
+        result = 31 * result + typing.hashCode();
         return result;
     }
 
@@ -497,7 +488,7 @@ public class MethodCall implements Implementation {
                 ", methodInvoker=" + methodInvoker +
                 ", terminationHandler=" + terminationHandler +
                 ", assigner=" + assigner +
-                ", dynamicallyTyped=" + dynamicallyTyped +
+                ", typing=" + typing +
                 '}';
     }
 
@@ -820,14 +811,14 @@ public class MethodCall implements Implementation {
          * @param interceptedMethod The method being intercepted.
          * @param targetType        The target type.
          * @param assigner          The assigner to be used.
-         * @param dynamicallyTyped  {@code true} if an assignment should be consider type castings.
+         * @param typing            Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return The stack manipulation that loads the represented argument onto the stack.
          */
         StackManipulation resolve(TypeDescription instrumentedType,
                                   MethodDescription interceptedMethod,
                                   TypeDescription targetType,
                                   Assigner assigner,
-                                  boolean dynamicallyTyped);
+                                  Assigner.Typing typing);
 
         /**
          * Prepares the instrumented type in order to allow the loading of the represented argument.
@@ -852,7 +843,7 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 if (targetType.isPrimitive()) {
                     throw new IllegalStateException("Cannot assign null to " + targetType);
                 }
@@ -885,13 +876,13 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 if (interceptedMethod.isStatic()) {
                     throw new IllegalStateException(interceptedMethod + " has no instance");
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.REFERENCE.loadOffset(0),
-                        assigner.assign(instrumentedType, targetType, dynamicallyTyped));
+                        assigner.assign(instrumentedType, targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + targetType);
                 }
@@ -924,10 +915,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         ClassConstant.of(instrumentedType),
-                        assigner.assign(TypeDescription.CLASS, targetType, dynamicallyTyped));
+                        assigner.assign(TypeDescription.CLASS, targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + targetType);
                 }
@@ -969,14 +960,14 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 if (index >= interceptedMethod.getParameters().size()) {
                     throw new IllegalStateException(interceptedMethod + " does not have a parameter with index " + index);
                 }
                 ParameterDescription parameterDescription = interceptedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.forType(parameterDescription.getType().asRawType()).loadOffset(parameterDescription.getOffset()),
-                        assigner.assign(parameterDescription.getType().asRawType(), targetType, dynamicallyTyped));
+                        assigner.assign(parameterDescription.getType().asRawType(), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + targetType + " for " + interceptedMethod);
                 }
@@ -1087,10 +1078,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter(),
-                        assigner.assign(new TypeDescription.ForLoadedType(value.getClass()), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(value.getClass()), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + value.getClass() + " to " + targetType);
                 }
@@ -1160,14 +1151,14 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 if (interceptedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot access instance field from static " + interceptedMethod);
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter(),
-                        assigner.assign(fieldType, targetType, dynamicallyTyped));
+                        assigner.assign(fieldType, targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign field " + fieldName + " of type "
                             + fieldType + " to " + targetType);
@@ -1228,7 +1219,7 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 FieldDescription fieldDescription = locate(instrumentedType);
                 if (!fieldDescription.isStatic() && interceptedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + interceptedMethod);
@@ -1238,7 +1229,7 @@ public class MethodCall implements Implementation {
                                 ? StackManipulation.LegalTrivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(fieldDescription).getter(),
-                        assigner.assign(fieldDescription.getType().asRawType(), targetType, dynamicallyTyped)
+                        assigner.assign(fieldDescription.getType().asRawType(), targetType, typing)
                 );
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + targetType);
@@ -1308,10 +1299,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(boolean.class), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(boolean.class), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign boolean value to " + targetType);
                 }
@@ -1364,10 +1355,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(byte.class), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(byte.class), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign byte value to " + targetType);
                 }
@@ -1420,10 +1411,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(short.class), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(short.class), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign short value to " + targetType);
                 }
@@ -1476,10 +1467,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(char.class), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(char.class), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign char value to " + targetType);
                 }
@@ -1532,10 +1523,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(int.class), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(int.class), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign integer value to " + targetType);
                 }
@@ -1588,10 +1579,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         LongConstant.forValue(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(long.class), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(long.class), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign long value to " + targetType);
                 }
@@ -1646,10 +1637,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         FloatConstant.forValue(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(float.class), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(float.class), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign float value to " + targetType);
                 }
@@ -1702,10 +1693,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         DoubleConstant.forValue(value),
-                        assigner.assign(new TypeDescription.ForLoadedType(double.class), targetType, dynamicallyTyped));
+                        assigner.assign(new TypeDescription.ForLoadedType(double.class), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign double value to " + targetType);
                 }
@@ -1759,10 +1750,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         new TextConstant(value),
-                        assigner.assign(TypeDescription.STRING, targetType, dynamicallyTyped));
+                        assigner.assign(TypeDescription.STRING, targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign String value to " + targetType);
                 }
@@ -1817,10 +1808,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         ClassConstant.of(typeDescription),
-                        assigner.assign(TypeDescription.CLASS, targetType, dynamicallyTyped));
+                        assigner.assign(TypeDescription.CLASS, targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign class value to " + targetType);
                 }
@@ -1875,10 +1866,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         FieldAccess.forEnumeration(enumerationDescription),
-                        assigner.assign(enumerationDescription.getEnumerationType(), targetType, dynamicallyTyped));
+                        assigner.assign(enumerationDescription.getEnumerationType(), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + enumerationDescription.getEnumerationType() + " value to " + targetType);
                 }
@@ -1933,10 +1924,10 @@ public class MethodCall implements Implementation {
                                              MethodDescription interceptedMethod,
                                              TypeDescription targetType,
                                              Assigner assigner,
-                                             boolean dynamicallyTyped) {
+                                             Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         javaInstance.asStackManipulation(),
-                        assigner.assign(javaInstance.getInstanceType(), targetType, dynamicallyTyped));
+                        assigner.assign(javaInstance.getInstanceType(), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + targetType);
                 }
@@ -2074,13 +2065,13 @@ public class MethodCall implements Implementation {
          * @param invokedMethod     The method that was invoked by the method call.
          * @param interceptedMethod The method being intercepted.
          * @param assigner          The assigner to be used.
-         * @param dynamicallyTyped  {@code true} if type-castings should be applied.
+         * @param typing            Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return A stack manipulation that handles the method return.
          */
         StackManipulation resolve(MethodDescription invokedMethod,
                                   MethodDescription interceptedMethod,
                                   Assigner assigner,
-                                  boolean dynamicallyTyped);
+                                  Assigner.Typing typing);
 
         /**
          * Returns the return value of the method call from the intercepted method.
@@ -2093,13 +2084,10 @@ public class MethodCall implements Implementation {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod,
-                                             MethodDescription interceptedMethod,
-                                             Assigner assigner,
-                                             boolean dynamicallyTyped) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription interceptedMethod, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
                         ? invokedMethod.getDeclaringType().asRawType()
-                        : invokedMethod.getReturnType().asRawType(), interceptedMethod.getReturnType().asRawType(), dynamicallyTyped);
+                        : invokedMethod.getReturnType().asRawType(), interceptedMethod.getReturnType().asRawType(), typing);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + interceptedMethod);
                 }
@@ -2125,10 +2113,7 @@ public class MethodCall implements Implementation {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod,
-                                             MethodDescription interceptedMethod,
-                                             Assigner assigner,
-                                             boolean dynamicallyTyped) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription interceptedMethod, Assigner assigner, Assigner.Typing typing) {
                 return Removal.pop(invokedMethod.isConstructor()
                         ? invokedMethod.getDeclaringType().asRawType()
                         : invokedMethod.getReturnType().asRawType());
@@ -2162,7 +2147,7 @@ public class MethodCall implements Implementation {
                     MethodInvoker.ForStandardInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         }
 
         /**
@@ -2178,7 +2163,7 @@ public class MethodCall implements Implementation {
                     MethodInvoker.ForStandardInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         /**
@@ -2208,7 +2193,7 @@ public class MethodCall implements Implementation {
                     MethodInvoker.ForStandardInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         /**
@@ -2226,7 +2211,7 @@ public class MethodCall implements Implementation {
                     MethodInvoker.ForSuperMethodInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         /**
@@ -2241,7 +2226,7 @@ public class MethodCall implements Implementation {
                     MethodInvoker.ForDefaultMethodInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         @Override
@@ -2253,7 +2238,7 @@ public class MethodCall implements Implementation {
                     ", methodInvoker=" + methodInvoker +
                     ", terminationHandler=" + terminationHandler +
                     ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    ", typing=" + typing +
                     '}';
         }
     }
@@ -2293,13 +2278,13 @@ public class MethodCall implements Implementation {
                         instrumentedMethod,
                         methodParameters.get(index++),
                         assigner,
-                        dynamicallyTyped);
+                        typing);
             }
             StackManipulation.Size size = new StackManipulation.Compound(
                     targetHandler.resolve(invokedMethod, implementationTarget.getTypeDescription()),
                     new StackManipulation.Compound(argumentInstruction),
                     methodInvoker.invoke(invokedMethod, implementationTarget),
-                    terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, dynamicallyTyped)
+                    terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, typing)
             ).apply(methodVisitor, implementationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
@@ -2315,10 +2300,8 @@ public class MethodCall implements Implementation {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other)
-                return true;
-            if (other == null || getClass() != other.getClass())
-                return false;
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
             Appender appender = (Appender) other;
             return implementationTarget.equals(appender.implementationTarget)
                     && MethodCall.this.equals(appender.getOuter());

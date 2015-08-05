@@ -17,9 +17,7 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
     INSTANCE;
 
     @Override
-    public StackManipulation assign(TypeDescription sourceType,
-                                    TypeDescription targetType,
-                                    boolean dynamicallyTyped) {
+    public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
         if (sourceType.isPrimitive() || targetType.isPrimitive()) {
             if (sourceType.equals(targetType)) {
                 return StackManipulation.LegalTrivial.INSTANCE;
@@ -28,7 +26,7 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
             }
         } else if (targetType.isAssignableFrom(sourceType)) {
             return StackManipulation.LegalTrivial.INSTANCE;
-        } else if (dynamicallyTyped) {
+        } else if (typing.isDynamic()) {
             return TypeCasting.to(targetType);
         } else {
             return StackManipulation.Illegal.INSTANCE;

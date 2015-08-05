@@ -54,7 +54,7 @@ public class AssignerEqualTypesOnlyTest {
 
     @Test
     public void testAssignmentEqual() throws Exception {
-        StackManipulation stackManipulation = Assigner.EqualTypesOnly.INSTANCE.assign(first, first, dynamicallyTyped);
+        StackManipulation stackManipulation = Assigner.EqualTypesOnly.INSTANCE.assign(first, first, Assigner.Typing.of(dynamicallyTyped));
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
@@ -63,7 +63,7 @@ public class AssignerEqualTypesOnlyTest {
 
     @Test
     public void testAssignmentNotEqual() throws Exception {
-        StackManipulation stackManipulation = Assigner.EqualTypesOnly.INSTANCE.assign(first, second, dynamicallyTyped);
+        StackManipulation stackManipulation = Assigner.EqualTypesOnly.INSTANCE.assign(first, second, Assigner.Typing.of(dynamicallyTyped));
         assertThat(stackManipulation.isValid(), is(false));
     }
 }

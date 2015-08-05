@@ -88,7 +88,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         when(source.getParameters()).thenReturn((ParameterList) sourceParameterList);
         when(sourceParameterList.asTypeList()).thenReturn(sourceTypeList);
         when(sourceTypeList.asRawTypes()).thenReturn(rawSourceTypeList);
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(stackManipulation);
+        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
         when(implementationTarget.getTypeDescription()).thenReturn(instrumentedType);
         when(implementationTarget.getOriginType()).thenReturn(instrumentedType);
         when(instrumentedType.asRawType()).thenReturn(instrumentedType);

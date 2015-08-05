@@ -75,14 +75,14 @@ public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
         when(targetTypeDescription.represents(targetType)).thenReturn(true);
         when(targetTypeDescription.isPrimitive()).thenReturn(true);
         when(chainedStackManipulation.isValid()).thenReturn(true);
-        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
+        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
                 .thenReturn(chainedStackManipulation);
         primitiveAssigner = new PrimitiveTypeAwareAssigner(chainedAssigner);
     }
 
     @Test
     public void testImplicitUnboxingAssignment() {
-        StackManipulation stackManipulation = primitiveAssigner.assign(sourceTypeDescription, targetTypeDescription, true);
+        StackManipulation stackManipulation = primitiveAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.DYNAMIC);
         assertThat(stackManipulation.isValid(), is(assignable));
         verify(chainedStackManipulation).isValid();
         verifyNoMoreInteractions(chainedStackManipulation);
@@ -92,7 +92,7 @@ public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
         verify(targetTypeDescription, atLeast(0)).represents(any(Class.class));
         verify(targetTypeDescription, atLeast(1)).isPrimitive();
         verifyNoMoreInteractions(targetTypeDescription);
-        verify(chainedAssigner).assign(sourceTypeDescription, new TypeDescription.ForLoadedType(wrapperType), true);
+        verify(chainedAssigner).assign(sourceTypeDescription, new TypeDescription.ForLoadedType(wrapperType), Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(chainedAssigner);
     }
 }

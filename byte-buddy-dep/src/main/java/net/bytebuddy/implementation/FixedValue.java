@@ -33,20 +33,19 @@ public abstract class FixedValue implements Implementation {
     protected final Assigner assigner;
 
     /**
-     * Determines if the runtime type of a fixed value should be considered for the assignment to a return type.
+     * Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected final boolean dynamicallyTyped;
+    protected final Assigner.Typing typing;
 
     /**
      * Creates a new fixed value implementation.
      *
-     * @param assigner         The assigner to use for assigning the fixed value to the return type of the instrumented value.
-     * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for assigning
-     *                         the return type.
+     * @param assigner The assigner to use for assigning the fixed value to the return type of the instrumented value.
+     * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected FixedValue(Assigner assigner, boolean dynamicallyTyped) {
+    protected FixedValue(Assigner assigner, Assigner.Typing typing) {
         this.assigner = assigner;
-        this.dynamicallyTyped = dynamicallyTyped;
+        this.typing = typing;
     }
 
     /**
@@ -89,69 +88,69 @@ public abstract class FixedValue implements Implementation {
             return new ForPoolValue(NullConstant.INSTANCE,
                     TypeDescription.OBJECT,
                     Assigner.DEFAULT,
-                    Assigner.DYNAMICALLY_TYPED);
+                    Assigner.Typing.DYNAMIC);
         }
         Class<?> type = fixedValue.getClass();
         if (type == String.class) {
             return new ForPoolValue(new TextConstant((String) fixedValue),
                     TypeDescription.STRING,
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Class.class) {
             return new ForPoolValue(ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) fixedValue)),
                     TypeDescription.CLASS,
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Boolean.class) {
             return new ForPoolValue(IntegerConstant.forValue((Boolean) fixedValue),
                     new TypeDescription.ForLoadedType(boolean.class),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Byte.class) {
             return new ForPoolValue(IntegerConstant.forValue((Byte) fixedValue),
                     new TypeDescription.ForLoadedType(byte.class),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Short.class) {
             return new ForPoolValue(IntegerConstant.forValue((Short) fixedValue),
                     new TypeDescription.ForLoadedType(short.class),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Character.class) {
             return new ForPoolValue(IntegerConstant.forValue((Character) fixedValue),
                     new TypeDescription.ForLoadedType(char.class),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Integer.class) {
             return new ForPoolValue(IntegerConstant.forValue((Integer) fixedValue),
                     new TypeDescription.ForLoadedType(int.class),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Long.class) {
             return new ForPoolValue(LongConstant.forValue((Long) fixedValue),
                     new TypeDescription.ForLoadedType(long.class),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Float.class) {
             return new ForPoolValue(FloatConstant.forValue((Float) fixedValue),
                     new TypeDescription.ForLoadedType(float.class),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (type == Double.class) {
             return new ForPoolValue(DoubleConstant.forValue((Double) fixedValue),
                     new TypeDescription.ForLoadedType(double.class),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
             return new ForPoolValue(MethodHandleConstant.of(JavaInstance.MethodHandle.of(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
             return new ForPoolValue(MethodTypeConstant.of(JavaInstance.MethodType.of(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     Assigner.DEFAULT,
-                    Assigner.STATICALLY_TYPED);
+                    Assigner.Typing.STATIC);
         } else {
             return reference(fixedValue);
         }
@@ -171,8 +170,8 @@ public abstract class FixedValue implements Implementation {
      */
     public static AssignerConfigurable reference(Object fixedValue) {
         return fixedValue == null
-                ? new ForPoolValue(NullConstant.INSTANCE, TypeDescription.OBJECT, Assigner.DEFAULT, Assigner.DYNAMICALLY_TYPED)
-                : new ForStaticField(fixedValue, Assigner.DEFAULT, Assigner.STATICALLY_TYPED);
+                ? new ForPoolValue(NullConstant.INSTANCE, TypeDescription.OBJECT, Assigner.DEFAULT, Assigner.Typing.DYNAMIC)
+                : new ForStaticField(fixedValue, Assigner.DEFAULT, Assigner.Typing.STATIC);
     }
 
     /**
@@ -191,7 +190,7 @@ public abstract class FixedValue implements Implementation {
         if (fixedValue == null) {
             throw new IllegalArgumentException("The fixed value must not be null");
         }
-        return new ForStaticField(isValidIdentifier(fieldName), fixedValue, Assigner.DEFAULT, Assigner.STATICALLY_TYPED);
+        return new ForStaticField(isValidIdentifier(fieldName), fixedValue, Assigner.DEFAULT, Assigner.Typing.STATIC);
     }
 
     /**
@@ -204,7 +203,7 @@ public abstract class FixedValue implements Implementation {
         return new ForPoolValue(ClassConstant.of(fixedValue),
                 TypeDescription.CLASS,
                 Assigner.DEFAULT,
-                Assigner.STATICALLY_TYPED);
+                Assigner.Typing.STATIC);
     }
 
     /**
@@ -217,7 +216,7 @@ public abstract class FixedValue implements Implementation {
         return new ForPoolValue(fixedValue.asStackManipulation(),
                 fixedValue.getInstanceType(),
                 Assigner.DEFAULT,
-                Assigner.STATICALLY_TYPED);
+                Assigner.Typing.STATIC);
     }
 
     /**
@@ -237,7 +236,7 @@ public abstract class FixedValue implements Implementation {
                                           MethodDescription instrumentedMethod,
                                           TypeDescription fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
-        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType().asRawType(), dynamicallyTyped);
+        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType().asRawType(), typing);
         if (!assignment.isValid()) {
             throw new IllegalArgumentException("Cannot return value of type " + fixedValueType + " for " + instrumentedMethod);
         }
@@ -252,13 +251,13 @@ public abstract class FixedValue implements Implementation {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && dynamicallyTyped == ((FixedValue) other).dynamicallyTyped
+                && typing == ((FixedValue) other).typing
                 && assigner.equals(((FixedValue) other).assigner);
     }
 
     @Override
     public int hashCode() {
-        return 31 * assigner.hashCode() + (dynamicallyTyped ? 1 : 0);
+        return 31 * assigner.hashCode() + typing.hashCode();
     }
 
     /**
@@ -270,13 +269,12 @@ public abstract class FixedValue implements Implementation {
         /**
          * Defines an explicit assigner to this fixed value implementation.
          *
-         * @param assigner         The assigner to use for assigning the fixed value to the return type of the
-         *                         instrumented value.
-         * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
-         *                         assigning the return type.
+         * @param assigner The assigner to use for assigning the fixed value to the return type of the
+         *                 instrumented value.
+         * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return A fixed value implementation that makes use of the given assigner.
          */
-        Implementation withAssigner(Assigner assigner, boolean dynamicallyTyped);
+        Implementation withAssigner(Assigner assigner, Assigner.Typing typing);
     }
 
     /**
@@ -303,21 +301,17 @@ public abstract class FixedValue implements Implementation {
          * @param loadedType           A type description representing the loaded type.
          * @param assigner             The assigner to use for assigning the fixed value to the return type of the
          *                             instrumented value.
-         * @param dynamicallyTyped     If {@code true}, the runtime type of the given value will be considered for
-         *                             assigning the return type.
+         * @param typing               Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
-        private ForPoolValue(StackManipulation valueLoadInstruction,
-                             TypeDescription loadedType,
-                             Assigner assigner,
-                             boolean dynamicallyTyped) {
-            super(assigner, dynamicallyTyped);
+        private ForPoolValue(StackManipulation valueLoadInstruction, TypeDescription loadedType, Assigner assigner, Assigner.Typing typing) {
+            super(assigner, typing);
             this.valueLoadInstruction = valueLoadInstruction;
             this.loadedType = loadedType;
         }
 
         @Override
-        public Implementation withAssigner(Assigner assigner, boolean dynamicallyTyped) {
-            return new ForPoolValue(valueLoadInstruction, loadedType, nonNull(assigner), dynamicallyTyped);
+        public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return new ForPoolValue(valueLoadInstruction, loadedType, nonNull(assigner), nonNull(typing));
         }
 
         @Override
@@ -357,7 +351,7 @@ public abstract class FixedValue implements Implementation {
                     "valueLoadInstruction=" + valueLoadInstruction +
                     ", loadedType=" + loadedType +
                     ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    ", typing=" + typing +
                     '}';
         }
     }
@@ -391,36 +385,34 @@ public abstract class FixedValue implements Implementation {
          * Creates a new static field fixed value implementation with a random name for the field containing the fixed
          * value.
          *
-         * @param fixedValue       The fixed value to be returned.
-         * @param assigner         The assigner to use for assigning the fixed value to the return type of the
-         *                         instrumented value.
-         * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
-         *                         assigning the return type.
+         * @param fixedValue The fixed value to be returned.
+         * @param assigner   The assigner to use for assigning the fixed value to the return type of the
+         *                   instrumented value.
+         * @param typing     Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
-        protected ForStaticField(Object fixedValue, Assigner assigner, boolean dynamicallyTyped) {
-            this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode())), fixedValue, assigner, dynamicallyTyped);
+        protected ForStaticField(Object fixedValue, Assigner assigner, Assigner.Typing typing) {
+            this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode())), fixedValue, assigner, typing);
         }
 
         /**
          * Creates a new static field fixed value implementation.
          *
-         * @param fieldName        The name of the field for storing the fixed value.
-         * @param fixedValue       The fixed value to be returned.
-         * @param assigner         The assigner to use for assigning the fixed value to the return type of the
-         *                         instrumented value.
-         * @param dynamicallyTyped If {@code true}, the runtime type of the given value will be considered for
-         *                         assigning the return type.
+         * @param fieldName  The name of the field for storing the fixed value.
+         * @param fixedValue The fixed value to be returned.
+         * @param assigner   The assigner to use for assigning the fixed value to the return type of the
+         *                   instrumented value.
+         * @param typing     Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
-        protected ForStaticField(String fieldName, Object fixedValue, Assigner assigner, boolean dynamicallyTyped) {
-            super(assigner, dynamicallyTyped);
+        protected ForStaticField(String fieldName, Object fixedValue, Assigner assigner, Assigner.Typing typing) {
+            super(assigner, typing);
             this.fieldName = fieldName;
             this.fixedValue = fixedValue;
             fieldType = new TypeDescription.ForLoadedType(fixedValue.getClass());
         }
 
         @Override
-        public Implementation withAssigner(Assigner assigner, boolean dynamicallyTyped) {
-            return new ForStaticField(fieldName, fixedValue, nonNull(assigner), dynamicallyTyped);
+        public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return new ForStaticField(fieldName, fixedValue, nonNull(assigner), typing);
         }
 
         @Override
@@ -455,7 +447,7 @@ public abstract class FixedValue implements Implementation {
                     ", fieldType=" + fieldType +
                     ", fixedValue=" + fixedValue +
                     ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    ", typing=" + typing +
                     '}';
         }
 

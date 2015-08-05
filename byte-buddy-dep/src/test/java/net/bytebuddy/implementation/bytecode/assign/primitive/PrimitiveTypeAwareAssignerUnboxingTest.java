@@ -72,7 +72,7 @@ public class PrimitiveTypeAwareAssignerUnboxingTest {
 
     @Test
     public void testUnboxingAssignment() throws Exception {
-        StackManipulation stackManipulation = primitiveAssigner.assign(sourceTypeDescription, targetTypeDescription, false);
+        StackManipulation stackManipulation = primitiveAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.STATIC);
         assertThat(stackManipulation.isValid(), is(assignable));
         verify(sourceTypeDescription, atLeast(0)).represents(any(Class.class));
         verify(sourceTypeDescription).represents(sourceType);

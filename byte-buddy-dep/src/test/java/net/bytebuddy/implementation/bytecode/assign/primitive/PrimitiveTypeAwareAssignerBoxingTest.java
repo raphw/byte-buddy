@@ -71,14 +71,14 @@ public class PrimitiveTypeAwareAssignerBoxingTest {
         when(targetTypeDescription.represents(targetType)).thenReturn(true);
         when(targetTypeDescription.isPrimitive()).thenReturn(false);
         when(chainedStackManipulation.isValid()).thenReturn(true);
-        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
+        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
                 .thenReturn(chainedStackManipulation);
         primitiveAssigner = new PrimitiveTypeAwareAssigner(chainedAssigner);
     }
 
     @Test
     public void testBoxingAssignment() {
-        StackManipulation stackManipulation = primitiveAssigner.assign(sourceTypeDescription, targetTypeDescription, false);
+        StackManipulation stackManipulation = primitiveAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.STATIC);
         assertThat(stackManipulation.isValid(), is(assignable));
         verify(chainedStackManipulation).isValid();
         verifyNoMoreInteractions(chainedStackManipulation);
@@ -88,7 +88,7 @@ public class PrimitiveTypeAwareAssignerBoxingTest {
         verifyNoMoreInteractions(sourceTypeDescription);
         verify(targetTypeDescription, atLeast(1)).isPrimitive();
         verifyNoMoreInteractions(targetTypeDescription);
-        verify(chainedAssigner).assign(new TypeDescription.ForLoadedType(targetType), targetTypeDescription, false);
+        verify(chainedAssigner).assign(new TypeDescription.ForLoadedType(targetType), targetTypeDescription, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(chainedAssigner);
     }
 }

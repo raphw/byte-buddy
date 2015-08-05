@@ -76,12 +76,12 @@ public @interface Argument {
                                                                              TypeDescription targetType,
                                                                              int sourceParameterIndex,
                                                                              Assigner assigner,
-                                                                             boolean dynamicallyTyped,
+                                                                             Assigner.Typing typing,
                                                                              int parameterOffset) {
                 return MethodDelegationBinder.ParameterBinding.Unique.of(
                         new StackManipulation.Compound(
                                 MethodVariableAccess.forType(sourceType).loadOffset(parameterOffset),
-                                assigner.assign(sourceType, targetType, dynamicallyTyped)),
+                                assigner.assign(sourceType, targetType, typing)),
                         new ArgumentTypeResolver.ParameterIndexToken(sourceParameterIndex)
                 );
             }
@@ -96,12 +96,12 @@ public @interface Argument {
                                                                              TypeDescription targetType,
                                                                              int sourceParameterIndex,
                                                                              Assigner assigner,
-                                                                             boolean dynamicallyTyped,
+                                                                             Assigner.Typing typing,
                                                                              int parameterOffset) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(
                         new StackManipulation.Compound(
                                 MethodVariableAccess.forType(sourceType).loadOffset(parameterOffset),
-                                assigner.assign(sourceType, targetType, dynamicallyTyped))
+                                assigner.assign(sourceType, targetType, typing))
                 );
             }
         };
@@ -113,7 +113,7 @@ public @interface Argument {
          * @param targetType           The target type the {@code sourceType} is to be bound to.
          * @param sourceParameterIndex The index of the source parameter.
          * @param assigner             The assigner that is used to perform the assignment.
-         * @param dynamicallyTyped     If {@code true}, the assignment is allowed to consider runtime types.
+         * @param typing               Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param parameterOffset      The offset of the source method's parameter.
          * @return A binding considering the chosen binding mechanic.
          */
@@ -121,7 +121,7 @@ public @interface Argument {
                                                                                   TypeDescription targetType,
                                                                                   int sourceParameterIndex,
                                                                                   Assigner assigner,
-                                                                                  boolean dynamicallyTyped,
+                                                                                  Assigner.Typing typing,
                                                                                   int parameterOffset);
 
         @Override

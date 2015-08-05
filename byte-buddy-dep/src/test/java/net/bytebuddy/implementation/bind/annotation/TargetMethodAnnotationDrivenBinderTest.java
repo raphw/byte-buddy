@@ -121,7 +121,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void setUp() throws Exception {
         when(assignmentBinding.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
+        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
                 .thenReturn(assignmentBinding);
         when(methodInvoker.invoke(any(MethodDescription.class))).thenReturn(methodInvocation);
         when(methodInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))

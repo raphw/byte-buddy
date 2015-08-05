@@ -594,7 +594,7 @@ public class ByteBuddy {
                 .intercept(MethodCall.invoke(TypeDescription.ENUM.getDeclaredMethods()
                         .filter(named(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME).and(takesArguments(Class.class, String.class))).getOnly())
                         .withOwnType().withArgument(0)
-                        .withAssigner(Assigner.DEFAULT, Assigner.DYNAMICALLY_TYPED))
+                        .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
                 .defineMethod(EnumerationImplementation.ENUM_VALUES_METHOD_NAME,
                         TargetType[].class,
                         Collections.<Class<?>>emptyList(),

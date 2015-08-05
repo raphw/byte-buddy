@@ -103,7 +103,7 @@ public class PrimitiveUnboxingDelegateWideningTest {
     @Test
     public void testTrivialBoxing() throws Exception {
         StackManipulation stackManipulation = PrimitiveUnboxingDelegate.forReferenceType(referenceTypeDescription)
-                .assignUnboxedTo(primitiveTypeDescription, chainedAssigner, false);
+                .assignUnboxedTo(primitiveTypeDescription, chainedAssigner, Assigner.Typing.STATIC);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(sizeChange));

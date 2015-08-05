@@ -45,7 +45,7 @@ public class VoidAwareAssignerTest {
         when(sourceTypeDescription.represents(void.class)).thenReturn(true);
         when(targetTypeDescription.represents(void.class)).thenReturn(true);
         Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner);
-        StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, false);
+        StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.STATIC);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
@@ -57,10 +57,10 @@ public class VoidAwareAssignerTest {
     public void testAssignNonVoidToNonVoid() throws Exception {
         Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner);
         StackManipulation chainedStackManipulation = mock(StackManipulation.class);
-        when(chainedAssigner.assign(sourceTypeDescription, targetTypeDescription, false)).thenReturn(chainedStackManipulation);
-        StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, false);
+        when(chainedAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.STATIC)).thenReturn(chainedStackManipulation);
+        StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.STATIC);
         assertThat(stackManipulation, is(chainedStackManipulation));
-        verify(chainedAssigner).assign(sourceTypeDescription, targetTypeDescription, false);
+        verify(chainedAssigner).assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(chainedAssigner);
     }
 

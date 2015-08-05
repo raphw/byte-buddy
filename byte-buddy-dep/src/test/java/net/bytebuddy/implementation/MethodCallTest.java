@@ -62,7 +62,7 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(nonAssigner.assign(Mockito.any(TypeDescription.class), Mockito.any(TypeDescription.class), Mockito.anyBoolean()))
+        when(nonAssigner.assign(Mockito.any(TypeDescription.class), Mockito.any(TypeDescription.class), Mockito.any(Assigner.Typing.class)))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
     }
 
@@ -177,7 +177,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     public void testWithExplicitArgumentConstantPoolNonAssignable() throws Exception {
         implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper()
-                .with(FOO).withAssigner(nonAssigner, false));
+                .with(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC));
     }
 
     @Test
@@ -198,7 +198,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     public void testWithExplicitArgumentFieldNonAssignable() throws Exception {
         implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper()
-                .withReference(FOO).withAssigner(nonAssigner, false));
+                .withReference(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC));
     }
 
     @Test
@@ -242,7 +242,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     public void testWithParameterNonAssignable() throws Exception {
         implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper()
-                .withArgument(0).withAssigner(nonAssigner, false));
+                .withArgument(0).withAssigner(nonAssigner, Assigner.Typing.STATIC));
     }
 
     @Test
@@ -268,7 +268,7 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testWithFieldNonAssignable() throws Exception {
-        implement(MethodCallWithField.class, MethodCall.invokeSuper().withField(FOO).withAssigner(nonAssigner, false));
+        implement(MethodCallWithField.class, MethodCall.invokeSuper().withField(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC));
     }
 
     @Test

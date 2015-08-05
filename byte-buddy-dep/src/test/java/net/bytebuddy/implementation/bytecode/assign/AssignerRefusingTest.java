@@ -54,13 +54,13 @@ public class AssignerRefusingTest {
 
     @Test
     public void testAssignmentEqual() throws Exception {
-        StackManipulation stackManipulation = Assigner.Refusing.INSTANCE.assign(first, first, dynamicallyTyped);
+        StackManipulation stackManipulation = Assigner.Refusing.INSTANCE.assign(first, first, Assigner.Typing.of(dynamicallyTyped));
         assertThat(stackManipulation.isValid(), is(false));
     }
 
     @Test
     public void testAssignmentNotEqual() throws Exception {
-        StackManipulation stackManipulation = Assigner.Refusing.INSTANCE.assign(first, second, dynamicallyTyped);
+        StackManipulation stackManipulation = Assigner.Refusing.INSTANCE.assign(first, second, Assigner.Typing.of(dynamicallyTyped));
         assertThat(stackManipulation.isValid(), is(false));
     }
 }

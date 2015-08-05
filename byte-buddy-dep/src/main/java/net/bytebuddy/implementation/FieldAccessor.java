@@ -38,20 +38,19 @@ public abstract class FieldAccessor implements Implementation {
     protected final Assigner assigner;
 
     /**
-     * {@code true} if the runtime type of the field's value should be considered when a field
-     * is accessed.
+     * Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected final boolean dynamicallyTyped;
+    protected final Assigner.Typing typing;
 
     /**
      * Creates a new field accessor.
      *
-     * @param assigner         The assigner to use.
-     * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
+     * @param assigner The assigner to use.
+     * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected FieldAccessor(Assigner assigner, boolean dynamicallyTyped) {
+    protected FieldAccessor(Assigner assigner, Assigner.Typing typing) {
         this.assigner = assigner;
-        this.dynamicallyTyped = dynamicallyTyped;
+        this.typing = typing;
     }
 
     /**
@@ -61,7 +60,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor for a field of a given name.
      */
     public static FieldDefinable ofField(String name) {
-        return new ForNamedField(Assigner.DEFAULT, Assigner.STATICALLY_TYPED, isValidIdentifier(name));
+        return new ForNamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, isValidIdentifier(name));
     }
 
     /**
@@ -82,7 +81,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor using the given field name extractor.
      */
     public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
-        return new ForUnnamedField(Assigner.DEFAULT, Assigner.STATICALLY_TYPED, nonNull(fieldNameExtractor));
+        return new ForUnnamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, nonNull(fieldNameExtractor));
     }
 
     /**
@@ -98,9 +97,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(),
-                methodDescription.getReturnType().asRawType(),
-                dynamicallyTyped);
+        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(), methodDescription.getReturnType().asRawType(), typing);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
         }
@@ -130,7 +127,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 MethodDescription methodDescription) {
         StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType().asRawType(),
                 fieldDescription.getType().asRawType(),
-                dynamicallyTyped);
+                typing);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
         } else if (fieldDescription.isFinal()) {
@@ -189,13 +186,13 @@ public abstract class FieldAccessor implements Implementation {
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && dynamicallyTyped == ((FieldAccessor) other).dynamicallyTyped
+                && typing == ((FieldAccessor) other).typing
                 && assigner.equals(((FieldAccessor) other).assigner);
     }
 
     @Override
     public int hashCode() {
-        return 31 * assigner.hashCode() + (dynamicallyTyped ? 1 : 0);
+        return 31 * assigner.hashCode() + typing.hashCode();
     }
 
     /**
@@ -476,11 +473,11 @@ public abstract class FieldAccessor implements Implementation {
          * Returns a field accessor that is identical to this field accessor but uses the given assigner
          * and runtime type use configuration.
          *
-         * @param assigner         The assigner to use.
-         * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
+         * @param assigner The assigner to use.
+         * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return This field accessor with the given assigner and runtime type use configuration.
          */
-        Implementation withAssigner(Assigner assigner, boolean dynamicallyTyped);
+        Implementation withAssigner(Assigner assigner, Assigner.Typing typing);
     }
 
     /**
@@ -560,39 +557,34 @@ public abstract class FieldAccessor implements Implementation {
          * Creates a new field accessor implementation.
          *
          * @param assigner           The assigner to use.
-         * @param dynamicallyTyped   {@code true} if a field value's runtime type should be considered.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param fieldNameExtractor The field name extractor to use.
          */
-        protected ForUnnamedField(Assigner assigner,
-                                  boolean dynamicallyTyped,
-                                  FieldNameExtractor fieldNameExtractor) {
-            this(assigner,
-                    dynamicallyTyped,
-                    fieldNameExtractor,
-                    FieldLocator.ForInstrumentedTypeHierarchy.Factory.INSTANCE);
+        protected ForUnnamedField(Assigner assigner, Assigner.Typing typing, FieldNameExtractor fieldNameExtractor) {
+            this(assigner, typing, fieldNameExtractor, FieldLocator.ForInstrumentedTypeHierarchy.Factory.INSTANCE);
         }
 
         /**
          * Creates a new field accessor implementation.
          *
          * @param assigner            The assigner to use.
-         * @param dynamicallyTyped    {@code true} if a field value's runtime type should be considered.
+         * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param fieldNameExtractor  The field name extractor to use.
          * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
          *                            a field to be accessed.
          */
         protected ForUnnamedField(Assigner assigner,
-                                  boolean dynamicallyTyped,
+                                  Assigner.Typing typing,
                                   FieldNameExtractor fieldNameExtractor,
                                   FieldLocator.Factory fieldLocatorFactory) {
-            super(assigner, dynamicallyTyped);
+            super(assigner, typing);
             this.fieldNameExtractor = fieldNameExtractor;
             this.fieldLocatorFactory = fieldLocatorFactory;
         }
 
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
-            return new ForUnnamedField(assigner, dynamicallyTyped, fieldNameExtractor, nonNull(fieldLocatorFactory));
+            return new ForUnnamedField(assigner, typing, fieldNameExtractor, nonNull(fieldLocatorFactory));
         }
 
         @Override
@@ -608,8 +600,8 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         @Override
-        public Implementation withAssigner(Assigner assigner, boolean dynamicallyTyped) {
-            return new ForUnnamedField(nonNull(assigner), dynamicallyTyped, fieldNameExtractor, fieldLocatorFactory);
+        public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return new ForUnnamedField(nonNull(assigner), typing, fieldNameExtractor, fieldLocatorFactory);
         }
 
         @Override
@@ -644,9 +636,9 @@ public abstract class FieldAccessor implements Implementation {
         public String toString() {
             return "FieldAccessor.ForUnnamedField{" +
                     "assigner=" + assigner +
-                    "dynamicallyTyped=" + dynamicallyTyped +
-                    "fieldLocatorFactory=" + fieldLocatorFactory +
-                    "fieldNameExtractor=" + fieldNameExtractor +
+                    ", typing=" + typing +
+                    ", fieldLocatorFactory=" + fieldLocatorFactory +
+                    ", fieldNameExtractor=" + fieldNameExtractor +
                     '}';
         }
     }
@@ -674,14 +666,12 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * Creates a field accessor implementation for a field of a given name.
          *
-         * @param assigner         The assigner to use.
-         * @param dynamicallyTyped {@code true} if a field value's runtime type should be considered.
-         * @param fieldName        The name of the field.
+         * @param assigner  The assigner to use.
+         * @param typing    Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @param fieldName The name of the field.
          */
-        protected ForNamedField(Assigner assigner,
-                                boolean dynamicallyTyped,
-                                String fieldName) {
-            super(assigner, dynamicallyTyped);
+        protected ForNamedField(Assigner assigner, Assigner.Typing typing, String fieldName) {
+            super(assigner, typing);
             this.fieldName = fieldName;
             preparationHandler = PreparationHandler.NoOp.INSTANCE;
             fieldLocatorFactory = FieldLocator.ForInstrumentedTypeHierarchy.Factory.INSTANCE;
@@ -691,18 +681,18 @@ public abstract class FieldAccessor implements Implementation {
          * reates a field accessor implementation for a field of a given name.
          *
          * @param fieldName           The name of the field.
+         * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param preparationHandler  The preparation handler for potentially defining a field.
          * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
          *                            a field to be accessed.
          * @param assigner            The assigner to use.
-         * @param dynamicallyTyped    {@code true} if a field value's runtime type should be considered.
          */
         private ForNamedField(Assigner assigner,
-                              boolean dynamicallyTyped,
+                              Assigner.Typing typing,
                               String fieldName,
                               PreparationHandler preparationHandler,
                               FieldLocator.Factory fieldLocatorFactory) {
-            super(assigner, dynamicallyTyped);
+            super(assigner, typing);
             this.fieldName = fieldName;
             this.preparationHandler = preparationHandler;
             this.fieldLocatorFactory = fieldLocatorFactory;
@@ -716,7 +706,7 @@ public abstract class FieldAccessor implements Implementation {
         @Override
         public AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier) {
             return new ForNamedField(assigner,
-                    dynamicallyTyped,
+                    typing,
                     fieldName,
                     PreparationHandler.FieldDefiner.of(fieldName, isActualType(typeDescription), nonNull(modifier)),
                     FieldLocator.ForInstrumentedType.INSTANCE);
@@ -725,7 +715,7 @@ public abstract class FieldAccessor implements Implementation {
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
             return new ForNamedField(assigner,
-                    dynamicallyTyped,
+                    typing,
                     fieldName,
                     preparationHandler,
                     nonNull(fieldLocatorFactory));
@@ -744,9 +734,9 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         @Override
-        public Implementation withAssigner(Assigner assigner, boolean dynamicallyTyped) {
+        public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new ForNamedField(nonNull(assigner),
-                    dynamicallyTyped,
+                    nonNull(typing),
                     fieldName,
                     preparationHandler,
                     fieldLocatorFactory);
@@ -791,8 +781,8 @@ public abstract class FieldAccessor implements Implementation {
         public String toString() {
             return "FieldAccessor.ForNamedField{" +
                     "assigner=" + assigner +
-                    "dynamicallyTyped=" + dynamicallyTyped +
-                    "fieldName='" + fieldName + '\'' +
+                    ", fieldName='" + fieldName + '\'' +
+                    ", typing=" + typing +
                     ", preparationHandler=" + preparationHandler +
                     ", fieldLocatorFactory=" + fieldLocatorFactory +
                     '}';

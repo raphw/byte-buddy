@@ -85,7 +85,7 @@ public class PrimitiveBoxingDelegateTest {
 
     @Before
     public void setUp() throws Exception {
-        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean()))
+        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
                 .thenReturn(stackManipulation);
         when(stackManipulation.isValid())
                 .thenReturn(true);
@@ -102,7 +102,7 @@ public class PrimitiveBoxingDelegateTest {
     @Test
     public void testBoxing() throws Exception {
         StackManipulation boxingStackManipulation = PrimitiveBoxingDelegate.forPrimitive(primitiveTypeDescription)
-                .assignBoxedTo(targetType, chainedAssigner, false);
+                .assignBoxedTo(targetType, chainedAssigner, Assigner.Typing.STATIC);
         assertThat(boxingStackManipulation.isValid(), is(true));
         StackManipulation.Size size = boxingStackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(sizeChange));
@@ -110,7 +110,7 @@ public class PrimitiveBoxingDelegateTest {
         verify(primitiveTypeDescription).represents(primitiveType);
         verify(primitiveTypeDescription, atLeast(1)).represents(any(Class.class));
         verifyNoMoreInteractions(primitiveTypeDescription);
-        verify(chainedAssigner).assign(referenceTypeDescription, targetType, false);
+        verify(chainedAssigner).assign(referenceTypeDescription, targetType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(chainedAssigner);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC,
                 referenceTypeDescription.getInternalName(),

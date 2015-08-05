@@ -6,6 +6,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,8 +81,8 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(firstSourceType, componentType, dynamicallyTyped);
-        verify(assigner).assign(secondSourceType, componentType, dynamicallyTyped);
+        verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.of(dynamicallyTyped));
+        verify(assigner).assign(secondSourceType, componentType, Assigner.Typing.of(dynamicallyTyped));
         verifyNoMoreInteractions(assigner);
     }
 
@@ -104,7 +105,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(firstSourceType, componentType, false);
+        verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
     }
 
@@ -137,8 +138,8 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(firstSourceType, componentType, false);
-        verify(assigner).assign(secondSourceType, componentType, false);
+        verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.STATIC);
+        verify(assigner).assign(secondSourceType, componentType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
     }
 

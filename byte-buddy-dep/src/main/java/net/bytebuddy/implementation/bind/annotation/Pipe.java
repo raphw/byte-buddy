@@ -548,12 +548,12 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadOffset(1),
-                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType().asRawType(), Assigner.DYNAMICALLY_TYPED),
+                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType().asRawType(), Assigner.Typing.DYNAMIC),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
                                 assigner.assign(redirectedMethod.getReturnType().asRawType(),
                                         instrumentedMethod.getReturnType().asRawType(),
-                                        Assigner.DYNAMICALLY_TYPED),
+                                        Assigner.Typing.DYNAMIC),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

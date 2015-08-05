@@ -38,15 +38,15 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
     }
 
     @Override
-    public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, boolean dynamicallyTyped) {
+    public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
         if (sourceType.isPrimitive() && targetType.isPrimitive()) {
             return PrimitiveWideningDelegate.forPrimitive(sourceType).widenTo(targetType);
         } else if (sourceType.isPrimitive() /* && !subType.isPrimitive() */) {
-            return PrimitiveBoxingDelegate.forPrimitive(sourceType).assignBoxedTo(targetType, referenceTypeAwareAssigner, dynamicallyTyped);
+            return PrimitiveBoxingDelegate.forPrimitive(sourceType).assignBoxedTo(targetType, referenceTypeAwareAssigner, typing);
         } else if (/* !superType.isPrimitive() && */ targetType.isPrimitive()) {
-            return PrimitiveUnboxingDelegate.forReferenceType(sourceType).assignUnboxedTo(targetType, referenceTypeAwareAssigner, dynamicallyTyped);
+            return PrimitiveUnboxingDelegate.forReferenceType(sourceType).assignUnboxedTo(targetType, referenceTypeAwareAssigner, typing);
         } else /* !superType.isPrimitive() && !subType.isPrimitive()) */ {
-            return referenceTypeAwareAssigner.assign(sourceType, targetType, dynamicallyTyped);
+            return referenceTypeAwareAssigner.assign(sourceType, targetType, typing);
         }
     }
 

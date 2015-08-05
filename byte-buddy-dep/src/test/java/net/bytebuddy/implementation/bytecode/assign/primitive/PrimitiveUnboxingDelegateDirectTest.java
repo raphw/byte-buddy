@@ -90,7 +90,7 @@ public class PrimitiveUnboxingDelegateDirectTest {
         when(wrapperTypeDescription.isPrimitive()).thenReturn(false);
         when(wrapperTypeDescription.represents(wrapperType)).thenReturn(true);
         when(wrapperTypeDescription.getInternalName()).thenReturn(Type.getInternalName(wrapperType));
-        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), anyBoolean())).thenReturn(stackManipulation);
+        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
         when(stackManipulation.isValid()).thenReturn(true);
         when(stackManipulation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(StackSize.ZERO.toIncreasingSize());
     }
@@ -103,7 +103,7 @@ public class PrimitiveUnboxingDelegateDirectTest {
     @Test
     public void testTrivialBoxing() throws Exception {
         StackManipulation stackManipulation = PrimitiveUnboxingDelegate.forReferenceType(wrapperTypeDescription)
-                .assignUnboxedTo(primitiveTypeDescription, chainedAssigner, false);
+                .assignUnboxedTo(primitiveTypeDescription, chainedAssigner, Assigner.Typing.STATIC);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(sizeChange));
@@ -122,7 +122,7 @@ public class PrimitiveUnboxingDelegateDirectTest {
     public void testImplicitBoxing() throws Exception {
         TypeDescription referenceTypeDescription = mock(TypeDescription.class);
         StackManipulation primitiveStackManipulation = PrimitiveUnboxingDelegate.forReferenceType(referenceTypeDescription)
-                .assignUnboxedTo(primitiveTypeDescription, chainedAssigner, true);
+                .assignUnboxedTo(primitiveTypeDescription, chainedAssigner, Assigner.Typing.DYNAMIC);
         assertThat(primitiveStackManipulation.isValid(), is(true));
         StackManipulation.Size size = primitiveStackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(sizeChange));
@@ -133,7 +133,7 @@ public class PrimitiveUnboxingDelegateDirectTest {
                 unboxingMethodDescriptor,
                 false);
         verifyNoMoreInteractions(methodVisitor);
-        verify(chainedAssigner).assign(referenceTypeDescription, new TypeDescription.ForLoadedType(wrapperType), true);
+        verify(chainedAssigner).assign(referenceTypeDescription, new TypeDescription.ForLoadedType(wrapperType), Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(chainedAssigner);
         verify(stackManipulation, atLeast(1)).isValid();
         verify(stackManipulation).apply(methodVisitor, implementationContext);

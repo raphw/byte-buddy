@@ -66,9 +66,9 @@ public class InvokeDynamic implements Implementation {
     protected final Assigner assigner;
 
     /**
-     * {@code true} if the assigner should attempt dynamically-typed assignments.
+     * Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected final boolean dynamicallyTyped;
+    protected final Assigner.Typing typing;
 
     /**
      * Creates a new invoke dynamic implementation.
@@ -78,20 +78,20 @@ public class InvokeDynamic implements Implementation {
      * @param invocationProvider The target provided that identifies the method to be bootstrapped.
      * @param terminationHandler A handler that handles the method return.
      * @param assigner           The assigner to be used.
-     * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+     * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
     protected InvokeDynamic(MethodDescription.InDefinedShape bootstrapMethod,
                             List<?> handleArguments,
                             InvocationProvider invocationProvider,
                             TerminationHandler terminationHandler,
                             Assigner assigner,
-                            boolean dynamicallyTyped) {
+                            Assigner.Typing typing) {
         this.bootstrapMethod = bootstrapMethod;
         this.handleArguments = handleArguments;
         this.invocationProvider = invocationProvider;
         this.terminationHandler = terminationHandler;
         this.assigner = assigner;
-        this.dynamicallyTyped = dynamicallyTyped;
+        this.typing = typing;
     }
 
     /**
@@ -235,7 +235,7 @@ public class InvokeDynamic implements Implementation {
                 new InvocationProvider.Default(),
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 Assigner.DEFAULT,
-                Assigner.STATICALLY_TYPED);
+                Assigner.Typing.STATIC);
     }
 
     /**
@@ -255,7 +255,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -275,7 +275,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -295,7 +295,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -315,7 +315,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -335,7 +335,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -355,7 +355,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -375,7 +375,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -395,7 +395,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -419,7 +419,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -437,7 +437,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped,
+                typing,
                 nonNull(value));
     }
 
@@ -459,7 +459,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -480,7 +480,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -501,7 +501,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -522,7 +522,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -554,7 +554,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -576,7 +576,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -595,7 +595,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider,
                 terminationHandler,
                 assigner,
-                dynamicallyTyped,
+                typing,
                 index);
     }
 
@@ -627,7 +627,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -641,7 +641,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArgument(InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.INSTANCE),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -656,7 +656,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArgument(InvocationProvider.ArgumentProvider.ForInterceptedMethodInstanceAndParameters.INSTANCE),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -687,7 +687,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForInstanceField(nonNull(fieldName), nonNull(fieldType))),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -707,24 +707,24 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider.appendArguments(argumentProviders),
                 terminationHandler,
                 assigner,
-                dynamicallyTyped);
+                typing);
     }
 
     /**
      * Instructs this implementation to use the provided assigner and decides if the assigner should apply
      * dynamic typing.
      *
-     * @param assigner         The assigner to use.
-     * @param dynamicallyTyped {@code true} if the assigner should attempt dynamic typing.
+     * @param assigner The assigner to use.
+     * @param typing   {@code true} if the assigner should attempt dynamic typing.
      * @return The invoke dynamic instruction where the given assigner and dynamic-typing directive are applied.
      */
-    public InvokeDynamic withAssigner(Assigner assigner, boolean dynamicallyTyped) {
+    public InvokeDynamic withAssigner(Assigner assigner, Assigner.Typing typing) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
                 invocationProvider,
                 terminationHandler,
                 nonNull(assigner),
-                dynamicallyTyped);
+                typing);
     }
 
     /**
@@ -740,7 +740,7 @@ public class InvokeDynamic implements Implementation {
                 invocationProvider,
                 TerminationHandler.ForChainedInvocation.INSTANCE,
                 assigner,
-                dynamicallyTyped),
+                typing),
                 nonNull(implementation));
     }
 
@@ -768,7 +768,7 @@ public class InvokeDynamic implements Implementation {
         if (this == other) return true;
         if (!(other instanceof InvokeDynamic)) return false;
         InvokeDynamic that = (InvokeDynamic) other;
-        return dynamicallyTyped == that.dynamicallyTyped
+        return typing == that.typing
                 && assigner.equals(that.assigner)
                 && bootstrapMethod.equals(that.bootstrapMethod)
                 && handleArguments.equals(that.handleArguments)
@@ -783,7 +783,7 @@ public class InvokeDynamic implements Implementation {
         result = 31 * result + getInvocationProvider().hashCode();
         result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + assigner.hashCode();
-        result = 31 * result + (dynamicallyTyped ? 1 : 0);
+        result = 31 * result + typing.hashCode();
         return result;
     }
 
@@ -795,7 +795,7 @@ public class InvokeDynamic implements Implementation {
                 ", invocationProvider=" + invocationProvider +
                 ", terminationHandler=" + terminationHandler +
                 ", assigner=" + assigner +
-                ", dynamicallyTyped=" + dynamicallyTyped +
+                ", typing=" + typing +
                 '}';
     }
 
@@ -870,11 +870,10 @@ public class InvokeDynamic implements Implementation {
              *
              * @param instrumentedType The instrumented type.
              * @param assigner         The assigner to be used.
-             * @param dynamicallyTyped {@code true} if the assigner should attempt to assign objects by their
-             *                         runtime type.
+             * @param typing           Indicates if dynamic type castings should be attempted for incompatible assignments.
              * @return The resolved target.
              */
-            Resolved resolve(TypeDescription instrumentedType, Assigner assigner, boolean dynamicallyTyped);
+            Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing);
 
             /**
              * Represents a resolved {@link net.bytebuddy.implementation.InvokeDynamic.InvocationProvider.Target}.
@@ -1025,7 +1024,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType, Assigner assigner, boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                     return this;
                 }
 
@@ -1083,14 +1082,13 @@ public class InvokeDynamic implements Implementation {
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
              * @param assigner           The assigner to be used.
-             * @param dynamicallyTyped   {@code true} if the assigner should attempt to resolve an assigned type
-             *                           at runtime.
+             * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
              * @return A resolved version of this argument provider.
              */
             Resolved resolve(TypeDescription instrumentedType,
                              MethodDescription instrumentedMethod,
                              Assigner assigner,
-                             boolean dynamicallyTyped);
+                             Assigner.Typing typing);
 
             /**
              * Prepares the instrumented type.
@@ -1112,10 +1110,7 @@ public class InvokeDynamic implements Implementation {
                 INSTANCE;
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
                             instrumentedMethod.isStatic()
                                     ? instrumentedMethod.getParameters().asTypeList().asRawTypes()
@@ -1144,10 +1139,7 @@ public class InvokeDynamic implements Implementation {
                 INSTANCE;
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()),
                             instrumentedMethod.getParameters().asTypeList().asRawTypes());
                 }
@@ -1342,12 +1334,9 @@ public class InvokeDynamic implements Implementation {
                     }
 
                     @Override
-                    public Resolved resolve(TypeDescription instrumentedType,
-                                            MethodDescription instrumentedMethod,
-                                            Assigner assigner,
-                                            boolean dynamicallyTyped) {
+                    public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                         return new Resolved.Simple(new StackManipulation.Compound(stackManipulation,
-                                assigner.assign(primitiveType, wrapperType, dynamicallyTyped)), wrapperType);
+                                assigner.assign(primitiveType, wrapperType, typing)), wrapperType);
                     }
 
                     @Override
@@ -1498,10 +1487,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     if (instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot get this instance from static method: " + instrumentedMethod);
                     } else if (!instrumentedType.isAssignableTo(typeDescription)) {
@@ -1587,12 +1573,9 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
-                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(), typeDescription, dynamicallyTyped);
+                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(), typeDescription, typing);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + typeDescription);
                     }
@@ -1661,16 +1644,12 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     if (instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot access " + fieldName + " from " + instrumentedMethod);
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(0),
-                            FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter())
-                            , fieldType);
+                            FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter()), fieldType);
                 }
 
                 @Override
@@ -1722,10 +1701,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     FieldDescription fieldDescription = locate(instrumentedType);
                     if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
@@ -1798,10 +1774,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     ParameterList<?> parameters = instrumentedMethod.getParameters();
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
@@ -1861,17 +1834,12 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     ParameterList<?> parameters = instrumentedMethod.getParameters();
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType().asRawType(),
-                            typeDescription,
-                            dynamicallyTyped);
+                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType().asRawType(), typeDescription, typing);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalArgumentException("Cannot assign " + parameters.get(index) + " to " + typeDescription);
                     }
@@ -1925,10 +1893,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(boolean.class));
                 }
 
@@ -1976,10 +1941,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(byte.class));
                 }
 
@@ -2027,10 +1989,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(short.class));
                 }
 
@@ -2078,10 +2037,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(char.class));
                 }
 
@@ -2129,10 +2085,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(int.class));
                 }
 
@@ -2180,10 +2133,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(LongConstant.forValue(value), new TypeDescription.ForLoadedType(long.class));
                 }
 
@@ -2231,10 +2181,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(FloatConstant.forValue(value), new TypeDescription.ForLoadedType(float.class));
                 }
 
@@ -2282,10 +2229,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(DoubleConstant.forValue(value), new TypeDescription.ForLoadedType(double.class));
                 }
 
@@ -2334,10 +2278,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(new TextConstant(value), TypeDescription.STRING);
                 }
 
@@ -2385,10 +2326,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(ClassConstant.of(typeDescription), TypeDescription.CLASS);
                 }
 
@@ -2436,10 +2374,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType());
                 }
 
@@ -2487,10 +2422,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(NullConstant.INSTANCE, typeDescription);
                 }
 
@@ -2538,10 +2470,7 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public Resolved resolve(TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(javaInstance.asStackManipulation(), javaInstance.getInstanceType());
                 }
 
@@ -2894,17 +2823,12 @@ public class InvokeDynamic implements Implementation {
                 }
 
                 @Override
-                public InvocationProvider.Target.Resolved resolve(TypeDescription instrumentedType,
-                                                                  Assigner assigner,
-                                                                  boolean dynamicallyTyped) {
+                public InvocationProvider.Target.Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                     StackManipulation[] stackManipulation = new StackManipulation[argumentProviders.size()];
                     List<TypeDescription> parameterTypes = new LinkedList<TypeDescription>();
                     int index = 0;
                     for (ArgumentProvider argumentProvider : argumentProviders) {
-                        ArgumentProvider.Resolved resolved = argumentProvider.resolve(instrumentedType,
-                                instrumentedMethod,
-                                assigner,
-                                dynamicallyTyped);
+                        ArgumentProvider.Resolved resolved = argumentProvider.resolve(instrumentedType, instrumentedMethod, assigner, typing);
                         parameterTypes.addAll(resolved.getLoadedTypes());
                         stackManipulation[index++] = resolved.getLoadInstruction();
                     }
@@ -2959,13 +2883,13 @@ public class InvokeDynamic implements Implementation {
          * @param interceptedMethod The method being intercepted.
          * @param returnType        The return type of the instrumented method.
          * @param assigner          The assigner to use.
-         * @param dynamicallyTyped  {@code true} if the assigner should attempt to apply dynamic type conversion.
+         * @param typing            Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return A stack manipulation that handles the method return.
          */
         StackManipulation resolve(MethodDescription interceptedMethod,
                                   TypeDescription returnType,
                                   Assigner assigner,
-                                  boolean dynamicallyTyped);
+                                  Assigner.Typing typing);
 
         /**
          * Returns the return value of the dynamic invocation from the intercepted method.
@@ -2978,11 +2902,8 @@ public class InvokeDynamic implements Implementation {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription interceptedMethod,
-                                             TypeDescription returnType,
-                                             Assigner assigner,
-                                             boolean dynamicallyTyped) {
-                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType().asRawType(), dynamicallyTyped);
+            public StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType().asRawType(), typing);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
                 }
@@ -3007,10 +2928,7 @@ public class InvokeDynamic implements Implementation {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription interceptedMethod,
-                                             TypeDescription returnType,
-                                             Assigner assigner,
-                                             boolean dynamicallyTyped) {
+            public StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
                 return Removal.pop(interceptedMethod.isConstructor()
                         ? interceptedMethod.getDeclaringType().asRawType()
                         : interceptedMethod.getReturnType().asRawType());
@@ -3036,15 +2954,15 @@ public class InvokeDynamic implements Implementation {
          * @param invocationProvider The target provided that identifies the method to be bootstrapped.
          * @param terminationHandler A handler that handles the method return.
          * @param assigner           The assigner to be used.
-         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         public AbstractDelegator(MethodDescription.InDefinedShape bootstrapMethod,
                                  List<?> handleArguments,
                                  InvocationProvider invocationProvider,
                                  TerminationHandler terminationHandler,
                                  Assigner assigner,
-                                 boolean dynamicallyTyped) {
-            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, dynamicallyTyped);
+                                 Assigner.Typing typing) {
+            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, typing);
         }
 
         /**
@@ -3189,20 +3107,20 @@ public class InvokeDynamic implements Implementation {
          * @param invocationProvider The target provided that identifies the method to be bootstrapped.
          * @param terminationHandler A handler that handles the method return.
          * @param assigner           The assigner to be used.
-         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected WithImplicitArguments(MethodDescription.InDefinedShape bootstrapMethod,
                                         List<?> handleArguments,
                                         InvocationProvider invocationProvider,
                                         TerminationHandler terminationHandler,
                                         Assigner assigner,
-                                        boolean dynamicallyTyped) {
+                                        Assigner.Typing typing) {
             super(bootstrapMethod,
                     handleArguments,
                     invocationProvider,
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         /**
@@ -3216,7 +3134,7 @@ public class InvokeDynamic implements Implementation {
                     invocationProvider.withoutArguments(),
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         @Override
@@ -3225,13 +3143,13 @@ public class InvokeDynamic implements Implementation {
         }
 
         @Override
-        public WithImplicitArguments withAssigner(Assigner assigner, boolean dynamicallyTyped) {
+        public WithImplicitArguments withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new WithImplicitArguments(bootstrapMethod,
                     handleArguments,
                     invocationProvider,
                     terminationHandler,
                     nonNull(assigner),
-                    dynamicallyTyped);
+                    nonNull(typing));
         }
 
         @Override
@@ -3242,7 +3160,7 @@ public class InvokeDynamic implements Implementation {
                     ", invocationProvider=" + invocationProvider +
                     ", terminationHandler=" + terminationHandler +
                     ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    ", typing=" + typing +
                     '}';
         }
     }
@@ -3262,20 +3180,20 @@ public class InvokeDynamic implements Implementation {
          * @param invocationProvider The target provided that identifies the method to be bootstrapped.
          * @param terminationHandler A handler that handles the method return.
          * @param assigner           The assigner to be used.
-         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected WithImplicitTarget(MethodDescription.InDefinedShape bootstrapMethod,
                                      List<?> handleArguments,
                                      InvocationProvider invocationProvider,
                                      TerminationHandler terminationHandler,
                                      Assigner assigner,
-                                     boolean dynamicallyTyped) {
+                                     Assigner.Typing typing) {
             super(bootstrapMethod,
                     handleArguments,
                     invocationProvider,
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         /**
@@ -3304,7 +3222,7 @@ public class InvokeDynamic implements Implementation {
                     invocationProvider.withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         /**
@@ -3319,7 +3237,7 @@ public class InvokeDynamic implements Implementation {
                     invocationProvider.withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName))),
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         /**
@@ -3354,7 +3272,7 @@ public class InvokeDynamic implements Implementation {
                             .withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         @Override
@@ -3365,7 +3283,7 @@ public class InvokeDynamic implements Implementation {
                     ", invocationProvider=" + invocationProvider +
                     ", terminationHandler=" + terminationHandler +
                     ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    ", typing=" + typing +
                     '}';
         }
     }
@@ -3393,7 +3311,7 @@ public class InvokeDynamic implements Implementation {
          * @param invocationProvider The target provided that identifies the method to be bootstrapped.
          * @param terminationHandler A handler that handles the method return.
          * @param assigner           The assigner to be used.
-         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param value              The value that is supplied as the next argument to the bootstrapped method.
          */
         protected WithImplicitFieldType(MethodDescription.InDefinedShape bootstrapMethod,
@@ -3401,9 +3319,9 @@ public class InvokeDynamic implements Implementation {
                                         InvocationProvider invocationProvider,
                                         TerminationHandler terminationHandler,
                                         Assigner assigner,
-                                        boolean dynamicallyTyped,
+                                        Assigner.Typing typing,
                                         Object value) {
-            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, dynamicallyTyped);
+            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, typing);
             this.value = value;
             this.argumentProvider = InvocationProvider.ArgumentProvider.ForStaticField.of(value);
         }
@@ -3432,7 +3350,7 @@ public class InvokeDynamic implements Implementation {
                     invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForStaticField(value, nonNull(typeDescription))),
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         @Override
@@ -3442,12 +3360,12 @@ public class InvokeDynamic implements Implementation {
                     invocationProvider.appendArgument(argumentProvider),
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         @Override
-        public InvokeDynamic withAssigner(Assigner assigner, boolean dynamicallyTyped) {
-            return materialize().withAssigner(assigner, dynamicallyTyped);
+        public InvokeDynamic withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return materialize().withAssigner(assigner, typing);
         }
 
         @Override
@@ -3478,7 +3396,7 @@ public class InvokeDynamic implements Implementation {
                     ", invocationProvider=" + invocationProvider +
                     ", terminationHandler=" + terminationHandler +
                     ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    ", typing=" + typing +
                     ", value=" + value +
                     '}';
         }
@@ -3502,7 +3420,7 @@ public class InvokeDynamic implements Implementation {
          * @param invocationProvider The target provided that identifies the method to be bootstrapped.
          * @param terminationHandler A handler that handles the method return.
          * @param assigner           The assigner to be used.
-         * @param dynamicallyTyped   {@code true} if the assigner should attempt dynamically-typed assignments.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param index              The index of of the argument to supply to the bootstapped method.
          */
         protected WithImplicitArgumentType(MethodDescription.InDefinedShape bootstrapMethod,
@@ -3510,9 +3428,9 @@ public class InvokeDynamic implements Implementation {
                                            InvocationProvider invocationProvider,
                                            TerminationHandler terminationHandler,
                                            Assigner assigner,
-                                           boolean dynamicallyTyped,
+                                           Assigner.Typing typing,
                                            int index) {
-            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, dynamicallyTyped);
+            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, typing);
             this.index = index;
         }
 
@@ -3541,7 +3459,7 @@ public class InvokeDynamic implements Implementation {
                             .ForExplicitTypedMethodParameter(index, nonNull(typeDescription))),
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         @Override
@@ -3551,12 +3469,12 @@ public class InvokeDynamic implements Implementation {
                     invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForMethodParameter(index)),
                     terminationHandler,
                     assigner,
-                    dynamicallyTyped);
+                    typing);
         }
 
         @Override
-        public InvokeDynamic withAssigner(Assigner assigner, boolean dynamicallyTyped) {
-            return materialize().withAssigner(assigner, dynamicallyTyped);
+        public InvokeDynamic withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return materialize().withAssigner(assigner, typing);
         }
 
         @Override
@@ -3587,7 +3505,7 @@ public class InvokeDynamic implements Implementation {
                     ", invocationProvider=" + invocationProvider +
                     ", terminationHandler=" + terminationHandler +
                     ", assigner=" + assigner +
-                    ", dynamicallyTyped=" + dynamicallyTyped +
+                    ", typing=" + typing +
                     ", index=" + index +
                     '}';
         }
@@ -3613,11 +3531,8 @@ public class InvokeDynamic implements Implementation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Context implementationContext,
-                          MethodDescription instrumentedMethod) {
-            InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod)
-                    .resolve(instrumentedType, assigner, dynamicallyTyped);
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+            InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod).resolve(instrumentedType, assigner, typing);
             StackManipulation.Size size = new StackManipulation.Compound(
                     target.getStackManipulation(),
                     MethodInvocation.invoke(bootstrapMethod)
@@ -3625,7 +3540,7 @@ public class InvokeDynamic implements Implementation {
                                     target.getReturnType(),
                                     target.getParameterTypes(),
                                     handleArguments),
-                    terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, dynamicallyTyped)
+                    terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, typing)
             ).apply(methodVisitor, implementationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
