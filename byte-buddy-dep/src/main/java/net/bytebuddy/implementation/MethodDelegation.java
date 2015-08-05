@@ -131,13 +131,16 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * If a target methods has a higher number of total parameters that were successfully bound, the method with
  * the higher number will be considered as the better delegation target.</li>
  * </ol>
+ * <p>
  * Additionally, if a method is annotated by
  * {@link net.bytebuddy.implementation.bind.annotation.IgnoreForBinding},
  * it is never considered as a target for a method delegation.
- * <p/>
+ * </p>
+ * <p>
  * <b>Important</b>: For invoking a method on another instance, use the {@link Forwarding} implementation. A method delegation
  * intends to bind a interceptor class and its resolution algorithm will not necessarily yield a delegation to the intercepted
  * method.
+ * </p>
  *
  * @see Forwarding
  */
