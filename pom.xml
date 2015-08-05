@@ -70,8 +70,8 @@
         <version.plugin.release>2.5.1</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
         <version.plugin.pitest>1.1.6</version.plugin.pitest>
-        <!-- Version 2.7 fails on Travis. -->
-        <version.plugin.cobertura>2.6</version.plugin.cobertura>
+        <!-- Versions 2.6 and 2.7 fail on Travis. -->
+        <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
         <version.plugin.coveralls>3.1.0</version.plugin.coveralls>
         <!-- Subsequent versions of checkstyle require Java 7. -->
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
