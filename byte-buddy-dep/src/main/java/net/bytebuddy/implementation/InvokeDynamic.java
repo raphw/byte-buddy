@@ -1116,7 +1116,7 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
+                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
                             instrumentedMethod.isStatic()
                                     ? instrumentedMethod.getParameters().asTypeList().asRawTypes()
                                     : join(instrumentedMethod.getDeclaringType().asRawType(), instrumentedMethod.getParameters().asTypeList().asRawTypes()));
@@ -1148,7 +1148,7 @@ public class InvokeDynamic implements Implementation {
                                         MethodDescription instrumentedMethod,
                                         Assigner assigner,
                                         boolean dynamicallyTyped) {
-                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod),
+                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()),
                             instrumentedMethod.getParameters().asTypeList().asRawTypes());
                 }
 

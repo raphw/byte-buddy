@@ -206,7 +206,7 @@ public class DefaultMethodCall implements Implementation {
                 throw new IllegalStateException("Cannot invoke default method on " + instrumentedMethod);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
+                    MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
                     defaultMethodInvocation,
                     MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
             ).apply(methodVisitor, implementationContext);

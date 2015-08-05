@@ -319,7 +319,7 @@ public @interface Pipe {
                 return new Compound(
                         TypeCreation.forType(forwardingType),
                         Duplication.SINGLE,
-                        MethodVariableAccess.allArgumentsOf(sourceMethod),
+                        MethodVariableAccess.allArgumentsOf(sourceMethod.asDefined()),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, implementationContext);
             }

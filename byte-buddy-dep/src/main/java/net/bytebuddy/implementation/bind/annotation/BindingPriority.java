@@ -53,7 +53,9 @@ public @interface BindingPriority {
          * @return The factual priority of the method under investigation.
          */
         private static double resolve(AnnotationDescription.Loadable<BindingPriority> bindingPriority) {
-            return bindingPriority == null ? DEFAULT : bindingPriority.loadSilent().value();
+            return bindingPriority == null
+                    ? BindingPriority.DEFAULT
+                    : bindingPriority.loadSilent().value();
         }
 
         @Override

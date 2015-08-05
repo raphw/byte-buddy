@@ -444,7 +444,7 @@ public class MethodCallProxy implements AuxiliaryType {
             return new Compound(
                     TypeCreation.forType(auxiliaryType),
                     Duplication.SINGLE,
-                    MethodVariableAccess.allArgumentsOf(specialMethodInvocation.getMethodDescription()).prependThisReference(),
+                    MethodVariableAccess.allArgumentsOf(specialMethodInvocation.getMethodDescription().asDefined()).prependThisReference(),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
             ).apply(methodVisitor, implementationContext);
         }

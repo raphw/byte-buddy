@@ -804,7 +804,7 @@ public interface TypeWriter<T> {
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new ByteCodeAppender.Simple(
-                                MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
+                                MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
                                 MethodInvocation.invoke(bridgeTarget).special(superType),
                                 MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
@@ -1017,8 +1017,8 @@ public interface TypeWriter<T> {
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
                     delegate.apply(classVisitor, implementationContext);
                     for (MethodDescription.TypeToken bridgeType : bridgeTypes) {
-                        MethodDescription bridgeMethod = new AccessorBridge(bridgeTarget, bridgeType, instrumentedType);
-                        MethodDescription bridgeTarget = new BridgeTarget(this.bridgeTarget, instrumentedType);
+                        MethodDescription.InDefinedShape bridgeMethod = new AccessorBridge(bridgeTarget, bridgeType, instrumentedType);
+                        MethodDescription.InDefinedShape bridgeTarget = new BridgeTarget(this.bridgeTarget, instrumentedType);
                         MethodVisitor methodVisitor = classVisitor.visitMethod(bridgeMethod.getAdjustedModifiers(true),
                                 bridgeMethod.getInternalName(),
                                 bridgeMethod.getDescriptor(),

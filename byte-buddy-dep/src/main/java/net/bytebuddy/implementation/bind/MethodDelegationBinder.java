@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bind.annotation.BindingPriority;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
@@ -598,6 +599,15 @@ public interface MethodDelegationBinder {
      * to two different target methods in order to identify a dominating binding.
      */
     interface AmbiguityResolver {
+
+        /**
+         * The default ambiguity resolver to use.
+         */
+        AmbiguityResolver DEFAULT = new MethodDelegationBinder.AmbiguityResolver.Chain(BindingPriority.Resolver.INSTANCE,
+                DeclaringTypeResolver.INSTANCE,
+                ArgumentTypeResolver.INSTANCE,
+                MethodNameEqualityResolver.INSTANCE,
+                ParameterLengthResolver.INSTANCE);
 
         /**
          * Attempts to resolve to conflicting bindings.

@@ -1944,7 +1944,7 @@ public class ByteBuddy {
         public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
                                                  ClassFileLocator classFileLocator,
                                                  MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
-            return super.rebase(levelType, classFileLocator, methodNameTransformer);
+            return materialize().rebase(levelType, classFileLocator, methodNameTransformer);
         }
 
         @Override
@@ -2089,17 +2089,17 @@ public class ByteBuddy {
 
         @Override
         public DynamicType.Builder<?> makePackage(String name) {
-            return super.makePackage(name);
+            return materialize().makePackage(name);
         }
 
         @Override
         public DynamicType.Builder<?> rebase(Package aPackage, ClassFileLocator classFileLocator) {
-            return super.rebase(aPackage, classFileLocator);
+            return materialize().rebase(aPackage, classFileLocator);
         }
 
         @Override
         public DynamicType.Builder<?> rebase(PackageDescription packageDescription, ClassFileLocator classFileLocator) {
-            return super.rebase(packageDescription, classFileLocator);
+            return materialize().rebase(packageDescription, classFileLocator);
         }
 
         @Override

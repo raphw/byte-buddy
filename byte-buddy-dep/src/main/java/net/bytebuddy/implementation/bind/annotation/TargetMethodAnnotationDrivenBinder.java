@@ -138,6 +138,22 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     public interface ParameterBinder<T extends Annotation> {
 
         /**
+         * The default parameter binders to be used.
+         */
+        List<ParameterBinder<?>> DEFAULTS = Collections.unmodifiableList(Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(
+                Argument.Binder.INSTANCE,
+                AllArguments.Binder.INSTANCE,
+                Origin.Binder.INSTANCE,
+                This.Binder.INSTANCE,
+                Super.Binder.INSTANCE,
+                Default.Binder.INSTANCE,
+                SuperCall.Binder.INSTANCE,
+                DefaultCall.Binder.INSTANCE,
+                FieldValue.Binder.INSTANCE,
+                StubValue.Binder.INSTANCE,
+                Empty.Binder.INSTANCE));
+
+        /**
          * The annotation type that is handled by this parameter binder.
          *
          * @return The {@link java.lang.annotation.Annotation#annotationType()} handled by this parameter binder.

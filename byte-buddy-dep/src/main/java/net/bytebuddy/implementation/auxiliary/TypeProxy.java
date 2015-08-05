@@ -864,11 +864,11 @@ public class TypeProxy implements AuxiliaryType {
 
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                    MethodDescription proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
+                    MethodDescription.InDefinedShape proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
                     return new StackManipulation.Compound(
                             MethodVariableAccess.REFERENCE.loadOffset(0),
                             fieldLoadingInstruction,
-                            MethodVariableAccess.allArgumentsOf(instrumentedMethod).asBridgeOf(proxyMethod),
+                            MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).asBridgeOf(proxyMethod),
                             MethodInvocation.invoke(proxyMethod),
                             MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
                     ).apply(methodVisitor, implementationContext);

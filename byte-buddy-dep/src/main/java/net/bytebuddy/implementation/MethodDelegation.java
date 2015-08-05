@@ -237,10 +237,10 @@ public class MethodDelegation implements Implementation {
             throw new IllegalArgumentException("Cannot delegate to primitive " + typeDescription);
         }
         return new MethodDelegation(ImplementationDelegate.ForStaticMethod.INSTANCE,
-                defaultParameterBinders(),
-                defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
-                defaultAmbiguityResolver(),
+                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
                 typeDescription.getDeclaredMethods().filter(isStatic().and(not(isPrivate()))));
     }
@@ -284,10 +284,10 @@ public class MethodDelegation implements Implementation {
      */
     public static MethodDelegation to(Object delegate, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(new ImplementationDelegate.ForStaticField(nonNull(delegate)),
-                defaultParameterBinders(),
-                defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
-                defaultAmbiguityResolver(),
+                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
                 methodGraphCompiler.compile(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .listNodes()
@@ -337,10 +337,10 @@ public class MethodDelegation implements Implementation {
     public static MethodDelegation to(Object delegate, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(
                 new ImplementationDelegate.ForStaticField(nonNull(delegate), isValidIdentifier(fieldName)),
-                defaultParameterBinders(),
-                defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
-                defaultAmbiguityResolver(),
+                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
                 methodGraphCompiler.compile(new TypeDescription.ForLoadedType(delegate.getClass()))
                         .listNodes()
@@ -445,10 +445,10 @@ public class MethodDelegation implements Implementation {
     public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(
                 new ImplementationDelegate.ForInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName)),
-                defaultParameterBinders(),
-                defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
-                defaultAmbiguityResolver(),
+                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
                 methodGraphCompiler.compile(typeDescription)
                         .listNodes()
@@ -476,53 +476,12 @@ public class MethodDelegation implements Implementation {
      */
     public static MethodDelegation toConstructor(TypeDescription typeDescription) {
         return new MethodDelegation(new ImplementationDelegate.ForConstruction(nonNull(typeDescription)),
-                defaultParameterBinders(),
-                defaultDefaultsProvider(),
+                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
-                defaultAmbiguityResolver(),
+                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
                 typeDescription.getDeclaredMethods().filter(isConstructor()));
-    }
-
-    /**
-     * Returns the default parameter binders to be used if not explicitly specified.
-     *
-     * @return The default parameter binders to be used if not explicitly specified.
-     */
-    private static List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> defaultParameterBinders() {
-        return Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(Argument.Binder.INSTANCE,
-                AllArguments.Binder.INSTANCE,
-                Origin.Binder.INSTANCE,
-                This.Binder.INSTANCE,
-                Super.Binder.INSTANCE,
-                Default.Binder.INSTANCE,
-                SuperCall.Binder.INSTANCE,
-                DefaultCall.Binder.INSTANCE,
-                FieldValue.Binder.INSTANCE,
-                StubValue.Binder.INSTANCE,
-                Empty.Binder.INSTANCE);
-    }
-
-    /**
-     * Returns the defaults provider that is to be used if no other is specified explicitly.
-     *
-     * @return The defaults provider that is to be used if no other is specified explicitly.
-     */
-    private static TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultDefaultsProvider() {
-        return Argument.NextUnboundAsDefaultsProvider.INSTANCE;
-    }
-
-    /**
-     * Returns the ambiguity resolver that is to be used if no other is specified explicitly.
-     *
-     * @return The ambiguity resolver that is to be used if no other is specified explicitly.
-     */
-    private static MethodDelegationBinder.AmbiguityResolver defaultAmbiguityResolver() {
-        return new MethodDelegationBinder.AmbiguityResolver.Chain(BindingPriority.Resolver.INSTANCE,
-                DeclaringTypeResolver.INSTANCE,
-                ArgumentTypeResolver.INSTANCE,
-                MethodNameEqualityResolver.INSTANCE,
-                ParameterLengthResolver.INSTANCE);
     }
 
     /**

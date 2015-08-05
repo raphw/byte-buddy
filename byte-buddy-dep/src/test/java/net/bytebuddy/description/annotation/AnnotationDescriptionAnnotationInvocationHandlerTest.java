@@ -19,7 +19,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class AnnotationDescriptionAnnotationInvocationHandler {
+public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -98,7 +98,7 @@ public class AnnotationDescriptionAnnotationInvocationHandler {
     public void testAnnotationTypeIncompatible() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
                 new AnnotationDescription.AnnotationValue.ForEnumeration.IncompatibleRuntimeType(Foo.class));
-        Object foo = AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
                 Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);

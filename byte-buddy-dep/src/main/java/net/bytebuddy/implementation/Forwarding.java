@@ -337,7 +337,7 @@ public class Forwarding implements Implementation {
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     delegateLoadingInstruction,
-                    MethodVariableAccess.allArgumentsOf(instrumentedMethod),
+                    MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()),
                     MethodInvocation.invoke(instrumentedMethod).virtual(fieldType),
                     MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
             ).apply(methodVisitor, implementationContext);

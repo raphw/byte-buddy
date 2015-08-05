@@ -278,11 +278,11 @@ public class ElementMatchersTest {
         Constructor<?> constructor = GenericConstructorType.class.getDeclaredConstructor(Exception.class);
         MethodDescription methodDescription = new TypeDescription.ForLoadedType(GenericConstructorType.Inner.class).getSuperType()
                 .getDeclaredMethods().filter(isConstructor()).getOnly();
-        assertThat(ElementMatchers.anyOf(constructor).matches(methodDescription), is(true));
-        assertThat(ElementMatchers.definedMethod(ElementMatchers.anyOf(methodDescription.asDefined())).matches(methodDescription), is(true));
-        assertThat(ElementMatchers.anyOf(methodDescription.asDefined()).matches(methodDescription.asDefined()), is(true));
-        assertThat(ElementMatchers.anyOf(methodDescription.asDefined()).matches(methodDescription), is(false));
-        assertThat(ElementMatchers.anyOf(methodDescription).matches(methodDescription.asDefined()), is(false));
+        assertThat(ElementMatchers.noneOf(constructor).matches(methodDescription), is(false));
+        assertThat(ElementMatchers.definedMethod(ElementMatchers.noneOf(methodDescription.asDefined())).matches(methodDescription), is(false));
+        assertThat(ElementMatchers.noneOf(methodDescription.asDefined()).matches(methodDescription.asDefined()), is(false));
+        assertThat(ElementMatchers.noneOf(methodDescription.asDefined()).matches(methodDescription), is(true));
+        assertThat(ElementMatchers.noneOf(methodDescription).matches(methodDescription.asDefined()), is(true));
     }
 
     @Test

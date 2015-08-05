@@ -568,7 +568,7 @@ public @interface Morph {
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadOffset(0),
                                 MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
-                                MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
+                                MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
                                 FieldAccess.forField(fieldDescription).putter(),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext);
