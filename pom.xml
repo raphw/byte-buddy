@@ -71,7 +71,7 @@
         <version.plugin.pitest>1.1.6</version.plugin.pitest>
         <version.plugin.cobertura>2.7</version.plugin.cobertura>
         <version.plugin.coveralls>3.1.0</version.plugin.coveralls>
-        <version.plugin.checkstyle>2.16</version.plugin.checkstyle>
+        <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
 
