@@ -57,7 +57,8 @@
         <version.junit>4.12</version.junit>
         <version.mockito>1.10.19</version.mockito>
         <version.plugin.bundle>2.5.4</version.plugin.bundle>
-        <version.plugin.compiler>3.3</version.plugin.compiler>
+        <!-- Compiler error for versions 3.2, 3.3. -->
+        <version.plugin.compiler>3.1</version.plugin.compiler>
         <version.plugin.install>2.5.2</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.javadoc>2.10.3</version.plugin.javadoc>
@@ -71,6 +72,7 @@
         <version.plugin.pitest>1.1.6</version.plugin.pitest>
         <version.plugin.cobertura>2.7</version.plugin.cobertura>
         <version.plugin.coveralls>3.1.0</version.plugin.coveralls>
+        <!-- Subsequent versions of checkstyle require Java 7. -->
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
