@@ -167,6 +167,24 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return compareTo(ClassFileVersion.JAVA_V8) > -1;
     }
 
+    /**
+     * Checks if this class file version supports annotation types.
+     *
+     * @return {@code true} if this class file version supports annotation types.
+     */
+    public boolean isSupportsAnnotations() {
+        return compareTo(ClassFileVersion.JAVA_V5) > -1;
+    }
+
+    /**
+     * Checks if this class file version supports generic types.
+     *
+     * @return {@code true} if this class file version supports generic types.
+     */
+    public boolean isSupportsGenerics() {
+        return compareTo(ClassFileVersion.JAVA_V5) > -1;
+    }
+
     @Override
     public int compareTo(ClassFileVersion other) {
         return Integer.signum(getMajorVersion() == other.getMajorVersion()
