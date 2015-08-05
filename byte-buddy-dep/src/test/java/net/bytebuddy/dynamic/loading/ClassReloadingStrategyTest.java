@@ -102,6 +102,13 @@ public class ClassReloadingStrategyTest {
         assertThat(foo.foo(), is(FOO));
     }
 
+    @Test
+    public void testRetransformationFunctional() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
+        assertThat(new ClassReloadingStrategy(instrumentation), notNullValue(ClassReloadingStrategy.class));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testNonCompatible() throws Exception {
         new ClassReloadingStrategy(mock(Instrumentation.class));

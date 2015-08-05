@@ -57,14 +57,14 @@
         <version.junit>4.12</version.junit>
         <version.mockito>1.10.19</version.mockito>
         <version.plugin.bundle>2.5.4</version.plugin.bundle>
-        <version.plugin.compiler>3.1</version.plugin.compiler>
-        <version.plugin.install>2.5.1</version.plugin.install>
+        <version.plugin.compiler>3.3</version.plugin.compiler>
+        <version.plugin.install>2.5.2</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.javadoc>2.10.3</version.plugin.javadoc>
-        <version.plugin.source>2.2.1</version.plugin.source>
+        <version.plugin.source>2.4</version.plugin.source>
         <version.plugin.shade>2.2</version.plugin.shade>
-        <version.plugin.gpg>1.5</version.plugin.gpg>
-        <version.plugin.jxr>2.4</version.plugin.jxr>
+        <version.plugin.gpg>1.6</version.plugin.gpg>
+        <version.plugin.jxr>2.5</version.plugin.jxr>
         <version.plugin.jar>2.6</version.plugin.jar>
         <version.plugin.release>2.5.1</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
@@ -72,7 +72,7 @@
         <!-- Newer versions of Cobertura raise problems with the instrumentation. -->
         <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
         <version.plugin.coveralls>3.0.1</version.plugin.coveralls>
-        <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
+        <version.plugin.checkstyle>2.16</version.plugin.checkstyle>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
 
