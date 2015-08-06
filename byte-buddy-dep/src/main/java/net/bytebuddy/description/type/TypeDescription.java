@@ -716,7 +716,9 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             @Override
             public String getSimpleName() {
                 int simpleNameIndex = getInternalName().lastIndexOf('$');
-                simpleNameIndex = simpleNameIndex == -1 ? getInternalName().lastIndexOf('/') : simpleNameIndex;
+                simpleNameIndex = simpleNameIndex == -1
+                        ? getInternalName().lastIndexOf('/')
+                        : simpleNameIndex;
                 return simpleNameIndex == -1 ? getInternalName() : getInternalName().substring(simpleNameIndex + 1);
             }
 

@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
+import net.bytebuddy.dynamic.loading.PackageDefiner;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.Implementation;
@@ -960,8 +961,8 @@ public interface AgentBuilder {
                         .loadClass(BYTE_BUDDY_AGENT_TYPE)
                         .getDeclaredMethod(GET_INSTRUMENTATION_METHOD)
                         .invoke(STATIC_METHOD));
-            } catch (Exception e) {
-                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", e);
+            } catch (Exception exception) {
+                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
             }
         }
 
@@ -1310,8 +1311,8 @@ public interface AgentBuilder {
                                         .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
                                 invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
                                         .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
-                            } catch (Exception e) {
-                                throw new IllegalStateException("Cannot create type initialization accessor", e);
+                            } catch (Exception exception) {
+                                throw new IllegalStateException("Cannot create type initialization accessor", exception);
                             }
                         }
 
@@ -1325,10 +1326,10 @@ public interface AgentBuilder {
                         public void register(String name, ClassLoader classLoader, Object typeInitializer) {
                             try {
                                 registration.invoke(STATIC_METHOD, name, classLoader, typeInitializer);
-                            } catch (IllegalAccessException e) {
-                                throw new IllegalStateException("Cannot register type initializer for " + name, e);
-                            } catch (InvocationTargetException e) {
-                                throw new IllegalStateException("Cannot register type initializer for " + name, e.getCause());
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot register type initializer for " + name, exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Cannot register type initializer for " + name, exception.getCause());
                             }
                         }
 
@@ -1567,7 +1568,7 @@ public interface AgentBuilder {
                             if (loadedTypeInitializers.size() > 1) {
                                 ClassInjector classInjector = classLoader == null
                                         ? bootstrapInjectionStrategy.make(protectionDomain)
-                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain);
+                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain, PackageDefiner.NoOp.INSTANCE);
                                 for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(dynamicType.getRawAuxiliaryTypes()).entrySet()) {
                                     initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
                                 }

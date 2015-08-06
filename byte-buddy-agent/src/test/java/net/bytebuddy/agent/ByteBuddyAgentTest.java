@@ -60,8 +60,8 @@ public class ByteBuddyAgentTest {
         try {
             constructor.newInstance();
             fail();
-        } catch (InvocationTargetException e) {
-            throw (Exception) e.getCause();
+        } catch (InvocationTargetException exception) {
+            throw (Exception) exception.getCause();
         }
     }
 }

@@ -6,6 +6,7 @@ import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.benchmark.specimen.ExampleInterface;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.PackageDefiner;
 import net.bytebuddy.implementation.StubMethod;
 import net.sf.cglib.proxy.CallbackHelper;
 import net.sf.cglib.proxy.Enhancer;
@@ -170,7 +171,7 @@ public class ClassByImplementationBenchmark {
                 .subclass(baseClass)
                 .method(isDeclaredBy(baseClass)).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefiner(PackageDefiner.NoOp.INSTANCE))
                 .getLoaded()
                 .newInstance();
     }

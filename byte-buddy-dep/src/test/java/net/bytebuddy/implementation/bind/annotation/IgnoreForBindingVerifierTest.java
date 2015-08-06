@@ -62,8 +62,8 @@ public class IgnoreForBindingVerifierTest {
         try {
             constructor.newInstance();
             fail();
-        } catch (InvocationTargetException e) {
-            throw (UnsupportedOperationException) e.getCause();
+        } catch (InvocationTargetException exception) {
+            throw (UnsupportedOperationException) exception.getCause();
         }
     }
 }

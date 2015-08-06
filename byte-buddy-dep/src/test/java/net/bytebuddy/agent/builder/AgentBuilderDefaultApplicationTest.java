@@ -4,6 +4,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.PackageDefiner;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
@@ -41,7 +42,8 @@ public class AgentBuilderDefaultApplicationTest {
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
                 ClassFileExtraction.of(Foo.class, Bar.class, Qux.class, Baz.class),
                 null,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefiner.NoOp.INSTANCE);
     }
 
     @Test
@@ -143,8 +145,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
-            } catch (Exception e) {
-                throw new AssertionError(e);
+            } catch (Exception exception) {
+                throw new AssertionError(exception);
             }
         }
 
@@ -170,8 +172,8 @@ public class AgentBuilderDefaultApplicationTest {
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
-            } catch (Exception e) {
-                throw new AssertionError(e);
+            } catch (Exception exception) {
+                throw new AssertionError(exception);
             }
         }
 

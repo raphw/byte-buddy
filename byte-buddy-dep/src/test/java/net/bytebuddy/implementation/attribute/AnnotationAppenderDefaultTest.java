@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.PackageDefiner;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -136,7 +137,8 @@ public class AnnotationAppenderDefaultTest {
         Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(),
                 Collections.singletonMap(BAR, classWriter.toByteArray()),
                 DEFAULT_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.LATENT).loadClass(BAR);
+                ByteArrayClassLoader.PersistenceHandler.LATENT,
+                PackageDefiner.NoOp.INSTANCE).loadClass(BAR);
         assertThat(bar.getName(), is(BAR));
         assertEquals(Object.class, bar.getSuperclass());
         return bar;

@@ -969,8 +969,8 @@ public interface TypePool {
                 return resolution.isResolved()
                         ? new Resolution.Simple(parse(resolution.resolve()))
                         : new Resolution.Illegal(name);
-            } catch (IOException e) {
-                throw new IllegalStateException("Error while reading class file", e);
+            } catch (IOException exception) {
+                throw new IllegalStateException("Error while reading class file", exception);
             }
         }
 
@@ -5251,8 +5251,8 @@ public interface TypePool {
                 public S loadSilent() {
                     try {
                         return load();
-                    } catch (ClassNotFoundException e) {
-                        throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, e);
+                    } catch (ClassNotFoundException exception) {
+                        throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
                     }
                 }
 
@@ -5260,8 +5260,8 @@ public interface TypePool {
                 public S loadSilent(ClassLoader classLoader) {
                     try {
                         return load(classLoader);
-                    } catch (ClassNotFoundException e) {
-                        throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, e);
+                    } catch (ClassNotFoundException exception) {
+                        throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
                     }
                 }
             }

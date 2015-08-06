@@ -28,9 +28,9 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
         try {
             instance.foo();
             fail();
-        } catch (RuntimeException e) {
-            assertEquals(RuntimeException.class, e.getClass());
-            assertThat(e.getMessage(), nullValue());
+        } catch (RuntimeException exception) {
+            assertEquals(RuntimeException.class, exception.getClass());
+            assertThat(exception.getMessage(), nullValue());
         }
         instance.assertZeroCalls();
     }
@@ -47,9 +47,9 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
         try {
             instance.foo();
             fail();
-        } catch (RuntimeException e) {
-            assertEquals(RuntimeException.class, e.getClass());
-            assertThat(e.getMessage(), is(BAR));
+        } catch (RuntimeException exception) {
+            assertEquals(RuntimeException.class, exception.getClass());
+            assertThat(exception.getMessage(), is(BAR));
         }
         instance.assertZeroCalls();
     }
@@ -66,9 +66,9 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
         try {
             instance.foo();
             fail();
-        } catch (Exception e) {
-            assertEquals(Exception.class, e.getClass());
-            assertThat(e.getMessage(), nullValue());
+        } catch (Exception exception) {
+            assertEquals(Exception.class, exception.getClass());
+            assertThat(exception.getMessage(), nullValue());
         }
         instance.assertZeroCalls();
     }

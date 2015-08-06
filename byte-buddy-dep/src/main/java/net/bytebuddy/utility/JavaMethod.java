@@ -94,10 +94,10 @@ public interface JavaMethod {
         public Object invoke(Object instance, Object... argument) {
             try {
                 return method.invoke(instance, argument);
-            } catch (IllegalAccessException e) {
-                throw new IllegalStateException("Cannot invoke dynamically-linked method", e);
-            } catch (InvocationTargetException e) {
-                throw new IllegalStateException("Exception when invoking method", e.getCause());
+            } catch (IllegalAccessException exception) {
+                throw new IllegalStateException("Cannot invoke dynamically-linked method", exception);
+            } catch (InvocationTargetException exception) {
+                throw new IllegalStateException("Exception when invoking method", exception.getCause());
             }
         }
 
@@ -158,12 +158,12 @@ public interface JavaMethod {
         public Object invokeStatic(Object... argument) {
             try {
                 return constructor.newInstance(argument);
-            } catch (InstantiationException e) {
-                throw new IllegalStateException("Cannot initiate class", e);
-            } catch (IllegalAccessException e) {
-                throw new IllegalStateException("Cannot invoke dynamically-linked method", e);
-            } catch (InvocationTargetException e) {
-                throw new IllegalStateException("Exception when invoking method", e.getCause());
+            } catch (InstantiationException exception) {
+                throw new IllegalStateException("Cannot initiate class", exception);
+            } catch (IllegalAccessException exception) {
+                throw new IllegalStateException("Cannot invoke dynamically-linked method", exception);
+            } catch (InvocationTargetException exception) {
+                throw new IllegalStateException("Exception when invoking method", exception.getCause());
             }
         }
 

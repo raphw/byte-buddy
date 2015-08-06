@@ -7,6 +7,7 @@ import net.bytebuddy.description.type.generic.AbstractGenericTypeDescriptionTest
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.PackageDefiner;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -323,7 +324,8 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SampleClass.class),
                 null,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefiner.NoOp.INSTANCE);
         Class<?> otherSampleClass = classLoader.loadClass(SampleClass.class.getName());
         assertThat(describe(SampleClass.class).isAssignableFrom(describe(otherSampleClass)), is(true));
         assertThat(describe(SampleClass.class).isAssignableTo(describe(otherSampleClass)), is(true));
@@ -516,7 +518,8 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
             ClassLoader classLoader = new ByteArrayClassLoader(null,
                     Collections.singletonMap(type.getName(), classWriter.toByteArray()),
                     null,
-                    ByteArrayClassLoader.PersistenceHandler.MANIFEST);
+                    ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                    PackageDefiner.NoOp.INSTANCE);
             return classLoader.loadClass(type.getName());
         }
 

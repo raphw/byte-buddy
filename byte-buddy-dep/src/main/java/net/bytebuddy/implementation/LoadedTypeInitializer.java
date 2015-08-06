@@ -126,10 +126,10 @@ public interface LoadedTypeInitializer {
                     field.setAccessible(true);
                 }
                 field.set(STATIC_FIELD, value);
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException("Cannot access " + fieldName + " from " + type, e);
-            } catch (NoSuchFieldException e) {
-                throw new IllegalStateException("There is no field " + fieldName + " defined on " + type, e);
+            } catch (IllegalAccessException exception) {
+                throw new IllegalArgumentException("Cannot access " + fieldName + " from " + type, exception);
+            } catch (NoSuchFieldException exception) {
+                throw new IllegalStateException("There is no field " + fieldName + " defined on " + type, exception);
             }
         }
 

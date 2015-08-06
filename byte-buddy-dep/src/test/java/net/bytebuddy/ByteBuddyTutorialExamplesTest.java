@@ -776,8 +776,8 @@ public class ByteBuddyTutorialExamplesTest {
         public List<String> load(String info) {
             try {
                 return LoggerInterceptor.log(new LoadMethodSuperCall(info));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
             }
         }
 

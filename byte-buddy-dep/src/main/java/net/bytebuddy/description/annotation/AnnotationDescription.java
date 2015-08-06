@@ -1258,7 +1258,7 @@ public interface AnnotationDescription {
                                     .equals(entry.getValue().resolve(), entry.getKey().invoke(other))) {
                                 return false;
                             }
-                        } catch (RuntimeException e) {
+                        } catch (RuntimeException exception) {
                             return false; // Incomplete annotations are not equal to one another.
                         }
                     } else {
@@ -1267,8 +1267,8 @@ public interface AnnotationDescription {
                 }
             } catch (InvocationTargetException ignored) {
                 return false;
-            } catch (IllegalAccessException e) {
-                throw new AssertionError(e);
+            } catch (IllegalAccessException exception) {
+                throw new AssertionError(exception);
             }
             return true;
         }
@@ -1513,8 +1513,8 @@ public interface AnnotationDescription {
             public S loadSilent() {
                 try {
                     return load();
-                } catch (ClassNotFoundException e) {
-                    throw new IllegalStateException(ERROR_MESSAGE, e);
+                } catch (ClassNotFoundException exception) {
+                    throw new IllegalStateException(ERROR_MESSAGE, exception);
                 }
             }
 
@@ -1522,8 +1522,8 @@ public interface AnnotationDescription {
             public S loadSilent(ClassLoader classLoader) {
                 try {
                     return load(classLoader);
-                } catch (ClassNotFoundException e) {
-                    throw new IllegalStateException(ERROR_MESSAGE, e);
+                } catch (ClassNotFoundException exception) {
+                    throw new IllegalStateException(ERROR_MESSAGE, exception);
                 }
             }
         }
@@ -1632,8 +1632,8 @@ public interface AnnotationDescription {
                     }
                 }
                 return describe(method.invoke(annotation), methodDescription.getReturnType().asRawType());
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot access annotation property " + methodDescription, e);
+            } catch (Exception exception) {
+                throw new IllegalStateException("Cannot access annotation property " + methodDescription, exception);
             }
         }
 

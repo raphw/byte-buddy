@@ -2296,8 +2296,8 @@ public interface TypeWriter<T> {
                         throw new IllegalArgumentException("Cannot locate the class file for " + targetType + " using " + classFileLocator);
                     }
                     return doCreate(implementationContext, resolution.resolve());
-                } catch (IOException e) {
-                    throw new RuntimeException("The class file could not be written", e);
+                } catch (IOException exception) {
+                    throw new RuntimeException("The class file could not be written", exception);
                 }
             }
 

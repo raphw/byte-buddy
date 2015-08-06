@@ -579,8 +579,8 @@ public class ByteBuddyCommonsTest {
         try {
             constructor.newInstance();
             fail();
-        } catch (InvocationTargetException e) {
-            assertEquals(UnsupportedOperationException.class, e.getCause().getClass());
+        } catch (InvocationTargetException exception) {
+            assertEquals(UnsupportedOperationException.class, exception.getCause().getClass());
         }
     }
 

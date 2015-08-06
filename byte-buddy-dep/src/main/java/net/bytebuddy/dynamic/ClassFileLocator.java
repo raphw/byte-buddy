@@ -114,8 +114,8 @@ public interface ClassFileLocator {
                 } else {
                     try {
                         return new Explicit(new StreamDrainer().drain(inputStream));
-                    } catch (IOException e) {
-                        throw new IllegalStateException(e);
+                    } catch (IOException exception) {
+                        throw new IllegalStateException(exception);
                     }
                 }
             }
@@ -407,8 +407,8 @@ public interface ClassFileLocator {
                         .loadClass(BYTE_BUDDY_AGENT_TYPE)
                         .getDeclaredMethod(GET_INSTRUMENTATION_METHOD)
                         .invoke(STATIC_METHOD), classLoader);
-            } catch (Exception e) {
-                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", e);
+            } catch (Exception exception) {
+                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
             }
         }
 
@@ -564,8 +564,8 @@ public interface ClassFileLocator {
                         Field field = ClassLoader.class.getDeclaredField("classes");
                         field.setAccessible(true);
                         classesField = new JavaField.ForResolvedField(field);
-                    } catch (Exception e) {
-                        classesField = new JavaField.ForNonResolvedField(e);
+                    } catch (Exception exception) {
+                        classesField = new JavaField.ForNonResolvedField(exception);
                     }
                     CLASSES_FIELD = classesField;
                 }

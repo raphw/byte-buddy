@@ -12,6 +12,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.PackageDefiner;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
@@ -182,7 +183,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(Bar.class),
                 null,
-                ByteArrayClassLoader.PersistenceHandler.LATENT);
+                ByteArrayClassLoader.PersistenceHandler.LATENT,
+                PackageDefiner.NoOp.INSTANCE);
         Class<?> type = createPlain()
                 .invokable(isTypeInitializer()).intercept(MethodCall.invoke(Bar.class.getDeclaredMethod("invoke")))
                 .make()
@@ -246,7 +248,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SampleAnnotation.class),
                 null,
-                ByteArrayClassLoader.PersistenceHandler.LATENT);
+                ByteArrayClassLoader.PersistenceHandler.LATENT,
+                PackageDefiner.NoOp.INSTANCE);
         Class<?> type = createPlain()
                 .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .intercept(new PreparedField())
@@ -269,7 +272,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SampleAnnotation.class),
                 null,
-                ByteArrayClassLoader.PersistenceHandler.LATENT);
+                ByteArrayClassLoader.PersistenceHandler.LATENT,
+                PackageDefiner.NoOp.INSTANCE);
         Class<?> type = createPlain()
                 .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
                 .intercept(new PreparedMethod())

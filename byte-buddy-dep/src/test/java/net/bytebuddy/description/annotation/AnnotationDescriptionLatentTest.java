@@ -69,8 +69,8 @@ public class AnnotationDescriptionLatentTest extends AbstractAnnotationDescripti
     protected AnnotationDescription describe(Annotation annotation, Class<?> declaringType) {
         try {
             return build(annotation);
-        } catch (Exception e) {
-            throw new AssertionError(e);
+        } catch (Exception exception) {
+            throw new AssertionError(exception);
         }
     }
 }

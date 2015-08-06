@@ -134,13 +134,13 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
             for (TypeDescription typeDescription : types.keySet()) {
                 try {
                     loadedTypes.put(typeDescription, dexClassLoader.loadClass(typeDescription.getName()));
-                } catch (ClassNotFoundException e) {
-                    throw new IllegalStateException("Cannot load " + typeDescription, e);
+                } catch (ClassNotFoundException exception) {
+                    throw new IllegalStateException("Cannot load " + typeDescription, exception);
                 }
             }
             return loadedTypes;
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot write to zip file " + zipFile, e);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Cannot write to zip file " + zipFile, exception);
         } finally {
             if (!zipFile.delete()) {
                 Logger.getAnonymousLogger().warning("Could not delete " + zipFile);

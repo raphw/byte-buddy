@@ -9,6 +9,7 @@ import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.PackageDefiner;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.StubMethod;
@@ -273,7 +274,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PackagePrivateReturnType.class, PackagePrivateReturnType.Argument.class),
                         null,
-                        ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
+                        ByteArrayClassLoader.PersistenceHandler.LATENT,
+                        PackageDefiner.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }
@@ -288,7 +290,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PackagePrivateArgumentType.class, PackagePrivateArgumentType.Argument.class),
                         null,
-                        ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
+                        ByteArrayClassLoader.PersistenceHandler.LATENT,
+                        PackageDefiner.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }
@@ -302,7 +305,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PrivateMethod.class),
                         null,
-                        ByteArrayClassLoader.PersistenceHandler.LATENT), ClassLoadingStrategy.Default.WRAPPER)
+                        ByteArrayClassLoader.PersistenceHandler.LATENT,
+                        PackageDefiner.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }

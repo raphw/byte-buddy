@@ -1004,8 +1004,8 @@ public class ElementMatchersTest {
         try {
             constructor.newInstance();
             fail();
-        } catch (InvocationTargetException e) {
-            throw (UnsupportedOperationException) e.getCause();
+        } catch (InvocationTargetException exception) {
+            throw (UnsupportedOperationException) exception.getCause();
         }
     }
 
@@ -1260,8 +1260,8 @@ public class ElementMatchersTest {
 
         public static class Inner extends GenericConstructorType<RuntimeException> {
 
-            public Inner(RuntimeException e) throws RuntimeException {
-                super(e);
+            public Inner(RuntimeException exception) throws RuntimeException {
+                super(exception);
             }
         }
     }
