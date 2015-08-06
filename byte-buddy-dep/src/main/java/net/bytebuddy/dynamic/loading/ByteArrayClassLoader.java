@@ -34,6 +34,11 @@ public class ByteArrayClassLoader extends ClassLoader {
     protected final ProtectionDomain protectionDomain;
 
     /**
+     * The package definer to be queried for package definitions.
+     */
+    protected final PackageDefiner packageDefiner;
+
+    /**
      * The access control context of this class loader's instantiation.
      */
     protected final AccessControlContext accessControlContext;
@@ -45,16 +50,19 @@ public class ByteArrayClassLoader extends ClassLoader {
      * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
      * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
      *                           protection domain.
+     * @param packageDefiner     The package definer to be queried for package definitions.
      * @param persistenceHandler The persistence handler of this class loader.
      */
     public ByteArrayClassLoader(ClassLoader parent,
                                 Map<String, byte[]> typeDefinitions,
                                 ProtectionDomain protectionDomain,
-                                PersistenceHandler persistenceHandler) {
+                                PersistenceHandler persistenceHandler,
+                                PackageDefiner packageDefiner) {
         super(parent);
         this.typeDefinitions = new HashMap<String, byte[]>(typeDefinitions);
         this.protectionDomain = protectionDomain;
         this.persistenceHandler = persistenceHandler;
+        this.packageDefiner = packageDefiner;
         accessControlContext = AccessController.getContext();
     }
 
@@ -66,6 +74,7 @@ public class ByteArrayClassLoader extends ClassLoader {
      * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
      *                           protection domain.
      * @param persistenceHandler The persistence handler to be used by the created class loader.
+     * @param packageDefiner     The package definer to be queried for package definitions.
      * @param childFirst         {@code true} if the class loader should apply child first semantics when loading
      *                           the {@code typeDefinitions}.
      * @return A corresponding class loader.
@@ -74,14 +83,15 @@ public class ByteArrayClassLoader extends ClassLoader {
                                  Map<TypeDescription, byte[]> typeDefinitions,
                                  ProtectionDomain protectionDomain,
                                  PersistenceHandler persistenceHandler,
+                                 PackageDefiner packageDefiner,
                                  boolean childFirst) {
         Map<String, byte[]> rawTypeDefinitions = new HashMap<String, byte[]>(typeDefinitions.size());
         for (Map.Entry<TypeDescription, byte[]> entry : typeDefinitions.entrySet()) {
             rawTypeDefinitions.put(entry.getKey().getName(), entry.getValue());
         }
         return childFirst
-                ? new ChildFirst(parent, rawTypeDefinitions, protectionDomain, persistenceHandler)
-                : new ByteArrayClassLoader(parent, rawTypeDefinitions, protectionDomain, persistenceHandler);
+                ? new ChildFirst(parent, rawTypeDefinitions, protectionDomain, persistenceHandler, packageDefiner)
+                : new ByteArrayClassLoader(parent, rawTypeDefinitions, protectionDomain, persistenceHandler, packageDefiner);
     }
 
     /**
@@ -92,6 +102,7 @@ public class ByteArrayClassLoader extends ClassLoader {
      * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
      *                           protection domain.
      * @param persistenceHandler The persistence handler of the created class loader.
+     * @param packageDefiner     The package definer to be queried for package definitions.
      * @param childFirst         {@code true} {@code true} if the created class loader should apply child-first
      *                           semantics when loading the {@code types}.
      * @return A map of the given type descriptions pointing to their loaded representations.
@@ -100,14 +111,15 @@ public class ByteArrayClassLoader extends ClassLoader {
                                                       Map<TypeDescription, byte[]> types,
                                                       ProtectionDomain protectionDomain,
                                                       PersistenceHandler persistenceHandler,
+                                                      PackageDefiner packageDefiner,
                                                       boolean childFirst) {
         Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
-        classLoader = ByteArrayClassLoader.of(classLoader, types, protectionDomain, persistenceHandler, childFirst);
+        classLoader = ByteArrayClassLoader.of(classLoader, types, protectionDomain, persistenceHandler, packageDefiner, childFirst);
         for (TypeDescription typeDescription : types.keySet()) {
             try {
                 loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException("Cannot load class " + typeDescription, e);
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalStateException("Cannot load class " + typeDescription, exception);
             }
         }
         return loadedTypes;
@@ -116,11 +128,14 @@ public class ByteArrayClassLoader extends ClassLoader {
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         try {
-            // This does not need synchronization because this method is only called from within
-            // ClassLoader in a synchronized context.
             return AccessController.doPrivileged(new ClassLoadingAction(name), accessControlContext);
-        } catch (PrivilegedActionException e) {
-            throw (ClassNotFoundException) e.getCause();
+        } catch (PrivilegedActionException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof ClassNotFoundException) {
+                throw (ClassNotFoundException) cause;
+            } else {
+                throw new IllegalStateException("Could not load class " + name, cause);
+            }
         }
     }
 
@@ -141,6 +156,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 ", typeDefinitions=" + typeDefinitions +
                 ", persistenceHandler=" + persistenceHandler +
                 ", protectionDomain=" + protectionDomain +
+                ", packageDefiner=" + packageDefiner +
                 ", accessControlContext=" + accessControlContext +
                 '}';
     }
@@ -242,8 +258,13 @@ public class ByteArrayClassLoader extends ClassLoader {
     }
 
     /**
+     * <p>
      * A {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} which applies child-first semantics for the
      * given type definitions.
+     * </p>
+     * <p>
+     * <b>Important</b>: Package definitions remain their parent-first semantics as loaded package definitions do not expose their class loaders.
+     * </p>
      */
     public static class ChildFirst extends ByteArrayClassLoader {
 
@@ -264,8 +285,9 @@ public class ByteArrayClassLoader extends ClassLoader {
         public ChildFirst(ClassLoader parent,
                           Map<String, byte[]> typeDefinitions,
                           ProtectionDomain protectionDomain,
-                          PersistenceHandler persistenceHandler) {
-            super(parent, typeDefinitions, protectionDomain, persistenceHandler);
+                          PersistenceHandler persistenceHandler,
+                          PackageDefiner packageDefiner) {
+            super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefiner);
         }
 
         @Override
@@ -275,15 +297,24 @@ public class ByteArrayClassLoader extends ClassLoader {
                 return type;
             }
             try {
-                type = findClass(name);
+                try {
+                    type = AccessController.doPrivileged(new ClassLoadingAction(name), accessControlContext);
+                } catch (PrivilegedActionException exception) {
+                    Throwable cause = exception.getCause();
+                    if (cause instanceof ClassNotFoundException) {
+                        throw (ClassNotFoundException) cause;
+                    } else {
+                        throw new IllegalStateException("Could not load class " + name, cause);
+                    }
+                }
                 if (resolve) {
                     resolveClass(type);
                 }
                 return type;
-            } catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException exception) {
                 // If an unknown class is loaded, this implementation causes the findClass method of this instance
                 // to be triggered twice. This is however of minor importance because this would result in a
-                // ClassNotFoundException which is rather uncommon.
+                // ClassNotFoundException what does not alter the outcome.
                 return super.loadClass(name, resolve);
             }
         }
@@ -332,6 +363,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                     ", typeDefinitions=" + typeDefinitions +
                     ", protectionDomain=" + protectionDomain +
                     ", persistenceHandler=" + persistenceHandler +
+                    ", packageDefiner=" + packageDefiner +
                     ", accessControlContext=" + accessControlContext +
                     '}';
         }
@@ -340,7 +372,7 @@ public class ByteArrayClassLoader extends ClassLoader {
     /**
      * A class loading action is responsible to perform the loading of a class in a privileged security context.
      */
-    private class ClassLoadingAction implements PrivilegedExceptionAction<Class<?>> {
+    protected class ClassLoadingAction implements PrivilegedExceptionAction<Class<?>> {
 
         /**
          * A convenience index referencing the beginning of an array to improve code readability.
@@ -350,33 +382,46 @@ public class ByteArrayClassLoader extends ClassLoader {
         /**
          * The name of the type to be loaded.
          */
-        private final String name;
+        private final String typeName;
 
         /**
          * Creates a new class loading action.
          *
-         * @param name The name of the type to be loaded.
+         * @param typeName The name of the type to be loaded.
          */
-        private ClassLoadingAction(String name) {
-            this.name = name;
+        protected ClassLoadingAction(String typeName) {
+            this.typeName = typeName;
         }
 
         @Override
-        public Class<?> run() throws ClassNotFoundException {
-            byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
+        public Class<?> run() throws ClassNotFoundException, IOException {
+            byte[] javaType = persistenceHandler.lookup(typeName, typeDefinitions);
             if (javaType != null) {
-                int packageIndex = name.lastIndexOf('.');
-                if (packageIndex != -1 && getPackage(name.substring(0, packageIndex)) == null) {
-                    definePackage(name.substring(0, packageIndex), null, null, null, null, null, null, null);
+                int packageIndex = typeName.lastIndexOf('.');
+                if (packageIndex != -1 && getPackage(typeName.substring(0, packageIndex)) == null) {
+                    String packageName = typeName.substring(0, packageIndex);
+                    PackageDefiner.Definition definition = packageDefiner.define(packageName,
+                            ByteArrayClassLoader.this,
+                            typeName.substring(packageIndex + 1));
+                    if (definition.isDefined()) {
+                        definePackage(packageName,
+                                definition.getSpecificationTitle(),
+                                definition.getSpecificationVersion(),
+                                definition.getSpecificationVendor(),
+                                definition.getImplementationTitle(),
+                                definition.getImplementationVersion(),
+                                definition.getImplementationVendor(),
+                                definition.getSealBase());
+                    }
                 }
-                return defineClass(name, javaType, FROM_BEGINNING, javaType.length, protectionDomain);
+                return defineClass(typeName, javaType, FROM_BEGINNING, javaType.length, protectionDomain);
             }
-            throw new ClassNotFoundException(name);
+            throw new ClassNotFoundException(typeName);
         }
 
         @Override
         public String toString() {
-            return "ByteArrayClassLoader.ClassLoadingAction{classLoader=" + ByteArrayClassLoader.this + ", name='" + name + "'}";
+            return "ByteArrayClassLoader.ClassLoadingAction{classLoader=" + ByteArrayClassLoader.this + ", typeName='" + typeName + "'}";
         }
     }
 }

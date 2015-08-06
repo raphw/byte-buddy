@@ -27,7 +27,7 @@ public interface ClassLoadingStrategy {
     /**
      * This class contains implementations of default class loading strategies.
      */
-    enum Default implements WithDefaultProtectionDomain {
+    enum Default implements WithDefaultPackageLoader {
 
         /**
          * This strategy creates a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} with the given
@@ -37,46 +37,14 @@ public interface ClassLoadingStrategy {
          * classes that were loaded by a byte array class loader, this strategy will lead to the unloading of these
          * classes once this class loader, its classes or any instances of these classes become unreachable.
          */
-        WRAPPER {
-            @Override
-            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader,
-                        types,
-                        DEFAULT_PROTECTION_DOMAIN,
-                        ByteArrayClassLoader.PersistenceHandler.LATENT,
-                        PARENT_FIRST);
-            }
-
-            @Override
-            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new ProtectionDomainWrapper(protectionDomain,
-                        ByteArrayClassLoader.PersistenceHandler.LATENT,
-                        PARENT_FIRST);
-            }
-        },
+        WRAPPER(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.LATENT, WrappingDispatcher.PARENT_FIRST)),
 
         /**
          * The strategy is identical to {@link ClassLoadingStrategy.Default#WRAPPER} but exposes
          * the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}. For
          * this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
          */
-        WRAPPER_PERSISTENT {
-            @Override
-            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader,
-                        types,
-                        DEFAULT_PROTECTION_DOMAIN,
-                        ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                        PARENT_FIRST);
-            }
-
-            @Override
-            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new ProtectionDomainWrapper(protectionDomain,
-                        ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                        PARENT_FIRST);
-            }
-        },
+        WRAPPER_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST, WrappingDispatcher.PARENT_FIRST)),
 
         /**
          * <p>
@@ -89,48 +57,17 @@ public interface ClassLoadingStrategy {
          * the reach of this class loader.
          * </p>
          */
-        CHILD_FIRST {
-            @Override
-            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader,
-                        types,
-                        DEFAULT_PROTECTION_DOMAIN,
-                        ByteArrayClassLoader.PersistenceHandler.LATENT,
-                        PARENT_LAST);
-            }
-
-            @Override
-            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new ProtectionDomainWrapper(protectionDomain,
-                        ByteArrayClassLoader.PersistenceHandler.LATENT,
-                        PARENT_LAST);
-            }
-        },
+        CHILD_FIRST(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.LATENT, WrappingDispatcher.CHILD_FIRST)),
 
         /**
          * The strategy is identical to {@link ClassLoadingStrategy.Default#CHILD_FIRST} but
          * exposes the byte arrays that represent a class by {@link java.lang.ClassLoader#getResourceAsStream(String)}.
          * For this purpose, all class files are persisted as byte arrays withing the wrapping class loader.
          */
-        CHILD_FIRST_PERSISTENT {
-            @Override
-            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader,
-                        types,
-                        DEFAULT_PROTECTION_DOMAIN,
-                        ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                        PARENT_LAST);
-            }
-
-            @Override
-            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new ProtectionDomainWrapper(protectionDomain,
-                        ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                        PARENT_LAST);
-            }
-        },
+        CHILD_FIRST_PERSISTENT(new WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler.MANIFEST, WrappingDispatcher.CHILD_FIRST)),
 
         /**
+         * <p>
          * This strategy does not create a new class loader but injects all classes into the given {@link java.lang.ClassLoader}
          * by reflective access. This prevents the loading of classes with cyclic load-time dependencies but avoids the
          * creation of an additional class loader. The advantage of this strategy is that the loaded classes will have
@@ -138,28 +75,47 @@ public interface ClassLoadingStrategy {
          * injected what is not permitted when the wrapper class loader is used. This strategy is implemented using a
          * {@link net.bytebuddy.dynamic.loading.ClassInjector.UsingReflection}. Note that this strategy usually yields
          * a better runtime performance.
+         * </p>
+         * <p>
+         * <b>Important</b>: This class loader does not define packages for injected classes by default. Therefore, calls to
+         * {@link Class#getPackage()} might return {@code null}. Packages are only defined
+         * </p>
          */
-        INJECTION {
-            @Override
-            public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return new ClassInjector.UsingReflection(classLoader).inject(types);
-            }
-
-            @Override
-            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new ProtectionDomainInjection(protectionDomain);
-            }
-        };
-
-        /**
-         * An identifier for a class loading-order for making the code more readable.
-         */
-        private static final boolean PARENT_LAST = true, PARENT_FIRST = false;
+        INJECTION(new InjectionDispatcher());
 
         /**
          * A convenience reference that references the default protection domain which is {@code null}.
          */
         private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
+
+        /**
+         * The dispatcher to be used when loading a class.
+         */
+        private final WithDefaultPackageLoader dispatcher;
+
+        /**
+         * Creates a new default class loading strategy.
+         *
+         * @param dispatcher The dispatcher to be used when loading a class.
+         */
+        Default(WithDefaultPackageLoader dispatcher) {
+            this.dispatcher = dispatcher;
+        }
+
+        @Override
+        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            return dispatcher.load(classLoader, types);
+        }
+
+        @Override
+        public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
+            return dispatcher.withProtectionDomain(protectionDomain);
+        }
+
+        @Override
+        public WithDefaultProtectionDomain withPackageDefiner(PackageDefiner packageDefiner) {
+            return dispatcher.withPackageDefiner(packageDefiner);
+        }
 
         @Override
         public String toString() {
@@ -170,7 +126,7 @@ public interface ClassLoadingStrategy {
          * A class loading strategy which applies a class loader injection while applying a given
          * {@link java.security.ProtectionDomain} on class injection.
          */
-        protected static class ProtectionDomainInjection implements ClassLoadingStrategy {
+        protected static class InjectionDispatcher implements ClassLoadingStrategy.WithDefaultPackageLoader {
 
             /**
              * The protection domain to apply.
@@ -178,33 +134,65 @@ public interface ClassLoadingStrategy {
             private final ProtectionDomain protectionDomain;
 
             /**
-             * Creates a new protection domain injection class loading strategy.
+             * The package definer to be used for querying information on package information.
+             */
+            private final PackageDefiner packageDefiner;
+
+            /**
+             * Creates a new injection dispatcher.
+             */
+            protected InjectionDispatcher() {
+                this(DEFAULT_PROTECTION_DOMAIN, PackageDefiner.NoOp.INSTANCE);
+            }
+
+            /**
+             * Creates a new injection dispatcher.
              *
              * @param protectionDomain The protection domain to apply.
+             * @param packageDefiner   The package definer to be used for querying information on package information.
              */
-            protected ProtectionDomainInjection(ProtectionDomain protectionDomain) {
+            private InjectionDispatcher(ProtectionDomain protectionDomain, PackageDefiner packageDefiner) {
                 this.protectionDomain = protectionDomain;
+                this.packageDefiner = packageDefiner;
             }
 
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return new ClassInjector.UsingReflection(classLoader, protectionDomain).inject(types);
+                return new ClassInjector.UsingReflection(classLoader, protectionDomain, packageDefiner).inject(types);
+            }
+
+            @Override
+            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
+                return new InjectionDispatcher(protectionDomain, packageDefiner);
+            }
+
+            @Override
+            public WithDefaultProtectionDomain withPackageDefiner(PackageDefiner packageDefiner) {
+                return new InjectionDispatcher(protectionDomain, packageDefiner);
             }
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && protectionDomain.equals(((ProtectionDomainInjection) other).protectionDomain);
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                InjectionDispatcher that = (InjectionDispatcher) other;
+                return !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
+                        && packageDefiner.equals(that.packageDefiner);
             }
 
             @Override
             public int hashCode() {
-                return protectionDomain.hashCode();
+                int result = protectionDomain != null ? protectionDomain.hashCode() : 0;
+                result = 31 * result + packageDefiner.hashCode();
+                return result;
             }
 
             @Override
             public String toString() {
-                return "ClassLoadingStrategy.Default.ProtectionDomainInjection{protectionDomain=" + protectionDomain + '}';
+                return "ClassLoadingStrategy.Default.ProtectionDomainInjection{" +
+                        "protectionDomain=" + protectionDomain +
+                        "packageDefiner=" + packageDefiner +
+                        '}';
             }
         }
 
@@ -212,7 +200,17 @@ public interface ClassLoadingStrategy {
          * A class loading strategy which creates a wrapping class loader while applying a given
          * {@link java.security.ProtectionDomain} on class loading.
          */
-        protected static class ProtectionDomainWrapper implements ClassLoadingStrategy {
+        protected static class WrappingDispatcher implements ClassLoadingStrategy.WithDefaultPackageLoader {
+
+            /**
+             * Indicates that a child first loading strategy should be attempted.
+             */
+            private static final boolean CHILD_FIRST = true;
+
+            /**
+             * Indicates that a parent first loading strategy should be attempted.
+             */
+            private static final boolean PARENT_FIRST = false;
 
             /**
              * The protection domain to apply.
@@ -225,36 +223,65 @@ public interface ClassLoadingStrategy {
             private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
 
             /**
+             * The package definer to be used for querying information on package information.
+             */
+            private final PackageDefiner packageDefiner;
+
+            /**
              * {@code true} if the created class loader should apply child-first semantics.
              */
             private final boolean childFirst;
 
             /**
-             * Creates a new protection domain specific class loading wrapper.
+             * Creates a new wrapping dispatcher.
              *
-             * @param protectionDomain   The protection domain to apply.
              * @param persistenceHandler The persistence handler to apply.
              * @param childFirst         {@code true} if the created class loader should apply child-first semantics.
              */
-            public ProtectionDomainWrapper(ProtectionDomain protectionDomain,
-                                           ByteArrayClassLoader.PersistenceHandler persistenceHandler,
-                                           boolean childFirst) {
+            protected WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler persistenceHandler, boolean childFirst) {
+                this(DEFAULT_PROTECTION_DOMAIN, PackageDefiner.Trivial.INSTANCE, persistenceHandler, childFirst);
+            }
+
+            /**
+             * Creates a new protection domain specific class loading wrapper.
+             *
+             * @param protectionDomain   The protection domain to apply.
+             * @param packageDefiner     The package definer to be used for querying information on package information.
+             * @param persistenceHandler The persistence handler to apply.
+             * @param childFirst         {@code true} if the created class loader should apply child-first semantics.
+             */
+            private WrappingDispatcher(ProtectionDomain protectionDomain,
+                                       PackageDefiner packageDefiner,
+                                       ByteArrayClassLoader.PersistenceHandler persistenceHandler,
+                                       boolean childFirst) {
                 this.protectionDomain = protectionDomain;
+                this.packageDefiner = packageDefiner;
                 this.persistenceHandler = persistenceHandler;
                 this.childFirst = childFirst;
             }
 
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, childFirst);
+                return ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, packageDefiner, childFirst);
+            }
+
+            @Override
+            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
+                return new WrappingDispatcher(protectionDomain, packageDefiner, persistenceHandler, childFirst);
+            }
+
+            @Override
+            public WithDefaultProtectionDomain withPackageDefiner(PackageDefiner packageDefiner) {
+                return new WrappingDispatcher(protectionDomain, packageDefiner, persistenceHandler, childFirst);
             }
 
             @Override
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
-                ProtectionDomainWrapper that = (ProtectionDomainWrapper) other;
+                WrappingDispatcher that = (WrappingDispatcher) other;
                 return childFirst == that.childFirst
+                        && packageDefiner.equals(that.packageDefiner)
                         && persistenceHandler == that.persistenceHandler
                         && protectionDomain.equals(that.protectionDomain);
             }
@@ -262,6 +289,7 @@ public interface ClassLoadingStrategy {
             @Override
             public int hashCode() {
                 int result = protectionDomain.hashCode();
+                result = 31 * result + packageDefiner.hashCode();
                 result = 31 * result + (childFirst ? 1 : 0);
                 result = 31 * result + persistenceHandler.hashCode();
                 return result;
@@ -269,8 +297,9 @@ public interface ClassLoadingStrategy {
 
             @Override
             public String toString() {
-                return "ClassLoadingStrategy.Default.ProtectionDomainWrapper{" +
-                        "protectionDomain=" + protectionDomain +
+                return "ClassLoadingStrategy.Default.WrappingDispatcher{" +
+                        "packageDefiner=" + packageDefiner +
+                        ", protectionDomain=" + protectionDomain +
                         ", childFirst=" + childFirst +
                         ", persistenceHandler=" + persistenceHandler +
                         '}';
@@ -290,6 +319,21 @@ public interface ClassLoadingStrategy {
          * @return This class loading strategy with an explicitly set {@link java.security.ProtectionDomain}.
          */
         ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain);
+    }
+
+    /**
+     * A class loading strategy with a default {@link net.bytebuddy.dynamic.loading.ClassLoadingStrategy.WithDefaultPackageLoader}
+     * and a default {@link ProtectionDomain}.
+     */
+    interface WithDefaultPackageLoader extends WithDefaultProtectionDomain {
+
+        /**
+         * Defines the supplied package definer to be used for defining packages.
+         *
+         * @param packageDefiner The package definer to be used.
+         * @return A version of this class loading strategy that applies the supplied package definer.
+         */
+        WithDefaultProtectionDomain withPackageDefiner(PackageDefiner packageDefiner);
     }
 
     /**

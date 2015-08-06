@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
 
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.security.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -54,18 +56,30 @@ public interface ClassInjector {
         static {
             ReflectionStore reflectionStore;
             try {
-                Method findLoadedClassMethod = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
-                findLoadedClassMethod.setAccessible(true);
-                Method loadByteArrayMethod = ClassLoader.class.getDeclaredMethod("defineClass",
+                Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+                findLoadedClass.setAccessible(true);
+                Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass",
                         String.class,
                         byte[].class,
                         int.class,
                         int.class,
                         ProtectionDomain.class);
-                loadByteArrayMethod.setAccessible(true);
-                reflectionStore = new ReflectionStore.Resolved(findLoadedClassMethod, loadByteArrayMethod);
-            } catch (Exception e) {
-                reflectionStore = new ReflectionStore.Faulty(e);
+                defineClass.setAccessible(true);
+                Method getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                getPackage.setAccessible(true);
+                Method definePackage = ClassLoader.class.getDeclaredMethod("definePackage",
+                        String.class,
+                        String.class,
+                        String.class,
+                        String.class,
+                        String.class,
+                        String.class,
+                        String.class,
+                        URL.class);
+                definePackage.setAccessible(true);
+                reflectionStore = new ReflectionStore.Resolved(findLoadedClass, defineClass, getPackage, definePackage);
+            } catch (Exception exception) {
+                reflectionStore = new ReflectionStore.Faulty(exception);
             }
             REFLECTION_STORE = reflectionStore;
         }
@@ -86,27 +100,34 @@ public interface ClassInjector {
         private final AccessControlContext accessControlContext;
 
         /**
-         * Creates a new injector for the given {@link java.lang.ClassLoader} and a default
-         * {@link java.security.ProtectionDomain}.
+         * The package definer to be queried for package definitions.
+         */
+        private final PackageDefiner packageDefiner;
+
+        /**
+         * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain}
+         * and {@link PackageDefiner}.
          *
          * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          */
         public UsingReflection(ClassLoader classLoader) {
-            this(classLoader, DEFAULT_PROTECTION_DOMAIN);
+            this(classLoader, DEFAULT_PROTECTION_DOMAIN, PackageDefiner.Trivial.INSTANCE);
         }
 
         /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and {@link java.security.ProtectionDomain}.
          *
          * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param packageDefiner   The package definer to be queried for package definitions.
          * @param protectionDomain The protection domain to apply during class definition.
          */
-        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain, PackageDefiner packageDefiner) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader");
             }
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
+            this.packageDefiner = packageDefiner;
             accessControlContext = AccessController.getContext();
         }
 
@@ -116,17 +137,34 @@ public interface ClassInjector {
                 Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>(types.size());
                 synchronized (classLoader) {
                     for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                        Class<?> type = (Class<?>) REFLECTION_STORE.getFindLoadedClassMethod().invoke(classLoader, entry.getKey().getName());
+                        PackageDescription packageDescription = entry.getKey().getPackage();
+                        if (packageDescription != null && REFLECTION_STORE.getPackage(classLoader, packageDescription.getName()) == null) {
+                            PackageDefiner.Definition definition = packageDefiner.define(packageDescription.getName(),
+                                    classLoader,
+                                    entry.getKey().getName().substring(packageDescription.getName().length() + 1));
+                            if (definition.isDefined()) {
+                                REFLECTION_STORE.definePackage(classLoader,
+                                        entry.getKey().getPackage().getName(),
+                                        definition.getSpecificationTitle(),
+                                        definition.getSpecificationVersion(),
+                                        definition.getSpecificationVendor(),
+                                        definition.getImplementationTitle(),
+                                        definition.getImplementationVersion(),
+                                        definition.getImplementationVendor(),
+                                        definition.getSealBase());
+                            }
+                        }
+                        Class<?> type = REFLECTION_STORE.findClass(classLoader, entry.getKey().getName());
                         if (type == null) {
                             try {
                                 type = AccessController.doPrivileged(new ClassLoadingAction(entry.getKey().getName(), entry.getValue()), accessControlContext);
-                            } catch (PrivilegedActionException e) {
-                                if (e.getCause() instanceof IllegalAccessException) {
-                                    throw (IllegalAccessException) e.getCause();
-                                } else if (e.getCause() instanceof InvocationTargetException) {
-                                    throw (InvocationTargetException) e.getCause();
+                            } catch (PrivilegedActionException exception) {
+                                if (exception.getCause() instanceof IllegalAccessException) {
+                                    throw (IllegalAccessException) exception.getCause();
+                                } else if (exception.getCause() instanceof InvocationTargetException) {
+                                    throw (InvocationTargetException) exception.getCause();
                                 } else {
-                                    throw (RuntimeException) e.getCause();
+                                    throw (RuntimeException) exception.getCause();
                                 }
                             }
                         }
@@ -134,10 +172,12 @@ public interface ClassInjector {
                     }
                 }
                 return loaded;
-            } catch (IllegalAccessException e) {
-                throw new IllegalStateException("Could not access injection method", e);
-            } catch (InvocationTargetException e) {
-                throw new IllegalStateException("Exception on invoking loader method", e.getCause());
+            } catch (IllegalAccessException exception) {
+                throw new IllegalStateException("Could not access injection method", exception);
+            } catch (InvocationTargetException exception) {
+                throw new IllegalStateException("Exception on invoking loader method", exception.getCause());
+            } catch (IOException exception) {
+                throw new IllegalStateException("Exception on IO operation", exception);
             }
         }
 
@@ -148,6 +188,7 @@ public interface ClassInjector {
             UsingReflection that = (UsingReflection) other;
             return accessControlContext.equals(that.accessControlContext)
                     && classLoader.equals(that.classLoader)
+                    && packageDefiner.equals(that.packageDefiner)
                     && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null);
         }
 
@@ -155,6 +196,7 @@ public interface ClassInjector {
         public int hashCode() {
             int result = classLoader.hashCode();
             result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
+            result = 31 * result + packageDefiner.hashCode();
             result = 31 * result + accessControlContext.hashCode();
             return result;
         }
@@ -164,6 +206,7 @@ public interface ClassInjector {
             return "ClassInjector.UsingReflection{" +
                     "classLoader=" + classLoader +
                     ", protectionDomain=" + protectionDomain +
+                    ", packageDefiner=" + packageDefiner +
                     ", accessControlContext=" + accessControlContext +
                     '}';
         }
@@ -173,19 +216,26 @@ public interface ClassInjector {
          */
         protected interface ReflectionStore {
 
-            /**
-             * Returns the method for finding a class on a class loader.
-             *
-             * @return The method for finding a class on a class loader.
-             */
-            Method getFindLoadedClassMethod();
+            Class<?> findClass(ClassLoader classLoader, String name) throws IllegalAccessException, InvocationTargetException;
 
-            /**
-             * Returns the method for loading a class into a class loader.
-             *
-             * @return The method for loading a class into a class loader.
-             */
-            Method getLoadByteArrayMethod();
+            Class<?> loadClass(ClassLoader classLoader,
+                               String name,
+                               byte[] binaryRepresentation,
+                               int startIndex,
+                               int endIndex,
+                               ProtectionDomain protectionDomain) throws InvocationTargetException, IllegalAccessException;
+
+            Package getPackage(ClassLoader classLoader, String name) throws InvocationTargetException, IllegalAccessException;
+
+            Package definePackage(ClassLoader classLoader,
+                                  String packageName,
+                                  String specificationTitle,
+                                  String specificationVersion,
+                                  String specificationVendor,
+                                  String implementationTitle,
+                                  String implementationVersion,
+                                  String implementationVendor,
+                                  URL sealBase) throws InvocationTargetException, IllegalAccessException;
 
             /**
              * Represents a successfully loaded method lookup.
@@ -193,34 +243,80 @@ public interface ClassInjector {
             class Resolved implements ReflectionStore {
 
                 /**
-                 * The method for finding a class on a class loader.
+                 * An accessible instance of {@link ClassLoader#findLoadedClass(String)}.
                  */
-                private final Method findLoadedClassMethod;
+                private final Method findLoadedClass;
 
                 /**
-                 * The method for loading a class into a class loader.
+                 * An accessible instance of {@link ClassLoader#loadClass(String)}.
                  */
-                private final Method loadByteArrayMethod;
+                private final Method loadClass;
+
+                /**
+                 * An accessible instance of {@link ClassLoader#getPackage(String)}.
+                 */
+                private final Method getPackage;
+
+                /**
+                 * An accessible instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                 */
+                private final Method definePackage;
 
                 /**
                  * Creates a new resolved reflection store.
                  *
-                 * @param findLoadedClassMethod The method for finding a class on a class loader.
-                 * @param loadByteArrayMethod   The method for loading a class into a class loader.
+                 * @param findLoadedClass An accessible instance of {@link ClassLoader#findLoadedClass(String)}.
+                 * @param loadClass       An accessible instance of {@link ClassLoader#loadClass(String)}.
+                 * @param getPackage      An accessible instance of {@link ClassLoader#getPackage(String)}.
+                 * @param definePackage   An accessible instance of
+                 *                        {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  */
-                protected Resolved(Method findLoadedClassMethod, Method loadByteArrayMethod) {
-                    this.findLoadedClassMethod = findLoadedClassMethod;
-                    this.loadByteArrayMethod = loadByteArrayMethod;
+                protected Resolved(Method findLoadedClass, Method loadClass, Method getPackage, Method definePackage) {
+                    this.findLoadedClass = findLoadedClass;
+                    this.loadClass = loadClass;
+                    this.getPackage = getPackage;
+                    this.definePackage = definePackage;
                 }
 
                 @Override
-                public Method getFindLoadedClassMethod() {
-                    return findLoadedClassMethod;
+                public Class<?> findClass(ClassLoader classLoader, String name) throws IllegalAccessException, InvocationTargetException {
+                    return (Class<?>) findLoadedClass.invoke(classLoader, name);
                 }
 
                 @Override
-                public Method getLoadByteArrayMethod() {
-                    return loadByteArrayMethod;
+                public Class<?> loadClass(ClassLoader classLoader,
+                                          String name,
+                                          byte[] binaryRepresentation,
+                                          int startIndex,
+                                          int endIndex,
+                                          ProtectionDomain protectionDomain) throws InvocationTargetException, IllegalAccessException {
+                    return (Class<?>) loadClass.invoke(classLoader, name, binaryRepresentation, startIndex, endIndex, protectionDomain);
+                }
+
+                @Override
+                public Package getPackage(ClassLoader classLoader, String name) throws InvocationTargetException, IllegalAccessException {
+                    return (Package) getPackage.invoke(classLoader, name);
+                }
+
+                @Override
+                public Package definePackage(ClassLoader classLoader,
+                                             String packageName,
+                                             String specificationTitle,
+                                             String specificationVersion,
+                                             String specificationVendor,
+                                             String implementationTitle,
+                                             String implementationVersion,
+                                             String implementationVendor,
+                                             URL sealBase) throws InvocationTargetException, IllegalAccessException {
+                    return (Package) definePackage.invoke(classLoader,
+                            packageName,
+                            specificationTitle,
+                            specificationVersion,
+                            specificationVendor,
+                            implementationTitle,
+                            implementationVersion,
+                            implementationVendor,
+                            sealBase);
                 }
 
                 @Override
@@ -228,22 +324,28 @@ public interface ClassInjector {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     Resolved resolved = (Resolved) other;
-                    return findLoadedClassMethod.equals(resolved.findLoadedClassMethod)
-                            && loadByteArrayMethod.equals(resolved.loadByteArrayMethod);
+                    return findLoadedClass.equals(resolved.findLoadedClass)
+                            && loadClass.equals(resolved.loadClass)
+                            && getPackage.equals(resolved.getPackage)
+                            && definePackage.equals(resolved.definePackage);
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = findLoadedClassMethod.hashCode();
-                    result = 31 * result + loadByteArrayMethod.hashCode();
+                    int result = findLoadedClass.hashCode();
+                    result = 31 * result + loadClass.hashCode();
+                    result = 31 * result + getPackage.hashCode();
+                    result = 31 * result + definePackage.hashCode();
                     return result;
                 }
 
                 @Override
                 public String toString() {
                     return "ClassInjector.UsingReflection.ReflectionStore.Resolved{" +
-                            "findLoadedClassMethod=" + findLoadedClassMethod +
-                            ", loadByteArrayMethod=" + loadByteArrayMethod +
+                            "findLoadedClass=" + findLoadedClass +
+                            ", loadClass=" + loadClass +
+                            ", getPackage=" + getPackage +
+                            ", definePackage=" + definePackage +
                             '}';
                 }
             }
@@ -273,12 +375,36 @@ public interface ClassInjector {
                 }
 
                 @Override
-                public Method getFindLoadedClassMethod() {
+                public Class<?> findClass(ClassLoader classLoader, String name) {
                     throw new IllegalStateException(MESSAGE, exception);
                 }
 
                 @Override
-                public Method getLoadByteArrayMethod() {
+                public Class<?> loadClass(ClassLoader classLoader,
+                                          String name,
+                                          byte[] binaryRepresentation,
+                                          int startIndex,
+                                          int endIndex,
+                                          ProtectionDomain protectionDomain) {
+                    throw new IllegalStateException(MESSAGE, exception);
+                }
+
+
+                @Override
+                public Package getPackage(ClassLoader classLoader, String name) {
+                    throw new IllegalStateException(MESSAGE, exception);
+                }
+
+                @Override
+                public Package definePackage(ClassLoader classLoader,
+                                             String packageName,
+                                             String specificationTitle,
+                                             String specificationVersion,
+                                             String specificationVendor,
+                                             String implementationTitle,
+                                             String implementationVersion,
+                                             String implementationVendor,
+                                             URL sealBase) {
                     throw new IllegalStateException(MESSAGE, exception);
                 }
 
@@ -333,7 +459,7 @@ public interface ClassInjector {
 
             @Override
             public Class<?> run() throws IllegalAccessException, InvocationTargetException {
-                return (Class<?>) REFLECTION_STORE.getLoadByteArrayMethod().invoke(classLoader,
+                return REFLECTION_STORE.loadClass(classLoader,
                         name,
                         binaryRepresentation,
                         FROM_BEGINNING,
@@ -452,10 +578,10 @@ public interface ClassInjector {
                     loaded.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
                 }
                 return loaded;
-            } catch (IOException e) {
-                throw new IllegalStateException("Cannot write jar file to disk", e);
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException("Cannot load injected class", e);
+            } catch (IOException exception) {
+                throw new IllegalStateException("Cannot write jar file to disk", exception);
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalStateException("Cannot load injected class", exception);
             }
         }
 

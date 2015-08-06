@@ -131,8 +131,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                     .loadClass(BYTE_BUDDY_AGENT_TYPE)
                     .getDeclaredMethod(GET_INSTRUMENTATION_METHOD)
                     .invoke(STATIC_METHOD));
-        } catch (Exception e) {
-            throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", e);
+        } catch (Exception exception) {
+            throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
         }
     }
 
@@ -156,10 +156,10 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                     ? bootstrapInjection.make(instrumentation)
                     : new ClassInjector.UsingReflection(classLoader);
             loadedClasses.putAll(classInjector.inject(unloadedClasses));
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Could not locate classes for redefinition", e);
-        } catch (UnmodifiableClassException e) {
-            throw new IllegalStateException("Cannot redefine specified class", e);
+        } catch (ClassNotFoundException exception) {
+            throw new IllegalArgumentException("Could not locate classes for redefinition", exception);
+        } catch (UnmodifiableClassException exception) {
+            throw new IllegalStateException("Cannot redefine specified class", exception);
         }
         return loadedClasses;
     }
@@ -181,15 +181,15 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                     inputStream.close();
                 }
             }
-        } catch (IOException e) {
-            throw new IllegalStateException("Exception while resetting types " + Arrays.toString(type), e);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Exception while resetting types " + Arrays.toString(type), exception);
         }
         try {
             engine.apply(instrumentation, classDefinitions);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("Cannot locate types " + Arrays.toString(type), e);
-        } catch (UnmodifiableClassException e) {
-            throw new IllegalStateException("Cannot reset types " + Arrays.toString(type), e);
+        } catch (ClassNotFoundException exception) {
+            throw new IllegalArgumentException("Cannot locate types " + Arrays.toString(type), exception);
+        } catch (UnmodifiableClassException exception) {
+            throw new IllegalStateException("Cannot reset types " + Arrays.toString(type), exception);
         }
         return this;
     }

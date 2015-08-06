@@ -37,7 +37,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new URLClassLoader(new URL[0], null /* null represents the bootstrap class loader */);
+        classLoader = new URLClassLoader(new URL[0], null);
         classInjector = new ClassInjector.UsingReflection(classLoader);
     }
 
@@ -53,13 +53,36 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testFaultyReflectionStoreClassMethod() throws Exception {
-        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getFindLoadedClassMethod();
+    public void testFaultyReflectionStoreFindClass() throws Exception {
+        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).findClass(classLoader, null);
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testFaultyReflectionStoreLoadByteArray() throws Exception {
-        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getLoadByteArrayMethod();
+    public void testFaultyReflectionStoreLoadClass() throws Exception {
+        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).loadClass(classLoader,
+                null,
+                null,
+                0,
+                0,
+                null);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFaultyReflectionStoreGetPackage() throws Exception {
+        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getPackage(classLoader, null);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFaultyReflectionStoreDefinePackage() throws Exception {
+        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).definePackage(classLoader,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     @Test
