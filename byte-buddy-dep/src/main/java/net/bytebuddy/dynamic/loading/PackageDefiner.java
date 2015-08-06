@@ -428,15 +428,15 @@ public interface PackageDefiner {
         /**
          * A locator for a sealed package's URL.
          */
-        private final CodeSourceLocator codeSourceLocator;
+        private final SealBaseLocator sealBaseLocator;
 
         /**
          * Creates a new package definer that reads a class loader's manifest file.
          *
-         * @param codeSourceLocator A locator for a sealed package's URL.
+         * @param sealBaseLocator A locator for a sealed package's URL.
          */
-        public ManifestReading(CodeSourceLocator codeSourceLocator) {
-            this.codeSourceLocator = codeSourceLocator;
+        public ManifestReading(SealBaseLocator sealBaseLocator) {
+            this.sealBaseLocator = sealBaseLocator;
         }
 
         @Override
@@ -468,7 +468,7 @@ public interface PackageDefiner {
                             values.get(Attributes.Name.IMPLEMENTATION_VERSION),
                             values.get(Attributes.Name.IMPLEMENTATION_VENDOR),
                             Boolean.parseBoolean(values.get(Attributes.Name.SEALED))
-                                    ? codeSourceLocator.findSealBase(packageName, classLoader, simpleTypeName)
+                                    ? sealBaseLocator.findSealBase(packageName, classLoader, simpleTypeName)
                                     : NOT_SEALED);
                 } finally {
                     inputStream.close();
@@ -481,25 +481,25 @@ public interface PackageDefiner {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && codeSourceLocator.equals(((ManifestReading) other).codeSourceLocator);
+                    && sealBaseLocator.equals(((ManifestReading) other).sealBaseLocator);
         }
 
         @Override
         public int hashCode() {
-            return codeSourceLocator.hashCode();
+            return sealBaseLocator.hashCode();
         }
 
         @Override
         public String toString() {
             return "PackageDefiner.ManifestReading{" +
-                    "sealBaseLocator=" + codeSourceLocator +
+                    "sealBaseLocator=" + sealBaseLocator +
                     '}';
         }
 
         /**
          * A locator for a seal base URL.
          */
-        public interface CodeSourceLocator {
+        public interface SealBaseLocator {
 
             /**
              * Locates the URL that should be used for sealing a package.
@@ -507,14 +507,14 @@ public interface PackageDefiner {
              * @param packageName    The name of the package.
              * @param classLoader    The class loader loading the package.
              * @param simpleTypeName The simple name of the type being loaded when defining this package.
-             * @return The URL that is used for sealing a package or {@code null} if the package should not be sealed..
+             * @return The URL that is used for sealing a package or {@code null} if the package should not be sealed.
              */
             URL findSealBase(String packageName, ClassLoader classLoader, String simpleTypeName);
 
             /**
              * A seal base locator that never seals a package.
              */
-            enum NonSealing implements CodeSourceLocator {
+            enum NonSealing implements SealBaseLocator {
 
                 /**
                  * The singleton instance.
@@ -535,7 +535,7 @@ public interface PackageDefiner {
             /**
              * A seal base locator that seals all packages with a fixed URL.
              */
-            class ForFixedSource implements CodeSourceLocator {
+            class ForFixedValue implements SealBaseLocator {
 
                 /**
                  * The seal base URL.
@@ -547,7 +547,7 @@ public interface PackageDefiner {
                  *
                  * @param sealBase The seal base URL.
                  */
-                public ForFixedSource(URL sealBase) {
+                public ForFixedValue(URL sealBase) {
                     this.sealBase = sealBase;
                 }
 
@@ -559,7 +559,7 @@ public interface PackageDefiner {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && sealBase.equals(((ForFixedSource) other).sealBase);
+                            && sealBase.equals(((ForFixedValue) other).sealBase);
                 }
 
                 @Override
@@ -569,7 +569,7 @@ public interface PackageDefiner {
 
                 @Override
                 public String toString() {
-                    return "PackageDefiner.ManifestReading.CodeSourceLocator.ForFixedSource{" +
+                    return "PackageDefiner.ManifestReading.CodeSourceLocator.ForFixedValue{" +
                             "sealBase=" + sealBase +
                             '}';
                 }

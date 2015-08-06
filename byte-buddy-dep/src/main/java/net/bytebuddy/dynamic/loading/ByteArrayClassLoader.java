@@ -281,6 +281,7 @@ public class ByteArrayClassLoader extends ClassLoader {
          * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
          *                           protection domain.
          * @param persistenceHandler The persistence handler of this class loader.
+         * @param packageDefiner     The package definer to be queried for package definitions.
          */
         public ChildFirst(ClassLoader parent,
                           Map<String, byte[]> typeDefinitions,
