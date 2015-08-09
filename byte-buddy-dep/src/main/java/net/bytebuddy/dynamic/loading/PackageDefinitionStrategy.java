@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.loading;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -569,6 +570,101 @@ public interface PackageDefinitionStrategy {
                 public String toString() {
                     return "PackageDefinitionStrategy.ManifestReading.CodeSourceLocator.ForFixedValue{" +
                             "sealBase=" + sealBase +
+                            '}';
+                }
+            }
+
+            /**
+             * A seal base locator that imitates the behavior of a {@link java.net.URLClassLoader}, i.e. tries
+             * to deduct the base from a class's resource URL.
+             */
+            class ForTypeResource implements SealBaseLocator {
+
+                /**
+                 * The file extension for a class file.
+                 */
+                private static final String CLASS_FILE_EXTENSION = ".class";
+
+                /**
+                 * The protocol name of a jar file.
+                 */
+                private static final String JAR_FILE = "jar";
+
+                /**
+                 * The protocol name of a file on the file system.
+                 */
+                private static final String FILE_PATH = "file";
+
+                /**
+                 * The protocol name of a Java 9 runtime image.
+                 */
+                private static final String RUNTIME_IMAGE = "jrt";
+
+                /**
+                 * The seal base locator to fallback to when a resource is not found or an unexpected URL protocol is discovered.
+                 */
+                private final SealBaseLocator fallback;
+
+                /**
+                 * Creates a new seal base locator that attempts deduction from a type's URL while using a
+                 * {@link net.bytebuddy.dynamic.loading.PackageDefinitionStrategy.ManifestReading.SealBaseLocator.NonSealing} seal base locator
+                 * as a fallback.
+                 */
+                public ForTypeResource() {
+                    this(NonSealing.INSTANCE);
+                }
+
+                /**
+                 * Creates a new seal base locator that attempts deduction from a type's URL.
+                 *
+                 * @param fallback The seal base locator to fallback to when a resource is not found or an unexpected URL protocol is discovered.
+                 */
+                public ForTypeResource(SealBaseLocator fallback) {
+                    this.fallback = fallback;
+                }
+
+                @Override
+                public URL findSealBase(String packageName, ClassLoader classLoader, String typeName) {
+                    URL url = classLoader.getResource(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
+                    if (url != null) {
+                        try {
+                            if (url.getProtocol().equals(JAR_FILE)) {
+                                String path = url.getPath();
+                                int fileIndex = path.indexOf('!');
+                                return new URL(fileIndex == -1
+                                        ? path
+                                        : path.substring(0, fileIndex));
+                            } else if (url.getProtocol().equals(RUNTIME_IMAGE)) {
+                                String path = url.getPath();
+                                int moduleIndex = path.indexOf('/');
+                                return moduleIndex == -1
+                                        ? url
+                                        : new URL(RUNTIME_IMAGE + ":/" + path.substring(0, moduleIndex));
+                            } else if (url.getProtocol().equals(FILE_PATH)) {
+                                return NOT_SEALED;
+                            }
+                        } catch (MalformedURLException exception) {
+                            throw new IllegalStateException("Unexpected URL: " + url, exception);
+                        }
+                    }
+                    return fallback.findSealBase(packageName, classLoader, typeName);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fallback.equals(((ForTypeResource) other).fallback);
+                }
+
+                @Override
+                public int hashCode() {
+                    return fallback.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResource{" +
+                            "fallback=" + fallback +
                             '}';
                 }
             }
