@@ -33,10 +33,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
+import java.util.jar.*;
 import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -157,6 +154,17 @@ public interface DynamicType {
      * @throws IOException If an IO exception occurs while injecting into the jar.
      */
     File inject(File jar) throws IOException;
+
+    /**
+     * Saves the contents of this dynamic type inside a <i>jar</i> file. The folder of the given {@code file} must
+     * exist prior to calling this method. The jar file is created with a simple manifest that only contains a version
+     * number.
+     *
+     * @param file The target file to which the <i>jar</i> is written to.
+     * @return The given {@code file}.
+     * @throws IOException If an IO exception occurs while writing the file.
+     */
+    File toJar(File file) throws IOException;
 
     /**
      * Saves the contents of this dynamic type inside a <i>jar</i> file. The folder of the given {@code file} must
@@ -2857,6 +2865,11 @@ public interface DynamicType {
         private static final String CLASS_FILE_EXTENSION = ".class";
 
         /**
+         * The default version of a jar file manifest.
+         */
+        private static final String MANIFEST_VERSION = "1.0";
+
+        /**
          * The size of a writing buffer.
          */
         private static final int BUFFER_SIZE = 1024;
@@ -3053,6 +3066,13 @@ public interface DynamicType {
                 }
             }
             return jar;
+        }
+
+        @Override
+        public File toJar(File file) throws IOException {
+            Manifest manifest = new Manifest();
+            manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION);
+            return toJar(file, manifest);
         }
 
         @Override

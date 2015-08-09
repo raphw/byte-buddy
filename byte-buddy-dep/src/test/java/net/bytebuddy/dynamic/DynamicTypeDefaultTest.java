@@ -176,6 +176,27 @@ public class DynamicTypeDefaultTest {
         File file = File.createTempFile(FOO, TEMP);
         boolean fileDeletion;
         try {
+            assertThat(dynamicType.toJar(file), is(file));
+            assertThat(file.exists(), is(true));
+            assertThat(file.isFile(), is(true));
+            assertThat(file.length() > 0L, is(true));
+            Map<String, byte[]> bytes = new HashMap<String, byte[]>();
+            bytes.put(FOOBAR + CLASS_FILE_EXTENSION, BINARY_FIRST);
+            bytes.put(QUXBAZ + CLASS_FILE_EXTENSION, BINARY_SECOND);
+            Manifest manifest = new Manifest();
+            manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+            assertJarFile(file, manifest, bytes);
+        } finally {
+            fileDeletion = file.delete();
+        }
+        assertThat(fileDeletion, is(true));
+    }
+
+    @Test
+    public void testJarWithExplicitManifestCreation() throws Exception {
+        File file = File.createTempFile(FOO, TEMP);
+        boolean fileDeletion;
+        try {
             Manifest manifest = new Manifest();
             manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
             assertThat(dynamicType.toJar(file, manifest), is(file));
