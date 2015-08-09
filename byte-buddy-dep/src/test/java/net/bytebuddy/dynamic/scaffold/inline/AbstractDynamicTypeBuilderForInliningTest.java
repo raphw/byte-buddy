@@ -9,7 +9,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.PackageDefiner;
+import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
@@ -121,7 +121,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 ClassFileExtraction.of(GenericType.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefiner.NoOp.INSTANCE);
+                PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> dynamicType = create(GenericType.Inner.class)
                 .method(named(FOO)).intercept(StubMethod.INSTANCE)
                 .make()
@@ -248,7 +248,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefiner.NoOp.INSTANCE);
+                PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
@@ -284,7 +284,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefiner.NoOp.INSTANCE);
+                PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
                 .modifiers(0)
                 .make()
@@ -300,7 +300,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 ClassFileExtraction.of(PublicVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefiner.NoOp.INSTANCE);
+                PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = new ByteBuddy().subclass(PublicVisibilityBridgeExtension.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
@@ -316,7 +316,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class, VisibilityBridgeAbstractMethod.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefiner.NoOp.INSTANCE);
+                PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class)
                 .modifiers(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
                 .make()

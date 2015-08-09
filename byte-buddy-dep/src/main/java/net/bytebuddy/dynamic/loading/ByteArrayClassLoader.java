@@ -36,7 +36,7 @@ public class ByteArrayClassLoader extends ClassLoader {
     /**
      * The package definer to be queried for package definitions.
      */
-    protected final PackageDefiner packageDefiner;
+    protected final PackageDefinitionStrategy packageDefinitionStrategy;
 
     /**
      * The access control context of this class loader's instantiation.
@@ -46,75 +46,75 @@ public class ByteArrayClassLoader extends ClassLoader {
     /**
      * Creates a new class loader for a given definition of classes.
      *
-     * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
-     * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
-     * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
-     *                           protection domain.
-     * @param packageDefiner     The package definer to be queried for package definitions.
-     * @param persistenceHandler The persistence handler of this class loader.
+     * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit
+     *                                  protection domain.
+     * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+     * @param persistenceHandler        The persistence handler of this class loader.
      */
     public ByteArrayClassLoader(ClassLoader parent,
                                 Map<String, byte[]> typeDefinitions,
                                 ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
-                                PackageDefiner packageDefiner) {
+                                PackageDefinitionStrategy packageDefinitionStrategy) {
         super(parent);
         this.typeDefinitions = new HashMap<String, byte[]>(typeDefinitions);
         this.protectionDomain = protectionDomain;
         this.persistenceHandler = persistenceHandler;
-        this.packageDefiner = packageDefiner;
+        this.packageDefinitionStrategy = packageDefinitionStrategy;
         accessControlContext = AccessController.getContext();
     }
 
     /**
      * Creates a new class loader for a given definition of classes.
      *
-     * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
-     * @param typeDefinitions    A map of type descriptions pointing to their binary representations.
-     * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
-     *                           protection domain.
-     * @param persistenceHandler The persistence handler to be used by the created class loader.
-     * @param packageDefiner     The package definer to be queried for package definitions.
-     * @param childFirst         {@code true} if the class loader should apply child first semantics when loading
-     *                           the {@code typeDefinitions}.
+     * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param typeDefinitions           A map of type descriptions pointing to their binary representations.
+     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit
+     *                                  protection domain.
+     * @param persistenceHandler        The persistence handler to be used by the created class loader.
+     * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+     * @param childFirst                {@code true} if the class loader should apply child first semantics when loading
+     *                                  the {@code typeDefinitions}.
      * @return A corresponding class loader.
      */
     public static ClassLoader of(ClassLoader parent,
                                  Map<TypeDescription, byte[]> typeDefinitions,
                                  ProtectionDomain protectionDomain,
                                  PersistenceHandler persistenceHandler,
-                                 PackageDefiner packageDefiner,
+                                 PackageDefinitionStrategy packageDefinitionStrategy,
                                  boolean childFirst) {
         Map<String, byte[]> rawTypeDefinitions = new HashMap<String, byte[]>(typeDefinitions.size());
         for (Map.Entry<TypeDescription, byte[]> entry : typeDefinitions.entrySet()) {
             rawTypeDefinitions.put(entry.getKey().getName(), entry.getValue());
         }
         return childFirst
-                ? new ChildFirst(parent, rawTypeDefinitions, protectionDomain, persistenceHandler, packageDefiner)
-                : new ByteArrayClassLoader(parent, rawTypeDefinitions, protectionDomain, persistenceHandler, packageDefiner);
+                ? new ChildFirst(parent, rawTypeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy)
+                : new ByteArrayClassLoader(parent, rawTypeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
     }
 
     /**
      * Loads a given set of class descriptions and their binary representations.
      *
-     * @param classLoader        The parent class loader.
-     * @param types              The unloaded types to be loaded.
-     * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
-     *                           protection domain.
-     * @param persistenceHandler The persistence handler of the created class loader.
-     * @param packageDefiner     The package definer to be queried for package definitions.
-     * @param childFirst         {@code true} {@code true} if the created class loader should apply child-first
-     *                           semantics when loading the {@code types}.
+     * @param classLoader               The parent class loader.
+     * @param types                     The unloaded types to be loaded.
+     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit
+     *                                  protection domain.
+     * @param persistenceHandler        The persistence handler of the created class loader.
+     * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+     * @param childFirst                {@code true} {@code true} if the created class loader should apply child-first
+     *                                  semantics when loading the {@code types}.
      * @return A map of the given type descriptions pointing to their loaded representations.
      */
     public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
                                                       Map<TypeDescription, byte[]> types,
                                                       ProtectionDomain protectionDomain,
                                                       PersistenceHandler persistenceHandler,
-                                                      PackageDefiner packageDefiner,
+                                                      PackageDefinitionStrategy packageDefinitionStrategy,
                                                       boolean childFirst) {
         Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
-        classLoader = ByteArrayClassLoader.of(classLoader, types, protectionDomain, persistenceHandler, packageDefiner, childFirst);
+        classLoader = ByteArrayClassLoader.of(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, childFirst);
         for (TypeDescription typeDescription : types.keySet()) {
             try {
                 loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
@@ -156,7 +156,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 ", typeDefinitions=" + typeDefinitions +
                 ", persistenceHandler=" + persistenceHandler +
                 ", protectionDomain=" + protectionDomain +
-                ", packageDefiner=" + packageDefiner +
+                ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                 ", accessControlContext=" + accessControlContext +
                 '}';
     }
@@ -276,19 +276,19 @@ public class ByteArrayClassLoader extends ClassLoader {
         /**
          * Creates a new child-first byte array class loader.
          *
-         * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
-         * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
-         * @param protectionDomain   The protection domain to apply where {@code null} references an implicit
-         *                           protection domain.
-         * @param persistenceHandler The persistence handler of this class loader.
-         * @param packageDefiner     The package definer to be queried for package definitions.
+         * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+         * @param protectionDomain          The protection domain to apply where {@code null} references an implicit
+         *                                  protection domain.
+         * @param persistenceHandler        The persistence handler of this class loader.
+         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          */
         public ChildFirst(ClassLoader parent,
                           Map<String, byte[]> typeDefinitions,
                           ProtectionDomain protectionDomain,
                           PersistenceHandler persistenceHandler,
-                          PackageDefiner packageDefiner) {
-            super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefiner);
+                          PackageDefinitionStrategy packageDefinitionStrategy) {
+            super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
         }
 
         @Override
@@ -301,11 +301,10 @@ public class ByteArrayClassLoader extends ClassLoader {
                 try {
                     type = AccessController.doPrivileged(new ClassLoadingAction(name), accessControlContext);
                 } catch (PrivilegedActionException exception) {
-                    Throwable cause = exception.getCause();
-                    if (cause instanceof ClassNotFoundException) {
-                        throw (ClassNotFoundException) cause;
+                    if (exception.getCause() instanceof ClassNotFoundException) {
+                        throw (ClassNotFoundException) exception.getCause();
                     } else {
-                        throw new IllegalStateException("Could not load class " + name, cause);
+                        throw new IllegalStateException("Could not load class " + name, exception.getCause());
                     }
                 }
                 if (resolve) {
@@ -364,7 +363,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                     ", typeDefinitions=" + typeDefinitions +
                     ", protectionDomain=" + protectionDomain +
                     ", persistenceHandler=" + persistenceHandler +
-                    ", packageDefiner=" + packageDefiner +
+                    ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                     ", accessControlContext=" + accessControlContext +
                     '}';
         }
@@ -399,20 +398,21 @@ public class ByteArrayClassLoader extends ClassLoader {
             byte[] javaType = persistenceHandler.lookup(typeName, typeDefinitions);
             if (javaType != null) {
                 int packageIndex = typeName.lastIndexOf('.');
-                if (packageIndex != -1 && getPackage(typeName.substring(0, packageIndex)) == null) {
+                if (packageIndex != -1) {
                     String packageName = typeName.substring(0, packageIndex);
-                    PackageDefiner.Definition definition = packageDefiner.define(packageName,
-                            ByteArrayClassLoader.this,
-                            typeName.substring(packageIndex + 1));
+                    PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(packageName, ByteArrayClassLoader.this, typeName);
                     if (definition.isDefined()) {
-                        definePackage(packageName,
-                                definition.getSpecificationTitle(),
-                                definition.getSpecificationVersion(),
-                                definition.getSpecificationVendor(),
-                                definition.getImplementationTitle(),
-                                definition.getImplementationVersion(),
-                                definition.getImplementationVendor(),
-                                definition.getSealBase());
+                        Package definedPackage = getPackage(packageName);
+                        if (definedPackage == null) {
+                            definePackage(packageName,
+                                    definition.getSpecificationTitle(),
+                                    definition.getSpecificationVersion(),
+                                    definition.getSpecificationVendor(),
+                                    definition.getImplementationTitle(),
+                                    definition.getImplementationVersion(),
+                                    definition.getImplementationVendor(),
+                                    definition.getSealBase());
+                        }
                     }
                 }
                 return defineClass(typeName, javaType, FROM_BEGINNING, javaType.length, protectionDomain);

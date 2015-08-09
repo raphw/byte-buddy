@@ -50,7 +50,7 @@ public class ByteArrayClassLoaderTest {
     private URL sealBase;
 
     @Mock
-    private PackageDefiner packageDefiner;
+    private PackageDefinitionStrategy packageDefinitionStrategy;
 
     public ByteArrayClassLoaderTest(ByteArrayClassLoader.PersistenceHandler persistenceHandler,
                                     Matcher<InputStream> expectedResourceLookup) {
@@ -72,15 +72,23 @@ public class ByteArrayClassLoaderTest {
                 ClassFileExtraction.of(Foo.class),
                 DEFAULT_PROTECTION_DOMAIN,
                 persistenceHandler,
-                packageDefiner);
+                packageDefinitionStrategy);
         sealBase = new URL("file://foo");
-        when(packageDefiner.define(Foo.class.getPackage().getName(), classLoader, getClass().getSimpleName() + "$" + Foo.class.getSimpleName()))
-                .thenReturn(new PackageDefiner.Definition.Simple(FOO, BAR, QUX, QUX, FOO, BAR, sealBase));
+        when(packageDefinitionStrategy.define(Foo.class.getPackage().getName(), classLoader,Foo.class.getName()))
+                .thenReturn(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, QUX, FOO, BAR, sealBase));
+    }
+
+    @Test
+    public void testSuccessfulHit() throws Exception {
+        Class<?> type = classLoader.loadClass(Foo.class.getName());
+        assertThat(type.getClassLoader(), is(classLoader));
+        assertEquals(classLoader.loadClass(Foo.class.getName()), type);
+        assertNotEquals(Foo.class, type);
     }
 
     @Test
     @IntegrationRule.Enforce
-    public void testSuccessfulHit() throws Exception {
+    public void testSuccessfulHitPackageDefinition() throws Exception {
         Class<?> type = classLoader.loadClass(Foo.class.getName());
         assertThat(type.getClassLoader(), is(classLoader));
         assertEquals(classLoader.loadClass(Foo.class.getName()), type);

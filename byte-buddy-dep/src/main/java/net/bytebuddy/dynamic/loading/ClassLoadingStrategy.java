@@ -27,7 +27,7 @@ public interface ClassLoadingStrategy {
     /**
      * This class contains implementations of default class loading strategies.
      */
-    enum Default implements WithDefaultPackageLoader {
+    enum Default implements Configurable {
 
         /**
          * This strategy creates a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} with the given
@@ -91,14 +91,14 @@ public interface ClassLoadingStrategy {
         /**
          * The dispatcher to be used when loading a class.
          */
-        private final WithDefaultPackageLoader dispatcher;
+        private final Configurable dispatcher;
 
         /**
          * Creates a new default class loading strategy.
          *
          * @param dispatcher The dispatcher to be used when loading a class.
          */
-        Default(WithDefaultPackageLoader dispatcher) {
+        Default(Configurable dispatcher) {
             this.dispatcher = dispatcher;
         }
 
@@ -108,13 +108,13 @@ public interface ClassLoadingStrategy {
         }
 
         @Override
-        public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
+        public Configurable withProtectionDomain(ProtectionDomain protectionDomain) {
             return dispatcher.withProtectionDomain(protectionDomain);
         }
 
         @Override
-        public WithDefaultProtectionDomain withPackageDefiner(PackageDefiner packageDefiner) {
-            return dispatcher.withPackageDefiner(packageDefiner);
+        public Configurable withPackageDefiner(PackageDefinitionStrategy packageDefinitionStrategy) {
+            return dispatcher.withPackageDefiner(packageDefinitionStrategy);
         }
 
         @Override
@@ -126,7 +126,7 @@ public interface ClassLoadingStrategy {
          * A class loading strategy which applies a class loader injection while applying a given
          * {@link java.security.ProtectionDomain} on class injection.
          */
-        protected static class InjectionDispatcher implements ClassLoadingStrategy.WithDefaultPackageLoader {
+        protected static class InjectionDispatcher implements ClassLoadingStrategy.Configurable {
 
             /**
              * The protection domain to apply.
@@ -136,39 +136,39 @@ public interface ClassLoadingStrategy {
             /**
              * The package definer to be used for querying information on package information.
              */
-            private final PackageDefiner packageDefiner;
+            private final PackageDefinitionStrategy packageDefinitionStrategy;
 
             /**
              * Creates a new injection dispatcher.
              */
             protected InjectionDispatcher() {
-                this(DEFAULT_PROTECTION_DOMAIN, PackageDefiner.NoOp.INSTANCE);
+                this(DEFAULT_PROTECTION_DOMAIN, PackageDefinitionStrategy.NoOp.INSTANCE);
             }
 
             /**
              * Creates a new injection dispatcher.
              *
              * @param protectionDomain The protection domain to apply.
-             * @param packageDefiner   The package definer to be used for querying information on package information.
+             * @param packageDefinitionStrategy   The package definer to be used for querying information on package information.
              */
-            private InjectionDispatcher(ProtectionDomain protectionDomain, PackageDefiner packageDefiner) {
+            private InjectionDispatcher(ProtectionDomain protectionDomain, PackageDefinitionStrategy packageDefinitionStrategy) {
                 this.protectionDomain = protectionDomain;
-                this.packageDefiner = packageDefiner;
+                this.packageDefinitionStrategy = packageDefinitionStrategy;
             }
 
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return new ClassInjector.UsingReflection(classLoader, protectionDomain, packageDefiner).inject(types);
+                return new ClassInjector.UsingReflection(classLoader, protectionDomain, packageDefinitionStrategy).inject(types);
             }
 
             @Override
-            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new InjectionDispatcher(protectionDomain, packageDefiner);
+            public Configurable withProtectionDomain(ProtectionDomain protectionDomain) {
+                return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy);
             }
 
             @Override
-            public WithDefaultProtectionDomain withPackageDefiner(PackageDefiner packageDefiner) {
-                return new InjectionDispatcher(protectionDomain, packageDefiner);
+            public Configurable withPackageDefiner(PackageDefinitionStrategy packageDefinitionStrategy) {
+                return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy);
             }
 
             @Override
@@ -177,13 +177,13 @@ public interface ClassLoadingStrategy {
                 if (other == null || getClass() != other.getClass()) return false;
                 InjectionDispatcher that = (InjectionDispatcher) other;
                 return !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
-                        && packageDefiner.equals(that.packageDefiner);
+                        && packageDefinitionStrategy.equals(that.packageDefinitionStrategy);
             }
 
             @Override
             public int hashCode() {
                 int result = protectionDomain != null ? protectionDomain.hashCode() : 0;
-                result = 31 * result + packageDefiner.hashCode();
+                result = 31 * result + packageDefinitionStrategy.hashCode();
                 return result;
             }
 
@@ -191,7 +191,7 @@ public interface ClassLoadingStrategy {
             public String toString() {
                 return "ClassLoadingStrategy.Default.ProtectionDomainInjection{" +
                         "protectionDomain=" + protectionDomain +
-                        "packageDefiner=" + packageDefiner +
+                        "packageDefiner=" + packageDefinitionStrategy +
                         '}';
             }
         }
@@ -200,7 +200,7 @@ public interface ClassLoadingStrategy {
          * A class loading strategy which creates a wrapping class loader while applying a given
          * {@link java.security.ProtectionDomain} on class loading.
          */
-        protected static class WrappingDispatcher implements ClassLoadingStrategy.WithDefaultPackageLoader {
+        protected static class WrappingDispatcher implements ClassLoadingStrategy.Configurable {
 
             /**
              * Indicates that a child first loading strategy should be attempted.
@@ -225,7 +225,7 @@ public interface ClassLoadingStrategy {
             /**
              * The package definer to be used for querying information on package information.
              */
-            private final PackageDefiner packageDefiner;
+            private final PackageDefinitionStrategy packageDefinitionStrategy;
 
             /**
              * {@code true} if the created class loader should apply child-first semantics.
@@ -239,40 +239,40 @@ public interface ClassLoadingStrategy {
              * @param childFirst         {@code true} if the created class loader should apply child-first semantics.
              */
             protected WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler persistenceHandler, boolean childFirst) {
-                this(DEFAULT_PROTECTION_DOMAIN, PackageDefiner.Trivial.INSTANCE, persistenceHandler, childFirst);
+                this(DEFAULT_PROTECTION_DOMAIN, PackageDefinitionStrategy.Trivial.INSTANCE, persistenceHandler, childFirst);
             }
 
             /**
              * Creates a new protection domain specific class loading wrapper.
              *
              * @param protectionDomain   The protection domain to apply.
-             * @param packageDefiner     The package definer to be used for querying information on package information.
+             * @param packageDefinitionStrategy     The package definer to be used for querying information on package information.
              * @param persistenceHandler The persistence handler to apply.
              * @param childFirst         {@code true} if the created class loader should apply child-first semantics.
              */
             private WrappingDispatcher(ProtectionDomain protectionDomain,
-                                       PackageDefiner packageDefiner,
+                                       PackageDefinitionStrategy packageDefinitionStrategy,
                                        ByteArrayClassLoader.PersistenceHandler persistenceHandler,
                                        boolean childFirst) {
                 this.protectionDomain = protectionDomain;
-                this.packageDefiner = packageDefiner;
+                this.packageDefinitionStrategy = packageDefinitionStrategy;
                 this.persistenceHandler = persistenceHandler;
                 this.childFirst = childFirst;
             }
 
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, packageDefiner, childFirst);
+                return ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, childFirst);
             }
 
             @Override
-            public ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new WrappingDispatcher(protectionDomain, packageDefiner, persistenceHandler, childFirst);
+            public Configurable withProtectionDomain(ProtectionDomain protectionDomain) {
+                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst);
             }
 
             @Override
-            public WithDefaultProtectionDomain withPackageDefiner(PackageDefiner packageDefiner) {
-                return new WrappingDispatcher(protectionDomain, packageDefiner, persistenceHandler, childFirst);
+            public Configurable withPackageDefiner(PackageDefinitionStrategy packageDefinitionStrategy) {
+                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst);
             }
 
             @Override
@@ -281,7 +281,7 @@ public interface ClassLoadingStrategy {
                 if (other == null || getClass() != other.getClass()) return false;
                 WrappingDispatcher that = (WrappingDispatcher) other;
                 return childFirst == that.childFirst
-                        && packageDefiner.equals(that.packageDefiner)
+                        && packageDefinitionStrategy.equals(that.packageDefinitionStrategy)
                         && persistenceHandler == that.persistenceHandler
                         && protectionDomain.equals(that.protectionDomain);
             }
@@ -289,7 +289,7 @@ public interface ClassLoadingStrategy {
             @Override
             public int hashCode() {
                 int result = protectionDomain.hashCode();
-                result = 31 * result + packageDefiner.hashCode();
+                result = 31 * result + packageDefinitionStrategy.hashCode();
                 result = 31 * result + (childFirst ? 1 : 0);
                 result = 31 * result + persistenceHandler.hashCode();
                 return result;
@@ -298,7 +298,7 @@ public interface ClassLoadingStrategy {
             @Override
             public String toString() {
                 return "ClassLoadingStrategy.Default.WrappingDispatcher{" +
-                        "packageDefiner=" + packageDefiner +
+                        "packageDefiner=" + packageDefinitionStrategy +
                         ", protectionDomain=" + protectionDomain +
                         ", childFirst=" + childFirst +
                         ", persistenceHandler=" + persistenceHandler +
@@ -308,9 +308,9 @@ public interface ClassLoadingStrategy {
     }
 
     /**
-     * A {@link ClassLoadingStrategy} that applies a default {@link java.security.ProtectionDomain}.
+     * A {@link ClassLoadingStrategy} that allows configuring the strategy's behavior.
      */
-    interface WithDefaultProtectionDomain extends ClassLoadingStrategy {
+    interface Configurable extends ClassLoadingStrategy {
 
         /**
          * Overrides the implicitly set default {@link java.security.ProtectionDomain} with an explicit one.
@@ -318,22 +318,15 @@ public interface ClassLoadingStrategy {
          * @param protectionDomain The protection domain to apply.
          * @return This class loading strategy with an explicitly set {@link java.security.ProtectionDomain}.
          */
-        ClassLoadingStrategy withProtectionDomain(ProtectionDomain protectionDomain);
-    }
-
-    /**
-     * A class loading strategy with a default {@link net.bytebuddy.dynamic.loading.ClassLoadingStrategy.WithDefaultPackageLoader}
-     * and a default {@link ProtectionDomain}.
-     */
-    interface WithDefaultPackageLoader extends WithDefaultProtectionDomain {
+        Configurable withProtectionDomain(ProtectionDomain protectionDomain);
 
         /**
          * Defines the supplied package definer to be used for defining packages.
          *
-         * @param packageDefiner The package definer to be used.
+         * @param packageDefinitionStrategy The package definer to be used.
          * @return A version of this class loading strategy that applies the supplied package definer.
          */
-        WithDefaultProtectionDomain withPackageDefiner(PackageDefiner packageDefiner);
+        Configurable withPackageDefiner(PackageDefinitionStrategy packageDefinitionStrategy);
     }
 
     /**
@@ -353,7 +346,7 @@ public interface ClassLoadingStrategy {
         private final File folder;
 
         /**
-         * Creates a new injector which is capable of injecting classes into the boostrap class loader.
+         * Creates a new injector which is capable of injecting classes into the bootstrap class loader.
          *
          * @param instrumentation The instrumentation to use.
          * @param folder          The folder to save jar files in.

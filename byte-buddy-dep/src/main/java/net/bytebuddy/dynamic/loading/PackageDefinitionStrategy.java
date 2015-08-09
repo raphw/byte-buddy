@@ -12,17 +12,17 @@ import java.util.jar.Manifest;
  * A package definer is responsible for defining a package's properties when a class of a new package is loaded. Also,
  * a package definer can choose not to define a package at all.
  */
-public interface PackageDefiner {
+public interface PackageDefinitionStrategy {
 
     /**
      * Returns a package definition for a given package.
      *
-     * @param packageName    The name of the package.
-     * @param classLoader    The class loader for which this package is being defined.
-     * @param simpleTypeName The simple name of the type being loaded when defining this package.
+     * @param packageName The name of the package.
+     * @param classLoader The class loader for which this package is being defined.
+     * @param typeName    The name of the type being loaded when the package is defined
      * @return A definition of the package.
      */
-    Definition define(String packageName, ClassLoader classLoader, String simpleTypeName) throws IOException;
+    Definition define(String packageName, ClassLoader classLoader, String typeName) throws IOException;
 
     /**
      * A definition of a package.
@@ -137,7 +137,7 @@ public interface PackageDefiner {
 
             @Override
             public String toString() {
-                return "PackageDefiner.Definition.Undefined." + name();
+                return "PackageDefinitionStrategy.Definition.Undefined." + name();
             }
         }
 
@@ -203,7 +203,7 @@ public interface PackageDefiner {
 
             @Override
             public String toString() {
-                return "PackageDefiner.Definition.Trivial." + name();
+                return "PackageDefinitionStrategy.Definition.Trivial." + name();
             }
         }
 
@@ -342,7 +342,7 @@ public interface PackageDefiner {
 
             @Override
             public String toString() {
-                return "PackageDefiner.Definition.Simple{" +
+                return "PackageDefinitionStrategy.Definition.Simple{" +
                         "specificationTitle='" + specificationTitle + '\'' +
                         ", specificationVersion='" + specificationVersion + '\'' +
                         ", specificationVendor='" + specificationVendor + '\'' +
@@ -358,7 +358,7 @@ public interface PackageDefiner {
     /**
      * A package definer that does not define any package.
      */
-    enum NoOp implements PackageDefiner {
+    enum NoOp implements PackageDefinitionStrategy {
 
         /**
          * The singleton instance.
@@ -366,20 +366,20 @@ public interface PackageDefiner {
         INSTANCE;
 
         @Override
-        public Definition define(String packageName, ClassLoader classLoader, String simpleTypeName) {
+        public Definition define(String packageName, ClassLoader classLoader, String typeName) {
             return Definition.Undefined.INSTANCE;
         }
 
         @Override
         public String toString() {
-            return "PackageDefiner.NoOp." + name();
+            return "PackageDefinitionStrategy.NoOp." + name();
         }
     }
 
     /**
      * A package definer that only defines packages without any meta data.
      */
-    enum Trivial implements PackageDefiner {
+    enum Trivial implements PackageDefinitionStrategy {
 
         /**
          * The singleton instance.
@@ -387,20 +387,20 @@ public interface PackageDefiner {
         INSTANCE;
 
         @Override
-        public Definition define(String packageName, ClassLoader classLoader, String simpleTypeName) {
+        public Definition define(String packageName, ClassLoader classLoader, String typeName) {
             return Definition.Trivial.INSTANCE;
         }
 
         @Override
         public String toString() {
-            return "PackageDefiner.Trivial." + name();
+            return "PackageDefinitionStrategy.Trivial." + name();
         }
     }
 
     /**
      * A package definer that reads a class loader's manifest file.
      */
-    class ManifestReading implements PackageDefiner {
+    class ManifestReading implements PackageDefinitionStrategy {
 
         /**
          * The path to the manifest file.
@@ -440,7 +440,7 @@ public interface PackageDefiner {
         }
 
         @Override
-        public Definition define(String packageName, ClassLoader classLoader, String simpleTypeName) throws IOException {
+        public Definition define(String packageName, ClassLoader classLoader, String typeName) throws IOException {
             InputStream inputStream = classLoader.getResourceAsStream(MANIFEST_FILE);
             if (inputStream != null) {
                 try {
@@ -468,7 +468,7 @@ public interface PackageDefiner {
                             values.get(Attributes.Name.IMPLEMENTATION_VERSION),
                             values.get(Attributes.Name.IMPLEMENTATION_VENDOR),
                             Boolean.parseBoolean(values.get(Attributes.Name.SEALED))
-                                    ? sealBaseLocator.findSealBase(packageName, classLoader, simpleTypeName)
+                                    ? sealBaseLocator.findSealBase(packageName, classLoader, typeName)
                                     : NOT_SEALED);
                 } finally {
                     inputStream.close();
@@ -491,9 +491,7 @@ public interface PackageDefiner {
 
         @Override
         public String toString() {
-            return "PackageDefiner.ManifestReading{" +
-                    "sealBaseLocator=" + sealBaseLocator +
-                    '}';
+            return "PackageDefinitionStrategy.ManifestReading{sealBaseLocator=" + sealBaseLocator + '}';
         }
 
         /**
@@ -504,12 +502,12 @@ public interface PackageDefiner {
             /**
              * Locates the URL that should be used for sealing a package.
              *
-             * @param packageName    The name of the package.
-             * @param classLoader    The class loader loading the package.
-             * @param simpleTypeName The simple name of the type being loaded when defining this package.
+             * @param packageName The name of the package.
+             * @param classLoader The class loader loading the package.
+             * @param typeName    The name of the type being loaded when defining this package.
              * @return The URL that is used for sealing a package or {@code null} if the package should not be sealed.
              */
-            URL findSealBase(String packageName, ClassLoader classLoader, String simpleTypeName);
+            URL findSealBase(String packageName, ClassLoader classLoader, String typeName);
 
             /**
              * A seal base locator that never seals a package.
@@ -522,13 +520,13 @@ public interface PackageDefiner {
                 INSTANCE;
 
                 @Override
-                public URL findSealBase(String packageName, ClassLoader classLoader, String simpleTypeName) {
+                public URL findSealBase(String packageName, ClassLoader classLoader, String typeName) {
                     return NOT_SEALED;
                 }
 
                 @Override
                 public String toString() {
-                    return "PackageDefiner.ManifestReading.CodeSourceLocator.NonSealing." + name();
+                    return "PackageDefinitionStrategy.ManifestReading.CodeSourceLocator.NonSealing." + name();
                 }
             }
 
@@ -552,7 +550,7 @@ public interface PackageDefiner {
                 }
 
                 @Override
-                public URL findSealBase(String packageName, ClassLoader classLoader, String simpleTypeName) {
+                public URL findSealBase(String packageName, ClassLoader classLoader, String typeName) {
                     return sealBase;
                 }
 
@@ -569,7 +567,7 @@ public interface PackageDefiner {
 
                 @Override
                 public String toString() {
-                    return "PackageDefiner.ManifestReading.CodeSourceLocator.ForFixedValue{" +
+                    return "PackageDefinitionStrategy.ManifestReading.CodeSourceLocator.ForFixedValue{" +
                             "sealBase=" + sealBase +
                             '}';
                 }

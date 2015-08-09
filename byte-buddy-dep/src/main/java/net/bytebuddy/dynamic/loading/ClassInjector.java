@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
 
@@ -102,32 +101,32 @@ public interface ClassInjector {
         /**
          * The package definer to be queried for package definitions.
          */
-        private final PackageDefiner packageDefiner;
+        private final PackageDefinitionStrategy packageDefinitionStrategy;
 
         /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain}
-         * and {@link PackageDefiner}.
+         * and {@link PackageDefinitionStrategy}.
          *
          * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          */
         public UsingReflection(ClassLoader classLoader) {
-            this(classLoader, DEFAULT_PROTECTION_DOMAIN, PackageDefiner.Trivial.INSTANCE);
+            this(classLoader, DEFAULT_PROTECTION_DOMAIN, PackageDefinitionStrategy.Trivial.INSTANCE);
         }
 
         /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and {@link java.security.ProtectionDomain}.
          *
-         * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
-         * @param packageDefiner   The package definer to be queried for package definitions.
-         * @param protectionDomain The protection domain to apply during class definition.
+         * @param classLoader               The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+         * @param protectionDomain          The protection domain to apply during class definition.
          */
-        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain, PackageDefiner packageDefiner) {
+        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain, PackageDefinitionStrategy packageDefinitionStrategy) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader");
             }
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
-            this.packageDefiner = packageDefiner;
+            this.packageDefinitionStrategy = packageDefinitionStrategy;
             accessControlContext = AccessController.getContext();
         }
 
@@ -137,23 +136,6 @@ public interface ClassInjector {
                 Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>(types.size());
                 synchronized (classLoader) {
                     for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                        PackageDescription packageDescription = entry.getKey().getPackage();
-                        if (packageDescription != null && REFLECTION_STORE.getPackage(classLoader, packageDescription.getName()) == null) {
-                            PackageDefiner.Definition definition = packageDefiner.define(packageDescription.getName(),
-                                    classLoader,
-                                    entry.getKey().getName().substring(packageDescription.getName().length() + 1));
-                            if (definition.isDefined()) {
-                                REFLECTION_STORE.definePackage(classLoader,
-                                        entry.getKey().getPackage().getName(),
-                                        definition.getSpecificationTitle(),
-                                        definition.getSpecificationVersion(),
-                                        definition.getSpecificationVendor(),
-                                        definition.getImplementationTitle(),
-                                        definition.getImplementationVersion(),
-                                        definition.getImplementationVendor(),
-                                        definition.getSealBase());
-                            }
-                        }
                         Class<?> type = REFLECTION_STORE.findClass(classLoader, entry.getKey().getName());
                         if (type == null) {
                             try {
@@ -163,6 +145,8 @@ public interface ClassInjector {
                                     throw (IllegalAccessException) exception.getCause();
                                 } else if (exception.getCause() instanceof InvocationTargetException) {
                                     throw (InvocationTargetException) exception.getCause();
+                                } else if (exception.getCause() instanceof IOException) {
+                                    throw new IllegalStateException("Exception on IO operation", exception.getCause());
                                 } else {
                                     throw (RuntimeException) exception.getCause();
                                 }
@@ -176,8 +160,6 @@ public interface ClassInjector {
                 throw new IllegalStateException("Could not access injection method", exception);
             } catch (InvocationTargetException exception) {
                 throw new IllegalStateException("Exception on invoking loader method", exception.getCause());
-            } catch (IOException exception) {
-                throw new IllegalStateException("Exception on IO operation", exception);
             }
         }
 
@@ -188,7 +170,7 @@ public interface ClassInjector {
             UsingReflection that = (UsingReflection) other;
             return accessControlContext.equals(that.accessControlContext)
                     && classLoader.equals(that.classLoader)
-                    && packageDefiner.equals(that.packageDefiner)
+                    && packageDefinitionStrategy.equals(that.packageDefinitionStrategy)
                     && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null);
         }
 
@@ -196,7 +178,7 @@ public interface ClassInjector {
         public int hashCode() {
             int result = classLoader.hashCode();
             result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
-            result = 31 * result + packageDefiner.hashCode();
+            result = 31 * result + packageDefinitionStrategy.hashCode();
             result = 31 * result + accessControlContext.hashCode();
             return result;
         }
@@ -206,7 +188,7 @@ public interface ClassInjector {
             return "ClassInjector.UsingReflection{" +
                     "classLoader=" + classLoader +
                     ", protectionDomain=" + protectionDomain +
-                    ", packageDefiner=" + packageDefiner +
+                    ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                     ", accessControlContext=" + accessControlContext +
                     '}';
         }
@@ -439,7 +421,7 @@ public interface ClassInjector {
             /**
              * The name of the class that is being loaded.
              */
-            private final String name;
+            private final String typeName;
 
             /**
              * The binary representation of the class that is being loaded.
@@ -449,18 +431,37 @@ public interface ClassInjector {
             /**
              * Creates a new class loading action.
              *
-             * @param name                 The name of the class that is being loaded.
+             * @param typeName             The name of the class that is being loaded.
              * @param binaryRepresentation The binary representation of the class that is being loaded.
              */
-            protected ClassLoadingAction(String name, byte[] binaryRepresentation) {
-                this.name = name;
+            protected ClassLoadingAction(String typeName, byte[] binaryRepresentation) {
+                this.typeName = typeName;
                 this.binaryRepresentation = binaryRepresentation;
             }
 
             @Override
-            public Class<?> run() throws IllegalAccessException, InvocationTargetException {
+            public Class<?> run() throws IllegalAccessException, InvocationTargetException, IOException {
+                int packageIndex = typeName.lastIndexOf('.');
+                if (packageIndex != -1) {
+                    String packageName = typeName.substring(0, packageIndex);
+                    PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(packageName, classLoader, typeName);
+                    if (definition.isDefined()) {
+                        Package definedPackage = REFLECTION_STORE.getPackage(classLoader, packageName);
+                        if (definedPackage == null) {
+                            REFLECTION_STORE.definePackage(classLoader,
+                                    packageName,
+                                    definition.getSpecificationTitle(),
+                                    definition.getSpecificationVersion(),
+                                    definition.getSpecificationVendor(),
+                                    definition.getImplementationTitle(),
+                                    definition.getImplementationVersion(),
+                                    definition.getImplementationVendor(),
+                                    definition.getSealBase());
+                        }
+                    }
+                }
                 return REFLECTION_STORE.loadClass(classLoader,
-                        name,
+                        typeName,
                         binaryRepresentation,
                         FROM_BEGINNING,
                         binaryRepresentation.length,
@@ -474,7 +475,7 @@ public interface ClassInjector {
                 ClassLoadingAction that = (ClassLoadingAction) other;
                 return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
                         && UsingReflection.this.equals(that.getOuter())
-                        && name.equals(that.name);
+                        && typeName.equals(that.typeName);
             }
 
             /**
@@ -488,7 +489,7 @@ public interface ClassInjector {
 
             @Override
             public int hashCode() {
-                int result = name.hashCode();
+                int result = typeName.hashCode();
                 result = 31 * result + UsingReflection.this.hashCode();
                 result = 31 * result + Arrays.hashCode(binaryRepresentation);
                 return result;
@@ -498,7 +499,7 @@ public interface ClassInjector {
             public String toString() {
                 return "ClassInjector.UsingReflection.ClassLoadingAction{" +
                         "injector=" + UsingReflection.this +
-                        ", name='" + name + '\'' +
+                        ", typeName='" + typeName + '\'' +
                         ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                         '}';
             }

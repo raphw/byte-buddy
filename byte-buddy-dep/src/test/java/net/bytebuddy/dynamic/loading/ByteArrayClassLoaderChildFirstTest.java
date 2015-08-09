@@ -46,7 +46,7 @@ public class ByteArrayClassLoaderChildFirstTest {
     private ClassLoader classLoader;
 
     @Mock
-    private PackageDefiner packageDefiner;
+    private PackageDefinitionStrategy packageDefinitionStrategy;
 
     public ByteArrayClassLoaderChildFirstTest(ByteArrayClassLoader.PersistenceHandler persistenceHandler,
                                               Matcher<InputStream> expectedResourceLookup) {
@@ -71,7 +71,7 @@ public class ByteArrayClassLoaderChildFirstTest {
                 values,
                 DEFAULT_PROTECTION_DOMAIN,
                 persistenceHandler,
-                PackageDefiner.NoOp.INSTANCE);
+                PackageDefinitionStrategy.NoOp.INSTANCE);
     }
 
     @Test
