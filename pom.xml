@@ -70,6 +70,7 @@
         <version.plugin.release>2.5.1</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
         <version.plugin.pitest>1.1.6</version.plugin.pitest>
+        <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
         <!-- Versions 2.6 and 2.7 fail on Travis. -->
         <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
         <version.plugin.coveralls>3.1.0</version.plugin.coveralls>
@@ -365,12 +366,33 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- Check API compatibility. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>animal-sniffer-maven-plugin</artifactId>
+                        <version>${version.plugin.animal-sniffer}</version>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <configuration>
+                                    <signature>
+                                        <groupId>org.codehaus.mojo.signature</groupId>
+                                        <artifactId>java16</artifactId>
+                                        <version>1.0</version>
+                                    </signature>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
         <profile>
             <id>android</id>
-            <!-- Only build the Android test application on demand. -->
+            <!-- Only build the Android test application on demand as it requires Android SDK installation. -->
             <modules>
                 <module>byte-buddy</module>
                 <module>byte-buddy-dep</module>
