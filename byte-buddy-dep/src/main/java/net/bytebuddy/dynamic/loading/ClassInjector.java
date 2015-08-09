@@ -457,6 +457,11 @@ public interface ClassInjector {
                                     definition.getImplementationVersion(),
                                     definition.getImplementationVendor(),
                                     definition.getSealBase());
+                        } else {
+                            URL sealBase = definition.getSealBase();
+                            if ((sealBase == null && definedPackage.isSealed()) || (sealBase != null && !definedPackage.isSealed(sealBase))) {
+                                throw new SecurityException("Sealing violation for package " + packageName);
+                            }
                         }
                     }
                 }
