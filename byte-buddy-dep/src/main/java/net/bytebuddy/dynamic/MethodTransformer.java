@@ -17,7 +17,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 /**
  * A method transformer allows to transform a method prior to its definition. This way, previously defined methods
  * can be substituted by a different method description. It is the responsibility of the method transformer that
- * the substitute method remains compatible to the substituted method.
+ * the substitute method remains signature compatible to the substituted method.
  */
 public interface MethodTransformer {
 
