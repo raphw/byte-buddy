@@ -360,7 +360,7 @@ public interface FieldDescription extends ByteCodeElement,
      * A token that represents a field's shape. A field token is equal to another token when the other field
      * tokens's name is equal to this token.
      */
-    class Token extends ModifierReviewable.AbstractBase implements ByteCodeElement.Token<Token> {
+    class Token implements ByteCodeElement.Token<Token> {
 
         /**
          * The name of the represented field.
@@ -426,7 +426,11 @@ public interface FieldDescription extends ByteCodeElement,
             return type;
         }
 
-        @Override
+        /**
+         * Returns the modifiers of the represented field.
+         *
+         * @return The modifiers of the represented field.
+         */
         public int getModifiers() {
             return modifiers;
         }

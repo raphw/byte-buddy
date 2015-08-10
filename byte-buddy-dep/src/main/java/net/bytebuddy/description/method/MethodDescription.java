@@ -1295,7 +1295,7 @@ public interface MethodDescription extends TypeVariableSource,
      * A token that represents a method's shape. A method token is equal to another token when the name, the raw return type
      * and the raw parameter types are equal to those of another method token.
      */
-    class Token extends ModifierReviewable.AbstractBase implements ByteCodeElement.Token<Token> {
+    class Token implements ByteCodeElement.Token<Token> {
 
         /**
          * The internal name of the represented method.
@@ -1395,7 +1395,11 @@ public interface MethodDescription extends TypeVariableSource,
             return internalName;
         }
 
-        @Override
+        /**
+         * Returns the modifiers of the represented method.
+         *
+         * @return The modifiers of the represented method.
+         */
         public int getModifiers() {
             return modifiers;
         }
