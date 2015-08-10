@@ -20,8 +20,9 @@ public interface PackageDefinitionStrategy {
      *
      * @param classLoader The class loader for which this package is being defined.
      * @param packageName The name of the package.
-     * @param typeName    The name of the type being loaded when the package is defined
+     * @param typeName    The name of the type being loaded that triggered the package definition.
      * @return A definition of the package.
+     * @throws IOException If the definition requires the reading of resources and triggered an IO exception.
      */
     Definition define(ClassLoader classLoader, String packageName, String typeName) throws IOException;
 
@@ -546,7 +547,7 @@ public interface PackageDefinitionStrategy {
              * Locates the URL that should be used for sealing a package.
              *
              * @param classLoader The class loader loading the package.
-             * @param typeName    The name of the type being loaded when defining this package.
+             * @param typeName    The name of the type being loaded that triggered the package definition.
              * @return The URL that is used for sealing a package or {@code null} if the package should not be sealed.
              */
             URL findSealBase(ClassLoader classLoader, String typeName);
