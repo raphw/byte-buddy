@@ -500,7 +500,7 @@ public interface MethodRegistry {
                 if (relevanceMatcher.matches(methodDescription)) {
                     for (Entry entry : entries) {
                         if (entry.resolve(instrumentedType).matches(methodDescription)) {
-                            implementations.put(methodDescription, entry.asPreparedEntry(methodDescription, node.getMethodTypes()));
+                            implementations.put(methodDescription, entry.asPreparedEntry(instrumentedType, methodDescription, node.getMethodTypes()));
                             visibilityBridge = false;
                             break;
                         }
@@ -519,7 +519,9 @@ public interface MethodRegistry {
             MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
             for (Entry entry : entries) {
                 if (entry.resolve(instrumentedType).matches(typeInitializer)) {
-                    implementations.put(typeInitializer, entry.asPreparedEntry(typeInitializer, Collections.<MethodDescription.TypeToken>emptySet()));
+                    implementations.put(typeInitializer, entry.asPreparedEntry(instrumentedType,
+                            typeInitializer,
+                            Collections.<MethodDescription.TypeToken>emptySet()));
                     break;
                 }
             }
@@ -599,8 +601,10 @@ public interface MethodRegistry {
              * @param methodTypes       The method types this method represents.
              * @return A prepared version of this entry.
              */
-            protected Prepared.Entry asPreparedEntry(MethodDescription methodDescription, Set<MethodDescription.TypeToken> methodTypes) {
-                return new Prepared.Entry(handler, attributeAppenderFactory, methodTransformer.transform(methodDescription), methodTypes);
+            protected Prepared.Entry asPreparedEntry(TypeDescription instrumentedType,
+                                                     MethodDescription methodDescription,
+                                                     Set<MethodDescription.TypeToken> methodTypes) {
+                return new Prepared.Entry(handler, attributeAppenderFactory, methodTransformer.transform(instrumentedType, methodDescription), methodTypes);
             }
 
             /**

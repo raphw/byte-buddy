@@ -331,7 +331,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         Class<?> type = create(Transform.class)
                 .method(named(FOO))
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE),
-                        MethodTransformer.Transforming.modifiers(MethodManifestation.FINAL))
+                        MethodTransformer.Simple.overrideWith(MethodManifestation.FINAL))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

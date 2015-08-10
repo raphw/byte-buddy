@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -13,7 +14,7 @@ public class MethodTransformerNoOpTest {
     @Test
     public void testTransformation() throws Exception {
         MethodDescription methodDescription = mock(MethodDescription.class);
-        assertThat(MethodTransformer.NoOp.INSTANCE.transform(methodDescription), is(methodDescription));
+        assertThat(MethodTransformer.NoOp.INSTANCE.transform(mock(TypeDescription.class), methodDescription), is(methodDescription));
     }
 
     @Test

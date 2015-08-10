@@ -212,7 +212,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .method(named(TO_STRING))
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE),
-                        MethodTransformer.Transforming.modifiers(MethodManifestation.FINAL))
+                        MethodTransformer.Simple.overrideWith(MethodManifestation.FINAL))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

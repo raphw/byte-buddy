@@ -102,7 +102,7 @@ public class MethodRegistryDefaultTest {
         when(secondCompiledHandler.assemble(instrumentedMethod, secondAppender)).thenReturn(secondRecord);
         when(typeDescription.asRawType()).thenReturn(typeDescription);
         when(implementationTarget.getTypeDescription()).thenReturn(typeDescription);
-        when(methodTransformer.transform(instrumentedMethod)).thenReturn(instrumentedMethod);
+        when(methodTransformer.transform(typeDescription, instrumentedMethod)).thenReturn(instrumentedMethod);
     }
 
     @Test

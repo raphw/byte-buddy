@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -22,17 +23,20 @@ public class MethodTransformerCompoundTest {
     private MethodTransformer first, second;
 
     @Mock
+    private TypeDescription typeDescription;
+
+    @Mock
     private MethodDescription firstMethod, secondMethod, finalMethod;
 
     @Before
     public void setUp() throws Exception {
-        when(first.transform(firstMethod)).thenReturn(secondMethod);
-        when(second.transform(secondMethod)).thenReturn(finalMethod);
+        when(first.transform(typeDescription, firstMethod)).thenReturn(secondMethod);
+        when(second.transform(typeDescription, secondMethod)).thenReturn(finalMethod);
     }
 
     @Test
     public void testTransformation() throws Exception {
-        assertThat(new MethodTransformer.Compound(first, second).transform(firstMethod), is(finalMethod));
+        assertThat(new MethodTransformer.Compound(first, second).transform(typeDescription, firstMethod), is(finalMethod));
     }
 
     @Test
