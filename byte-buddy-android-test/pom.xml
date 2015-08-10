@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
+        <artifactId>byte-buddy-parent</artifactId>
         <!-- The version number is not updated by the release plugin as this artifact is not released! -->
-        <version>0.6-SNAPSHOT</version>
+        <version>0.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-android-test</artifactId>
