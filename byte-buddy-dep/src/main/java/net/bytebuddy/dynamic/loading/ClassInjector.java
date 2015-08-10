@@ -198,8 +198,30 @@ public interface ClassInjector {
          */
         protected interface ReflectionStore {
 
+            /**
+             * Looks up a class from the given class loader.
+             *
+             * @param classLoader The class loader for which a class should be located.
+             * @param name        The binary name of the class that should be located.
+             * @return The class for the binary name or {@code null} if no such class is defined for the provided class loader.
+             * @throws InvocationTargetException If an exception is caused during invocation.
+             * @throws IllegalAccessException    If the access was refused.
+             */
             Class<?> findClass(ClassLoader classLoader, String name) throws IllegalAccessException, InvocationTargetException;
 
+            /**
+             * Defines a class for the given class loader.
+             *
+             * @param classLoader          The class loader for which a new class should be defined.
+             * @param name                 The binary name of the class that should be defined.
+             * @param binaryRepresentation The binary representation of the class.
+             * @param startIndex           The start index of the provided binary representation.
+             * @param endIndex             The final index of the binary representation.
+             * @param protectionDomain     The protection domain for the defined class.
+             * @return The defined, loaded class.
+             * @throws InvocationTargetException If an exception is caused during invocation.
+             * @throws IllegalAccessException    If the access was refused.
+             */
             Class<?> loadClass(ClassLoader classLoader,
                                String name,
                                byte[] binaryRepresentation,
@@ -207,8 +229,33 @@ public interface ClassInjector {
                                int endIndex,
                                ProtectionDomain protectionDomain) throws InvocationTargetException, IllegalAccessException;
 
+            /**
+             * Looks up a package from a class loader.
+             *
+             * @param classLoader The class loader to query.
+             * @param name        The binary name of the package.
+             * @return The package for the given name as defined by the provided class loader or {@code null} if no such package exists.
+             * @throws InvocationTargetException If an exception is caused during invocation.
+             * @throws IllegalAccessException    If the access was refused.
+             */
             Package getPackage(ClassLoader classLoader, String name) throws InvocationTargetException, IllegalAccessException;
 
+            /**
+             * Defines a package for the given class loader.
+             *
+             * @param classLoader           The class loader for which a package is to be defined.
+             * @param packageName           The binary name of the package.
+             * @param specificationTitle    The specification title of the package or {@code null} if no specification title exists.
+             * @param specificationVersion  The specification version of the package or {@code null} if no specification version exists.
+             * @param specificationVendor   The specification vendor of the package or {@code null} if no specification vendor exists.
+             * @param implementationTitle   The implementation title of the package or {@code null} if no implementation title exists.
+             * @param implementationVersion The implementation version of the package or {@code null} if no implementation version exists.
+             * @param implementationVendor  The implementation vendor of the package or {@code null} if no implementation vendor exists.
+             * @param sealBase              The seal base URL or {@code null} if the package should not be sealed.
+             * @return The defined package.
+             * @throws InvocationTargetException If an exception is caused during invocation.
+             * @throws IllegalAccessException    If the access was refused.
+             */
             Package definePackage(ClassLoader classLoader,
                                   String packageName,
                                   String specificationTitle,

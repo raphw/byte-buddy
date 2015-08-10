@@ -597,6 +597,7 @@ public interface MethodRegistry {
             /**
              * Transforms this entry into a prepared state.
              *
+             * @param instrumentedType  The instrumented type.
              * @param methodDescription The non-transformed method to be implemented.
              * @param methodTypes       The method types this method represents.
              * @return A prepared version of this entry.
