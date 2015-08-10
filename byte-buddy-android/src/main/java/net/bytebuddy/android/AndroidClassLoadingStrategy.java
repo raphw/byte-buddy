@@ -91,7 +91,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
      *                         generated classes and their processed forms.
      */
     public AndroidClassLoadingStrategy(File privateDirectory) {
-        this(privateDirectory, new DexProcessor.ForSdkCompiler(new DexOptions(), new CfOptions()));
+        this(privateDirectory, DexProcessor.ForSdkCompiler.makeDefault());
     }
 
     /**
@@ -208,6 +208,22 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
          * compatible to version 1.7.
          */
         class ForSdkCompiler implements DexProcessor {
+
+            /**
+             * An API version for a DEX file that ensures compatibility to the underlying compiler.
+             */
+            private static final int DEX_COMPATIBLE_API_VERSION = 13;
+
+            /**
+             * Creates a default dex processor that ensures API version compatibility.
+             *
+             * @return A dex processor using an SDK compiler that ensures compatibility.
+             */
+            protected static DexProcessor makeDefault() {
+                DexOptions dexOptions = new DexOptions();
+                dexOptions.targetApiLevel = DEX_COMPATIBLE_API_VERSION;
+                return new ForSdkCompiler(dexOptions, new CfOptions());
+            }
 
             /**
              * The file name extension of a Java class file.
