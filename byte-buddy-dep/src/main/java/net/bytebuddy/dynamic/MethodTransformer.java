@@ -72,7 +72,7 @@ public interface MethodTransformer {
          * @param modifierTransformer The modifier transformers in their application order.
          * @return A method transformer where each method's modifiers are adapted to the given modifiers.
          */
-        public static MethodTransformer overrideWith(ModifierContributor.ForMethod... modifierTransformer) {
+        public static MethodTransformer withModifiers(ModifierContributor.ForMethod... modifierTransformer) {
             return new Simple(new Transformer.ForModifierTransformation(Arrays.asList(nonNull(modifierTransformer))));
         }
 
