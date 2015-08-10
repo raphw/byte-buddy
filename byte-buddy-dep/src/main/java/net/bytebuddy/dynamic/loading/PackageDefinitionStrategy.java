@@ -343,7 +343,11 @@ public interface PackageDefinitionStrategy {
 
             @Override
             public boolean isCompatibleTo(Package definedPackage) {
-                return (sealBase == null && definedPackage.isSealed()) || (sealBase != null && !definedPackage.isSealed(sealBase));
+                if (sealBase == null) {
+                    return !definedPackage.isSealed();
+                } else {
+                    return definedPackage.isSealed(sealBase);
+                }
             }
 
             @Override
@@ -466,7 +470,7 @@ public interface PackageDefinitionStrategy {
          * Creates a manifest reading package definition strategy that attempts to extract sealing information from a defined class's URL.
          */
         public ManifestReading() {
-            this(new SealBaseLocator.ForTypeResourceURL());
+            this(new SealBaseLocator.ForTypeResourceUrl());
         }
 
         /**
@@ -485,13 +489,13 @@ public interface PackageDefinitionStrategy {
                 try {
                     Manifest manifest = new Manifest(inputStream);
                     Map<Attributes.Name, String> values = new HashMap<Attributes.Name, String>(ATTRIBUTE_NAMES.length);
-                    Attributes attributes = manifest.getMainAttributes();
-                    if (attributes != null) {
+                    Attributes mainAttributes = manifest.getMainAttributes();
+                    if (mainAttributes != null) {
                         for (Attributes.Name attributeName : ATTRIBUTE_NAMES) {
-                            values.put(attributeName, attributes.getValue(attributeName));
+                            values.put(attributeName, mainAttributes.getValue(attributeName));
                         }
                     }
-                    attributes = manifest.getAttributes(packageName.replace('.', '/').concat("/"));
+                    Attributes attributes = manifest.getAttributes(packageName.replace('.', '/').concat("/"));
                     if (attributes != null) {
                         for (Attributes.Name attributeName : ATTRIBUTE_NAMES) {
                             String value = attributes.getValue(attributeName);
@@ -507,7 +511,7 @@ public interface PackageDefinitionStrategy {
                             values.get(Attributes.Name.IMPLEMENTATION_VERSION),
                             values.get(Attributes.Name.IMPLEMENTATION_VENDOR),
                             Boolean.parseBoolean(values.get(Attributes.Name.SEALED))
-                                    ? sealBaseLocator.findSealBase(classLoader, packageName, typeName)
+                                    ? sealBaseLocator.findSealBase(classLoader, typeName)
                                     : NOT_SEALED);
                 } finally {
                     inputStream.close();
@@ -542,11 +546,10 @@ public interface PackageDefinitionStrategy {
              * Locates the URL that should be used for sealing a package.
              *
              * @param classLoader The class loader loading the package.
-             * @param packageName The name of the package.
              * @param typeName    The name of the type being loaded when defining this package.
              * @return The URL that is used for sealing a package or {@code null} if the package should not be sealed.
              */
-            URL findSealBase(ClassLoader classLoader, String packageName, String typeName);
+            URL findSealBase(ClassLoader classLoader, String typeName);
 
             /**
              * A seal base locator that never seals a package.
@@ -559,13 +562,13 @@ public interface PackageDefinitionStrategy {
                 INSTANCE;
 
                 @Override
-                public URL findSealBase(ClassLoader classLoader, String packageName, String typeName) {
+                public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return NOT_SEALED;
                 }
 
                 @Override
                 public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.CodeSourceLocator.NonSealing." + name();
+                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.NonSealing." + name();
                 }
             }
 
@@ -589,7 +592,7 @@ public interface PackageDefinitionStrategy {
                 }
 
                 @Override
-                public URL findSealBase(ClassLoader classLoader, String packageName, String typeName) {
+                public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return sealBase;
                 }
 
@@ -606,7 +609,7 @@ public interface PackageDefinitionStrategy {
 
                 @Override
                 public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.CodeSourceLocator.ForFixedValue{" +
+                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForFixedValue{" +
                             "sealBase=" + sealBase +
                             '}';
                 }
@@ -616,7 +619,7 @@ public interface PackageDefinitionStrategy {
              * A seal base locator that imitates the behavior of a {@link java.net.URLClassLoader}, i.e. tries
              * to deduct the base from a class's resource URL.
              */
-            class ForTypeResourceURL implements SealBaseLocator {
+            class ForTypeResourceUrl implements SealBaseLocator {
 
                 /**
                  * The file extension for a class file.
@@ -629,6 +632,16 @@ public interface PackageDefinitionStrategy {
                 private static final String JAR_FILE = "jar";
 
                 /**
+                 * The protocol name of a file system link.
+                 */
+                private static final String FILE_SYSTEM = "file";
+
+                /**
+                 * The protocol name of a Java 9 runtime image.
+                 */
+                private static final String RUNTIME_IMAGE = "jrt";
+
+                /**
                  * The seal base locator to fallback to when a resource is not found or an unexpected URL protocol is discovered.
                  */
                 private final SealBaseLocator fallback;
@@ -638,7 +651,7 @@ public interface PackageDefinitionStrategy {
                  * {@link net.bytebuddy.dynamic.loading.PackageDefinitionStrategy.ManifestReading.SealBaseLocator.NonSealing} seal base locator
                  * as a fallback.
                  */
-                public ForTypeResourceURL() {
+                public ForTypeResourceUrl() {
                     this(NonSealing.INSTANCE);
                 }
 
@@ -647,33 +660,37 @@ public interface PackageDefinitionStrategy {
                  *
                  * @param fallback The seal base locator to fallback to when a resource is not found or an unexpected URL protocol is discovered.
                  */
-                public ForTypeResourceURL(SealBaseLocator fallback) {
+                public ForTypeResourceUrl(SealBaseLocator fallback) {
                     this.fallback = fallback;
                 }
 
                 @Override
-                public URL findSealBase(ClassLoader classLoader, String packageName, String typeName) {
+                public URL findSealBase(ClassLoader classLoader, String typeName) {
                     URL url = classLoader.getResource(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
                     if (url != null) {
-                        if (url.getProtocol().equals(JAR_FILE)) {
-                            String path = url.getPath();
-                            int fileIndex = path.indexOf('!');
-                            try {
-                                return new URL(fileIndex == -1
-                                        ? path
-                                        : path.substring(0, fileIndex));
-                            } catch (MalformedURLException exception) {
-                                throw new IllegalStateException("Unexpected URL: " + url, exception);
+                        try {
+                            if (url.getProtocol().equals(JAR_FILE)) {
+                                return new URL(url.getPath().substring(0, url.getPath().indexOf('!')));
+                            } else if (url.getProtocol().equals(FILE_SYSTEM)) {
+                                return url;
+                            } else if (url.getProtocol().equals(RUNTIME_IMAGE)) {
+                                String path = url.getPath();
+                                int modulePathIndex = path.indexOf(1, '/');
+                                return modulePathIndex == -1
+                                        ? url
+                                        : new URL(RUNTIME_IMAGE + ":" + path.substring(0, modulePathIndex));
                             }
+                        } catch (MalformedURLException exception) {
+                            throw new IllegalStateException("Unexpected URL: " + url, exception);
                         }
                     }
-                    return fallback.findSealBase(classLoader, packageName, typeName);
+                    return fallback.findSealBase(classLoader, typeName);
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fallback.equals(((ForTypeResourceURL) other).fallback);
+                            && fallback.equals(((ForTypeResourceUrl) other).fallback);
                 }
 
                 @Override
@@ -683,7 +700,7 @@ public interface PackageDefinitionStrategy {
 
                 @Override
                 public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResource{" +
+                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl{" +
                             "fallback=" + fallback +
                             '}';
                 }
