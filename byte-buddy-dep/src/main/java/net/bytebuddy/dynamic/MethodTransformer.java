@@ -1,8 +1,13 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 
 import java.util.Arrays;
 import java.util.List;
@@ -78,7 +83,7 @@ public interface MethodTransformer {
 
         @Override
         public MethodDescription transform(TypeDescription instrumentedType, MethodDescription methodDescription) {
-            return new MethodDescription.Latent(instrumentedType, transformer.transform(methodDescription.asToken()));
+            return new TransformedMethod(methodDescription.getDeclaringType(), transformer.transform(methodDescription.asToken()), methodDescription.asDefined());
         }
 
         @Override
@@ -163,6 +168,184 @@ public interface MethodTransformer {
                     return "MethodTransformer.Simple.Transformer.ForModifierTransformation{" +
                             "modifierContributors=" + modifierContributors +
                             '}';
+                }
+            }
+        }
+
+        /**
+         * The transformed method.
+         */
+        protected static class TransformedMethod extends MethodDescription.AbstractBase {
+
+            /**
+             * The method's declaring type.
+             */
+            private final GenericTypeDescription declaringType;
+
+            /**
+             * The method representing the transformed method.
+             */
+            private final MethodDescription.Token methodToken;
+
+            /**
+             * The defined shape of the transformed method.
+             */
+            private final MethodDescription.InDefinedShape definedShape;
+
+            /**
+             * Creates a new transformed method.
+             *
+             * @param declaringType The method's declaring type.
+             * @param methodToken   The method representing the transformed method.
+             * @param definedShape  The defined shape of the transformed method.
+             */
+            protected TransformedMethod(GenericTypeDescription declaringType,
+                                        MethodDescription.Token methodToken,
+                                        MethodDescription.InDefinedShape definedShape) {
+                this.declaringType = declaringType;
+                this.methodToken = methodToken;
+                this.definedShape = definedShape;
+            }
+
+            @Override
+            public GenericTypeList getTypeVariables() {
+                return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, methodToken.getTypeVariables());
+            }
+
+            @Override
+            public GenericTypeDescription getReturnType() {
+                return methodToken.getReturnType().accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+            }
+
+            @Override
+            public ParameterList<?> getParameters() {
+                return new TransformedParameterList();
+            }
+
+            @Override
+            public GenericTypeList getExceptionTypes() {
+                return GenericTypeList.ForDetachedTypes.attach(this, methodToken.getExceptionTypes());
+            }
+
+            @Override
+            public AnnotationList getDeclaredAnnotations() {
+                return methodToken.getAnnotations();
+            }
+
+            @Override
+            public String getInternalName() {
+                return methodToken.getInternalName();
+            }
+
+            @Override
+            public GenericTypeDescription getDeclaringType() {
+                return declaringType;
+            }
+
+            @Override
+            public int getModifiers() {
+                return methodToken.getModifiers();
+            }
+
+            @Override
+            public Object getDefaultValue() {
+                return methodToken.getDefaultValue();
+            }
+
+            @Override
+            public InDefinedShape asDefined() {
+                return definedShape;
+            }
+
+            /**
+             * A parameter list representing the transformed method's parameters.
+             */
+            protected class TransformedParameterList extends ParameterList.AbstractBase<ParameterDescription> {
+
+                @Override
+                public ParameterDescription get(int index) {
+                    return new TransformedParameter(index, methodToken.getParameterTokens().get(index));
+                }
+
+                @Override
+                public int size() {
+                    return methodToken.getParameterTokens().size();
+                }
+            }
+
+            /**
+             * A transformed method's parameter.
+             */
+            protected class TransformedParameter extends ParameterDescription.AbstractBase {
+
+                /**
+                 * The index of the transformed method.
+                 */
+                private final int index;
+
+                /**
+                 * The token representing the transformed method parameter's properties.
+                 */
+                private final ParameterDescription.Token parameterToken;
+
+                /**
+                 * Creates a transformed parameter.
+                 *
+                 * @param index          The index of the transformed method.
+                 * @param parameterToken The token representing the transformed method parameter's properties.
+                 */
+                protected TransformedParameter(int index, ParameterDescription.Token parameterToken) {
+                    this.index = index;
+                    this.parameterToken = parameterToken;
+                }
+
+                @Override
+                public GenericTypeDescription getType() {
+                    return parameterToken.getType().accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+                }
+
+                @Override
+                public MethodDescription getDeclaringMethod() {
+                    return TransformedMethod.this;
+                }
+
+                @Override
+                public int getIndex() {
+                    return index;
+                }
+
+                @Override
+                public boolean isNamed() {
+                    return parameterToken.getName() != null;
+                }
+
+                @Override
+                public boolean hasModifiers() {
+                    return parameterToken.getModifiers() != null;
+                }
+
+                @Override
+                public String getName() {
+                    return isNamed()
+                            ? parameterToken.getName()
+                            : super.getName();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return hasModifiers()
+                            ? parameterToken.getModifiers()
+                            : super.getModifiers();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return parameterToken.getAnnotations();
+                }
+
+                @Override
+                public InDefinedShape asDefined() {
+                    return definedShape.getParameters().get(index);
                 }
             }
         }

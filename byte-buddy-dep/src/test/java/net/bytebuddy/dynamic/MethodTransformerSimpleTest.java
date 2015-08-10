@@ -5,6 +5,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -34,7 +35,7 @@ public class MethodTransformerSimpleTest {
     public TestRule mocktioRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription instrumentedType;
+    private TypeDescription instrumentedType, rawDeclaringType, rawReturnType, rawParameterType;
 
     @Mock
     private MethodTransformer.Simple.Transformer transformer;
@@ -43,13 +44,19 @@ public class MethodTransformerSimpleTest {
     private MethodDescription methodDescription;
 
     @Mock
+    private MethodDescription.InDefinedShape definedMethod;
+
+    @Mock
     private MethodDescription.Token methodToken;
 
     @Mock
     private ParameterDescription.Token parameterToken;
 
     @Mock
-    private GenericTypeDescription returnType, typeVariable, parameterType, exceptionType;
+    private ParameterDescription.InDefinedShape definedParameter;
+
+    @Mock
+    private GenericTypeDescription returnType, typeVariable, parameterType, exceptionType, declaringType;
 
     @Mock
     private AnnotationDescription methodAnnotation, parameterAnnotation;
@@ -60,7 +67,6 @@ public class MethodTransformerSimpleTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
         when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
         when(typeVariable.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(typeVariable);
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
@@ -68,6 +74,8 @@ public class MethodTransformerSimpleTest {
         when(typeVariable.getSymbol()).thenReturn(QUX);
         when(typeVariable.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
         when(methodDescription.asToken()).thenReturn(methodToken);
+        when(methodDescription.getDeclaringType()).thenReturn(declaringType);
+        when(methodDescription.asDefined()).thenReturn(definedMethod);
         when(methodToken.getInternalName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
@@ -82,13 +90,18 @@ public class MethodTransformerSimpleTest {
         when(parameterToken.getAnnotations()).thenReturn(new AnnotationList.Explicit(Collections.singletonList(parameterAnnotation)));
         when(parameterToken.getName()).thenReturn(BAR);
         when(parameterToken.getModifiers()).thenReturn(MODIFIERS * 2);
+        when(definedMethod.getParameters())
+                .thenReturn(new ParameterList.Explicit<ParameterDescription.InDefinedShape>(Collections.singletonList(definedParameter)));
+        when(declaringType.asRawType()).thenReturn(rawDeclaringType);
+        when(returnType.asRawType()).thenReturn(rawReturnType);
+        when(parameterType.asRawType()).thenReturn(rawParameterType);
     }
 
     @Test
     public void testSimpleTransformation() throws Exception {
         when(transformer.transform(methodToken)).thenReturn(methodToken);
         MethodDescription transformed = new MethodTransformer.Simple(transformer).transform(instrumentedType, methodDescription);
-        assertThat(transformed.getDeclaringType(), is((GenericTypeDescription) instrumentedType));
+        assertThat(transformed.getDeclaringType(), is(declaringType));
         assertThat(transformed.getInternalName(), is(FOO));
         assertThat(transformed.getModifiers(), is(MODIFIERS));
         assertThat(transformed.getReturnType(), is(returnType));
@@ -98,6 +111,9 @@ public class MethodTransformerSimpleTest {
         assertThat(transformed.getExceptionTypes().getOnly(), is(exceptionType));
         assertThat(transformed.getParameters().size(), is(1));
         assertThat(transformed.getParameters().getOnly().asToken(), is(parameterToken));
+        assertThat(transformed.getParameters().getOnly().asDefined(), is(definedParameter));
+        assertThat(transformed.getParameters().getOnly().getDeclaringMethod(), is(transformed));
+        assertThat(transformed.asDefined(), is(definedMethod));
     }
 
     @Test
