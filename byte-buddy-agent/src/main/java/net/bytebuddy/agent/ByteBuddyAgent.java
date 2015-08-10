@@ -191,19 +191,19 @@ public class ByteBuddyAgent {
         String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
         Object virtualMachineInstance = virtualMachine.getDeclaredMethod(ATTACH_METHOD_NAME, String.class)
                 .invoke(STATIC_MEMBER, runtimeName.substring(0, runtimeName.indexOf('@')));
+        File agentFile = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
         try {
-            File agentFile = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
+            saveAgentJar(agentFile);
+            virtualMachine.getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
+                    .invoke(virtualMachineInstance, agentFile.getAbsolutePath(), WITHOUT_ARGUMENTS);
+        } finally {
             try {
-                saveAgentJar(agentFile);
-                virtualMachine.getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                        .invoke(virtualMachineInstance, agentFile.getAbsolutePath(), WITHOUT_ARGUMENTS);
+                virtualMachine.getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
             } finally {
                 if (!agentFile.delete()) {
                     Logger.getAnonymousLogger().info("Cannot delete temporary file: " + agentFile);
                 }
             }
-        } finally {
-            virtualMachine.getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
         }
     }
 
