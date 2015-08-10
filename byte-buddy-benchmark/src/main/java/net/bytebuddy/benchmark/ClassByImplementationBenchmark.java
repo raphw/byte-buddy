@@ -171,7 +171,7 @@ public class ClassByImplementationBenchmark {
                 .subclass(baseClass)
                 .method(isDeclaredBy(baseClass)).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefiner(PackageDefinitionStrategy.NoOp.INSTANCE))
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefinitionStrategy(PackageDefinitionStrategy.NoOp.INSTANCE))
                 .getLoaded()
                 .newInstance();
     }

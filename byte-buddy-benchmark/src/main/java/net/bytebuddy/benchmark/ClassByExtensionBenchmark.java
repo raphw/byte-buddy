@@ -80,7 +80,7 @@ public class ClassByExtensionBenchmark {
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(MethodDelegation.to(ByteBuddyInterceptor.class))
                 .make()
-                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefiner(PackageDefinitionStrategy.NoOp.INSTANCE))
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefinitionStrategy(PackageDefinitionStrategy.NoOp.INSTANCE))
                 .getLoaded()
                 .newInstance();
     }
@@ -99,7 +99,7 @@ public class ClassByExtensionBenchmark {
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(SuperMethodCall.INSTANCE)
                 .make()
-                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefiner(PackageDefinitionStrategy.NoOp.INSTANCE))
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefinitionStrategy(PackageDefinitionStrategy.NoOp.INSTANCE))
                 .getLoaded()
                 .newInstance();
     }

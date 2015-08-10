@@ -113,8 +113,8 @@ public interface ClassLoadingStrategy {
         }
 
         @Override
-        public Configurable withPackageDefiner(PackageDefinitionStrategy packageDefinitionStrategy) {
-            return dispatcher.withPackageDefiner(packageDefinitionStrategy);
+        public Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy) {
+            return dispatcher.withPackageDefinitionStrategy(packageDefinitionStrategy);
         }
 
         @Override
@@ -167,7 +167,7 @@ public interface ClassLoadingStrategy {
             }
 
             @Override
-            public Configurable withPackageDefiner(PackageDefinitionStrategy packageDefinitionStrategy) {
+            public Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy) {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy);
             }
 
@@ -271,7 +271,7 @@ public interface ClassLoadingStrategy {
             }
 
             @Override
-            public Configurable withPackageDefiner(PackageDefinitionStrategy packageDefinitionStrategy) {
+            public Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy) {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst);
             }
 
@@ -326,7 +326,7 @@ public interface ClassLoadingStrategy {
          * @param packageDefinitionStrategy The package definer to be used.
          * @return A version of this class loading strategy that applies the supplied package definer.
          */
-        Configurable withPackageDefiner(PackageDefinitionStrategy packageDefinitionStrategy);
+        Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy);
     }
 
     /**
