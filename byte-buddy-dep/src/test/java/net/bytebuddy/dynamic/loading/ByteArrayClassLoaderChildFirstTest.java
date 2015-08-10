@@ -36,12 +36,12 @@ public class ByteArrayClassLoaderChildFirstTest {
 
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
 
     private final Matcher<InputStream> expectedResourceLookup;
+
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
 
     private ClassLoader classLoader;
 
@@ -81,7 +81,8 @@ public class ByteArrayClassLoaderChildFirstTest {
         assertEquals(classLoader.loadClass(Foo.class.getName()), type);
         assertNotEquals(Foo.class, type);
         assertThat(type.getPackage(), notNullValue(Package.class));
-        assertThat(type.getPackage(), is(Foo.class.getPackage()));;
+        assertThat(type.getPackage(), is(Foo.class.getPackage()));
+        ;
     }
 
     @Test

@@ -26,6 +26,48 @@ public interface PackageDefinitionStrategy {
     Definition define(ClassLoader classLoader, String packageName, String typeName) throws IOException;
 
     /**
+     * A package definer that does not define any package.
+     */
+    enum NoOp implements PackageDefinitionStrategy {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Definition define(ClassLoader classLoader, String packageName, String typeName) {
+            return Definition.Undefined.INSTANCE;
+        }
+
+        @Override
+        public String toString() {
+            return "PackageDefinitionStrategy.NoOp." + name();
+        }
+    }
+
+    /**
+     * A package definer that only defines packages without any meta data.
+     */
+    enum Trivial implements PackageDefinitionStrategy {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Definition define(ClassLoader classLoader, String packageName, String typeName) {
+            return Definition.Trivial.INSTANCE;
+        }
+
+        @Override
+        public String toString() {
+            return "PackageDefinitionStrategy.Trivial." + name();
+        }
+    }
+
+    /**
      * A definition of a package.
      */
     interface Definition {
@@ -240,6 +282,11 @@ public interface PackageDefinitionStrategy {
         class Simple implements Definition {
 
             /**
+             * The seal base or {@code null} if the package is not sealed.
+             */
+            protected final URL sealBase;
+
+            /**
              * The package specification's title or {@code null} if no such title exists.
              */
             private final String specificationTitle;
@@ -268,11 +315,6 @@ public interface PackageDefinitionStrategy {
              * The package implementation's vendor or {@code null} if no such vendor exists.
              */
             private final String implementationVendor;
-
-            /**
-             * The seal base or {@code null} if the package is not sealed.
-             */
-            protected final URL sealBase;
 
             /**
              * Creates a new simple package definition.
@@ -388,48 +430,6 @@ public interface PackageDefinitionStrategy {
                         ", sealBase=" + sealBase +
                         '}';
             }
-        }
-    }
-
-    /**
-     * A package definer that does not define any package.
-     */
-    enum NoOp implements PackageDefinitionStrategy {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public Definition define(ClassLoader classLoader, String packageName, String typeName) {
-            return Definition.Undefined.INSTANCE;
-        }
-
-        @Override
-        public String toString() {
-            return "PackageDefinitionStrategy.NoOp." + name();
-        }
-    }
-
-    /**
-     * A package definer that only defines packages without any meta data.
-     */
-    enum Trivial implements PackageDefinitionStrategy {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        @Override
-        public Definition define(ClassLoader classLoader, String packageName, String typeName) {
-            return Definition.Trivial.INSTANCE;
-        }
-
-        @Override
-        public String toString() {
-            return "PackageDefinitionStrategy.Trivial." + name();
         }
     }
 

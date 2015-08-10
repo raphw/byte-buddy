@@ -35,15 +35,15 @@ public class ByteArrayClassLoaderTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", CLASS_FILE = ".class";
 
+    private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
+
+    private final Matcher<InputStream> expectedResourceLookup;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Rule
     public MethodRule integrationRule = new IntegrationRule();
-
-    private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
-
-    private final Matcher<InputStream> expectedResourceLookup;
 
     private ClassLoader classLoader;
 

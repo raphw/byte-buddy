@@ -148,8 +148,8 @@ public interface ClassLoadingStrategy {
             /**
              * Creates a new injection dispatcher.
              *
-             * @param protectionDomain The protection domain to apply.
-             * @param packageDefinitionStrategy   The package definer to be used for querying information on package information.
+             * @param protectionDomain          The protection domain to apply.
+             * @param packageDefinitionStrategy The package definer to be used for querying information on package information.
              */
             private InjectionDispatcher(ProtectionDomain protectionDomain, PackageDefinitionStrategy packageDefinitionStrategy) {
                 this.protectionDomain = protectionDomain;
@@ -245,10 +245,10 @@ public interface ClassLoadingStrategy {
             /**
              * Creates a new protection domain specific class loading wrapper.
              *
-             * @param protectionDomain   The protection domain to apply.
-             * @param packageDefinitionStrategy     The package definer to be used for querying information on package information.
-             * @param persistenceHandler The persistence handler to apply.
-             * @param childFirst         {@code true} if the created class loader should apply child-first semantics.
+             * @param protectionDomain          The protection domain to apply.
+             * @param packageDefinitionStrategy The package definer to be used for querying information on package information.
+             * @param persistenceHandler        The persistence handler to apply.
+             * @param childFirst                {@code true} if the created class loader should apply child-first semantics.
              */
             private WrappingDispatcher(ProtectionDomain protectionDomain,
                                        PackageDefinitionStrategy packageDefinitionStrategy,
