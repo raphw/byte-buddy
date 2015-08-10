@@ -74,7 +74,7 @@ public class ByteArrayClassLoaderTest {
                 persistenceHandler,
                 packageDefinitionStrategy);
         sealBase = new URL("file://foo");
-        when(packageDefinitionStrategy.define(Foo.class.getPackage().getName(), classLoader,Foo.class.getName()))
+        when(packageDefinitionStrategy.define(classLoader, Foo.class.getPackage().getName(), Foo.class.getName()))
                 .thenReturn(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, QUX, FOO, BAR, sealBase));
     }
 

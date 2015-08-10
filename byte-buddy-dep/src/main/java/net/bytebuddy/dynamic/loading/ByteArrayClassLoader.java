@@ -400,7 +400,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 int packageIndex = typeName.lastIndexOf('.');
                 if (packageIndex != -1) {
                     String packageName = typeName.substring(0, packageIndex);
-                    PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(packageName, ByteArrayClassLoader.this, typeName);
+                    PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(ByteArrayClassLoader.this, packageName, typeName);
                     if (definition.isDefined()) {
                         Package definedPackage = getPackage(packageName);
                         if (definedPackage == null) {
@@ -412,11 +412,8 @@ public class ByteArrayClassLoader extends ClassLoader {
                                     definition.getImplementationVersion(),
                                     definition.getImplementationVendor(),
                                     definition.getSealBase());
-                        } else {
-                            URL sealBase = definition.getSealBase();
-                            if ((sealBase == null && definedPackage.isSealed()) || (sealBase != null && !definedPackage.isSealed(sealBase))) {
-                                throw new SecurityException("Sealing violation for package " + packageName);
-                            }
+                        } else if (!definition.isCompatibleTo(definedPackage)) {
+                            throw new SecurityException("Sealing violation for package " + packageName);
                         }
                     }
                 }

@@ -444,7 +444,7 @@ public interface ClassInjector {
                 int packageIndex = typeName.lastIndexOf('.');
                 if (packageIndex != -1) {
                     String packageName = typeName.substring(0, packageIndex);
-                    PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(packageName, classLoader, typeName);
+                    PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, typeName);
                     if (definition.isDefined()) {
                         Package definedPackage = REFLECTION_STORE.getPackage(classLoader, packageName);
                         if (definedPackage == null) {
@@ -457,11 +457,8 @@ public interface ClassInjector {
                                     definition.getImplementationVersion(),
                                     definition.getImplementationVendor(),
                                     definition.getSealBase());
-                        } else {
-                            URL sealBase = definition.getSealBase();
-                            if ((sealBase == null && definedPackage.isSealed()) || (sealBase != null && !definedPackage.isSealed(sealBase))) {
-                                throw new SecurityException("Sealing violation for package " + packageName);
-                            }
+                        } else if (!definition.isCompatibleTo(definedPackage)) {
+                            throw new SecurityException("Sealing violation for package " + packageName);
                         }
                     }
                 }

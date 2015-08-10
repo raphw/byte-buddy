@@ -18,12 +18,12 @@ public interface PackageDefinitionStrategy {
     /**
      * Returns a package definition for a given package.
      *
-     * @param packageName The name of the package.
      * @param classLoader The class loader for which this package is being defined.
+     * @param packageName The name of the package.
      * @param typeName    The name of the type being loaded when the package is defined
      * @return A definition of the package.
      */
-    Definition define(String packageName, ClassLoader classLoader, String typeName) throws IOException;
+    Definition define(ClassLoader classLoader, String packageName, String typeName) throws IOException;
 
     /**
      * A definition of a package.
@@ -38,53 +38,68 @@ public interface PackageDefinitionStrategy {
         boolean isDefined();
 
         /**
-         * Returns the package specification's title or {@code null} if no such title exists.
+         * Returns the package specification's title or {@code null} if no such title exists. This method must only be called
+         * for defined package definitions.
          *
          * @return The package specification's title.
          */
         String getSpecificationTitle();
 
         /**
-         * Returns the package specification's version or {@code null} if no such version exists.
+         * Returns the package specification's version or {@code null} if no such version exists. This method must only be called
+         * for defined package definitions.
          *
          * @return The package specification's version.
          */
         String getSpecificationVersion();
 
         /**
-         * Returns the package specification's vendor or {@code null} if no such vendor exists.
+         * Returns the package specification's vendor or {@code null} if no such vendor exists. This method must only be called
+         * for defined package definitions.
          *
          * @return The package specification's vendor.
          */
         String getSpecificationVendor();
 
         /**
-         * Returns the package implementation's title or {@code null} if no such title exists.
+         * Returns the package implementation's title or {@code null} if no such title exists. This method must only be called
+         * for defined package definitions.
          *
          * @return The package implementation's title.
          */
         String getImplementationTitle();
 
         /**
-         * Returns the package implementation's version or {@code null} if no such version exists.
+         * Returns the package implementation's version or {@code null} if no such version exists. This method must only be called
+         * for defined package definitions.
          *
          * @return The package implementation's version.
          */
         String getImplementationVersion();
 
         /**
-         * Returns the package implementation's vendor or {@code null} if no such vendor exists.
+         * Returns the package implementation's vendor or {@code null} if no such vendor exists. This method must only be called
+         * for defined package definitions.
          *
          * @return The package implementation's vendor.
          */
         String getImplementationVendor();
 
         /**
-         * The URL representing the seal base.
+         * The URL representing the seal base. This method must only be called for defined package definitions.
          *
          * @return The seal base of the package.
          */
         URL getSealBase();
+
+        /**
+         * Validates that this package definition is compatible to a previously defined package. This method must only be
+         * called for defined package definitions.
+         *
+         * @param definedPackage The previously defined package.
+         * @return {@code false} if this package and the defined package's sealing information are not compatible.
+         */
+        boolean isCompatibleTo(Package definedPackage);
 
         /**
          * A canonical implementation of an undefined package.
@@ -135,6 +150,12 @@ public interface PackageDefinitionStrategy {
             public URL getSealBase() {
                 throw new IllegalStateException("Cannot read property of undefined package");
             }
+
+            @Override
+            public boolean isCompatibleTo(Package definedPackage) {
+                throw new IllegalStateException("Cannot check compatibility to undefined package");
+            }
+
 
             @Override
             public String toString() {
@@ -203,6 +224,11 @@ public interface PackageDefinitionStrategy {
             }
 
             @Override
+            public boolean isCompatibleTo(Package definedPackage) {
+                return true;
+            }
+
+            @Override
             public String toString() {
                 return "PackageDefinitionStrategy.Definition.Trivial." + name();
             }
@@ -246,7 +272,7 @@ public interface PackageDefinitionStrategy {
             /**
              * The seal base or {@code null} if the package is not sealed.
              */
-            private final URL sealBase;
+            protected final URL sealBase;
 
             /**
              * Creates a new simple package definition.
@@ -316,6 +342,11 @@ public interface PackageDefinitionStrategy {
             }
 
             @Override
+            public boolean isCompatibleTo(Package definedPackage) {
+                return (sealBase == null && definedPackage.isSealed()) || (sealBase != null && !definedPackage.isSealed(sealBase));
+            }
+
+            @Override
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
@@ -367,7 +398,7 @@ public interface PackageDefinitionStrategy {
         INSTANCE;
 
         @Override
-        public Definition define(String packageName, ClassLoader classLoader, String typeName) {
+        public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             return Definition.Undefined.INSTANCE;
         }
 
@@ -388,7 +419,7 @@ public interface PackageDefinitionStrategy {
         INSTANCE;
 
         @Override
-        public Definition define(String packageName, ClassLoader classLoader, String typeName) {
+        public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             return Definition.Trivial.INSTANCE;
         }
 
@@ -432,6 +463,13 @@ public interface PackageDefinitionStrategy {
         private final SealBaseLocator sealBaseLocator;
 
         /**
+         * Creates a manifest reading package definition strategy that attempts to extract sealing information from a defined class's URL.
+         */
+        public ManifestReading() {
+            this(new SealBaseLocator.ForTypeResourceURL());
+        }
+
+        /**
          * Creates a new package definer that reads a class loader's manifest file.
          *
          * @param sealBaseLocator A locator for a sealed package's URL.
@@ -441,7 +479,7 @@ public interface PackageDefinitionStrategy {
         }
 
         @Override
-        public Definition define(String packageName, ClassLoader classLoader, String typeName) throws IOException {
+        public Definition define(ClassLoader classLoader, String packageName, String typeName) throws IOException {
             InputStream inputStream = classLoader.getResourceAsStream(MANIFEST_FILE);
             if (inputStream != null) {
                 try {
@@ -469,7 +507,7 @@ public interface PackageDefinitionStrategy {
                             values.get(Attributes.Name.IMPLEMENTATION_VERSION),
                             values.get(Attributes.Name.IMPLEMENTATION_VENDOR),
                             Boolean.parseBoolean(values.get(Attributes.Name.SEALED))
-                                    ? sealBaseLocator.findSealBase(packageName, classLoader, typeName)
+                                    ? sealBaseLocator.findSealBase(classLoader, packageName, typeName)
                                     : NOT_SEALED);
                 } finally {
                     inputStream.close();
@@ -503,12 +541,12 @@ public interface PackageDefinitionStrategy {
             /**
              * Locates the URL that should be used for sealing a package.
              *
-             * @param packageName The name of the package.
              * @param classLoader The class loader loading the package.
+             * @param packageName The name of the package.
              * @param typeName    The name of the type being loaded when defining this package.
              * @return The URL that is used for sealing a package or {@code null} if the package should not be sealed.
              */
-            URL findSealBase(String packageName, ClassLoader classLoader, String typeName);
+            URL findSealBase(ClassLoader classLoader, String packageName, String typeName);
 
             /**
              * A seal base locator that never seals a package.
@@ -521,7 +559,7 @@ public interface PackageDefinitionStrategy {
                 INSTANCE;
 
                 @Override
-                public URL findSealBase(String packageName, ClassLoader classLoader, String typeName) {
+                public URL findSealBase(ClassLoader classLoader, String packageName, String typeName) {
                     return NOT_SEALED;
                 }
 
@@ -551,7 +589,7 @@ public interface PackageDefinitionStrategy {
                 }
 
                 @Override
-                public URL findSealBase(String packageName, ClassLoader classLoader, String typeName) {
+                public URL findSealBase(ClassLoader classLoader, String packageName, String typeName) {
                     return sealBase;
                 }
 
@@ -578,7 +616,7 @@ public interface PackageDefinitionStrategy {
              * A seal base locator that imitates the behavior of a {@link java.net.URLClassLoader}, i.e. tries
              * to deduct the base from a class's resource URL.
              */
-            class ForTypeResource implements SealBaseLocator {
+            class ForTypeResourceURL implements SealBaseLocator {
 
                 /**
                  * The file extension for a class file.
@@ -591,16 +629,6 @@ public interface PackageDefinitionStrategy {
                 private static final String JAR_FILE = "jar";
 
                 /**
-                 * The protocol name of a file on the file system.
-                 */
-                private static final String FILE_PATH = "file";
-
-                /**
-                 * The protocol name of a Java 9 runtime image.
-                 */
-                private static final String RUNTIME_IMAGE = "jrt";
-
-                /**
                  * The seal base locator to fallback to when a resource is not found or an unexpected URL protocol is discovered.
                  */
                 private final SealBaseLocator fallback;
@@ -610,7 +638,7 @@ public interface PackageDefinitionStrategy {
                  * {@link net.bytebuddy.dynamic.loading.PackageDefinitionStrategy.ManifestReading.SealBaseLocator.NonSealing} seal base locator
                  * as a fallback.
                  */
-                public ForTypeResource() {
+                public ForTypeResourceURL() {
                     this(NonSealing.INSTANCE);
                 }
 
@@ -619,41 +647,33 @@ public interface PackageDefinitionStrategy {
                  *
                  * @param fallback The seal base locator to fallback to when a resource is not found or an unexpected URL protocol is discovered.
                  */
-                public ForTypeResource(SealBaseLocator fallback) {
+                public ForTypeResourceURL(SealBaseLocator fallback) {
                     this.fallback = fallback;
                 }
 
                 @Override
-                public URL findSealBase(String packageName, ClassLoader classLoader, String typeName) {
+                public URL findSealBase(ClassLoader classLoader, String packageName, String typeName) {
                     URL url = classLoader.getResource(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
                     if (url != null) {
-                        try {
-                            if (url.getProtocol().equals(JAR_FILE)) {
-                                String path = url.getPath();
-                                int fileIndex = path.indexOf('!');
+                        if (url.getProtocol().equals(JAR_FILE)) {
+                            String path = url.getPath();
+                            int fileIndex = path.indexOf('!');
+                            try {
                                 return new URL(fileIndex == -1
                                         ? path
                                         : path.substring(0, fileIndex));
-                            } else if (url.getProtocol().equals(RUNTIME_IMAGE)) {
-                                String path = url.getPath();
-                                int moduleIndex = path.indexOf('/');
-                                return moduleIndex == -1
-                                        ? url
-                                        : new URL(RUNTIME_IMAGE + ":/" + path.substring(0, moduleIndex));
-                            } else if (url.getProtocol().equals(FILE_PATH)) {
-                                return NOT_SEALED;
+                            } catch (MalformedURLException exception) {
+                                throw new IllegalStateException("Unexpected URL: " + url, exception);
                             }
-                        } catch (MalformedURLException exception) {
-                            throw new IllegalStateException("Unexpected URL: " + url, exception);
                         }
                     }
-                    return fallback.findSealBase(packageName, classLoader, typeName);
+                    return fallback.findSealBase(classLoader, packageName, typeName);
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fallback.equals(((ForTypeResource) other).fallback);
+                            && fallback.equals(((ForTypeResourceURL) other).fallback);
                 }
 
                 @Override
