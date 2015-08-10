@@ -2852,6 +2852,22 @@ public interface DynamicType {
          * @see net.bytebuddy.dynamic.loading.ClassLoadingStrategy.Default
          */
         Loaded<T> load(ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy);
+
+        /**
+         * Includes the provided dynamic types as auxiliary types of this instance.
+         *
+         * @param dynamicType The dynamic types to include.
+         * @return A copy of this unloaded dynamic type which includes the provided dynamic types.
+         */
+        Unloaded<T> include(DynamicType... dynamicType);
+
+        /**
+         * Includes the provided dynamic types as auxiliary types of this instance.
+         *
+         * @param dynamicTypes The dynamic types to include.
+         * @return A copy of this unloaded dynamic type which includes the provided dynamic types.
+         */
+        Unloaded<T> include(List<? extends DynamicType> dynamicTypes);
     }
 
     /**
@@ -3140,15 +3156,15 @@ public interface DynamicType {
              * Creates a new unloaded representation of a dynamic type.
              *
              * @param typeDescription       A description of this dynamic type.
-             * @param typeByte              An array of byte of the binary representation of this dynamic type.
+             * @param binaryRepresentation  An array of byte of the binary representation of this dynamic type.
              * @param loadedTypeInitializer The type initializer of this dynamic type.
              * @param auxiliaryTypes        The auxiliary types that are required for this dynamic type.
              */
             public Unloaded(TypeDescription typeDescription,
-                            byte[] typeByte,
+                            byte[] binaryRepresentation,
                             LoadedTypeInitializer loadedTypeInitializer,
                             List<? extends DynamicType> auxiliaryTypes) {
-                super(typeDescription, typeByte, loadedTypeInitializer, auxiliaryTypes);
+                super(typeDescription, binaryRepresentation, loadedTypeInitializer, auxiliaryTypes);
             }
 
             @Override
@@ -3175,6 +3191,16 @@ public interface DynamicType {
                     typeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                 }
                 return new HashMap<TypeDescription, Class<?>>(uninitialized);
+            }
+
+            @Override
+            public DynamicType.Unloaded<T> include(DynamicType... dynamicType) {
+                return include(Arrays.asList(dynamicType));
+            }
+
+            @Override
+            public DynamicType.Unloaded<T> include(List<? extends DynamicType> dynamicType) {
+                return new Default.Unloaded<T>(typeDescription, binaryRepresentation, loadedTypeInitializer, join(auxiliaryTypes, dynamicType));
             }
 
             @Override

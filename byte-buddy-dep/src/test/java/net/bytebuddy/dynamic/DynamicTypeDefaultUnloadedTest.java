@@ -20,8 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class DynamicTypeDefaultUnloadedTest {
 
@@ -85,6 +84,17 @@ public class DynamicTypeDefaultUnloadedTest {
         assertEquals(AUXILIARY_TYPE, loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
         verify(mainLoadedTypeInitializer).onLoad(MAIN_TYPE);
         verify(auxiliaryLoadedTypeInitializer).onLoad(AUXILIARY_TYPE);
+    }
+
+    @Test
+    public void testTypeInclusion() throws Exception {
+        DynamicType additionalType = mock(DynamicType.class);
+        TypeDescription additionalTypeDescription = mock(TypeDescription.class);
+        when(additionalType.getTypeDescription()).thenReturn(additionalTypeDescription);
+        DynamicType.Unloaded<?> dynamicType = unloaded.include(additionalType);
+        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(2));
+        assertThat(dynamicType.getRawAuxiliaryTypes().containsKey(additionalTypeDescription), is(true));
+        assertThat(dynamicType.getRawAuxiliaryTypes().containsKey(auxiliaryTypeDescription), is(true));
     }
 
     @Test
