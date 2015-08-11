@@ -477,13 +477,12 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .withNamingStrategy(new NamingStrategy() {
     @Override
     public String getName(UnnamedType unnamedType) {
-        return "i.love.ByteBuddy." + unnamedType.getSuperClass().getSimpleName();
+        return "i.love.ByteBuddy." + unnamedType.getSuperType().asRawType().getSimpleName();
     }
   })
   .subclass(Object.class)
   .make();
 </pre>
-<!-- Add: 'asErasedType()' when releasing 0.7 -->
 
 <p>
     In the above code example, we created a new configuration that differs from the default configuration in its
@@ -2362,7 +2361,7 @@ enum SumMethod implements ByteCodeAppender {
   public Size apply(MethodVisitor methodVisitor,
                     Implementation.Context implementationContext,
                     MethodDescription instrumentedMethod) {
-    if (!instrumentedMethod.getReturnType().represents(int.class)) {
+    if (!instrumentedMethod.getReturnType().asRawType().represents(int.class)) {
       throw new IllegalArgumentException(instrumentedMethod + " must return int");
     }
     StackManipulation.Size operandStackSize = new StackManipulation.Compound(
@@ -2510,7 +2509,7 @@ enum ToStringAssigner implements Assigner {
   @Override
   public StackManipulation assign(TypeDescription sourceType,
                                   TypeDescription targetType,
-                                  boolean considerRuntimeType) {
+                                  Assigner.Typing typing) {
     if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
       MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
         .getDeclaredMethods()
@@ -2539,7 +2538,8 @@ new ByteBuddy()
   .subclass(Object.class)
   .method(named("toString"))
     .intercept(FixedValue.value(42)
-      .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE), false))
+      .withAssigner(new PrimitiveTypeAwareAssigner(ToStringAssigner.INSTANCE),
+                    Assigner.Typing.STATIC))
   .make()
 </pre>
 
@@ -2604,7 +2604,7 @@ enum StringValueBinder
                                                          ParameterDescription target,
                                                          Implementation.Target implementationTarget,
                                                          Assigner assigner) {
-    if (!target.getTypeDescription().represents(String.class)) {
+    if (!target.getTypeDescription().asRawType().represents(String.class)) {
       throw new IllegalStateException(target + " makes illegal use of @StringValue");
     }
     StackManipulation constant = new TextConstant(annotation.loadSilent().value());
