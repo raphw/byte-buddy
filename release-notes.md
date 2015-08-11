@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. August 2015: version 0.7 (release candidate 1)
+
+- Added support for generic types.
+- Replaced `MethodLookupEngine` with `MethodGraph.Compiler` to provide a richer data structure.
+- Added support for bridge methods (type and visibility bridges).
+- Refactored the predefined `ElementMatcher`s to allow for matching generic types.
+- Replaced the `ModifierResolver` with a more general `MethodTransformer`.
+
 ### 11. August 2015: version 0.6.15
 
 - Added support for discovery and handling of Java 9 VMs.
