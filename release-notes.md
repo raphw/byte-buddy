@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. August 2015: version 0.6.15
+
+- Added support for discovery and handling of Java 9 VMs.
+- Fixed class loading for Android 5 (Lollipop) API.
+
 ### 20. July 2015: version 0.6.14
 
 - Fixed resolution of ignored methods. Previously, additional ignored methods were not appended but added as an additional criteria for ignoring a method.
