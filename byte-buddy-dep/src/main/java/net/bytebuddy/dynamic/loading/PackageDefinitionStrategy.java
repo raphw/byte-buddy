@@ -623,6 +623,11 @@ public interface PackageDefinitionStrategy {
             class ForTypeResourceUrl implements SealBaseLocator {
 
                 /**
+                 * An index to indicate to a {@link String} manipulation that the initial slash should be excluded.
+                 */
+                private static final int EXCLUDE_INITIAL_SLASH = 1;
+
+                /**
                  * The file extension for a class file.
                  */
                 private static final String CLASS_FILE_EXTENSION = ".class";
@@ -676,7 +681,7 @@ public interface PackageDefinitionStrategy {
                                 return url;
                             } else if (url.getProtocol().equals(RUNTIME_IMAGE)) {
                                 String path = url.getPath();
-                                int modulePathIndex = path.indexOf('/', 1);
+                                int modulePathIndex = path.indexOf('/', EXCLUDE_INITIAL_SLASH);
                                 return modulePathIndex == -1
                                         ? url
                                         : new URL(RUNTIME_IMAGE + ":" + path.substring(0, modulePathIndex));
