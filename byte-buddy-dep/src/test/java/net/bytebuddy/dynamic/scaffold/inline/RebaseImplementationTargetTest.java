@@ -154,6 +154,11 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     }
 
     @Test
+    public void testOriginType() throws Exception {
+        assertThat(implementationTarget.getOriginType(), is(instrumentedType));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(RebaseImplementationTarget.class).apply();

@@ -24,6 +24,7 @@ public class MethodVariableAccessOtherTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodVariableAccess.class).apply();
         ObjectPropertyAssertion.of(MethodVariableAccess.OffsetLoading.class).apply();
+        ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.class).apply();
         ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.TypeCastingHandler.ForBridgeTarget.class)
                 .refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
                     @Override
