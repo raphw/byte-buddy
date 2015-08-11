@@ -57,7 +57,7 @@ public class InstrumentedTypeTest {
     @SuppressWarnings("unchecked")
     public void testWithField() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
-        when(fieldType.asRawType()).thenReturn(fieldType);
+        when(fieldType.asErasure()).thenReturn(fieldType);
         when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType);
         when(fieldType.getName()).thenReturn(FOO);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
@@ -93,8 +93,8 @@ public class InstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        assertThat(fieldDescription.getType().asRawType().isArray(), is(true));
-        assertThat(fieldDescription.getType().asRawType().getComponentType(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(fieldDescription.getType().asErasure().isArray(), is(true));
+        assertThat(fieldDescription.getType().asErasure().getComponentType(), sameInstance((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
         assertThat(fieldDescription.getDeclaringType(), sameInstance((GenericTypeDescription) instrumentedType));
@@ -104,7 +104,7 @@ public class InstrumentedTypeTest {
     @SuppressWarnings("unchecked")
     public void testWithFieldDouble() throws Exception {
         TypeDescription fieldType = mock(TypeDescription.class);
-        when(fieldType.asRawType()).thenReturn(fieldType);
+        when(fieldType.asErasure()).thenReturn(fieldType);
         when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType);
         when(fieldType.getName()).thenReturn(FOO);
         makePlainInstrumentedType()
@@ -116,10 +116,10 @@ public class InstrumentedTypeTest {
     @SuppressWarnings("unchecked")
     public void testWithMethod() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.asErasure()).thenReturn(returnType);
         when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
         TypeDescription parameterType = mock(TypeDescription.class);
-        when(parameterType.asRawType()).thenReturn(parameterType);
+        when(parameterType.asErasure()).thenReturn(parameterType);
         when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(returnType.getName()).thenReturn(FOO);
         when(parameterType.getName()).thenReturn(QUX);
@@ -170,10 +170,10 @@ public class InstrumentedTypeTest {
                 Collections.singletonList(TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1))));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription methodDescription = instrumentedType.getDeclaredMethods().get(0);
-        assertThat(methodDescription.getReturnType().asRawType().isArray(), is(true));
+        assertThat(methodDescription.getReturnType().asErasure().isArray(), is(true));
         assertThat(methodDescription.getReturnType().getComponentType(), sameInstance((GenericTypeDescription) instrumentedType));
         assertThat(methodDescription.getParameters().size(), is(1));
-        assertThat(methodDescription.getParameters().asTypeList().asRawTypes().get(0).isArray(), is(true));
+        assertThat(methodDescription.getParameters().asTypeList().asErasures().get(0).isArray(), is(true));
         assertThat(methodDescription.getParameters().asTypeList().get(0).getComponentType(), sameInstance((GenericTypeDescription) instrumentedType));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
@@ -185,7 +185,7 @@ public class InstrumentedTypeTest {
     @SuppressWarnings("unchecked")
     public void testWithMethodDouble() throws Exception {
         TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.asErasure()).thenReturn(returnType);
         when(returnType.getName()).thenReturn(FOO);
         when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
         makePlainInstrumentedType()
@@ -272,7 +272,7 @@ public class InstrumentedTypeTest {
         TypeDescription other = mock(TypeDescription.class);
         when(other.getInternalName()).thenReturn(instrumentedType.getInternalName());
         when(other.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(other.asRawType()).thenReturn(other);
+        when(other.asErasure()).thenReturn(other);
         assertThat(instrumentedType, equalTo(other));
         verify(other, atLeast(1)).getInternalName();
     }

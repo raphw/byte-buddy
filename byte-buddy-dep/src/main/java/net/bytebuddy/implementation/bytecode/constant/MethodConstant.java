@@ -80,7 +80,7 @@ public abstract class MethodConstant implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         Size argumentSize = prepare(methodVisitor)
                 .aggregate(ArrayFactory.forType(TypeDescription.CLASS)
-                        .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asRawTypes()))
+                        .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures()))
                         .apply(methodVisitor, implementationContext));
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 CLASS_TYPE_INTERNAL_NAME,
@@ -210,7 +210,7 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         protected Size prepare(MethodVisitor methodVisitor) {
-            methodVisitor.visitLdcInsn(Type.getType(methodDescription.getDeclaringType().asRawType().getDescriptor()));
+            methodVisitor.visitLdcInsn(Type.getType(methodDescription.getDeclaringType().asErasure().getDescriptor()));
             methodVisitor.visitLdcInsn(methodDescription.getInternalName());
             return new Size(2, 2);
         }
@@ -260,7 +260,7 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         protected Size prepare(MethodVisitor methodVisitor) {
-            methodVisitor.visitLdcInsn(Type.getType(methodDescription.getDeclaringType().asRawType().getDescriptor()));
+            methodVisitor.visitLdcInsn(Type.getType(methodDescription.getDeclaringType().asErasure().getDescriptor()));
             return new Size(1, 1);
         }
 

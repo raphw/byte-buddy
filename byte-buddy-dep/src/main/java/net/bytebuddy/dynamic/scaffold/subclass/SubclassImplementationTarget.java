@@ -65,7 +65,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         MethodDescription methodDescription = superConstructors.get(methodToken);
         return methodDescription == null
                 ? Implementation.SpecialMethodInvocation.Illegal.INSTANCE
-                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asRawType());
+                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asErasure());
     }
 
     /**
@@ -77,7 +77,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.Token methodToken) {
         MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(methodToken);
         return methodNode.getSort().isUnique()
-                ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperType().asRawType())
+                ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperType().asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
@@ -124,7 +124,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         SUPER_TYPE {
             @Override
             protected TypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription.getSuperType().asRawType();
+                return typeDescription.getSuperType().asErasure();
             }
         },
 

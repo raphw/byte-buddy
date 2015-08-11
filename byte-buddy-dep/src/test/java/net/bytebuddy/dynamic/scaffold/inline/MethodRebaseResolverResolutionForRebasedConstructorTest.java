@@ -53,7 +53,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(genericTypeDescription.asRawType()).thenReturn(typeDescription);
+        when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
@@ -65,9 +65,9 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(placeholderType.getDescriptor()).thenReturn(BAZ);
         when(otherPlaceHolderType.getDescriptor()).thenReturn(FOO);
-        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.asErasure()).thenReturn(returnType);
         when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
-        when(parameterType.asRawType()).thenReturn(parameterType);
+        when(parameterType.asErasure()).thenReturn(parameterType);
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
     }
 
@@ -99,7 +99,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
                 when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
                 TypeDescription returnType = mock(TypeDescription.class);
-                when(returnType.asRawType()).thenReturn(returnType);
+                when(returnType.asErasure()).thenReturn(returnType);
                 when(mock.getReturnType()).thenReturn(returnType);
                 when(mock.getInternalName()).thenReturn(FOO + System.identityHashCode(mock));
             }
@@ -107,7 +107,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
             @Override
             public void apply(TypeDescription mock) {
                 when(mock.getDescriptor()).thenReturn(FOO + System.identityHashCode(mock));
-                when(mock.asRawType()).thenReturn(mock);
+                when(mock.asErasure()).thenReturn(mock);
                 when(mock.getStackSize()).thenReturn(StackSize.ZERO);
             }
         }).apply();

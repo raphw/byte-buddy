@@ -51,7 +51,7 @@ public class MethodRebaseResolverEnabledTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(declaringType.asErasure()).thenReturn(declaringType);
         when(method.getDeclaringType()).thenReturn(declaringType);
         when(constructor.getDeclaringType()).thenReturn(declaringType);
         when(other.getDeclaringType()).thenReturn(declaringType);
@@ -70,11 +70,11 @@ public class MethodRebaseResolverEnabledTest {
         when(constructor.getReturnType()).thenReturn(returnType);
         when(constructor.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(method, Collections.singletonList(parameterType)));
         when(methodNameTransformer.transform(method)).thenReturn(BAR);
-        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.asErasure()).thenReturn(returnType);
         when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(parameterType.asRawType()).thenReturn(parameterType);
+        when(parameterType.asErasure()).thenReturn(parameterType);
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
-        when(placeholderType.asRawType()).thenReturn(placeholderType);
+        when(placeholderType.asErasure()).thenReturn(placeholderType);
         when(placeholderType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(placeholderType);
     }
 

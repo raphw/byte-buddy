@@ -48,7 +48,7 @@ public class MethodInvocationDynamicTest {
 
     @Before
     public void setUp() throws Exception {
-        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(declaringType.asErasure()).thenReturn(declaringType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(firstType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstType.getDescriptor()).thenReturn(FOO);

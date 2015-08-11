@@ -98,7 +98,7 @@ public class ByteBuddyCommonsTest {
     public void testIsThrowableForExceptionVariable() throws Exception {
         GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
         when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
-        when(genericTypeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Throwable.class));
+        when(genericTypeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Throwable.class));
         assertThat(isThrowable(genericTypeDescription), sameInstance(genericTypeDescription));
     }
 
@@ -106,7 +106,7 @@ public class ByteBuddyCommonsTest {
     public void testIsThrowableThrowsExceptionForExceptionVariableOfNonThrowableType() throws Exception {
         GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
         when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
-        when(genericTypeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(genericTypeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         isThrowable(genericTypeDescription);
     }
 
@@ -186,7 +186,7 @@ public class ByteBuddyCommonsTest {
     public void testParameterizedTypeIsExtendable() throws Exception {
         GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
         when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.PARAMETERIZED);
-        when(genericTypeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(genericTypeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         assertThat(isExtendable(genericTypeDescription), sameInstance(genericTypeDescription));
     }
 
@@ -194,7 +194,7 @@ public class ByteBuddyCommonsTest {
     public void testParameterizedTypeWithIllegalErasureIsExtendableThrowsException() throws Exception {
         GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
         when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.PARAMETERIZED);
-        when(genericTypeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(String.class));
+        when(genericTypeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(String.class));
         isExtendable(genericTypeDescription);
     }
 
@@ -244,7 +244,7 @@ public class ByteBuddyCommonsTest {
     public void testParameterizedTypeIsImplementable() throws Exception {
         GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
         when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.PARAMETERIZED);
-        when(genericTypeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Runnable.class));
+        when(genericTypeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Runnable.class));
         assertThat(isImplementable(genericTypeDescription), sameInstance(genericTypeDescription));
     }
 
@@ -252,7 +252,7 @@ public class ByteBuddyCommonsTest {
     public void testParameterizedTypeWithIllegalErasureIsImplementableThrowsException() throws Exception {
         GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
         when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.PARAMETERIZED);
-        when(genericTypeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(genericTypeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         isImplementable(genericTypeDescription);
     }
 
@@ -306,7 +306,7 @@ public class ByteBuddyCommonsTest {
     public void testCollectionIsActualTypeOrVoid() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         Collection<GenericTypeDescription> typeDescriptions = Collections.singleton(typeDescription);
         assertThat(isActualTypeOrVoid(typeDescriptions), sameInstance(typeDescriptions));
     }
@@ -322,7 +322,7 @@ public class ByteBuddyCommonsTest {
     public void testIsActualTypeForRawType() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
     }
 
@@ -330,7 +330,7 @@ public class ByteBuddyCommonsTest {
     public void testIsActualTypeForRawVoidThrowsException() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
     }
 
@@ -338,7 +338,7 @@ public class ByteBuddyCommonsTest {
     public void testIsActualTypeForGenericArray() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.GENERIC_ARRAY);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
     }
 
@@ -346,7 +346,7 @@ public class ByteBuddyCommonsTest {
     public void testIsActualTypeForTypeVariable() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
     }
 
@@ -354,7 +354,7 @@ public class ByteBuddyCommonsTest {
     public void testIsActualTypeForParameterizedType() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.PARAMETERIZED);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
     }
 
@@ -362,7 +362,7 @@ public class ByteBuddyCommonsTest {
     public void testIsActualTypeForWildcardThrowsException() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.WILDCARD);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         isActualType(typeDescription);
     }
 
@@ -370,7 +370,7 @@ public class ByteBuddyCommonsTest {
     public void testCollectionIsActualType() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         Collection<GenericTypeDescription> typeDescriptions = Collections.singleton(typeDescription);
         assertThat(isActualType(typeDescriptions), sameInstance(typeDescriptions));
     }
@@ -379,7 +379,7 @@ public class ByteBuddyCommonsTest {
     public void testCollectionIsActualTypeThrowsException() throws Exception {
         GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(typeDescription.asRawType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         isActualType(Collections.singleton(typeDescription));
     }
 
@@ -421,8 +421,8 @@ public class ByteBuddyCommonsTest {
     @Test
     public void testUniqueRaw() throws Exception {
         TypeDescription first = mock(TypeDescription.class), second = mock(TypeDescription.class);
-        when(first.asRawType()).thenReturn(first);
-        when(second.asRawType()).thenReturn(second);
+        when(first.asErasure()).thenReturn(first);
+        when(second.asErasure()).thenReturn(second);
         Collection<TypeDescription> typeDescriptions = Arrays.asList(first, second);
         assertThat(uniqueRaw(typeDescriptions), sameInstance(typeDescriptions));
     }
@@ -430,7 +430,7 @@ public class ByteBuddyCommonsTest {
     @Test(expected = IllegalArgumentException.class)
     public void testUniqueRawThrowsException() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         Collection<TypeDescription> typeDescriptions = Arrays.asList(typeDescription, typeDescription);
         uniqueRaw(typeDescriptions);
     }
@@ -438,7 +438,7 @@ public class ByteBuddyCommonsTest {
     @Test
     public void testJoinUniqueRaw() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         assertThat(joinUniqueRaw(Collections.singleton(typeDescription), Collections.singleton(typeDescription)),
                 is(Collections.singletonList(typeDescription)));
     }
@@ -446,7 +446,7 @@ public class ByteBuddyCommonsTest {
     @Test
     public void testJoinUniqueRawWithDuplicate() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         assertThat(joinUniqueRaw(Collections.singleton(typeDescription), Collections.singleton(typeDescription)),
                 is(Collections.singletonList(typeDescription)));
     }
@@ -455,8 +455,8 @@ public class ByteBuddyCommonsTest {
     public void testJoinUniqueRawWithConflictingDuplicate() throws Exception {
         GenericTypeDescription first = mock(GenericTypeDescription.class), second = mock(GenericTypeDescription.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(first.asRawType()).thenReturn(typeDescription);
-        when(second.asRawType()).thenReturn(typeDescription);
+        when(first.asErasure()).thenReturn(typeDescription);
+        when(second.asErasure()).thenReturn(typeDescription);
         joinUniqueRaw(Collections.singletonList(first), Collections.singleton(second));
     }
 

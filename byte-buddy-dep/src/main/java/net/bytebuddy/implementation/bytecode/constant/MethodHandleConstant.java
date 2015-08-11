@@ -46,7 +46,7 @@ public class MethodHandleConstant implements StackManipulation {
         return methodDescription.isTypeInitializer()
                 ? Illegal.INSTANCE
                 : new MethodHandleConstant(new Handle(tagFor(methodDescription),
-                methodDescription.getDeclaringType().asRawType().getInternalName(),
+                methodDescription.getDeclaringType().asErasure().getInternalName(),
                 methodDescription.getInternalName(),
                 methodDescription.getDescriptor()));
     }
@@ -118,7 +118,7 @@ public class MethodHandleConstant implements StackManipulation {
      */
     private static StackManipulation of(FieldDescription fieldDescription, int tag) {
         return new MethodHandleConstant(new Handle(tag,
-                fieldDescription.getDeclaringType().asRawType().getInternalName(),
+                fieldDescription.getDeclaringType().asErasure().getInternalName(),
                 fieldDescription.getInternalName(),
                 fieldDescription.getDescriptor()));
     }

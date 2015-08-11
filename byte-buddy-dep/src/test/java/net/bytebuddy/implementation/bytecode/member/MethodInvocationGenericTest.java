@@ -46,9 +46,9 @@ public class MethodInvocationGenericTest {
         when(methodDescription.asDefined()).thenReturn(declaredMethod);
         when(methodDescription.getReturnType()).thenReturn(methodReturnType);
         when(declaredMethod.getReturnType()).thenReturn(declaredReturnType);
-        when(declaredReturnType.asRawType()).thenReturn(declaredErasure);
+        when(declaredReturnType.asErasure()).thenReturn(declaredErasure);
         when(declaredMethod.getDeclaringType()).thenReturn(declaringType);
-        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(declaringType.asErasure()).thenReturn(declaringType);
         when(declaredMethod.asToken()).thenReturn(methodToken);
         when(declaredMethod.isSpecializableFor(targetType)).thenReturn(true);
     }
@@ -56,7 +56,7 @@ public class MethodInvocationGenericTest {
     @Test
     public void testGenericMethod() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class);
-        when(methodReturnType.asRawType()).thenReturn(genericErasure);
+        when(methodReturnType.asErasure()).thenReturn(genericErasure);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription);
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is((StackManipulation) new MethodInvocation.OfGenericMethod(genericErasure, MethodInvocation.invoke(declaredMethod))));
@@ -64,7 +64,7 @@ public class MethodInvocationGenericTest {
 
     @Test
     public void testGenericMethodErasureEqual() throws Exception {
-        when(methodReturnType.asRawType()).thenReturn(declaredErasure);
+        when(methodReturnType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription);
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is((StackManipulation) MethodInvocation.invoke(declaredMethod)));
@@ -73,7 +73,7 @@ public class MethodInvocationGenericTest {
     @Test
     public void testGenericMethodVirtual() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class);
-        when(methodReturnType.asRawType()).thenReturn(genericErasure);
+        when(methodReturnType.asErasure()).thenReturn(genericErasure);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).virtual(targetType);
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(MethodInvocation.invoke(declaredMethod).virtual(targetType),
@@ -82,7 +82,7 @@ public class MethodInvocationGenericTest {
 
     @Test
     public void testGenericMethodVirtualErasureEqual() throws Exception {
-        when(methodReturnType.asRawType()).thenReturn(declaredErasure);
+        when(methodReturnType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).virtual(targetType);
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is(MethodInvocation.invoke(declaredMethod).virtual(targetType)));
@@ -91,7 +91,7 @@ public class MethodInvocationGenericTest {
     @Test
     public void testGenericMethodSpecial() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class);
-        when(methodReturnType.asRawType()).thenReturn(genericErasure);
+        when(methodReturnType.asErasure()).thenReturn(genericErasure);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).special(targetType);
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(MethodInvocation.invoke(declaredMethod).special(targetType),
@@ -100,7 +100,7 @@ public class MethodInvocationGenericTest {
 
     @Test
     public void testGenericMethodSpecialErasureEqual() throws Exception {
-        when(methodReturnType.asRawType()).thenReturn(declaredErasure);
+        when(methodReturnType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).special(targetType);
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is(MethodInvocation.invoke(declaredMethod).special(targetType)));
@@ -109,7 +109,7 @@ public class MethodInvocationGenericTest {
     @Test
     public void testGenericMethodDynamic() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class);
-        when(methodReturnType.asRawType()).thenReturn(genericErasure);
+        when(methodReturnType.asErasure()).thenReturn(genericErasure);
         when(declaredMethod.isBootstrap()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).dynamic(FOO,
                 otherType,
@@ -124,7 +124,7 @@ public class MethodInvocationGenericTest {
 
     @Test
     public void testGenericMethodDynamicErasureEqual() throws Exception {
-        when(methodReturnType.asRawType()).thenReturn(declaredErasure);
+        when(methodReturnType.asErasure()).thenReturn(declaredErasure);
         when(declaredMethod.isBootstrap()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).dynamic(FOO,
                 otherType,
@@ -140,7 +140,7 @@ public class MethodInvocationGenericTest {
     @Test
     public void testIllegal() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class);
-        when(methodReturnType.asRawType()).thenReturn(genericErasure);
+        when(methodReturnType.asErasure()).thenReturn(genericErasure);
         when(declaredMethod.isTypeInitializer()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription);
         assertThat(stackManipulation.isValid(), is(false));

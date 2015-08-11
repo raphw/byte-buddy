@@ -114,7 +114,7 @@ public class ImplementationContextDefaultTest {
         firstSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(firstSpecialExceptionType));
         secondSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
-        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
+        when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(methodPool.target(any(MethodDescription.class))).thenReturn(record);
         when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(firstDynamicType);
@@ -170,7 +170,7 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(secondSpecialMethod,
                 Collections.singletonList(secondSpecialParameterType)));
         when(firstFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(firstFieldType.asRawType()).thenReturn(firstFieldType);
+        when(firstFieldType.asErasure()).thenReturn(firstFieldType);
         when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType);
         when(firstField.getType()).thenReturn(firstFieldType);
         when(firstField.getName()).thenReturn(FOO);
@@ -180,7 +180,7 @@ public class ImplementationContextDefaultTest {
         when(firstField.asDefined()).thenReturn(firstField);
         when(firstFieldDeclaringType.getInternalName()).thenReturn(QUX);
         when(secondFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(secondFieldType.asRawType()).thenReturn(secondFieldType);
+        when(secondFieldType.asErasure()).thenReturn(secondFieldType);
         when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType);
         when(secondField.getType()).thenReturn(secondFieldType);
         when(secondField.getName()).thenReturn(BAR);
@@ -189,20 +189,20 @@ public class ImplementationContextDefaultTest {
         when(secondField.getDeclaringType()).thenReturn(secondFieldDeclaringType);
         when(secondField.asDefined()).thenReturn(secondField);
         when(secondFieldDeclaringType.getInternalName()).thenReturn(BAZ);
-        when(firstSpecialReturnType.asRawType()).thenReturn(firstSpecialReturnType);
-        when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType);
-        when(firstSpecialExceptionType.asRawType()).thenReturn(firstSpecialExceptionType);
-        when(secondSpecialExceptionType.asRawType()).thenReturn(secondSpecialExceptionType);
-        when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType);
-        when(secondSpecialParameterType.asRawType()).thenReturn(secondSpecialParameterType);
+        when(firstSpecialReturnType.asErasure()).thenReturn(firstSpecialReturnType);
+        when(secondSpecialReturnType.asErasure()).thenReturn(secondSpecialReturnType);
+        when(firstSpecialExceptionType.asErasure()).thenReturn(firstSpecialExceptionType);
+        when(secondSpecialExceptionType.asErasure()).thenReturn(secondSpecialExceptionType);
+        when(firstSpecialParameterType.asErasure()).thenReturn(firstSpecialParameterType);
+        when(secondSpecialParameterType.asErasure()).thenReturn(secondSpecialParameterType);
         when(firstSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstSpecialParameterType);
         when(secondSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondSpecialParameterType);
-        when(firstFieldDeclaringType.asRawType()).thenReturn(firstFieldDeclaringType);
-        when(secondFieldDeclaringType.asRawType()).thenReturn(secondFieldDeclaringType);
+        when(firstFieldDeclaringType.asErasure()).thenReturn(firstFieldDeclaringType);
+        when(secondFieldDeclaringType.asErasure()).thenReturn(secondFieldDeclaringType);
         when(firstSpecialMethod.getDeclaringType()).thenReturn(firstSpecialType);
-        when(firstSpecialType.asRawType()).thenReturn(firstSpecialType);
+        when(firstSpecialType.asErasure()).thenReturn(firstSpecialType);
         when(secondSpecialMethod.getDeclaringType()).thenReturn(secondSpecialType);
-        when(secondSpecialType.asRawType()).thenReturn(secondSpecialType);
+        when(secondSpecialType.asErasure()).thenReturn(secondSpecialType);
     }
 
     @Test

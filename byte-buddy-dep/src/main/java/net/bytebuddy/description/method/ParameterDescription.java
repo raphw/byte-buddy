@@ -129,7 +129,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         @Override
         public int getOffset() {
-            TypeList parameterType = getDeclaringMethod().getParameters().asTypeList().asRawTypes();
+            TypeList parameterType = getDeclaringMethod().getParameters().asTypeList().asErasures();
             int offset = getDeclaringMethod().isStatic()
                     ? StackSize.ZERO.getSize()
                     : StackSize.SINGLE.getSize();
@@ -180,8 +180,8 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 stringBuilder.append(' ');
             }
             stringBuilder.append(isVarArgs()
-                    ? getType().asRawType().getName().replaceFirst("\\[\\]$", "...")
-                    : getType().asRawType().getName());
+                    ? getType().asErasure().getName().replaceFirst("\\[\\]$", "...")
+                    : getType().asErasure().getName());
             return stringBuilder.append(' ').append(getName()).toString();
         }
     }

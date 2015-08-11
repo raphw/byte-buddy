@@ -163,7 +163,7 @@ public interface JavaInstance {
          * @return The method type of the given method.
          */
         public static MethodType of(MethodDescription methodDescription) {
-            return new MethodType(methodDescription.getReturnType().asRawType(), methodDescription.getParameters().asTypeList().asRawTypes());
+            return new MethodType(methodDescription.getReturnType().asErasure(), methodDescription.getParameters().asTypeList().asErasures());
         }
 
         /**
@@ -183,7 +183,7 @@ public interface JavaInstance {
          * @return The type of a setter for the given field.
          */
         public static MethodType ofSetter(FieldDescription fieldDescription) {
-            return new MethodType(TypeDescription.VOID, Collections.singletonList(fieldDescription.getType().asRawType()));
+            return new MethodType(TypeDescription.VOID, Collections.singletonList(fieldDescription.getType().asErasure()));
         }
 
         /**
@@ -203,7 +203,7 @@ public interface JavaInstance {
          * @return The type of a getter for the given field.
          */
         public static MethodType ofGetter(FieldDescription fieldDescription) {
-            return new MethodType(fieldDescription.getType().asRawType(), Collections.<TypeDescription>emptyList());
+            return new MethodType(fieldDescription.getType().asErasure(), Collections.<TypeDescription>emptyList());
         }
 
         /**
@@ -520,10 +520,10 @@ public interface JavaInstance {
          */
         public static MethodHandle of(MethodDescription methodDescription) {
             return new MethodHandle(HandleType.of(methodDescription),
-                    methodDescription.getDeclaringType().asRawType(),
+                    methodDescription.getDeclaringType().asErasure(),
                     methodDescription.getInternalName(),
-                    methodDescription.getReturnType().asRawType(),
-                    methodDescription.getParameters().asTypeList().asRawTypes());
+                    methodDescription.getReturnType().asErasure(),
+                    methodDescription.getParameters().asTypeList().asErasures());
 
         }
 
@@ -552,8 +552,8 @@ public interface JavaInstance {
             return new MethodHandle(HandleType.ofSpecial(methodDescription),
                     typeDescription,
                     methodDescription.getInternalName(),
-                    methodDescription.getReturnType().asRawType(),
-                    methodDescription.getParameters().asTypeList().asRawTypes());
+                    methodDescription.getReturnType().asErasure(),
+                    methodDescription.getParameters().asTypeList().asErasures());
         }
 
         /**
@@ -574,9 +574,9 @@ public interface JavaInstance {
          */
         public static MethodHandle ofGetter(FieldDescription fieldDescription) {
             return new MethodHandle(HandleType.ofGetter(fieldDescription),
-                    fieldDescription.getDeclaringType().asRawType(),
+                    fieldDescription.getDeclaringType().asErasure(),
                     fieldDescription.getInternalName(),
-                    fieldDescription.getType().asRawType(),
+                    fieldDescription.getType().asErasure(),
                     Collections.<TypeDescription>emptyList());
         }
 
@@ -598,10 +598,10 @@ public interface JavaInstance {
          */
         public static MethodHandle ofSetter(FieldDescription fieldDescription) {
             return new MethodHandle(HandleType.ofSetter(fieldDescription),
-                    fieldDescription.getDeclaringType().asRawType(),
+                    fieldDescription.getDeclaringType().asErasure(),
                     fieldDescription.getInternalName(),
                     TypeDescription.VOID,
-                    Collections.singletonList(fieldDescription.getType().asRawType()));
+                    Collections.singletonList(fieldDescription.getType().asErasure()));
         }
 
         @Override
@@ -779,7 +779,7 @@ public interface JavaInstance {
                     return INVOKE_SPECIAL;
                 } else if (methodDescription.isConstructor()) {
                     return INVOKE_SPECIAL_CONSTRUCTOR;
-                } else if (methodDescription.getDeclaringType().asRawType().isInterface()) {
+                } else if (methodDescription.getDeclaringType().asErasure().isInterface()) {
                     return INVOKE_INTERFACE;
                 } else {
                     return INVOKE_VIRTUAL;

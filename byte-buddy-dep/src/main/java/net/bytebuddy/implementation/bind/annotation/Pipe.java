@@ -166,9 +166,9 @@ public @interface Pipe {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
             MethodDescription methodDescription = methodCandidates.getOnly();
-            if (!methodDescription.getReturnType().asRawType().represents(Object.class)) {
+            if (!methodDescription.getReturnType().asErasure().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().getOnly().getType().asRawType().represents(Object.class)) {
+            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().getOnly().getType().asErasure().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single Object-typed argument");
             }
             return methodDescription;
@@ -185,12 +185,12 @@ public @interface Pipe {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().asRawType().equals(forwardingMethod.getDeclaringType())) {
+            if (!target.getType().asErasure().equals(forwardingMethod.getDeclaringType())) {
                 throw new IllegalStateException("Illegal use of @Pipe for " + target + " which was installed for " + forwardingMethod.getDeclaringType());
             } else if (source.isStatic()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType().asRawType(),
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType().asErasure(),
                     source,
                     assigner,
                     annotation.loadSilent().serializableProxy()));
@@ -269,7 +269,7 @@ public @interface Pipe {
              * given method.
              */
             private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
-                TypeList parameterTypes = methodDescription.getParameters().asTypeList().asRawTypes();
+                TypeList parameterTypes = methodDescription.getParameters().asTypeList().asErasures();
                 LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>(parameterTypes.size());
                 int currentIndex = 0;
                 for (TypeDescription parameterType : parameterTypes) {
@@ -319,7 +319,7 @@ public @interface Pipe {
                 return new Compound(
                         TypeCreation.forType(forwardingType),
                         Duplication.SINGLE,
-                        MethodVariableAccess.allArgumentsOf(sourceMethod.asDefined()),
+                        MethodVariableAccess.allArgumentsOf(sourceMethod),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, implementationContext);
             }
@@ -424,7 +424,7 @@ public @interface Pipe {
                         for (FieldDescription fieldDescription : fieldList) {
                             fieldLoading[index] = new StackManipulation.Compound(
                                     thisReference,
-                                    MethodVariableAccess.forType(fieldDescription.getType().asRawType())
+                                    MethodVariableAccess.forType(fieldDescription.getType().asErasure())
                                             .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
                                     FieldAccess.forField(fieldDescription).putter()
                             );
@@ -548,11 +548,11 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadOffset(1),
-                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType().asRawType(), Assigner.Typing.DYNAMIC),
+                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType().asErasure(), Assigner.Typing.DYNAMIC),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
-                                assigner.assign(redirectedMethod.getReturnType().asRawType(),
-                                        instrumentedMethod.getReturnType().asRawType(),
+                                assigner.assign(redirectedMethod.getReturnType().asErasure(),
+                                        instrumentedMethod.getReturnType().asErasure(),
                                         Assigner.Typing.DYNAMIC),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);

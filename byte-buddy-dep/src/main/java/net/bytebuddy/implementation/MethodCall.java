@@ -640,7 +640,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType().asRawType()), Duplication.SINGLE);
+                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType().asErasure()), Duplication.SINGLE);
             }
 
             @Override
@@ -691,7 +691,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                if (methodDescription.isStatic() || !methodDescription.getDeclaringType().asRawType().isInstance(target)) {
+                if (methodDescription.isStatic() || !methodDescription.getDeclaringType().asErasure().isInstance(target)) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + target);
                 }
                 return FieldAccess.forField(instrumentedType.getDeclaredFields()
@@ -966,8 +966,8 @@ public class MethodCall implements Implementation {
                 }
                 ParameterDescription parameterDescription = interceptedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(parameterDescription.getType().asRawType()).loadOffset(parameterDescription.getOffset()),
-                        assigner.assign(parameterDescription.getType().asRawType(), targetType, typing));
+                        MethodVariableAccess.forType(parameterDescription.getType().asErasure()).loadOffset(parameterDescription.getOffset()),
+                        assigner.assign(parameterDescription.getType().asErasure(), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + targetType + " for " + interceptedMethod);
                 }
@@ -1229,7 +1229,7 @@ public class MethodCall implements Implementation {
                                 ? StackManipulation.LegalTrivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(fieldDescription).getter(),
-                        assigner.assign(fieldDescription.getType().asRawType(), targetType, typing)
+                        assigner.assign(fieldDescription.getType().asErasure(), targetType, typing)
                 );
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + targetType);
@@ -1245,7 +1245,7 @@ public class MethodCall implements Implementation {
              */
             private FieldDescription locate(TypeDescription instrumentedType) {
                 for (GenericTypeDescription currentType : instrumentedType) {
-                    FieldList<?> fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                    FieldList<?> fieldList = currentType.asErasure().getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
                     if (fieldList.size() != 0) {
                         return fieldList.getOnly();
                     }
@@ -2039,7 +2039,7 @@ public class MethodCall implements Implementation {
                 if (!methodDescription.isDefaultMethod()) {
                     throw new IllegalStateException("Not a default method: " + methodDescription);
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asRawType(), methodDescription.asToken());
+                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asErasure(), methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
                 }
@@ -2086,13 +2086,13 @@ public class MethodCall implements Implementation {
             @Override
             public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription interceptedMethod, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType().asRawType()
-                        : invokedMethod.getReturnType().asRawType(), interceptedMethod.getReturnType().asRawType(), typing);
+                        ? invokedMethod.getDeclaringType().asErasure()
+                        : invokedMethod.getReturnType().asErasure(), interceptedMethod.getReturnType().asErasure(), typing);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + interceptedMethod);
                 }
                 return new StackManipulation.Compound(stackManipulation,
-                        MethodReturn.returning(interceptedMethod.getReturnType().asRawType()));
+                        MethodReturn.returning(interceptedMethod.getReturnType().asErasure()));
             }
 
             @Override
@@ -2115,8 +2115,8 @@ public class MethodCall implements Implementation {
             @Override
             public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription interceptedMethod, Assigner assigner, Assigner.Typing typing) {
                 return Removal.pop(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType().asRawType()
-                        : invokedMethod.getReturnType().asRawType());
+                        ? invokedMethod.getDeclaringType().asErasure()
+                        : invokedMethod.getReturnType().asErasure());
             }
 
             @Override
@@ -2267,7 +2267,7 @@ public class MethodCall implements Implementation {
                           Context implementationContext,
                           MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
-            TypeList methodParameters = invokedMethod.getParameters().asTypeList().asRawTypes();
+            TypeList methodParameters = invokedMethod.getParameters().asTypeList().asErasures();
             if (methodParameters.size() != argumentLoaders.size()) {
                 throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
             }

@@ -868,9 +868,9 @@ public class TypeProxy implements AuxiliaryType {
                     return new StackManipulation.Compound(
                             MethodVariableAccess.REFERENCE.loadOffset(0),
                             fieldLoadingInstruction,
-                            MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).asBridgeOf(proxyMethod),
+                            MethodVariableAccess.allArgumentsOf(instrumentedMethod).asBridgeOf(proxyMethod),
                             MethodInvocation.invoke(proxyMethod),
-                            MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
+                            MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                     ).apply(methodVisitor, implementationContext);
                 }
 

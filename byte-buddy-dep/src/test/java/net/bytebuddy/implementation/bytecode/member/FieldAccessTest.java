@@ -82,7 +82,7 @@ public class FieldAccessTest {
 
     @Before
     public void setUp() throws Exception {
-        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(declaringType.asErasure()).thenReturn(declaringType);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
         when(fieldDescription.getType()).thenReturn(fieldType);
         when(declaringType.getInternalName()).thenReturn(FOO);

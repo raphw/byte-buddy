@@ -54,12 +54,12 @@ public @interface Default {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().asRawType().isInterface()) {
+            if (!target.getType().asErasure().isInterface()) {
                 throw new IllegalStateException(target + " uses the @Default annotation on a non-interface type");
-            } else if (source.isStatic() || !implementationTarget.getTypeDescription().getInterfaces().asRawTypes().contains(target.getType().asRawType())) {
+            } else if (source.isStatic() || !implementationTarget.getTypeDescription().getInterfaces().asErasures().contains(target.getType().asErasure())) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(target.getType().asRawType(),
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(target.getType().asErasure(),
                         implementationTarget,
                         annotation.loadSilent().serializableProxy()));
             }

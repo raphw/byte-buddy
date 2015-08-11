@@ -316,7 +316,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public TypeDescription asRawType() {
+        public TypeDescription asErasure() {
             return this;
         }
 
@@ -345,7 +345,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             MethodDescription enclosingMethod = getEnclosingMethod();
             return enclosingMethod == null
                     ? getEnclosingType()
-                    : enclosingMethod.getDeclaringType().asRawType();
+                    : enclosingMethod.getDeclaringType().asErasure();
         }
 
         @Override
@@ -441,7 +441,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 for (GenericTypeDescription typeVariable : getTypeVariables()) {
                     signatureWriter.visitFormalTypeParameter(typeVariable.getSymbol());
                     for (GenericTypeDescription upperBound : typeVariable.getUpperBounds()) {
-                        upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(upperBound.asRawType().isInterface()
+                        upperBound.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(upperBound.asErasure().isInterface()
                                 ? signatureWriter.visitInterfaceBound()
                                 : signatureWriter.visitClassBound()));
                     }
@@ -491,7 +491,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 for (AnnotationDescription annotationDescription : declaredAnnotations) {
                     annotationTypes.add(annotationDescription.getAnnotationType());
                 }
-                return new AnnotationList.Explicit(join(declaredAnnotations, getSuperType().asRawType().getInheritedAnnotations().inherited(annotationTypes)));
+                return new AnnotationList.Explicit(join(declaredAnnotations, getSuperType().asErasure().getInheritedAnnotations().inherited(annotationTypes)));
             }
         }
 
@@ -604,7 +604,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         public boolean equals(Object other) {
             return other == this || other instanceof GenericTypeDescription
                     && ((GenericTypeDescription) other).getSort().isNonGeneric()
-                    && getInternalName().equals(((GenericTypeDescription) other).asRawType().getInternalName());
+                    && getInternalName().equals(((GenericTypeDescription) other).asErasure().getInternalName());
         }
 
         @Override
@@ -643,12 +643,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 }
                 // The sub type has a super type and this super type is assignable to the super type.
                 GenericTypeDescription targetTypeSuperType = targetType.getSuperType();
-                if (targetTypeSuperType != null && targetTypeSuperType.asRawType().isAssignableTo(sourceType)) {
+                if (targetTypeSuperType != null && targetTypeSuperType.asErasure().isAssignableTo(sourceType)) {
                     return true;
                 }
                 // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
                 if (sourceType.isInterface()) {
-                    for (TypeDescription interfaceType : targetType.getInterfaces().asRawTypes()) {
+                    for (TypeDescription interfaceType : targetType.getInterfaces().asErasures()) {
                         if (interfaceType.isAssignableTo(sourceType)) {
                             return true;
                         }

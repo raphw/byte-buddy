@@ -1035,7 +1035,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public TypeDescription getReturnType() {
-                    return methodDescription.getReturnType().asRawType();
+                    return methodDescription.getReturnType().asErasure();
                 }
 
                 @Override
@@ -1046,8 +1046,8 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public List<TypeDescription> getParameterTypes() {
                     return methodDescription.isStatic()
-                            ? methodDescription.getParameters().asTypeList().asRawTypes()
-                            : new TypeList.Explicit(join(methodDescription.getDeclaringType().asRawType(), methodDescription.getParameters().asTypeList().asRawTypes()));
+                            ? methodDescription.getParameters().asTypeList().asErasures()
+                            : new TypeList.Explicit(join(methodDescription.getDeclaringType().asErasure(), methodDescription.getParameters().asTypeList().asErasures()));
                 }
 
                 @Override
@@ -1111,10 +1111,10 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
+                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             instrumentedMethod.isStatic()
-                                    ? instrumentedMethod.getParameters().asTypeList().asRawTypes()
-                                    : join(instrumentedMethod.getDeclaringType().asRawType(), instrumentedMethod.getParameters().asTypeList().asRawTypes()));
+                                    ? instrumentedMethod.getParameters().asTypeList().asErasures()
+                                    : join(instrumentedMethod.getDeclaringType().asErasure(), instrumentedMethod.getParameters().asTypeList().asErasures()));
                 }
 
                 @Override
@@ -1140,8 +1140,8 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()),
-                            instrumentedMethod.getParameters().asTypeList().asRawTypes());
+                    return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod),
+                            instrumentedMethod.getParameters().asTypeList().asErasures());
                 }
 
                 @Override
@@ -1575,12 +1575,12 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
-                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(), typeDescription, typing);
+                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asErasure(), typeDescription, typing);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + typeDescription);
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
-                            stackManipulation), fieldDescription.getType().asRawType());
+                            stackManipulation), fieldDescription.getType().asErasure());
                 }
 
                 @Override
@@ -1711,7 +1711,7 @@ public class InvokeDynamic implements Implementation {
                                     ? StackManipulation.LegalTrivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter()
-                    ), fieldDescription.getType().asRawType());
+                    ), fieldDescription.getType().asErasure());
                 }
 
                 /**
@@ -1722,7 +1722,7 @@ public class InvokeDynamic implements Implementation {
                  */
                 private FieldDescription locate(TypeDescription instrumentedType) {
                     for (GenericTypeDescription currentType : instrumentedType) {
-                        FieldList<?> fieldList = currentType.asRawType().getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
+                        FieldList<?> fieldList = currentType.asErasure().getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
                         if (fieldList.size() != 0) {
                             return fieldList.getOnly();
                         }
@@ -1779,8 +1779,8 @@ public class InvokeDynamic implements Implementation {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getType().asRawType())
-                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getType().asRawType());
+                    return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getType().asErasure())
+                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getType().asErasure());
                 }
 
                 @Override
@@ -1839,12 +1839,12 @@ public class InvokeDynamic implements Implementation {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType().asRawType(), typeDescription, typing);
+                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType().asErasure(), typeDescription, typing);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalArgumentException("Cannot assign " + parameters.get(index) + " to " + typeDescription);
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.forType(parameters.get(index)
-                            .getType().asRawType()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
+                            .getType().asErasure()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
                 }
 
                 @Override
@@ -2602,7 +2602,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public TypeDescription resolve(MethodDescription methodDescription) {
-                    return methodDescription.getReturnType().asRawType();
+                    return methodDescription.getReturnType().asErasure();
                 }
 
                 @Override
@@ -2903,11 +2903,11 @@ public class InvokeDynamic implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType().asRawType(), typing);
+                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType().asErasure(), typing);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
                 }
-                return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType().asRawType()));
+                return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType().asErasure()));
             }
 
             @Override
@@ -2930,8 +2930,8 @@ public class InvokeDynamic implements Implementation {
             @Override
             public StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
                 return Removal.pop(interceptedMethod.isConstructor()
-                        ? interceptedMethod.getDeclaringType().asRawType()
-                        : interceptedMethod.getReturnType().asRawType());
+                        ? interceptedMethod.getDeclaringType().asErasure()
+                        : interceptedMethod.getReturnType().asErasure());
             }
 
             @Override

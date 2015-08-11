@@ -43,7 +43,7 @@ public @interface Empty {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(DefaultValue.of(target.getType().asRawType()));
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(DefaultValue.of(target.getType().asErasure()));
         }
 
         @Override

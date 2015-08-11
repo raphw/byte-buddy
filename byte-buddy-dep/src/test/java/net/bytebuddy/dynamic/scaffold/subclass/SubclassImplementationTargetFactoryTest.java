@@ -32,7 +32,7 @@ public class SubclassImplementationTargetFactoryTest {
     @Before
     public void setUp() throws Exception {
         when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.asRawType()).thenReturn(superType);
+        when(superType.asErasure()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
         factory = new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE);
     }

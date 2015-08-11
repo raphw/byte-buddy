@@ -340,7 +340,7 @@ public interface Implementation {
             public SpecialMethodInvocation invokeDominant(MethodDescription.Token methodToken) {
                 SpecialMethodInvocation specialMethodInvocation = invokeSuper(methodToken);
                 if (!specialMethodInvocation.isValid()) {
-                    Iterator<TypeDescription> iterator = instrumentedType.getInterfaces().asRawTypes().iterator();
+                    Iterator<TypeDescription> iterator = instrumentedType.getInterfaces().asErasures().iterator();
                     while (!specialMethodInvocation.isValid() && iterator.hasNext()) {
                         specialMethodInvocation = invokeDefault(iterator.next(), methodToken);
                     }
@@ -878,17 +878,17 @@ public interface Implementation {
 
                 @Override
                 public GenericTypeDescription getReturnType() {
-                    return methodDescription.getReturnType().asRawType();
+                    return methodDescription.getReturnType().asErasure();
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
+                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asErasures());
                 }
 
                 @Override
                 public GenericTypeList getExceptionTypes() {
-                    return methodDescription.getExceptionTypes().asRawTypes().asGenericTypes();
+                    return methodDescription.getExceptionTypes().asErasures().asGenericTypes();
                 }
 
                 @Override
@@ -959,7 +959,7 @@ public interface Implementation {
 
                 @Override
                 public GenericTypeDescription getReturnType() {
-                    return fieldDescription.getType().asRawType();
+                    return fieldDescription.getType().asErasure();
                 }
 
                 @Override
@@ -1045,7 +1045,7 @@ public interface Implementation {
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asRawType()));
+                    return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asErasure()));
                 }
 
                 @Override
@@ -1169,9 +1169,9 @@ public interface Implementation {
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
+                            MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             accessorMethodInvocation,
-                            MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
+                            MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
@@ -1225,7 +1225,7 @@ public interface Implementation {
                                     ? StackManipulation.LegalTrivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter(),
-                            MethodReturn.returning(fieldDescription.getType().asRawType())
+                            MethodReturn.returning(fieldDescription.getType().asErasure())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
@@ -1276,7 +1276,7 @@ public interface Implementation {
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
+                            MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             FieldAccess.forField(fieldDescription).putter(),
                             MethodReturn.VOID
                     ).apply(methodVisitor, implementationContext);

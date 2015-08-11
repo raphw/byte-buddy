@@ -97,7 +97,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asRawType(), methodDescription.getReturnType().asRawType(), typing);
+        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asErasure(), methodDescription.getReturnType().asErasure(), typing);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
         }
@@ -125,8 +125,8 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType().asRawType(),
-                fieldDescription.getType().asRawType(),
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType().asErasure(),
+                fieldDescription.getType().asErasure(),
                 typing);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
@@ -138,7 +138,7 @@ public abstract class FieldAccessor implements Implementation {
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
-                        MethodVariableAccess.forType(fieldDescription.getType().asRawType())
+                        MethodVariableAccess.forType(fieldDescription.getType().asErasure())
                                 .loadOffset(methodDescription.getParameters().get(0).getOffset()),
                         stackManipulation,
                         FieldAccess.forField(fieldDescription).putter()
@@ -170,7 +170,7 @@ public abstract class FieldAccessor implements Implementation {
                         ? StackManipulation.LegalTrivial.INSTANCE
                         : MethodVariableAccess.REFERENCE.loadOffset(0),
                 fieldAccess,
-                MethodReturn.returning(methodDescription.getReturnType().asRawType())
+                MethodReturn.returning(methodDescription.getReturnType().asErasure())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), methodDescription.getStackSize());
     }

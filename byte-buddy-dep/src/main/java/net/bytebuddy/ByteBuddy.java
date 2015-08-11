@@ -1032,7 +1032,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new GenericTypeList.Explicit(toList(types)).asRawTypes()))));
+                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new GenericTypeList.Explicit(toList(types)).asErasures()))));
     }
 
     /**
@@ -2236,8 +2236,8 @@ public class ByteBuddy {
                 MethodDescription cloneMethod = TypeDescription.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),
-                        MethodInvocation.invoke(cloneMethod).virtual(valuesField.getType().asRawType()),
-                        TypeCasting.to(valuesField.getType().asRawType()),
+                        MethodInvocation.invoke(cloneMethod).virtual(valuesField.getType().asErasure()),
+                        TypeCasting.to(valuesField.getType().asErasure()),
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }
@@ -2282,7 +2282,7 @@ public class ByteBuddy {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                TypeDescription instrumentedType = instrumentedMethod.getDeclaringType().asRawType();
+                TypeDescription instrumentedType = instrumentedMethod.getDeclaringType().asErasure();
                 MethodDescription enumConstructor = instrumentedType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(String.class, int.class)))
                         .getOnly();

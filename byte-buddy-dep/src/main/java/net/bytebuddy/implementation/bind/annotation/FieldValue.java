@@ -98,8 +98,8 @@ public @interface FieldValue {
                                 ? StackManipulation.LegalTrivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(resolution.getFieldDescription()).getter(),
-                        assigner.assign(resolution.getFieldDescription().getType().asRawType(),
-                                target.getType().asRawType(),
+                        assigner.assign(resolution.getFieldDescription().getType().asErasure(),
+                                target.getType().asErasure(),
                                 RuntimeType.Verifier.check(target))
                 );
                 return stackManipulation.isValid()

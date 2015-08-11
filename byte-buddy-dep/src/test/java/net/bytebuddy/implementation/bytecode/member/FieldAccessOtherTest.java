@@ -108,8 +108,8 @@ public class FieldAccessOtherTest {
     @Test
     public void testGenericFieldAccessGetter() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class), declaredErasure = mock(TypeDescription.class);
-        when(genericType.asRawType()).thenReturn(genericErasure);
-        when(declaredType.asRawType()).thenReturn(declaredErasure);
+        when(genericType.asErasure()).thenReturn(genericErasure);
+        when(declaredType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = FieldAccess.forField(genericField).getter();
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
@@ -119,8 +119,8 @@ public class FieldAccessOtherTest {
     @Test
     public void testGenericFieldAccessPutter() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class), declaredErasure = mock(TypeDescription.class);
-        when(genericType.asRawType()).thenReturn(genericErasure);
-        when(declaredType.asRawType()).thenReturn(declaredErasure);
+        when(genericType.asErasure()).thenReturn(genericErasure);
+        when(declaredType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = FieldAccess.forField(genericField).putter();
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).putter()));
@@ -129,8 +129,8 @@ public class FieldAccessOtherTest {
     @Test
     public void testGenericFieldAccessGetterEqualErasure() throws Exception {
         TypeDescription declaredErasure = mock(TypeDescription.class);
-        when(genericType.asRawType()).thenReturn(declaredErasure);
-        when(declaredType.asRawType()).thenReturn(declaredErasure);
+        when(genericType.asErasure()).thenReturn(declaredErasure);
+        when(declaredType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = FieldAccess.forField(genericField).getter();
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).getter()));
@@ -139,8 +139,8 @@ public class FieldAccessOtherTest {
     @Test
     public void testGenericFieldAccessPutterEqualErasure() throws Exception {
         TypeDescription declaredErasure = mock(TypeDescription.class);
-        when(genericType.asRawType()).thenReturn(declaredErasure);
-        when(declaredType.asRawType()).thenReturn(declaredErasure);
+        when(genericType.asErasure()).thenReturn(declaredErasure);
+        when(declaredType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = FieldAccess.forField(genericField).putter();
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).putter()));

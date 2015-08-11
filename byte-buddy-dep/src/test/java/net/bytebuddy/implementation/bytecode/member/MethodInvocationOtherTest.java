@@ -43,7 +43,7 @@ public class MethodInvocationOtherTest {
             public void apply(MethodDescription mock) {
                 when(mock.asToken()).thenReturn(mock(MethodDescription.Token.class));
                 TypeDescription declaringType = mock(TypeDescription.class);
-                when(declaringType.asRawType()).thenReturn(declaringType);
+                when(declaringType.asErasure()).thenReturn(declaringType);
                 when(mock.getDeclaringType()).thenReturn(declaringType);
             }
         }).apply();

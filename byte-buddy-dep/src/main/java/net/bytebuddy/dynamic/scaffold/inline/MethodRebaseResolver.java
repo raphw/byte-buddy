@@ -377,17 +377,17 @@ public interface MethodRebaseResolver {
 
                 @Override
                 public GenericTypeDescription getReturnType() {
-                    return methodDescription.getReturnType().asRawType();
+                    return methodDescription.getReturnType().asErasure();
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
+                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asErasures());
                 }
 
                 @Override
                 public GenericTypeList getExceptionTypes() {
-                    return methodDescription.getExceptionTypes().asRawTypes().asGenericTypes();
+                    return methodDescription.getExceptionTypes().asErasures().asGenericTypes();
                 }
 
                 @Override
@@ -518,12 +518,12 @@ public interface MethodRebaseResolver {
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, join(methodDescription.getParameters().asTypeList().asRawTypes(), placeholderType));
+                    return new ParameterList.Explicit.ForTypes(this, join(methodDescription.getParameters().asTypeList().asErasures(), placeholderType));
                 }
 
                 @Override
                 public GenericTypeList getExceptionTypes() {
-                    return methodDescription.getExceptionTypes().asRawTypes().asGenericTypes();
+                    return methodDescription.getExceptionTypes().asErasures().asGenericTypes();
                 }
 
                 @Override

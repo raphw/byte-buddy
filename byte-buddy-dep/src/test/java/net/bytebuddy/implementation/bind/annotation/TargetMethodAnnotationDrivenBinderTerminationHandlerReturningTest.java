@@ -44,8 +44,8 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerReturningTest {
     public void setUp() throws Exception {
         when(source.getReturnType()).thenReturn(sourceType);
         when(target.getReturnType()).thenReturn(targetType);
-        when(sourceType.asRawType()).thenReturn(sourceType);
-        when(targetType.asRawType()).thenReturn(targetType);
+        when(sourceType.asErasure()).thenReturn(sourceType);
+        when(targetType.asErasure()).thenReturn(targetType);
         when(assigner.assign(eq(targetType), eq(sourceType), any(Assigner.Typing.class))).thenReturn(stackManipulation);
         when(target.getDeclaredAnnotations()).thenReturn(annotationList);
     }

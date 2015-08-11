@@ -61,19 +61,19 @@ public class MethodConstantTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(declaringType.asErasure()).thenReturn(declaringType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getParameters()).thenReturn((ParameterList) parameterList);
         when(parameterList.asTypeList()).thenReturn(typeList);
         when(declaringType.getDescriptor()).thenReturn(BAR);
-        when(typeList.asRawTypes()).thenReturn(rawTypeList);
+        when(typeList.asErasures()).thenReturn(rawTypeList);
         when(rawTypeList.iterator()).thenReturn(Collections.singletonList(parameterType).iterator());
         when(parameterType.getDescriptor()).thenReturn(QUX);
         when(fieldDescription.getType()).thenReturn(fieldType);
         when(fieldDescription.isStatic()).thenReturn(true);
         when(fieldType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(fieldType.asRawType()).thenReturn(fieldType);
+        when(fieldType.asErasure()).thenReturn(fieldType);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getInternalName()).thenReturn(BAZ);
         when(fieldDescription.getInternalName()).thenReturn(FOO);

@@ -50,13 +50,13 @@ public @interface StubValue {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().asRawType().represents(Object.class)) {
+            if (!target.getType().asErasure().represents(Object.class)) {
                 throw new IllegalStateException(target + " uses StubValue annotation on non-Object type");
             }
-            StackManipulation stackManipulation = source.getReturnType().asRawType().represents(void.class)
+            StackManipulation stackManipulation = source.getReturnType().asErasure().represents(void.class)
                     ? NullConstant.INSTANCE
-                    : new StackManipulation.Compound(DefaultValue.of(source.getReturnType().asRawType()),
-                    assigner.assign(source.getReturnType().asRawType(), TypeDescription.OBJECT, Assigner.Typing.STATIC));
+                    : new StackManipulation.Compound(DefaultValue.of(source.getReturnType().asErasure()),
+                    assigner.assign(source.getReturnType().asErasure(), TypeDescription.OBJECT, Assigner.Typing.STATIC));
             return stackManipulation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation)
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

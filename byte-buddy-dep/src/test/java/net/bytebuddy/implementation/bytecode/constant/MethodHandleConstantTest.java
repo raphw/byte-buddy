@@ -48,7 +48,7 @@ public class MethodHandleConstantTest {
 
     @Before
     public void setUp() throws Exception {
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(typeDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getInternalName()).thenReturn(BAR);

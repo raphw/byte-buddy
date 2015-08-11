@@ -35,7 +35,7 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
     public void testNonVoidAssignableReturnType() throws Exception {
         when(target.getType()).thenReturn(TypeDescription.OBJECT);
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(source.getReturnType()).thenReturn(typeDescription);
         when(stackManipulation.isValid()).thenReturn(true);
         assertThat(StubValue.Binder.INSTANCE.bind(annotationDescription,
@@ -60,7 +60,7 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
     @Test(expected = IllegalStateException.class)
     public void testIllegalParameter() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(target.getType()).thenReturn(typeDescription);
         StubValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }

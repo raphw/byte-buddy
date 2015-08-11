@@ -49,7 +49,7 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
         when(sourceParameter.getType()).thenReturn(sourceType);
         when(leftMethod.getParameters()).thenReturn((ParameterList) leftParameterList);
         when(rightMethod.getParameters()).thenReturn((ParameterList) rightParameterList);
-        when(sourceType.asRawType()).thenReturn(sourceType);
+        when(sourceType.asErasure()).thenReturn(sourceType);
     }
 
     private static class IndexTokenMatcher extends BaseMatcher<ArgumentTypeResolver.ParameterIndexToken> {

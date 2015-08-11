@@ -31,8 +31,8 @@ public class CollectionRawTypeMatcherTest extends AbstractElementMatcherTest<Col
 
     @Before
     public void setUp() throws Exception {
-        when(first.asRawType()).thenReturn(firstRaw);
-        when(second.asRawType()).thenReturn(secondRaw);
+        when(first.asErasure()).thenReturn(firstRaw);
+        when(second.asErasure()).thenReturn(secondRaw);
     }
 
     @Test
@@ -41,9 +41,9 @@ public class CollectionRawTypeMatcherTest extends AbstractElementMatcherTest<Col
         assertThat(new CollectionRawTypeMatcher<Iterable<GenericTypeDescription>>(matcher).matches(Arrays.asList(first, second)), is(true));
         verify(matcher).matches(Arrays.asList(firstRaw, secondRaw));
         verifyNoMoreInteractions(matcher);
-        verify(first).asRawType();
+        verify(first).asErasure();
         verifyNoMoreInteractions(first);
-        verify(second).asRawType();
+        verify(second).asErasure();
         verifyNoMoreInteractions(second);
     }
 
@@ -52,9 +52,9 @@ public class CollectionRawTypeMatcherTest extends AbstractElementMatcherTest<Col
         assertThat(new CollectionRawTypeMatcher<Iterable<GenericTypeDescription>>(matcher).matches(Arrays.asList(first, second)), is(false));
         verify(matcher).matches(Arrays.asList(firstRaw, secondRaw));
         verifyNoMoreInteractions(matcher);
-        verify(first).asRawType();
+        verify(first).asErasure();
         verifyNoMoreInteractions(first);
-        verify(second).asRawType();
+        verify(second).asErasure();
         verifyNoMoreInteractions(second);
     }
 }

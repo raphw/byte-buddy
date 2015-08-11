@@ -24,7 +24,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
      *
      * @return A list of the generic types' erasures.
      */
-    TypeList asRawTypes();
+    TypeList asErasures();
 
     /**
      * Transforms the generic types by applying the supplied visitor to each of them.
@@ -70,10 +70,10 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         }
 
         @Override
-        public TypeList asRawTypes() {
+        public TypeList asErasures() {
             List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(size());
             for (GenericTypeDescription genericTypeDescription : this) {
-                typeDescriptions.add(genericTypeDescription.asRawType());
+                typeDescriptions.add(genericTypeDescription.asErasure());
             }
             return new TypeList.Explicit(typeDescriptions);
         }
@@ -377,7 +377,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
     class Empty extends FilterableList.Empty<GenericTypeDescription, GenericTypeList> implements GenericTypeList {
 
         @Override
-        public TypeList asRawTypes() {
+        public TypeList asErasures() {
             return new TypeList.Empty();
         }
 
@@ -465,7 +465,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
             }
 
             @Override
-            public TypeList asRawTypes() {
+            public TypeList asErasures() {
                 return new TypeList.ForLoadedType(type.getInterfaces());
             }
 
@@ -485,21 +485,21 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 private final int index;
 
                 /**
-                 * The raw type of the interface this lazy projection represents.
+                 * The erasure of the type of the interface this lazy projection represents.
                  */
-                private final Class<?> rawType;
+                private final Class<?> erasure;
 
                 /**
                  * Creates a new lazy type projection of a generic interface type.
                  *
                  * @param type    The type of which an interface type is represented.
                  * @param index   The index of the generic interface type that is represented.
-                 * @param rawType The raw type of the interface this lazy projection represents.
+                 * @param erasure The erasure of the type of the interface this lazy projection represents.
                  */
-                private TypeProjection(Class<?> type, int index, Class<?> rawType) {
+                private TypeProjection(Class<?> type, int index, Class<?> erasure) {
                     this.type = type;
                     this.index = index;
-                    this.rawType = rawType;
+                    this.erasure = erasure;
                 }
 
                 @Override
@@ -508,8 +508,8 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 }
 
                 @Override
-                public TypeDescription asRawType() {
-                    return new TypeDescription.ForLoadedType(rawType);
+                public TypeDescription asErasure() {
+                    return new TypeDescription.ForLoadedType(erasure);
                 }
             }
         }
@@ -544,7 +544,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
             }
 
             @Override
-            public TypeList asRawTypes() {
+            public TypeList asErasures() {
                 return new TypeList.ForLoadedType(constructor.getExceptionTypes());
             }
 
@@ -564,21 +564,21 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 private final int index;
 
                 /**
-                 * The raw type of the exception type.
+                 * The erasure of the type of the interface this lazy projection represents.
                  */
-                private final Class<?> rawType;
+                private final Class<?> erasure;
 
                 /**
                  * Creates a lazy type projection of a constructor's exception type.
                  *
                  * @param constructor The constructor of which the exception types are represented.
                  * @param index       The index of the exception type.
-                 * @param rawType     The raw type of the exception type.
+                 * @param erasure     The erasure of the type of the interface this lazy projection represents.
                  */
-                private TypeProjection(Constructor<?> constructor, int index, Class<?> rawType) {
+                private TypeProjection(Constructor<?> constructor, int index, Class<?> erasure) {
                     this.constructor = constructor;
                     this.index = index;
-                    this.rawType = rawType;
+                    this.erasure = erasure;
                 }
 
                 @Override
@@ -587,8 +587,8 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 }
 
                 @Override
-                public TypeDescription asRawType() {
-                    return new TypeDescription.ForLoadedType(rawType);
+                public TypeDescription asErasure() {
+                    return new TypeDescription.ForLoadedType(erasure);
                 }
             }
         }
@@ -623,7 +623,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
             }
 
             @Override
-            public TypeList asRawTypes() {
+            public TypeList asErasures() {
                 return new TypeList.ForLoadedType(method.getExceptionTypes());
             }
 
@@ -643,21 +643,21 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 private final int index;
 
                 /**
-                 * The raw type of the exception type.
+                 * The erasure of the type of the interface this lazy projection represents.
                  */
-                private final Class<?> rawType;
+                private final Class<?> erasure;
 
                 /**
                  * Creates a lazy type projection of a constructor's exception type.
                  *
                  * @param method  The method of which the exception types are represented.
                  * @param index   The index of the exception type.
-                 * @param rawType The raw type of the exception type.
+                 * @param erasure The erasure of the type of the interface this lazy projection represents.
                  */
-                public TypeProjection(Method method, int index, Class<?> rawType) {
+                public TypeProjection(Method method, int index, Class<?> erasure) {
                     this.method = method;
                     this.index = index;
-                    this.rawType = rawType;
+                    this.erasure = erasure;
                 }
 
                 @Override
@@ -666,8 +666,8 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 }
 
                 @Override
-                public TypeDescription asRawType() {
-                    return new TypeDescription.ForLoadedType(rawType);
+                public TypeDescription asErasure() {
+                    return new TypeDescription.ForLoadedType(erasure);
                 }
             }
         }

@@ -87,7 +87,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.getGenericSignature()).thenReturn(QUX);
         when(methodDescription.getExceptionTypes()).thenReturn(exceptionTypes);
         when(methodDescription.getAdjustedModifiers(anyBoolean())).thenReturn(MODIFIERS);
-        when(exceptionTypes.asRawTypes()).thenReturn(rawExceptionTypes);
+        when(exceptionTypes.asErasures()).thenReturn(rawExceptionTypes);
         when(rawExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ});
         when(classVisitor.visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ})).thenReturn(methodVisitor);
         when(methodDescription.getParameters())

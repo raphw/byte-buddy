@@ -131,7 +131,7 @@ public final class ByteBuddyCommons {
      * @return The input value.
      */
     public static <T extends GenericTypeDescription> T isThrowable(T typeDescription) {
-        if (!isActualType(typeDescription).asRawType().isAssignableTo(Throwable.class)) {
+        if (!isActualType(typeDescription).asErasure().isAssignableTo(Throwable.class)) {
             throw new IllegalArgumentException("Cannot throw instances of: " + typeDescription);
         }
         return typeDescription;
@@ -177,7 +177,7 @@ public final class ByteBuddyCommons {
     public static <T extends GenericTypeDescription> T isExtendable(T typeDescription) {
         if (!EXTENDABLE_TYPES.contains(typeDescription.getSort())) {
             throw new IllegalArgumentException("Cannot extend generic type: " + typeDescription);
-        } else if (isDefineable(typeDescription.asRawType()).isFinal()) {
+        } else if (isDefineable(typeDescription.asErasure()).isFinal()) {
             throw new IllegalArgumentException("Cannot extend a final type: " + typeDescription);
         }
         return typeDescription;
@@ -191,7 +191,7 @@ public final class ByteBuddyCommons {
      * @return The input value.
      */
     public static <T extends GenericTypeDescription> T isImplementable(T typeDescription) {
-        if (!isExtendable(typeDescription).asRawType().isInterface()) {
+        if (!isExtendable(typeDescription).asErasure().isInterface()) {
             throw new IllegalArgumentException("Not an interface: " + typeDescription);
         }
         return typeDescription;
@@ -219,7 +219,7 @@ public final class ByteBuddyCommons {
      * @return The input value.
      */
     public static <T extends GenericTypeDescription> T isActualType(T typeDescription) {
-        if (isActualTypeOrVoid(typeDescription).asRawType().represents(void.class)) {
+        if (isActualTypeOrVoid(typeDescription).asErasure().represents(void.class)) {
             throw new IllegalArgumentException("The void non-type cannot be assigned a value");
         }
         return typeDescription;
@@ -370,7 +370,7 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Validates that a collection of generic type descriptions does not contain duplicate raw types.
+     * Validates that a collection of generic type descriptions does not contain duplicate type erasure.
      *
      * @param typeDescriptions The type descriptions to validate for being unique.
      * @param <T>              The actual type of the argument.
@@ -379,7 +379,7 @@ public final class ByteBuddyCommons {
     public static <T extends Collection<? extends GenericTypeDescription>> T uniqueRaw(T typeDescriptions) {
         Map<TypeDescription, GenericTypeDescription> types = new HashMap<TypeDescription, GenericTypeDescription>(typeDescriptions.size());
         for (GenericTypeDescription typeDescription : typeDescriptions) {
-            GenericTypeDescription conflictingType = types.put(typeDescription.asRawType(), typeDescription);
+            GenericTypeDescription conflictingType = types.put(typeDescription.asErasure(), typeDescription);
             if (conflictingType != null) {
                 throw new IllegalArgumentException("Duplicate types: " + typeDescription + " and " + conflictingType);
             }
@@ -388,8 +388,8 @@ public final class ByteBuddyCommons {
     }
 
     /**
-     * Joins two collections where the left collection must only contain unique elements. If two elements represent the same raw type
-     * but are not equal, an exception is thrown-
+     * Joins two collections where the left collection must only contain unique elements. If two elements represent the same type
+     * erasure but are not equal, an exception is thrown-
      *
      * @param left  The left collection.
      * @param right The right collection.
@@ -400,13 +400,13 @@ public final class ByteBuddyCommons {
         List<T> result = new ArrayList<T>(left.size() + right.size());
         Map<TypeDescription, GenericTypeDescription> types = new HashMap<TypeDescription, GenericTypeDescription>();
         for (T typeDescription : left) {
-            types.put(typeDescription.asRawType(), typeDescription);
+            types.put(typeDescription.asErasure(), typeDescription);
             result.add(typeDescription);
         }
         for (T typeDescription : right) {
-            GenericTypeDescription conflictingType = types.put(typeDescription.asRawType(), typeDescription);
+            GenericTypeDescription conflictingType = types.put(typeDescription.asErasure(), typeDescription);
             if (conflictingType != null && !conflictingType.equals(typeDescription)) {
-                throw new IllegalArgumentException("Conflicting raw types: " + conflictingType + " and " + typeDescription);
+                throw new IllegalArgumentException("Conflicting type erasures: " + conflictingType + " and " + typeDescription);
             } else if (conflictingType == null) {
                 result.add(typeDescription);
             }

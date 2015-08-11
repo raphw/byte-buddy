@@ -1617,7 +1617,7 @@ public interface AnnotationDescription {
 
         @Override
         public Object getValue(MethodDescription methodDescription) {
-            if (!methodDescription.getDeclaringType().asRawType().represents(annotation.annotationType())) {
+            if (!methodDescription.getDeclaringType().asErasure().represents(annotation.annotationType())) {
                 throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
             }
             try {
@@ -1631,7 +1631,7 @@ public interface AnnotationDescription {
                         method.setAccessible(true);
                     }
                 }
-                return describe(method.invoke(annotation), methodDescription.getReturnType().asRawType());
+                return describe(method.invoke(annotation), methodDescription.getReturnType().asErasure());
             } catch (Exception exception) {
                 throw new IllegalStateException("Cannot access annotation property " + methodDescription, exception);
             }
@@ -1815,7 +1815,7 @@ public interface AnnotationDescription {
             MethodList<?> methodDescriptions = annotationType.getDeclaredMethods().filter(named(nonNull(property)));
             if (methodDescriptions.isEmpty()) {
                 throw new IllegalArgumentException(annotationType + " does not define a property named " + property);
-            } else if (!methodDescriptions.getOnly().getReturnType().asRawType().isAnnotationValue(value.resolve())) {
+            } else if (!methodDescriptions.getOnly().getReturnType().asErasure().isAnnotationValue(value.resolve())) {
                 throw new IllegalArgumentException(value + " cannot be assigned to " + property);
             }
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>(this.annotationValues.size() + 1);

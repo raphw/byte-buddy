@@ -1612,7 +1612,7 @@ public interface DynamicType {
 
             @Override
             public FieldValueTarget<S> defineField(FieldDescription fieldDescription) {
-                return defineField(fieldDescription.getName(), fieldDescription.getType().asRawType(), fieldDescription.getModifiers());
+                return defineField(fieldDescription.getName(), fieldDescription.getType().asErasure(), fieldDescription.getModifiers());
             }
 
             @Override
@@ -1641,8 +1641,8 @@ public interface DynamicType {
                     throw new IllegalArgumentException("Not a method: " + methodDescription);
                 }
                 return defineMethod(methodDescription.getName(),
-                        methodDescription.getReturnType().asRawType(),
-                        methodDescription.getParameters().asTypeList().asRawTypes(),
+                        methodDescription.getReturnType().asErasure(),
+                        methodDescription.getParameters().asTypeList().asErasures(),
                         methodDescription.getModifiers());
             }
 
@@ -1689,7 +1689,7 @@ public interface DynamicType {
                 if (!methodDescription.isConstructor()) {
                     throw new IllegalArgumentException("Not a constructor: " + methodDescription);
                 }
-                return defineConstructor(methodDescription.getParameters().asTypeList().asRawTypes(), methodDescription.getModifiers());
+                return defineConstructor(methodDescription.getParameters().asTypeList().asErasures(), methodDescription.getModifiers());
             }
 
             @Override
@@ -2152,7 +2152,7 @@ public interface DynamicType {
 
                 @Override
                 public FieldAnnotationTarget<S> value(int value) {
-                    return makeFieldAnnotationTarget(NumericRangeValidator.of(fieldToken.getType().asRawType()).validate(value));
+                    return makeFieldAnnotationTarget(NumericRangeValidator.of(fieldToken.getType().asErasure()).validate(value));
                 }
 
                 @Override
@@ -2183,7 +2183,7 @@ public interface DynamicType {
                  * @return The given default value.
                  */
                 private Object isValid(Object defaultValue, Class<?> legalType) {
-                    if (!fieldToken.getType().asRawType().represents(legalType)) {
+                    if (!fieldToken.getType().asErasure().represents(legalType)) {
                         throw new IllegalStateException(defaultValue + " is not of the required type " + legalType);
                     }
                     return defaultValue;

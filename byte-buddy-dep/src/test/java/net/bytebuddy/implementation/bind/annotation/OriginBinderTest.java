@@ -40,7 +40,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(targetType);
-        when(targetType.asRawType()).thenReturn(targetType);
+        when(targetType.asErasure()).thenReturn(targetType);
         when(source.asDefined()).thenReturn(methodDescription);
     }
 
@@ -92,7 +92,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
         when(target.getType()).thenReturn(targetType);
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);

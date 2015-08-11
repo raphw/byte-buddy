@@ -95,7 +95,7 @@ public @interface DefaultCall {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            TypeDescription targetType = target.getType().asRawType();
+            TypeDescription targetType = target.getType().asErasure();
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A default method call proxy can only be assigned to Runnable or Callable types: " + target);
             }
@@ -145,7 +145,7 @@ public @interface DefaultCall {
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
                                                                       MethodDescription source) {
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asRawTypes()) {
+                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asErasures()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;

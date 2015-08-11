@@ -103,7 +103,7 @@ public enum MethodVariableAccess {
      * @param methodDescription The method for which all parameters are to be loaded onto the operand stack.
      * @return A stack manipulation that loads all parameters of the provided method onto the operand stack.
      */
-    public static MethodLoading allArgumentsOf(MethodDescription.InDefinedShape methodDescription) {
+    public static MethodLoading allArgumentsOf(MethodDescription methodDescription) {
         return new MethodLoading(methodDescription, MethodLoading.TypeCastingHandler.NoOp.INSTANCE);
     }
 
@@ -133,7 +133,7 @@ public enum MethodVariableAccess {
         /**
          * The method for which all parameters are loaded onto the operand stack.
          */
-        private final MethodDescription.InDefinedShape methodDescription;
+        private final MethodDescription methodDescription;
 
         /**
          * A type casting handler which is capable of transforming all method parameters.
@@ -146,7 +146,7 @@ public enum MethodVariableAccess {
          * @param methodDescription  The method for which all parameters are loaded onto the operand stack.
          * @param typeCastingHandler A type casting handler which is capable of transforming all method parameters.
          */
-        protected MethodLoading(MethodDescription.InDefinedShape methodDescription, TypeCastingHandler typeCastingHandler) {
+        protected MethodLoading(MethodDescription methodDescription, TypeCastingHandler typeCastingHandler) {
             this.methodDescription = methodDescription;
             this.typeCastingHandler = typeCastingHandler;
         }
@@ -160,7 +160,7 @@ public enum MethodVariableAccess {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(methodDescription.getParameters().size() * 2);
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                TypeDescription parameterType = parameterDescription.getType().asRawType();
+                TypeDescription parameterType = parameterDescription.getType().asErasure();
                 stackManipulations.add(forType(parameterType).loadOffset(parameterDescription.getOffset()));
                 stackManipulations.add(typeCastingHandler.ofIndex(parameterType, parameterDescription.getIndex()));
             }
@@ -186,7 +186,7 @@ public enum MethodVariableAccess {
          * @param bridgeTarget The method that is the target of the bridge method for which the parameters are being loaded.
          * @return A stack manipulation that loads all parameters casted to the types of the supplied bridge target.
          */
-        public MethodLoading asBridgeOf(MethodDescription.InDefinedShape bridgeTarget) {
+        public MethodLoading asBridgeOf(MethodDescription bridgeTarget) {
             return new MethodLoading(methodDescription, new TypeCastingHandler.ForBridgeTarget(bridgeTarget));
         }
 
@@ -257,20 +257,20 @@ public enum MethodVariableAccess {
                 /**
                  * The target of the method bridge.
                  */
-                private final MethodDescription.InDefinedShape bridgeTarget;
+                private final MethodDescription bridgeTarget;
 
                 /**
                  * Creates a new type casting handler for a bridge target.
                  *
                  * @param bridgeTarget The target of the method bridge.
                  */
-                public ForBridgeTarget(MethodDescription.InDefinedShape bridgeTarget) {
+                public ForBridgeTarget(MethodDescription bridgeTarget) {
                     this.bridgeTarget = bridgeTarget;
                 }
 
                 @Override
                 public StackManipulation ofIndex(TypeDescription parameterType, int index) {
-                    TypeDescription targetType = bridgeTarget.getParameters().get(index).getType().asRawType();
+                    TypeDescription targetType = bridgeTarget.getParameters().get(index).getType().asErasure();
                     return parameterType.equals(targetType)
                             ? LegalTrivial.INSTANCE
                             : TypeCasting.to(targetType);

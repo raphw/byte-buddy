@@ -20,15 +20,15 @@ public class GenericTypeDescriptionVisitorForDetachmentTest {
         GenericTypeDescription detached = original.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
         assertThat(detached, not(sameInstance(original)));
         assertThat(detached.getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
-        assertThat(detached.asRawType(), is(TargetType.DESCRIPTION));
+        assertThat(detached.asErasure(), is(TargetType.DESCRIPTION));
         assertThat(detached.getParameters().size(), is(4));
         assertThat(detached.getParameters().get(0).getSort(), is(GenericTypeDescription.Sort.VARIABLE_DETACHED));
         assertThat(detached.getParameters().get(0).getSymbol(), is("T"));
         assertThat(detached.getParameters().get(0).getUpperBounds().size(), is(1));
         assertThat(detached.getParameters().get(0).getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        assertThat(detached.getParameters().get(0).getUpperBounds().getOnly().asRawType().represents(Object.class), is(true));
+        assertThat(detached.getParameters().get(0).getUpperBounds().getOnly().asErasure().represents(Object.class), is(true));
         assertThat(detached.getParameters().get(1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        assertThat(detached.getParameters().get(1).asRawType().represents(String.class), is(true));
+        assertThat(detached.getParameters().get(1).asErasure().represents(String.class), is(true));
         assertThat(detached.getParameters().get(2).getSort(), is(GenericTypeDescription.Sort.VARIABLE_DETACHED));
         assertThat(detached.getParameters().get(2).getSymbol(), is("U"));
         assertThat(detached.getParameters().get(2).getUpperBounds().size(), is(1));
@@ -39,7 +39,7 @@ public class GenericTypeDescriptionVisitorForDetachmentTest {
         assertThat(detached.getParameters().get(3).getParameters().getOnly().getSymbol(), is("S"));
         assertThat(detached.getParameters().get(3).getParameters().getOnly().getUpperBounds().size(), is(1));
         assertThat(detached.getParameters().get(3).getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        assertThat(detached.getParameters().get(3).getParameters().getOnly().getUpperBounds().getOnly().asRawType().represents(CharSequence.class), is(true));
+        assertThat(detached.getParameters().get(3).getParameters().getOnly().getUpperBounds().getOnly().asErasure().represents(CharSequence.class), is(true));
         assertThat(detached.getOwnerType(), notNullValue(GenericTypeDescription.class));
         assertThat(detached.getOwnerType().getSort(), is(GenericTypeDescription.Sort.PARAMETERIZED));
         assertThat(detached.getOwnerType().getParameters().size(), is(1));

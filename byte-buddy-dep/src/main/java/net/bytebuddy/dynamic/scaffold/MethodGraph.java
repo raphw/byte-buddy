@@ -456,7 +456,7 @@ public interface MethodGraph {
              * <p>
              * Creates a default compiler for a method hierarchy following the rules of the Java virtual machine. According
              * to these rules, two methods of the same name are different if their parameter types and return types represent
-             * different raw types.
+             * different type erasures.
              * </p>
              * <p>
              * Ambiguous methods are merged by considering the method that was discovered first.
@@ -476,7 +476,7 @@ public interface MethodGraph {
                 List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>(interfaceTypes.size());
                 for (GenericTypeDescription interfaceType : interfaceTypes) {
-                    interfaceGraphs.put(interfaceType.asRawType(), snapshots.get(interfaceType).asGraph(merger));
+                    interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType).asGraph(merger));
                 }
                 return new Linked.Delegation(rootStore.asGraph(merger),
                         superType == null
@@ -1031,9 +1031,9 @@ public interface MethodGraph {
                         combined.addAll(leftMethods);
                         combined.addAll(rightMethods);
                         for (MethodDescription leftMethod : leftMethods) {
-                            TypeDescription leftType = leftMethod.getDeclaringType().asRawType();
+                            TypeDescription leftType = leftMethod.getDeclaringType().asErasure();
                             for (MethodDescription rightMethod : rightMethods) {
-                                TypeDescription rightType = rightMethod.getDeclaringType().asRawType();
+                                TypeDescription rightType = rightMethod.getDeclaringType().asErasure();
                                 if (leftType.isAssignableTo(rightType)) {
                                     combined.remove(rightMethod);
                                     break;

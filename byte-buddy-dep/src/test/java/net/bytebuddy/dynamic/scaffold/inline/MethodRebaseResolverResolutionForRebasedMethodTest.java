@@ -61,9 +61,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
-        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.asErasure()).thenReturn(returnType);
         when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
-        when(parameterType.asRawType()).thenReturn(parameterType);
+        when(parameterType.asErasure()).thenReturn(parameterType);
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
     }
 
@@ -94,7 +94,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
                 when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
                 TypeDescription returnType = mock(TypeDescription.class);
-                when(returnType.asRawType()).thenReturn(returnType);
+                when(returnType.asErasure()).thenReturn(returnType);
                 when(mock.getReturnType()).thenReturn(returnType);
             }
         }).refine(new ObjectPropertyAssertion.Refinement<MethodRebaseResolver.MethodNameTransformer>() {

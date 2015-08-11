@@ -39,10 +39,10 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(targetParameterType);
-        when(targetParameterType.asRawType()).thenReturn(targetParameterType);
+        when(targetParameterType.asErasure()).thenReturn(targetParameterType);
         when(implementationTarget.invokeDefault(any(TypeDescription.class), eq(methodToken))).thenReturn(specialMethodInvocation);
-        when(firstInterface.asRawType()).thenReturn(firstInterface);
-        when(secondInterface.asRawType()).thenReturn(secondInterface);
+        when(firstInterface.asErasure()).thenReturn(firstInterface);
+        when(secondInterface.asErasure()).thenReturn(secondInterface);
     }
 
     @Override

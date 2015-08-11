@@ -307,7 +307,7 @@ public interface MethodDescription extends TypeVariableSource,
         public String getName() {
             return isMethod()
                     ? getInternalName()
-                    : getDeclaringType().asRawType().getName();
+                    : getDeclaringType().asErasure().getName();
         }
 
         @Override
@@ -320,10 +320,10 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public String getDescriptor() {
             StringBuilder descriptor = new StringBuilder("(");
-            for (TypeDescription parameterType : getParameters().asTypeList().asRawTypes()) {
+            for (TypeDescription parameterType : getParameters().asTypeList().asErasures()) {
                 descriptor.append(parameterType.getDescriptor());
             }
-            return descriptor.append(")").append(getReturnType().asRawType().getDescriptor()).toString();
+            return descriptor.append(")").append(getReturnType().asErasure().getDescriptor()).toString();
         }
 
         @Override
@@ -370,18 +370,18 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            if (!getDeclaringType().asRawType().isVisibleTo(typeDescription) || !getReturnType().asRawType().isVisibleTo(typeDescription)) {
+            if (!getDeclaringType().asErasure().isVisibleTo(typeDescription) || !getReturnType().asErasure().isVisibleTo(typeDescription)) {
                 return false;
             }
-            for (TypeDescription parameterType : getParameters().asTypeList().asRawTypes()) {
+            for (TypeDescription parameterType : getParameters().asTypeList().asErasures()) {
                 if (!parameterType.isVisibleTo(typeDescription)) {
                     return false;
                 }
             }
             return isPublic()
                     || typeDescription.equals(getDeclaringType())
-                    || (isProtected() && getDeclaringType().asRawType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asRawType()));
+                    || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()));
         }
 
         @Override
@@ -391,7 +391,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean isDefaultMethod() {
-            return !isAbstract() && !isBridge() && getDeclaringType().asRawType().isInterface();
+            return !isAbstract() && !isBridge() && getDeclaringType().asErasure().isInterface();
         }
 
         @Override
@@ -401,7 +401,7 @@ public interface MethodDescription extends TypeVariableSource,
             } else if (isPrivate() || isConstructor() || isDefaultMethod()) {
                 return getDeclaringType().equals(targetType);
             } else {
-                return !isAbstract() && getDeclaringType().asRawType().isAssignableFrom(targetType);
+                return !isAbstract() && getDeclaringType().asErasure().isAssignableFrom(targetType);
             }
         }
 
@@ -415,18 +415,18 @@ public interface MethodDescription extends TypeVariableSource,
             return !isStatic()
                     && !isTypeInitializer()
                     && isVisibleTo(typeDescription)
-                    && getDeclaringType().asRawType().isAssignableFrom(typeDescription);
+                    && getDeclaringType().asErasure().isAssignableFrom(typeDescription);
         }
 
         @Override
         public boolean isBootstrap() {
-            TypeDescription returnType = getReturnType().asRawType();
+            TypeDescription returnType = getReturnType().asErasure();
             if ((isMethod() && (!isStatic()
                     || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(returnType) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(returnType))))
-                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType().asRawType()))) {
+                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType().asErasure()))) {
                 return false;
             }
-            TypeList parameterTypes = getParameters().asTypeList().asRawTypes();
+            TypeList parameterTypes = getParameters().asTypeList().asErasures();
             switch (parameterTypes.size()) {
                 case 0:
                     return false;
@@ -474,7 +474,7 @@ public interface MethodDescription extends TypeVariableSource,
                     throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
                 }
             }
-            TypeList parameterTypes = getParameters().asTypeList().asRawTypes();
+            TypeList parameterTypes = getParameters().asTypeList().asErasures();
             // The following assumes that the bootstrap method is a valid one, as checked above.
             if (parameterTypes.size() < 4) {
                 return arguments.isEmpty() || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
@@ -507,7 +507,7 @@ public interface MethodDescription extends TypeVariableSource,
         public boolean isDefaultValue() {
             return !isConstructor()
                     && !isStatic()
-                    && getReturnType().asRawType().isAnnotationReturnType()
+                    && getReturnType().asErasure().isAnnotationReturnType()
                     && getParameters().isEmpty();
         }
 
@@ -516,7 +516,7 @@ public interface MethodDescription extends TypeVariableSource,
             if (!isDefaultValue()) {
                 return false;
             }
-            TypeDescription returnType = getReturnType().asRawType();
+            TypeDescription returnType = getReturnType().asErasure();
             return (returnType.represents(boolean.class) && value instanceof Boolean)
                     || (returnType.represents(byte.class) && value instanceof Byte)
                     || (returnType.represents(char.class) && value instanceof Character)
@@ -533,7 +533,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeVariableSource getEnclosingSource() {
-            return getDeclaringType().asRawType();
+            return getDeclaringType().asErasure();
         }
 
         @Override
@@ -569,7 +569,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeToken asTypeToken() {
-            return new TypeToken(getReturnType().asRawType(), getParameters().asTypeList().asRawTypes());
+            return new TypeToken(getReturnType().asErasure(), getParameters().asTypeList().asErasures());
         }
 
         @Override
@@ -577,16 +577,16 @@ public interface MethodDescription extends TypeVariableSource,
             return other == this || other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
                     && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
-                    && getReturnType().asRawType().equals(((MethodDescription) other).getReturnType().asRawType())
-                    && getParameters().asTypeList().asRawTypes().equals(((MethodDescription) other).getParameters().asTypeList().asRawTypes());
+                    && getReturnType().asErasure().equals(((MethodDescription) other).getReturnType().asErasure())
+                    && getParameters().asTypeList().asErasures().equals(((MethodDescription) other).getParameters().asTypeList().asErasures());
         }
 
         @Override
         public int hashCode() {
             int hashCode = getDeclaringType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
-            hashCode = 31 * hashCode + getReturnType().asRawType().hashCode();
-            return 31 * hashCode + getParameters().asTypeList().asRawTypes().hashCode();
+            hashCode = 31 * hashCode + getReturnType().asErasure().hashCode();
+            return 31 * hashCode + getParameters().asTypeList().asErasures().hashCode();
         }
 
         @Override
@@ -598,7 +598,7 @@ public interface MethodDescription extends TypeVariableSource,
             }
             if (isMethod()) {
                 stringBuilder.append(getReturnType().getSourceCodeName()).append(" ");
-                stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
+                stringBuilder.append(getDeclaringType().asErasure().getSourceCodeName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
@@ -635,12 +635,12 @@ public interface MethodDescription extends TypeVariableSource,
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnType().asRawType().getSourceCodeName()).append(" ");
-                stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
+                stringBuilder.append(getReturnType().asErasure().getSourceCodeName()).append(" ");
+                stringBuilder.append(getDeclaringType().asErasure().getSourceCodeName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
-            for (TypeDescription typeDescription : getParameters().asTypeList().asRawTypes()) {
+            for (TypeDescription typeDescription : getParameters().asTypeList().asErasures()) {
                 if (!first) {
                     stringBuilder.append(",");
                 } else {
@@ -649,7 +649,7 @@ public interface MethodDescription extends TypeVariableSource,
                 stringBuilder.append(typeDescription.getSourceCodeName());
             }
             stringBuilder.append(")");
-            TypeList exceptionTypes = getExceptionTypes().asRawTypes();
+            TypeList exceptionTypes = getExceptionTypes().asErasures();
             if (exceptionTypes.size() > 0) {
                 stringBuilder.append(" throws ");
                 first = true;
@@ -1205,7 +1205,7 @@ public interface MethodDescription extends TypeVariableSource,
                     parameters.add(parameter.accept(this));
                 }
                 GenericTypeDescription ownerType = parameterizedType.getOwnerType();
-                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType(),
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure(),
                         parameters,
                         ownerType == null
                                 ? null
@@ -1466,9 +1466,9 @@ public interface MethodDescription extends TypeVariableSource,
         public TypeToken asTypeToken() {
             List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(getParameterTokens().size());
             for (ParameterDescription.Token parameterToken : getParameterTokens()) {
-                parameterTypes.add(parameterToken.getType().asRawType());
+                parameterTypes.add(parameterToken.getType().asErasure());
             }
-            return new TypeToken(getReturnType().asRawType(), parameterTypes);
+            return new TypeToken(getReturnType().asErasure(), parameterTypes);
         }
 
         @Override
@@ -1502,11 +1502,11 @@ public interface MethodDescription extends TypeVariableSource,
             if (!(other instanceof Token)) return false;
             Token token = (Token) other;
             if (!getInternalName().equals(token.getInternalName())) return false;
-            if (!getReturnType().asRawType().equals(token.getReturnType().asRawType())) return false;
+            if (!getReturnType().asErasure().equals(token.getReturnType().asErasure())) return false;
             List<ParameterDescription.Token> tokens = getParameterTokens(), otherTokens = token.getParameterTokens();
             if (tokens.size() != otherTokens.size()) return false;
             for (int index = 0; index < tokens.size(); index++) {
-                if (!tokens.get(index).getType().asRawType().equals(otherTokens.get(index).getType().asRawType())) return false;
+                if (!tokens.get(index).getType().asErasure().equals(otherTokens.get(index).getType().asErasure())) return false;
             }
             return true;
         }
@@ -1514,9 +1514,9 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public int hashCode() {
             int result = getInternalName().hashCode();
-            result = 31 * result + getReturnType().asRawType().hashCode();
+            result = 31 * result + getReturnType().asErasure().hashCode();
             for (ParameterDescription.Token parameterToken : getParameterTokens()) {
-                result = 31 * result + parameterToken.getType().asRawType().hashCode();
+                result = 31 * result + parameterToken.getType().asErasure().hashCode();
             }
             return result;
         }
@@ -1537,7 +1537,7 @@ public interface MethodDescription extends TypeVariableSource,
     }
 
     /**
-     * A token representing a method's raw type.
+     * A token representing a method's erased return and parameter types.
      */
     class TypeToken {
 

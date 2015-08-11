@@ -41,7 +41,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.asRawType()).thenReturn(superType);
+        when(superType.asErasure()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(BAR);
         when(superType.getDeclaredMethods())
                 .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(superTypeConstructor)));

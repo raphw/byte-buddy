@@ -13,8 +13,8 @@ public abstract class AbstractGenericTypeListTest<U> extends AbstractFilterableL
 
     @Test
     public void testRawTypes() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asRawTypes().size(), is(1));
-        assertThat(asList(Collections.singletonList(getFirst())).asRawTypes().getOnly(), is(asElement(getFirst()).asRawType()));
+        assertThat(asList(Collections.singletonList(getFirst())).asErasures().size(), is(1));
+        assertThat(asList(Collections.singletonList(getFirst())).asErasures().getOnly(), is(asElement(getFirst()).asErasure()));
     }
 
     @Test

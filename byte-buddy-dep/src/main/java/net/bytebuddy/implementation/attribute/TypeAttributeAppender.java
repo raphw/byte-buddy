@@ -71,7 +71,7 @@ public interface TypeAttributeAppender {
                 return; // Takes into account that types can be renamed. This check is more reliable.
             }
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
-            for (AnnotationDescription annotation : targetType.asRawType().getDeclaredAnnotations()) {
+            for (AnnotationDescription annotation : targetType.asErasure().getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
             }
         }

@@ -83,8 +83,8 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
         when(firstPrimitive.represents(firstType)).thenReturn(true);
         when(secondPrimitive.isPrimitive()).thenReturn(true);
         when(secondPrimitive.represents(secondType)).thenReturn(true);
-        when(firstPrimitive.asRawType()).thenReturn(firstPrimitive);
-        when(secondPrimitive.asRawType()).thenReturn(secondPrimitive);
+        when(firstPrimitive.asErasure()).thenReturn(firstPrimitive);
+        when(secondPrimitive.asErasure()).thenReturn(secondPrimitive);
     }
 
     @Test

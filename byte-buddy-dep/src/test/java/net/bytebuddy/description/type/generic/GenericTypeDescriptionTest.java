@@ -38,7 +38,7 @@ public class GenericTypeDescriptionTest {
     @Test
     public void testNonGenericArrayType() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         assertThat(GenericTypeDescription.ForGenericArray.Latent.of(typeDescription, 1).getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
         assertThat(GenericTypeDescription.ForGenericArray.Latent.of(typeDescription, 1).getComponentType(), is((GenericTypeDescription) typeDescription));

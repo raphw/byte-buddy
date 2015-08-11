@@ -53,7 +53,7 @@ public class ConstructorStrategyDefaultTest {
                 any(MethodTransformer.class))).thenReturn(methodRegistry);
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn((MethodList) methodList);
-        when(superType.asRawType()).thenReturn(superType);
+        when(superType.asErasure()).thenReturn(superType);
         when(filteredMethodList.asTokenList()).thenReturn(filteredMethodTokenList);
     }
 

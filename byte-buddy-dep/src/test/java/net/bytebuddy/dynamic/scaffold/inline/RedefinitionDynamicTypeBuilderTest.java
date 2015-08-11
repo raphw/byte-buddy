@@ -98,14 +98,14 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
             @Override
             public List<?> create() {
                 TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.asRawType()).thenReturn(typeDescription);
+                when(typeDescription.asErasure()).thenReturn(typeDescription);
                 return Collections.singletonList(typeDescription);
             }
         }).create(new ObjectPropertyAssertion.Creator<TypeDescription>() {
             @Override
             public TypeDescription create() {
                 TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.asRawType()).thenReturn(typeDescription);
+                when(typeDescription.asErasure()).thenReturn(typeDescription);
                 when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Collections.singletonList(typeDescription)));
                 when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty());
                 when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());

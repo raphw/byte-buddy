@@ -33,7 +33,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
         super.setUp();
         when(targetMethod.getDeclaringType()).thenReturn(targetMethodType);
         binder = new Pipe.Binder(targetMethod);
-        when(targetMethodType.asRawType()).thenReturn(targetMethodType);
+        when(targetMethodType.asErasure()).thenReturn(targetMethodType);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     @Test(expected = IllegalStateException.class)
     public void testParameterBindingOnIllegalTargetTypeThrowsException() throws Exception {
         TypeDescription targetType = mock(TypeDescription.class);
-        when(targetType.asRawType()).thenReturn(targetType);
+        when(targetType.asErasure()).thenReturn(targetType);
         when(target.getType()).thenReturn(targetType);
         binder.bind(annotationDescription,
                 source,

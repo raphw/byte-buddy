@@ -120,7 +120,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return A list of stack manipulation that loads all arguments of an instrumented method.
      */
     private List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
-        TypeList parameterTypes = instrumentedMethod.getParameters().asTypeList().asRawTypes();
+        TypeList parameterTypes = instrumentedMethod.getParameters().asTypeList().asErasures();
         List<StackManipulation> instruction = new ArrayList<StackManipulation>(parameterTypes.size());
         TypeDescription objectType = TypeDescription.OBJECT;
         int currentIndex = 1;
@@ -174,8 +174,8 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         : MethodConstant.forMethod(instrumentedMethod.asDefined()),
                 ArrayFactory.forType(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().getOnly()),
-                assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType().asRawType(), Assigner.Typing.DYNAMIC),
-                MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
+                assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType().asErasure(), Assigner.Typing.DYNAMIC),
+                MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }

@@ -438,7 +438,7 @@ public class ByteBuddyTutorialExamplesTest {
         public Size apply(MethodVisitor methodVisitor,
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
-            if (!instrumentedMethod.getReturnType().asRawType().represents(int.class)) {
+            if (!instrumentedMethod.getReturnType().asErasure().represents(int.class)) {
                 throw new IllegalArgumentException(instrumentedMethod + " must return int");
             }
             StackManipulation.Size operandStackSize = new StackManipulation.Compound(
@@ -496,7 +496,7 @@ public class ByteBuddyTutorialExamplesTest {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().asRawType().represents(String.class)) {
+            if (!target.getType().asErasure().represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }
             StackManipulation constant = new TextConstant(annotation.loadSilent().value());
@@ -604,7 +604,7 @@ public class ByteBuddyTutorialExamplesTest {
 
         @Override
         public String name(UnnamedType unnamedType) {
-            return "i.love.ByteBuddy." + unnamedType.getSuperClass().asRawType().getSimpleName();
+            return "i.love.ByteBuddy." + unnamedType.getSuperClass().asErasure().getSimpleName();
         }
     }
 

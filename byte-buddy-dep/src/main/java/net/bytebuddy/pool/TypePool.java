@@ -1143,7 +1143,7 @@ public interface TypePool {
                                 .filter(named(name))
                                 .getOnly()
                                 .getReturnType()
-                                .asRawType()
+                                .asErasure()
                                 .getComponentType()
                                 .getName();
                     }
@@ -3479,7 +3479,7 @@ public interface TypePool {
             /**
              * Transforms this token into a generic type reprsentation.
              *
-             * @param typePool           The type pool to be used for locating the underlaying raw types.
+             * @param typePool           The type pool to be used for locating non-generic type descriptions.
              * @param typeVariableSource The type variable source.
              * @return A description of the represented generic type.
              */
@@ -3630,7 +3630,7 @@ public interface TypePool {
                 /**
                  * Resolves the type variables of the represented element.
                  *
-                 * @param typePool           The type pool to use for resolving raw types.
+                 * @param typePool           The type pool to be used for locating non-generic type descriptions.
                  * @param typeVariableSource The type variable source to use for resolving type variables.
                  * @return A list describing the resolved generic types.
                  */
@@ -3648,12 +3648,12 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
-                        return TokenizedGenericType.toRawType(typePool, fieldTypeDescriptor);
+                        return TokenizedGenericType.toErasure(typePool, fieldTypeDescriptor);
                     }
 
                     @Override
                     public GenericTypeDescription resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
-                        return TokenizedGenericType.toRawType(typePool, returnTypeDescriptor);
+                        return TokenizedGenericType.toErasure(typePool, returnTypeDescriptor);
                     }
 
                     @Override
@@ -3668,7 +3668,7 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeDescription resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
-                        return TokenizedGenericType.toRawType(typePool, superTypeDescriptor);
+                        return TokenizedGenericType.toErasure(typePool, superTypeDescriptor);
                     }
 
                     @Override
@@ -3747,7 +3747,7 @@ public interface TypePool {
                      * Resolves the generic super type of the represented type.
                      *
                      * @param superTypeDescriptor The descriptor of the raw super type.
-                     * @param typePool            The type pool to use for resolving raw types.
+                     * @param typePool            The type pool to be used for locating non-generic type descriptions.
                      * @param definingType        The type that defines this super type.
                      * @return A description of this type's generic super type.
                      */
@@ -3757,7 +3757,7 @@ public interface TypePool {
                      * Resolves the generic interface types of the represented type.
                      *
                      * @param interfaceTypeDescriptors The descriptor of the raw interface types.
-                     * @param typePool                 The type pool to use for resolving raw types.
+                     * @param typePool                 The type pool to be used for locating non-generic type descriptions.
                      * @param definingType             The type that defines these interface type.
                      * @return A description of this type's generic interface types.
                      */
@@ -3851,7 +3851,7 @@ public interface TypePool {
                      * Resolves the return type of the represented method.
                      *
                      * @param returnTypeDescriptor The descriptor of the raw return type.
-                     * @param typePool             The type pool to use for resolving raw types.
+                     * @param typePool             The type pool to be used for locating non-generic type descriptions.
                      * @param definingMethod       The method that defines this return type.
                      * @return A description of this type's generic return type.
                      */
@@ -3861,7 +3861,7 @@ public interface TypePool {
                      * Resolves the generic parameter types of the represented method.
                      *
                      * @param parameterTypeDescriptors The descriptor of the raw parameter types.
-                     * @param typePool                 The type pool to use for resolving raw types.
+                     * @param typePool                 The type pool to be used for locating non-generic type descriptions.
                      * @param definingMethod           The method that defines these parameter types.
                      * @return A description of this type's generic interface types.
                      */
@@ -3871,7 +3871,7 @@ public interface TypePool {
                      * Resolves the generic parameter types of the represented method.
                      *
                      * @param exceptionTypeDescriptors The descriptor of the raw exception types.
-                     * @param typePool                 The type pool to use for resolving raw types.
+                     * @param typePool                 The type pool to be used for locating non-generic type descriptions.
                      * @param definingMethod           The method that defines these exception types.
                      * @return A description of this type's generic interface types.
                      */
@@ -3981,7 +3981,7 @@ public interface TypePool {
                      * Resolves the field type of the represented field.
                      *
                      * @param fieldTypeDescriptor The descriptor of the raw field type.
-                     * @param typePool            The type pool to use for resolving raw types.
+                     * @param typePool            The type pool to be used for locating non-generic type descriptions.
                      * @param definingField       The field that defines this type.
                      * @return A description of this field's type.
                      */
@@ -4008,7 +4008,7 @@ public interface TypePool {
 
                         @Override
                         public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
-                            return new TokenizedGenericType(typePool, fieldTypeToken, fieldTypeDescriptor, definingField.getDeclaringType().asRawType());
+                            return new TokenizedGenericType(typePool, fieldTypeToken, fieldTypeDescriptor, definingField.getDeclaringType().asErasure());
                         }
 
                         @Override
@@ -4384,7 +4384,7 @@ public interface TypePool {
             class ForParameterizedType implements GenericTypeToken {
 
                 /**
-                 * The name of the parameterized type's raw type.
+                 * The name of the parameterized type's erasure.
                  */
                 private final String name;
 
@@ -4396,7 +4396,7 @@ public interface TypePool {
                 /**
                  * Creates a type token that represents a parameterized type.
                  *
-                 * @param name       The name of the parameterized type's raw type.
+                 * @param name       The name of the parameterized type's erasure.
                  * @param parameters A list of tokens that represent the parameters of the represented type.
                  */
                 public ForParameterizedType(String name, List<GenericTypeToken> parameters) {
@@ -4440,7 +4440,7 @@ public interface TypePool {
                 public static class Nested implements GenericTypeToken {
 
                     /**
-                     * The name of the parameterized type's raw type.
+                     *The name of the parameterized type's erasure.
                      */
                     private final String name;
 
@@ -4457,7 +4457,7 @@ public interface TypePool {
                     /**
                      * Creates a type token that represents a parameterized type.
                      *
-                     * @param name       The name of the parameterized type's raw type.
+                     * @param name       The name of the parameterized type's erasure.
                      * @param parameters A list of tokens that represent the parameters of the represented type.
                      * @param ownerType  A token that describes the described parameterized type's owner type.
                      */
@@ -4505,7 +4505,7 @@ public interface TypePool {
                     protected class LazyParameterizedType extends GenericTypeDescription.ForParameterizedType {
 
                         /**
-                         * The type pool to use for locating raw types.
+                         *The type pool to be used for locating non-generic type descriptions.
                          */
                         private final TypePool typePool;
 
@@ -4517,7 +4517,7 @@ public interface TypePool {
                         /**
                          * Creates a lazy description of a parameterized type with an owner type.
                          *
-                         * @param typePool           The type pool to use for locating raw types.
+                         * @param typePool           The type pool to be used for locating non-generic type descriptions.
                          * @param typeVariableSource The type variable source for locating generic types.
                          */
                         public LazyParameterizedType(TypePool typePool, TypeVariableSource typeVariableSource) {
@@ -4526,7 +4526,7 @@ public interface TypePool {
                         }
 
                         @Override
-                        public TypeDescription asRawType() {
+                        public TypeDescription asErasure() {
                             return typePool.describe(name).resolve();
                         }
 
@@ -4573,7 +4573,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public TypeDescription asRawType() {
+                    public TypeDescription asErasure() {
                         return typePool.describe(name).resolve();
                     }
 
@@ -5180,7 +5180,7 @@ public interface TypePool {
 
             @Override
             public Object getValue(MethodDescription methodDescription) {
-                if (!methodDescription.getDeclaringType().asRawType().getDescriptor().equals(descriptor)) {
+                if (!methodDescription.getDeclaringType().asErasure().getDescriptor().equals(descriptor)) {
                     throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
                 }
                 AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());
@@ -5336,7 +5336,7 @@ public interface TypePool {
 
             @Override
             public TypeDescription get(int index) {
-                return TokenizedGenericType.toRawType(typePool, descriptors.get(index));
+                return TokenizedGenericType.toErasure(typePool, descriptors.get(index));
             }
 
             @Override
@@ -5388,7 +5388,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeList asRawTypes() {
+                public TypeList asErasures() {
                     return LazyTypeList.this;
                 }
             }
@@ -5424,7 +5424,7 @@ public interface TypePool {
              *
              * @param typePool           The type pool to use for locating referenced types.
              * @param genericTypeToken   The token that describes the represented generic type.
-             * @param rawTypeDescriptor  A descriptor of the generic type's raw type.
+             * @param rawTypeDescriptor  A descriptor of the generic type's erasure.
              * @param typeVariableSource The closest type variable source of this generic type's declaration context.
              */
             protected TokenizedGenericType(TypePool typePool,
@@ -5444,7 +5444,7 @@ public interface TypePool {
              * @param descriptor The descriptor to interpret.
              * @return A description of the type represented by the descriptor.
              */
-            protected static TypeDescription toRawType(TypePool typePool, String descriptor) {
+            protected static TypeDescription toErasure(TypePool typePool, String descriptor) {
                 Type type = Type.getType(descriptor);
                 return typePool.describe(type.getSort() == Type.ARRAY
                         ? type.getInternalName().replace('/', '.')
@@ -5462,8 +5462,8 @@ public interface TypePool {
             }
 
             @Override
-            public TypeDescription asRawType() {
-                return toRawType(typePool, rawTypeDescriptor);
+            public TypeDescription asErasure() {
+                return toErasure(typePool, rawTypeDescriptor);
             }
 
             /**
@@ -5482,7 +5482,7 @@ public interface TypePool {
                 private final List<GenericTypeToken> genericTypeTokens;
 
                 /**
-                 * A list of the generic types' raw types.
+                 * A list of the generic types' erasures.
                  */
                 private final List<String> rawTypeDescriptors;
 
@@ -5496,7 +5496,7 @@ public interface TypePool {
                  *
                  * @param typePool           The type pool to use for locating type descriptions.
                  * @param genericTypeTokens  A list of tokens describing the represented generic types.
-                 * @param rawTypeDescriptors A list of the generic types' raw types.
+                 * @param rawTypeDescriptors A list of the generic types' erasures.
                  * @param typeVariableSource The closest type variable source of this generic type's declaration context.
                  */
                 private TokenList(TypePool typePool,
@@ -5520,7 +5520,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeList asRawTypes() {
+                public TypeList asErasures() {
                     return new LazyTypeList(typePool, rawTypeDescriptors);
                 }
             }
@@ -5580,7 +5580,7 @@ public interface TypePool {
                 private final TypePool typePool;
 
                 /**
-                 * The descriptor of the raw type.
+                 * The descriptor of the type erasure.
                  */
                 private final String rawTypeDescriptor;
 
@@ -5588,7 +5588,7 @@ public interface TypePool {
                  * Creates a lazy description of a non-well-defined described generic type.
                  *
                  * @param typePool          The type pool to use for locating types.
-                 * @param rawTypeDescriptor The descriptor of the raw type.
+                 * @param rawTypeDescriptor The descriptor of the type erasure.
                  */
                 protected Malformed(TypePool typePool, String rawTypeDescriptor) {
                     this.typePool = typePool;
@@ -5601,8 +5601,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeDescription asRawType() {
-                    return toRawType(typePool, rawTypeDescriptor);
+                public TypeDescription asErasure() {
+                    return toErasure(typePool, rawTypeDescriptor);
                 }
 
                 /**
@@ -5616,7 +5616,7 @@ public interface TypePool {
                     private final TypePool typePool;
 
                     /**
-                     * A list of descriptors of the list's raw types.
+                     * A list of descriptors of the list's types' erasures.
                      */
                     private final List<String> rawTypeDescriptors;
 
@@ -5624,7 +5624,7 @@ public interface TypePool {
                      * Creates a new tokenized list of generic types.
                      *
                      * @param typePool           The type pool to use for locating types.
-                     * @param rawTypeDescriptors A list of descriptors of the list's raw types.
+                     * @param rawTypeDescriptors A list of descriptors of the list's types' erasures.
                      */
                     protected TokenList(TypePool typePool, List<String> rawTypeDescriptors) {
                         this.typePool = typePool;
@@ -5642,7 +5642,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public TypeList asRawTypes() {
+                    public TypeList asErasures() {
                         return new LazyTypeList(typePool, rawTypeDescriptors);
                     }
                 }

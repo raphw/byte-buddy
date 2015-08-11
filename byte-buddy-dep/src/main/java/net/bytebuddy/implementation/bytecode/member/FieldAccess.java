@@ -92,7 +92,7 @@ public enum FieldAccess {
      */
     public static Defined forField(FieldDescription fieldDescription) {
         FieldDescription.InDefinedShape declaredField = fieldDescription.asDefined();
-        return fieldDescription.getType().asRawType().equals(declaredField.getType().asRawType())
+        return fieldDescription.getType().asErasure().equals(declaredField.getType().asErasure())
                 ? forField(declaredField)
                 : OfGenericField.of(fieldDescription, forField(declaredField));
     }
@@ -156,7 +156,7 @@ public enum FieldAccess {
          * @return A field access dispatcher for the given field.
          */
         protected static Defined of(FieldDescription fieldDescription, Defined fieldAccess) {
-            return new OfGenericField(fieldDescription.getType().asRawType(), fieldAccess);
+            return new OfGenericField(fieldDescription.getType().asErasure(), fieldAccess);
         }
 
         @Override
@@ -264,7 +264,7 @@ public enum FieldAccess {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitFieldInsn(getOpcode(),
-                        fieldDescription.getDeclaringType().asRawType().getInternalName(),
+                        fieldDescription.getDeclaringType().asErasure().getInternalName(),
                         fieldDescription.getInternalName(),
                         fieldDescription.getDescriptor());
                 return resolveSize(fieldDescription.getType().getStackSize());

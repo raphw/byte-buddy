@@ -1111,7 +1111,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any method that exactly matches the provided generic exception.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresGenericException(GenericTypeDescription exceptionType) {
-        return !exceptionType.getSort().isWildcard() && exceptionType.asRawType().isAssignableTo(Throwable.class)
+        return !exceptionType.getSort().isWildcard() && exceptionType.asErasure().isAssignableTo(Throwable.class)
                 ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<GenericTypeDescription>(is(exceptionType)))
                 : new BooleanMatcher<T>(false);
     }
@@ -1135,7 +1135,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any method that exactly matches the provided exception.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(TypeDescription exceptionType) {
-        return !exceptionType.getSort().isWildcard() && exceptionType.asRawType().isAssignableTo(Throwable.class)
+        return !exceptionType.getSort().isWildcard() && exceptionType.asErasure().isAssignableTo(Throwable.class)
                 ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<GenericTypeDescription>(rawType(exceptionType)))
                 : new BooleanMatcher<T>(false);
     }

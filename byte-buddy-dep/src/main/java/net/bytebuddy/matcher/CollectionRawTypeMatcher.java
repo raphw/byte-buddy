@@ -31,7 +31,7 @@ public class CollectionRawTypeMatcher<T extends Iterable<? extends GenericTypeDe
     public boolean matches(T target) {
         List<TypeDescription> typeDescriptions = new LinkedList<TypeDescription>();
         for (GenericTypeDescription typeDescription : target) {
-            typeDescriptions.add(typeDescription.asRawType());
+            typeDescriptions.add(typeDescription.asErasure());
         }
         return matcher.matches(typeDescriptions);
     }

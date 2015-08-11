@@ -510,7 +510,7 @@ public interface MethodRegistry {
                         && methodDescription.isPublic()
                         && !(methodDescription.isAbstract() || methodDescription.isFinal())
                         && !node.getSort().isMadeVisible()
-                        && methodDescription.getDeclaringType().asRawType().isPackagePrivate()) {
+                        && methodDescription.getDeclaringType().asErasure().isPackagePrivate()) {
                     // Visibility bridges are required for public types that inherit a public method from a package-private type.
                     // Checking the last condition contradicts any method that is defined by the instrumented type itself.
                     implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getMethodTypes()));
@@ -528,7 +528,7 @@ public interface MethodRegistry {
             return new Prepared(implementations,
                     instrumentedType.getLoadedTypeInitializer(),
                     instrumentedType.getTypeInitializer(),
-                    instrumentedType.asRawType(),
+                    instrumentedType.asErasure(),
                     methodGraph);
         }
 

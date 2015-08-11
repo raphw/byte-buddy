@@ -522,7 +522,7 @@ public interface NamingStrategy {
 
                 @Override
                 public String resolve(UnnamedType unnamedType) {
-                    return unnamedType.getSuperClass().asRawType().getName();
+                    return unnamedType.getSuperClass().asErasure().getName();
                 }
 
                 @Override
@@ -647,7 +647,7 @@ public interface NamingStrategy {
 
         @Override
         public String name(UnnamedType unnamedType) {
-            return String.format("%s.%s$%s", prefix, unnamedType.getSuperClass().asRawType().getName(), randomString.nextString());
+            return String.format("%s.%s$%s", prefix, unnamedType.getSuperClass().asErasure().getName(), randomString.nextString());
         }
 
         @Override

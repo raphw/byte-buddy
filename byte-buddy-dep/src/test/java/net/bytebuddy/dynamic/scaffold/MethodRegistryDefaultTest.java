@@ -100,7 +100,7 @@ public class MethodRegistryDefaultTest {
         when(implementationTargetFactory.make(typeDescription, methodGraph)).thenReturn(implementationTarget);
         when(firstCompiledHandler.assemble(instrumentedMethod, firstAppender)).thenReturn(firstRecord);
         when(secondCompiledHandler.assemble(instrumentedMethod, secondAppender)).thenReturn(secondRecord);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(implementationTarget.getTypeDescription()).thenReturn(typeDescription);
         when(methodTransformer.transform(typeDescription, instrumentedMethod)).thenReturn(instrumentedMethod);
     }
@@ -270,7 +270,7 @@ public class MethodRegistryDefaultTest {
         when(secondFilter.matches(instrumentedMethod)).thenReturn(false);
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         TypeDescription declaringType = mock(TypeDescription.class);
-        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(declaringType.asErasure()).thenReturn(declaringType);
         when(instrumentedMethod.getDeclaringType()).thenReturn(declaringType);
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
@@ -296,13 +296,13 @@ public class MethodRegistryDefaultTest {
         when(secondFilter.matches(instrumentedMethod)).thenReturn(false);
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         TypeDescription declaringType = mock(TypeDescription.class);
-        when(declaringType.asRawType()).thenReturn(declaringType);
+        when(declaringType.asErasure()).thenReturn(declaringType);
         when(instrumentedMethod.getDeclaringType()).thenReturn(declaringType);
         when(typeDescription.isPublic()).thenReturn(true);
         when(instrumentedMethod.isPublic()).thenReturn(true);
         when(declaringType.isPackagePrivate()).thenReturn(true);
         TypeDescription superType = mock(TypeDescription.class);
-        when(superType.asRawType()).thenReturn(superType);
+        when(superType.asErasure()).thenReturn(superType);
         when(typeDescription.getSuperType()).thenReturn(superType);
         MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
         when(instrumentedMethod.asToken()).thenReturn(methodToken);

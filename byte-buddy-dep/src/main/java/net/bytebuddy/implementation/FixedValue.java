@@ -236,14 +236,14 @@ public abstract class FixedValue implements Implementation {
                                           MethodDescription instrumentedMethod,
                                           TypeDescription fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
-        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType().asRawType(), typing);
+        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType().asErasure(), typing);
         if (!assignment.isValid()) {
             throw new IllegalArgumentException("Cannot return value of type " + fixedValueType + " for " + instrumentedMethod);
         }
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 valueLoadingInstruction,
                 assignment,
-                MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
+                MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }

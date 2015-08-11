@@ -36,7 +36,7 @@ public class NamingStrategyTest {
 
     @Before
     public void setUp() throws Exception {
-        when(genericSuperType.asRawType()).thenReturn(rawSuperType);
+        when(genericSuperType.asErasure()).thenReturn(rawSuperType);
     }
 
     @Test

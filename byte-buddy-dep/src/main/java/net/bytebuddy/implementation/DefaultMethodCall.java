@@ -141,7 +141,7 @@ public class DefaultMethodCall implements Implementation {
      */
     private List<TypeDescription> filterRelevant(TypeDescription typeDescription) {
         List<TypeDescription> filtered = new ArrayList<TypeDescription>(prioritizedInterfaces.size());
-        Set<TypeDescription> relevant = new HashSet<TypeDescription>(typeDescription.getInterfaces().asRawTypes());
+        Set<TypeDescription> relevant = new HashSet<TypeDescription>(typeDescription.getInterfaces().asErasures());
         for (TypeDescription prioritizedInterface : prioritizedInterfaces) {
             if (relevant.remove(prioritizedInterface)) {
                 filtered.add(prioritizedInterface);
@@ -195,7 +195,7 @@ public class DefaultMethodCall implements Implementation {
         protected Appender(Target implementationTarget, List<TypeDescription> prioritizedInterfaces) {
             this.implementationTarget = implementationTarget;
             this.prioritizedInterfaces = prioritizedInterfaces;
-            this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(implementationTarget.getTypeDescription().getInterfaces().asRawTypes());
+            this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(implementationTarget.getTypeDescription().getInterfaces().asErasures());
             nonPrioritizedInterfaces.removeAll(prioritizedInterfaces);
         }
 
@@ -206,9 +206,9 @@ public class DefaultMethodCall implements Implementation {
                 throw new IllegalStateException("Cannot invoke default method on " + instrumentedMethod);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
+                    MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                     defaultMethodInvocation,
-                    MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
+                    MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }

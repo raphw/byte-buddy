@@ -20,7 +20,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
     public void setUp() throws Exception {
         super.setUp();
         when(typeDescription.getSuperType()).thenReturn(targetType);
-        when(targetType.asRawType()).thenReturn(rawSuperType);
+        when(targetType.asErasure()).thenReturn(rawSuperType);
     }
 
     @Test

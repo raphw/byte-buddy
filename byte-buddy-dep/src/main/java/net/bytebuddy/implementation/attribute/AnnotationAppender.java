@@ -411,7 +411,7 @@ public interface AnnotationAppender {
         private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation, ValueFilter valueFilter) {
             for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
                 if (valueFilter.isRelevant(annotation, methodDescription)) {
-                    apply(annotationVisitor, methodDescription.getReturnType().asRawType(), methodDescription.getName(), annotation.getValue(methodDescription));
+                    apply(annotationVisitor, methodDescription.getReturnType().asErasure(), methodDescription.getName(), annotation.getValue(methodDescription));
                 }
             }
             annotationVisitor.visitEnd();

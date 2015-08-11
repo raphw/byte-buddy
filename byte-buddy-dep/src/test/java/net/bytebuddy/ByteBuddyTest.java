@@ -73,7 +73,7 @@ public class ByteBuddyTest {
     public void setUp() throws Exception {
         when(modifierContributorForType.getMask()).thenReturn(MASK);
         when(typeDescription.isInterface()).thenReturn(true);
-        when(typeDescription.asRawType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
     }
 

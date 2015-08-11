@@ -34,7 +34,7 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerDroppingTest {
     @Before
     public void setUp() throws Exception {
         when(target.getReturnType()).thenReturn(targetType);
-        when(targetType.asRawType()).thenReturn(targetType);
+        when(targetType.asErasure()).thenReturn(targetType);
         when(targetType.getStackSize()).thenReturn(StackSize.SINGLE);
     }
 
@@ -43,7 +43,7 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerDroppingTest {
         StackManipulation stackManipulation = TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.INSTANCE.resolve(assigner, source, target);
         assertThat(stackManipulation, is((StackManipulation) Removal.SINGLE));
         verify(targetType).getStackSize();
-        verify(targetType).asRawType();
+        verify(targetType).asErasure();
         verifyNoMoreInteractions(targetType);
     }
 }

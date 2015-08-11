@@ -43,7 +43,7 @@ public abstract class AbstractImplementationTargetTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
+        when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(methodGraph.getSuperGraph()).thenReturn(superGraph);
         when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
@@ -51,11 +51,11 @@ public abstract class AbstractImplementationTargetTest {
         when(methodGraph.getInterfaceGraph(defaultMethodDeclaringType)).thenReturn(defaultGraph);
         when(defaultGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(defaultGraph.locate(defaultToken)).thenReturn(new MethodGraph.Node.Simple(defaultMethod));
-        when(methodDeclaringType.asRawType()).thenReturn(methodDeclaringType);
+        when(methodDeclaringType.asErasure()).thenReturn(methodDeclaringType);
         when(invokableMethod.getDeclaringType()).thenReturn(methodDeclaringType);
         when(invokableMethod.getReturnType()).thenReturn(returnType);
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.asErasure()).thenReturn(returnType);
         when(invokableMethod.getInternalName()).thenReturn(FOO);
         when(invokableMethod.getDescriptor()).thenReturn(QUX);
         when(invokableMethod.asToken()).thenReturn(invokableToken);
@@ -68,7 +68,7 @@ public abstract class AbstractImplementationTargetTest {
         when(defaultMethod.asDefined()).thenReturn(defaultMethod);
         when(defaultMethod.isSpecializableFor(defaultMethodDeclaringType)).thenReturn(true);
         when(defaultMethodDeclaringType.isInterface()).thenReturn(true);
-        when(defaultMethodDeclaringType.asRawType()).thenReturn(defaultMethodDeclaringType);
+        when(defaultMethodDeclaringType.asErasure()).thenReturn(defaultMethodDeclaringType);
         when(defaultMethodDeclaringType.getInternalName()).thenReturn(BAZBAR);
         implementationTarget = makeImplementationTarget();
     }

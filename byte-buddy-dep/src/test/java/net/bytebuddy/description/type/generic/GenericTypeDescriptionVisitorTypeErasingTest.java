@@ -26,7 +26,7 @@ public class GenericTypeDescriptionVisitorTypeErasingTest {
 
     @Before
     public void setUp() throws Exception {
-        when(genericTypeDescription.asRawType()).thenReturn(typeDescription);
+        when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
     }
 
     @Test

@@ -75,7 +75,7 @@ public interface ConstructorStrategy {
         DEFAULT_CONSTRUCTOR {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSuperType().asRawType();
+                TypeDescription superType = instrumentedType.getSuperType().asErasure();
                 MethodList<?> defaultConstructors = superType == null
                         ? new MethodList.Empty()
                         : superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
@@ -130,7 +130,7 @@ public interface ConstructorStrategy {
                 GenericTypeDescription superType = instrumentedType.getSuperType();
                 return (superType == null
                         ? new MethodList.Empty()
-                        : superType.asRawType().getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();
+                        : superType.asErasure().getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();
             }
 
             @Override

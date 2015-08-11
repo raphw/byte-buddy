@@ -113,7 +113,7 @@ public enum SuperMethodCall implements Implementation {
                 throw new IllegalStateException("Cannot call super (or default) method for " + instrumentedMethod);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
+                    MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                     superMethodCall,
                     terminationHandler.of(instrumentedMethod)
             ).apply(methodVisitor, implementationContext);
@@ -151,7 +151,7 @@ public enum SuperMethodCall implements Implementation {
             RETURNING {
                 @Override
                 protected StackManipulation of(MethodDescription methodDescription) {
-                    return MethodReturn.returning(methodDescription.getReturnType().asRawType());
+                    return MethodReturn.returning(methodDescription.getReturnType().asErasure());
                 }
             },
 
@@ -161,7 +161,7 @@ public enum SuperMethodCall implements Implementation {
             DROPPING {
                 @Override
                 protected StackManipulation of(MethodDescription methodDescription) {
-                    return Removal.pop(methodDescription.getReturnType().asRawType());
+                    return Removal.pop(methodDescription.getReturnType().asErasure());
                 }
             };
 

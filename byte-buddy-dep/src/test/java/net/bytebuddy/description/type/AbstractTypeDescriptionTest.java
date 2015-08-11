@@ -207,7 +207,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(identical, equalTo(identical));
         TypeDescription equalFirst = mock(TypeDescription.class);
         when(equalFirst.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(equalFirst.asRawType()).thenReturn(equalFirst);
+        when(equalFirst.asErasure()).thenReturn(equalFirst);
         when(equalFirst.getInternalName()).thenReturn(Type.getInternalName(SampleClass.class));
         assertThat(describe(SampleClass.class), equalTo(equalFirst));
         assertThat(describe(SampleClass.class), not(equalTo(describe(SampleInterface.class))));
@@ -446,11 +446,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     public void testMalformedTypeHasLegalErasure() throws Exception {
         TypeDescription malformed = new TypeDescription.ForLoadedType(Callable.class);
         TypeDescription typeDescription = describe(SignatureMalformer.malform(MalformedBase.class));
-        assertThat(typeDescription.getSuperType().asRawType(), is(TypeDescription.OBJECT));
-        assertThat(typeDescription.getInterfaces().asRawTypes().size(), is(1));
-        assertThat(typeDescription.getInterfaces().asRawTypes().getOnly(), is(malformed));
-        assertThat(typeDescription.getDeclaredFields().getOnly().getType().asRawType(), is(malformed));
-        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().asRawType(), is(malformed));
+        assertThat(typeDescription.getSuperType().asErasure(), is(TypeDescription.OBJECT));
+        assertThat(typeDescription.getInterfaces().asErasures().size(), is(1));
+        assertThat(typeDescription.getInterfaces().asErasures().getOnly(), is(malformed));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getType().asErasure(), is(malformed));
+        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().asErasure(), is(malformed));
         assertThat(typeDescription.getGenericSignature(), nullValue(String.class));
         assertThat(typeDescription.getGenericSignature(), nullValue(String.class));
         assertThat(typeDescription.getDeclaredFields().getOnly().getGenericSignature(), nullValue(String.class));

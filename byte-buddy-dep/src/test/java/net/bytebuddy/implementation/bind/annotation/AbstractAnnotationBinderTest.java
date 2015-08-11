@@ -79,19 +79,19 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(sourceDeclaringType.asRawType()).thenReturn(sourceDeclaringType);
-        when(targetDeclaringType.asRawType()).thenReturn(targetDeclaringType);
+        when(sourceDeclaringType.asErasure()).thenReturn(sourceDeclaringType);
+        when(targetDeclaringType.asErasure()).thenReturn(targetDeclaringType);
         when(source.getDeclaringType()).thenReturn(sourceDeclaringType);
         annotation = mock(annotationType);
         doReturn(annotationType).when(annotation).annotationType();
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         when(source.getParameters()).thenReturn((ParameterList) sourceParameterList);
         when(sourceParameterList.asTypeList()).thenReturn(sourceTypeList);
-        when(sourceTypeList.asRawTypes()).thenReturn(rawSourceTypeList);
+        when(sourceTypeList.asErasures()).thenReturn(rawSourceTypeList);
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
         when(implementationTarget.getTypeDescription()).thenReturn(instrumentedType);
         when(implementationTarget.getOriginType()).thenReturn(instrumentedType);
-        when(instrumentedType.asRawType()).thenReturn(instrumentedType);
+        when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(instrumentedType.iterator()).then(new Answer<Iterator<GenericTypeDescription>>() {
             @Override
             public Iterator<GenericTypeDescription> answer(InvocationOnMock invocationOnMock) throws Throwable {

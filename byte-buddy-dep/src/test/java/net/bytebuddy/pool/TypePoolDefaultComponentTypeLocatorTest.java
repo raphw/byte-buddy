@@ -33,7 +33,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
                 .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)));
         when(methodDescription.getSourceCodeName()).thenReturn(FOO);
         TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asRawType()).thenReturn(returnType);
+        when(returnType.asErasure()).thenReturn(returnType);
         when(methodDescription.getReturnType()).thenReturn(returnType);
         TypeDescription componentType = mock(TypeDescription.class);
         when(returnType.getComponentType()).thenReturn(componentType);

@@ -34,8 +34,8 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
         super.setUp();
         when(target.getType()).thenReturn(targetType);
         when(instrumentedType.getInterfaces()).thenReturn(interfaces);
-        when(interfaces.asRawTypes()).thenReturn(rawInterfaces);
-        when(targetType.asRawType()).thenReturn(targetType);
+        when(interfaces.asErasures()).thenReturn(rawInterfaces);
+        when(targetType.asErasure()).thenReturn(targetType);
     }
 
     @Override

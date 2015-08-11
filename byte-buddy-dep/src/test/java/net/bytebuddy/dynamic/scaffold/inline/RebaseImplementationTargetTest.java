@@ -38,7 +38,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(methodGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(methodGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.asRawType()).thenReturn(superType);
+        when(superType.asErasure()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(BAR);
         when(rebasedMethod.getInternalName()).thenReturn(QUX);
         when(rebasedMethod.getDescriptor()).thenReturn(FOO);

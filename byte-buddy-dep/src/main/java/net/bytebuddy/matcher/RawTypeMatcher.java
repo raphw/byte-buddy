@@ -27,7 +27,7 @@ public class RawTypeMatcher<T extends GenericTypeDescription> extends ElementMat
 
     @Override
     public boolean matches(T target) {
-        return !target.getSort().isWildcard() && rawTypeMatcher.matches(target.asRawType());
+        return !target.getSort().isWildcard() && rawTypeMatcher.matches(target.asErasure());
     }
 
     @Override

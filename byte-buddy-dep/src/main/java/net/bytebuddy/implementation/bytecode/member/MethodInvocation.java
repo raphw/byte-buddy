@@ -78,7 +78,7 @@ public enum MethodInvocation {
             return SPECIAL_CONSTRUCTOR.new Invocation(methodDescription); // Check this property second, constructors might be private
         } else if (methodDescription.isPrivate()) {
             return SPECIAL.new Invocation(methodDescription);
-        } else if (methodDescription.getDeclaringType().asRawType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
+        } else if (methodDescription.getDeclaringType().asErasure().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
             return INTERFACE.new Invocation(methodDescription);
         } else {
             return VIRTUAL.new Invocation(methodDescription);
@@ -94,7 +94,7 @@ public enum MethodInvocation {
      */
     public static WithImplicitInvocationTargetType invoke(MethodDescription methodDescription) {
         MethodDescription.InDefinedShape declaredMethod = methodDescription.asDefined();
-        return declaredMethod.getReturnType().asRawType().equals(methodDescription.getReturnType().asRawType())
+        return declaredMethod.getReturnType().asErasure().equals(methodDescription.getReturnType().asErasure())
                 ? invoke(declaredMethod)
                 : OfGenericMethod.of(methodDescription, invoke(declaredMethod));
     }
@@ -221,7 +221,7 @@ public enum MethodInvocation {
          * @return A method access dispatcher for the given method.
          */
         protected static WithImplicitInvocationTargetType of(MethodDescription methodDescription, WithImplicitInvocationTargetType invocation) {
-            return new OfGenericMethod(methodDescription.getReturnType().asRawType(), invocation);
+            return new OfGenericMethod(methodDescription.getReturnType().asErasure(), invocation);
         }
 
         @Override
@@ -294,7 +294,7 @@ public enum MethodInvocation {
          * @param methodDescription The method to be invoked.
          */
         protected Invocation(MethodDescription methodDescription) {
-            this(methodDescription, methodDescription.getDeclaringType().asRawType());
+            this(methodDescription, methodDescription.getDeclaringType().asErasure());
         }
 
         /**
@@ -456,7 +456,7 @@ public enum MethodInvocation {
             methodVisitor.visitInvokeDynamicInsn(methodName,
                     methodDescriptor,
                     new Handle(handle,
-                            bootstrapMethod.getDeclaringType().asRawType().getInternalName(),
+                            bootstrapMethod.getDeclaringType().asErasure().getInternalName(),
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor()),
                     arguments.toArray(new Object[arguments.size()]));

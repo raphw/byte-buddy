@@ -48,7 +48,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
      *
      * @return The erasure of this type.
      */
-    TypeDescription asRawType();
+    TypeDescription asErasure();
 
     /**
      * <p>
@@ -472,7 +472,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
             @Override
             public TypeDescription onGenericArray(GenericTypeDescription genericArray) {
-                return genericArray.asRawType();
+                return genericArray.asErasure();
             }
 
             @Override
@@ -482,17 +482,17 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
             @Override
             public TypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
-                return parameterizedType.asRawType();
+                return parameterizedType.asErasure();
             }
 
             @Override
             public TypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
-                return typeVariable.asRawType();
+                return typeVariable.asErasure();
             }
 
             @Override
             public TypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
-                return typeDescription.asRawType();
+                return typeDescription.asErasure();
             }
 
             @Override
@@ -538,12 +538,12 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
                 for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
                     if (parameter.accept(PartialErasureReviser.INSTANCE)) {
-                        return parameterizedType.asRawType();
+                        return parameterizedType.asErasure();
                     }
                     parameters.add(parameter.accept(this));
                 }
                 GenericTypeDescription ownerType = parameterizedType.getOwnerType();
-                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType(),
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure(),
                         parameters,
                         ownerType == null
                                 ? null
@@ -552,12 +552,12 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
             @Override
             public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
-                return typeVariable.asRawType();
+                return typeVariable.asErasure();
             }
 
             @Override
             public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
-                return new ForParameterizedType.Raw(typeDescription.asRawType());
+                return new ForParameterizedType.Raw(typeDescription.asErasure());
             }
 
             @Override
@@ -663,9 +663,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 GenericTypeDescription ownerType = genericTypeDescription.getOwnerType();
                 if (ownerType != null && ownerType.getSort().isParameterized()) {
                     onOwnableType(ownerType);
-                    signatureVisitor.visitInnerClassType(genericTypeDescription.asRawType().getSimpleName());
+                    signatureVisitor.visitInnerClassType(genericTypeDescription.asErasure().getSimpleName());
                 } else {
-                    signatureVisitor.visitClassType(genericTypeDescription.asRawType().getInternalName());
+                    signatureVisitor.visitClassType(genericTypeDescription.asErasure().getInternalName());
                 }
                 for (GenericTypeDescription upperBound : genericTypeDescription.getParameters()) {
                     upperBound.accept(new OfParameter(signatureVisitor));
@@ -683,9 +683,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 if (typeDescription.isArray()) {
                     typeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
                 } else if (typeDescription.isPrimitive()) {
-                    signatureVisitor.visitBaseType(typeDescription.asRawType().getDescriptor().charAt(ONLY_CHARACTER));
+                    signatureVisitor.visitBaseType(typeDescription.asErasure().getDescriptor().charAt(ONLY_CHARACTER));
                 } else {
-                    signatureVisitor.visitClassType(typeDescription.asRawType().getInternalName());
+                    signatureVisitor.visitClassType(typeDescription.asErasure().getInternalName());
                     signatureVisitor.visitEnd();
                 }
                 return signatureVisitor;
@@ -727,7 +727,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 public SignatureVisitor onWildcardType(GenericTypeDescription wildcardType) {
                     GenericTypeList upperBounds = wildcardType.getUpperBounds();
                     GenericTypeList lowerBounds = wildcardType.getLowerBounds();
-                    if (lowerBounds.isEmpty() && upperBounds.getOnly().asRawType().represents(Object.class)) {
+                    if (lowerBounds.isEmpty() && upperBounds.getOnly().asErasure().represents(Object.class)) {
                         signatureVisitor.visitTypeArgument();
                     } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
                         lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
@@ -781,7 +781,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
                     parameters.add(parameter.accept(this));
                 }
-                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType().accept(this).asRawType(),
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure().accept(this).asErasure(),
                         parameters,
                         ownerType == null
                                 ? null
@@ -853,7 +853,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                  * @return A substitutor that attaches visited types to the given field's type context.
                  */
                 public static ForAttachment of(FieldDescription fieldDescription) {
-                    return new ForAttachment(fieldDescription.getDeclaringType().asRawType(), fieldDescription.getDeclaringType().asRawType());
+                    return new ForAttachment(fieldDescription.getDeclaringType().asErasure(), fieldDescription.getDeclaringType().asErasure());
                 }
 
                 /**
@@ -863,7 +863,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                  * @return A substitutor that attaches visited types to the given method's type context.
                  */
                 public static ForAttachment of(MethodDescription methodDescription) {
-                    return new ForAttachment(methodDescription.getDeclaringType().asRawType(), methodDescription);
+                    return new ForAttachment(methodDescription.getDeclaringType().asErasure(), methodDescription);
                 }
 
                 /**
@@ -873,7 +873,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                  * @return A substitutor that attaches visited types to the given parameter's type context.
                  */
                 public static ForAttachment of(ParameterDescription parameterDescription) {
-                    return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType().asRawType(), parameterDescription.getDeclaringMethod());
+                    return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType().asErasure(), parameterDescription.getDeclaringMethod());
                 }
 
                 /**
@@ -890,7 +890,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
                     GenericTypeDescription typeVariable = typeVariableSource.findVariable(genericTypeDescription.getSymbol());
                     return typeVariable == null
-                            ? genericTypeDescription.asRawType()
+                            ? genericTypeDescription.asErasure()
                             : typeVariable;
                 }
 
@@ -963,7 +963,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
                 @Override
                 protected GenericTypeDescription onSimpleType(GenericTypeDescription typeDescription) {
-                    return typeMatcher.matches(typeDescription.asRawType())
+                    return typeMatcher.matches(typeDescription.asErasure())
                             ? TargetType.DESCRIPTION
                             : typeDescription;
                 }
@@ -1061,7 +1061,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                     Map<GenericTypeDescription, GenericTypeDescription> bindings = new HashMap<GenericTypeDescription, GenericTypeDescription>();
                     do {
                         GenericTypeList parameters = typeDescription.getParameters();
-                        GenericTypeList typeVariables = typeDescription.asRawType().getTypeVariables();
+                        GenericTypeList typeVariables = typeDescription.asErasure().getTypeVariables();
                         if (parameters.size() != typeVariables.size()) {
                             return TypeVariableErasing.INSTANCE;
                         }
@@ -1077,7 +1077,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
                     GenericTypeDescription substitution = bindings.get(typeVariable);
                     return substitution == null
-                            ? typeVariable.asRawType() // Fallback: Never happens for well-defined generic types.
+                            ? typeVariable.asErasure() // Fallback: Never happens for well-defined generic types.
                             : substitution;
                 }
 
@@ -1128,8 +1128,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         }
 
         @Override
-        public TypeDescription asRawType() {
-            return TypeDescription.ArrayProjection.of(getComponentType().asRawType(), 1);
+        public TypeDescription asErasure() {
+            return TypeDescription.ArrayProjection.of(getComponentType().asErasure(), 1);
         }
 
         @Override
@@ -1185,14 +1185,14 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         @Override
         public String getTypeName() {
             return getSort().isNonGeneric()
-                    ? asRawType().getTypeName()
+                    ? asErasure().getTypeName()
                     : toString();
         }
 
         @Override
         public String getSourceCodeName() {
             return getSort().isNonGeneric()
-                    ? asRawType().getSourceCodeName()
+                    ? asErasure().getSourceCodeName()
                     : toString();
         }
 
@@ -1226,7 +1226,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         @Override
         public boolean equals(Object other) {
             if (getSort().isNonGeneric()) {
-                return asRawType().equals(other);
+                return asErasure().equals(other);
             }
             if (!(other instanceof GenericTypeDescription)) return false;
             GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
@@ -1236,14 +1236,14 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         @Override
         public int hashCode() {
             return getSort().isNonGeneric()
-                    ? asRawType().hashCode()
+                    ? asErasure().hashCode()
                     : getComponentType().hashCode();
         }
 
         @Override
         public String toString() {
             return getSort().isNonGeneric()
-                    ? asRawType().toString()
+                    ? asErasure().toString()
                     : getComponentType().getTypeName() + "[]";
         }
 
@@ -1343,7 +1343,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         }
 
         @Override
-        public TypeDescription asRawType() {
+        public TypeDescription asErasure() {
             throw new IllegalStateException("A wildcard does not represent an erasable type: " + this);
         }
 
@@ -1573,22 +1573,22 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return LazyProjection.OfPotentiallyRawType.of(asRawType().getSuperType(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return LazyProjection.OfPotentiallyRawType.of(asErasure().getSuperType(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
         public GenericTypeList getInterfaces() {
-            return new GenericTypeList.OfPotentiallyRawType(asRawType().getInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return new GenericTypeList.OfPotentiallyRawType(asErasure().getInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
         public FieldList getDeclaredFields() {
-            return new FieldList.TypeSubstituting(this, asRawType().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
         public MethodList getDeclaredMethods() {
-            return new MethodList.TypeSubstituting(this, asRawType().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
@@ -1659,7 +1659,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
             GenericTypeDescription ownerType = getOwnerType();
             return result ^ (ownerType == null
-                    ? asRawType().hashCode()
+                    ? asErasure().hashCode()
                     : ownerType.hashCode());
         }
 
@@ -1669,7 +1669,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             GenericTypeDescription genericTypeDescription = (GenericTypeDescription) other;
             if (!genericTypeDescription.getSort().isParameterized()) return false;
             GenericTypeDescription ownerType = getOwnerType(), otherOwnerType = genericTypeDescription.getOwnerType();
-            return asRawType().equals(genericTypeDescription.asRawType())
+            return asErasure().equals(genericTypeDescription.asErasure())
                     && !(ownerType == null && otherOwnerType != null) && !(ownerType != null && !ownerType.equals(otherOwnerType))
                     && getParameters().equals(genericTypeDescription.getParameters());
         }
@@ -1682,10 +1682,10 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 stringBuilder.append(ownerType.getTypeName());
                 stringBuilder.append(".");
                 stringBuilder.append(ownerType.getSort().isParameterized()
-                        ? asRawType().getName().replace(ownerType.asRawType().getName() + "$", "")
-                        : asRawType().getName());
+                        ? asErasure().getName().replace(ownerType.asErasure().getName() + "$", "")
+                        : asErasure().getName());
             } else {
-                stringBuilder.append(asRawType().getName());
+                stringBuilder.append(asErasure().getName());
             }
             GenericTypeList actualTypeArguments = getParameters();
             if (!actualTypeArguments.isEmpty()) {
@@ -1736,7 +1736,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription asRawType() {
+            public TypeDescription asErasure() {
                 return new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType());
             }
         }
@@ -1775,7 +1775,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription asRawType() {
+            public TypeDescription asErasure() {
                 return rawType;
             }
 
@@ -1827,8 +1827,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
              * @return Either a raw type, or a transformed generic type.
              */
             public static GenericTypeDescription check(GenericTypeDescription typeDescription, Visitor<? extends GenericTypeDescription> transformer) {
-                return typeDescription.getParameters().size() != typeDescription.asRawType().getTypeVariables().size()
-                        ? new Raw(typeDescription.asRawType())
+                return typeDescription.getParameters().size() != typeDescription.asErasure().getTypeVariables().size()
+                        ? new Raw(typeDescription.asErasure())
                         : typeDescription.accept(transformer);
             }
 
@@ -1864,7 +1864,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription asRawType() {
+            public TypeDescription asErasure() {
                 return typeDescription;
             }
 
@@ -1969,11 +1969,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         }
 
         @Override
-        public TypeDescription asRawType() {
+        public TypeDescription asErasure() {
             GenericTypeList upperBounds = getUpperBounds();
             return upperBounds.isEmpty()
                     ? TypeDescription.OBJECT
-                    : upperBounds.get(0).asRawType();
+                    : upperBounds.get(0).asErasure();
         }
 
         @Override
@@ -2236,17 +2236,17 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
         @Override
         public StackSize getStackSize() {
-            return asRawType().getStackSize();
+            return asErasure().getStackSize();
         }
 
         @Override
         public boolean isArray() {
-            return asRawType().isArray();
+            return asErasure().isArray();
         }
 
         @Override
         public boolean isPrimitive() {
-            return asRawType().isPrimitive();
+            return asErasure().isPrimitive();
         }
 
         @Override
@@ -2303,10 +2303,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
              * @return A lazy projection of the provided unresolved type.
              */
             public static GenericTypeDescription of(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
-                if (unresolvedType == null) {
-                    return null;
-                }
-                return new OfPotentiallyRawType(unresolvedType, transformer);
+                return unresolvedType == null
+                        ? null
+                        : new OfPotentiallyRawType(unresolvedType, transformer);
             }
 
             @Override
@@ -2315,8 +2314,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription asRawType() {
-                return unresolvedType.asRawType();
+            public TypeDescription asErasure() {
+                return unresolvedType.asErasure();
             }
         }
 
@@ -2348,7 +2347,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription asRawType() {
+            public TypeDescription asErasure() {
                 Class<?> superClass = type.getSuperclass();
                 return superClass == null
                         ? null
@@ -2381,7 +2380,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription asRawType() {
+            public TypeDescription asErasure() {
                 return new TypeDescription.ForLoadedType(field.getType());
             }
         }
@@ -2411,7 +2410,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription asRawType() {
+            public TypeDescription asErasure() {
                 return new TypeDescription.ForLoadedType(method.getReturnType());
             }
         }
@@ -2468,7 +2467,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription asRawType() {
+            public TypeDescription asErasure() {
                 return new TypeDescription.ForLoadedType((Class<?>) GET_TYPE.invoke(parameter));
             }
 
@@ -2488,21 +2487,21 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 private final int index;
 
                 /**
-                 * The raw type of the parameter.
+                 * The erasure of the parameter type.
                  */
-                private final Class<?> rawType;
+                private final Class<?> erasure;
 
                 /**
                  * Creates a lazy projection of a constructor's parameter.
                  *
                  * @param constructor The constructor of which a parameter type is represented.
                  * @param index       The parameter's index.
-                 * @param rawType     The raw type of the parameter.
+                 * @param erasure     The erasure of the parameter type.
                  */
-                public OfLegacyVmConstructor(Constructor<?> constructor, int index, Class<?> rawType) {
+                public OfLegacyVmConstructor(Constructor<?> constructor, int index, Class<?> erasure) {
                     this.constructor = constructor;
                     this.index = index;
-                    this.rawType = rawType;
+                    this.erasure = erasure;
                 }
 
                 @Override
@@ -2511,8 +2510,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 }
 
                 @Override
-                public TypeDescription asRawType() {
-                    return new TypeDescription.ForLoadedType(rawType);
+                public TypeDescription asErasure() {
+                    return new TypeDescription.ForLoadedType(erasure);
                 }
             }
 
@@ -2532,21 +2531,21 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 private final int index;
 
                 /**
-                 * The raw type of the parameter.
+                 * The erasure of the parameter type.
                  */
-                private final Class<?> rawType;
+                private final Class<?> erasure;
 
                 /**
                  * Creates a lazy projection of a constructor's parameter.
                  *
                  * @param method  The method of which a parameter type is represented.
                  * @param index   The parameter's index.
-                 * @param rawType The raw type of the parameter.
+                 * @param erasure The erasure of the parameter's type.
                  */
-                public OfLegacyVmMethod(Method method, int index, Class<?> rawType) {
+                public OfLegacyVmMethod(Method method, int index, Class<?> erasure) {
                     this.method = method;
                     this.index = index;
-                    this.rawType = rawType;
+                    this.erasure = erasure;
                 }
 
                 @Override
@@ -2555,8 +2554,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 }
 
                 @Override
-                public TypeDescription asRawType() {
-                    return new TypeDescription.ForLoadedType(rawType);
+                public TypeDescription asErasure() {
+                    return new TypeDescription.ForLoadedType(erasure);
                 }
             }
         }

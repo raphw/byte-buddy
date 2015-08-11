@@ -108,10 +108,10 @@ public class MethodCallProxy implements AuxiliaryType {
         LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>((methodDescription.isStatic() ? 0 : 1) + parameters.size());
         int currentIndex = 0;
         if (!methodDescription.isStatic()) {
-            typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType().asRawType());
+            typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType().asErasure());
         }
         for (ParameterDescription parameterDescription : parameters) {
-            typeDescriptions.put(fieldName(currentIndex++), parameterDescription.getType().asRawType());
+            typeDescriptions.put(fieldName(currentIndex++), parameterDescription.getType().asErasure());
         }
         return typeDescriptions;
     }
@@ -238,7 +238,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 for (FieldDescription fieldDescription : fieldList) {
                     fieldLoading[index] = new StackManipulation.Compound(
                             thisReference,
-                            MethodVariableAccess.forType(fieldDescription.getType().asRawType())
+                            MethodVariableAccess.forType(fieldDescription.getType().asErasure())
                                     .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
                             FieldAccess.forField(fieldDescription).putter()
                     );
@@ -360,10 +360,10 @@ public class MethodCallProxy implements AuxiliaryType {
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
                         new StackManipulation.Compound(fieldLoading),
                         MethodInvocation.invoke(accessorMethod),
-                        assigner.assign(accessorMethod.getReturnType().asRawType(),
-                                instrumentedMethod.getReturnType().asRawType(),
+                        assigner.assign(accessorMethod.getReturnType().asErasure(),
+                                instrumentedMethod.getReturnType().asErasure(),
                                 Assigner.Typing.DYNAMIC),
-                        MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
+                        MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
@@ -444,7 +444,7 @@ public class MethodCallProxy implements AuxiliaryType {
             return new Compound(
                     TypeCreation.forType(auxiliaryType),
                     Duplication.SINGLE,
-                    MethodVariableAccess.allArgumentsOf(specialMethodInvocation.getMethodDescription().asDefined()).prependThisReference(),
+                    MethodVariableAccess.allArgumentsOf(specialMethodInvocation.getMethodDescription()).prependThisReference(),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
             ).apply(methodVisitor, implementationContext);
         }

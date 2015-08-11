@@ -431,7 +431,7 @@ public interface TypeWriter<T> {
                             getImplementedMethod().getInternalName(),
                             getImplementedMethod().getDescriptor(),
                             getImplementedMethod().getGenericSignature(),
-                            getImplementedMethod().getExceptionTypes().asRawTypes().toInternalNames());
+                            getImplementedMethod().getExceptionTypes().asErasures().toInternalNames());
                     ParameterList<?> parameterList = getImplementedMethod().getParameters();
                     if (parameterList.hasExplicitMetaData()) {
                         for (ParameterDescription parameterDescription : parameterList) {
@@ -670,7 +670,7 @@ public interface TypeWriter<T> {
                         }
                         AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotationDefault();
                         AnnotationAppender.Default.apply(annotationVisitor,
-                                methodDescription.getReturnType().asRawType(),
+                                methodDescription.getReturnType().asErasure(),
                                 AnnotationAppender.NO_NAME,
                                 annotationValue);
                         annotationVisitor.visitEnd();
@@ -768,7 +768,7 @@ public interface TypeWriter<T> {
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
                         return new OfVisibilityBridge(VisibilityBridge.of(instrumentedType, bridgeTarget),
                                 bridgeTarget,
-                                instrumentedType.getSuperType().asRawType(),
+                                instrumentedType.getSuperType().asErasure(),
                                 attributeAppender);
                     }
 
@@ -803,9 +803,9 @@ public interface TypeWriter<T> {
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new ByteCodeAppender.Simple(
-                                MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
+                                MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                                 MethodInvocation.invoke(bridgeTarget).special(superType),
-                                MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
+                                MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
 
@@ -1022,13 +1022,13 @@ public interface TypeWriter<T> {
                                 bridgeMethod.getInternalName(),
                                 bridgeMethod.getDescriptor(),
                                 MethodDescription.NON_GENERIC_SIGNATURE,
-                                bridgeMethod.getExceptionTypes().asRawTypes().toInternalNames());
+                                bridgeMethod.getExceptionTypes().asErasures().toInternalNames());
                         attributeAppender.apply(methodVisitor, bridgeMethod);
                         methodVisitor.visitCode();
                         ByteCodeAppender.Size size = new ByteCodeAppender.Simple(
                                 MethodVariableAccess.allArgumentsOf(bridgeMethod).asBridgeOf(bridgeTarget).prependThisReference(),
                                 MethodInvocation.invoke(bridgeTarget).virtual(instrumentedType),
-                                MethodReturn.returning(bridgeTarget.getReturnType().asRawType())
+                                MethodReturn.returning(bridgeTarget.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext, bridgeMethod);
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                         methodVisitor.visitEnd();
@@ -2608,8 +2608,8 @@ public interface TypeWriter<T> {
                             instrumentedType.getGenericSignature(),
                             (instrumentedType.getSuperType() == NO_SUPER_CLASS ?
                                     TypeDescription.OBJECT :
-                                    instrumentedType.getSuperType().asRawType()).getInternalName(),
-                            instrumentedType.getInterfaces().asRawTypes().toInternalNames());
+                                    instrumentedType.getSuperType().asErasure()).getInternalName(),
+                            instrumentedType.getInterfaces().asErasures().toInternalNames());
                     attributeAppender.apply(this, instrumentedType, targetType);
                 }
 
@@ -2636,7 +2636,7 @@ public interface TypeWriter<T> {
                                 injectedCode.getInjectorProxyMethod().getInternalName(),
                                 injectedCode.getInjectorProxyMethod().getDescriptor(),
                                 injectedCode.getInjectorProxyMethod().getGenericSignature(),
-                                injectedCode.getInjectorProxyMethod().getExceptionTypes().asRawTypes().toInternalNames());
+                                injectedCode.getInjectorProxyMethod().getExceptionTypes().asErasures().toInternalNames());
                     }
                     MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                     return methodDescription == RETAIN_METHOD
@@ -2660,14 +2660,14 @@ public interface TypeWriter<T> {
                                 methodDescription.getInternalName(),
                                 methodDescription.getDescriptor(),
                                 methodDescription.getGenericSignature(),
-                                methodDescription.getExceptionTypes().asRawTypes().toInternalNames());
+                                methodDescription.getExceptionTypes().asErasures().toInternalNames());
                     }
                     MethodDescription implementedMethod = record.getImplementedMethod();
                     MethodVisitor methodVisitor = super.visitMethod(implementedMethod.getAdjustedModifiers(record.getSort().isImplemented()),
                             implementedMethod.getInternalName(),
                             implementedMethod.getDescriptor(),
                             implementedMethod.getGenericSignature(),
-                            implementedMethod.getExceptionTypes().asRawTypes().toInternalNames());
+                            implementedMethod.getExceptionTypes().asErasures().toInternalNames());
                     return abstractOrigin
                             ? new AttributeObtainingMethodVisitor(methodVisitor, record)
                             : new CodePreservingMethodVisitor(methodVisitor, record, methodRebaseResolver.resolve(implementedMethod.asDefined()));
@@ -2748,7 +2748,7 @@ public interface TypeWriter<T> {
                                 resolution.getResolvedMethod().getInternalName(),
                                 resolution.getResolvedMethod().getDescriptor(),
                                 resolution.getResolvedMethod().getGenericSignature(),
-                                resolution.getResolvedMethod().getExceptionTypes().asRawTypes().toInternalNames())
+                                resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames())
                                 : IGNORE_METHOD;
                         super.visitCode();
                     }
@@ -2930,8 +2930,8 @@ public interface TypeWriter<T> {
                         instrumentedType.getGenericSignature(),
                         (instrumentedType.getSuperType() == null
                                 ? TypeDescription.OBJECT
-                                : instrumentedType.getSuperType().asRawType()).getInternalName(),
-                        instrumentedType.getInterfaces().asRawTypes().toInternalNames());
+                                : instrumentedType.getSuperType().asErasure()).getInternalName(),
+                        instrumentedType.getInterfaces().asErasures().toInternalNames());
                 attributeAppender.apply(classVisitor, instrumentedType, instrumentedType.getSuperType());
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor);

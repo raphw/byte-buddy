@@ -9,7 +9,7 @@ public class GenericTypeListEmptyTest {
 
     @Test
     public void testRawTypes() throws Exception {
-        assertThat(new GenericTypeList.Empty().asRawTypes().size(), is(0));
+        assertThat(new GenericTypeList.Empty().asErasures().size(), is(0));
     }
 
     @Test

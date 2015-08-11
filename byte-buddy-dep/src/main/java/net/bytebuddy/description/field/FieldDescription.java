@@ -75,7 +75,7 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public String getDescriptor() {
-            return getType().asRawType().getDescriptor();
+            return getType().asErasure().getDescriptor();
         }
 
         @Override
@@ -92,12 +92,12 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return getDeclaringType().asRawType().isVisibleTo(typeDescription)
-                    && getType().asRawType().isVisibleTo(typeDescription)
+            return getDeclaringType().asErasure().isVisibleTo(typeDescription)
+                    && getType().asErasure().isVisibleTo(typeDescription)
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType())
-                    || (isProtected() && getDeclaringType().asRawType().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asRawType())));
+                    || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
         }
 
         @Override
@@ -132,7 +132,7 @@ public interface FieldDescription extends ByteCodeElement,
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
             stringBuilder.append(getType().getSourceCodeName()).append(" ");
-            stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
+            stringBuilder.append(getDeclaringType().asErasure().getSourceCodeName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
 
@@ -142,8 +142,8 @@ public interface FieldDescription extends ByteCodeElement,
             if (getModifiers() != EMPTY_MASK) {
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
-            stringBuilder.append(getType().asRawType().getSourceCodeName()).append(" ");
-            stringBuilder.append(getDeclaringType().asRawType().getSourceCodeName()).append(".");
+            stringBuilder.append(getType().asErasure().getSourceCodeName()).append(" ");
+            stringBuilder.append(getDeclaringType().asErasure().getSourceCodeName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
     }

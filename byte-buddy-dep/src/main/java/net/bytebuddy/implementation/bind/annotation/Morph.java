@@ -167,9 +167,9 @@ public @interface Morph {
                 throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
             }
             MethodDescription methodDescription = methodCandidates.getOnly();
-            if (!methodDescription.getReturnType().asRawType().represents(Object.class)) {
+            if (!methodDescription.getReturnType().asErasure().represents(Object.class)) {
                 throw new IllegalArgumentException(methodDescription + " does not return an Object-type");
-            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getType().asRawType().represents(Object[].class)) {
+            } else if (methodDescription.getParameters().size() != 1 || !methodDescription.getParameters().get(0).getType().asErasure().represents(Object[].class)) {
                 throw new IllegalArgumentException(methodDescription + " does not take a single argument of type Object[]");
             }
             return methodDescription;
@@ -186,7 +186,7 @@ public @interface Morph {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().asRawType().equals(forwardingMethod.getDeclaringType())) {
+            if (!target.getType().asErasure().equals(forwardingMethod.getDeclaringType())) {
                 throw new IllegalStateException("Illegal use of @Morph for " + target + " which was installed for " + forwardingMethod.getDeclaringType());
             }
             Implementation.SpecialMethodInvocation specialMethodInvocation;
@@ -199,7 +199,7 @@ public @interface Morph {
                         : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source);
             }
             return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType().asRawType(),
+                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType().asErasure(),
                     implementationTarget.getTypeDescription(),
                     specialMethodInvocation,
                     assigner,
@@ -253,7 +253,7 @@ public @interface Morph {
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asRawTypes()) {
+                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asErasures()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
@@ -568,7 +568,7 @@ public @interface Morph {
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadOffset(0),
                                 MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
-                                MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
+                                MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                                 FieldAccess.forField(fieldDescription).putter(),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext);
@@ -677,7 +677,7 @@ public @interface Morph {
                         StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadOffset(1);
                         StackManipulation[] parameterLoading = new StackManipulation[accessorMethod.getParameters().size()];
                         int index = 0;
-                        for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList().asRawTypes()) {
+                        for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList().asErasures()) {
                             parameterLoading[index] = new StackManipulation.Compound(arrayReference,
                                     IntegerConstant.forValue(index),
                                     ArrayAccess.REFERENCE.load(),
@@ -694,8 +694,8 @@ public @interface Morph {
                                                 .getOnly()).getter()),
                                 new StackManipulation.Compound(parameterLoading),
                                 MethodInvocation.invoke(accessorMethod),
-                                assigner.assign(accessorMethod.getReturnType().asRawType(),
-                                        instrumentedMethod.getReturnType().asRawType(),
+                                assigner.assign(accessorMethod.getReturnType().asErasure(),
+                                        instrumentedMethod.getReturnType().asErasure(),
                                         Assigner.Typing.DYNAMIC),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);

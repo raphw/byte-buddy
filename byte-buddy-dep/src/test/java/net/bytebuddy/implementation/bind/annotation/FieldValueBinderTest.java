@@ -40,8 +40,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         super.setUp();
         when(fieldDescription.asDefined()).thenReturn(fieldDescription);
         when(fieldDescription.getType()).thenReturn(fieldType);
-        when(fieldType.asRawType()).thenReturn(fieldType);
-        when(targetType.asRawType()).thenReturn(targetType);
+        when(fieldType.asErasure()).thenReturn(fieldType);
+        when(targetType.asErasure()).thenReturn(targetType);
         when(target.getType()).thenReturn(targetType);
     }
 

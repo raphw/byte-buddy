@@ -21,15 +21,15 @@ public class DeclaringTypeResolverTest extends AbstractAmbiguityResolverTest {
         super.setUp();
         when(leftMethod.getDeclaringType()).thenReturn(leftType);
         when(rightMethod.getDeclaringType()).thenReturn(rightType);
-        when(leftType.asRawType()).thenReturn(leftType);
-        when(rightType.asRawType()).thenReturn(rightType);
+        when(leftType.asErasure()).thenReturn(leftType);
+        when(rightType.asErasure()).thenReturn(rightType);
     }
 
     @Test
     public void testEquals() throws Exception {
         when(leftType.isAssignableFrom(rightType)).thenReturn(true);
         assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, left), is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
-        verify(leftType, times(2)).asRawType();
+        verify(leftType, times(2)).asErasure();
         verifyNoMoreInteractions(leftType);
     }
 
@@ -38,9 +38,9 @@ public class DeclaringTypeResolverTest extends AbstractAmbiguityResolverTest {
         when(leftType.isAssignableFrom(rightType)).thenReturn(true);
         assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
         verify(leftType).isAssignableFrom(rightType);
-        verify(leftType).asRawType();
+        verify(leftType).asErasure();
         verifyNoMoreInteractions(leftType);
-        verify(rightType).asRawType();
+        verify(rightType).asErasure();
         verifyNoMoreInteractions(rightType);
     }
 
@@ -50,9 +50,9 @@ public class DeclaringTypeResolverTest extends AbstractAmbiguityResolverTest {
         assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
         verify(leftType).isAssignableFrom(rightType);
         verify(leftType).isAssignableTo(rightType);
-        verify(leftType).asRawType();
+        verify(leftType).asErasure();
         verifyNoMoreInteractions(leftType);
-        verify(rightType).asRawType();
+        verify(rightType).asErasure();
         verifyNoMoreInteractions(rightType);
     }
 
@@ -61,9 +61,9 @@ public class DeclaringTypeResolverTest extends AbstractAmbiguityResolverTest {
         assertThat(DeclaringTypeResolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
         verify(leftType).isAssignableFrom(rightType);
         verify(leftType).isAssignableTo(rightType);
-        verify(leftType).asRawType();
+        verify(leftType).asErasure();
         verifyNoMoreInteractions(leftType);
-        verify(rightType).asRawType();
+        verify(rightType).asErasure();
         verifyNoMoreInteractions(rightType);
     }
 

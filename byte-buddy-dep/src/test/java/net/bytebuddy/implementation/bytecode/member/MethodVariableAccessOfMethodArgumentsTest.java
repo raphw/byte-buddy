@@ -52,9 +52,9 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(firstParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(firstParameterType.asRawType()).thenReturn(firstParameterType);
+        when(firstParameterType.asErasure()).thenReturn(firstParameterType);
         when(firstParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstParameterType);
-        when(secondParameterType.asRawType()).thenReturn(secondParameterType);
+        when(secondParameterType.asErasure()).thenReturn(secondParameterType);
         when(secondParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondParameterType);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription,
                 Arrays.asList(firstParameterType, secondParameterType)));

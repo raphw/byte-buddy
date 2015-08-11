@@ -92,9 +92,9 @@ public class MethodTransformerSimpleTest {
         when(parameterToken.getModifiers()).thenReturn(MODIFIERS * 2);
         when(definedMethod.getParameters())
                 .thenReturn(new ParameterList.Explicit<ParameterDescription.InDefinedShape>(Collections.singletonList(definedParameter)));
-        when(declaringType.asRawType()).thenReturn(rawDeclaringType);
-        when(returnType.asRawType()).thenReturn(rawReturnType);
-        when(parameterType.asRawType()).thenReturn(rawParameterType);
+        when(declaringType.asErasure()).thenReturn(rawDeclaringType);
+        when(returnType.asErasure()).thenReturn(rawReturnType);
+        when(parameterType.asErasure()).thenReturn(rawParameterType);
     }
 
     @Test

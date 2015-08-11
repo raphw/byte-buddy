@@ -171,15 +171,15 @@ public @interface FieldProxy {
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(TypeDescription getterType, TypeDescription setterType) {
             MethodDescription getterMethod = onlyMethod(nonNull(getterType));
-            if (!getterMethod.getReturnType().asRawType().represents(Object.class)) {
+            if (!getterMethod.getReturnType().asErasure().represents(Object.class)) {
                 throw new IllegalArgumentException(getterMethod + " must take a single Object-typed parameter");
             } else if (getterMethod.getParameters().size() != 0) {
                 throw new IllegalArgumentException(getterMethod + " must not declare parameters");
             }
             MethodDescription setterMethod = onlyMethod(nonNull(setterType));
-            if (!setterMethod.getReturnType().asRawType().represents(void.class)) {
+            if (!setterMethod.getReturnType().asErasure().represents(void.class)) {
                 throw new IllegalArgumentException(setterMethod + " must return void");
-            } else if (setterMethod.getParameters().size() != 1 || !setterMethod.getParameters().get(0).getType().asRawType().represents(Object.class)) {
+            } else if (setterMethod.getParameters().size() != 1 || !setterMethod.getParameters().get(0).getType().asErasure().represents(Object.class)) {
                 throw new IllegalArgumentException(setterMethod + " must declare a single Object-typed parameters");
             }
             return new Binder(getterMethod, setterMethod);
@@ -219,9 +219,9 @@ public @interface FieldProxy {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
             AccessType accessType;
-            if (target.getType().asRawType().equals(getterMethod.getDeclaringType())) {
+            if (target.getType().asErasure().equals(getterMethod.getDeclaringType())) {
                 accessType = AccessType.GETTER;
-            } else if (target.getType().asRawType().equals(setterMethod.getDeclaringType())) {
+            } else if (target.getType().asErasure().equals(setterMethod.getDeclaringType())) {
                 accessType = AccessType.SETTER;
             } else {
                 throw new IllegalStateException(target + " uses a @Field annotation on an non-installed type");
@@ -314,7 +314,7 @@ public @interface FieldProxy {
             GETTER {
                 @Override
                 protected TypeDescription proxyType(MethodDescription getterMethod, MethodDescription setterMethod) {
-                    return getterMethod.getDeclaringType().asRawType();
+                    return getterMethod.getDeclaringType().asErasure();
                 }
 
                 @Override
@@ -331,7 +331,7 @@ public @interface FieldProxy {
             SETTER {
                 @Override
                 protected TypeDescription proxyType(MethodDescription getterMethod, MethodDescription setterMethod) {
-                    return setterMethod.getDeclaringType().asRawType();
+                    return setterMethod.getDeclaringType().asErasure();
                 }
 
                 @Override
@@ -474,10 +474,10 @@ public @interface FieldProxy {
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodInvocation.invoke(getterMethod),
-                                assigner.assign(getterMethod.getReturnType().asRawType(),
-                                        instrumentedMethod.getReturnType().asRawType(),
+                                assigner.assign(getterMethod.getReturnType().asErasure(),
+                                        instrumentedMethod.getReturnType().asErasure(),
                                         Assigner.Typing.DYNAMIC),
-                                MethodReturn.returning(instrumentedMethod.getReturnType().asRawType())
+                                MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
@@ -608,7 +608,7 @@ public @interface FieldProxy {
                     public Size apply(MethodVisitor methodVisitor,
                                       Context implementationContext,
                                       MethodDescription instrumentedMethod) {
-                        TypeDescription parameterType = instrumentedMethod.getParameters().get(0).getType().asRawType();
+                        TypeDescription parameterType = instrumentedMethod.getParameters().get(0).getType().asErasure();
                         MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(accessedField);
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 accessedField.isStatic()
@@ -618,7 +618,7 @@ public @interface FieldProxy {
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodVariableAccess.forType(parameterType).loadOffset(1),
-                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getType().asRawType(), Assigner.Typing.DYNAMIC),
+                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getType().asErasure(), Assigner.Typing.DYNAMIC),
                                 MethodInvocation.invoke(setterMethod),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext);
