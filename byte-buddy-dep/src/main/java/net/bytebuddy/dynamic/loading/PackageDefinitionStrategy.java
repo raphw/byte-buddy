@@ -676,7 +676,7 @@ public interface PackageDefinitionStrategy {
                                 return url;
                             } else if (url.getProtocol().equals(RUNTIME_IMAGE)) {
                                 String path = url.getPath();
-                                int modulePathIndex = path.indexOf(1, '/');
+                                int modulePathIndex = path.indexOf('/', 1);
                                 return modulePathIndex == -1
                                         ? url
                                         : new URL(RUNTIME_IMAGE + ":" + path.substring(0, modulePathIndex));
