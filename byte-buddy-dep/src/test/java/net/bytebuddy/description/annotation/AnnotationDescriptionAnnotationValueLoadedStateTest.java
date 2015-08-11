@@ -24,6 +24,6 @@ public class AnnotationDescriptionAnnotationValueLoadedStateTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationDescription.AnnotationValue.Loaded.State.class);
+        ObjectPropertyAssertion.of(AnnotationDescription.AnnotationValue.Loaded.State.class).apply();
     }
 }

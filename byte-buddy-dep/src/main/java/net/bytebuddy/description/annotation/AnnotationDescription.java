@@ -197,7 +197,7 @@ public interface AnnotationDescription {
 
                 @Override
                 public String toString() {
-                    return "TypePool.LazyTypeDescription.AnnotationValue.Loaded.State." + name();
+                    return "AnnotationDescription.AnnotationValue.Loaded.State." + name();
                 }
             }
         }

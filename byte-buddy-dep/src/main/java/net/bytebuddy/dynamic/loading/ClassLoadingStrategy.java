@@ -189,9 +189,9 @@ public interface ClassLoadingStrategy {
 
             @Override
             public String toString() {
-                return "ClassLoadingStrategy.Default.ProtectionDomainInjection{" +
+                return "ClassLoadingStrategy.Default.InjectionDispatcher{" +
                         "protectionDomain=" + protectionDomain +
-                        "packageDefiner=" + packageDefinitionStrategy +
+                        "packageDefinitionStrategy=" + packageDefinitionStrategy +
                         '}';
             }
         }
@@ -281,24 +281,24 @@ public interface ClassLoadingStrategy {
                 if (other == null || getClass() != other.getClass()) return false;
                 WrappingDispatcher that = (WrappingDispatcher) other;
                 return childFirst == that.childFirst
-                        && packageDefinitionStrategy.equals(that.packageDefinitionStrategy)
+                        && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
                         && persistenceHandler == that.persistenceHandler
-                        && protectionDomain.equals(that.protectionDomain);
+                        && packageDefinitionStrategy.equals(that.packageDefinitionStrategy);
             }
 
             @Override
             public int hashCode() {
-                int result = protectionDomain.hashCode();
+                int result = protectionDomain != null ? protectionDomain.hashCode() : 0;
+                result = 31 * result + persistenceHandler.hashCode();
                 result = 31 * result + packageDefinitionStrategy.hashCode();
                 result = 31 * result + (childFirst ? 1 : 0);
-                result = 31 * result + persistenceHandler.hashCode();
                 return result;
             }
 
             @Override
             public String toString() {
                 return "ClassLoadingStrategy.Default.WrappingDispatcher{" +
-                        "packageDefiner=" + packageDefinitionStrategy +
+                        "packageDefinitionStrategy=" + packageDefinitionStrategy +
                         ", protectionDomain=" + protectionDomain +
                         ", childFirst=" + childFirst +
                         ", persistenceHandler=" + persistenceHandler +

@@ -25,6 +25,6 @@ public class TypeVariableSourceVisitorNoOpTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeVariableSource.Visitor.NoOp.class);
+        ObjectPropertyAssertion.of(TypeVariableSource.Visitor.NoOp.class).apply();
     }
 }

@@ -202,9 +202,9 @@ public class ClassLoadingStrategyDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.class);
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.WrappingDispatcher.class);
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.InjectionDispatcher.class);
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.class).apply();
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.WrappingDispatcher.class).apply();
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.InjectionDispatcher.class).apply();
     }
 
     private static class Foo {
