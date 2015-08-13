@@ -27,6 +27,8 @@
       build path of the built APK. Therefore, the dx.jar dependency sometimes needs to be added explicitly
       to the project build. This is further described here:
       http://stackoverflow.com/questions/14765910/could-not-find-class-xxx-referenced-from-method-xxx-yyy
+
+      This module is activated by the 'android' Maven profile.
     -->
 
     <dependencies>

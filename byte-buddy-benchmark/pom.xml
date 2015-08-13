@@ -13,6 +13,12 @@
     <name>Byte Buddy benchmarks</name>
     <description>A benchmark of Byte Buddy using the JMH.</description>
 
+    <!--
+        The benchmarks of this module should be changed with care, especially in relation to recommendations for
+        code optimizations by IDEs or 'find bugs'. When changing the benchmarks, it is advisable to analyze the
+        tests' assembly code for validating what iis measured.
+    -->
+
     <properties>
         <benchmark.mainClass>net.bytebuddy.benchmark.runner.BenchmarkRunner</benchmark.mainClass>
         <version.jmh>1.10.3</version.jmh>
