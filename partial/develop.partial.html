@@ -46,7 +46,11 @@ mvn package
             <img src="http://img.shields.io/coveralls/raphw/byte-buddy/master.svg" alt="Byte Buddy code coverage"/>
         </a>. As a more modern alternative, Byte Buddy also supports running mutation tests by running
         <code>org.pitest:pitest-maven:mutationCoverage</code> from Maven. Keep however in mind that running mutation
-        tests requires a significant amount of additional runtime compared to computing line coverage.
+        tests requires a significant amount of additional runtime compared to computing line coverage. Finally, the
+        <i>find bugs</i> plugin for Maven is configured which can be run by
+        <code>compile findbugs:findbugs findbugs:gui</code> in order to identify potential bugs in the code base. Note
+        however, that findbugs tends to be overly strict or even wrong with several of its recommendations. If it
+        is non-obvious, the source code commentary explains why the recommendation is ignored.
     </p>
 
     <p>
