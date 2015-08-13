@@ -16,6 +16,7 @@ import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.InputStream;
+import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,6 +71,7 @@ public class ByteArrayClassLoaderChildFirstTest {
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
                 values,
                 DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 persistenceHandler,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
     }

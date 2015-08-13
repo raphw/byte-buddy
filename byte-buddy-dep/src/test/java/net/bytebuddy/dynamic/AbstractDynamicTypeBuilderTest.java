@@ -35,6 +35,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.ProtectionDomain;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
@@ -46,6 +48,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractDynamicTypeBuilderTest {
+
+    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", TO_STRING = "toString";
 
@@ -182,7 +186,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testTypeInitializer() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(Bar.class),
-                null,
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()
@@ -247,7 +252,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testPreparedField() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SampleAnnotation.class),
-                null,
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()
@@ -271,7 +277,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testPreparedMethod() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SampleAnnotation.class),
-                null,
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()

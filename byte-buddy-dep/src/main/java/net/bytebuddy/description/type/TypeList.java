@@ -16,6 +16,11 @@ import java.util.List;
 public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
     /**
+     * Represents that a type list does not contain any values for ASM interoperability which is represented by {@code null}.
+     */
+    String[] NO_INTERFACES = null;
+
+    /**
      * Returns a list of internal names of all types represented by this list.
      *
      * @return An array of all internal names or {@code null} if the list is empty.
@@ -110,7 +115,9 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             for (Class<?> type : types) {
                 internalNames[i++] = Type.getInternalName(type);
             }
-            return internalNames.length == 0 ? null : internalNames;
+            return internalNames.length == 0
+                    ? NO_INTERFACES
+                    : internalNames;
         }
 
         @Override
@@ -160,7 +167,9 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             for (TypeDescription typeDescription : typeDescriptions) {
                 internalNames[i++] = typeDescription.getInternalName();
             }
-            return internalNames.length == 0 ? null : internalNames;
+            return internalNames.length == 0
+                    ? NO_INTERFACES
+                    : internalNames;
         }
 
         @Override
@@ -185,7 +194,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
         @Override
         public String[] toInternalNames() {
-            return null;
+            return NO_INTERFACES;
         }
 
         @Override

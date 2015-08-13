@@ -37,7 +37,7 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
      * @param varargs {@code true} if the method is supposed to support varargs.
      * @return The corresponding method argument state.
      */
-    public static MethodArguments isVarargs(boolean varargs) {
+    public static MethodArguments isVarArgs(boolean varargs) {
         return varargs ? VARARGS : PLAIN;
     }
 
@@ -61,7 +61,7 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
      *
      * @return {@code true} if the current state represents a varargs method.
      */
-    public boolean isVarargs() {
+    public boolean isVarArgs() {
         return this == VARARGS;
     }
 

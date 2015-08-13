@@ -39,8 +39,8 @@ public class BindingPriorityResolverTest {
         when(right.getTarget()).thenReturn(rightMethod);
         when(leftMethod.getDeclaredAnnotations()).thenReturn(leftAnnotations);
         when(rightMethod.getDeclaredAnnotations()).thenReturn(rightAnnotations);
-        when(highPriority.value()).thenReturn(BindingPriority.DEFAULT * 2d);
-        when(lowPriority.value()).thenReturn(BindingPriority.DEFAULT / 2d);
+        when(highPriority.value()).thenReturn(BindingPriority.DEFAULT * 3);
+        when(lowPriority.value()).thenReturn(BindingPriority.DEFAULT * 2);
     }
 
     @Test

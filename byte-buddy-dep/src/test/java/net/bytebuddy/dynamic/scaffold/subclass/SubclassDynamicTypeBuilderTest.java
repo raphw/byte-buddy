@@ -29,6 +29,8 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
+import java.security.AccessController;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +44,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotEquals;
 
 public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest {
+
+    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -273,7 +277,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .make()
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PackagePrivateReturnType.class, PackagePrivateReturnType.Argument.class),
-                        null,
+                        DEFAULT_PROTECTION_DOMAIN,
+                        AccessController.getContext(),
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -289,7 +294,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .make()
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PackagePrivateArgumentType.class, PackagePrivateArgumentType.Argument.class),
-                        null,
+                        DEFAULT_PROTECTION_DOMAIN,
+                        AccessController.getContext(),
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -304,7 +310,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .make()
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PrivateMethod.class),
-                        null,
+                        DEFAULT_PROTECTION_DOMAIN,
+                        AccessController.getContext(),
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

@@ -60,6 +60,10 @@ public interface LoadedTypeInitializer {
      * @param <T> The type of the value that is set as a value to the field.
      */
     class ForStaticField<T> implements LoadedTypeInitializer, Serializable {
+        /**
+         * This class's serial version UID.
+         */
+        private static final long serialVersionUID = 1L;
 
         /**
          * A value for accessing a static field.
@@ -170,6 +174,11 @@ public interface LoadedTypeInitializer {
      * A compound loaded type initializer that combines several type initializers.
      */
     class Compound implements LoadedTypeInitializer, Serializable {
+
+        /**
+         * This class's serial version UID.
+         */
+        private static final long serialVersionUID = 1L;
 
         /**
          * The loaded type initializers that are represented by this compound type initializer.

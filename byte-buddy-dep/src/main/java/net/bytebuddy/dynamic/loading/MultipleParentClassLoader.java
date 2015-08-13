@@ -4,6 +4,9 @@ import net.bytebuddy.matcher.ElementMatcher;
 
 import java.io.IOException;
 import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.filterUnique;
@@ -241,14 +244,24 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         /**
-         * Returns an appropriate class loader that represents all the collected class loaders.
+         * Returns an appropriate class loader that represents all the collected class loaders using the current access control context.
          *
          * @return A suitable class loader.
          */
         public ClassLoader build() {
+            return build(AccessController.getContext());
+        }
+
+        /**
+         * Returns an appropriate class loader that represents all the collected class loaders.
+         *
+         * @param accessControlContext The access control context to be used for creating the class loader.
+         * @return A suitable class loader.
+         */
+        public ClassLoader build(AccessControlContext accessControlContext) {
             return classLoaders.size() == 1
                     ? classLoaders.get(ONLY)
-                    : new MultipleParentClassLoader(classLoaders);
+                    : AccessController.doPrivileged(new ClassLoaderCreationAction(classLoaders), accessControlContext);
         }
 
         @Override
@@ -269,6 +282,49 @@ public class MultipleParentClassLoader extends ClassLoader {
             return "MultipleParentClassLoader.Builder{" +
                     "classLoaders=" + classLoaders +
                     '}';
+        }
+
+        /**
+         * A privileged action for creating a multiple-parent class loader.
+         */
+        protected static class ClassLoaderCreationAction implements PrivilegedAction<ClassLoader> {
+
+            /**
+             * The class loaders to combine.
+             */
+            private final List<? extends ClassLoader> classLoaders;
+
+            /**
+             * Creates a new action for creating a multiple-parent class loader.
+             *
+             * @param classLoaders The class loaders to combine.
+             */
+            protected ClassLoaderCreationAction(List<? extends ClassLoader> classLoaders) {
+                this.classLoaders = classLoaders;
+            }
+
+            @Override
+            public ClassLoader run() {
+                return new MultipleParentClassLoader(classLoaders);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && classLoaders.equals(((ClassLoaderCreationAction) other).classLoaders);
+            }
+
+            @Override
+            public int hashCode() {
+                return classLoaders.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MultipleParentClassLoader.Builder.ClassLoaderCreationAction{" +
+                        "classLoaders=" + classLoaders +
+                        '}';
+            }
         }
     }
 }

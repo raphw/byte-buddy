@@ -268,10 +268,8 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
 
             @Override
             public ClassLoader makeClassLoader(File zipFile, File privateDirectory, ClassLoader parentClassLoader) {
-                return new DexClassLoader(zipFile.getAbsolutePath(),
-                        privateDirectory.getAbsolutePath(),
-                        EMPTY_LIBRARY_PATH,
-                        parentClassLoader);
+                // Note: Android discourages privileged actions but runs its own security model.
+                return new DexClassLoader(zipFile.getAbsolutePath(), privateDirectory.getAbsolutePath(), EMPTY_LIBRARY_PATH, parentClassLoader);
             }
 
             @Override

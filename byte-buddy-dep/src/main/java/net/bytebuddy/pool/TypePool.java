@@ -680,7 +680,7 @@ public interface TypePool {
             /**
              * Represents a loaded annotation property that represents a type.
              */
-            protected class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Class<?>> {
+            protected static class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Class<?>> {
 
                 /**
                  * The type that is represented by an annotation property.
@@ -829,7 +829,7 @@ public interface TypePool {
             /**
              * Represents a loaded annotation property representing a complex array.
              */
-            protected class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Object[]> {
+            protected static class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Object[]> {
 
                 /**
                  * The array's loaded component type.
@@ -1824,6 +1824,9 @@ public interface TypePool {
 
                 @Override
                 public void register(LazyTypeDescription.GenericTypeToken token) {
+                    if (currentBounds == null) {
+                        throw new IllegalStateException("Did not expect " + token + " before finding formal parameter");
+                    }
                     currentBounds.add(token);
                 }
 
@@ -2478,8 +2481,6 @@ public interface TypePool {
                     AnnotationDescription.AnnotationValue<?, ?> annotationValue;
                     if (value instanceof Type) {
                         annotationValue = new RawTypeValue(Default.this, (Type) value);
-                    } else if (value.getClass().isArray()) {
-                        annotationValue = new AnnotationDescription.AnnotationValue.Trivial<Object>(value);
                     } else {
                         annotationValue = new AnnotationDescription.AnnotationValue.Trivial<Object>(value);
                     }
@@ -3284,12 +3285,12 @@ public interface TypePool {
 
                 @Override
                 public MethodDescription getEnclosingMethod(TypePool typePool) {
-                    return null;
+                    return MethodDescription.UNDEFINED;
                 }
 
                 @Override
                 public TypeDescription getEnclosingType(TypePool typePool) {
-                    return null;
+                    return TypeDescription.UNDEFINED;
                 }
 
                 @Override
@@ -3335,7 +3336,7 @@ public interface TypePool {
 
                 @Override
                 public MethodDescription getEnclosingMethod(TypePool typePool) {
-                    return null;
+                    return MethodDescription.UNDEFINED;
                 }
 
                 @Override
@@ -4440,7 +4441,7 @@ public interface TypePool {
                 public static class Nested implements GenericTypeToken {
 
                     /**
-                     *The name of the parameterized type's erasure.
+                     * The name of the parameterized type's erasure.
                      */
                     private final String name;
 
@@ -4505,7 +4506,7 @@ public interface TypePool {
                     protected class LazyParameterizedType extends GenericTypeDescription.ForParameterizedType {
 
                         /**
-                         *The type pool to be used for locating non-generic type descriptions.
+                         * The type pool to be used for locating non-generic type descriptions.
                          */
                         private final TypePool typePool;
 
@@ -5346,16 +5347,14 @@ public interface TypePool {
 
             @Override
             public String[] toInternalNames() {
-                if (descriptors.isEmpty()) {
-                    return null;
-                } else {
-                    String[] internalName = new String[descriptors.size()];
-                    int index = 0;
-                    for (String descriptor : descriptors) {
-                        internalName[index++] = Type.getType(descriptor).getInternalName();
-                    }
-                    return internalName;
+                String[] internalName = new String[descriptors.size()];
+                int index = 0;
+                for (String descriptor : descriptors) {
+                    internalName[index++] = Type.getType(descriptor).getInternalName();
                 }
+                return internalName.length == 0
+                        ? NO_INTERFACES
+                        : internalName;
             }
 
             @Override

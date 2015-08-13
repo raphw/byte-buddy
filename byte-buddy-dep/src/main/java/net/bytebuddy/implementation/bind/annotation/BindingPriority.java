@@ -23,7 +23,7 @@ public @interface BindingPriority {
      * {@link net.bytebuddy.implementation.bind.annotation.BindingPriority}
      * annotation.
      */
-    double DEFAULT = 1d;
+    int DEFAULT = 1;
 
     /**
      * The binding priority for the annotated method. A method of higher priority will be preferred over a method
@@ -31,7 +31,7 @@ public @interface BindingPriority {
      *
      * @return The priority for the annotated method.
      */
-    double value();
+    int value();
 
     /**
      * An ambiguity resolver that considers the priority of a method as defined by the
@@ -52,7 +52,7 @@ public @interface BindingPriority {
          * @param bindingPriority The annotation of the method or {@code null} if no such annotation was found.
          * @return The factual priority of the method under investigation.
          */
-        private static double resolve(AnnotationDescription.Loadable<BindingPriority> bindingPriority) {
+        private static int resolve(AnnotationDescription.Loadable<BindingPriority> bindingPriority) {
             return bindingPriority == null
                     ? BindingPriority.DEFAULT
                     : bindingPriority.loadSilent().value();
@@ -62,8 +62,8 @@ public @interface BindingPriority {
         public Resolution resolve(MethodDescription source,
                                   MethodDelegationBinder.MethodBinding left,
                                   MethodDelegationBinder.MethodBinding right) {
-            double leftPriority = resolve(left.getTarget().getDeclaredAnnotations().ofType(BindingPriority.class));
-            double rightPriority = resolve(right.getTarget().getDeclaredAnnotations().ofType(BindingPriority.class));
+            int leftPriority = resolve(left.getTarget().getDeclaredAnnotations().ofType(BindingPriority.class));
+            int rightPriority = resolve(right.getTarget().getDeclaredAnnotations().ofType(BindingPriority.class));
             if (leftPriority == rightPriority) {
                 return Resolution.AMBIGUOUS;
             } else if (leftPriority < rightPriority) {

@@ -60,6 +60,12 @@ public interface MethodDescription extends TypeVariableSource,
     Object NO_DEFAULT_VALUE = null;
 
     /**
+     * Represents any undefined property of a type description that is instead represented as {@code null} in order
+     * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
+     */
+    MethodDescription UNDEFINED = null;
+
+    /**
      * Returns the return type of the described method.
      *
      * @return The return type of the described method.
@@ -752,7 +758,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public Object getDefaultValue() {
-            return null;
+            return NO_DEFAULT_VALUE;
         }
 
         @Override

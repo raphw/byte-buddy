@@ -12,6 +12,7 @@ import org.mockito.Mock;
 
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -20,8 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class ClassLoadingStrategyDefaultTest {
 
@@ -203,8 +203,18 @@ public class ClassLoadingStrategyDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.class).apply();
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.WrappingDispatcher.class).apply();
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.InjectionDispatcher.class).apply();
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.WrappingDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.InjectionDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
     }
 
     private static class Foo {

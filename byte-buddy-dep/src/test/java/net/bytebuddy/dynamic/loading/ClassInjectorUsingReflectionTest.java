@@ -13,12 +13,15 @@ import org.mockito.Mock;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessControlContext;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
 
 public class ClassInjectorUsingReflectionTest {
 
@@ -87,8 +90,13 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.ClassLoadingAction.class)
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.ClassInjectionAction.class)
                 .ignoreFields("accessControlContext")
                 .apply();
         final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();

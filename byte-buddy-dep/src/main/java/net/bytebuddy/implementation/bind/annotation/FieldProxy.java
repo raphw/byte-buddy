@@ -274,7 +274,7 @@ public @interface FieldProxy {
             /**
              * A reference of the {@link Object} type default constructor.
              */
-            protected final MethodDescription objectTypeDefaultConstructor;
+            private final MethodDescription objectTypeDefaultConstructor;
 
             /**
              * Creates the constructor call singleton.

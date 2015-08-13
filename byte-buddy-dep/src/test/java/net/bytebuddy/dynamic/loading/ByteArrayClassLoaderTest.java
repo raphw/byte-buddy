@@ -15,6 +15,7 @@ import org.mockito.Mock;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,6 +72,7 @@ public class ByteArrayClassLoaderTest {
         classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER,
                 ClassFileExtraction.of(Foo.class),
                 DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 persistenceHandler,
                 packageDefinitionStrategy);
         sealBase = new URL("file://foo");

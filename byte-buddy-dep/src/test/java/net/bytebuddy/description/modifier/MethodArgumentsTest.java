@@ -22,14 +22,14 @@ public class MethodArgumentsTest extends AbstractModifierContributorTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {MethodArguments.PLAIN, 0, true},
-                {MethodArguments.isVarargs(false), 0, true},
+                {MethodArguments.isVarArgs(false), 0, true},
                 {MethodArguments.VARARGS, Opcodes.ACC_VARARGS, false},
-                {MethodArguments.isVarargs(true), Opcodes.ACC_VARARGS, false},
+                {MethodArguments.isVarArgs(true), Opcodes.ACC_VARARGS, false},
         });
     }
 
     @Test
     public void testState() throws Exception {
-        assertThat(((MethodArguments) modifierContributor).isVarargs(), is(expectedModifier != 0));
+        assertThat(((MethodArguments) modifierContributor).isVarArgs(), is(expectedModifier != 0));
     }
 }

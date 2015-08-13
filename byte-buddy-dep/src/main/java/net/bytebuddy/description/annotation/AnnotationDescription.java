@@ -573,7 +573,7 @@ public interface AnnotationDescription {
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                    AnnotationValue.Loaded<?> loadedOther = (ForEnumeration.Loaded<?>) other;
+                    AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
                     return loadedOther.getState().isResolved() && enumeration.equals(loadedOther.resolve());
                 }
 
@@ -1534,7 +1534,7 @@ public interface AnnotationDescription {
      *
      * @param <S> The type of the annotation.
      */
-    class ForLoadedAnnotation<S extends Annotation> extends AbstractBase.ForPrepared<S> implements Loadable<S> {
+    class ForLoadedAnnotation<S extends Annotation> extends AbstractBase.ForPrepared<S> {
 
         /**
          * The represented annotation value.

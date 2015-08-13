@@ -19,7 +19,7 @@ import org.objectweb.asm.Opcodes;
 public interface AuxiliaryType {
 
     /**
-     * The default type access of an auxiliary type. This array must not be mutated.
+     * The default type access of an auxiliary type. <b>This array must not be mutated</b>.
      */
     ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {SyntheticState.SYNTHETIC};
 
@@ -33,9 +33,7 @@ public interface AuxiliaryType {
      * @param methodAccessorFactory A factory for accessor methods.
      * @return A dynamically created type representing this auxiliary type.
      */
-    DynamicType make(String auxiliaryTypeName,
-                     ClassFileVersion classFileVersion,
-                     MethodAccessorFactory methodAccessorFactory);
+    DynamicType make(String auxiliaryTypeName, ClassFileVersion classFileVersion, MethodAccessorFactory methodAccessorFactory);
 
     /**
      * A factory for creating method proxies for an auxiliary type. Such proxies are required to allow a type to

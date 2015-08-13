@@ -23,6 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
+import java.security.AccessController;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -324,6 +325,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SampleClass.class),
                 null,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> otherSampleClass = classLoader.loadClass(SampleClass.class.getName());
@@ -518,6 +520,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
             ClassLoader classLoader = new ByteArrayClassLoader(null,
                     Collections.singletonMap(type.getName(), classWriter.toByteArray()),
                     null,
+                    AccessController.getContext(),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                     PackageDefinitionStrategy.NoOp.INSTANCE);
             return classLoader.loadClass(type.getName());

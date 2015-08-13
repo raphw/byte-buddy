@@ -30,6 +30,8 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,7 +53,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * </p>
  * <p>
  * When defining several {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s, the agent builder always
- * applies the transformers that were supplied with the last applicable matcher. Therefore, more general transfromers
+ * applies the transformers that were supplied with the last applicable matcher. Therefore, more general transformers
  * should be defined first.
  * </p>
  */
@@ -100,8 +102,7 @@ public interface AgentBuilder {
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
      * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
      */
-    Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher,
-                      ElementMatcher<? super ClassLoader> classLoaderMatcher);
+    Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
     /**
      * Defines the given {@link net.bytebuddy.ByteBuddy} instance to be used by the created agent.
@@ -139,6 +140,14 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder which uses the given native method prefix.
      */
     AgentBuilder withNativeMethodPrefix(String prefix);
+
+    /**
+     * Defines classes to be loaded using the given access control context.
+     *
+     * @param accessControlContext The access control context to be used for loading classes.
+     * @return A new instance of this agent builder which uses the given access control context for class loading.
+     */
+    AgentBuilder withAccessControlContext(AccessControlContext accessControlContext);
 
     /**
      * <p>
@@ -754,6 +763,11 @@ public interface AgentBuilder {
         private final String nativeMethodPrefix;
 
         /**
+         * The access control context to use for loading classes.
+         */
+        private final AccessControlContext accessControlContext;
+
+        /**
          * {@code true} if generated types should not create a callback inside their type initializer in order
          * to call their potential {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
          */
@@ -784,7 +798,7 @@ public interface AgentBuilder {
         }
 
         /**
-         * Creates a new default agent builder.
+         * Creates a new agent builder with default settings.
          *
          * @param byteBuddy The Byte Buddy instance to be used.
          */
@@ -793,6 +807,7 @@ public interface AgentBuilder {
                     BinaryLocator.Default.INSTANCE,
                     Listener.NoOp.INSTANCE,
                     NO_NATIVE_PREFIX,
+                    AccessController.getContext(),
                     false,
                     false,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
@@ -808,6 +823,7 @@ public interface AgentBuilder {
          * @param nativeMethodPrefix         The native method prefix to use which might also represent
          *                                   {@link net.bytebuddy.agent.builder.AgentBuilder.Default#NO_NATIVE_PREFIX}
          *                                   to indicate that no prefix should be added but rather a random suffix.
+         * @param accessControlContext       The access control context to use for loading classes.
          * @param disableSelfInitialization  {@code true} if generated types should not create a callback inside their
          *                                   type initializer in order to call their potential
          *                                   {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -822,6 +838,7 @@ public interface AgentBuilder {
                           BinaryLocator binaryLocator,
                           Listener listener,
                           String nativeMethodPrefix,
+                          AccessControlContext accessControlContext,
                           boolean disableSelfInitialization,
                           boolean retransformation,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
@@ -830,6 +847,7 @@ public interface AgentBuilder {
             this.binaryLocator = binaryLocator;
             this.listener = listener;
             this.nativeMethodPrefix = nativeMethodPrefix;
+            this.accessControlContext = accessControlContext;
             this.disableSelfInitialization = disableSelfInitialization;
             this.retransformation = retransformation;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
@@ -858,6 +876,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     listener,
                     nativeMethodPrefix,
+                    accessControlContext,
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
@@ -870,6 +889,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     new Listener.Compound(this.listener, nonNull(listener)),
                     nativeMethodPrefix,
+                    accessControlContext,
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
@@ -882,6 +902,7 @@ public interface AgentBuilder {
                     nonNull(binaryLocator),
                     listener,
                     nativeMethodPrefix,
+                    accessControlContext,
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
@@ -897,6 +918,20 @@ public interface AgentBuilder {
                     binaryLocator,
                     listener,
                     prefix,
+                    accessControlContext,
+                    disableSelfInitialization,
+                    retransformation,
+                    bootstrapInjectionStrategy,
+                    entries);
+        }
+
+        @Override
+        public AgentBuilder withAccessControlContext(AccessControlContext accessControlContext) {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    listener,
+                    nativeMethodPrefix,
+                    accessControlContext,
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
@@ -909,6 +944,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     listener,
                     nativeMethodPrefix,
+                    accessControlContext,
                     disableSelfInitialization,
                     true,
                     bootstrapInjectionStrategy,
@@ -921,6 +957,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     listener,
                     nativeMethodPrefix,
+                    accessControlContext,
                     true,
                     retransformation,
                     bootstrapInjectionStrategy,
@@ -933,6 +970,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     listener,
                     nativeMethodPrefix,
+                    accessControlContext,
                     true,
                     retransformation,
                     new BootstrapInjectionStrategy.Enabled(nonNull(folder), nonNull(instrumentation)),
@@ -975,6 +1013,7 @@ public interface AgentBuilder {
                     && byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
                     && nativeMethodPrefix.equals(aDefault.nativeMethodPrefix)
+                    && accessControlContext.equals(aDefault.accessControlContext)
                     && disableSelfInitialization == aDefault.disableSelfInitialization
                     && retransformation == aDefault.retransformation
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
@@ -988,6 +1027,7 @@ public interface AgentBuilder {
             result = 31 * result + binaryLocator.hashCode();
             result = 31 * result + listener.hashCode();
             result = 31 * result + nativeMethodPrefix.hashCode();
+            result = 31 * result + accessControlContext.hashCode();
             result = 31 * result + (disableSelfInitialization ? 1 : 0);
             result = 31 * result + (retransformation ? 1 : 0);
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
@@ -1002,6 +1042,7 @@ public interface AgentBuilder {
                     ", binaryLocator=" + binaryLocator +
                     ", listener=" + listener +
                     ", nativeMethodPrefix=" + nativeMethodPrefix +
+                    ", accessControlContext=" + accessControlContext +
                     ", disableSelfInitialization=" + disableSelfInitialization +
                     ", retransformation=" + retransformation +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
@@ -1568,7 +1609,7 @@ public interface AgentBuilder {
                             if (loadedTypeInitializers.size() > 1) {
                                 ClassInjector classInjector = classLoader == null
                                         ? bootstrapInjectionStrategy.make(protectionDomain)
-                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain, PackageDefinitionStrategy.NoOp.INSTANCE);
+                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext, PackageDefinitionStrategy.NoOp.INSTANCE);
                                 for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(dynamicType.getRawAuxiliaryTypes()).entrySet()) {
                                     initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
                                 }
@@ -1668,6 +1709,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder withAccessControlContext(AccessControlContext accessControlContext) {
+                return materialize().withAccessControlContext(accessControlContext);
+            }
+
+            @Override
             public AgentBuilder disableSelfInitialization() {
                 return materialize().disableSelfInitialization();
             }
@@ -1707,6 +1753,7 @@ public interface AgentBuilder {
                         binaryLocator,
                         listener,
                         nativeMethodPrefix,
+                        accessControlContext,
                         disableSelfInitialization,
                         retransformation,
                         bootstrapInjectionStrategy,

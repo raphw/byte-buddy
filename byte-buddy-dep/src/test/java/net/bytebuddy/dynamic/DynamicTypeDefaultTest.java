@@ -174,6 +174,7 @@ public class DynamicTypeDefaultTest {
     @Test
     public void testJarCreation() throws Exception {
         File file = File.createTempFile(FOO, TEMP);
+        assertThat(file.delete(), is(true));
         boolean fileDeletion;
         try {
             assertThat(dynamicType.toJar(file), is(file));
@@ -195,6 +196,7 @@ public class DynamicTypeDefaultTest {
     @Test
     public void testJarWithExplicitManifestCreation() throws Exception {
         File file = File.createTempFile(FOO, TEMP);
+        assertThat(file.delete(), is(true));
         boolean fileDeletion;
         try {
             Manifest manifest = new Manifest();
@@ -230,6 +232,7 @@ public class DynamicTypeDefaultTest {
             jarOutputStream.close();
         }
         File file = File.createTempFile(FOO, TEMP);
+        assertThat(file.delete(), is(true));
         boolean fileDeletion;
         try {
             assertThat(dynamicType.inject(sourceFile, file), is(file));

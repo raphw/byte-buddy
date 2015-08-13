@@ -16,6 +16,7 @@ import java.util.Set;
  */
 public interface AnnotationList extends FilterableList<AnnotationDescription, AnnotationList> {
 
+
     /**
      * Checks if this list contains an annotation of the given type.
      *

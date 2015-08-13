@@ -12,7 +12,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -110,7 +109,10 @@ public interface ClassInjector {
          * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          */
         public UsingReflection(ClassLoader classLoader) {
-            this(classLoader, DEFAULT_PROTECTION_DOMAIN, PackageDefinitionStrategy.Trivial.INSTANCE);
+            this(classLoader,
+                    DEFAULT_PROTECTION_DOMAIN,
+                    AccessController.getContext(),
+                    PackageDefinitionStrategy.Trivial.INSTANCE);
         }
 
         /**
@@ -118,48 +120,32 @@ public interface ClassInjector {
          *
          * @param classLoader               The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+         * @param accessControlContext      The access control context of this class loader's instantiation.
          * @param protectionDomain          The protection domain to apply during class definition.
          */
-        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain, PackageDefinitionStrategy packageDefinitionStrategy) {
+        public UsingReflection(ClassLoader classLoader,
+                               ProtectionDomain protectionDomain,
+                               AccessControlContext accessControlContext,
+                               PackageDefinitionStrategy packageDefinitionStrategy) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader");
             }
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
             this.packageDefinitionStrategy = packageDefinitionStrategy;
-            accessControlContext = AccessController.getContext();
+            this.accessControlContext = accessControlContext;
         }
 
         @Override
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             try {
-                Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>(types.size());
                 synchronized (classLoader) {
-                    for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                        Class<?> type = REFLECTION_STORE.findClass(classLoader, entry.getKey().getName());
-                        if (type == null) {
-                            try {
-                                type = AccessController.doPrivileged(new ClassLoadingAction(entry.getKey().getName(), entry.getValue()), accessControlContext);
-                            } catch (PrivilegedActionException exception) {
-                                if (exception.getCause() instanceof IllegalAccessException) {
-                                    throw (IllegalAccessException) exception.getCause();
-                                } else if (exception.getCause() instanceof InvocationTargetException) {
-                                    throw (InvocationTargetException) exception.getCause();
-                                } else if (exception.getCause() instanceof IOException) {
-                                    throw new IllegalStateException("Exception on IO operation", exception.getCause());
-                                } else {
-                                    throw (RuntimeException) exception.getCause();
-                                }
-                            }
-                        }
-                        loaded.put(entry.getKey(), type);
-                    }
+                    return AccessController.doPrivileged(new ClassInjectionAction(types), accessControlContext);
                 }
-                return loaded;
-            } catch (IllegalAccessException exception) {
-                throw new IllegalStateException("Could not access injection method", exception);
-            } catch (InvocationTargetException exception) {
-                throw new IllegalStateException("Exception on invoking loader method", exception.getCause());
+            } catch (PrivilegedActionException exception) {
+                throw new IllegalStateException("Could not access injection method", exception.getException() instanceof InvocationTargetException
+                        ? exception.getException().getCause()
+                        : exception.getException());
             }
         }
 
@@ -458,7 +444,7 @@ public interface ClassInjector {
         /**
          * A privileged action for loading a class reflectively.
          */
-        protected class ClassLoadingAction implements PrivilegedExceptionAction<Class<?>> {
+        protected class ClassInjectionAction implements PrivilegedExceptionAction<Map<TypeDescription, Class<?>>> {
 
             /**
              * A convenience variable representing the first index of an array, to make the code more readable.
@@ -466,65 +452,58 @@ public interface ClassInjector {
             private static final int FROM_BEGINNING = 0;
 
             /**
-             * The name of the class that is being loaded.
+             * The types to be loaded mapping to their binary representation.
              */
-            private final String typeName;
+            private final Map<? extends TypeDescription, byte[]> types;
 
             /**
-             * The binary representation of the class that is being loaded.
-             */
-            private final byte[] binaryRepresentation;
-
-            /**
-             * Creates a new class loading action.
+             * Creates a new class injection action.
              *
-             * @param typeName             The name of the class that is being loaded.
-             * @param binaryRepresentation The binary representation of the class that is being loaded.
+             * @param types The types to be loaded mapping to their binary representation.
              */
-            protected ClassLoadingAction(String typeName, byte[] binaryRepresentation) {
-                this.typeName = typeName;
-                this.binaryRepresentation = binaryRepresentation;
+            protected ClassInjectionAction(Map<? extends TypeDescription, byte[]> types) {
+                this.types = types;
             }
 
             @Override
-            public Class<?> run() throws IllegalAccessException, InvocationTargetException, IOException {
-                int packageIndex = typeName.lastIndexOf('.');
-                if (packageIndex != -1) {
-                    String packageName = typeName.substring(0, packageIndex);
-                    PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, typeName);
-                    if (definition.isDefined()) {
-                        Package definedPackage = REFLECTION_STORE.getPackage(classLoader, packageName);
-                        if (definedPackage == null) {
-                            REFLECTION_STORE.definePackage(classLoader,
-                                    packageName,
-                                    definition.getSpecificationTitle(),
-                                    definition.getSpecificationVersion(),
-                                    definition.getSpecificationVendor(),
-                                    definition.getImplementationTitle(),
-                                    definition.getImplementationVersion(),
-                                    definition.getImplementationVendor(),
-                                    definition.getSealBase());
-                        } else if (!definition.isCompatibleTo(definedPackage)) {
-                            throw new SecurityException("Sealing violation for package " + packageName);
+            public Map<TypeDescription, Class<?>> run() throws IllegalAccessException, InvocationTargetException, IOException {
+                Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>(types.size());
+                for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
+                    String typeName = entry.getKey().getName();
+                    Class<?> type = REFLECTION_STORE.findClass(classLoader, typeName);
+                    if (type == null) {
+                        int packageIndex = typeName.lastIndexOf('.');
+                        if (packageIndex != -1) {
+                            String packageName = typeName.substring(0, packageIndex);
+                            PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, typeName);
+                            if (definition.isDefined()) {
+                                Package definedPackage = REFLECTION_STORE.getPackage(classLoader, packageName);
+                                if (definedPackage == null) {
+                                    REFLECTION_STORE.definePackage(classLoader,
+                                            packageName,
+                                            definition.getSpecificationTitle(),
+                                            definition.getSpecificationVersion(),
+                                            definition.getSpecificationVendor(),
+                                            definition.getImplementationTitle(),
+                                            definition.getImplementationVersion(),
+                                            definition.getImplementationVendor(),
+                                            definition.getSealBase());
+                                } else if (!definition.isCompatibleTo(definedPackage)) {
+                                    throw new SecurityException("Sealing violation for package " + packageName);
+                                }
+                            }
                         }
+                        byte[] binaryRepresentation = entry.getValue();
+                        type = REFLECTION_STORE.loadClass(classLoader,
+                                typeName,
+                                binaryRepresentation,
+                                FROM_BEGINNING,
+                                binaryRepresentation.length,
+                                protectionDomain);
                     }
+                    loadedTypes.put(entry.getKey(), type);
                 }
-                return REFLECTION_STORE.loadClass(classLoader,
-                        typeName,
-                        binaryRepresentation,
-                        FROM_BEGINNING,
-                        binaryRepresentation.length,
-                        protectionDomain);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ClassLoadingAction that = (ClassLoadingAction) other;
-                return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
-                        && UsingReflection.this.equals(that.getOuter())
-                        && typeName.equals(that.typeName);
+                return loadedTypes;
             }
 
             /**
@@ -537,19 +516,22 @@ public interface ClassInjector {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && UsingReflection.this.equals(((ClassInjectionAction) other).getOuter())
+                        && types.equals(((ClassInjectionAction) other).types);
+            }
+
+            @Override
             public int hashCode() {
-                int result = typeName.hashCode();
-                result = 31 * result + UsingReflection.this.hashCode();
-                result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                return result;
+                return types.hashCode() + 31 * UsingReflection.this.hashCode();
             }
 
             @Override
             public String toString() {
-                return "ClassInjector.UsingReflection.ClassLoadingAction{" +
-                        "injector=" + UsingReflection.this +
-                        ", typeName='" + typeName + '\'' +
-                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
+                return "ClassInjector.UsingReflection.ClassInjectionAction{" +
+                        "usingReflection=" + UsingReflection.this +
+                        ",types=" + types +
                         '}';
             }
         }

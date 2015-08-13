@@ -21,6 +21,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.ProtectionDomain;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
@@ -29,6 +31,8 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AgentBuilderDefaultApplicationTest {
+
+    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -41,7 +45,8 @@ public class AgentBuilderDefaultApplicationTest {
     public void setUp() throws Exception {
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
                 ClassFileExtraction.of(Foo.class, Bar.class, Qux.class, Baz.class),
-                null,
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
     }

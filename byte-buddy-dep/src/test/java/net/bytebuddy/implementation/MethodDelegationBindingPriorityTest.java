@@ -11,7 +11,7 @@ public class MethodDelegationBindingPriorityTest extends AbstractImplementationT
 
     private static final String FOO = "FOO", BAR = "bar";
 
-    private static final double PRIORITY = 10d;
+    private static final int PRIORITY = 10;
 
     @Test
     public void testBindingPriority() throws Exception {

@@ -70,6 +70,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      */
     GenericTypeList ARRAY_INTERFACES = new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class);
 
+    /**
+     * Represents any undefined property of a type description that is instead represented as {@code null} in order
+     * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
+     */
+    TypeDescription UNDEFINED = null;
+
     @Override
     FieldList<FieldDescription.InDefinedShape> getDeclaredFields();
 
@@ -463,7 +469,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public TypeVariableSource getVariableSource() {
-            return null;
+            return UNDEFINED;
         }
 
         @Override
@@ -695,7 +701,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
             @Override
             public TypeDescription getComponentType() {
-                return null;
+                return UNDEFINED;
             }
 
             @Override
@@ -879,7 +885,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             } else if (enclosingConstructor != null) {
                 return new MethodDescription.ForLoadedConstructor(enclosingConstructor);
             } else {
-                return null;
+                return MethodDescription.UNDEFINED;
             }
         }
 
@@ -1098,12 +1104,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public MethodDescription getEnclosingMethod() {
-            return null;
+            return MethodDescription.UNDEFINED;
         }
 
         @Override
         public TypeDescription getEnclosingType() {
-            return null;
+            return UNDEFINED;
         }
 
         @Override
@@ -1166,7 +1172,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public PackageDescription getPackage() {
-            return null;
+            return PackageDescription.UNDEFINED;
         }
 
         @Override
@@ -1189,7 +1195,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public TypeDescription getDeclaringType() {
-            return null;
+            return UNDEFINED;
         }
 
         @Override
@@ -1255,12 +1261,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public MethodDescription getEnclosingMethod() {
-            return null;
+            return MethodDescription.UNDEFINED;
         }
 
         @Override
         public TypeDescription getEnclosingType() {
-            return null;
+            return UNDEFINED;
         }
 
         @Override
@@ -1309,7 +1315,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public TypeDescription getDeclaringType() {
-            return null;
+            return UNDEFINED;
         }
 
         @Override
@@ -1359,12 +1365,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public MethodDescription getEnclosingMethod() {
-            return null;
+            return MethodDescription.UNDEFINED;
         }
 
         @Override
         public TypeDescription getEnclosingType() {
-            return null;
+            return UNDEFINED;
         }
 
         @Override
@@ -1404,7 +1410,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public TypeDescription getDeclaringType() {
-            return null;
+            return UNDEFINED;
         }
 
         @Override

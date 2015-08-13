@@ -32,6 +32,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public abstract class AbstractDynamicTypeBuilderForInliningTest extends AbstractDynamicTypeBuilderTest {
+
+    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -118,8 +122,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @Test
     public void testGenericType() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
-                ClassFileExtraction.of(GenericType.class),
-                null,
+                ClassFileExtraction.of(GenericType.class), DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> dynamicType = create(GenericType.Inner.class)
@@ -246,7 +250,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testVisibilityBridge() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
-                null,
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
@@ -282,7 +287,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testNoVisibilityBridgeForNonPublicType() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
-                null,
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
@@ -298,7 +304,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testNoVisibilityBridgeForInheritedType() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PublicVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
-                null,
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = new ByteBuddy().subclass(PublicVisibilityBridgeExtension.class)
@@ -314,7 +321,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testNoVisibilityBridgeForAbstractMethod() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class, VisibilityBridgeAbstractMethod.class),
-                null,
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class)

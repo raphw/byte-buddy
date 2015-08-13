@@ -19,6 +19,7 @@ import org.mockito.stubbing.Answer;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -197,7 +198,12 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Matched.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();

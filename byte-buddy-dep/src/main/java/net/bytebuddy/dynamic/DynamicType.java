@@ -2999,7 +2999,9 @@ public interface DynamicType {
             Map<TypeDescription, File> savedFiles = new HashMap<TypeDescription, File>();
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (target.getParentFile() != null) {
-                target.getParentFile().mkdirs();
+                if(!target.getParentFile().mkdirs()) {
+                    Logger.getAnonymousLogger().info("Writing file to existing folder structure: " + target.getParent());
+                }
             }
             OutputStream outputStream = new FileOutputStream(target);
             try {
@@ -3018,7 +3020,9 @@ public interface DynamicType {
         public File inject(File sourceJar, File targetJar) throws IOException {
             JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
             try {
-                targetJar.createNewFile();
+                if(!targetJar.createNewFile()) {
+                    Logger.getAnonymousLogger().info("Overwriting file " + targetJar);
+                }
                 JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetJar)), jarInputStream.getManifest());
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getRawAuxiliaryTypes();
@@ -3093,9 +3097,10 @@ public interface DynamicType {
 
         @Override
         public File toJar(File file, Manifest manifest) throws IOException {
-            file.createNewFile();
-            JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)),
-                    manifest);
+            if (!file.createNewFile()) {
+                Logger.getAnonymousLogger().info("Overwriting existing file: " + file);
+            }
+            JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)), manifest);
             try {
                 for (Map.Entry<TypeDescription, byte[]> entry : getRawAuxiliaryTypes().entrySet()) {
                     outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
