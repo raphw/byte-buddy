@@ -47,10 +47,10 @@ mvn package
         </a>. As a more modern alternative, Byte Buddy also supports running mutation tests by running
         <code>org.pitest:pitest-maven:mutationCoverage</code> from Maven. Keep however in mind that running mutation
         tests requires a significant amount of additional runtime compared to computing line coverage. Finally, the
-        <i>find bugs</i> plugin for Maven is configured which can be run by
-        <code>compile findbugs:findbugs findbugs:gui</code> in order to identify potential bugs in the code base. Note
-        however, that findbugs tends to be overly strict or even wrong with several of its recommendations. If it
-        is non-obvious, the source code commentary explains why the recommendation is ignored.
+        <code>integration</code> profile for Maven can be activated for scanning the code base for potential
+        errors. This progile is always activated on the continous integration server. The <code>checks</code>
+        prfoile on the other hand aggregates faster-running code checks and is activated by default for any 
+        Maven build.
     </p>
 
     <p>
