@@ -18,13 +18,13 @@
         code optimizations by IDEs or 'find bugs'. When changing the benchmarks, it is advisable to analyze the
         tests' assembly code for validating what iis measured.
 
-        For running the benchmarks, build the project with the 'extras' profile and run the target/byte-buddy-benchmarks.jar
+        For running the benchmarks, build the project with the 'extras' profile and execute 'target/byte-buddy-benchmarks.jar'
         from the command line. Running the benchmarks should happen on an idle machine and requires several hours of runtime.
     -->
 
     <properties>
         <benchmark.mainClass>net.bytebuddy.benchmark.runner.BenchmarkRunner</benchmark.mainClass>
-        <version.jmh>1.10.3</version.jmh>
+        <version.jmh>1.10.5</version.jmh>
         <version.cglib>3.1</version.cglib>
         <version.javassist>3.20.0-GA</version.javassist>
     </properties>

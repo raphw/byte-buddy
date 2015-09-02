@@ -22,16 +22,13 @@
       - extras: Creates additional artifacts containing source files and javadoc. (activated on release)
       - gpg: Sign all artifacts using gpg. (activated on release)
       - checks: Applies style checks to the source files. (activated by default, activated on release)
+      - integration: Runs additional unit tests and executes static code analysis (activated on Travis CI)
       - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
 
       Additionally, the following reports are available via Maven:
       - cobertura:cobertura - Computes line coverage for test suite (all modules)
       - org.pitest:pitest-maven:mutationCoverage - Runs mutation tests (all modules)
-      - compile findbugs:findbugs findbugs:gui - Runs findbugs and shows a report in a graphical interface (module specific)
-
-      Few tests concerning class loaders require a longer runtime than adequate for continuous application. Setting the property
-      '-Dnet.bytebuddy.property.integration=true' triggers the execution of these tests. These tests are activated on the Travis
-      build.
+      - findbugs:findbugs findbugs:gui - Runs findbugs and shows a report in a graphical interface (module specific)
     -->
 
     <modules>
@@ -73,7 +70,7 @@
         <version.plugin.surefire>2.18.1</version.plugin.surefire>
         <version.plugin.pitest>1.1.6</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
-        <version.plugin.enforcer>1.4</version.plugin.enforcer>
+        <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
         <!-- Versions 2.6 and 2.7 fail on Travis. -->
         <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
         <version.plugin.coveralls>3.1.0</version.plugin.coveralls>
@@ -217,7 +214,7 @@
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${version.plugin.coveralls}</version>
             </plugin>
-            <!-- Find bugs. Note that the generated warnings do not always apply for Byte Buddy's use case. -->
+            <!-- Also allow for manual findbugs execution. Note that the generated warnings do not always apply for Byte Buddy's use case. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -293,7 +290,7 @@
     </distributionManagement>
 
     <profiles>
-        <!-- Creates additional articats that make this project deployable to repositories. -->
+        <!-- Creates additional artifacts that are required for deployment. -->
         <profile>
             <id>extras</id>
             <activation>
@@ -423,6 +420,29 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- Make sure that Byte Buddy does never depend on ASM's tree API. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>${version.plugin.enforcer}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <fail>true</fail>
+                                    <rules>
+                                        <bannedDependencies>
+                                            <includes>
+                                                <include>org.ow2.asm:asm-tree</include>
+                                            </includes>
+                                        </bannedDependencies>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
@@ -445,7 +465,7 @@
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
-                    <!-- Run findbugs if not specified differently.-->
+                    <!-- Run findbugs if not specified differently in a module.-->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>findbugs-maven-plugin</artifactId>
@@ -461,29 +481,6 @@
                                     <threshold>Low</threshold>
                                     <xmlOutput>true</xmlOutput>
                                     <failOnError>true</failOnError>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!-- Make sure that Byte Buddy does never depend on ASM's tree API. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <version>${version.plugin.enforcer}</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <fail>true</fail>
-                                    <rules>
-                                        <bannedDependencies>
-                                            <includes>
-                                                <include>org.ow2.asm:asm-tree</include>
-                                            </includes>
-                                        </bannedDependencies>
-                                    </rules>
                                 </configuration>
                             </execution>
                         </executions>
