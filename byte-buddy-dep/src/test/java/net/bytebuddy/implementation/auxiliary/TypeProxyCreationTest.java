@@ -15,7 +15,6 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.MoreOpcodes;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -238,7 +237,7 @@ public class TypeProxyCreationTest {
                 foo.getInternalName(),
                 TypeProxy.INSTANCE_FIELD,
                 Type.getDescriptor(Void.class));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verifyNoMoreInteractions(methodVisitor);
     }
 
@@ -274,7 +273,7 @@ public class TypeProxyCreationTest {
                 foo.getInternalName(),
                 TypeProxy.INSTANCE_FIELD,
                 Type.getDescriptor(Void.class));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verifyNoMoreInteractions(methodVisitor);
     }
 
@@ -311,7 +310,7 @@ public class TypeProxyCreationTest {
                 Type.getInternalName(FooProxyMake.class),
                 TypeProxy.INSTANCE_FIELD,
                 Type.getDescriptor(Void.class));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verifyNoMoreInteractions(methodVisitor);
     }
 

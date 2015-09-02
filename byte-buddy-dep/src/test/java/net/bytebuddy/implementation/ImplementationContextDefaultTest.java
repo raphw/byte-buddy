@@ -15,7 +15,6 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.MoreOpcodes;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
@@ -446,8 +445,8 @@ public class ImplementationContextDefaultTest {
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
         verify(methodVisitor).visitCode();
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
         verify(firstSpecialInvocation).apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitInsn(Opcodes.ARETURN);
         verify(methodVisitor).visitMaxs(2, 1);
@@ -468,7 +467,7 @@ public class ImplementationContextDefaultTest {
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + BAR + ")" + FOO), isNull(String.class), aryEq(new String[]{BAZ}));
         verify(methodVisitor).visitCode();
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verify(secondSpecialInvocation).apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitInsn(Opcodes.ARETURN);
         verify(methodVisitor).visitMaxs(1, 0);
@@ -518,7 +517,7 @@ public class ImplementationContextDefaultTest {
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verify(methodVisitor).visitFieldInsn(Opcodes.GETFIELD, QUX, FOO, BAR);
         verify(methodVisitor).visitInsn(Opcodes.ARETURN);
         verify(methodVisitor).visitMaxs(1, 1);
@@ -590,8 +589,8 @@ public class ImplementationContextDefaultTest {
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
         verify(methodVisitor).visitFieldInsn(Opcodes.PUTFIELD, QUX, FOO, BAR);
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verify(methodVisitor).visitMaxs(2, 1);
@@ -612,7 +611,7 @@ public class ImplementationContextDefaultTest {
         verify(classVisitor).visitMethod(eq(AuxiliaryType.MethodAccessorFactory.ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verify(methodVisitor).visitFieldInsn(Opcodes.PUTSTATIC, BAZ, BAR, FOO);
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verify(methodVisitor).visitMaxs(1, 0);

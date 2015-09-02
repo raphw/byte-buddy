@@ -21,38 +21,32 @@ public enum MethodVariableAccess {
     /**
      * The accessor handler for a JVM-integer.
      */
-    INTEGER(Opcodes.ILOAD, 5, StackSize.SINGLE),
+    INTEGER(Opcodes.ILOAD, StackSize.SINGLE),
 
     /**
      * The accessor handler for a {@code long}.
      */
-    LONG(Opcodes.LLOAD, 8, StackSize.DOUBLE),
+    LONG(Opcodes.LLOAD, StackSize.DOUBLE),
 
     /**
      * The accessor handler for a {@code float}.
      */
-    FLOAT(Opcodes.FLOAD, 11, StackSize.SINGLE),
+    FLOAT(Opcodes.FLOAD, StackSize.SINGLE),
 
     /**
      * The accessor handler for a {@code double}.
      */
-    DOUBLE(Opcodes.DLOAD, 14, StackSize.DOUBLE),
+    DOUBLE(Opcodes.DLOAD, StackSize.DOUBLE),
 
     /**
      * The accessor handler for a reference type.
      */
-    REFERENCE(Opcodes.ALOAD, 17, StackSize.SINGLE);
+    REFERENCE(Opcodes.ALOAD, StackSize.SINGLE);
 
     /**
      * The opcode for loading this variable.
      */
     private final int loadOpcode;
-
-    /**
-     * The offset for any shortcut opcode that allows to load a variable from a low range index, such as
-     * {@code ALOAD_0}, {@code ILOAD_0} etc.
-     */
-    private final int loadOpcodeShortcutOffset;
 
     /**
      * The size impact of this stack manipulation.
@@ -62,14 +56,11 @@ public enum MethodVariableAccess {
     /**
      * Creates a new method variable access for a given JVM type.
      *
-     * @param loadOpcode               The opcode for loading this variable.
-     * @param loadOpcodeShortcutOffset The offset for any shortcut opcode that allows to load a variable from a low
-     *                                 range index, such as {@code ALOAD_0}, {@code ILOAD_0} etc.
-     * @param stackSize                The size of the JVM type.
+     * @param loadOpcode The opcode for loading this variable.
+     * @param stackSize  The size of the JVM type.
      */
-    MethodVariableAccess(int loadOpcode, int loadOpcodeShortcutOffset, StackSize stackSize) {
+    MethodVariableAccess(int loadOpcode, StackSize stackSize) {
         this.loadOpcode = loadOpcode;
-        this.loadOpcodeShortcutOffset = loadOpcodeShortcutOffset;
         this.size = stackSize.toIncreasingSize();
     }
 
@@ -325,23 +316,7 @@ public enum MethodVariableAccess {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            switch (offset) {
-                case 0:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset);
-                    break;
-                case 1:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 1);
-                    break;
-                case 2:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 2);
-                    break;
-                case 3:
-                    methodVisitor.visitInsn(loadOpcode + loadOpcodeShortcutOffset + 3);
-                    break;
-                default:
-                    methodVisitor.visitVarInsn(loadOpcode, offset);
-                    break;
-            }
+            methodVisitor.visitVarInsn(loadOpcode, offset);
             return size;
         }
 

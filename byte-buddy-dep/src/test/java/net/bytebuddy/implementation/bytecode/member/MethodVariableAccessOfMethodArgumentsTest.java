@@ -8,7 +8,6 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.MoreOpcodes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -75,8 +74,8 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE));
         assertThat(size.getMaximalSize(), is(PARAMETER_STACK_SIZE));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
         verifyNoMoreInteractions(methodVisitor);
     }
 
@@ -87,8 +86,8 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE));
         assertThat(size.getMaximalSize(), is(PARAMETER_STACK_SIZE));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_2);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 2);
         verifyNoMoreInteractions(methodVisitor);
     }
 
@@ -100,8 +99,8 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE));
         assertThat(size.getMaximalSize(), is(PARAMETER_STACK_SIZE));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
         verifyNoMoreInteractions(methodVisitor);
     }
 
@@ -112,9 +111,9 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE + 1));
         assertThat(size.getMaximalSize(), is(PARAMETER_STACK_SIZE + 1));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_0);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_2);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 2);
         verifyNoMoreInteractions(methodVisitor);
     }
 
@@ -127,8 +126,8 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE));
         assertThat(size.getMaximalSize(), is(PARAMETER_STACK_SIZE));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_2);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 2);
         verifyNoMoreInteractions(methodVisitor);
     }
 
@@ -141,9 +140,9 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(PARAMETER_STACK_SIZE));
         assertThat(size.getMaximalSize(), is(PARAMETER_STACK_SIZE));
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_1);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
         verify(methodVisitor).visitTypeInsn(Opcodes.CHECKCAST, FOO);
-        verify(methodVisitor).visitInsn(MoreOpcodes.ALOAD_2);
+        verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 2);
         verifyNoMoreInteractions(methodVisitor);
     }
 }
