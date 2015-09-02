@@ -11,7 +11,10 @@ import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.security.*;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -43,43 +46,43 @@ public interface ClassInjector {
     class UsingReflection implements ClassInjector {
 
         /**
-         * A storage for the reflection method representations that are obtained on loading this classes.
+         * Indicates that an array should be included from the first index position. Improves source code readabilty.
          */
-        private static final ReflectionStore REFLECTION_STORE;
+        private static final int FROM_BEGINNING = 0;
+
+        /**
+         * The dispatcher to use for accessing a class loader via reflection.
+         */
+        private static final Dispatcher.Initializable DISPATCHER;
 
         /*
          * Obtains the reflective instances used by this injector or a no-op instance that throws the exception
          * that occurred when attempting to obtain the reflective member instances.
          */
         static {
-            ReflectionStore reflectionStore;
+            Dispatcher.Initializable dispatcher;
             try {
-                Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
-                findLoadedClass.setAccessible(true);
-                Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass",
-                        String.class,
-                        byte[].class,
-                        int.class,
-                        int.class,
-                        ProtectionDomain.class);
-                defineClass.setAccessible(true);
-                Method getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
-                getPackage.setAccessible(true);
-                Method definePackage = ClassLoader.class.getDeclaredMethod("definePackage",
-                        String.class,
-                        String.class,
-                        String.class,
-                        String.class,
-                        String.class,
-                        String.class,
-                        String.class,
-                        URL.class);
-                definePackage.setAccessible(true);
-                reflectionStore = new ReflectionStore.Resolved(findLoadedClass, defineClass, getPackage, definePackage);
+                dispatcher = new Dispatcher.Resolved(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
+                        ClassLoader.class.getDeclaredMethod("defineClass",
+                                String.class,
+                                byte[].class,
+                                int.class,
+                                int.class,
+                                ProtectionDomain.class),
+                        ClassLoader.class.getDeclaredMethod("getPackage", String.class),
+                        ClassLoader.class.getDeclaredMethod("definePackage",
+                                String.class,
+                                String.class,
+                                String.class,
+                                String.class,
+                                String.class,
+                                String.class,
+                                String.class,
+                                URL.class));
             } catch (Exception exception) {
-                reflectionStore = new ReflectionStore.Faulty(exception);
+                dispatcher = new Dispatcher.Faulty(exception);
             }
-            REFLECTION_STORE = reflectionStore;
+            DISPATCHER = dispatcher;
         }
 
         /**
@@ -138,14 +141,45 @@ public interface ClassInjector {
 
         @Override
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
-            try {
-                synchronized (classLoader) {
-                    return AccessController.doPrivileged(new ClassInjectionAction(types), accessControlContext);
+            synchronized (classLoader) {
+                Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>(types.size());
+                for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
+                    String typeName = entry.getKey().getName();
+                    Dispatcher dispatcher = DISPATCHER.initialize(accessControlContext);
+                    Class<?> type = dispatcher.findClass(classLoader, typeName);
+                    if (type == null) {
+                        int packageIndex = typeName.lastIndexOf('.');
+                        if (packageIndex != -1) {
+                            String packageName = typeName.substring(0, packageIndex);
+                            PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, typeName);
+                            if (definition.isDefined()) {
+                                Package definedPackage = dispatcher.getPackage(classLoader, packageName);
+                                if (definedPackage == null) {
+                                    dispatcher.definePackage(classLoader,
+                                            packageName,
+                                            definition.getSpecificationTitle(),
+                                            definition.getSpecificationVersion(),
+                                            definition.getSpecificationVendor(),
+                                            definition.getImplementationTitle(),
+                                            definition.getImplementationVersion(),
+                                            definition.getImplementationVendor(),
+                                            definition.getSealBase());
+                                } else if (!definition.isCompatibleTo(definedPackage)) {
+                                    throw new SecurityException("Sealing violation for package " + packageName);
+                                }
+                            }
+                        }
+                        byte[] binaryRepresentation = entry.getValue();
+                        type = dispatcher.loadClass(classLoader,
+                                typeName,
+                                binaryRepresentation,
+                                FROM_BEGINNING,
+                                binaryRepresentation.length,
+                                protectionDomain);
+                    }
+                    loadedTypes.put(entry.getKey(), type);
                 }
-            } catch (PrivilegedActionException exception) {
-                throw new IllegalStateException("Could not access injection method", exception.getException() instanceof InvocationTargetException
-                        ? exception.getException().getCause()
-                        : exception.getException());
+                return loadedTypes;
             }
         }
 
@@ -180,9 +214,9 @@ public interface ClassInjector {
         }
 
         /**
-         * A storage for method representations in order to access a class loader reflectively.
+         * A dispatcher for accessing a {@link ClassLoader} reflectively.
          */
-        protected interface ReflectionStore {
+        protected interface Dispatcher {
 
             /**
              * Looks up a class from the given class loader.
@@ -190,10 +224,8 @@ public interface ClassInjector {
              * @param classLoader The class loader for which a class should be located.
              * @param name        The binary name of the class that should be located.
              * @return The class for the binary name or {@code null} if no such class is defined for the provided class loader.
-             * @throws InvocationTargetException If an exception is caused during invocation.
-             * @throws IllegalAccessException    If the access was refused.
              */
-            Class<?> findClass(ClassLoader classLoader, String name) throws IllegalAccessException, InvocationTargetException;
+            Class<?> findClass(ClassLoader classLoader, String name);
 
             /**
              * Defines a class for the given class loader.
@@ -205,15 +237,13 @@ public interface ClassInjector {
              * @param endIndex             The final index of the binary representation.
              * @param protectionDomain     The protection domain for the defined class.
              * @return The defined, loaded class.
-             * @throws InvocationTargetException If an exception is caused during invocation.
-             * @throws IllegalAccessException    If the access was refused.
              */
             Class<?> loadClass(ClassLoader classLoader,
                                String name,
                                byte[] binaryRepresentation,
                                int startIndex,
                                int endIndex,
-                               ProtectionDomain protectionDomain) throws InvocationTargetException, IllegalAccessException;
+                               ProtectionDomain protectionDomain);
 
             /**
              * Looks up a package from a class loader.
@@ -221,10 +251,8 @@ public interface ClassInjector {
              * @param classLoader The class loader to query.
              * @param name        The binary name of the package.
              * @return The package for the given name as defined by the provided class loader or {@code null} if no such package exists.
-             * @throws InvocationTargetException If an exception is caused during invocation.
-             * @throws IllegalAccessException    If the access was refused.
              */
-            Package getPackage(ClassLoader classLoader, String name) throws InvocationTargetException, IllegalAccessException;
+            Package getPackage(ClassLoader classLoader, String name);
 
             /**
              * Defines a package for the given class loader.
@@ -239,8 +267,6 @@ public interface ClassInjector {
              * @param implementationVendor  The implementation vendor of the package or {@code null} if no implementation vendor exists.
              * @param sealBase              The seal base URL or {@code null} if the package should not be sealed.
              * @return The defined package.
-             * @throws InvocationTargetException If an exception is caused during invocation.
-             * @throws IllegalAccessException    If the access was refused.
              */
             Package definePackage(ClassLoader classLoader,
                                   String packageName,
@@ -250,12 +276,26 @@ public interface ClassInjector {
                                   String implementationTitle,
                                   String implementationVersion,
                                   String implementationVendor,
-                                  URL sealBase) throws InvocationTargetException, IllegalAccessException;
+                                  URL sealBase);
 
             /**
-             * Represents a successfully loaded method lookup.
+             * Initializes a dispatcher to make non-accessible APIs accessible.
              */
-            class Resolved implements ReflectionStore {
+            interface Initializable {
+
+                /**
+                 * Initializes this dispatcher.
+                 *
+                 * @param accessControlContext The access control context to use for initialization.
+                 * @return The initiailized dispatcher.
+                 */
+                Dispatcher initialize(AccessControlContext accessControlContext);
+            }
+
+            /**
+             * Represents a successfully loaded method lookup for the dispatcher.
+             */
+            class Resolved implements Dispatcher, Initializable, PrivilegedAction<Dispatcher> {
 
                 /**
                  * An accessible instance of {@link ClassLoader#findLoadedClass(String)}.
@@ -294,8 +334,14 @@ public interface ClassInjector {
                 }
 
                 @Override
-                public Class<?> findClass(ClassLoader classLoader, String name) throws IllegalAccessException, InvocationTargetException {
-                    return (Class<?>) findLoadedClass.invoke(classLoader, name);
+                public Class<?> findClass(ClassLoader classLoader, String name) {
+                    try {
+                        return (Class<?>) findLoadedClass.invoke(classLoader, name);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                    }
                 }
 
                 @Override
@@ -304,13 +350,25 @@ public interface ClassInjector {
                                           byte[] binaryRepresentation,
                                           int startIndex,
                                           int endIndex,
-                                          ProtectionDomain protectionDomain) throws InvocationTargetException, IllegalAccessException {
-                    return (Class<?>) loadClass.invoke(classLoader, name, binaryRepresentation, startIndex, endIndex, protectionDomain);
+                                          ProtectionDomain protectionDomain) {
+                    try {
+                        return (Class<?>) loadClass.invoke(classLoader, name, binaryRepresentation, startIndex, endIndex, protectionDomain);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                    }
                 }
 
                 @Override
-                public Package getPackage(ClassLoader classLoader, String name) throws InvocationTargetException, IllegalAccessException {
-                    return (Package) getPackage.invoke(classLoader, name);
+                public Package getPackage(ClassLoader classLoader, String name) {
+                    try {
+                        return (Package) getPackage.invoke(classLoader, name);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                    }
                 }
 
                 @Override
@@ -322,16 +380,38 @@ public interface ClassInjector {
                                              String implementationTitle,
                                              String implementationVersion,
                                              String implementationVendor,
-                                             URL sealBase) throws InvocationTargetException, IllegalAccessException {
-                    return (Package) definePackage.invoke(classLoader,
-                            packageName,
-                            specificationTitle,
-                            specificationVersion,
-                            specificationVendor,
-                            implementationTitle,
-                            implementationVersion,
-                            implementationVendor,
-                            sealBase);
+                                             URL sealBase) {
+                    try {
+                        return (Package) definePackage.invoke(classLoader,
+                                packageName,
+                                specificationTitle,
+                                specificationVersion,
+                                specificationVendor,
+                                implementationTitle,
+                                implementationVersion,
+                                implementationVendor,
+                                sealBase);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Dispatcher initialize(AccessControlContext accessControlContext) {
+                    return AccessController.doPrivileged(this, accessControlContext);
+                }
+
+                @Override
+                public Dispatcher run() {
+                    // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
+                    // By always setting accessability, the security manager is always triggered if this operation was illegal.
+                    findLoadedClass.setAccessible(true);
+                    loadClass.setAccessible(true);
+                    getPackage.setAccessible(true);
+                    definePackage.setAccessible(true);
+                    return this;
                 }
 
                 @Override
@@ -356,7 +436,7 @@ public interface ClassInjector {
 
                 @Override
                 public String toString() {
-                    return "ClassInjector.UsingReflection.ReflectionStore.Resolved{" +
+                    return "ClassInjector.UsingReflection.Dispatcher.Resolved{" +
                             "findLoadedClass=" + findLoadedClass +
                             ", loadClass=" + loadClass +
                             ", getPackage=" + getPackage +
@@ -368,12 +448,7 @@ public interface ClassInjector {
             /**
              * Represents an unsuccessfully loaded method lookup.
              */
-            class Faulty implements ReflectionStore {
-
-                /**
-                 * The message to display in an exception.
-                 */
-                private static final String MESSAGE = "Cannot access reflection API for class loading";
+            class Faulty implements Initializable {
 
                 /**
                  * The exception that occurred when looking up the reflection methods.
@@ -390,37 +465,8 @@ public interface ClassInjector {
                 }
 
                 @Override
-                public Class<?> findClass(ClassLoader classLoader, String name) {
-                    throw new IllegalStateException(MESSAGE, exception);
-                }
-
-                @Override
-                public Class<?> loadClass(ClassLoader classLoader,
-                                          String name,
-                                          byte[] binaryRepresentation,
-                                          int startIndex,
-                                          int endIndex,
-                                          ProtectionDomain protectionDomain) {
-                    throw new IllegalStateException(MESSAGE, exception);
-                }
-
-
-                @Override
-                public Package getPackage(ClassLoader classLoader, String name) {
-                    throw new IllegalStateException(MESSAGE, exception);
-                }
-
-                @Override
-                public Package definePackage(ClassLoader classLoader,
-                                             String packageName,
-                                             String specificationTitle,
-                                             String specificationVersion,
-                                             String specificationVendor,
-                                             String implementationTitle,
-                                             String implementationVersion,
-                                             String implementationVendor,
-                                             URL sealBase) {
-                    throw new IllegalStateException(MESSAGE, exception);
+                public Dispatcher initialize(AccessControlContext accessControlContext) {
+                    throw new IllegalStateException("Error locating class loader API", exception);
                 }
 
                 @Override
@@ -436,103 +482,8 @@ public interface ClassInjector {
 
                 @Override
                 public String toString() {
-                    return "ClassInjector.UsingReflection.ReflectionStore.Faulty{exception=" + exception + '}';
+                    return "ClassInjector.UsingReflection.Dispatcher.Faulty{exception=" + exception + '}';
                 }
-            }
-        }
-
-        /**
-         * A privileged action for loading a class reflectively.
-         */
-        protected class ClassInjectionAction implements PrivilegedExceptionAction<Map<TypeDescription, Class<?>>> {
-
-            /**
-             * A convenience variable representing the first index of an array, to make the code more readable.
-             */
-            private static final int FROM_BEGINNING = 0;
-
-            /**
-             * The types to be loaded mapping to their binary representation.
-             */
-            private final Map<? extends TypeDescription, byte[]> types;
-
-            /**
-             * Creates a new class injection action.
-             *
-             * @param types The types to be loaded mapping to their binary representation.
-             */
-            protected ClassInjectionAction(Map<? extends TypeDescription, byte[]> types) {
-                this.types = types;
-            }
-
-            @Override
-            public Map<TypeDescription, Class<?>> run() throws IllegalAccessException, InvocationTargetException, IOException {
-                Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>(types.size());
-                for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                    String typeName = entry.getKey().getName();
-                    Class<?> type = REFLECTION_STORE.findClass(classLoader, typeName);
-                    if (type == null) {
-                        int packageIndex = typeName.lastIndexOf('.');
-                        if (packageIndex != -1) {
-                            String packageName = typeName.substring(0, packageIndex);
-                            PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, typeName);
-                            if (definition.isDefined()) {
-                                Package definedPackage = REFLECTION_STORE.getPackage(classLoader, packageName);
-                                if (definedPackage == null) {
-                                    REFLECTION_STORE.definePackage(classLoader,
-                                            packageName,
-                                            definition.getSpecificationTitle(),
-                                            definition.getSpecificationVersion(),
-                                            definition.getSpecificationVendor(),
-                                            definition.getImplementationTitle(),
-                                            definition.getImplementationVersion(),
-                                            definition.getImplementationVendor(),
-                                            definition.getSealBase());
-                                } else if (!definition.isCompatibleTo(definedPackage)) {
-                                    throw new SecurityException("Sealing violation for package " + packageName);
-                                }
-                            }
-                        }
-                        byte[] binaryRepresentation = entry.getValue();
-                        type = REFLECTION_STORE.loadClass(classLoader,
-                                typeName,
-                                binaryRepresentation,
-                                FROM_BEGINNING,
-                                binaryRepresentation.length,
-                                protectionDomain);
-                    }
-                    loadedTypes.put(entry.getKey(), type);
-                }
-                return loadedTypes;
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private UsingReflection getOuter() {
-                return UsingReflection.this;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && UsingReflection.this.equals(((ClassInjectionAction) other).getOuter())
-                        && types.equals(((ClassInjectionAction) other).types);
-            }
-
-            @Override
-            public int hashCode() {
-                return types.hashCode() + 31 * UsingReflection.this.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "ClassInjector.UsingReflection.ClassInjectionAction{" +
-                        "usingReflection=" + UsingReflection.this +
-                        ",types=" + types +
-                        '}';
             }
         }
     }

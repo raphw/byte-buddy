@@ -25,7 +25,6 @@ public class ByteArrayClassLoaderObjectPropertiesTest {
             }
         }).applyBasic();
         ObjectPropertyAssertion.of(ByteArrayClassLoader.PersistenceHandler.class).apply();
-        ObjectPropertyAssertion.of(ByteArrayClassLoader.ClassLoadingAction.class).apply();
         ObjectPropertyAssertion.of(ByteArrayClassLoader.ClassLoaderCreationAction.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override
             public AccessControlContext create() {

@@ -6,7 +6,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.security.*;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,6 +20,11 @@ import java.util.Map;
  * the class loading mechanics are only called from synchronized context.
  */
 public class ByteArrayClassLoader extends ClassLoader {
+
+    /**
+     * Indicates that an array should be included from its first index. Improves the source code readability.
+     */
+    private static final int FROM_BEGINNING = 0;
 
     /**
      * Indicates that a lookup for a class file did not locate any class.
@@ -145,16 +153,31 @@ public class ByteArrayClassLoader extends ClassLoader {
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        try {
-            return AccessController.doPrivileged(new ClassLoadingAction(name), accessControlContext);
-        } catch (PrivilegedActionException exception) {
-            Throwable cause = exception.getCause();
-            if (cause instanceof ClassNotFoundException) {
-                throw (ClassNotFoundException) cause;
-            } else {
-                throw new IllegalStateException("Could not load class " + name, cause);
+        byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
+        if (javaType != null) {
+            int packageIndex = name.lastIndexOf('.');
+            if (packageIndex != -1) {
+                String packageName = name.substring(0, packageIndex);
+                PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(ByteArrayClassLoader.this, packageName, name);
+                if (definition.isDefined()) {
+                    Package definedPackage = getPackage(packageName);
+                    if (definedPackage == null) {
+                        definePackage(packageName,
+                                definition.getSpecificationTitle(),
+                                definition.getSpecificationVersion(),
+                                definition.getSpecificationVendor(),
+                                definition.getImplementationTitle(),
+                                definition.getImplementationVersion(),
+                                definition.getImplementationVendor(),
+                                definition.getSealBase());
+                    } else if (!definition.isCompatibleTo(definedPackage)) {
+                        throw new SecurityException("Sealing violation for package " + packageName);
+                    }
+                }
             }
+            return defineClass(name, javaType, FROM_BEGINNING, javaType.length, protectionDomain);
         }
+        throw new ClassNotFoundException(name);
     }
 
     @Override
@@ -317,15 +340,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 return type;
             }
             try {
-                try {
-                    type = AccessController.doPrivileged(new ClassLoadingAction(name), accessControlContext);
-                } catch (PrivilegedActionException exception) {
-                    if (exception.getCause() instanceof ClassNotFoundException) {
-                        throw (ClassNotFoundException) exception.getCause();
-                    } else {
-                        throw new IllegalStateException("Could not load class " + name, exception.getCause());
-                    }
-                }
+                type = findClass(name);
                 if (resolve) {
                     resolveClass(type);
                 }
@@ -499,89 +514,6 @@ public class ByteArrayClassLoader extends ClassLoader {
                     ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                     ", childFirst=" + childFirst +
                     '}';
-        }
-    }
-
-    /**
-     * A class loading action is responsible to perform the loading of a class in a privileged security context.
-     */
-    protected class ClassLoadingAction implements PrivilegedExceptionAction<Class<?>> {
-
-        /**
-         * A convenience index referencing the beginning of an array to improve code readability.
-         */
-        private static final int FROM_BEGINNING = 0;
-
-        /**
-         * The name of the type to be loaded.
-         */
-        private final String typeName;
-
-        /**
-         * Creates a new class loading action.
-         *
-         * @param typeName The name of the type to be loaded.
-         */
-        protected ClassLoadingAction(String typeName) {
-            this.typeName = typeName;
-        }
-
-        @Override
-        public Class<?> run() throws ClassNotFoundException, IOException {
-            byte[] javaType = persistenceHandler.lookup(typeName, typeDefinitions);
-            if (javaType != null) {
-                int packageIndex = typeName.lastIndexOf('.');
-                if (packageIndex != -1) {
-                    String packageName = typeName.substring(0, packageIndex);
-                    PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(ByteArrayClassLoader.this, packageName, typeName);
-                    if (definition.isDefined()) {
-                        Package definedPackage = getPackage(packageName);
-                        if (definedPackage == null) {
-                            definePackage(packageName,
-                                    definition.getSpecificationTitle(),
-                                    definition.getSpecificationVersion(),
-                                    definition.getSpecificationVendor(),
-                                    definition.getImplementationTitle(),
-                                    definition.getImplementationVersion(),
-                                    definition.getImplementationVendor(),
-                                    definition.getSealBase());
-                        } else if (!definition.isCompatibleTo(definedPackage)) {
-                            throw new SecurityException("Sealing violation for package " + packageName);
-                        }
-                    }
-                }
-                return defineClass(typeName, javaType, FROM_BEGINNING, javaType.length, protectionDomain);
-            }
-            throw new ClassNotFoundException(typeName);
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private ByteArrayClassLoader getOuter() {
-            return ByteArrayClassLoader.this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && ByteArrayClassLoader.this.equals(((ClassLoadingAction) other).getOuter())
-                    && typeName.equals(((ClassLoadingAction) other).typeName);
-        }
-
-        @Override
-        public int hashCode() {
-            return typeName.hashCode() + 31 * ByteArrayClassLoader.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "ByteArrayClassLoader.ClassLoadingAction{" +
-                    "outer=" + ByteArrayClassLoader.this +
-                    ", typeName='" + typeName
-                    + "'}";
         }
     }
 }

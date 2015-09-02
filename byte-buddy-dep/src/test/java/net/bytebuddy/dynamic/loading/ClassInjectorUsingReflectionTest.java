@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,36 +57,8 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testFaultyReflectionStoreFindClass() throws Exception {
-        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).findClass(classLoader, null);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testFaultyReflectionStoreLoadClass() throws Exception {
-        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).loadClass(classLoader,
-                null,
-                null,
-                0,
-                0,
-                null);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testFaultyReflectionStoreGetPackage() throws Exception {
-        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).getPackage(classLoader, null);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testFaultyReflectionStoreDefinePackage() throws Exception {
-        new ClassInjector.UsingReflection.ReflectionStore.Faulty(new Exception()).definePackage(classLoader,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null);
+    public void testDispatcherFaultyInitialization() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize(AccessController.getContext());
     }
 
     @Test
@@ -96,17 +69,14 @@ public class ClassInjectorUsingReflectionTest {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.ClassInjectionAction.class)
-                .ignoreFields("accessControlContext")
-                .apply();
         final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.ReflectionStore.Resolved.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Resolved.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return iterator.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.ReflectionStore.Faulty.class).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Faulty.class).apply();
     }
 
     private static class Foo {

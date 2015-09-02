@@ -24,9 +24,8 @@ public interface PackageDefinitionStrategy {
      * @param packageName The name of the package.
      * @param typeName    The name of the type being loaded that triggered the package definition.
      * @return A definition of the package.
-     * @throws IOException If the definition requires the reading of resources and triggered an IO exception.
      */
-    Definition define(ClassLoader classLoader, String packageName, String typeName) throws IOException;
+    Definition define(ClassLoader classLoader, String packageName, String typeName);
 
     /**
      * A package definer that does not define any package.
@@ -488,38 +487,42 @@ public interface PackageDefinitionStrategy {
         }
 
         @Override
-        public Definition define(ClassLoader classLoader, String packageName, String typeName) throws IOException {
+        public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             InputStream inputStream = classLoader.getResourceAsStream(MANIFEST_FILE);
             if (inputStream != null) {
                 try {
-                    Manifest manifest = new Manifest(inputStream);
-                    Map<Attributes.Name, String> values = new HashMap<Attributes.Name, String>(ATTRIBUTE_NAMES.length);
-                    Attributes mainAttributes = manifest.getMainAttributes();
-                    if (mainAttributes != null) {
-                        for (Attributes.Name attributeName : ATTRIBUTE_NAMES) {
-                            values.put(attributeName, mainAttributes.getValue(attributeName));
-                        }
-                    }
-                    Attributes attributes = manifest.getAttributes(packageName.replace('.', '/').concat("/"));
-                    if (attributes != null) {
-                        for (Attributes.Name attributeName : ATTRIBUTE_NAMES) {
-                            String value = attributes.getValue(attributeName);
-                            if (value != null) {
-                                values.put(attributeName, value);
+                    try {
+                        Manifest manifest = new Manifest(inputStream);
+                        Map<Attributes.Name, String> values = new HashMap<Attributes.Name, String>(ATTRIBUTE_NAMES.length);
+                        Attributes mainAttributes = manifest.getMainAttributes();
+                        if (mainAttributes != null) {
+                            for (Attributes.Name attributeName : ATTRIBUTE_NAMES) {
+                                values.put(attributeName, mainAttributes.getValue(attributeName));
                             }
                         }
+                        Attributes attributes = manifest.getAttributes(packageName.replace('.', '/').concat("/"));
+                        if (attributes != null) {
+                            for (Attributes.Name attributeName : ATTRIBUTE_NAMES) {
+                                String value = attributes.getValue(attributeName);
+                                if (value != null) {
+                                    values.put(attributeName, value);
+                                }
+                            }
+                        }
+                        return new Definition.Simple(values.get(Attributes.Name.SPECIFICATION_TITLE),
+                                values.get(Attributes.Name.SPECIFICATION_VERSION),
+                                values.get(Attributes.Name.SPECIFICATION_VENDOR),
+                                values.get(Attributes.Name.IMPLEMENTATION_TITLE),
+                                values.get(Attributes.Name.IMPLEMENTATION_VERSION),
+                                values.get(Attributes.Name.IMPLEMENTATION_VENDOR),
+                                Boolean.parseBoolean(values.get(Attributes.Name.SEALED))
+                                        ? sealBaseLocator.findSealBase(classLoader, typeName)
+                                        : NOT_SEALED);
+                    } finally {
+                        inputStream.close();
                     }
-                    return new Definition.Simple(values.get(Attributes.Name.SPECIFICATION_TITLE),
-                            values.get(Attributes.Name.SPECIFICATION_VERSION),
-                            values.get(Attributes.Name.SPECIFICATION_VENDOR),
-                            values.get(Attributes.Name.IMPLEMENTATION_TITLE),
-                            values.get(Attributes.Name.IMPLEMENTATION_VERSION),
-                            values.get(Attributes.Name.IMPLEMENTATION_VENDOR),
-                            Boolean.parseBoolean(values.get(Attributes.Name.SEALED))
-                                    ? sealBaseLocator.findSealBase(classLoader, typeName)
-                                    : NOT_SEALED);
-                } finally {
-                    inputStream.close();
+                } catch (IOException exception) {
+                    throw new IllegalStateException("Error while reading manifest file", exception);
                 }
             } else {
                 return Definition.Trivial.INSTANCE;
