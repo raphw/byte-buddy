@@ -9,6 +9,8 @@ Byte Buddy release notes
 - Refactored the predefined `ElementMatcher`s to allow for matching generic types.
 - Replaced the `ModifierResolver` with a more general `MethodTransformer`.
 
+*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
+
 ### 11. August 2015: version 0.6.15
 
 - Added support for discovery and handling of Java 9 VMs.
