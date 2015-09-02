@@ -2184,7 +2184,7 @@ public interface DynamicType {
                  * @return The given default value.
                  */
                 private Object isValid(Object defaultValue, Class<?> legalType) {
-                    if (!fieldToken.getType().asErasure().represents(legalType)) {
+                    if (!fieldToken.getType().represents(legalType)) {
                         throw new IllegalStateException(defaultValue + " is not of the required type " + legalType);
                     }
                     return defaultValue;

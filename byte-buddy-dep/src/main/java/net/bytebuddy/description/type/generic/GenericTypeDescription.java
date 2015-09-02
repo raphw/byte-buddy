@@ -231,6 +231,14 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
     boolean isPrimitive();
 
     /**
+     * Checks if the type described by this instance represents {@code type}.
+     *
+     * @param type The type of interest.
+     * @return {@code true} if the type described by this instance represents {@code type}.
+     */
+    boolean represents(Type type);
+
+    /**
      * Applies a visitor to this generic type description.
      *
      * @param visitor The visitor to apply.
@@ -727,7 +735,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 public SignatureVisitor onWildcardType(GenericTypeDescription wildcardType) {
                     GenericTypeList upperBounds = wildcardType.getUpperBounds();
                     GenericTypeList lowerBounds = wildcardType.getLowerBounds();
-                    if (lowerBounds.isEmpty() && upperBounds.getOnly().asErasure().represents(Object.class)) {
+                    if (lowerBounds.isEmpty() && upperBounds.getOnly().represents(Object.class)) {
                         signatureVisitor.visitTypeArgument();
                     } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
                         lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
@@ -1197,6 +1205,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         }
 
         @Override
+        public boolean represents(Type type) {
+            return equals(Sort.describe(type));
+        }
+
+        @Override
         public boolean isArray() {
             return true;
         }
@@ -1411,6 +1424,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         @Override
         public boolean isArray() {
             return false;
+        }
+
+        @Override
+        public boolean represents(Type type) {
+            return equals(Sort.describe(type));
         }
 
         @Override
@@ -1635,6 +1653,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         @Override
         public boolean isArray() {
             return false;
+        }
+
+        @Override
+        public boolean represents(Type type) {
+            return equals(Sort.describe(type));
         }
 
         @Override
@@ -1938,6 +1961,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
+            public boolean represents(Type type) {
+                return typeDescription.represents(type);
+            }
+
+            @Override
             public Iterator<GenericTypeDescription> iterator() {
                 return new SuperTypeIterator(this);
             }
@@ -2046,6 +2074,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         @Override
         public boolean isPrimitive() {
             return false;
+        }
+
+        @Override
+        public boolean represents(Type type) {
+            return equals(Sort.describe(type));
         }
 
         @Override
@@ -2249,6 +2282,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         @Override
         public boolean isPrimitive() {
             return asErasure().isPrimitive();
+        }
+
+        @Override
+        public boolean represents(Type type) {
+            return resolve().represents(type);
         }
 
         @Override

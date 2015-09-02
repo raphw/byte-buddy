@@ -146,14 +146,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
      */
     boolean isAssignableTo(TypeDescription typeDescription);
 
-    /**
-     * Checks if the type described by this instance represents {@code type}.
-     *
-     * @param type The type of interest.
-     * @return {@code true} if the type described by this instance represents {@code type}.
-     */
-    boolean represents(Class<?> type);
-
     @Override
     TypeDescription getComponentType();
 
@@ -567,6 +559,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
+        public boolean represents(java.lang.reflect.Type type) {
+            return equals(Sort.describe(type));
+        }
+
+        @Override
         public String getTypeName() {
             return getName();
         }
@@ -706,11 +703,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             }
 
             @Override
-            public boolean represents(Class<?> type) {
-                return type.getName().equals(getName());
-            }
-
-            @Override
             public String getDescriptor() {
                 return "L" + getInternalName() + ";";
             }
@@ -823,8 +815,8 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public boolean represents(Class<?> type) {
-            return type == this.type || equals(new ForLoadedType(type));
+        public boolean represents(java.lang.reflect.Type type) {
+            return type == this.type || super.represents(type);
         }
 
         @Override
@@ -1064,16 +1056,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             return typeDescription.represents(Object.class)
                     || ARRAY_INTERFACES.contains(typeDescription)
                     || isArrayAssignable(typeDescription, this);
-        }
-
-        @Override
-        public boolean represents(Class<?> type) {
-            int arity = 0;
-            while (type.isArray()) {
-                type = type.getComponentType();
-                arity++;
-            }
-            return arity == this.arity && componentType.represents(type);
         }
 
         @Override

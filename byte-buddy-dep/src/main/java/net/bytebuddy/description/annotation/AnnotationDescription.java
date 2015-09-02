@@ -1580,18 +1580,15 @@ public interface AnnotationDescription {
             if (typeDescription.represents(Class.class)) {
                 value = new TypeDescription.ForLoadedType((Class<?>) value);
             } else if (typeDescription.represents(Class[].class)) {
-                value = new TypeList.ForLoadedType((Class<?>[]) value)
-                        .toArray(new TypeDescription[((Class<?>[]) value).length]);
+                value = new TypeList.ForLoadedType((Class<?>[]) value).toArray(new TypeDescription[((Class<?>[]) value).length]);
             } else if (typeDescription.isAssignableTo(Enum.class)) {
                 value = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);
             } else if (typeDescription.isAssignableTo(Enum[].class)) {
-                value = EnumerationDescription.ForLoadedEnumeration.asList((Enum<?>[]) value)
-                        .toArray(new EnumerationDescription[((Enum<?>[]) value).length]);
+                value = EnumerationDescription.ForLoadedEnumeration.asList((Enum<?>[]) value).toArray(new EnumerationDescription[((Enum<?>[]) value).length]);
             } else if (typeDescription.isAssignableTo(Annotation.class)) {
                 value = ForLoadedAnnotation.of((Annotation) value);
             } else if (typeDescription.isAssignableTo(Annotation[].class)) {
-                value = new AnnotationList.ForLoadedAnnotation((Annotation[]) value)
-                        .toArray(new AnnotationDescription[((Annotation[]) value).length]);
+                value = new AnnotationList.ForLoadedAnnotation((Annotation[]) value).toArray(new AnnotationDescription[((Annotation[]) value).length]);
             }
             return value;
         }
@@ -1619,7 +1616,7 @@ public interface AnnotationDescription {
 
         @Override
         public Object getValue(MethodDescription methodDescription) {
-            if (!methodDescription.getDeclaringType().asErasure().represents(annotation.annotationType())) {
+            if (!methodDescription.getDeclaringType().represents(annotation.annotationType())) {
                 throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
             }
             try {

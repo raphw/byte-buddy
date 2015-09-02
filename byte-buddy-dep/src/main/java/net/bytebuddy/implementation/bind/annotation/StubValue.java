@@ -50,10 +50,10 @@ public @interface StubValue {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (!target.getType().asErasure().represents(Object.class)) {
+            if (!target.getType().represents(Object.class)) {
                 throw new IllegalStateException(target + " uses StubValue annotation on non-Object type");
             }
-            StackManipulation stackManipulation = source.getReturnType().asErasure().represents(void.class)
+            StackManipulation stackManipulation = source.getReturnType().represents(void.class)
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(DefaultValue.of(source.getReturnType().asErasure()),
                     assigner.assign(source.getReturnType().asErasure(), TypeDescription.OBJECT, Assigner.Typing.STATIC));

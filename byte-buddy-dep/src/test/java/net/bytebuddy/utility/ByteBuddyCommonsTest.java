@@ -328,10 +328,7 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsActualTypeForRawVoidThrowsException() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        assertThat(isActualType(typeDescription), sameInstance(typeDescription));
+        isActualType(new TypeDescription.ForLoadedType(void.class));
     }
 
     @Test
@@ -377,10 +374,7 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testCollectionIsActualTypeThrowsException() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(void.class));
-        isActualType(Collections.singleton(typeDescription));
+        isActualType(Collections.singleton(new TypeDescription.ForLoadedType(void.class)));
     }
 
     @Test

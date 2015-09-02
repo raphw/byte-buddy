@@ -219,7 +219,7 @@ public final class ByteBuddyCommons {
      * @return The input value.
      */
     public static <T extends GenericTypeDescription> T isActualType(T typeDescription) {
-        if (isActualTypeOrVoid(typeDescription).asErasure().represents(void.class)) {
+        if (isActualTypeOrVoid(typeDescription).represents(void.class)) {
             throw new IllegalArgumentException("The void non-type cannot be assigned a value");
         }
         return typeDescription;
