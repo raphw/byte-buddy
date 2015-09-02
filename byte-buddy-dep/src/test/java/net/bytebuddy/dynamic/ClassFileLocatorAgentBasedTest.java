@@ -12,6 +12,8 @@ import org.junit.rules.MethodRule;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.security.AccessControlContext;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -91,7 +93,13 @@ public class ClassFileLocatorAgentBasedTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.Default.class).apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.class).apply();
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.class)
+                .create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+                    @Override
+                    public AccessControlContext create() {
+                        return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+                    }
+                }).apply();
         final Iterator<Field> iterator = Arrays.asList(Foo.class.getDeclaredFields()).iterator();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Resolved.class)
                 .create(new ObjectPropertyAssertion.Creator<Field>() {

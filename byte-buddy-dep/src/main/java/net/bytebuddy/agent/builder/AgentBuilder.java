@@ -867,8 +867,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher,
-                                 ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+        public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
             return rebase(new RawMatcher.ForElementMatcherPair(nonNull(typeMatcher), nonNull(classLoaderMatcher)));
         }
 

@@ -2435,6 +2435,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 try {
                     Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
                     dispatcher = new Dispatcher.ForModernVm(parameterType.getDeclaredMethod("getType"), parameterType.getDeclaredMethod("getParameterizedType"));
+                } catch (RuntimeException exception) {
+                    throw exception;
                 } catch (Exception ignored) {
                     dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
                 }

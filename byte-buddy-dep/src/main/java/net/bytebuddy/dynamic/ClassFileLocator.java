@@ -634,9 +634,26 @@ public interface ClassFileLocator {
                 }
 
                 @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    if (!super.equals(other)) return false;
+                    ForDelegatingClassLoader that = (ForDelegatingClassLoader) other;
+                    return accessControlContext.equals(that.accessControlContext);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + accessControlContext.hashCode();
+                    return result;
+                }
+
+                @Override
                 public String toString() {
                     return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader{" +
                             "classLoader=" + classLoader +
+                            ", accessControlContext=" + accessControlContext +
                             '}';
                 }
 
@@ -720,7 +737,7 @@ public interface ClassFileLocator {
 
                         @Override
                         public String toString() {
-                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.ClassCollection.Resolved{" +
+                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Resolved{" +
                                     "field=" + field +
                                     '}';
                         }
@@ -763,7 +780,7 @@ public interface ClassFileLocator {
 
                         @Override
                         public String toString() {
-                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.ClassCollection.Unresolved{" +
+                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Unresolved{" +
                                     "exception=" + exception +
                                     '}';
                         }

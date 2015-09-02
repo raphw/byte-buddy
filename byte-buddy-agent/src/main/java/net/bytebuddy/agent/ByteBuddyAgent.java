@@ -279,6 +279,8 @@ public class ByteBuddyAgent {
                     .getDeclaredField(INSTRUMENTATION_FIELD_NAME);
             field.setAccessible(true);
             return (Instrumentation) field.get(STATIC_MEMBER);
+        } catch (RuntimeException exception) {
+            throw exception;
         } catch (Exception exception) {
             throw new IllegalStateException("The Byte Buddy agent is not properly initialized", exception);
         }

@@ -3,6 +3,10 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Iterator;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -39,6 +43,13 @@ public class LoadedTypeInitializerForStaticFieldTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(LoadedTypeInitializer.ForStaticField.class).apply();
+        final Iterator<Field> fields = Arrays.asList(Baz.class.getDeclaredFields()).iterator();
+        ObjectPropertyAssertion.of(LoadedTypeInitializer.ForStaticField.FieldAccessibilityAction.class).create(new ObjectPropertyAssertion.Creator<Field>() {
+            @Override
+            public Field create() {
+                return fields.next();
+            }
+        }).apply();
     }
 
     @SuppressWarnings("unused")
@@ -51,5 +62,11 @@ public class LoadedTypeInitializerForStaticFieldTest {
     public static class Bar {
 
         private static Object foo;
+    }
+
+    @SuppressWarnings("unused")
+    private static class Baz {
+
+        String foo, bar;
     }
 }
