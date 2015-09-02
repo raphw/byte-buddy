@@ -482,7 +482,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.AbstractTypeDescription.SuperTypeIterator.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeDescription.AbstractBase.SuperTypeIterator.class).applyBasic();
     }
 
     protected interface SampleInterface {

@@ -34,7 +34,7 @@ public class GenericTypeDescriptionSuperTypeIteratorTest {
 
     @Test
     public void testHasNext() throws Exception {
-        Iterator<GenericTypeDescription> iterator = new TypeDescription.AbstractTypeDescription.SuperTypeIterator(typeDescription);
+        Iterator<GenericTypeDescription> iterator = new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is((GenericTypeDescription) typeDescription));
@@ -47,7 +47,7 @@ public class GenericTypeDescriptionSuperTypeIteratorTest {
 
     @Test(expected = NoSuchElementException.class)
     public void testHasNotNext() throws Exception {
-        Iterator<GenericTypeDescription> iterator = new TypeDescription.AbstractTypeDescription.SuperTypeIterator(typeDescription);
+        Iterator<GenericTypeDescription> iterator = new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription);
         assertThat(iterator.next(), is((GenericTypeDescription) typeDescription));
         assertThat(iterator.next(), is(superType));
         iterator.next();
@@ -55,7 +55,7 @@ public class GenericTypeDescriptionSuperTypeIteratorTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testNoRemoval() throws Exception {
-        new TypeDescription.AbstractTypeDescription.SuperTypeIterator(typeDescription).remove();
+        new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription).remove();
     }
 
     @Test

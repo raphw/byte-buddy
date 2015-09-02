@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -290,7 +291,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     /**
      * An abstract base implementation of a type description.
      */
-    abstract class AbstractTypeDescription extends AbstractBase implements TypeDescription {
+    abstract class AbstractBase extends ModifierReviewable.AbstractBase implements TypeDescription {
 
         @Override
         public GenericTypeDescription getSuperType() {
@@ -627,7 +628,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
          * An adapter implementation of a {@link TypeDescription} that
          * describes any type that is not an array or a primitive type.
          */
-        public abstract static class OfSimpleType extends AbstractTypeDescription {
+        public abstract static class OfSimpleType extends TypeDescription.AbstractBase {
 
             /**
              * Checks if a specific type is assignable to another type where the source type must be a super
@@ -738,7 +739,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     /**
      * A type description implementation that represents a loaded type.
      */
-    class ForLoadedType extends AbstractTypeDescription {
+    class ForLoadedType extends AbstractBase {
 
         /**
          * The loaded type this instance represents.
@@ -979,7 +980,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     /**
      * A projection for an array type based on an existing {@link TypeDescription}.
      */
-    class ArrayProjection extends AbstractTypeDescription {
+    class ArrayProjection extends AbstractBase {
 
         /**
          * The base component type which is itself not an array.
@@ -1212,7 +1213,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     /**
      * A latent type description for a type without methods or fields.
      */
-    class Latent extends AbstractTypeDescription.OfSimpleType {
+    class Latent extends AbstractBase.OfSimpleType {
 
         /**
          * The name of the type.
@@ -1337,7 +1338,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     /**
      * A type representation of a package description.
      */
-    class ForPackageDescription extends AbstractTypeDescription.OfSimpleType {
+    class ForPackageDescription extends AbstractBase.OfSimpleType {
 
         /**
          * The package to be described as a type.

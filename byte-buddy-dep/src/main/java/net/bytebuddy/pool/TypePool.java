@@ -3029,7 +3029,7 @@ public interface TypePool {
      * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
      * {@link AnnotationDescription} by querying a type pool at lookup time.
      */
-    class LazyTypeDescription extends TypeDescription.AbstractTypeDescription.OfSimpleType {
+    class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
         /**
          * The type pool to be used for looking up linked types.

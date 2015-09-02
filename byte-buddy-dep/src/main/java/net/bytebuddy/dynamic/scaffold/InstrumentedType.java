@@ -202,7 +202,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * A default implementation of an instrumented type.
      */
-    class Default extends AbstractTypeDescription.OfSimpleType implements InstrumentedType {
+    class Default extends AbstractBase.OfSimpleType implements InstrumentedType {
 
         /**
          * The binary name of the instrumented type.
