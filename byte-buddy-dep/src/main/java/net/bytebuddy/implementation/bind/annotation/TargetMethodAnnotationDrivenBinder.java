@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -135,6 +136,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      *
      * @param <T> The {@link java.lang.annotation.Annotation#annotationType()} handled by this parameter binder.
      */
+    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "No circularity, initialization is safe")
     public interface ParameterBinder<T extends Annotation> {
 
         /**

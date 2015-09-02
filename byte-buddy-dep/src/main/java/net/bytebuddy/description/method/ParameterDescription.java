@@ -11,13 +11,14 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.JavaMethod;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.AbstractList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -192,65 +193,26 @@ public interface ParameterDescription extends AnnotatedCodeElement,
     class ForLoadedParameter extends InDefinedShape.AbstractBase {
 
         /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getType} method.
+         * A dispatcher for reading properties from {@code java.lang.reflect.Parameter} instances.
          */
-        protected static final JavaMethod GET_TYPE;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getName} method.
-         */
-        private static final JavaMethod GET_NAME;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s
-         * {@code getDeclaringExecutable} method.
-         */
-        private static final JavaMethod GET_DECLARING_EXECUTABLE;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code isNamePresent} method.
-         */
-        private static final JavaMethod IS_NAME_PRESENT;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getModifiers} method.
-         */
-        private static final JavaMethod GET_MODIFIERS;
-
-        /**
-         * Java method representation for the {@code java.lang.reflect.Parameter}'s {@code getDeclaredAnnotations}
-         * method.
-         */
-        private static final JavaMethod GET_DECLARED_ANNOTATIONS;
+        private static final Dispatcher DISPATCHER;
 
         /*
-         * Initializes the {@link net.bytebuddy.utility.JavaMethod} instances of this class dependant on
-         * whether they are available.
+         * Creates a dispatcher for a loaded parameter if the type is available for the running JVM.
          */
         static {
-            JavaMethod getName, getDeclaringExecutable, isNamePresent, getModifiers, getDeclaredAnnotations, getType;
+            Dispatcher dispatcher;
             try {
                 Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                getName = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getName"));
-                getDeclaringExecutable = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getDeclaringExecutable"));
-                isNamePresent = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("isNamePresent"));
-                getModifiers = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getModifiers"));
-                getDeclaredAnnotations = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getDeclaredAnnotations"));
-                getType = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getType"));
+                dispatcher = new Dispatcher.ForModernVm(parameterType.getDeclaredMethod("getName"),
+                        parameterType.getDeclaredMethod("getDeclaringExecutable"),
+                        parameterType.getDeclaredMethod("isNamePresent"),
+                        parameterType.getDeclaredMethod("getModifiers"),
+                        parameterType.getDeclaredMethod("getDeclaredAnnotations"));
             } catch (Exception ignored) {
-                getName = JavaMethod.ForUnavailableMethod.INSTANCE;
-                getDeclaringExecutable = JavaMethod.ForUnavailableMethod.INSTANCE;
-                isNamePresent = JavaMethod.ForUnavailableMethod.INSTANCE;
-                getModifiers = JavaMethod.ForUnavailableMethod.INSTANCE;
-                getDeclaredAnnotations = JavaMethod.ForUnavailableMethod.INSTANCE;
-                getType = JavaMethod.ForUnavailableMethod.INSTANCE;
+                dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
             }
-            GET_NAME = getName;
-            GET_DECLARING_EXECUTABLE = getDeclaringExecutable;
-            IS_NAME_PRESENT = isNamePresent;
-            GET_MODIFIERS = getModifiers;
-            GET_DECLARED_ANNOTATIONS = getDeclaredAnnotations;
-            GET_TYPE = getType;
+            DISPATCHER = dispatcher;
         }
 
         /**
@@ -281,7 +243,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         @Override
         public MethodDescription.InDefinedShape getDeclaringMethod() {
-            Object executable = GET_DECLARING_EXECUTABLE.invoke(parameter);
+            Object executable = DISPATCHER.getDeclaringExecutable(parameter);
             if (executable instanceof Method) {
                 return new MethodDescription.ForLoadedMethod((Method) executable);
             } else if (executable instanceof Constructor) {
@@ -293,12 +255,12 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation((Annotation[]) GET_DECLARED_ANNOTATIONS.invoke(parameter));
+            return new AnnotationList.ForLoadedAnnotation(DISPATCHER.getDeclaredAnnotations(parameter));
         }
 
         @Override
         public String getName() {
-            return (String) GET_NAME.invoke(parameter);
+            return DISPATCHER.getName(parameter);
         }
 
         @Override
@@ -308,12 +270,12 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         @Override
         public boolean isNamed() {
-            return (Boolean) IS_NAME_PRESENT.invoke(parameter);
+            return DISPATCHER.isNamePresent(parameter);
         }
 
         @Override
         public int getModifiers() {
-            return (Integer) GET_MODIFIERS.invoke(parameter);
+            return DISPATCHER.getModifiers(parameter);
         }
 
         @Override
@@ -321,6 +283,234 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             // Rational: If a parameter is not named despite the information being attached,
             // it is synthetic, i.e. it has non-default modifiers.
             return isNamed() || getModifiers() != EMPTY_MASK;
+        }
+
+        /**
+         * A dispatcher for {@code java.lang.reflect.Parameter} instances.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Returns the given parameter's modifiers.
+             *
+             * @param parameter The parameter to introspect.
+             * @return The parameter's modifiers.
+             */
+            int getModifiers(Object parameter);
+
+            /**
+             * Returns {@code true} if the given parameter has an explicit name.
+             *
+             * @param parameter The parameter to introspect.
+             * @return {@code true} if the given parameter has an explicit name.
+             */
+            boolean isNamePresent(Object parameter);
+
+            /**
+             * Returns the given parameter's implicit or explicit name.
+             *
+             * @param parameter The parameter to introspect.
+             * @return The parameter's name.
+             */
+            String getName(Object parameter);
+
+            /**
+             * Returns the given parameter's annotations.
+             *
+             * @param parameter The parameter to introspect.
+             * @return The parameter's declared annotations.
+             */
+            List<Annotation> getDeclaredAnnotations(Object parameter);
+
+            /**
+             * Returns the given parameter's declaring exectuable, i.e, method or constructor.
+             *
+             * @param parameter The parameter to introspect.
+             * @return The parameter's declaring executable.
+             */
+            Object getDeclaringExecutable(Object parameter);
+
+            /**
+             * A dispatcher for VMs that support the {@code java.lang.reflect.Parameter} API for Java 8+.
+             */
+            class ForModernVm implements Dispatcher {
+
+                /**
+                 * A reference to {@code java.lang.reflect.Parameter#getName}.
+                 */
+                private final Method getName;
+
+                /**
+                 * A reference to {@code java.lang.reflect.Parameter#getDeclaringExecutable}.
+                 */
+                private final Method getDeclaringExecutable;
+
+                /**
+                 * A reference to {@code java.lang.reflect.Parameter#isNamePresent}.
+                 */
+                private final Method isNamePresent;
+
+                /**
+                 * A reference to {@code java.lang.reflect.Parameter#getModifiers}.
+                 */
+                private final Method getModifiers;
+
+                /**
+                 * A reference to {@code java.lang.reflect.Parameter#getDeclaredAnnotations}.
+                 */
+                private final Method getDeclaredAnnotations;
+
+                /**
+                 * Creates a new dispatcher for a modern VM.
+                 *
+                 * @param getName                A reference to {@code java.lang.reflect.Parameter#getName}.
+                 * @param getDeclaringExecutable A reference to {@code java.lang.reflect.Parameter#getDeclaringExecutable}.
+                 * @param isNamePresent          A reference to {@code java.lang.reflect.Parameter#isNamePresent}.
+                 * @param getModifiers           A reference to {@code java.lang.reflect.Parameter#getModifiers}.
+                 * @param getDeclaredAnnotations A reference to {@code java.lang.reflect.Parameter#getDeclaredAnnotations}.
+                 */
+                protected ForModernVm(Method getName,
+                                      Method getDeclaringExecutable,
+                                      Method isNamePresent,
+                                      Method getModifiers,
+                                      Method getDeclaredAnnotations) {
+                    this.getName = getName;
+                    this.getDeclaringExecutable = getDeclaringExecutable;
+                    this.isNamePresent = isNamePresent;
+                    this.getModifiers = getModifiers;
+                    this.getDeclaredAnnotations = getDeclaredAnnotations;
+                }
+
+                @Override
+                public int getModifiers(Object parameter) {
+                    try {
+                        return (Integer) getModifiers.invoke(parameter);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getModifiers", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getModifiers", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean isNamePresent(Object parameter) {
+                    try {
+                        return (Boolean) isNamePresent.invoke(parameter);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#isNamePresent", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#isNamePresent", exception.getCause());
+                    }
+                }
+
+                @Override
+                public String getName(Object parameter) {
+                    try {
+                        return (String) getName.invoke(parameter);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getName", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getName", exception.getCause());
+                    }
+                }
+
+                @Override
+                public List<Annotation> getDeclaredAnnotations(Object parameter) {
+                    try {
+                        return Arrays.asList((Annotation[]) getDeclaredAnnotations.invoke(parameter));
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getDeclaredAnnotations", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getDeclaredAnnotations", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Object getDeclaringExecutable(Object parameter) {
+                    try {
+                        return getDeclaringExecutable.invoke(parameter);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getDeclaringExecutable", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getDeclaringExecutable", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForModernVm legal = (ForModernVm) other;
+                    return getName.equals(legal.getName)
+                            && getDeclaringExecutable.equals(legal.getDeclaringExecutable)
+                            && isNamePresent.equals(legal.isNamePresent)
+                            && getModifiers.equals(legal.getModifiers)
+                            && getDeclaredAnnotations.equals(legal.getDeclaredAnnotations);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = getName.hashCode();
+                    result = 31 * result + getDeclaringExecutable.hashCode();
+                    result = 31 * result + isNamePresent.hashCode();
+                    result = 31 * result + getModifiers.hashCode();
+                    result = 31 * result + getDeclaredAnnotations.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "ParameterDescription.ForLoadedParameter.Dispatcher.ForModernVm{" +
+                            "getName=" + getName +
+                            ", getDeclaringExecutable=" + getDeclaringExecutable +
+                            ", isNamePresent=" + isNamePresent +
+                            ", getModifiers=" + getModifiers +
+                            ", getDeclaredAnnotations=" + getDeclaredAnnotations +
+                            '}';
+                }
+            }
+
+            /**
+             * A dispatcher for a legacy VM that does not know the {@code java.lang.reflect.Parameter} type that only throws
+             * exceptions on any property extraction.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public int getModifiers(Object parameter) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                }
+
+                @Override
+                public boolean isNamePresent(Object parameter) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                }
+
+                @Override
+                public String getName(Object parameter) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                }
+
+                @Override
+                public List<Annotation> getDeclaredAnnotations(Object parameter) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                }
+
+                @Override
+                public Object getDeclaringExecutable(Object parameter) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                }
+
+                @Override
+                public String toString() {
+                    return "ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm." + name();
+                }
+            }
         }
 
         /**

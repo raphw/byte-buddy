@@ -5,10 +5,10 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
-import net.bytebuddy.utility.JavaMethod;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -122,23 +122,21 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     class ForLoadedExecutable extends AbstractBase<ParameterDescription.InDefinedShape> {
 
         /**
-         * Represents the {@code java.lang.reflect.Executable}'s {@code getParameters} method.
+         * A dispatcher for creating parameter lists depending on the features of the currently running Java virtual machine.
          */
-        private static final JavaMethod GET_PARAMETERS;
+        private static final Dispatcher DISPATCHER;
 
         /*
-         * Initializes the {@link net.bytebuddy.utility.JavaMethod} instances of this class dependant on
-         * whether they are available.
+         * Creates a dispatcher for the currently running JVM.
          */
         static {
-            JavaMethod getParameters;
+            Dispatcher dispatcher;
             try {
-                Class<?> executableType = Class.forName("java.lang.reflect.Executable");
-                getParameters = new JavaMethod.ForLoadedMethod(executableType.getDeclaredMethod("getParameters"));
+                dispatcher = new Dispatcher.ForModernVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameters"));
             } catch (Exception ignored) {
-                getParameters = JavaMethod.ForUnavailableMethod.INSTANCE;
+                dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
             }
-            GET_PARAMETERS = getParameters;
+            DISPATCHER = dispatcher;
         }
 
         /**
@@ -162,9 +160,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @return A list of parameters for this method.
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Method method) {
-            return GET_PARAMETERS.isInvokable()
-                    ? new ForLoadedExecutable((Object[]) GET_PARAMETERS.invoke(method))
-                    : new OfLegacyVmMethod(method);
+            return DISPATCHER.getParameters(method);
         }
 
         /**
@@ -174,9 +170,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @return A list of parameters for this constructor.
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor) {
-            return GET_PARAMETERS.isInvokable()
-                    ? new ForLoadedExecutable((Object[]) GET_PARAMETERS.invoke(constructor))
-                    : new OfLegacyVmConstructor(constructor);
+            return DISPATCHER.getParameters(constructor);
         }
 
         @Override
@@ -196,6 +190,116 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter(aParameter));
             }
             return new GenericTypeList.Explicit(types);
+        }
+
+        /**
+         * A dispatcher for creating parameter lists depending on the features of the currently running JVM.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Returns a list of descriptions of the provided method.
+             *
+             * @param method The loaded method for which to describe the parameters.
+             * @return A description of the method's parameters.
+             */
+            ParameterList<ParameterDescription.InDefinedShape> getParameters(Method method);
+
+            /**
+             * Returns a list of descriptions of the provided constructor.
+             *
+             * @param constructor The loaded constructor for which to describe the parameters.
+             * @return A description of the constructor's parameters.
+             */
+            ParameterList<ParameterDescription.InDefinedShape> getParameters(Constructor<?> constructor);
+
+            /**
+             * A dispatcher for virtual machines that are aware of the {@code java.lang.reflect.Executable} type that was added in Java version 8.
+             */
+            class ForModernVm implements Dispatcher {
+
+                /**
+                 * The {@code java.lang.reflect.Executable#getParameters} method.
+                 */
+                private final Method getParameters;
+
+                /**
+                 * Creates a dispatcher for modern VMs.
+                 *
+                 * @param getParameters The {@code java.lang.reflect.Executable#getParameters} method.
+                 */
+                protected ForModernVm(Method getParameters) {
+                    this.getParameters = getParameters;
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters(Method method) {
+                    try {
+                        return new ForLoadedExecutable((Object[]) getParameters.invoke(method));
+                    } catch (IllegalAccessException e) {
+                        throw new IllegalStateException();
+                    } catch (InvocationTargetException e) {
+                        throw new IllegalStateException();
+                    }
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters(Constructor<?> constructor) {
+                    try {
+                        return new ForLoadedExecutable((Object[]) getParameters.invoke(constructor));
+                    } catch (IllegalAccessException e) {
+                        throw new IllegalStateException();
+                    } catch (InvocationTargetException e) {
+                        throw new IllegalStateException();
+                    }
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForModernVm that = (ForModernVm) other;
+                    return getParameters.equals(that.getParameters);
+                }
+
+                @Override
+                public int hashCode() {
+                    return getParameters.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "ParameterList.ForLoadedExecutable.Dispatcher.ForModernVm{" +
+                            "getParameters=" + getParameters +
+                            '}';
+                }
+            }
+
+            /**
+             * A dispatcher for virtual machines that are <b>not</b> aware of the {@code java.lang.reflect.Executable} type that was added in Java version 8.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters(Method method) {
+                    return new OfLegacyVmMethod(method);
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters(Constructor<?> constructor) {
+                    return new OfLegacyVmConstructor(constructor);
+                }
+
+                @Override
+                public String toString() {
+                    return "ParameterList.ForLoadedExecutable.Dispatcher.ForLegacyVm." + name();
+                }
+            }
         }
 
         /**

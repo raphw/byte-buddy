@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.utility.StreamDrainer;
 
 import java.io.*;
@@ -92,8 +93,9 @@ public interface ClassFileLocator {
             /**
              * Creates a new explicit resolution of a given array of binary data.
              *
-             * @param binaryRepresentation The binary data to represent.
+             * @param binaryRepresentation The binary data to represent. The array must not be modified.
              */
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received value is never modified by contract")
             public Explicit(byte[] binaryRepresentation) {
                 this.binaryRepresentation = binaryRepresentation;
             }
@@ -126,6 +128,7 @@ public interface ClassFileLocator {
             }
 
             @Override
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value must never be modified by contract")
             public byte[] resolve() {
                 return binaryRepresentation;
             }
@@ -820,6 +823,7 @@ public interface ClassFileLocator {
             /**
              * The binary representation of the looked-up class.
              */
+            @SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY", justification = "By contract, the referenced array is not to be modified")
             private volatile byte[] binaryRepresentation;
 
             /**
@@ -834,6 +838,7 @@ public interface ClassFileLocator {
             }
 
             @Override
+            @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "Return value is always null; received value is never modified")
             public byte[] transform(ClassLoader classLoader,
                                     String internalName,
                                     Class<?> redefinedType,
@@ -864,11 +869,12 @@ public interface ClassFileLocator {
             }
 
             /**
-             * Returns the binary representation of the class file that was looked up.
+             * Returns the binary representation of the class file that was looked up. The returned array must never be modified.
              *
              * @return The binary representation of the class file or {@code null} if no such class file could
              * be located.
              */
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value must never be modified by contract")
             protected byte[] getBinaryRepresentation() {
                 return binaryRepresentation;
             }

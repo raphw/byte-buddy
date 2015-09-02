@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type.generic;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -10,7 +11,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.JavaMethod;
 import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.reflect.*;
@@ -1224,6 +1224,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         }
 
         @Override
+        @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure instance")
         public boolean equals(Object other) {
             if (getSort().isNonGeneric()) {
                 return asErasure().equals(other);
@@ -1947,6 +1948,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
+            @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure instance")
             public boolean equals(Object other) {
                 return typeDescription.equals(other);
             }
@@ -2421,30 +2423,22 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         public static class OfLoadedParameter extends LazyProjection {
 
             /**
-             * The Java 7 {@code java.lang.reflect.Parameter}'s {@code getType} method.
+             * A dispatcher for introspecting a parameter's type.
              */
-            protected static final JavaMethod GET_TYPE;
-
-            /**
-             * The Java 7 {@code java.lang.reflect.Parameter}'s {@code getGenericType} method.
-             */
-            protected static final JavaMethod GET_GENERIC_TYPE;
+            private static final Dispatcher DISPATCHER;
 
             /*
-             * Looks up Java 7 specific methods if possible.
+             * Looks up Java 7+ specific methods if possible.
              */
             static {
-                JavaMethod getType, getGenericType;
+                Dispatcher dispatcher;
                 try {
                     Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                    getType = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getType"));
-                    getGenericType = new JavaMethod.ForLoadedMethod(parameterType.getDeclaredMethod("getParameterizedType"));
+                    dispatcher = new Dispatcher.ForModernVm(parameterType.getDeclaredMethod("getType"), parameterType.getDeclaredMethod("getParameterizedType"));
                 } catch (Exception ignored) {
-                    getType = JavaMethod.ForUnavailableMethod.INSTANCE;
-                    getGenericType = JavaMethod.ForUnavailableMethod.INSTANCE;
+                    dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
                 }
-                GET_TYPE = getType;
-                GET_GENERIC_TYPE = getGenericType;
+                DISPATCHER = dispatcher;
             }
 
             /**
@@ -2463,12 +2457,133 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
             @Override
             protected GenericTypeDescription resolve() {
-                return Sort.describe((Type) GET_GENERIC_TYPE.invoke(parameter));
+                return Sort.describe(DISPATCHER.getParameterizedType(parameter));
             }
 
             @Override
             public TypeDescription asErasure() {
-                return new TypeDescription.ForLoadedType((Class<?>) GET_TYPE.invoke(parameter));
+                return new TypeDescription.ForLoadedType(DISPATCHER.getType(parameter));
+            }
+
+            /**
+             * A dispatcher for introspecting a method's types.
+             */
+            protected interface Dispatcher {
+
+                /**
+                 * Returns a parameter's parameterized type.
+                 *
+                 * @param parameter The parameter to extract the paramaterized type of.
+                 * @return The parameter's generic type.
+                 */
+                Type getParameterizedType(Object parameter);
+
+                /**
+                 * Returns the parameter's type.
+                 *
+                 * @param parameter The parameter to extract the non-generic type of.
+                 * @return The parameter's non-generic type.
+                 */
+                Class<?> getType(Object parameter);
+
+                /**
+                 * A dispatcher for a modern VM that supports the {@code java.lang.reflect.Parameter} API for Java 8+.
+                 */
+                class ForModernVm implements Dispatcher {
+
+                    /**
+                     * A reference to {@code java.lang.reflect.Parameter#getType}.
+                     */
+                    private final Method getType;
+
+                    /**
+                     * A reference to {@code java.lang.reflect.Parameter#getParameterizedType}.
+                     */
+                    private final Method getParameterizedType;
+
+                    /**
+                     * Creates a new dispatcher.
+                     *
+                     * @param getType              A reference to {@code java.lang.reflect.Parameter#getType}.
+                     * @param getParameterizedType A reference to {@code java.lang.reflect.Parameter#getParameterizedType}.
+                     */
+                    protected ForModernVm(Method getType, Method getParameterizedType) {
+                        this.getType = getType;
+                        this.getParameterizedType = getParameterizedType;
+                    }
+
+                    @Override
+                    public Type getParameterizedType(Object parameter) {
+                        try {
+                            return (Type) getParameterizedType.invoke(parameter);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getParameterizedType", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getParameterizedType", exception.getCause());
+                        }
+                    }
+
+                    @Override
+                    public Class<?> getType(Object parameter) {
+                        try {
+                            return (Class<?>) getType.invoke(parameter);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getType", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getType", exception.getCause());
+                        }
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForModernVm legal = (ForModernVm) other;
+                        return getType.equals(legal.getType) && getParameterizedType.equals(legal.getParameterizedType);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = getType.hashCode();
+                        result = 31 * result + getParameterizedType.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "GenericTypeDescription.LazyProjection.OfLoadedParameter.Dispatcher.ForModernVm{" +
+                                "getType=" + getType +
+                                ", getParameterizedType=" + getParameterizedType +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A dispatcher for a VM that does not support the {@code java.lang.reflect.Parameter} API that throws an exception
+                 * for any property.
+                 */
+                enum ForLegacyVm implements Dispatcher {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public Type getParameterizedType(Object parameter) {
+                        throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                    }
+
+                    @Override
+                    public Class<?> getType(Object parameter) {
+                        throw new IllegalStateException("Unsupported type for current JVM: java,lang.Parameter");
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "GenericTypeDescription.LazyProjection.OfLoadedParameter.Dispatcher.ForLegacyVm." + name();
+                    }
+                }
             }
 
             /**

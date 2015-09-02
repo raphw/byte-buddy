@@ -1,5 +1,7 @@
 package net.bytebuddy.matcher;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Collection;
 
 /**
@@ -24,6 +26,7 @@ public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher
     }
 
     @Override
+    @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "Iteration required to count size of an iterable")
     public boolean matches(T target) {
         if (target instanceof Collection) {
             return ((Collection<?>) target).size() == size;

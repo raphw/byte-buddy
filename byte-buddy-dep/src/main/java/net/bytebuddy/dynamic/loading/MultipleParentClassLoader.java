@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import java.io.IOException;
@@ -131,6 +132,7 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         @Override
+        @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Null reference is impossible due to element check")
         public URL nextElement() {
             if (hasMoreElements()) {
                 return currentEnumeration.nextElement();

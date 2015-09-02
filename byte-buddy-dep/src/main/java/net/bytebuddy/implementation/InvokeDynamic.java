@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -3291,6 +3292,7 @@ public class InvokeDynamic implements Implementation {
     /**
      * A step in the invoke dynamic domain specific language that allows to explicitly specify a field type for a reference value.
      */
+    @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation convers use case")
     public static class WithImplicitFieldType extends AbstractDelegator {
 
         /**
@@ -3405,6 +3407,7 @@ public class InvokeDynamic implements Implementation {
     /**
      * An invoke dynamic implementation where the last argument is an implicitly typed method argument.
      */
+    @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation convers use case")
     public static class WithImplicitArgumentType extends AbstractDelegator {
 
         /**
@@ -3455,8 +3458,7 @@ public class InvokeDynamic implements Implementation {
         public InvokeDynamic as(TypeDescription typeDescription) {
             return new InvokeDynamic(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider
-                            .ForExplicitTypedMethodParameter(index, nonNull(typeDescription))),
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter(index, nonNull(typeDescription))),
                     terminationHandler,
                     assigner,
                     typing);

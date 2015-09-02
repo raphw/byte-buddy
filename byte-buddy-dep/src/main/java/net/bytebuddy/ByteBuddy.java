@@ -1292,7 +1292,7 @@ public class ByteBuddy {
 
             @Override
             public boolean equals(Object other) {
-                return other != null && other.getClass() == Undefined.class;
+                return other != null && other.getClass() == getClass();
             }
 
             @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.auxiliary;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -21,6 +22,7 @@ public interface AuxiliaryType {
     /**
      * The default type access of an auxiliary type. <b>This array must not be mutated</b>.
      */
+    @SuppressFBWarnings(value = "MS_MUTABLE_ARRAY", justification = "Favor simplicity with current API in overall immutable library layout")
     ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {SyntheticState.SYNTHETIC};
 
     /**

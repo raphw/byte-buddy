@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
@@ -12,6 +13,7 @@ import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAware
  * An assigner is for example responsible for type casting, auto boxing or unboxing or for the widening of primitive
  * types.
  */
+@SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "No circularity, initialization is safe")
 public interface Assigner {
 
     /**

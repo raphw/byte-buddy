@@ -391,7 +391,7 @@ public abstract class FixedValue implements Implementation {
          * @param typing     Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected ForStaticField(Object fixedValue, Assigner assigner, Assigner.Typing typing) {
-            this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode())), fixedValue, assigner, typing);
+            this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode() % Integer.MAX_VALUE)), fixedValue, assigner, typing);
         }
 
         /**

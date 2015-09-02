@@ -1,5 +1,6 @@
 package net.bytebuddy.pool;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -2302,6 +2303,7 @@ public interface TypePool {
             }
 
             @Override
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received value is never modified")
             public void visit(int classFileVersion,
                               int modifiers,
                               String internalName,
@@ -2478,13 +2480,9 @@ public interface TypePool {
 
                 @Override
                 public void visit(String name, Object value) {
-                    AnnotationDescription.AnnotationValue<?, ?> annotationValue;
-                    if (value instanceof Type) {
-                        annotationValue = new RawTypeValue(Default.this, (Type) value);
-                    } else {
-                        annotationValue = new AnnotationDescription.AnnotationValue.Trivial<Object>(value);
-                    }
-                    annotationRegistrant.register(name, annotationValue);
+                    annotationRegistrant.register(name, value instanceof Type
+                            ? new RawTypeValue(Default.this, (Type) value)
+                            : new AnnotationDescription.AnnotationValue.Trivial<Object>(value));
                 }
 
                 @Override

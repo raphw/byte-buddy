@@ -85,7 +85,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler) {
-        return of(invocationHandler, String.format("%s$%d", PREFIX, Math.abs(invocationHandler.hashCode())));
+        return of(invocationHandler, String.format("%s$%d", PREFIX, Math.abs(invocationHandler.hashCode() % Integer.MAX_VALUE)));
     }
 
     /**

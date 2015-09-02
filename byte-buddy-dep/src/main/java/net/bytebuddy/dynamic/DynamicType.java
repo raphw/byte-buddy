@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
@@ -2929,10 +2930,11 @@ public interface DynamicType {
          * Creates a new dynamic type.
          *
          * @param typeDescription       A description of this dynamic type.
-         * @param binaryRepresentation  A byte array containing the binary representation of this dynamic type.
+         * @param binaryRepresentation  A byte array containing the binary representation of this dynamic type. The array must not be modified.
          * @param loadedTypeInitializer The loaded type initializer of this dynamic type.
          * @param auxiliaryTypes        The auxiliary type required for this dynamic type.
          */
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received value is never modified by contract")
         public Default(TypeDescription typeDescription,
                        byte[] binaryRepresentation,
                        LoadedTypeInitializer loadedTypeInitializer,
@@ -2980,6 +2982,7 @@ public interface DynamicType {
         }
 
         @Override
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value must never be modified")
         public byte[] getBytes() {
             return binaryRepresentation;
         }

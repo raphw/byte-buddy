@@ -1,5 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -394,6 +396,7 @@ public interface PackageDefinitionStrategy {
             }
 
             @Override
+            @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
@@ -408,6 +411,7 @@ public interface PackageDefinitionStrategy {
             }
 
             @Override
+            @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
             public int hashCode() {
                 int result = specificationTitle != null ? specificationTitle.hashCode() : 0;
                 result = 31 * result + (specificationVersion != null ? specificationVersion.hashCode() : 0);
@@ -598,12 +602,14 @@ public interface PackageDefinitionStrategy {
                 }
 
                 @Override
+                @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && sealBase.equals(((ForFixedValue) other).sealBase);
                 }
 
                 @Override
+                @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
                 public int hashCode() {
                     return sealBase.hashCode();
                 }

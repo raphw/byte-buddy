@@ -78,6 +78,7 @@
         <!-- Subsequent versions of checkstyle require Java 7. -->
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
         <version.plugin.findbugs>3.0.1</version.plugin.findbugs>
+        <version.annotations.findbugs>3.0.0</version.annotations.findbugs>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
 
@@ -149,6 +150,16 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <!-- Allows the suppression of find bugs false-positives by annotations without adding an actual dependency. -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+            <version>${version.annotations.findbugs}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>

@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -18,6 +19,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * Represents that a type list does not contain any values for ASM interoperability which is represented by {@code null}.
      */
+    @SuppressFBWarnings(value = "MS_MUTABLE_ARRAY", justification = "Value is null")
     String[] NO_INTERFACES = null;
 
     /**
@@ -193,6 +195,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     class Empty extends FilterableList.Empty<TypeDescription, TypeList> implements TypeList {
 
         @Override
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value is always null")
         public String[] toInternalNames() {
             return NO_INTERFACES;
         }

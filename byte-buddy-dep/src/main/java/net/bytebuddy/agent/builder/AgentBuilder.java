@@ -1,5 +1,6 @@
 package net.bytebuddy.agent.builder;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -486,10 +487,11 @@ public interface AgentBuilder {
                  * Creates a new initialized form of a default binary locator.
                  *
                  * @param typeName             The binary name of the type that is being instrumented.
-                 * @param binaryRepresentation The binary representation of the instrumented type.
+                 * @param binaryRepresentation The binary representation of the instrumented type. The provided array must not be modified.
                  * @param cacheProvider        The cache provider to use.
                  * @param classFileLocator     The class file locator to use.
                  */
+                @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received array must be immutable by contract")
                 public Initialized(String typeName,
                                    byte[] binaryRepresentation,
                                    TypePool.CacheProvider cacheProvider,
