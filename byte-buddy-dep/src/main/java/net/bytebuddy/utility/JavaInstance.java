@@ -71,6 +71,8 @@ public interface JavaInstance {
             try {
                 Class<?> methodType = JavaType.METHOD_TYPE.load();
                 dispatcher = new Dispatcher.ForModernVm(methodType.getDeclaredMethod("returnType"), methodType.getDeclaredMethod("parameterArray"));
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception ignored) {
                 dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
             }
@@ -444,6 +446,8 @@ public interface JavaInstance {
                             methodType.getDeclaredMethod("returnType"),
                             methodType.getDeclaredMethod("parameterArray"),
                             JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
+                } catch (RuntimeException exception) {
+                    throw exception;
                 } catch (Exception ignored) {
                     dispatcher = new Dispatcher.ForIntermediateVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
                             methodHandleInfo.getDeclaredMethod("getName"),
@@ -454,7 +458,8 @@ public interface JavaInstance {
                             methodType.getDeclaredMethod("parameterArray"),
                             methodHandleInfo.getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
                 }
-
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception ignored) {
                 dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
             }
@@ -1170,7 +1175,7 @@ public interface JavaInstance {
                 @Override
                 public Object reveal(Object lookup, Object methodHandle) {
                     try {
-                        return methodInfo.newInstance(lookup, methodHandle);
+                        return methodInfo.newInstance(methodHandle);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodInfo()", exception);
                     } catch (InvocationTargetException exception) {

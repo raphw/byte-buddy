@@ -93,7 +93,7 @@ public class ClassFileLocatorAgentBasedTest {
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.Default.class).apply();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.class).apply();
         final Iterator<Field> iterator = Arrays.asList(Foo.class.getDeclaredFields()).iterator();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.JavaField.ForResolvedField.class)
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Resolved.class)
                 .create(new ObjectPropertyAssertion.Creator<Field>() {
                     @Override
                     public Field create() {
@@ -101,7 +101,7 @@ public class ClassFileLocatorAgentBasedTest {
                     }
                 })
                 .apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.JavaField.ForNonResolvedField.class).apply();
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Unresolved.class).apply();
         final Iterator<Class<?>> otherIterator = Arrays.<Class<?>>asList(Integer.class, String.class, Object.class, Byte.class).iterator();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.class).create(new ObjectPropertyAssertion.Creator<Collection<Class<?>>>() {
             @Override

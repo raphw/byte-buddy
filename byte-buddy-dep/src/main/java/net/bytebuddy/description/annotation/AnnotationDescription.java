@@ -1632,6 +1632,8 @@ public interface AnnotationDescription {
                     }
                 }
                 return describe(method.invoke(annotation), methodDescription.getReturnType().asErasure());
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception exception) {
                 throw new IllegalStateException("Cannot access annotation property " + methodDescription, exception);
             }

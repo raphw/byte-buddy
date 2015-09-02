@@ -1001,6 +1001,8 @@ public interface AgentBuilder {
                         .loadClass(BYTE_BUDDY_AGENT_TYPE)
                         .getDeclaredMethod(GET_INSTRUMENTATION_METHOD)
                         .invoke(STATIC_METHOD));
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception exception) {
                 throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
             }
@@ -1354,6 +1356,8 @@ public interface AgentBuilder {
                                         .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
                                 invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
                                         .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
+                            } catch (RuntimeException exception) {
+                                throw exception;
                             } catch (Exception exception) {
                                 throw new IllegalStateException("Cannot create type initialization accessor", exception);
                             }

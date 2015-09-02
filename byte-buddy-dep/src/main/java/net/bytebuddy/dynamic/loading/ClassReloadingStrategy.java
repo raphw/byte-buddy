@@ -131,6 +131,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                     .loadClass(BYTE_BUDDY_AGENT_TYPE)
                     .getDeclaredMethod(GET_INSTRUMENTATION_METHOD)
                     .invoke(STATIC_METHOD));
+        } catch (RuntimeException exception) {
+            throw exception;
         } catch (Exception exception) {
             throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
         }

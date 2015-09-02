@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -209,6 +210,8 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                         parameterType.getDeclaredMethod("isNamePresent"),
                         parameterType.getDeclaredMethod("getModifiers"),
                         parameterType.getDeclaredMethod("getDeclaredAnnotations"));
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception ignored) {
                 dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
             }

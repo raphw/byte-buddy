@@ -8,6 +8,9 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
@@ -410,6 +413,8 @@ public interface ClassFileLocator {
                         .loadClass(BYTE_BUDDY_AGENT_TYPE)
                         .getDeclaredMethod(GET_INSTRUMENTATION_METHOD)
                         .invoke(STATIC_METHOD), classLoader);
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception exception) {
                 throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
             }
@@ -429,6 +434,8 @@ public interface ClassFileLocator {
                 } finally {
                     instrumentation.removeTransformer(classFileTransformer);
                 }
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception ignored) {
                 return Resolution.Illegal.INSTANCE;
             }
@@ -501,8 +508,19 @@ public interface ClassFileLocator {
                  * @return The class loading delegate for the provided class loader.
                  */
                 public static ClassLoadingDelegate of(ClassLoader classLoader) {
+                    return of(classLoader, AccessController.getContext());
+                }
+
+                /**
+                 * Creates a class loading delegate for the given class loader.
+                 *
+                 * @param classLoader          The class loader for which to create a delegate.
+                 * @param accessControlContext The access control context to use when reading a class from a delegating class loader.
+                 * @return The class loading delegate for the provided class loader.
+                 */
+                public static ClassLoadingDelegate of(ClassLoader classLoader, AccessControlContext accessControlContext) {
                     return ForDelegatingClassLoader.isDelegating(classLoader)
-                            ? new ForDelegatingClassLoader(classLoader)
+                            ? new ForDelegatingClassLoader(classLoader, accessControlContext)
                             : new Default(classLoader);
                 }
 
@@ -554,32 +572,37 @@ public interface ClassFileLocator {
                 private static final int ONLY = 0;
 
                 /**
-                 * The class loader's field that contains all loaded classes.
+                 * A dispatcher for extracting a class loader's loaded classes.
                  */
-                private static final JavaField CLASSES_FIELD;
+                private static final Dispatcher.Initializable DISPATCHER;
 
                 /*
                  * Locates the {@link java.lang.ClassLoader}'s field that contains all loaded classes.
                  */
                 static {
-                    JavaField classesField;
+                    Dispatcher.Initializable dispatcher;
                     try {
-                        Field field = ClassLoader.class.getDeclaredField("classes");
-                        field.setAccessible(true);
-                        classesField = new JavaField.ForResolvedField(field);
+                        dispatcher = new Dispatcher.Resolved(ClassLoader.class.getDeclaredField("classes"));
                     } catch (Exception exception) {
-                        classesField = new JavaField.ForNonResolvedField(exception);
+                        dispatcher = new Dispatcher.Unresolved(exception);
                     }
-                    CLASSES_FIELD = classesField;
+                    DISPATCHER = dispatcher;
                 }
+
+                /**
+                 * The access control context to use for accessing the field.
+                 */
+                private final AccessControlContext accessControlContext;
 
                 /**
                  * Creates a class loading delegate for a delegating class loader.
                  *
-                 * @param classLoader The delegating class loader.
+                 * @param classLoader          The delegating class loader.
+                 * @param accessControlContext The access control context to be used for accessing
                  */
-                protected ForDelegatingClassLoader(ClassLoader classLoader) {
+                protected ForDelegatingClassLoader(ClassLoader classLoader, AccessControlContext accessControlContext) {
                     super(classLoader);
+                    this.accessControlContext = accessControlContext;
                 }
 
                 /**
@@ -597,8 +620,8 @@ public interface ClassFileLocator {
                 public Class<?> locate(String name) throws ClassNotFoundException {
                     Vector<Class<?>> classes;
                     try {
-                        classes = (Vector<Class<?>>) CLASSES_FIELD.readValue(classLoader);
-                    } catch (Exception ignored) {
+                        classes = DISPATCHER.initialize(accessControlContext).extract(classLoader);
+                    } catch (RuntimeException ignored) {
                         return super.locate(name);
                     }
                     if (classes.size() != 1) {
@@ -620,21 +643,34 @@ public interface ClassFileLocator {
                 /**
                  * Representation of a Java {@link java.lang.reflect.Field}.
                  */
-                protected interface JavaField {
+                protected interface Dispatcher {
 
                     /**
-                     * Reads a value from the underlying field.
+                     * Reads the classes of the represented collection.
                      *
-                     * @param instance The instance to read from.
-                     * @return The field's value.
-                     * @throws Exception If the field's value cannot be read.
+                     * @param classLoader The class loader to read from.
+                     * @return The class loader's loaded classes.
                      */
-                    Object readValue(Object instance) throws Exception;
+                    Vector<Class<?>> extract(ClassLoader classLoader);
+
+                    /**
+                     * An unitialized version of a dispatcher for extracting a class loader's loaded classes.
+                     */
+                    interface Initializable {
+
+                        /**
+                         * Initializes the dispatcher.
+                         *
+                         * @param accessControlContext The access control context to use for accessing the private API.
+                         * @return An initialized dispatcher.
+                         */
+                        Dispatcher initialize(AccessControlContext accessControlContext);
+                    }
 
                     /**
                      * Represents a field that could be located.
                      */
-                    class ForResolvedField implements JavaField {
+                    class Resolved implements Dispatcher, Initializable, PrivilegedAction<Dispatcher> {
 
                         /**
                          * The represented field.
@@ -646,19 +682,35 @@ public interface ClassFileLocator {
                          *
                          * @param field the represented field.l
                          */
-                        public ForResolvedField(Field field) {
+                        public Resolved(Field field) {
                             this.field = field;
                         }
 
                         @Override
-                        public Object readValue(Object instance) throws Exception {
-                            return field.get(instance);
+                        public Dispatcher initialize(AccessControlContext accessControlContext) {
+                            return AccessController.doPrivileged(this, accessControlContext);
+                        }
+
+                        @Override
+                        public Dispatcher run() {
+                            field.setAccessible(true);
+                            return this;
+                        }
+
+                        @Override
+                        @SuppressWarnings("unchecked")
+                        public Vector<Class<?>> extract(ClassLoader classLoader) {
+                            try {
+                                return (Vector<Class<?>>) field.get(classLoader);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access field", exception);
+                            }
                         }
 
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
-                                    && field.equals(((ForResolvedField) other).field);
+                                    && field.equals(((Resolved) other).field);
                         }
 
                         @Override
@@ -668,7 +720,7 @@ public interface ClassFileLocator {
 
                         @Override
                         public String toString() {
-                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.JavaField.ForResolvedField{" +
+                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.ClassCollection.Resolved{" +
                                     "field=" + field +
                                     '}';
                         }
@@ -677,7 +729,7 @@ public interface ClassFileLocator {
                     /**
                      * Represents a field that could not be located.
                      */
-                    class ForNonResolvedField implements JavaField {
+                    class Unresolved implements Initializable {
 
                         /**
                          * The exception that occurred when attempting to locate the field.
@@ -689,19 +741,19 @@ public interface ClassFileLocator {
                          *
                          * @param exception The exception that occurred when attempting to locate the field.
                          */
-                        public ForNonResolvedField(Exception exception) {
+                        public Unresolved(Exception exception) {
                             this.exception = exception;
                         }
 
                         @Override
-                        public Object readValue(Object instance) throws Exception {
-                            throw exception;
+                        public Dispatcher initialize(AccessControlContext accessControlContext) {
+                            throw new IllegalStateException("Could not locate classes vector", exception);
                         }
 
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
-                                    && exception.equals(((ForNonResolvedField) other).exception);
+                                    && exception.equals(((Unresolved) other).exception);
                         }
 
                         @Override
@@ -711,7 +763,7 @@ public interface ClassFileLocator {
 
                         @Override
                         public String toString() {
-                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.JavaField.ForNonResolvedField{" +
+                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.ClassCollection.Unresolved{" +
                                     "exception=" + exception +
                                     '}';
                         }

@@ -133,6 +133,8 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             Dispatcher dispatcher;
             try {
                 dispatcher = new Dispatcher.ForModernVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameters"));
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception ignored) {
                 dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
             }

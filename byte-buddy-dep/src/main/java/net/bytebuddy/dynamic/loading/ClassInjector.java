@@ -79,6 +79,8 @@ public interface ClassInjector {
                                 String.class,
                                 String.class,
                                 URL.class));
+            } catch (RuntimeException exception) {
+                throw exception;
             } catch (Exception exception) {
                 dispatcher = new Dispatcher.Faulty(exception);
             }
