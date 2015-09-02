@@ -70,8 +70,10 @@
         <version.plugin.jar>2.6</version.plugin.jar>
         <version.plugin.release>2.5.1</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
+        <version.plugin.surefire>2.18.1</version.plugin.surefire>
         <version.plugin.pitest>1.1.6</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
+        <version.plugin.enforcer>1.4</version.plugin.enforcer>
         <!-- Versions 2.6 and 2.7 fail on Travis. -->
         <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
         <version.plugin.coveralls>3.1.0</version.plugin.coveralls>
@@ -248,6 +250,11 @@
                     <version>${version.plugin.install}</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.surefire</groupId>
+                    <artifactId>surefire</artifactId>
+                    <version>${version.plugin.surefire}</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>${version.plugin.deploy}</version>
@@ -286,6 +293,7 @@
     </distributionManagement>
 
     <profiles>
+        <!-- Creates additional articats that make this project deployable to repositories. -->
         <profile>
             <id>extras</id>
             <activation>
@@ -342,6 +350,7 @@
                 </plugins>
             </build>
         </profile>
+        <!-- Sign any created artifact. (Requires configuration of gpg on the executing machine.) -->
         <profile>
             <id>gpg</id>
             <activation>
@@ -366,6 +375,7 @@
                 </plugins>
             </build>
         </profile>
+        <!-- Basic checks that are not requiring too much runtime. -->
         <profile>
             <id>checks</id>
             <activation>
@@ -416,9 +426,77 @@
                 </plugins>
             </build>
         </profile>
+        <!-- Integration profile that executes long-running tasks and additional static code analysis. -->
+        <profile>
+            <id>integration</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- Enable non-fast-running unit tests by setting the integration profile. -->
+                    <plugin>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire</artifactId>
+                        <version>${version.plugin.surefire}</version>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <net.bytebuddy.property.integration>true</net.bytebuddy.property.integration>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                    <!-- Run findbugs if not specified differently.-->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>findbugs-maven-plugin</artifactId>
+                        <version>${version.plugin.findbugs}</version>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <configuration>
+                                    <effort>Max</effort>
+                                    <threshold>Low</threshold>
+                                    <xmlOutput>true</xmlOutput>
+                                    <failOnError>true</failOnError>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Make sure that Byte Buddy does never depend on ASM's tree API. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>${version.plugin.enforcer}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <fail>true</fail>
+                                    <rules>
+                                        <bannedDependencies>
+                                            <includes>
+                                                <include>org.ow2.asm:asm-tree</include>
+                                            </includes>
+                                        </bannedDependencies>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- Only build the Android test application on demand as it requires Android SDK installation. -->
         <profile>
             <id>android</id>
-            <!-- Only build the Android test application on demand as it requires Android SDK installation. -->
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
             <modules>
                 <module>byte-buddy</module>
                 <module>byte-buddy-dep</module>

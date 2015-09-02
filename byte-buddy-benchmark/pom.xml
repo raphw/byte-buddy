@@ -17,6 +17,9 @@
         The benchmarks of this module should be changed with care, especially in relation to recommendations for
         code optimizations by IDEs or 'find bugs'. When changing the benchmarks, it is advisable to analyze the
         tests' assembly code for validating what iis measured.
+
+        For running the benchmarks, build the project with the 'extras' profile and run the target/byte-buddy-benchmarks.jar
+        from the command line. Running the benchmarks should happen on an idle machine and requires several hours of runtime.
     -->
 
     <properties>
@@ -62,7 +65,7 @@
 
     <build>
         <plugins>
-            <!-- Mutation testing is not required for benchmarks -->
+            <!-- Mutation testing is not adding information on benchmarking quality. -->
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
@@ -71,10 +74,20 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <!-- For micro-benchmarks, a static code analysis is of no value. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>${version.plugin.findbugs}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <!-- Shade the benchmark artifact. -->
         <profile>
             <id>extras</id>
             <activation>

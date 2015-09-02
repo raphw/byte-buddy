@@ -2,7 +2,7 @@ language: java
 
 sudo: false
 
-script: mvn test -Dnet.bytebuddy.property.integration=true
+script: mvn test -Pintegration
 
 branches:
   only:
