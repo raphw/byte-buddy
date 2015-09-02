@@ -3,10 +3,13 @@
         "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
         "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 <module name="Checker">
+
     <module name="JavadocPackage"/>
+
     <module name="NewlineAtEndOfFile">
         <property name="lineSeparator" value="lf"/>
     </module>
+
     <module name="FileTabCharacter"/>
 
     <module name="RegexpSingleline">
@@ -18,7 +21,7 @@
 
     <module name="TreeWalker">
 
-        <!-- Checkstyle has a bug that disallows @return in annotation methods, enable only on demand -->
+        <!-- Manual only. Checkstyle bug disallows @return in annotation methods: https://groups.google.com/forum/#!topic/checkstyle/VEVFDsZKLzg -->
         <!--<module name="JavadocMethod"/>-->
         <module name="JavadocType"/>
         <module name="JavadocVariable"/>
