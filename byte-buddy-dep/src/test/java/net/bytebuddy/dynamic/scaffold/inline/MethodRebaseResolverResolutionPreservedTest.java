@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -25,7 +24,11 @@ public class MethodRebaseResolverResolutionPreservedTest {
         MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.Preserved(methodDescription);
         assertThat(resolution.isRebased(), is(false));
         assertThat(resolution.getResolvedMethod(), is(methodDescription));
-        assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.Trivial.INSTANCE));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPreservationCannotAppendArguments() throws Exception {
+        new MethodRebaseResolver.Resolution.Preserved(methodDescription).getAdditionalArguments();
     }
 
     @Test

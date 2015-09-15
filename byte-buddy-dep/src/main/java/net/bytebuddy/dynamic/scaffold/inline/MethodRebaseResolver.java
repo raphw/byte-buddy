@@ -267,7 +267,7 @@ public interface MethodRebaseResolver {
 
             @Override
             public StackManipulation getAdditionalArguments() {
-                return StackManipulation.Trivial.INSTANCE;
+                throw new IllegalStateException("Cannot process additional arguments for non-rebased method: " + methodDescription);
             }
 
             @Override

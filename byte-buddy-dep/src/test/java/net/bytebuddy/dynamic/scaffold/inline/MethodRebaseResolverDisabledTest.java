@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -24,7 +23,6 @@ public class MethodRebaseResolverDisabledTest {
     public void testResolutionPreservesMethod() throws Exception {
         MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Disabled.INSTANCE.resolve(methodDescription);
         assertThat(resolution.isRebased(), is(false));
-        assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.Trivial.INSTANCE));
         assertThat(resolution.getResolvedMethod(), is(methodDescription));
     }
 
