@@ -62,18 +62,18 @@ public @interface FieldValue {
         /**
          * The annotation method that for the defining type.
          */
-        private static final MethodDescription DEFINING_TYPE;
+        private static final MethodDescription.InDefinedShape DEFINING_TYPE;
 
         /**
          * The annotation method for the field's name.
          */
-        private static final MethodDescription FIELD_NAME;
+        private static final MethodDescription.InDefinedShape FIELD_NAME;
 
         /*
          * Initializes the methods of the annotation that is read by this binder.
          */
         static {
-            MethodList<?> methodList = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
             DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
         }

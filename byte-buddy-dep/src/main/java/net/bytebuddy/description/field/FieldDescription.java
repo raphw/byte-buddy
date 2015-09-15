@@ -41,7 +41,7 @@ public interface FieldDescription extends ByteCodeElement,
     /**
      * Represents a field in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
      */
-    interface InDefinedShape extends FieldDescription {
+    interface InDefinedShape extends FieldDescription, ByteCodeElement.Accessible {
 
         @Override
         TypeDescription getDeclaringType();
@@ -54,6 +54,11 @@ public interface FieldDescription extends ByteCodeElement,
             @Override
             public InDefinedShape asDefined() {
                 return this;
+            }
+
+            @Override
+            public boolean isAccessibleTo(TypeDescription typeDescription) {
+                return isVisibleTo(typeDescription) && getDeclaringType().isVisibleTo(typeDescription);
             }
         }
     }
@@ -93,7 +98,6 @@ public interface FieldDescription extends ByteCodeElement,
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return getDeclaringType().asErasure().isVisibleTo(typeDescription)
-                    && getType().asErasure().isVisibleTo(typeDescription)
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))

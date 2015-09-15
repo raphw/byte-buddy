@@ -26,7 +26,7 @@ public class TypePoolDefaultEnumerationDescriptionTest extends AbstractEnumerati
     @Override
     protected EnumerationDescription describe(Enum<?> enumeration,
                                               Class<?> carrierType,
-                                              MethodDescription annotationMethod) {
+                                              MethodDescription.InDefinedShape annotationMethod) {
         TypeDescription typeDescription = typePool.describe(carrierType.getName()).resolve();
         for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
             if (annotationDescription.getAnnotationType().equals(annotationDescription.getAnnotationType())) {

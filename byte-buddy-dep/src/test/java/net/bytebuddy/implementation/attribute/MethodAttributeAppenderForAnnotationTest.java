@@ -24,7 +24,7 @@ public class MethodAttributeAppenderForAnnotationTest extends AbstractMethodAttr
         ParameterList<?> parameterList = mock(ParameterList.class);
         when(parameterList.size()).thenReturn(PARAMETER_INDEX + 1);
         when(methodDescription.getParameters()).thenReturn((ParameterList) parameterList);
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
+        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
     }
 
     @Test

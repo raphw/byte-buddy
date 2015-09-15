@@ -416,12 +416,20 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
                 .isVisibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("publicMethod"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("protectedMethod"))
                 .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("packagePrivateMethod"))
                 .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredMethod("privateMethod"))
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPublicMethod"))
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticProtectedMethod"))
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPackagePrivateMethod"))
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPrivateMethod"))
                 .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
@@ -472,9 +480,113 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
                 .isVisibleTo(new TypeDescription.ForLoadedType(MethodVisibilityType.class)), is(true));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
-                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
         assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+    }
+
+    @Test
+    public void testMethodIsAccessibleTo() throws Exception {
+        assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("packagePrivateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("packagePrivateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Sample.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredMethod("packagePrivateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredMethod("packagePrivateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("publicMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("protectedMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("packagePrivateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("privateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPublicMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticProtectedMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPackagePrivateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredMethod("staticPrivateMethod"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+    }
+
+    @Test
+    public void testConstructorIsAccessibleTo() throws Exception {
+        assertThat(describe(PublicType.class.getDeclaredConstructor())
+                .isAccessibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(Object.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor())
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(Object.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Sample.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Sample.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredConstructor())
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(Object.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredConstructor())
+                .isAccessibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(true));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(Object.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(false));
+        assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(VisibilityMethodTestHelper.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredConstructor())
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(Void.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(Object.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(PackagePrivateType.class.getDeclaredConstructor(String.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(MethodVisibilityType.class)), is(true));
+        assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(MethodVisibilityType.class)), is(true));
+        assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateArgument", PackagePrivateType.class))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(describe(MethodVisibilityType.class.getDeclaredMethod("packagePrivateReturnType"))
+                .isAccessibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
     }
 
     @Test
@@ -659,6 +771,22 @@ public abstract class AbstractMethodDescriptionTest {
         protected abstract void protectedMethod();
 
         abstract void packagePrivateMethod();
+
+        public static void staticPublicMethod() {
+            /* empty */
+        }
+
+        protected static void staticProtectedMethod() {
+            /* empty */
+        }
+
+        static void staticPackagePrivateMethod() {
+            /* empty */
+        }
+
+        private static void staticPrivateMethod() {
+            /* empty */
+        }
 
         private void privateMethod() {
             /* do nothing*/

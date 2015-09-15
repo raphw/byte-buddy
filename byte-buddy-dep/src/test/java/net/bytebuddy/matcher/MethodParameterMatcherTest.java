@@ -10,7 +10,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class MethodParameterMatcherTest extends AbstractElementMatcherTest<MethodParameterMatcher<?>> {
+public class MethodParameterMatcherTest extends AbstractElementMatcherTest<MethodParametersMatcher<?>> {
 
     @Mock
     private ElementMatcher<? super ParameterList<?>> parameterListMatcher;
@@ -23,7 +23,7 @@ public class MethodParameterMatcherTest extends AbstractElementMatcherTest<Metho
 
     @SuppressWarnings("unchecked")
     public MethodParameterMatcherTest() {
-        super((Class<MethodParameterMatcher<?>>) (Object) MethodParameterMatcher.class, "hasParameter");
+        super((Class<MethodParametersMatcher<?>>) (Object) MethodParametersMatcher.class, "hasParameter");
     }
 
     @Before
@@ -35,7 +35,7 @@ public class MethodParameterMatcherTest extends AbstractElementMatcherTest<Metho
     @Test
     public void testMatch() throws Exception {
         when(parameterListMatcher.matches(parameterList)).thenReturn(true);
-        assertThat(new MethodParameterMatcher<MethodDescription>(parameterListMatcher).matches(methodDescription), is(true));
+        assertThat(new MethodParametersMatcher<MethodDescription>(parameterListMatcher).matches(methodDescription), is(true));
         verify(parameterListMatcher).matches(parameterList);
         verifyNoMoreInteractions(parameterListMatcher);
     }
@@ -43,7 +43,7 @@ public class MethodParameterMatcherTest extends AbstractElementMatcherTest<Metho
     @Test
     public void testNoMatch() throws Exception {
         when(parameterListMatcher.matches(parameterList)).thenReturn(false);
-        assertThat(new MethodParameterMatcher<MethodDescription>(parameterListMatcher).matches(methodDescription), is(false));
+        assertThat(new MethodParametersMatcher<MethodDescription>(parameterListMatcher).matches(methodDescription), is(false));
         verify(parameterListMatcher).matches(parameterList);
         verifyNoMoreInteractions(parameterListMatcher);
     }

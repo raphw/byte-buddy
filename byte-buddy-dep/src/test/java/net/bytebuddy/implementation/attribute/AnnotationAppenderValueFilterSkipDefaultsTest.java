@@ -22,7 +22,7 @@ public class AnnotationAppenderValueFilterSkipDefaultsTest {
     private AnnotationDescription annotationDescription;
 
     @Mock
-    private MethodDescription methodDescription;
+    private MethodDescription.InDefinedShape methodDescription;
 
     @Test
     public void testFilteringNoDefault() throws Exception {

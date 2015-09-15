@@ -39,7 +39,7 @@ public interface AnnotationDescription {
      * @param methodDescription The method for the value to be requested.
      * @return The value for the given method.
      */
-    Object getValue(MethodDescription methodDescription);
+    Object getValue(MethodDescription.InDefinedShape methodDescription);
 
     /**
      * Returns the value of the given method for this annotation value and performs a casting to the given value. Note
@@ -51,7 +51,7 @@ public interface AnnotationDescription {
      * @param <T>               The given type of the return value.
      * @return The value for the given method casted to {@code type}.
      */
-    <T> T getValue(MethodDescription methodDescription, Class<T> type);
+    <T> T getValue(MethodDescription.InDefinedShape methodDescription, Class<T> type);
 
     /**
      * Returns a description of the annotation type of this annotation.
@@ -1442,7 +1442,7 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public <T> T getValue(MethodDescription methodDescription, Class<T> type) {
+        public <T> T getValue(MethodDescription.InDefinedShape methodDescription, Class<T> type) {
             return type.cast(getValue(methodDescription));
         }
 
@@ -1458,7 +1458,7 @@ public interface AnnotationDescription {
             if (!annotationDescription.getAnnotationType().equals(getAnnotationType())) {
                 return false;
             }
-            for (MethodDescription methodDescription : getAnnotationType().getDeclaredMethods()) {
+            for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
                 Object value = getValue(methodDescription);
                 if (!PropertyDispatcher.of(value.getClass()).equals(value, annotationDescription.getValue(methodDescription))) {
                     return false;
@@ -1470,7 +1470,7 @@ public interface AnnotationDescription {
         @Override
         public int hashCode() {
             int hashCode = 0;
-            for (MethodDescription methodDescription : getAnnotationType().getDeclaredMethods()) {
+            for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
                 Object value = getValue(methodDescription);
                 hashCode += 31 * PropertyDispatcher.of(value.getClass()).hashCode(value);
             }
@@ -1484,7 +1484,7 @@ public interface AnnotationDescription {
             toString.append(getAnnotationType().getName());
             toString.append('(');
             boolean firstMember = true;
-            for (MethodDescription methodDescription : getAnnotationType().getDeclaredMethods()) {
+            for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
                 if (firstMember) {
                     firstMember = false;
                 } else {
@@ -1615,18 +1615,18 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public Object getValue(MethodDescription methodDescription) {
+        public Object getValue(MethodDescription.InDefinedShape methodDescription) {
             if (!methodDescription.getDeclaringType().represents(annotation.annotationType())) {
                 throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
             }
             try {
-                boolean visible = methodDescription.isVisibleTo(new TypeDescription.ForLoadedType(getClass()));
+                boolean accessible = methodDescription.isAccessibleTo(new TypeDescription.ForLoadedType(getClass()));
                 Method method = methodDescription instanceof MethodDescription.ForLoadedMethod
                         ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
                         : null;
-                if (method == null || (!visible && !method.isAccessible())) {
+                if (method == null || (!accessible && !method.isAccessible())) {
                     method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
-                    if (!visible) {
+                    if (!accessible) {
                         AccessController.doPrivileged(new MethodAccessibilityAction(method));
                     }
                 }
@@ -1670,6 +1670,7 @@ public interface AnnotationDescription {
 
             /**
              * Creates a new method accessibility action.
+             *
              * @param method The method to make accessible.
              */
             protected MethodAccessibilityAction(Method method) {
@@ -1731,7 +1732,7 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public Object getValue(MethodDescription methodDescription) {
+        public Object getValue(MethodDescription.InDefinedShape methodDescription) {
             AnnotationValue<?, ?> value = annotationValues.get(methodDescription.getName());
             if (value != null) {
                 return value.resolve();
@@ -1791,7 +1792,7 @@ public interface AnnotationDescription {
             }
 
             @Override
-            public Object getValue(MethodDescription methodDescription) {
+            public Object getValue(MethodDescription.InDefinedShape methodDescription) {
                 return Latent.this.getValue(methodDescription);
             }
 

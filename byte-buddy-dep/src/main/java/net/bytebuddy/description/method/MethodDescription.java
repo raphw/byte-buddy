@@ -242,7 +242,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * Represents a method in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
      */
-    interface InDefinedShape extends MethodDescription {
+    interface InDefinedShape extends MethodDescription, ByteCodeElement.Accessible {
 
         @Override
         TypeDescription getDeclaringType();
@@ -258,6 +258,11 @@ public interface MethodDescription extends TypeVariableSource,
             @Override
             public InDefinedShape asDefined() {
                 return this;
+            }
+
+            @Override
+            public boolean isAccessibleTo(TypeDescription typeDescription) {
+                return isVisibleTo(typeDescription) && getDeclaringType().isVisibleTo(typeDescription);
             }
         }
     }
@@ -376,18 +381,11 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            if (!getDeclaringType().asErasure().isVisibleTo(typeDescription) || !getReturnType().asErasure().isVisibleTo(typeDescription)) {
-                return false;
-            }
-            for (TypeDescription parameterType : getParameters().asTypeList().asErasures()) {
-                if (!parameterType.isVisibleTo(typeDescription)) {
-                    return false;
-                }
-            }
-            return isPublic()
+            return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
+                    && (isPublic()
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()));
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
         }
 
         @Override

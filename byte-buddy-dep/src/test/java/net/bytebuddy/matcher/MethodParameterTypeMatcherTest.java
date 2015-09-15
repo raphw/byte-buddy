@@ -26,7 +26,7 @@ public class MethodParameterTypeMatcherTest extends AbstractElementMatcherTest<M
 
     @SuppressWarnings("unchecked")
     public MethodParameterTypeMatcherTest() {
-        super((Class<MethodParameterTypeMatcher<?>>) (Object) MethodParameterTypeMatcher.class, "types");
+        super((Class<MethodParameterTypeMatcher<?>>) (Object) MethodParameterTypeMatcher.class, "hasType");
     }
 
     @Before
@@ -37,7 +37,7 @@ public class MethodParameterTypeMatcherTest extends AbstractElementMatcherTest<M
     @Test
     public void testMatch() throws Exception {
         when(parameterMatcher.matches(typeList)).thenReturn(true);
-        assertThat(new MethodParameterTypeMatcher<ParameterList>(parameterMatcher).matches(parameterList), is(true));
+        assertThat(new MethodParameterTypesMatcher<ParameterList<?>>(parameterMatcher).matches(parameterList), is(true));
         verify(parameterMatcher).matches(typeList);
         verifyNoMoreInteractions(parameterMatcher);
     }
@@ -45,7 +45,7 @@ public class MethodParameterTypeMatcherTest extends AbstractElementMatcherTest<M
     @Test
     public void testNoMatch() throws Exception {
         when(parameterMatcher.matches(typeList)).thenReturn(false);
-        assertThat(new MethodParameterTypeMatcher<ParameterList>(parameterMatcher).matches(parameterList), is(false));
+        assertThat(new MethodParameterTypesMatcher<ParameterList<?>>(parameterMatcher).matches(parameterList), is(false));
         verify(parameterMatcher).matches(typeList);
         verifyNoMoreInteractions(parameterMatcher);
     }

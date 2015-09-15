@@ -325,7 +325,7 @@ public interface AnnotationAppender {
          * @param methodDescription     The annotation method of which a value is being written.
          * @return {@code true} if the value should be written to the annotation.
          */
-        boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription methodDescription);
+        boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription);
 
         /**
          * A value filter that skips all annotation values that represent the default value of the annotation. Note that it is not possible
@@ -341,7 +341,7 @@ public interface AnnotationAppender {
             INSTANCE;
 
             @Override
-            public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription methodDescription) {
+            public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
                 Object defaultValue = methodDescription.getDefaultValue();
                 return defaultValue != null && defaultValue.equals(annotationDescription.getValue(methodDescription));
             }
@@ -363,7 +363,7 @@ public interface AnnotationAppender {
             INSTANCE;
 
             @Override
-            public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription methodDescription) {
+            public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
                 return true;
             }
 
@@ -409,7 +409,7 @@ public interface AnnotationAppender {
          * @param valueFilter       The value filter to apply for discovering which values of an annotation should be written.
          */
         private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation, ValueFilter valueFilter) {
-            for (MethodDescription methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
+            for (MethodDescription.InDefinedShape methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
                 if (valueFilter.isRelevant(annotation, methodDescription)) {
                     apply(annotationVisitor, methodDescription.getReturnType().asErasure(), methodDescription.getName(), annotation.getValue(methodDescription));
                 }

@@ -9,7 +9,7 @@ import net.bytebuddy.description.method.ParameterList;
  *
  * @param <T> The type of the matched entity.
  */
-public class MethodParameterMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class MethodParametersMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The matcher to apply to the parameters.
@@ -21,7 +21,7 @@ public class MethodParameterMatcher<T extends MethodDescription> extends Element
      *
      * @param parameterMatcher The matcher to apply to the parameters.
      */
-    public MethodParameterMatcher(ElementMatcher<? super ParameterList<? extends ParameterDescription>> parameterMatcher) {
+    public MethodParametersMatcher(ElementMatcher<? super ParameterList<? extends ParameterDescription>> parameterMatcher) {
         this.parameterMatcher = parameterMatcher;
     }
 
@@ -33,7 +33,7 @@ public class MethodParameterMatcher<T extends MethodDescription> extends Element
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && parameterMatcher.equals(((MethodParameterMatcher<?>) other).parameterMatcher);
+                && parameterMatcher.equals(((MethodParametersMatcher<?>) other).parameterMatcher);
     }
 
     @Override

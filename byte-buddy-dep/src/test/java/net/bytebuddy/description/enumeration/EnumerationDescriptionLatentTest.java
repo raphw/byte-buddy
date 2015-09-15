@@ -6,7 +6,9 @@ import net.bytebuddy.description.type.TypeDescription;
 public class EnumerationDescriptionLatentTest extends AbstractEnumerationDescriptionTest {
 
     @Override
-    protected EnumerationDescription describe(Enum<?> enumeration, Class<?> carrierType, MethodDescription annotationMethod) {
+    protected EnumerationDescription describe(Enum<?> enumeration,
+                                              Class<?> carrierType,
+                                              MethodDescription.InDefinedShape annotationMethod) {
         return new EnumerationDescription.Latent(new TypeDescription.ForLoadedType(enumeration.getDeclaringClass()), enumeration.name());
     }
 }

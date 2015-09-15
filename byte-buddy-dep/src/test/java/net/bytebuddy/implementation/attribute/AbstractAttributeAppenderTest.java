@@ -25,7 +25,7 @@ public abstract class AbstractAttributeAppenderTest {
 
     @Before
     public void setUp() throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
+        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
     }
 
     protected @interface Qux {

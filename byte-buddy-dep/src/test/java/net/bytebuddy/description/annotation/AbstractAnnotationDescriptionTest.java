@@ -190,37 +190,37 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(identical, equalTo(identical));
         AnnotationDescription equalFirst = mock(AnnotationDescription.class);
         when(equalFirst.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(first.annotationType()));
-        when(equalFirst.getValue(Mockito.any(MethodDescription.class))).then(new Answer<Object>() {
+        when(equalFirst.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                MethodDescription method = (MethodDescription) invocation.getArguments()[0];
+                MethodDescription.InDefinedShape method = (MethodDescription.InDefinedShape) invocation.getArguments()[0];
                 return AnnotationDescription.ForLoadedAnnotation.of(first).getValue(method);
             }
         });
         assertThat(describe(first), equalTo(equalFirst));
         AnnotationDescription equalSecond = mock(AnnotationDescription.class);
         when(equalSecond.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(first.annotationType()));
-        when(equalSecond.getValue(Mockito.any(MethodDescription.class))).then(new Answer<Object>() {
+        when(equalSecond.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                MethodDescription method = (MethodDescription) invocation.getArguments()[0];
+                MethodDescription.InDefinedShape method = (MethodDescription.InDefinedShape) invocation.getArguments()[0];
                 return AnnotationDescription.ForLoadedAnnotation.of(second).getValue(method);
             }
         });
         assertThat(describe(second), equalTo(equalSecond));
         AnnotationDescription equalFirstTypeOnly = mock(AnnotationDescription.class);
         when(equalFirstTypeOnly.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(Other.class));
-        when(equalFirstTypeOnly.getValue(Mockito.any(MethodDescription.class))).then(new Answer<Object>() {
+        when(equalFirstTypeOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
-                MethodDescription method = (MethodDescription) invocation.getArguments()[0];
+                MethodDescription.InDefinedShape method = (MethodDescription.InDefinedShape) invocation.getArguments()[0];
                 return AnnotationDescription.ForLoadedAnnotation.of(first).getValue(method);
             }
         });
         assertThat(describe(first), not(equalTo(equalFirstTypeOnly)));
         AnnotationDescription equalFirstNameOnly = mock(AnnotationDescription.class);
         when(equalFirstNameOnly.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(first.annotationType()));
-        when(equalFirstNameOnly.getValue(Mockito.any(MethodDescription.class))).thenReturn(null);
+        when(equalFirstNameOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn(null);
         assertThat(describe(first), not(equalTo(equalFirstNameOnly)));
         assertThat(describe(first), not(equalTo(equalSecond)));
         assertThat(describe(first), not(equalTo(new Object())));

@@ -26,7 +26,7 @@ public abstract class AbstractEnumerationDescriptionTest {
 
     protected abstract EnumerationDescription describe(Enum<?> enumeration,
                                                        Class<?> carrierType,
-                                                       MethodDescription annotationMethod);
+                                                       MethodDescription.InDefinedShape annotationMethod);
 
     @Before
     public void setUp() throws Exception {

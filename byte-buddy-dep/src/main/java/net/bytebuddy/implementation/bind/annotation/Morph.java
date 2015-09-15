@@ -84,23 +84,23 @@ public @interface Morph {
         /**
          * A reference to the serializable proxy method.
          */
-        private static final MethodDescription SERIALIZABLE_PROXY;
+        private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY;
 
         /**
          * A reference to the default method method.
          */
-        private static final MethodDescription DEFAULT_METHOD;
+        private static final MethodDescription.InDefinedShape DEFAULT_METHOD;
 
         /**
          * A reference to the default target method.
          */
-        private static final MethodDescription DEFAULT_TARGET;
+        private static final MethodDescription.InDefinedShape DEFAULT_TARGET;
 
         /*
          * Looks up references for all annotation properties of the morph annotation.
          */
         static {
-            MethodList<?> methodList = new TypeDescription.ForLoadedType(Morph.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(Morph.class).getDeclaredMethods();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
             DEFAULT_METHOD = methodList.filter(named("defaultMethod")).getOnly();
             DEFAULT_TARGET = methodList.filter(named("defaultTarget")).getOnly();

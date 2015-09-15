@@ -493,6 +493,8 @@ public interface MethodRegistry {
             MethodGraph.Linked methodGraph = methodGraphCompiler.compile(instrumentedType);
             // Casting required for Java 6 compiler.
             ElementMatcher<? super MethodDescription> relevanceMatcher = (ElementMatcher<? super MethodDescription>) not(anyOf(implementations.keySet()))
+                    .and(returns(isVisibleTo(instrumentedType)))
+                    .and(not(hasParameter(hasType(not(isVisibleTo(instrumentedType))))))
                     .and(methodFilter.resolve(instrumentedType));
             for (MethodGraph.Node node : methodGraph.listNodes()) {
                 MethodDescription methodDescription = node.getRepresentative();
@@ -511,8 +513,7 @@ public interface MethodRegistry {
                         && !(methodDescription.isAbstract() || methodDescription.isFinal())
                         && !node.getSort().isMadeVisible()
                         && methodDescription.getDeclaringType().asErasure().isPackagePrivate()) {
-                    // Visibility bridges are required for public types that inherit a public method from a package-private type.
-                    // Checking the last condition contradicts any method that is defined by the instrumented type itself.
+                    // Visibility bridges are required for public classes that inherit a public method from a package-private class.
                     implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription));
                 }
             }

@@ -128,23 +128,23 @@ public @interface Super {
         /**
          * A reference to the ignore finalizer method.
          */
-        private static final MethodDescription IGNORE_FINALIZER;
+        private static final MethodDescription.InDefinedShape IGNORE_FINALIZER;
 
         /**
          * A reference to the serializable proxy method.
          */
-        private static final MethodDescription SERIALIZABLE_PROXY;
+        private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY;
 
         /**
          * A reference to the constructor parameters method.
          */
-        private static final MethodDescription CONSTRUCTOR_PARAMETERS;
+        private static final MethodDescription.InDefinedShape CONSTRUCTOR_PARAMETERS;
 
         /*
          * Extracts method references to the annotation methods.
          */
         static {
-            MethodList<?> annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
             IGNORE_FINALIZER = annotationProperties.filter(named("ignoreFinalizer")).getOnly();
             SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
             CONSTRUCTOR_PARAMETERS = annotationProperties.filter(named("constructorParameters")).getOnly();
@@ -186,13 +186,13 @@ public @interface Super {
         /**
          * A method reference to the strategy property.
          */
-        private static final MethodDescription STRATEGY;
+        private static final MethodDescription.InDefinedShape STRATEGY;
 
         /*
          * Extracts method references of the super annotation.
          */
         static {
-            MethodList<?> annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
             STRATEGY = annotationProperties.filter(named("strategy")).getOnly();
         }
 

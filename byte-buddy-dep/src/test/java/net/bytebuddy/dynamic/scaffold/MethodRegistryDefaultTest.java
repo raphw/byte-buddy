@@ -2,6 +2,8 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
@@ -78,6 +80,12 @@ public class MethodRegistryDefaultTest {
     @Mock
     private MethodTransformer methodTransformer;
 
+    @Mock
+    private TypeDescription returnType, parameterType;
+
+    @Mock
+    private ParameterDescription.InDefinedShape parameterDescription;
+
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -103,6 +111,15 @@ public class MethodRegistryDefaultTest {
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(implementationTarget.getTypeDescription()).thenReturn(typeDescription);
         when(methodTransformer.transform(typeDescription, instrumentedMethod)).thenReturn(instrumentedMethod);
+        when(returnType.asErasure()).thenReturn(returnType);
+        when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(returnType.isVisibleTo(typeDescription)).thenReturn(true);
+        when(parameterType.asErasure()).thenReturn(parameterType);
+        when(parameterType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(parameterType.isVisibleTo(typeDescription)).thenReturn(true);
+        when(instrumentedMethod.getReturnType()).thenReturn(returnType);
+        when(instrumentedMethod.getParameters()).thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));
+        when(parameterDescription.getType()).thenReturn(parameterType);
     }
 
     @Test

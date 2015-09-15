@@ -163,7 +163,7 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(PackagePrivateFieldType.class.getDeclaredField("packagePrivateType"))
                 .isVisibleTo(new TypeDescription.ForLoadedType(PackagePrivateFieldType.class)), is(true));
         assertThat(describe(PackagePrivateFieldType.class.getDeclaredField("packagePrivateType"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+                .isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
     }
 
     @Test

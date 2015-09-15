@@ -15,7 +15,7 @@ public class AnnotationAppenderValueFilterAppendDefaultsTest {
     @Test
     public void testFiltering() throws Exception {
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
-        MethodDescription methodDescription = mock(MethodDescription.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         assertThat(AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE.isRelevant(annotationDescription, methodDescription), is(true));
         verifyZeroInteractions(annotationDescription);
         verifyZeroInteractions(methodDescription);

@@ -89,23 +89,23 @@ public @interface FieldProxy {
         /**
          * A reference to the method that declares the field annotation's defining type property.
          */
-        private static final MethodDescription DEFINING_TYPE;
+        private static final MethodDescription.InDefinedShape DEFINING_TYPE;
 
         /**
          * A reference to the method that declares the field annotation's field name property.
          */
-        private static final MethodDescription FIELD_NAME;
+        private static final MethodDescription.InDefinedShape FIELD_NAME;
 
         /**
          * A reference to the method that declares the field annotation's serializable proxy property.
          */
-        private static final MethodDescription SERIALIZABLE_PROXY;
+        private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY;
 
         /*
          * Fetches a reference to all annotation properties.
          */
         static {
-            MethodList<?> methodList = new TypeDescription.ForLoadedType(FieldProxy.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(FieldProxy.class).getDeclaredMethods();
             DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();

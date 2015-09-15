@@ -5178,7 +5178,7 @@ public interface TypePool {
             }
 
             @Override
-            public Object getValue(MethodDescription methodDescription) {
+            public Object getValue(MethodDescription.InDefinedShape methodDescription) {
                 if (!methodDescription.getDeclaringType().asErasure().getDescriptor().equals(descriptor)) {
                     throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
                 }

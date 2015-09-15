@@ -68,18 +68,18 @@ public @interface DefaultCall {
         /**
          * A reference to the target type method of the default call annotation.
          */
-        private static final MethodDescription TARGET_TYPE;
+        private static final MethodDescription.InDefinedShape TARGET_TYPE;
 
         /**
          * A reference to the serializable proxy method of the default call annotation.
          */
-        private static final MethodDescription SERIALIZABLE_PROXY;
+        private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY;
 
         /*
          * Finds references to the methods of the default call annotation.
          */
         static {
-            MethodList<?> annotationProperties = new TypeDescription.ForLoadedType(DefaultCall.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> annotationProperties = new TypeDescription.ForLoadedType(DefaultCall.class).getDeclaredMethods();
             TARGET_TYPE = annotationProperties.filter(named("targetType")).getOnly();
             SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
         }

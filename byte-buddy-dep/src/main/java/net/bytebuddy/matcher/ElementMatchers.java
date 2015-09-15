@@ -172,6 +172,22 @@ public final class ElementMatchers {
         return parameterRepresentedBy(is(nonNull(parameterToken)));
     }
 
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasType(Class<?> type) {
+        return hasType(is(nonNull(type)));
+    }
+
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasType(ElementMatcher<? super TypeDescription> matcher) {
+        return hasGenericType(rawType(nonNull(matcher)));
+    }
+
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasGenericType(Type type) {
+        return hasGenericType(is(nonNull(type)));
+    }
+
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasGenericType(ElementMatcher<? super GenericTypeDescription> matcher) {
+        return new MethodParameterTypeMatcher<T>(nonNull(matcher));
+    }
+
     /**
      * Exactly matches a given type as a {@link TypeDescription}.
      *
@@ -935,7 +951,11 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(TypeDescription typeDescription) {
-        return returnsGeneric(rawType(nonNull(typeDescription)));
+        return returns(is(nonNull(typeDescription)));
+    }
+
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super TypeDescription> matcher) {
+        return returnsGeneric(rawType(nonNull(matcher)));
     }
 
     /**
@@ -988,6 +1008,19 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a {@link MethodDescription} by applying an iterable collection of element matcher on any parameter's {@link TypeDescription}.
+     *
+     * @param matchers The matcher that are applied onto the parameter types of the matched method description.
+     * @param <T>      The type of the matched object.
+     * @return A matcher that matches a method description by applying another element matcher onto each
+     * parameter's type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(
+            ElementMatcher<? super Iterable<? extends GenericTypeDescription>> matchers) {
+        return new MethodParametersMatcher<T>(new MethodParameterTypesMatcher<ParameterList<?>>(nonNull(matchers)));
+    }
+
+    /**
      * Matches a method description that takes the provided raw arguments.
      *
      * @param type The arguments to match against the matched method.
@@ -1025,20 +1058,6 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link MethodDescription} by applying an iterable collection
-     * of element matcher on any parameter's {@link TypeDescription}.
-     *
-     * @param matchers The matcher that are applied onto the parameter types of the matched method description.
-     * @param <T>      The type of the matched object.
-     * @return A matcher that matches a method description by applying another element matcher onto each
-     * parameter's type.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(
-            ElementMatcher<? super Iterable<? extends GenericTypeDescription>> matchers) {
-        return new MethodParameterMatcher<T>(new MethodParameterTypeMatcher<ParameterList>(nonNull(matchers)));
-    }
-
-    /**
      * Matches a {@link MethodDescription} by the number of its parameters.
      *
      * @param length The expected length.
@@ -1046,7 +1065,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a method description by the number of its parameters.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(int length) {
-        return new MethodParameterMatcher<T>(new CollectionSizeMatcher<ParameterList<?>>(length));
+        return new MethodParametersMatcher<T>(new CollectionSizeMatcher<ParameterList<?>>(length));
     }
 
     /**
@@ -1071,7 +1090,7 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> hasParameters(
             ElementMatcher<? super Iterable<? extends ParameterDescription>> matcher) {
-        return new MethodParameterMatcher<T>(nonNull(matcher));
+        return new MethodParametersMatcher<T>(nonNull(matcher));
     }
 
     /**

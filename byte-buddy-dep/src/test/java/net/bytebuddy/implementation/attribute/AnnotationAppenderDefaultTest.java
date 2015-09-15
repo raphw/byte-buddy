@@ -105,7 +105,7 @@ public class AnnotationAppenderDefaultTest {
     }
 
     private Class<?> makeTypeWithAnnotation(Annotation annotation) throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
+        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
         classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getVersion(),
                 Opcodes.ACC_PUBLIC,
@@ -123,7 +123,7 @@ public class AnnotationAppenderDefaultTest {
             case CLASS_FILE:
                 verify(target).visit(Type.getDescriptor(annotation.annotationType()), annotationVisibility == AnnotationAppender.AnnotationVisibility.RUNTIME);
                 verifyNoMoreInteractions(target);
-                for (MethodDescription methodDescription : annotationDescription.getAnnotationType().getDeclaredMethods()) {
+                for (MethodDescription.InDefinedShape methodDescription : annotationDescription.getAnnotationType().getDeclaredMethods()) {
                     verify(valueFilter).isRelevant(annotationDescription, methodDescription);
                 }
                 verifyNoMoreInteractions(valueFilter);
@@ -149,8 +149,8 @@ public class AnnotationAppenderDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testSkipValues() throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(false);
-        MethodDescription methodDescription = mock(MethodDescription.InDefinedShape.class);
+        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(false);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         TypeDescription annotationType = mock(TypeDescription.class);
         when(annotationType.getDeclaredMethods())
                 .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(Collections.singletonList(methodDescription)));

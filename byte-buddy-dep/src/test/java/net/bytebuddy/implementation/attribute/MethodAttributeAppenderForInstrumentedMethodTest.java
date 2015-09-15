@@ -24,7 +24,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodAnnotations() throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
+        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
@@ -43,7 +43,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodParameterAnnotations() throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.class))).thenReturn(true);
+        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         ParameterDescription parameterDescription = mock(ParameterDescription.class);
         when(parameterDescription.getDeclaredAnnotations())

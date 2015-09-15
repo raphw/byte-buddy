@@ -31,7 +31,7 @@ public class AnnotationDescriptionAbstractPreparedExceptionTest {
         }
 
         @Override
-        public Object getValue(MethodDescription methodDescription) {
+        public Object getValue(MethodDescription.InDefinedShape methodDescription) {
             throw new UnsupportedOperationException();
         }
 

@@ -35,9 +35,19 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
     String getGenericSignature();
 
     /**
-     * Checks if this element is visible from a given type. Methods are only considered visible if their return type and their parameter
-     * types are also visible to the given type. Similarly, fields are only considered visible if the field's type is visible to the
-     * given type. For array types, a type is considered visible only if the component type is visible to the given type.
+     * <p>
+     * Checks if this element is visible from a given type.
+     * </p>
+     * <p>
+     * <b>Note</b>: A method or field might define a signature that includes types that are not visible to a type. Such methods can be
+     * legally invoked from this type and can even be implemented as bridge methods by this type. It is however not legal to declare
+     * a method with invisible types in its signature that are not bridges what might require additional validation.
+     * </p>
+     * <p>
+     * <b>Important</b>: Virtual byte code elements, i.e. virtual methods, are only considered visible if the type they are invoked upon
+     * is visible to a given type. The visibility of such virtual members can therefore not be determined by only investigating the invoked
+     * method but requires an additional check of the target type.
+     * </p>
      *
      * @param typeDescription The type which is checked for its access of this element.
      * @return {@code true} if this element is visible for {@code typeDescription}.
@@ -74,6 +84,11 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
          * @return A token representative of this type dependant.
          */
         S asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
+    }
+
+    interface Accessible extends ByteCodeElement {
+
+        boolean isAccessibleTo(TypeDescription typeDescription);
     }
 
     /**
