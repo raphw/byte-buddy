@@ -70,6 +70,11 @@ public interface MethodGraph {
         }
 
         @Override
+        public Linked compile(TypeDescription typeDescription, TypeDescription viewPoint) {
+            return this;
+        }
+
+        @Override
         public String toString() {
             return "MethodGraph.Empty." + name();
         }
@@ -392,7 +397,7 @@ public interface MethodGraph {
         Compiler DEFAULT = MethodGraph.Compiler.Default.forJavaHierarchy();
 
         /**
-         * Compiles the given type into a method graph.
+         * Compiles the given type into a method graph considering the type to be the viewpoint.
          *
          * @param typeDescription The type to be compiled.
          * @return A linked method graph representing the given type.
@@ -400,11 +405,31 @@ public interface MethodGraph {
         MethodGraph.Linked compile(TypeDescription typeDescription);
 
         /**
+         * Compiles the given type into a method graph.
+         *
+         * @param typeDescription The type to be compiled.
+         * @param viewPoint       The view point that determines the method's visibility.
+         * @return A linked method graph representing the given type.
+         */
+        MethodGraph.Linked compile(TypeDescription typeDescription, TypeDescription viewPoint);
+
+        /**
+         * An abstract base implementation of a method graph compiler.
+         */
+        abstract class AbstractBase implements Compiler {
+
+            @Override
+            public Linked compile(TypeDescription typeDescription) {
+                return compile(typeDescription, typeDescription);
+            }
+        }
+
+        /**
          * A default implementation of a method graph.
          *
          * @param <T> The type of the harmonizer token to be used for linking methods of different types.
          */
-        class Default<T> implements Compiler {
+        class Default<T> extends AbstractBase {
 
             /**
              * The harmonizer to be used.
@@ -472,9 +497,9 @@ public interface MethodGraph {
             }
 
             @Override
-            public MethodGraph.Linked compile(TypeDescription typeDescription) {
+            public MethodGraph.Linked compile(TypeDescription typeDescription, TypeDescription viewPoint) {
                 Map<GenericTypeDescription, Key.Store<T>> snapshots = new HashMap<GenericTypeDescription, Key.Store<T>>();
-                Key.Store<?> rootStore = doAnalyze(typeDescription, snapshots, isVirtual().and(isVisibleTo(typeDescription)));
+                Key.Store<?> rootStore = doAnalyze(typeDescription, snapshots, isVirtual().and(isVisibleTo(viewPoint)));
                 GenericTypeDescription superType = typeDescription.getSuperType();
                 List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>(interfaceTypes.size());
