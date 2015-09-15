@@ -35,16 +35,13 @@ public class RebaseImplementationTargetFactoryTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-//        when(finding.getInvokableMethods()).thenReturn((MethodList) new MethodList.Empty());
-//        when(finding.getInvokableDefaultMethods()).thenReturn(Collections.<TypeDescription, Set<MethodDescription>>emptyMap());
-//        when(finding.getTypeDescription()).thenReturn(instrumentedType);
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        factory = new RebaseImplementationTarget.Factory(methodRebaseResolver);
+        factory = new RebaseImplementationTarget.Factory(new MethodList.Empty(), methodRebaseResolver);
     }
 
     @Test
-    public void testReturnsRebaseimplementationTarget() throws Exception {
+    public void testReturnsRebaseImplementationTarget() throws Exception {
         assertThat(factory.make(instrumentedType, methodGraph) instanceof RebaseImplementationTarget, is(true));
     }
 

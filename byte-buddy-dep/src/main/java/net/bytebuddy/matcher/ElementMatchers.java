@@ -90,7 +90,11 @@ public final class ElementMatchers {
      * @return A matcher that matches any field that is represented by the provided field description.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> representedBy(FieldDescription.Token fieldToken) {
-        return new TokenMatcher<T, FieldDescription.Token>(is(nonNull(fieldToken)));
+        return fieldRepresentedBy(is(nonNull(fieldToken)));
+    }
+
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldRepresentedBy(ElementMatcher<? super FieldDescription.Token> matcher) {
+        return new TokenMatcher<T, FieldDescription.Token>(nonNull(matcher));
     }
 
     /**
@@ -126,6 +130,10 @@ public final class ElementMatchers {
         return new DefinedShapeMatcher<T, MethodDescription.InDefinedShape>(nonNull(matcher));
     }
 
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> methodRepresentedBy(ElementMatcher<? super MethodDescription.Token> matcher) {
+        return new TokenMatcher<T, MethodDescription.Token>(nonNull(matcher));
+    }
+
     /**
      * Validates if a method is represented by the provided method token.
      *
@@ -134,7 +142,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any method that is represented by the provided method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> representedBy(MethodDescription.Token methodToken) {
-        return new TokenMatcher<T, MethodDescription.Token>(is(nonNull(methodToken)));
+        return methodRepresentedBy(is(nonNull(methodToken)));
     }
 
     /**
@@ -149,6 +157,10 @@ public final class ElementMatchers {
         return new DefinedShapeMatcher<T, ParameterDescription.InDefinedShape>(nonNull(matcher));
     }
 
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> parameterRepresentedBy(ElementMatcher<? super ParameterDescription.Token> matcher) {
+        return new TokenMatcher<T, ParameterDescription.Token>(nonNull(matcher));
+    }
+
     /**
      * Validates if a method is represented by the provided method token.
      *
@@ -157,7 +169,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any parameter that is represented by the provided parameter description.
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> representedBy(ParameterDescription.Token parameterToken) {
-        return new TokenMatcher<T, ParameterDescription.Token>(is(nonNull(parameterToken)));
+        return parameterRepresentedBy(is(nonNull(parameterToken)));
     }
 
     /**

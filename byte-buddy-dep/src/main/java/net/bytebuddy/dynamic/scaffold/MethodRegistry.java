@@ -513,16 +513,16 @@ public interface MethodRegistry {
                         && methodDescription.getDeclaringType().asErasure().isPackagePrivate()) {
                     // Visibility bridges are required for public types that inherit a public method from a package-private type.
                     // Checking the last condition contradicts any method that is defined by the instrumented type itself.
-                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getMethodTypes()));
+                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription));
                 }
             }
-            MethodDescription typeInitializer = new MethodDescription.Latent.TypeInitializer(instrumentedType);
-            for (Entry entry : entries) {
-                if (entry.resolve(instrumentedType).matches(typeInitializer)) {
-                    implementations.put(typeInitializer, entry.asPreparedEntry(instrumentedType,
-                            typeInitializer,
-                            Collections.<MethodDescription.TypeToken>emptySet()));
-                    break;
+            for (MethodDescription methodDescription : join(instrumentedType.getDeclaredMethods().filter(not(isVirtual()).and(relevanceMatcher)),
+                    new MethodDescription.Latent.TypeInitializer(instrumentedType))) {
+                for (Entry entry : entries) {
+                    if (entry.resolve(instrumentedType).matches(methodDescription)) {
+                        implementations.put(methodDescription, entry.asPreparedEntry(instrumentedType, methodDescription));
+                        break;
+                    }
                 }
             }
             return new Prepared(implementations,
@@ -592,6 +592,17 @@ public interface MethodRegistry {
                 this.handler = handler;
                 this.attributeAppenderFactory = attributeAppenderFactory;
                 this.methodTransformer = methodTransformer;
+            }
+
+            /**
+             * Transforms this entry into a prepared state.
+             *
+             * @param instrumentedType  The instrumented type.
+             * @param methodDescription The non-transformed method to be implemented.
+             * @return A prepared version of this entry.
+             */
+            protected Prepared.Entry asPreparedEntry(TypeDescription instrumentedType, MethodDescription methodDescription) {
+                return asPreparedEntry(instrumentedType, methodDescription, Collections.<MethodDescription.TypeToken>emptySet());
             }
 
             /**
@@ -842,14 +853,13 @@ public interface MethodRegistry {
                  * Creates an entry for a visibility bridge.
                  *
                  * @param bridgeTarget The bridge method's target.
-                 * @param bridges      The type tokens describing all bridges.
                  * @return An entry representing a visibility bridge.
                  */
-                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Set<MethodDescription.TypeToken> bridges) {
+                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget) {
                     return new Entry(Handler.ForVisibilityBridge.INSTANCE,
                             new MethodAttributeAppender.ForMethod(bridgeTarget, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
                             bridgeTarget,
-                            bridges);
+                            Collections.<MethodDescription.TypeToken>emptySet());
                 }
 
                 /**

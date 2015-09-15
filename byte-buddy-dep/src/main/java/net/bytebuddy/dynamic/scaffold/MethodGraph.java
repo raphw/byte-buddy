@@ -10,7 +10,8 @@ import net.bytebuddy.matcher.FilterableList;
 
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
+import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 
 /**
  * A method graph represents a view on a set of methods as they are seen from a given type. Any method is represented as a node that represents
@@ -473,7 +474,7 @@ public interface MethodGraph {
             @Override
             public MethodGraph.Linked compile(TypeDescription typeDescription) {
                 Map<GenericTypeDescription, Key.Store<T>> snapshots = new HashMap<GenericTypeDescription, Key.Store<T>>();
-                Key.Store<?> rootStore = doAnalyze(typeDescription, snapshots, any(), isVirtual().and(isVisibleTo(typeDescription)));
+                Key.Store<?> rootStore = doAnalyze(typeDescription, snapshots, isVirtual().and(isVisibleTo(typeDescription)));
                 GenericTypeDescription superType = typeDescription.getSuperType();
                 List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>(interfaceTypes.size());
@@ -490,19 +491,17 @@ public interface MethodGraph {
             /**
              * Analyzes the given type description without checking if the end of the type hierarchy was reached.
              *
-             * @param typeDescription The type to analyze.
-             * @param snapshots       A map containing snapshots of key stores for previously analyzed types.
-             * @param currentMatcher  A matcher to be used for filtering methods of the currently analyzed types.
-             * @param nextMatcher     A matcher to be used for filtering methods of the super types of the analyzed type.
+             * @param typeDescription  The type to analyze.
+             * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
+             * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
             protected Key.Store<T> analyze(GenericTypeDescription typeDescription,
                                            Map<GenericTypeDescription, Key.Store<T>> snapshots,
-                                           ElementMatcher<? super MethodDescription> currentMatcher,
-                                           ElementMatcher<? super MethodDescription> nextMatcher) {
+                                           ElementMatcher<? super MethodDescription> relevanceMatcher) {
                 Key.Store<T> store = snapshots.get(typeDescription);
                 if (store == null) {
-                    store = doAnalyze(typeDescription, snapshots, currentMatcher, nextMatcher);
+                    store = doAnalyze(typeDescription, snapshots, relevanceMatcher);
                     snapshots.put(typeDescription, store);
                 }
                 return store;
@@ -511,41 +510,37 @@ public interface MethodGraph {
             /**
              * Analyzes the given type description.
              *
-             * @param typeDescription The type to analyze.
-             * @param snapshots       A map containing snapshots of key stores for previously analyzed types.
-             * @param currentMatcher  A matcher to be used for filtering methods of the currently analyzed types.
-             * @param nextMatcher     A matcher to be used for filtering methods of the super types of the analyzed type.
+             * @param typeDescription  The type to analyze.
+             * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
+             * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
             protected Key.Store<T> analyzeNullable(GenericTypeDescription typeDescription,
                                                    Map<GenericTypeDescription, Key.Store<T>> snapshots,
-                                                   ElementMatcher<? super MethodDescription> currentMatcher,
-                                                   ElementMatcher<? super MethodDescription> nextMatcher) {
+                                                   ElementMatcher<? super MethodDescription> relevanceMatcher) {
                 return typeDescription == null
                         ? new Key.Store<T>()
-                        : analyze(typeDescription, snapshots, currentMatcher, nextMatcher);
+                        : analyze(typeDescription, snapshots, relevanceMatcher);
             }
 
             /**
              * Analyzes the given type description without checking if it is already presented in the key store.
              *
-             * @param typeDescription The type to analyze.
-             * @param snapshots       A map containing snapshots of key stores for previously analyzed types.
-             * @param currentMatcher  A matcher to be used for filtering methods of the currently analyzed types.
-             * @param nextMatcher     A matcher to be used for filtering methods of the super types of the analyzed type.
+             * @param typeDescription  The type to analyze.
+             * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
+             * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
             protected Key.Store<T> doAnalyze(GenericTypeDescription typeDescription,
                                              Map<GenericTypeDescription, Key.Store<T>> snapshots,
-                                             ElementMatcher<? super MethodDescription> currentMatcher,
-                                             ElementMatcher<? super MethodDescription> nextMatcher) {
-                Key.Store<T> store = analyzeNullable(typeDescription.getSuperType(), snapshots, nextMatcher, nextMatcher);
+                                             ElementMatcher<? super MethodDescription> relevanceMatcher) {
+                Key.Store<T> store = analyzeNullable(typeDescription.getSuperType(), snapshots, relevanceMatcher);
                 Key.Store<T> interfaceStore = new Key.Store<T>();
                 for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
-                    interfaceStore = interfaceStore.combineWith(analyze(interfaceType, snapshots, nextMatcher, nextMatcher));
+                    interfaceStore = interfaceStore.combineWith(analyze(interfaceType, snapshots, relevanceMatcher));
                 }
                 store = store.inject(interfaceStore);
-                for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(currentMatcher)) {
+                for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(relevanceMatcher)) {
                     store = store.registerTopLevel(methodDescription, harmonizer);
                 }
                 return store;

@@ -587,21 +587,21 @@ public interface MethodRebaseResolver {
         /**
          * Creates a new method rebase resolver.
          *
-         * @param instrumentedMethods         The methods that are to be instrumented and therefore rebased.
          * @param instrumentedType            The instrumented type.
+         * @param rebaseableMethods           The methods that are possible to rebase.
          * @param classFileVersion            The class file version for the instrumentation.
          * @param auxiliaryTypeNamingStrategy The naming strategy for naming a potential auxiliary type.
          * @param methodNameTransformer       A transformer for method names.
          * @return A method rebase resolver that is capable of rebasing any of the provided methods.
          */
-        public static MethodRebaseResolver make(MethodList<?> instrumentedMethods,
-                                                TypeDescription instrumentedType,
+        public static MethodRebaseResolver make(TypeDescription instrumentedType,
+                                                MethodList<MethodDescription.InDefinedShape> rebaseableMethods,
                                                 ClassFileVersion classFileVersion,
                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                 MethodNameTransformer methodNameTransformer) {
             DynamicType placeholderType = null;
-            Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>(instrumentedMethods.size());
-            for (MethodDescription.InDefinedShape instrumentedMethod : instrumentedMethods.asDefined()) {
+            Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>(rebaseableMethods.size());
+            for (MethodDescription.InDefinedShape instrumentedMethod : rebaseableMethods) {
                 Resolution resolution;
                 if (instrumentedMethod.isConstructor()) {
                     if (placeholderType == null) {

@@ -115,6 +115,14 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
         assertThat(packageType.getAnnotation(Baz.class), notNullValue(Baz.class));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testCannotRebaseDefinedMethod() throws Exception {
+        new ByteBuddy()
+                .rebase(Foo.class)
+                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList()).intercept(SuperMethodCall.INSTANCE)
+                .make();
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(RebaseDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {

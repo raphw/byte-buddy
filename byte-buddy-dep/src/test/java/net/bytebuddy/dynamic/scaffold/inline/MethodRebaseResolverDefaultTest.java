@@ -81,8 +81,8 @@ public class MethodRebaseResolverDefaultTest {
 
     @Test
     public void testCreationWithoutConstructor() throws Exception {
-        MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(new MethodList.Explicit<MethodDescription>(Collections.singletonList(methodDescription)),
-                instrumentedType,
+        MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(instrumentedType,
+                new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
@@ -96,8 +96,8 @@ public class MethodRebaseResolverDefaultTest {
     @Test
     public void testCreationWithConstructor() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
-        MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(new MethodList.Explicit<MethodDescription>(Collections.singletonList(methodDescription)),
-                instrumentedType,
+        MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(instrumentedType,
+                new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);

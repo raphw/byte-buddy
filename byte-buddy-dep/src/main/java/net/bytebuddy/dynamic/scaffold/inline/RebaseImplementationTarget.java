@@ -1,12 +1,16 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An implementation target for redefining a given type while preserving the original methods within the
@@ -21,52 +25,68 @@ import org.objectweb.asm.MethodVisitor;
 public class RebaseImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**
-     * A method rebase resolver to be used when calling a rebased method.
+     * A mapping of the instrumented type's declared methods by each method's token.
      */
-    protected final MethodRebaseResolver methodRebaseResolver;
+    private final Map<MethodDescription.Token, MethodRebaseResolver.Resolution> rebaseableMethods;
 
     /**
      * Creates a rebase implementation target.
      *
+     * @param instrumentedType The instrumented type.
+     * @param methodGraph      A method graph of the instrumented type.
+     * @param rebasements      A mapping of the instrumented type's declared methods by each method's token.
+     */
+    protected RebaseImplementationTarget(TypeDescription instrumentedType,
+                                         MethodGraph.Linked methodGraph,
+                                         Map<MethodDescription.Token, MethodRebaseResolver.Resolution> rebasements) {
+        super(instrumentedType, methodGraph);
+        this.rebaseableMethods = rebasements;
+    }
+
+    /**
+     * Creates a new rebase implementation target.
+     *
      * @param instrumentedType     The instrumented type.
      * @param methodGraph          A method graph of the instrumented type.
      * @param methodRebaseResolver A method rebase resolver to be used when calling a rebased method.
+     * @return An implementation target for the given input.
      */
-    protected RebaseImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, MethodRebaseResolver methodRebaseResolver) {
-        super(instrumentedType, methodGraph);
-        this.methodRebaseResolver = methodRebaseResolver;
+    protected static Implementation.Target of(TypeDescription instrumentedType,
+                                              MethodGraph.Linked methodGraph,
+                                              MethodList<MethodDescription.InDefinedShape> rebaseableMethods,
+                                              MethodRebaseResolver methodRebaseResolver) {
+        Map<MethodDescription.Token, MethodRebaseResolver.Resolution> rebasements = new HashMap<MethodDescription.Token, MethodRebaseResolver.Resolution>(rebaseableMethods.size());
+        for (MethodDescription.InDefinedShape methodDescription : rebaseableMethods) {
+            rebasements.put(methodDescription.asToken(), methodRebaseResolver.resolve(methodDescription));
+        }
+        return new RebaseImplementationTarget(instrumentedType, methodGraph, rebasements);
     }
 
     @Override
     public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
-        MethodGraph.Node node = methodGraph.locate(methodToken);
-        return node.getSort().isUnique()
-                ? invokeSuper(node.getRepresentative())
+        MethodRebaseResolver.Resolution resolution = rebaseableMethods.get(methodToken);
+        return resolution == null
+                ? invokeSuper(methodGraph.getSuperGraph().locate(methodToken))
+                : invokeSuper(resolution);
+    }
+
+    /**
+     * Creates a special method invocation for the given node.
+     *
+     * @param node The node for which a special method invocation is to be created.
+     * @return A special method invocation for the provided node.
+     */
+    private Implementation.SpecialMethodInvocation invokeSuper(MethodGraph.Node node) {
+        return node.getSort().isResolved()
+                ? Implementation.SpecialMethodInvocation.Simple.of(node.getRepresentative(), instrumentedType.getSuperType().asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
     /**
-     * Invokes a method on the super type or a rebased method.
+     * Creates a special method invocation for the given rebase resolution.
      *
-     * @param methodDescription The method to be invoked.
-     * @return A special method invocation for invoking the provided method.
-     */
-    private Implementation.SpecialMethodInvocation invokeSuper(MethodDescription methodDescription) {
-        return methodDescription.getDeclaringType().equals(instrumentedType)
-                ? invokeSuper(methodRebaseResolver.resolve(methodDescription.asDefined()))
-                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asErasure());
-    }
-
-    /**
-     * Defines a special method invocation on type level. This means that invoke super instructions are not explicitly
-     * dispatched on the super type but on the instrumented type. This allows to call methods non-virtually even though
-     * they are not defined on the super type. Redefined constructors are not renamed by are added an additional
-     * parameter of a type which is only used for this purpose. Additionally, a {@code null} value is loaded onto the
-     * stack when the special method invocation is applied in order to fill the operand stack with an additional caller
-     * argument. Non-constructor methods are renamed.
-     *
-     * @param resolution A proxied super method invocation on the instrumented type.
-     * @return A special method invocation on this proxied super method.
+     * @param resolution The resolution for which a special method invocation is to be created.
+     * @return A special method invocation for the provided resolution.
      */
     private Implementation.SpecialMethodInvocation invokeSuper(MethodRebaseResolver.Resolution resolution) {
         return resolution.isRebased()
@@ -83,22 +103,22 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
-                && methodRebaseResolver.equals(((RebaseImplementationTarget) other).methodRebaseResolver);
+                && rebaseableMethods.equals(((RebaseImplementationTarget) other).rebaseableMethods);
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + methodRebaseResolver.hashCode();
+        result = 31 * result + rebaseableMethods.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
         return "RebaseImplementationTarget{" +
-                "methodRebaseResolver=" + methodRebaseResolver +
                 ", instrumentedType=" + instrumentedType +
                 ", methodGraph=" + methodGraph +
+                ", rebaseableMethods=" + rebaseableMethods +
                 '}';
     }
 
@@ -186,39 +206,49 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     public static class Factory implements Implementation.Target.Factory {
 
         /**
+         * A list of methods that is to be rebased.
+         */
+        private final MethodList<MethodDescription.InDefinedShape> rebaseableMethods;
+
+        /**
          * The method rebase resolver to use.
          */
         private final MethodRebaseResolver methodRebaseResolver;
+
 
         /**
          * Creates a new factory for a rebase implementation target.
          *
          * @param methodRebaseResolver The method rebase resolver to use.
+         * @param rebaseableMethods
          */
-        public Factory(MethodRebaseResolver methodRebaseResolver) {
+        public Factory(MethodList<MethodDescription.InDefinedShape> rebaseableMethods, MethodRebaseResolver methodRebaseResolver) {
+            this.rebaseableMethods = rebaseableMethods;
             this.methodRebaseResolver = methodRebaseResolver;
         }
 
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
-            return new RebaseImplementationTarget(instrumentedType, methodGraph, methodRebaseResolver);
+            return RebaseImplementationTarget.of(instrumentedType, methodGraph, rebaseableMethods, methodRebaseResolver);
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && methodRebaseResolver.equals(((Factory) other).methodRebaseResolver);
+                    && methodRebaseResolver.equals(((Factory) other).methodRebaseResolver)
+                    && rebaseableMethods.equals(((Factory) other).rebaseableMethods);
         }
 
         @Override
         public int hashCode() {
-            return methodRebaseResolver.hashCode();
+            return methodRebaseResolver.hashCode() + 31 * rebaseableMethods.hashCode();
         }
 
         @Override
         public String toString() {
             return "RebaseImplementationTarget.Factory{" +
                     "methodRebaseResolver=" + methodRebaseResolver +
+                    ", rebaseableMethods=" + rebaseableMethods +
                     '}';
         }
     }
