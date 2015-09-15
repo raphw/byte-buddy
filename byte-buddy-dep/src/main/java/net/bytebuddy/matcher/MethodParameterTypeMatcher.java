@@ -4,7 +4,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
- * An element matcher that matches a method's parameter types.
+ * An element matcher that matches a method's parameter's type.
  *
  * @param <T> The type of the matched entity.
  */
@@ -16,7 +16,7 @@ public class MethodParameterTypeMatcher<T extends ParameterDescription> extends 
     private final ElementMatcher<? super GenericTypeDescription> matcher;
 
     /**
-     * Creates a new matcher for a method's parameter types.
+     * Creates a new matcher for a method's parameter's type.
      *
      * @param matcher The matcher to apply to the type of the parameter.
      */

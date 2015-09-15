@@ -93,6 +93,13 @@ public final class ElementMatchers {
         return fieldRepresentedBy(is(nonNull(fieldToken)));
     }
 
+    /**
+     * Matches a field by a token matcher.
+     *
+     * @param matcher The matcher to apply to the field's token.
+     * @param <T>     The matched object's type.
+     * @return A matcher that applies the given matcher to the matched field's token.
+     */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldRepresentedBy(ElementMatcher<? super FieldDescription.Token> matcher) {
         return new TokenMatcher<T, FieldDescription.Token>(nonNull(matcher));
     }
@@ -130,6 +137,13 @@ public final class ElementMatchers {
         return new DefinedShapeMatcher<T, MethodDescription.InDefinedShape>(nonNull(matcher));
     }
 
+    /**
+     * Matches a method by a token matcher.
+     *
+     * @param matcher The matcher to apply to the method's token.
+     * @param <T>     The matched object's type.
+     * @return A matcher that applies the given matcher to the matched method's token.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> methodRepresentedBy(ElementMatcher<? super MethodDescription.Token> matcher) {
         return new TokenMatcher<T, MethodDescription.Token>(nonNull(matcher));
     }
@@ -157,7 +171,15 @@ public final class ElementMatchers {
         return new DefinedShapeMatcher<T, ParameterDescription.InDefinedShape>(nonNull(matcher));
     }
 
-    public static <T extends ParameterDescription> ElementMatcher.Junction<T> parameterRepresentedBy(ElementMatcher<? super ParameterDescription.Token> matcher) {
+    /**
+     * Matches a parameter by a token matcher.
+     *
+     * @param matcher The matcher to apply to the parameter's token.
+     * @param <T>     The matched object's type.
+     * @return A matcher that applies the given matcher to the matched parameter's token.
+     */
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> parameterRepresentedBy(
+            ElementMatcher<? super ParameterDescription.Token> matcher) {
         return new TokenMatcher<T, ParameterDescription.Token>(nonNull(matcher));
     }
 
@@ -172,18 +194,24 @@ public final class ElementMatchers {
         return parameterRepresentedBy(is(nonNull(parameterToken)));
     }
 
-    public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasType(Class<?> type) {
-        return hasType(is(nonNull(type)));
-    }
-
+    /**
+     * Matches a parameter's type by the given matcher.
+     *
+     * @param matcher
+     * @param <T>
+     * @return
+     */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasType(ElementMatcher<? super TypeDescription> matcher) {
         return hasGenericType(rawType(nonNull(matcher)));
     }
 
-    public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasGenericType(Type type) {
-        return hasGenericType(is(nonNull(type)));
-    }
-
+    /**
+     * Matches a method parameter by its generic type.
+     *
+     * @param matcher The matcher to apply to a parameter's generic type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches the matched parameter's generic type.
+     */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasGenericType(ElementMatcher<? super GenericTypeDescription> matcher) {
         return new MethodParameterTypeMatcher<T>(nonNull(matcher));
     }
@@ -954,13 +982,19 @@ public final class ElementMatchers {
         return returns(is(nonNull(typeDescription)));
     }
 
+    /**
+     * Matches a method's return type's erasure by the given matcher.
+     *
+     * @param matcher The matcher to apply to a method's return type's erasure.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches the matched method's return type's erasure.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super TypeDescription> matcher) {
         return returnsGeneric(rawType(nonNull(matcher)));
     }
 
     /**
-     * Matches {@link MethodDescription}s that matches a matched method's
-     * return type.
+     * Matches {@link MethodDescription}s that matches a matched method's return type.
      *
      * @param matcher A matcher to apply onto a matched method's return type.
      * @param <T>     The type of the matched object.
