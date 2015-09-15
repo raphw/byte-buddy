@@ -122,11 +122,10 @@ public interface AuxiliaryType {
         /**
          * Names an auxiliary type.
          *
-         * @param auxiliaryType    The auxiliary type to name.
          * @param instrumentedType The instrumented type for which an auxiliary type is registered.
          * @return The fully qualified name for the given auxiliary type.
          */
-        String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType);
+        String name(TypeDescription instrumentedType);
 
         /**
          * A naming strategy for an auxiliary type which returns the instrumented type's name with a fixed extension
@@ -155,7 +154,7 @@ public interface AuxiliaryType {
             }
 
             @Override
-            public String name(AuxiliaryType auxiliaryType, TypeDescription instrumentedType) {
+            public String name(TypeDescription instrumentedType) {
                 return String.format("%s$%s$%s", instrumentedType.getName(), suffix, randomString.nextString());
             }
 

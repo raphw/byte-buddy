@@ -623,7 +623,7 @@ public interface Implementation {
             public TypeDescription register(AuxiliaryType auxiliaryType) {
                 DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
-                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(auxiliaryType, instrumentedType), classFileVersion, this);
+                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(instrumentedType), classFileVersion, this);
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
                 return dynamicType.getTypeDescription();

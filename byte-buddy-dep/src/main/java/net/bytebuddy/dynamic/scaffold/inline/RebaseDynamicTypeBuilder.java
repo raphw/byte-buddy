@@ -220,7 +220,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                         targetType.isLocalClass()),
                 methodGraphCompiler,
                 InliningImplementationMatcher.of(ignoredMethods, targetType));
-        MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Enabled.make(preparedMethodRegistry.getInstrumentedMethods(),
+        MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(preparedMethodRegistry.getInstrumentedMethods(),
                 preparedMethodRegistry.getInstrumentedType(),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
