@@ -721,6 +721,49 @@ public interface MethodDelegationBinder {
         }
 
         /**
+         * An ambiguity resolver that always resolves in the specified direction.
+         */
+        enum Directional implements AmbiguityResolver {
+
+            /**
+             * A resolver that always resolves to
+             * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver.Resolution#LEFT}.
+             */
+            LEFT(true),
+
+            /**
+             * A resolver that always resolves to
+             * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver.Resolution#RIGHT}.
+             */
+            RIGHT(false);
+
+            /**
+             * {@code true} if this instance should resolve to the left side.
+             */
+            private final boolean left;
+
+            /**
+             * Creates a new directional resolver.
+             * @param left {@code true} if this instance should resolve to the left side.
+             */
+            Directional(boolean left) {
+                this.left = left;
+            }
+
+            @Override
+            public Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right) {
+                return this.left
+                        ? Resolution.LEFT
+                        : Resolution.RIGHT;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.AmbiguityResolver.Directional." + name();
+            }
+        }
+
+        /**
          * A chain of {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}s
          * that are applied in the given order until two bindings can be resolved.
          */
