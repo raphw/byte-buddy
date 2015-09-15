@@ -69,6 +69,8 @@ public class MethodDelegationObjectPropertiesTest {
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForInstanceField.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForConstruction.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForStaticMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.MethodContainer.ForExplicitMethods.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.MethodContainer.ForVirtualMethods.class).apply();
     }
 
     public static class Foo {

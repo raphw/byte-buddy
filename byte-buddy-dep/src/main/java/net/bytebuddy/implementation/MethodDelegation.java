@@ -148,11 +148,6 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
 public class MethodDelegation implements Implementation {
 
     /**
-     * The error message for the exception to be thrown if no method for delegation can be identified.
-     */
-    private static final String NO_METHODS_ERROR_MESSAGE = "The target type does not define any methods for delegation";
-
-    /**
      * The implementation delegate for this method delegation.
      */
     private final ImplementationDelegate implementationDelegate;
@@ -185,10 +180,7 @@ public class MethodDelegation implements Implementation {
      */
     private final Assigner assigner;
 
-    /**
-     * A list of methods to be considered as target by this method delegation.
-     */
-    private final MethodList<?> targetCandidates;
+    private final MethodContainer methodContainer;
 
     /**
      * Creates a new method delegation.
@@ -199,8 +191,6 @@ public class MethodDelegation implements Implementation {
      * @param terminationHandler     The termination handler to apply.
      * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
      * @param assigner               The assigner to be supplied by this method delegator.
-     * @param targetCandidates       A list of methods that should be considered as possible binding targets by
-     *                               this method delegator.
      */
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
@@ -208,14 +198,14 @@ public class MethodDelegation implements Implementation {
                                TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                Assigner assigner,
-                               MethodList<?> targetCandidates) {
+                               MethodContainer methodContainer) {
         this.implementationDelegate = implementationDelegate;
         this.parameterBinders = parameterBinders;
         this.defaultsProvider = defaultsProvider;
         this.terminationHandler = terminationHandler;
         this.ambiguityResolver = ambiguityResolver;
         this.assigner = assigner;
-        this.targetCandidates = isNotEmpty(targetCandidates, NO_METHODS_ERROR_MESSAGE);
+        this.methodContainer = methodContainer;
     }
 
     /**
@@ -246,7 +236,7 @@ public class MethodDelegation implements Implementation {
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
-                typeDescription.getDeclaredMethods().filter(isStatic().and(not(isPrivate()))));
+                MethodContainer.ForExplicitMethods.ofStatic(typeDescription));
     }
 
     /**
@@ -293,10 +283,7 @@ public class MethodDelegation implements Implementation {
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
-                methodGraphCompiler.compile(new TypeDescription.ForLoadedType(delegate.getClass()))
-                        .listNodes()
-                        .asMethodList()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+                new MethodContainer.ForVirtualMethods(methodGraphCompiler, new TypeDescription.ForLoadedType(delegate.getClass())));
     }
 
     /**
@@ -339,17 +326,13 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
-        return new MethodDelegation(
-                new ImplementationDelegate.ForStaticField(nonNull(delegate), isValidIdentifier(fieldName)),
+        return new MethodDelegation(new ImplementationDelegate.ForStaticField(nonNull(delegate), isValidIdentifier(fieldName)),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
-                methodGraphCompiler.compile(new TypeDescription.ForLoadedType(delegate.getClass()))
-                        .listNodes()
-                        .asMethodList()
-                        .filter(not(isStatic().or(isPrivate()).or(isConstructor()))));
+                new MethodContainer.ForVirtualMethods(methodGraphCompiler, new TypeDescription.ForLoadedType(delegate.getClass())));
     }
 
     /**
@@ -447,17 +430,13 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
-        return new MethodDelegation(
-                new ImplementationDelegate.ForInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName)),
+        return new MethodDelegation(new ImplementationDelegate.ForInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName)),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
-                methodGraphCompiler.compile(typeDescription)
-                        .listNodes()
-                        .asMethodList()
-                        .filter(isVirtual()));
+                new MethodContainer.ForVirtualMethods(methodGraphCompiler, typeDescription));
     }
 
     /**
@@ -485,7 +464,7 @@ public class MethodDelegation implements Implementation {
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
-                typeDescription.getDeclaredMethods().filter(isConstructor()));
+                MethodContainer.ForExplicitMethods.ofConstructors(typeDescription));
     }
 
     /**
@@ -501,7 +480,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
-                targetCandidates);
+                methodContainer);
     }
 
     /**
@@ -517,7 +496,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
-                targetCandidates);
+                methodContainer);
     }
 
     /**
@@ -533,7 +512,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
-                targetCandidates);
+                methodContainer);
     }
 
     /**
@@ -559,7 +538,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 new MethodDelegationBinder.AmbiguityResolver.Chain(nonNull(ambiguityResolver)),
                 assigner,
-                targetCandidates);
+                methodContainer);
     }
 
     /**
@@ -575,7 +554,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 nonNull(assigner),
-                targetCandidates);
+                methodContainer);
     }
 
     /**
@@ -591,7 +570,7 @@ public class MethodDelegation implements Implementation {
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
-                isNotEmpty(targetCandidates.filter(nonNull(methodMatcher)), NO_METHODS_ERROR_MESSAGE));
+                methodContainer.filter(methodMatcher));
     }
 
     /**
@@ -611,7 +590,7 @@ public class MethodDelegation implements Implementation {
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.INSTANCE,
                 ambiguityResolver,
                 assigner,
-                targetCandidates), nonNull(implementation));
+                methodContainer), nonNull(implementation));
     }
 
     @Override
@@ -623,7 +602,7 @@ public class MethodDelegation implements Implementation {
     public ByteCodeAppender appender(Target implementationTarget) {
         return new Appender(implementationDelegate.getPreparingStackAssignment(implementationTarget.getTypeDescription()),
                 implementationTarget,
-                targetCandidates,
+                methodContainer.resolve(implementationTarget.getTypeDescription()),
                 new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
                         parameterBinders,
                         defaultsProvider,
@@ -644,7 +623,7 @@ public class MethodDelegation implements Implementation {
                 && defaultsProvider.equals(that.defaultsProvider)
                 && terminationHandler.equals(that.terminationHandler)
                 && implementationDelegate.equals(that.implementationDelegate)
-                && targetCandidates.equals(that.targetCandidates)
+                && methodContainer.equals(that.methodContainer)
                 && parameterBinders.equals(that.parameterBinders);
     }
 
@@ -656,7 +635,7 @@ public class MethodDelegation implements Implementation {
         result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + ambiguityResolver.hashCode();
         result = 31 * result + assigner.hashCode();
-        result = 31 * result + targetCandidates.hashCode();
+        result = 31 * result + methodContainer.hashCode();
         return result;
     }
 
@@ -669,7 +648,7 @@ public class MethodDelegation implements Implementation {
                 ", terminationHandler=" + terminationHandler +
                 ", ambiguityResolver=" + ambiguityResolver +
                 ", assigner=" + assigner +
-                ", targetCandidates=" + targetCandidates +
+                ", methodContainer=" + methodContainer +
                 '}';
     }
 
@@ -932,6 +911,179 @@ public class MethodDelegation implements Implementation {
             public String toString() {
                 return "MethodDelegation.ImplementationDelegate.ForConstruction{" +
                         "typeDescription=" + typeDescription +
+                        '}';
+            }
+        }
+    }
+
+    /**
+     * A method container collects methods that are considered as a target for delegation.
+     */
+    protected interface MethodContainer {
+
+        /**
+         * Appends a filter that is applied to the methods that this container represents.
+         *
+         * @param matcher The matcher that is to be applied for filtering methods.
+         * @return A method container with the supplied filter applied.
+         */
+        MethodContainer filter(ElementMatcher<? super MethodDescription> matcher);
+
+        /**
+         * Resolves this method container to extract a list of methods to be considered for interception.
+         *
+         * @param instrumentedType The instrumented type.
+         * @return A list of methods to be considered as delegation target.
+         */
+        MethodList<?> resolve(TypeDescription instrumentedType);
+
+        /**
+         * A method container for an explicit list of methods.
+         */
+        class ForExplicitMethods implements MethodContainer {
+
+            /**
+             * The methods to be considered.
+             */
+            private final MethodList<?> methodList;
+
+            /**
+             * Creates a new explicit method container.
+             *
+             * @param methodList The methods to be considered.
+             */
+            protected ForExplicitMethods(MethodList<?> methodList) {
+                this.methodList = methodList;
+            }
+
+            /**
+             * Creates a container for all static methods of the given type description.
+             *
+             * @param typeDescription The type description of which all static methods should be considered.
+             * @return An appropriate method container.
+             */
+            protected static MethodContainer ofStatic(TypeDescription typeDescription) {
+                return new ForExplicitMethods(typeDescription.getDeclaredMethods().filter(isStatic()));
+            }
+
+            /**
+             * Creates a container for all constructors of the given type description.
+             *
+             * @param typeDescription The type description of which all constructors should be considered.
+             * @return An appropriate method container.
+             */
+            protected static MethodContainer ofConstructors(TypeDescription typeDescription) {
+                return new ForExplicitMethods(typeDescription.getDeclaredMethods().filter(isConstructor()));
+            }
+
+            @Override
+            public MethodContainer filter(ElementMatcher<? super MethodDescription> matcher) {
+                return new ForExplicitMethods(methodList.filter(matcher));
+            }
+
+            @Override
+            public MethodList<?> resolve(TypeDescription instrumentedType) {
+                return methodList.filter(isVisibleTo(instrumentedType));
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && methodList.equals(((ForExplicitMethods) other).methodList);
+            }
+
+            @Override
+            public int hashCode() {
+                return methodList.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDelegation.MethodContainer.ForExplicitMethods{" +
+                        "methodList=" + methodList +
+                        '}';
+            }
+        }
+
+        /**
+         * A method container for which all virtual methods of a given type should be considered.
+         */
+        class ForVirtualMethods implements MethodContainer {
+
+            /**
+             * The method graph compiler to use.
+             */
+            private final MethodGraph.Compiler methodGraphCompiler;
+
+            /**
+             * The target type for which the virtual methods should be extracted.
+             */
+            private final TypeDescription targetType;
+
+            /**
+             * A matcher representing a filter to be applied to the extracted methods.
+             */
+            private final ElementMatcher.Junction<? super MethodDescription> matcher;
+
+            /**
+             * Creates a new method container for virtual method extraction.
+             *
+             * @param methodGraphCompiler The method graph compiler to use.
+             * @param targetType          The target type for which the virtual methods should be extracted.
+             */
+            protected ForVirtualMethods(MethodGraph.Compiler methodGraphCompiler, TypeDescription targetType) {
+                this(methodGraphCompiler, targetType, any());
+            }
+
+            /**
+             * Creates a new method container for virtual method extraction.
+             *
+             * @param methodGraphCompiler The method graph compiler to use.
+             * @param targetType          The target type for which the virtual methods should be extracted.
+             * @param matcher             A matcher representing a filter to be applied to the extracted methods.
+             */
+            private ForVirtualMethods(MethodGraph.Compiler methodGraphCompiler,
+                                      TypeDescription targetType,
+                                      ElementMatcher.Junction<? super MethodDescription> matcher) {
+                this.methodGraphCompiler = methodGraphCompiler;
+                this.targetType = targetType;
+                this.matcher = matcher;
+            }
+
+            @Override
+            public MethodContainer filter(ElementMatcher<? super MethodDescription> matcher) {
+                return new ForVirtualMethods(methodGraphCompiler, targetType, this.matcher.and(matcher));
+            }
+
+            @Override
+            public MethodList<?> resolve(TypeDescription instrumentedType) {
+                return methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(matcher);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                ForVirtualMethods that = (ForVirtualMethods) other;
+                return methodGraphCompiler.equals(that.methodGraphCompiler)
+                        && targetType.equals(that.targetType)
+                        && matcher.equals(that.matcher);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = methodGraphCompiler.hashCode();
+                result = 31 * result + targetType.hashCode();
+                result = 31 * result + matcher.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDelegation.MethodContainer.ForVirtualMethods{" +
+                        "methodGraphCompiler=" + methodGraphCompiler +
+                        ", targetType=" + targetType +
+                        ", matcher=" + matcher +
                         '}';
             }
         }

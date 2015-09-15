@@ -21,11 +21,6 @@ public class MethodDelegationExceptionTest extends AbstractImplementationTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testInterface() throws Exception {
-        MethodDelegation.to(Runnable.class);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
     public void testArray() throws Exception {
         MethodDelegation.to(int[].class);
     }
