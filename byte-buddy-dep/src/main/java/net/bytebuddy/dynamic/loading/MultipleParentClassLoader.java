@@ -26,6 +26,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.filterUnique;
  * For the {@link java.lang.ClassLoader#getResources(java.lang.String)} method, this means that this class loader
  * might return the same url multiple times by representing the same class loader multiple times.
  * </p>
+ * <p>
+ * <b>Important</b>: This class loader does not support the location of packages from its multiple parents. This breaks
+ * package equality when loading classes by either loading them directly via this class loader (e.g. by subclassing) or
+ * by loading classes with child class loaders of this class loader.
+ * </p>
  */
 public class MultipleParentClassLoader extends ClassLoader {
 
