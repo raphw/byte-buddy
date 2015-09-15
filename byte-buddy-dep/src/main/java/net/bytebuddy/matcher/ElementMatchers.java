@@ -197,9 +197,9 @@ public final class ElementMatchers {
     /**
      * Matches a parameter's type by the given matcher.
      *
-     * @param matcher
-     * @param <T>
-     * @return
+     * @param matcher The matcher to apply to the parameter's type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches a parameter's type by the given matcher.
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasType(ElementMatcher<? super TypeDescription> matcher) {
         return hasGenericType(rawType(nonNull(matcher)));

@@ -86,8 +86,18 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         S asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
     }
 
+    /**
+     * Describes a byte code element that can be accessed by another element.
+     */
     interface Accessible extends ByteCodeElement {
 
+        /**
+         * Determines if this byte code element is considered accessible to the given type by the semantics
+         * of the Java reflection API.
+         *
+         * @param typeDescription The type for which the access is to be determined.
+         * @return {@code true} if this element is considered accessible to the given type.
+         */
         boolean isAccessibleTo(TypeDescription typeDescription);
     }
 

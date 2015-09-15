@@ -180,6 +180,9 @@ public class MethodDelegation implements Implementation {
      */
     private final Assigner assigner;
 
+    /**
+     * A method container to query for methods to be considered for delegation.
+     */
     private final MethodContainer methodContainer;
 
     /**
@@ -191,6 +194,7 @@ public class MethodDelegation implements Implementation {
      * @param terminationHandler     The termination handler to apply.
      * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
      * @param assigner               The assigner to be supplied by this method delegator.
+     * @param methodContainer        A method container to query for methods to be considered for delegation.
      */
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
