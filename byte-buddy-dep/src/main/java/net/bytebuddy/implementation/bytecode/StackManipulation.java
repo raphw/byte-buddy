@@ -75,7 +75,7 @@ public interface StackManipulation {
 
         @Override
         public String toString() {
-            return "StackManipulation.LegalTrivial." + name();
+            return "StackManipulation.Trivial." + name();
         }
     }
 
