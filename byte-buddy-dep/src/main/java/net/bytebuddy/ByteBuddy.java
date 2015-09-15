@@ -2287,7 +2287,7 @@ public class ByteBuddy {
                         .filter(isConstructor().and(takesArguments(String.class, int.class)))
                         .getOnly();
                 int ordinal = 0;
-                StackManipulation stackManipulation = StackManipulation.LegalTrivial.INSTANCE;
+                StackManipulation stackManipulation = StackManipulation.Trivial.INSTANCE;
                 List<FieldDescription> enumerationFields = new ArrayList<FieldDescription>(values.size());
                 for (String value : values) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(value)).getOnly();

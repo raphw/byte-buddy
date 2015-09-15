@@ -102,7 +102,7 @@ public interface Assigner {
         @Override
         public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
             return sourceType.equals(targetType)
-                    ? StackManipulation.LegalTrivial.INSTANCE
+                    ? StackManipulation.Trivial.INSTANCE
                     : StackManipulation.Illegal.INSTANCE;
         }
 

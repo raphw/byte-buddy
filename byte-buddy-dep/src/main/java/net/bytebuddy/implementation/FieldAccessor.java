@@ -167,7 +167,7 @@ public abstract class FieldAccessor implements Implementation {
         }
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 fieldDescription.isStatic()
-                        ? StackManipulation.LegalTrivial.INSTANCE
+                        ? StackManipulation.Trivial.INSTANCE
                         : MethodVariableAccess.REFERENCE.loadOffset(0),
                 fieldAccess,
                 MethodReturn.returning(methodDescription.getReturnType().asErasure())

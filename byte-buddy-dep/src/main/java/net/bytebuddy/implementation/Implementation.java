@@ -1222,7 +1222,7 @@ public interface Implementation {
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             fieldDescription.isStatic()
-                                    ? StackManipulation.LegalTrivial.INSTANCE
+                                    ? StackManipulation.Trivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter(),
                             MethodReturn.returning(fieldDescription.getType().asErasure())

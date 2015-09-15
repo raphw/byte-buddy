@@ -312,7 +312,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         implementationContext,
                         instrumentedMethod,
                         instrumentedType,
-                        StackManipulation.LegalTrivial.INSTANCE);
+                        StackManipulation.Trivial.INSTANCE);
             }
 
             /**

@@ -33,7 +33,7 @@ public class StackManipulationTest {
 
     @Test
     public void testLegalIsValid() throws Exception {
-        assertThat(StackManipulation.LegalTrivial.INSTANCE.isValid(), is(true));
+        assertThat(StackManipulation.Trivial.INSTANCE.isValid(), is(true));
     }
 
     @Test
@@ -43,7 +43,7 @@ public class StackManipulationTest {
 
     @Test
     public void testLegalIsApplicable() throws Exception {
-        StackManipulation.Size size = StackManipulation.LegalTrivial.INSTANCE.apply(methodVisitor, implementationContext);
+        StackManipulation.Size size = StackManipulation.Trivial.INSTANCE.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
     }
@@ -55,7 +55,7 @@ public class StackManipulationTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(StackManipulation.LegalTrivial.class).apply();
+        ObjectPropertyAssertion.of(StackManipulation.Trivial.class).apply();
         ObjectPropertyAssertion.of(StackManipulation.Illegal.class).apply();
     }
 }

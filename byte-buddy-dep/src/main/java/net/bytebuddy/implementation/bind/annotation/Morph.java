@@ -409,7 +409,7 @@ public @interface Morph {
                         TypeCreation.forType(forwardingType),
                         Duplication.SINGLE,
                         specialMethodInvocation.getMethodDescription().isStatic()
-                                ? LegalTrivial.INSTANCE
+                                ? Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, implementationContext);
@@ -686,7 +686,7 @@ public @interface Morph {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 accessorMethod.isStatic()
-                                        ? LegalTrivial.INSTANCE
+                                        ? Trivial.INSTANCE
                                         : new StackManipulation.Compound(
                                         MethodVariableAccess.REFERENCE.loadOffset(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()

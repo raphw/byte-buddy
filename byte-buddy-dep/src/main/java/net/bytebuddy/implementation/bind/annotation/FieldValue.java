@@ -95,7 +95,7 @@ public @interface FieldValue {
             if (resolution.isResolved()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         resolution.getFieldDescription().isStatic()
-                                ? StackManipulation.LegalTrivial.INSTANCE
+                                ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(resolution.getFieldDescription()).getter(),
                         assigner.assign(resolution.getFieldDescription().getType().asErasure(),

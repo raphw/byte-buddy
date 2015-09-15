@@ -24,7 +24,7 @@ public class MethodRebaseResolverDisabledTest {
     public void testResolutionPreservesMethod() throws Exception {
         MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Disabled.INSTANCE.resolve(methodDescription);
         assertThat(resolution.isRebased(), is(false));
-        assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.LegalTrivial.INSTANCE));
+        assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.Trivial.INSTANCE));
         assertThat(resolution.getResolvedMethod(), is(methodDescription));
     }
 

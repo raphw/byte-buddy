@@ -248,7 +248,7 @@ public class Forwarding implements Implementation {
 
             @Override
             public StackManipulation loadFieldOwner() {
-                return StackManipulation.LegalTrivial.INSTANCE;
+                return StackManipulation.Trivial.INSTANCE;
             }
 
             @Override
@@ -285,7 +285,7 @@ public class Forwarding implements Implementation {
 
             @Override
             public StackManipulation loadFieldOwner() {
-                return StackManipulation.LegalTrivial.INSTANCE;
+                return StackManipulation.Trivial.INSTANCE;
             }
 
             @Override

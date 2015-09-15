@@ -609,11 +609,11 @@ public class MethodCall implements Implementation {
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(
                         methodDescription.isStatic()
-                                ? StackManipulation.LegalTrivial.INSTANCE
+                                ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         methodDescription.isConstructor()
                                 ? Duplication.SINGLE
-                                : StackManipulation.LegalTrivial.INSTANCE
+                                : StackManipulation.Trivial.INSTANCE
                 );
             }
 
@@ -764,7 +764,7 @@ public class MethodCall implements Implementation {
                 }
                 return new StackManipulation.Compound(
                         methodDescription.isStatic()
-                                ? StackManipulation.LegalTrivial.INSTANCE
+                                ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter());
             }
@@ -1226,7 +1226,7 @@ public class MethodCall implements Implementation {
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         fieldDescription.isStatic()
-                                ? StackManipulation.LegalTrivial.INSTANCE
+                                ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(fieldDescription).getter(),
                         assigner.assign(fieldDescription.getType().asErasure(), targetType, typing)

@@ -267,7 +267,7 @@ public interface MethodRebaseResolver {
 
             @Override
             public StackManipulation getAdditionalArguments() {
-                return StackManipulation.LegalTrivial.INSTANCE;
+                return StackManipulation.Trivial.INSTANCE;
             }
 
             @Override
@@ -329,7 +329,7 @@ public interface MethodRebaseResolver {
 
             @Override
             public StackManipulation getAdditionalArguments() {
-                return StackManipulation.LegalTrivial.INSTANCE;
+                return StackManipulation.Trivial.INSTANCE;
             }
 
             @Override

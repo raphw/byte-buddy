@@ -34,7 +34,7 @@ public enum DefaultValue implements StackManipulation {
     /**
      * The default value of a {@code void} which resembles a no-op manipulation.
      */
-    VOID(StackManipulation.LegalTrivial.INSTANCE),
+    VOID(Trivial.INSTANCE),
 
     /**
      * The default value of a reference type which resembles the {@code null} reference.

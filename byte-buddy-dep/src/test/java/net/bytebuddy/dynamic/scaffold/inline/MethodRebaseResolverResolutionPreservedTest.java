@@ -25,7 +25,7 @@ public class MethodRebaseResolverResolutionPreservedTest {
         MethodRebaseResolver.Resolution resolution = new MethodRebaseResolver.Resolution.Preserved(methodDescription);
         assertThat(resolution.isRebased(), is(false));
         assertThat(resolution.getResolvedMethod(), is(methodDescription));
-        assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.LegalTrivial.INSTANCE));
+        assertThat(resolution.getAdditionalArguments(), is((StackManipulation) StackManipulation.Trivial.INSTANCE));
     }
 
     @Test

@@ -719,7 +719,7 @@ public class MethodDelegation implements Implementation {
 
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
-                return StackManipulation.LegalTrivial.INSTANCE;
+                return StackManipulation.Trivial.INSTANCE;
             }
 
             @Override

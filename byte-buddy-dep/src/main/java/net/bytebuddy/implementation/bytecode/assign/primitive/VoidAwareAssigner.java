@@ -37,7 +37,7 @@ public class VoidAwareAssigner implements Assigner {
     @Override
     public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
         if (sourceType.represents(void.class) && targetType.represents(void.class)) {
-            return StackManipulation.LegalTrivial.INSTANCE;
+            return StackManipulation.Trivial.INSTANCE;
         } else if (sourceType.represents(void.class) /* && subType != void.class */) {
             return typing.isDynamic()
                     ? DefaultValue.of(targetType)

@@ -20,12 +20,12 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
     public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
         if (sourceType.isPrimitive() || targetType.isPrimitive()) {
             if (sourceType.equals(targetType)) {
-                return StackManipulation.LegalTrivial.INSTANCE;
+                return StackManipulation.Trivial.INSTANCE;
             } else {
                 return StackManipulation.Illegal.INSTANCE;
             }
         } else if (targetType.isAssignableFrom(sourceType)) {
-            return StackManipulation.LegalTrivial.INSTANCE;
+            return StackManipulation.Trivial.INSTANCE;
         } else if (typing.isDynamic()) {
             return TypeCasting.to(targetType);
         } else {

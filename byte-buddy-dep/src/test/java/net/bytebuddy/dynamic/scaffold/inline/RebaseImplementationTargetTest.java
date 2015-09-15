@@ -95,7 +95,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(resolution.isRebased()).thenReturn(true);
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
-        when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
+        when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Trivial.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);
         verify(methodRebaseResolver).resolve(rebasedMethod);
@@ -143,7 +143,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(resolution.isRebased()).thenReturn(true);
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
-        when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.LegalTrivial.INSTANCE);
+        when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Trivial.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(false);
         when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.Preserved(invokableMethod));
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);

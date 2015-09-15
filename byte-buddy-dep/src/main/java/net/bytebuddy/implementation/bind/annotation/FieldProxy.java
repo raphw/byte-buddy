@@ -468,7 +468,7 @@ public @interface FieldProxy {
                         MethodDescription getterMethod = methodAccessorFactory.registerGetterFor(accessedField);
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 accessedField.isStatic()
-                                        ? StackManipulation.LegalTrivial.INSTANCE
+                                        ? StackManipulation.Trivial.INSTANCE
                                         : new StackManipulation.Compound(
                                         MethodVariableAccess.REFERENCE.loadOffset(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
@@ -612,7 +612,7 @@ public @interface FieldProxy {
                         MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(accessedField);
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 accessedField.isStatic()
-                                        ? StackManipulation.LegalTrivial.INSTANCE
+                                        ? StackManipulation.Trivial.INSTANCE
                                         : new StackManipulation.Compound(
                                         MethodVariableAccess.REFERENCE.loadOffset(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
@@ -1219,7 +1219,7 @@ public @interface FieldProxy {
                         TypeCreation.forType(auxiliaryType),
                         Duplication.SINGLE,
                         accessedField.isStatic()
-                                ? LegalTrivial.INSTANCE
+                                ? Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, implementationContext);

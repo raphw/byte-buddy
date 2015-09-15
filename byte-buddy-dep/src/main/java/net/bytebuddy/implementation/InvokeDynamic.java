@@ -1709,7 +1709,7 @@ public class InvokeDynamic implements Implementation {
                     }
                     return new Resolved.Simple(new StackManipulation.Compound(
                             fieldDescription.isStatic()
-                                    ? StackManipulation.LegalTrivial.INSTANCE
+                                    ? StackManipulation.Trivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadOffset(0),
                             FieldAccess.forField(fieldDescription).getter()
                     ), fieldDescription.getType().asErasure());

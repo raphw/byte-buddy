@@ -56,7 +56,7 @@ public interface StackManipulation {
     /**
      * Canonical representation of a legal stack manipulation which does not require any action.
      */
-    enum LegalTrivial implements StackManipulation {
+    enum Trivial implements StackManipulation {
 
         /**
          * The singleton instance.

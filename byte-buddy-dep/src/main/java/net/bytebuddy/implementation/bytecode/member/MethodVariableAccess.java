@@ -230,7 +230,7 @@ public enum MethodVariableAccess {
 
                 @Override
                 public StackManipulation ofIndex(TypeDescription parameterType, int index) {
-                    return LegalTrivial.INSTANCE;
+                    return Trivial.INSTANCE;
                 }
 
                 @Override
@@ -263,7 +263,7 @@ public enum MethodVariableAccess {
                 public StackManipulation ofIndex(TypeDescription parameterType, int index) {
                     TypeDescription targetType = bridgeTarget.getParameters().get(index).getType().asErasure();
                     return parameterType.equals(targetType)
-                            ? LegalTrivial.INSTANCE
+                            ? Trivial.INSTANCE
                             : TypeCasting.to(targetType);
                 }
 
