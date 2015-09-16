@@ -3,8 +3,8 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -21,17 +21,17 @@ public class ClassReloadingStrategyTest {
     private static final String FOO = "foo", BAR = "bar";
 
     @Rule
-    public MethodRule toolsJarRule = new ToolsJarRule();
+    public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testStrategyCreation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testFromAgentClassReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
@@ -49,7 +49,7 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testClassRedefinitionRenamingWithStackMapFrames() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
@@ -64,7 +64,7 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testRedefinitionReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Instrumentation instrumentation = spy(ByteBuddyAgent.getInstrumentation());
@@ -84,7 +84,7 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testRetransformationReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();

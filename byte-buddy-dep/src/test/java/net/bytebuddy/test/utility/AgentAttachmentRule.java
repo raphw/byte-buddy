@@ -1,10 +1,10 @@
 package net.bytebuddy.test.utility;
 
+import net.bytebuddy.agent.ByteBuddyAgent;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
-import java.io.File;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -12,24 +12,20 @@ import java.lang.annotation.Target;
 import java.util.logging.Logger;
 
 /**
- * This rules assures that the running JVM is a JDK JVM with an existing
- * <a href="https://blogs.oracle.com/CoreJavaTechTips/entry/the_attach_api">'tools.jar'</a>.
+ * This rules assures that the running JVM is a JDK JVM with an available
+ * <a href="https://blogs.oracle.com/CoreJavaTechTips/entry/the_attach_api">attach API</a>.
  */
-public class ToolsJarRule implements MethodRule {
+public class AgentAttachmentRule implements MethodRule {
 
-    public static final String JAVA_HOME_PROPERTY = "java.home";
+    private final boolean available;
 
-    public static final String TOOLS_JAR_LOCATION = "/../lib/tools.jar";
-
-    private final boolean toolsJarExists;
-
-    public ToolsJarRule() {
-        toolsJarExists = new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + TOOLS_JAR_LOCATION).isFile();
+    public AgentAttachmentRule() {
+        available = ByteBuddyAgent.AttachmentProvider.DEFAULT.attempt().isAvailable();
     }
 
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
-        return toolsJarExists || method.getAnnotation(Enforce.class) == null
+        return available || method.getAnnotation(Enforce.class) == null
                 ? base
                 : new NoOpStatement();
     }

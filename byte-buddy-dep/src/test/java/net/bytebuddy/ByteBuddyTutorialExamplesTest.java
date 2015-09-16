@@ -25,8 +25,8 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -64,7 +64,7 @@ public class ByteBuddyTutorialExamplesTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Rule
-    public MethodRule toolsJarRule = new ToolsJarRule();
+    public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     @SuppressWarnings("unused")
     private static void println(String s) {
@@ -133,7 +133,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testTutorialGettingStartedClassReloading() throws Exception {
         ByteBuddyAgent.install();
         FooReloading foo = new FooReloading();

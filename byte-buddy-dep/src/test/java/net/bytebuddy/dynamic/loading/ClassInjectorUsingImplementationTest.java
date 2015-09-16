@@ -4,8 +4,8 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.ToolsJarRule;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,7 +25,7 @@ public class ClassInjectorUsingImplementationTest {
     private static final String FOO = "foo", BAR = "bar";
 
     @Rule
-    public MethodRule toolsJarRule = new ToolsJarRule();
+    public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     private File folder;
 
@@ -38,7 +38,7 @@ public class ClassInjectorUsingImplementationTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testBootstrapInjection() throws Exception {
         ClassInjector classInjector = new ClassInjector.UsingInstrumentation(folder,
                 ClassInjector.UsingInstrumentation.Target.BOOTSTRAP,
@@ -52,7 +52,7 @@ public class ClassInjectorUsingImplementationTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testSystemInjection() throws Exception {
         ClassInjector classInjector = new ClassInjector.UsingInstrumentation(folder,
                 ClassInjector.UsingInstrumentation.Target.SYSTEM,

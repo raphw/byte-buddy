@@ -1,6 +1,6 @@
 package net.bytebuddy.agent;
 
-import net.bytebuddy.test.utility.ToolsJarRule;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -13,10 +13,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class ByteBuddyAgentInstallationTest {
 
     @Rule
-    public MethodRule toolsJarRule = new ToolsJarRule();
+    public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testAgentInstallation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
     }

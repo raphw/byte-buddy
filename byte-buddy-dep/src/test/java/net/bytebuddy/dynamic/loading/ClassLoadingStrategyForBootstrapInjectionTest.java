@@ -4,8 +4,8 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.ToolsJarRule;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,7 +27,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     private static final String FOO = "foo", BAR = "bar";
 
     @Rule
-    public MethodRule toolsJarRule = new ToolsJarRule();
+    public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     private File file;
 
@@ -40,7 +40,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testBootstrapInjection() throws Exception {
         ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file);
         String name = FOO + RandomString.make();
@@ -52,7 +52,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testClassLoaderInjection() throws Exception {
         ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file);
         String name = BAR + RandomString.make();

@@ -2,9 +2,9 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -27,19 +27,19 @@ import static org.mockito.Mockito.*;
 public class ClassFileLocatorAgentBasedTest {
 
     @Rule
-    public MethodRule toolsJarRule = new ToolsJarRule();
+    public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testStrategyCreation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testExtraction() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(getClass().getClassLoader());
@@ -49,7 +49,7 @@ public class ClassFileLocatorAgentBasedTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testExtractionOfInflatedMethodAccessor() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Method bar = Foo.class.getDeclaredMethod("bar");

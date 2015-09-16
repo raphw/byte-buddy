@@ -9,8 +9,8 @@ import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.ToolsJarRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class AgentBuilderDefaultApplicationTest {
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     @Rule
-    public MethodRule toolsJarRule = new ToolsJarRule();
+    public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     private ClassLoader classLoader;
 
@@ -52,7 +52,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testAgentWithoutSelfInitialization() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -68,7 +68,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testAgentSelfInitialization() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -83,7 +83,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testAgentSelfInitializationAuxiliaryTypes() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -98,7 +98,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @ToolsJarRule.Enforce
+    @AgentAttachmentRule.Enforce
     public void testAgentWithoutSelfInitializationWithNativeMethodPrefix() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
