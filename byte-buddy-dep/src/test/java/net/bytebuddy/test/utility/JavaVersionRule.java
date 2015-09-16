@@ -22,7 +22,7 @@ public class JavaVersionRule implements MethodRule {
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
-        return enforce == null || ClassFileVersion.forKnownJavaVersion(enforce.value()).compareTo(supportedVersion) < 0
+        return enforce == null || ClassFileVersion.forKnownJavaVersion(enforce.value()).compareTo(supportedVersion) <= 0
                 ? base
                 : new NoOpStatement(enforce.value());
     }
