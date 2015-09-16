@@ -446,6 +446,29 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches an iterable by assuring that at least one element of the iterable collection matches the
+     * provided matcher.
+     *
+     * @param matcher The matcher to apply to each element.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches an iterable if at least one element matches the provided matcher.
+     */
+    public static <T> ElementMatcher.Junction<Iterable<? extends T>> whereAny(ElementMatcher<? super T> matcher) {
+        return new CollectionItemMatcher<T>(matcher);
+    }
+
+    /**
+     * Matches an iterable by assuring that no element of the iterable collection matches the provided matcher.
+     *
+     * @param matcher The matcher to apply to each element.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches an iterable if no element matches the provided matcher.
+     */
+    public static <T> ElementMatcher.Junction<Iterable<? extends T>> whereNone(ElementMatcher<? super T> matcher) {
+        return not(whereAny(matcher));
+    }
+
+    /**
      * Matches a generic type's raw type against the provided raw type.
      *
      * @param type The type to match a generic type's erasure against.
@@ -1100,18 +1123,6 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(int length) {
         return new MethodParametersMatcher<T>(new CollectionSizeMatcher<ParameterList<?>>(length));
-    }
-
-    /**
-     * Matches a {@link MethodDescription} by validating that at least one
-     * parameter fullfils a given constraint.
-     *
-     * @param matcher The constraint to check the parameters against.
-     * @param <T>     The type of the matched object.
-     * @return A matcher that matches a method description's parameters against the given constraint.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> hasParameter(ElementMatcher<? super ParameterDescription> matcher) {
-        return hasParameters(new CollectionItemMatcher<ParameterDescription>(nonNull(matcher)));
     }
 
     /**

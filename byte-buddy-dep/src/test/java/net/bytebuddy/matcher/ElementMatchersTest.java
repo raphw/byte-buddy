@@ -23,6 +23,7 @@ import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -34,15 +35,9 @@ import static org.mockito.Mockito.*;
 
 public class ElementMatchersTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
-
-    private static final String PARAMETER_NAMES = "net.bytebuddy.test.precompiled.ParameterNames";
-
-    private static final String RETURN_TYPE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.ReturnTypeInterfaceBridge";
-
-    private static final String TYPE_VARIABLE_INTERFACE_BRIDGE = "net.bytebuddy.test.precompiled.TypeVariableInterfaceBridge";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -344,6 +339,18 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(value), is(false));
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(otherValue), is(false));
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(new Object()), is(true));
+    }
+
+    @Test
+    public void testWhereAny() throws Exception {
+        assertThat(ElementMatchers.whereAny(ElementMatchers.is(FOO)).matches(Arrays.asList(FOO, BAR)), is(true));
+        assertThat(ElementMatchers.whereAny(ElementMatchers.is(FOO)).matches(Arrays.asList(BAR, QUX)), is(false));
+    }
+
+    @Test
+    public void testWhereNone() throws Exception {
+        assertThat(ElementMatchers.whereNone(ElementMatchers.is(FOO)).matches(Arrays.asList(FOO, BAR)), is(false));
+        assertThat(ElementMatchers.whereNone(ElementMatchers.is(FOO)).matches(Arrays.asList(BAR, QUX)), is(true));
     }
 
     @Test
@@ -667,15 +674,6 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
         assertThat(ElementMatchers.takesArguments(3)
                 .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
-    }
-
-    @Test
-    @JavaVersionRule.Enforce(8)
-    public void testHasParameter() throws Exception {
-        MethodDescription methodDescription = new MethodDescription.ForLoadedMethod(Class.forName(PARAMETER_NAMES)
-                .getDeclaredMethod(FOO, String.class, long.class, int.class));
-        assertThat(ElementMatchers.hasParameter(named(FOO)).matches(methodDescription), is(false));
-        assertThat(ElementMatchers.hasParameter(named("first")).matches(methodDescription), is(true));
     }
 
     @Test
