@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import org.junit.Test;
 
@@ -50,6 +51,20 @@ public class MethodDelegationSuperTest extends AbstractImplementationTest {
     @Test
     public void testSerializableProxy() throws Exception {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(SerializationCheck.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.qux(), is((Object) (FOO + QUX)));
+    }
+
+    @Test
+    public void testTargetTypeProxy() throws Exception {
+        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(TargetTypeTest.class));
+        Foo instance = loaded.getLoaded().newInstance();
+        assertThat(instance.qux(), is((Object) (FOO + QUX)));
+    }
+
+    @Test
+    public void testExplicitTypeProxy() throws Exception {
+        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(ExplicitTypeTest.class));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
     }
@@ -126,6 +141,21 @@ public class MethodDelegationSuperTest extends AbstractImplementationTest {
             assertThat(foo, instanceOf(Serializable.class));
             return foo.qux() + QUX;
         }
+    }
 
+    public static class TargetTypeTest {
+
+        public static String baz(@Super(proxyType = TargetType.class) Object proxy) throws Exception {
+            assertThat(proxy, instanceOf(Foo.class));
+            return Foo.class.getDeclaredMethod(QUX).invoke(proxy) + QUX;
+        }
+    }
+    public static class ExplicitTypeTest {
+
+        public static String baz(@Super(proxyType = Qux.class) Object proxy) throws Exception {
+            assertThat(proxy, instanceOf(Qux.class));
+            assertThat(proxy, not(instanceOf(Foo.class)));
+            return Qux.class.getDeclaredMethod(QUX).invoke(proxy) + QUX;
+        }
     }
 }

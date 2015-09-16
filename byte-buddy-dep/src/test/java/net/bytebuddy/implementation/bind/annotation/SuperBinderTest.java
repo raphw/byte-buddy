@@ -9,8 +9,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
 
@@ -42,6 +41,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
 
     @Test
     public void testAssignableBinding() throws Exception {
+        doReturn(void.class).when(annotation).proxyType();
         when(stackManipulation.isValid()).thenReturn(true);
         when(instrumentedType.isAssignableTo(targetType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
@@ -52,14 +52,48 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
 
     @Test
     public void testIllegalBinding() throws Exception {
+        doReturn(void.class).when(annotation).proxyType();
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPrimitiveParameterType() throws Exception {
+        when(targetType.isPrimitive()).thenReturn(true);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArrayParameterType() throws Exception {
+        when(targetType.isArray()).thenReturn(true);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPrimitiveProxyType() throws Exception {
+        doReturn(int.class).when(annotation).proxyType();
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArrayProxyType() throws Exception {
+        doReturn(Object[].class).when(annotation).proxyType();
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUnassignableType() throws Exception {
+        doReturn(Void.class).when(annotation).proxyType();
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Super.Binder.class).apply();
         ObjectPropertyAssertion.of(Super.Instantiation.class).apply();
+        ObjectPropertyAssertion.of(Super.Binder.TypeLocator.ForInstrumentedType.class).apply();
+        ObjectPropertyAssertion.of(Super.Binder.TypeLocator.ForParameterType.class).apply();
+        ObjectPropertyAssertion.of(Super.Binder.TypeLocator.ForType.class).apply();
     }
 }

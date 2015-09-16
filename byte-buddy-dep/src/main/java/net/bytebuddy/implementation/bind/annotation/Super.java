@@ -6,6 +6,8 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.TypeProxy;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -84,6 +86,16 @@ public @interface Super {
      * @return The parameter types of the constructor to be called.
      */
     Class<?>[] constructorParameters() default {};
+
+    /**
+     * Determines the type that is implemented by the proxy. When this value is set to its default value
+     * {@code void}, the proxy is created as an instance of the parameter's type. When it is set to
+     * {@link TargetType}, it is created as an instance of the generated class. Otherwise, the proxy type
+     * is set to the given value.
+     *
+     * @return The type of the proxy or an indicator type, i.e. {@code void} or {@link TargetType}.
+     */
+    Class<?> proxyType() default void.class;
 
     /**
      * Determines the instantiation of the proxy type.
@@ -188,12 +200,18 @@ public @interface Super {
          */
         private static final MethodDescription.InDefinedShape STRATEGY;
 
+        /**
+         * A reference to the proxy type property.
+         */
+        private static final MethodDescription.InDefinedShape PROXY_TYPE;
+
         /*
          * Extracts method references of the super annotation.
          */
         static {
             MethodList<MethodDescription.InDefinedShape> annotationProperties = new TypeDescription.ForLoadedType(Super.class).getDeclaredMethods();
             STRATEGY = annotationProperties.filter(named("strategy")).getOnly();
+            PROXY_TYPE = annotationProperties.filter(named("proxyType")).getOnly();
         }
 
         @Override
@@ -207,18 +225,147 @@ public @interface Super {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(target.getType().asErasure())) {
+            if (target.getType().isPrimitive() || target.getType().isArray()) {
+                throw new IllegalStateException(target + " uses the @Super annotation on an invalid type");
+            }
+            TypeDescription proxyType = TypeLocator.ForType
+                    .of(annotation.getValue(PROXY_TYPE, TypeDescription.class))
+                    .resolve(implementationTarget.getTypeDescription(), target.getType());
+            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(proxyType)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
                         .getValue(STRATEGY, EnumerationDescription.class).load(Instantiation.class)
-                        .proxyFor(target.getType().asErasure(), implementationTarget, annotation));
+                        .proxyFor(proxyType, implementationTarget, annotation));
             }
         }
 
         @Override
         public String toString() {
             return "Super.Binder." + name();
+        }
+
+        /**
+         * Locates the type which should be the base type of the created proxy.
+         */
+        protected interface TypeLocator {
+
+            /**
+             * Resolves the target type.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param parameterType    The type of the target parameter.
+             * @return The proxy type.
+             */
+            TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType);
+
+            /**
+             * A type locator that yields the instrumented type.
+             */
+            enum ForInstrumentedType implements TypeLocator {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public String toString() {
+                    return "Super.Binder.TypeLocator.ForInstrumentedType." + name();
+                }
+            }
+
+            /**
+             * A type locator that yields the target parameter's type.
+             */
+            enum ForParameterType implements TypeLocator {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
+                    return parameterType.asErasure();
+                }
+
+                @Override
+                public String toString() {
+                    return "Super.Binder.TypeLocator.ForParameterType." + name();
+                }
+            }
+
+            /**
+             * A type locator that returns a given type.
+             */
+            class ForType implements TypeLocator {
+
+                /**
+                 * The type to be returned upon resolution.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates a new type locator for a given type.
+                 *
+                 * @param typeDescription The type to be returned upon resolution.
+                 */
+                protected ForType(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                /**
+                 * Resolves a type locator based upon an annotation value.
+                 *
+                 * @param typeDescription The annotation's value.
+                 * @return The appropriate type locator.
+                 */
+                protected static TypeLocator of(TypeDescription typeDescription) {
+                    if (typeDescription.represents(void.class)) {
+                        return ForParameterType.INSTANCE;
+                    } else if (typeDescription.represents(TargetType.class)) {
+                        return ForInstrumentedType.INSTANCE;
+                    } else if (typeDescription.isPrimitive() || typeDescription.isArray()) {
+                        throw new IllegalStateException("Cannot assign proxy to " + typeDescription);
+                    } else {
+                        return new ForType(typeDescription);
+                    }
+                }
+
+                @Override
+                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
+                    if (!typeDescription.isAssignableTo(parameterType.asErasure())) {
+                        throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);
+                    }
+                    return typeDescription;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForType forType = (ForType) other;
+                    return typeDescription.equals(forType.typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return typeDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Super.Binder.TypeLocator.ForType{" +
+                            "typeDescription=" + typeDescription +
+                            '}';
+                }
+            }
         }
     }
 }
