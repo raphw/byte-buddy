@@ -139,6 +139,7 @@ public class ByteBuddyAgent {
      * <p>
      * Installs an agent on the currently running Java virtual machine. Unfortunately, this does
      * not always work. The runtime installation of a Java agent is supported for:
+     * </p>
      * <ul>
      * <li><b>JVM version 9+</b>: For Java VM of at least version 9, the attachment API was merged
      * into a Jigsaw module and the runtime installation is always possible.</li>
@@ -146,6 +147,7 @@ public class ByteBuddyAgent {
      * possible when bundled with a JDK up until Java version 8. It is not possible for runtime-only
      * installations of HotSpot or J9 for these versions.</li>
      * </ul>
+     * <p>
      * If an agent cannot be installed, a {@link IllegalStateException} is thrown.
      * </p>
      * <p>
