@@ -42,7 +42,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     @Test
     @ToolsJarRule.Enforce
     public void testBootstrapInjection() throws Exception {
-        ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.installOnOpenJDK(), file);
+        ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file);
         String name = FOO + RandomString.make();
         DynamicType dynamicType = new ByteBuddy().subclass(Object.class).name(name).make();
         Map<TypeDescription, Class<?>> loaded = bootstrapStrategy.load(null, Collections.singletonMap(dynamicType.getTypeDescription(), dynamicType.getBytes()));
@@ -54,7 +54,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     @Test
     @ToolsJarRule.Enforce
     public void testClassLoaderInjection() throws Exception {
-        ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.installOnOpenJDK(), file);
+        ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file);
         String name = BAR + RandomString.make();
         ClassLoader classLoader = new URLClassLoader(new URL[0], null);
         DynamicType dynamicType = new ByteBuddy().subclass(Object.class).name(name).make();

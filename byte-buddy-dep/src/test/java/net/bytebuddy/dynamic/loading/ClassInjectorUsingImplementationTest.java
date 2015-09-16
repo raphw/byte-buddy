@@ -42,7 +42,7 @@ public class ClassInjectorUsingImplementationTest {
     public void testBootstrapInjection() throws Exception {
         ClassInjector classInjector = new ClassInjector.UsingInstrumentation(folder,
                 ClassInjector.UsingInstrumentation.Target.BOOTSTRAP,
-                ByteBuddyAgent.installOnOpenJDK());
+                ByteBuddyAgent.install());
         String name = FOO + RandomString.make();
         DynamicType dynamicType = new ByteBuddy().subclass(Object.class).name(name).make();
         Map<TypeDescription, Class<?>> types = classInjector.inject(Collections.singletonMap(dynamicType.getTypeDescription(), dynamicType.getBytes()));
@@ -56,7 +56,7 @@ public class ClassInjectorUsingImplementationTest {
     public void testSystemInjection() throws Exception {
         ClassInjector classInjector = new ClassInjector.UsingInstrumentation(folder,
                 ClassInjector.UsingInstrumentation.Target.SYSTEM,
-                ByteBuddyAgent.installOnOpenJDK());
+                ByteBuddyAgent.install());
         String name = BAR + RandomString.make();
         DynamicType dynamicType = new ByteBuddy().subclass(Object.class).name(name).make();
         Map<TypeDescription, Class<?>> types = classInjector.inject(Collections.singletonMap(dynamicType.getTypeDescription(), dynamicType.getBytes()));

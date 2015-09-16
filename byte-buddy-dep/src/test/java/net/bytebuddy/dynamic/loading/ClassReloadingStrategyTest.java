@@ -26,14 +26,14 @@ public class ClassReloadingStrategyTest {
     @Test
     @ToolsJarRule.Enforce
     public void testStrategyCreation() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
     @ToolsJarRule.Enforce
     public void testFromAgentClassReloadingStrategy() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
@@ -51,7 +51,7 @@ public class ClassReloadingStrategyTest {
     @Test
     @ToolsJarRule.Enforce
     public void testClassRedefinitionRenamingWithStackMapFrames() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
         Bar bar = new Bar();
         new ByteBuddy().redefine(Qux.class)
@@ -66,7 +66,7 @@ public class ClassReloadingStrategyTest {
     @Test
     @ToolsJarRule.Enforce
     public void testRedefinitionReloadingStrategy() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Instrumentation instrumentation = spy(ByteBuddyAgent.getInstrumentation());
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
@@ -86,7 +86,7 @@ public class ClassReloadingStrategyTest {
     @Test
     @ToolsJarRule.Enforce
     public void testRetransformationReloadingStrategy() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),

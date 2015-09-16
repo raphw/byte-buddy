@@ -54,7 +54,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @ToolsJarRule.Enforce
     public void testAgentWithoutSelfInitialization() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .disableSelfInitialization()
                 .rebase(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
@@ -70,7 +70,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @ToolsJarRule.Enforce
     public void testAgentSelfInitialization() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .rebase(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new BarTransformer())
                 .installOnByteBuddyAgent();
@@ -85,7 +85,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @ToolsJarRule.Enforce
     public void testAgentSelfInitializationAuxiliaryTypes() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .rebase(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer())
                 .installOnByteBuddyAgent();
@@ -100,7 +100,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @ToolsJarRule.Enforce
     public void testAgentWithoutSelfInitializationWithNativeMethodPrefix() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .disableSelfInitialization()
                 .withNativeMethodPrefix(QUX)

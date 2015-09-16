@@ -135,7 +135,7 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     @ToolsJarRule.Enforce
     public void testTutorialGettingStartedClassReloading() throws Exception {
-        ByteBuddyAgent.installOnOpenJDK();
+        ByteBuddyAgent.install();
         FooReloading foo = new FooReloading();
         new ByteBuddy()
                 .redefine(BarReloading.class)

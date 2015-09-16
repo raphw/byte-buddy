@@ -34,14 +34,14 @@ public class ClassFileLocatorAgentBasedTest {
     @Test
     @ToolsJarRule.Enforce
     public void testStrategyCreation() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
     @ToolsJarRule.Enforce
     public void testExtraction() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(getClass().getClassLoader());
         ClassFileLocator.Resolution resolution = classFileLocator.locate(Foo.class.getName());
         assertThat(resolution.isResolved(), is(true));
@@ -51,7 +51,7 @@ public class ClassFileLocatorAgentBasedTest {
     @Test
     @ToolsJarRule.Enforce
     public void testExtractionOfInflatedMethodAccessor() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Method bar = Foo.class.getDeclaredMethod("bar");
         for (int i = 0; i < 20; i++) {
             bar.invoke(new Foo());

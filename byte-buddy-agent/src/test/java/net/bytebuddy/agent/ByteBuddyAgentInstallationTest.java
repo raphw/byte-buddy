@@ -10,7 +10,7 @@ import java.lang.instrument.Instrumentation;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ByteBuddyAgentOpenJdkTest {
+public class ByteBuddyAgentInstallationTest {
 
     @Rule
     public MethodRule toolsJarRule = new ToolsJarRule();
@@ -18,6 +18,6 @@ public class ByteBuddyAgentOpenJdkTest {
     @Test
     @ToolsJarRule.Enforce
     public void testAgentInstallation() throws Exception {
-        assertThat(ByteBuddyAgent.installOnOpenJDK(), instanceOf(Instrumentation.class));
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
     }
 }
