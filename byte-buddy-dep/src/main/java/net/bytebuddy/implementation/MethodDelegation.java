@@ -1027,7 +1027,7 @@ public class MethodDelegation implements Implementation {
             /**
              * A matcher representing a filter to be applied to the extracted methods.
              */
-            private final ElementMatcher.Junction<? super MethodDescription> matcher;
+            private final ElementMatcher<? super MethodDescription> matcher;
 
             /**
              * Creates a new method container for virtual method extraction.
@@ -1048,7 +1048,7 @@ public class MethodDelegation implements Implementation {
              */
             private ForVirtualMethods(MethodGraph.Compiler methodGraphCompiler,
                                       TypeDescription targetType,
-                                      ElementMatcher.Junction<? super MethodDescription> matcher) {
+                                      ElementMatcher<? super MethodDescription> matcher) {
                 this.methodGraphCompiler = methodGraphCompiler;
                 this.targetType = targetType;
                 this.matcher = matcher;
@@ -1056,7 +1056,9 @@ public class MethodDelegation implements Implementation {
 
             @Override
             public MethodContainer filter(ElementMatcher<? super MethodDescription> matcher) {
-                return new ForVirtualMethods(methodGraphCompiler, targetType, this.matcher.and(matcher));
+                return new ForVirtualMethods(methodGraphCompiler,
+                        targetType,
+                        new ElementMatcher.Junction.Conjunction<MethodDescription>(this.matcher, matcher));
             }
 
             @Override
