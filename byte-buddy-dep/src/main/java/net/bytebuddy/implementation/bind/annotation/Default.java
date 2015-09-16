@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.TypeProxy;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -42,7 +41,7 @@ public @interface Default {
     /**
      * Determines the type that is implemented by the proxy. When this value is set to its default value
      * {@code void}, the proxy is created as an instance of the parameter's type. It is <b>not</b> possible to
-     * set the value of this property to {@link TargetType} as a interface cannot implement itself.
+     * set the value of this property to {@link net.bytebuddy.dynamic.TargetType} as a interface cannot implement itself.
      *
      * @return The type of the proxy or an indicator type, i.e. {@code void}.
      */
