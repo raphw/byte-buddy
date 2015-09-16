@@ -498,6 +498,27 @@ public class MethodCallTest extends AbstractImplementationTest {
         MethodCall.invokeSuper().withArgument(-1);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testMethodCallNonVirtual() throws Exception {
+        implement(InstanceMethod.class, MethodCall
+                .invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class))
+                .on(new StaticIncompatibleExternalMethod()).with(FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodCallIncompatibleInstance() throws Exception {
+        implement(InstanceMethod.class, MethodCall
+                .invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class))
+                .on(new Object()).with(FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodCallNonVisibleType() throws Exception {
+        implement(Object.class, MethodCall
+                .invoke(PackagePrivateType.class.getDeclaredMethod("foo"))
+                .on(new PackagePrivateType()));
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodCall.class).apply();
@@ -505,7 +526,8 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.Appender.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForExplicitMethod.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForInterceptedMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForStandardInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForContextualInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForSuperMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForDefaultMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TerminationHandler.ForChainedInvocation.class).apply();
@@ -651,6 +673,13 @@ public class MethodCallTest extends AbstractImplementationTest {
 
         public static String bar(Object arg0, Object arg1) {
             return "" + arg0 + arg1;
+        }
+    }
+
+    static class PackagePrivateType {
+
+        public String foo() {
+            return FOO;
         }
     }
 }

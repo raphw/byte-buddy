@@ -1063,6 +1063,9 @@ public class MethodDelegation implements Implementation {
 
             @Override
             public MethodList<?> resolve(TypeDescription instrumentedType) {
+                if (!targetType.isVisibleTo(instrumentedType)) {
+                    throw new IllegalStateException(instrumentedType + " cannot access " + targetType);
+                }
                 return methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(matcher);
             }
 

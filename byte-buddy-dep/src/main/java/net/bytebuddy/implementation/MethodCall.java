@@ -169,7 +169,7 @@ public class MethodCall implements Implementation {
         return new MethodCall(new MethodLocator.ForExplicitMethod(methodDescription),
                 TargetHandler.ForConstructingInvocation.INSTANCE,
                 Collections.<ArgumentLoader>emptyList(),
-                MethodInvoker.ForStandardInvocation.INSTANCE,
+                MethodInvoker.ForContextualInvocation.INSTANCE,
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
@@ -691,11 +691,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                if (methodDescription.isStatic() || !methodDescription.getDeclaringType().asErasure().isInstance(target)) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + target);
-                }
-                return FieldAccess.forField(instrumentedType.getDeclaredFields()
-                        .filter(named(fieldName)).getOnly()).getter();
+                return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter();
             }
 
             @Override
@@ -1975,10 +1971,10 @@ public class MethodCall implements Implementation {
         StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget);
 
         /**
-         * Applies a standard invocation of the provided method, i.e. a static invocation for static methods,
+         * Applies a contextual invocation of the provided method, i.e. a static invocation for static methods,
          * a special invocation for constructors and private methods and a virtual invocation for any other method.
          */
-        enum ForStandardInvocation implements MethodInvoker {
+        enum ForContextualInvocation implements MethodInvoker {
 
             /**
              * The singleton instance.
@@ -1987,15 +1983,69 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (!methodDescription.isStatic() && !methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " for " + implementationTarget);
+                if (methodDescription.isVirtual() && !methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
                 }
-                return MethodInvocation.invoke(methodDescription);
+                return methodDescription.isVirtual()
+                        ? MethodInvocation.invoke(methodDescription).virtual(implementationTarget.getTypeDescription())
+                        : MethodInvocation.invoke(methodDescription);
             }
 
             @Override
             public String toString() {
-                return "MethodCall.MethodInvoker.ForStandardInvocation." + name();
+                return "MethodCall.MethodInvoker.ForContextualInvocation." + name();
+            }
+        }
+
+        /**
+         * Applies a virtual invocation on a given type.
+         */
+        class ForVirtualInvocation implements MethodInvoker {
+
+            /**
+             * The type description to virtually invoke the method upon.
+             */
+            private final TypeDescription typeDescription;
+
+            /**
+             * Creates a new method invoking for a virtual method invocation.
+             *
+             * @param typeDescription The type description to virtually invoke the method upon.
+             */
+            protected ForVirtualInvocation(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
+                if (!methodDescription.isVirtual()) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " virtually");
+                } else if (!methodDescription.isInvokableOn(typeDescription)) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + typeDescription);
+                } else if (!typeDescription.isVisibleTo(implementationTarget.getTypeDescription())) {
+                    throw new IllegalStateException(typeDescription + " is not visible to " + implementationTarget.getTypeDescription());
+                }
+                return MethodInvocation.invoke(methodDescription).virtual(typeDescription);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                ForVirtualInvocation that = (ForVirtualInvocation) other;
+                return typeDescription.equals(that.typeDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return typeDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.MethodInvoker.ForVirtualInvocation{" +
+                        "typeDescription=" + typeDescription +
+                        '}';
             }
         }
 
@@ -2144,7 +2194,7 @@ public class MethodCall implements Implementation {
             super(methodLocator,
                     TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
                     Collections.<ArgumentLoader>emptyList(),
-                    MethodInvoker.ForStandardInvocation.INSTANCE,
+                    MethodInvoker.ForContextualInvocation.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
@@ -2160,7 +2210,7 @@ public class MethodCall implements Implementation {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForStaticField(nonNull(target)),
                     argumentLoaders,
-                    MethodInvoker.ForStandardInvocation.INSTANCE,
+                    new MethodInvoker.ForVirtualInvocation(new TypeDescription.ForLoadedType(target.getClass())),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
@@ -2190,7 +2240,7 @@ public class MethodCall implements Implementation {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForInstanceField(nonNull(fieldName), isActualType(typeDescription)),
                     argumentLoaders,
-                    MethodInvoker.ForStandardInvocation.INSTANCE,
+                    new MethodInvoker.ForVirtualInvocation(typeDescription),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);

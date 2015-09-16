@@ -1,18 +1,29 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.isToString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.when;
 
-public class MethodDelegationObjectPropertiesTest {
+public class MethodDelegationOtherrTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
+    @Test(expected = IllegalStateException.class)
+    public void testDelegationToInvisibleInstanceThrowsException() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .method(isToString())
+                .intercept(MethodDelegation.to(new Qux()))
+                .make();
+    }
 
     @Test
     public void testStaticMethodDelegation() throws Exception {
@@ -105,5 +116,9 @@ public class MethodDelegationObjectPropertiesTest {
         public int hashCode() {
             return 27;
         }
+    }
+
+    static class Qux {
+        /* empty */
     }
 }
