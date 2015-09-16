@@ -51,8 +51,17 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     }
 
     @Test
-    public void testIllegalBinding() throws Exception {
+    public void testIllegalBindingForNonAssignableType() throws Exception {
         doReturn(void.class).when(annotation).proxyType();
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(false));
+    }
+
+    @Test
+    public void testIllegalBindingStaticMethod() throws Exception {
+        doReturn(void.class).when(annotation).proxyType();
+        when(source.isStatic()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
@@ -83,7 +92,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testUnassignableType() throws Exception {
+    public void testNonAssignableType() throws Exception {
         doReturn(Void.class).when(annotation).proxyType();
         Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }

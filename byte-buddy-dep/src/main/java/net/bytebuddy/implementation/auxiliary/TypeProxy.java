@@ -383,7 +383,7 @@ public class TypeProxy implements AuxiliaryType {
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
-                    return implementationTarget.invokeSuper(instrumentedMethod.asToken());
+                    return implementationTarget.invokeDominant(instrumentedMethod.asToken());
                 }
             },
 

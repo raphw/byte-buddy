@@ -41,10 +41,10 @@ public class TypeProxyInvocationFactoryDefaultTest {
 
     @Test
     public void testSuperMethod() throws Exception {
-        when(implementationTarget.invokeSuper(methodToken)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDominant(methodToken)).thenReturn(specialMethodInvocation);
         assertThat(TypeProxy.InvocationFactory.Default.SUPER_METHOD.invoke(implementationTarget, typeDescription, methodDescription),
                 is(specialMethodInvocation));
-        verify(implementationTarget).invokeSuper(methodToken);
+        verify(implementationTarget).invokeDominant(methodToken);
         verifyNoMoreInteractions(implementationTarget);
     }
 

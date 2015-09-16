@@ -41,11 +41,10 @@ public @interface Default {
 
     /**
      * Determines the type that is implemented by the proxy. When this value is set to its default value
-     * {@code void}, the proxy is created as an instance of the parameter's type. When it is set to
-     * {@link TargetType}, it is created as an instance of the generated class. Otherwise, the proxy type
-     * is set to the given value.
+     * {@code void}, the proxy is created as an instance of the parameter's type. It is <b>not</b> possible to
+     * set the value of this property to {@link TargetType} as a interface cannot implement itself.
      *
-     * @return The type of the proxy or an indicator type, i.e. {@code void} or {@link TargetType}.
+     * @return The type of the proxy or an indicator type, i.e. {@code void}.
      */
     Class<?> proxyType() default void.class;
 
@@ -89,13 +88,11 @@ public @interface Default {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            if (target.getType().isPrimitive() || target.getType().isArray()) {
+            TypeDescription proxyType = TypeLocator.ForType.of(annotation.getValue(PROXY_TYPE, TypeDescription.class)).resolve(target.getType());
+            if (!proxyType.isInterface()) {
                 throw new IllegalStateException(target + " uses the @Default annotation on an invalid type");
             }
-            TypeDescription proxyType = TypeLocator.ForType
-                    .of(annotation.getValue(PROXY_TYPE, TypeDescription.class))
-                    .resolve(implementationTarget.getTypeDescription(), target.getType());
-            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(proxyType)) {
+            if (source.isStatic() || !implementationTarget.getTypeDescription().getInterfaces().asErasures().contains(proxyType)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(proxyType,
@@ -117,32 +114,10 @@ public @interface Default {
             /**
              * Resolves the target type.
              *
-             * @param instrumentedType The instrumented type.
-             * @param parameterType    The type of the target parameter.
+             * @param parameterType The type of the target parameter.
              * @return The proxy type.
              */
-            TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType);
-
-            /**
-             * A type locator that yields the instrumented type.
-             */
-            enum ForInstrumentedType implements TypeLocator {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "Default.Binder.TypeLocator.ForInstrumentedType." + name();
-                }
-            }
+            TypeDescription resolve(GenericTypeDescription parameterType);
 
             /**
              * A type locator that yields the target parameter's type.
@@ -155,7 +130,7 @@ public @interface Default {
                 INSTANCE;
 
                 @Override
-                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
+                public TypeDescription resolve(GenericTypeDescription parameterType) {
                     return parameterType.asErasure();
                 }
 
@@ -193,9 +168,7 @@ public @interface Default {
                 protected static TypeLocator of(TypeDescription typeDescription) {
                     if (typeDescription.represents(void.class)) {
                         return ForParameterType.INSTANCE;
-                    } else if (typeDescription.represents(TargetType.class)) {
-                        return ForInstrumentedType.INSTANCE;
-                    } else if (typeDescription.isPrimitive() || typeDescription.isArray()) {
+                    } else if (!typeDescription.isInterface()) {
                         throw new IllegalStateException("Cannot assign proxy to " + typeDescription);
                     } else {
                         return new ForType(typeDescription);
@@ -203,7 +176,7 @@ public @interface Default {
                 }
 
                 @Override
-                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
+                public TypeDescription resolve(GenericTypeDescription parameterType) {
                     if (!typeDescription.isAssignableTo(parameterType.asErasure())) {
                         throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);
                     }

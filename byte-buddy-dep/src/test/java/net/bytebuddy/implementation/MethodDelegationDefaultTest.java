@@ -21,6 +21,8 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
 
     private static final String DELEGATION_TARGET_SERIALIZABLE = "net.bytebuddy.test.precompiled.DelegationDefaultTargetSerializable";
 
+    private static final String DELEGATION_TARGET_EXPLICIT = "net.bytebuddy.test.precompiled.DelegationDefaultTargetExplicit";
+
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
@@ -53,6 +55,18 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
     public void testDefaultInterfaceSerializableProxy() throws Exception {
         DynamicType.Loaded<?> loaded = implement(Object.class,
                 MethodDelegation.to(Class.forName(DELEGATION_TARGET_SERIALIZABLE)),
+                getClass().getClassLoader(),
+                isMethod().and(not(isDeclaredBy(Object.class))),
+                Class.forName(DEFAULT_INTERFACE));
+        Object instance = loaded.getLoaded().newInstance();
+        assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testDefaultInterfaceExplicitProxyType() throws Exception {
+        DynamicType.Loaded<?> loaded = implement(Object.class,
+                MethodDelegation.to(Class.forName(DELEGATION_TARGET_EXPLICIT)),
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(DEFAULT_INTERFACE));
