@@ -1,8 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -11,18 +9,13 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
 
     @Mock
     private TypeDescription targetType;
-
-    @Mock
-    private GenericTypeList interfaces;
-
-    @Mock
-    private TypeList rawInterfaces;
 
     public DefaultBinderTest() {
         super(Default.class);
@@ -33,8 +26,6 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(targetType);
-        when(instrumentedType.getInterfaces()).thenReturn(interfaces);
-        when(interfaces.asErasures()).thenReturn(rawInterfaces);
         when(targetType.asErasure()).thenReturn(targetType);
     }
 
@@ -45,9 +36,9 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
 
     @Test
     public void testAssignableBinding() throws Exception {
-        when(targetType.isInterface()).thenReturn(true);
+        doReturn(void.class).when(annotation).proxyType();
+        when(instrumentedType.isAssignableTo(targetType)).thenReturn(true);
         when(stackManipulation.isValid()).thenReturn(true);
-        when(rawInterfaces.contains(targetType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Default.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -55,19 +46,47 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
 
     @Test
     public void testIllegalBinding() throws Exception {
-        when(targetType.isInterface()).thenReturn(true);
+        doReturn(void.class).when(annotation).proxyType();
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Default.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testIllegalAnnotation() throws Exception {
+    public void testPrimitiveParameterType() throws Exception {
+        when(targetType.isPrimitive()).thenReturn(true);
+        Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArrayParameterType() throws Exception {
+        when(targetType.isArray()).thenReturn(true);
+        Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPrimitiveProxyType() throws Exception {
+        doReturn(int.class).when(annotation).proxyType();
+        Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArrayProxyType() throws Exception {
+        doReturn(Object[].class).when(annotation).proxyType();
+        Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUnassignableType() throws Exception {
+        doReturn(Void.class).when(annotation).proxyType();
         Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Default.Binder.class).apply();
+        ObjectPropertyAssertion.of(Default.Binder.TypeLocator.ForInstrumentedType.class).apply();
+        ObjectPropertyAssertion.of(Default.Binder.TypeLocator.ForParameterType.class).apply();
+        ObjectPropertyAssertion.of(Default.Binder.TypeLocator.ForType.class).apply();
     }
 }
