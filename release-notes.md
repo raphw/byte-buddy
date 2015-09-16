@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. September 2015: version 0.7 (release candidate 2)
+
+- Refactored runtime attachment of Java agents to support Java 9 and additional legacy VM (version 8-).
+- Refactored `MethodGraph` to only represent virtual methods.
+- Changed notion of visibility to not longer consider the declaring type as part of the visibility.
+- Increased flexibility of defining proxy types for `@Super` and `@Default` annotations.
+- Added directional `AmbigouityResolver`.
+- Fixed detection of methods that can be rebased to not include methods that did not previously exist.
+
+*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
+
 ### 11. August 2015: version 0.7 (release candidate 1)
 
 - Added support for generic types.
