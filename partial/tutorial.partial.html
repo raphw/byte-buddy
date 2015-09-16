@@ -477,7 +477,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
   .withNamingStrategy(new NamingStrategy() {
     @Override
     public String getName(UnnamedType unnamedType) {
-        return "i.love.ByteBuddy." + unnamedType.getSuperType().asRawType().getSimpleName();
+        return "i.love.ByteBuddy." + unnamedType.getSuperType().asErasure().getSimpleName();
     }
   })
   .subclass(Object.class)
@@ -751,7 +751,7 @@ class Bar {
 </p>
 
 <pre class="prettyprint">
-ByteBuddyAgent.installOnOpenJDK();
+ByteBuddyAgent.install();
 Foo foo = new Foo();
 new ByteBuddy()
   .redefine(Bar.class)
@@ -768,9 +768,10 @@ assertThat(foo.m(), is("bar"));
     Such an agent can be installed by either specifying it on the startup of the Java virtual machine by using the
     <code>-javaagent</code> parameter where the parameter's argument needs to be Byte Buddy's agent jar which can be
     <a href="https://bintray.com/raphw/maven/ByteBuddy/view">downloaded from Byte Buddy's Bintray page</a>. However,
-    when a Java application is run from a JDK version of the Java virtual machine, Byte Buddy can load a Java agent
-    even after application startup by <code>ByteBuddyAgent.installOnOpenJDK()</code>. Because class redefinition is
-    mostly used to implement tooling or testing, this can be a very convenient alternative.
+    when a Java application is run from a JDK-installation of the Java virtual machine, Byte Buddy can load a Java
+    agent even after application startup by <code>ByteBuddyAgent.installOnOpenJDK()</code>. Because class redefinition
+    is mostly used to implement tooling or testing, this can be a very convenient alternative. Since Java 9, a
+    runtime installation is also possible without a JDK-installation since Java 9.
 </p>
 
 <p>
@@ -1165,7 +1166,7 @@ new ByteBuddy()
     Byte Buddy's assignment behavior is customizable. Again, Byte Buddy only provides a sane default which mimics
     the assignment behavior of the Java compiler. Consequently, Byte Buddy allows an assignment of a type to any
     of its super types and it will also consider to box primitive values or to unbox their wrapper representations.
-    Note however, that Byte Buddy does currently not fully support generic types and will only consider raw types.
+    Note however, that Byte Buddy does currently not fully support generic types and will only consider type erasures.
     Therefore, it is possible that Byte Buddy causes <a href="http://en.wikipedia.org/wiki/Heap_pollution">heap
     pollution</a>. Instead of using the predefined assigner, you can always implement your own <code>Assigner</code>
     which is capable of type transformations that are not implicit in the Java programming language. We will look
@@ -1692,7 +1693,7 @@ class Bar extends Foo {
 </pre>
 
 <p>
-    Thanks to the above class definition, the Java runtime can simply process method invocations on raw types
+    Thanks to the above class definition, the Java runtime can simply process method invocations on type erasures
     and act as if generic types did not exist. Instead, it is the <code>Bar</code> class itself that shoulders the
     responsibility of invoking the correct method. In this sence, generic types are nothing but syntactic sugar.
     While this is convenient for the Java runtime, this can become problematic to us when we dynamically extend
@@ -2361,7 +2362,7 @@ enum SumMethod implements ByteCodeAppender {
   public Size apply(MethodVisitor methodVisitor,
                     Implementation.Context implementationContext,
                     MethodDescription instrumentedMethod) {
-    if (!instrumentedMethod.getReturnType().asRawType().represents(int.class)) {
+    if (!instrumentedMethod.getReturnType().asErasure().represents(int.class)) {
       throw new IllegalArgumentException(instrumentedMethod + " must return int");
     }
     StackManipulation.Size operandStackSize = new StackManipulation.Compound(
@@ -2604,7 +2605,7 @@ enum StringValueBinder
                                                          ParameterDescription target,
                                                          Implementation.Target implementationTarget,
                                                          Assigner assigner) {
-    if (!target.getTypeDescription().asRawType().represents(String.class)) {
+    if (!target.getTypeDescription().asErasure().represents(String.class)) {
       throw new IllegalStateException(target + " makes illegal use of @StringValue");
     }
     StackManipulation constant = new TextConstant(annotation.loadSilent().value());
