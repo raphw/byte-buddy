@@ -2,7 +2,7 @@ language: java
 
 sudo: false
 
-script: mvn test -Pintegration
+script: mvn -X test -Pintegration
 
 branches:
   only:
