@@ -34,6 +34,10 @@ import java.util.logging.Logger;
  * </code>
  * </p>
  * <p>
+ * <b>Note</b>: The runtime installation of a Java agent is not possible on all JVMs. See the documentation for
+ * {@link ByteBuddyAgent#install()} for details on JVMs that are supported out of the box.
+ * </p>
+ * <p>
  * <b>Important</b>: This class's name is known to the Byte Buddy main application and must not be altered.
  * </p>
  */
@@ -330,7 +334,7 @@ public class ByteBuddyAgent {
          * @param agentArguments  The unused agent arguments.
          * @param instrumentation The instrumentation instance.
          */
-        public static void agentmain(String agentArguments, Instrumentation instrumentation) {
+        public static void agentmain(@SuppressWarnings("unused") String agentArguments, Instrumentation instrumentation) {
             Installer.instrumentation = instrumentation;
         }
     }
@@ -538,7 +542,7 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An attachment provider that is dependant on the existance of a <i>tools.jar</i> file on the local
+         * An attachment provider that is dependant on the existence of a <i>tools.jar</i> file on the local
          * file system.
          */
         enum ForToolsJarVm implements AttachmentProvider {
