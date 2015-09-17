@@ -755,9 +755,6 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                if (methodDescription.isStatic() || !methodDescription.isInvokableOn(fieldType)) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + fieldType);
-                }
                 return new StackManipulation.Compound(
                         methodDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
@@ -1983,7 +1980,7 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (methodDescription.isVirtual() && !methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
+                if (!methodDescription.isStatic() && !methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
                 }
                 return methodDescription.isVirtual()
@@ -2086,9 +2083,6 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (!methodDescription.isDefaultMethod()) {
-                    throw new IllegalStateException("Not a default method: " + methodDescription);
-                }
                 StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asErasure(), methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
@@ -2313,9 +2307,7 @@ public class MethodCall implements Implementation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Context implementationContext,
-                          MethodDescription instrumentedMethod) {
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
             TypeList methodParameters = invokedMethod.getParameters().asTypeList().asErasures();
             if (methodParameters.size() != argumentLoaders.size()) {
