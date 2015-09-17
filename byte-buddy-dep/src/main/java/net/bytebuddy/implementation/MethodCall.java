@@ -1980,8 +1980,10 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (!methodDescription.isStatic() && !methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
+                if (methodDescription.isVirtual() && !methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getTypeDescription());
+                } else if (!methodDescription.isVisibleTo(implementationTarget.getTypeDescription())) {
+                    throw new IllegalStateException(implementationTarget.getTypeDescription() + " cannot see " + methodDescription);
                 }
                 return methodDescription.isVirtual()
                         ? MethodInvocation.invoke(methodDescription).virtual(implementationTarget.getTypeDescription())
@@ -2058,7 +2060,12 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                StackManipulation stackManipulation = implementationTarget.invokeSuper(methodDescription.asToken());
+                if (implementationTarget.getTypeDescription().getSuperType() == null) {
+                    throw new IllegalStateException("Cannot invoke super method for " + implementationTarget.getTypeDescription());
+                } else if (!methodDescription.isInvokableOn(implementationTarget.getTypeDescription().getSuperType().asErasure())) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as super method of " + implementationTarget.getTypeDescription());
+                }
+                StackManipulation stackManipulation = implementationTarget.invokeDominant(methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " as a super method");
                 }
@@ -2083,9 +2090,12 @@ public class MethodCall implements Implementation {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
+                if (!methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as default method of " + implementationTarget.getTypeDescription());
+                }
                 StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asErasure(), methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget);
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getTypeDescription());
                 }
                 return stackManipulation;
             }

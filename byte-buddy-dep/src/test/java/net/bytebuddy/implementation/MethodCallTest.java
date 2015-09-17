@@ -519,6 +519,21 @@ public class MethodCallTest extends AbstractImplementationTest {
                 .on(new PackagePrivateType()));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testMethodCallStaticTargetNonVisibleType() throws Exception {
+        implement(Object.class, MethodCall.invoke(PackagePrivateType.class.getDeclaredMethod("bar")));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodCallSuperCallNonInvokable() throws Exception {
+        implement(Object.class, MethodCall.invoke(Bar.class.getDeclaredMethod("bar")).onSuper());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodCallDefaultCallNonInvokable() throws Exception {
+        implement(Object.class, MethodCall.invoke(Bar.class.getDeclaredMethod("bar")).onDefault());
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodCall.class).apply();
@@ -680,6 +695,17 @@ public class MethodCallTest extends AbstractImplementationTest {
 
         public String foo() {
             return FOO;
+        }
+
+        public static String bar() {
+            return BAR;
+        }
+    }
+
+    public static class Bar {
+
+        public void bar() {
+            /* empty */
         }
     }
 }

@@ -419,7 +419,9 @@ public interface MethodDescription extends TypeVariableSource,
             return !isStatic()
                     && !isTypeInitializer()
                     && isVisibleTo(typeDescription)
-                    && getDeclaringType().asErasure().isAssignableFrom(typeDescription);
+                    && (isVirtual()
+                    ? getDeclaringType().asErasure().isAssignableFrom(typeDescription)
+                    : getDeclaringType().asErasure().equals(typeDescription));
         }
 
         @Override
