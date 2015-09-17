@@ -2062,7 +2062,7 @@ public class MethodCall implements Implementation {
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
                 if (implementationTarget.getTypeDescription().getSuperType() == null) {
                     throw new IllegalStateException("Cannot invoke super method for " + implementationTarget.getTypeDescription());
-                } else if (!methodDescription.isInvokableOn(implementationTarget.getTypeDescription().getSuperType().asErasure())) {
+                } else if (!methodDescription.isInvokableOn(implementationTarget.getOriginType())) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " as super method of " + implementationTarget.getTypeDescription());
                 }
                 StackManipulation stackManipulation = implementationTarget.invokeDominant(methodDescription.asToken());
