@@ -170,10 +170,10 @@ public interface AgentBuilder {
     AgentBuilder disableSelfInitialization();
 
     /**
-     * Enables retransformation when this agent is installed. Note that retransformation on does not currently allow
-     * for adding or removing fields or methods on the Hot Spot Virtual machine.
+     * Enables retransformation when this agent is installed. Note that retransformation does not currently allow
+     * for adding or removing fields or methods on the HotSpot Virtual machine.
      *
-     * @return A new instance of this agent builder which does not apply self initialization.
+     * @return A new instance of this agent builder which allows for retransformation.
      */
     AgentBuilder allowRetransformation();
 
