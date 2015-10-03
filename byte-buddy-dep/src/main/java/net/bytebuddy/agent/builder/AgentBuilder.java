@@ -1340,11 +1340,10 @@ public interface AgentBuilder {
                          */
                         Accessor() {
                             try {
-                                ClassLoader classLoader = ClassLoader.getSystemClassLoader();
                                 TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                                Class<?> nexus = new ClassInjector.UsingReflection(classLoader)
-                                        .inject(Collections.singletonMap(nexusType,
-                                                new StreamDrainer().drain(classLoader.getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
+                                Class<?> nexus = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
+                                        .inject(Collections.singletonMap(nexusType, new StreamDrainer()
+                                                .drain(getClass().getClassLoader().getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
                                         .get(nexusType);
                                 registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, Object.class);
                                 systemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
