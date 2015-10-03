@@ -41,6 +41,8 @@ public class ByteBuddyAgentAttachmentProviderTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForJigsawVm.class).apply();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForToolsJarVm.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForToolsJarVm.ClassLoaderCreationAction.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Compound.class).apply();
         final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Void.class, Object.class).iterator();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Accessor.Simple.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override

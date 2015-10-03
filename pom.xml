@@ -163,6 +163,7 @@
         <plugins>
             <!-- Define release properties. -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${version.plugin.release}</version>
                 <configuration>
@@ -246,8 +247,8 @@
                     <version>${version.plugin.install}</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.apache.maven.surefire</groupId>
-                    <artifactId>surefire</artifactId>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
                     <version>${version.plugin.surefire}</version>
                 </plugin>
                 <plugin>
@@ -455,9 +456,8 @@
                 <plugins>
                     <!-- Enable non-fast-running unit tests by setting the integration profile. -->
                     <plugin>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire</artifactId>
-                        <version>${version.plugin.surefire}</version>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <systemPropertyVariables>
                                 <net.bytebuddy.property.integration>true</net.bytebuddy.property.integration>
