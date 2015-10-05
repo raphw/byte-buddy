@@ -878,7 +878,7 @@ public interface MethodDelegationBinder {
         public MethodBinding process(Implementation.Target implementationTarget, MethodDescription source, MethodList<?> targetCandidates) {
             List<MethodBinding> possibleDelegations = bind(implementationTarget, source, targetCandidates);
             if (possibleDelegations.isEmpty()) {
-                throw new IllegalArgumentException("No delegator method can be bound to " + source);
+                throw new IllegalArgumentException("None of " + targetCandidates + " allows for delegation from " + source);
             }
             return resolve(source, possibleDelegations);
         }
@@ -909,8 +909,7 @@ public interface MethodDelegationBinder {
          * @param targets A list of possible binding targets.
          * @return The most specific method binding that was located from the given list of candidate targets.
          */
-        private MethodBinding resolve(MethodDescription source,
-                                      List<MethodBinding> targets) {
+        private MethodBinding resolve(MethodDescription source, List<MethodBinding> targets) {
             switch (targets.size()) {
                 case 1:
                     return targets.get(ONLY);
