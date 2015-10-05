@@ -582,7 +582,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             if (typeVariables.isEmpty()) {
                 TypeVariableSource enclosingSource = getEnclosingSource();
                 return enclosingSource == null
-                        ? null
+                        ? UNDEFINED
                         : enclosingSource.findVariable(symbol);
             } else {
                 return typeVariables.getOnly();
