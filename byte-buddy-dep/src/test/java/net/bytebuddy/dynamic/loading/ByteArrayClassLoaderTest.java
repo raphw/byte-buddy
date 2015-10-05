@@ -165,6 +165,42 @@ public class ByteArrayClassLoaderTest {
         }
     }
 
+    @Test
+    public void testResourceLookupWithPrefixBeforeLoading() throws Exception {
+        assertThat(classLoader.getResource("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE), expectedResourceLookup
+                ? notNullValue(URL.class)
+                : nullValue(URL.class));
+    }
+
+    @Test
+    public void testResourceLookupWithPrefixAfterLoading() throws Exception {
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+        assertThat(classLoader.getResource("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE), expectedResourceLookup
+                ? notNullValue(URL.class)
+                : nullValue(URL.class));
+    }
+
+    @Test
+    public void testResourcesLookupWithPrefixBeforeLoading() throws Exception {
+        Enumeration<URL> enumeration = classLoader.getResources("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE);
+        assertThat(enumeration.hasMoreElements(), is(expectedResourceLookup));
+        if (expectedResourceLookup) {
+            assertThat(enumeration.nextElement(), notNullValue(URL.class));
+            assertThat(enumeration.hasMoreElements(), is(false));
+        }
+    }
+
+    @Test
+    public void testResourcesLookupWithPrefixAfterLoading() throws Exception {
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+        Enumeration<URL> enumeration = classLoader.getResources("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE);
+        assertThat(enumeration.hasMoreElements(), is(expectedResourceLookup));
+        if (expectedResourceLookup) {
+            assertThat(enumeration.nextElement(), notNullValue(URL.class));
+            assertThat(enumeration.hasMoreElements(), is(false));
+        }
+    }
+
     @Test(expected = ClassNotFoundException.class)
     public void testNotFoundException() throws Exception {
         // Note: Will throw a class format error instead targeting not found exception targeting loader attempts.

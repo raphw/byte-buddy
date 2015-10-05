@@ -170,10 +170,10 @@ public interface AgentBuilder {
     AgentBuilder disableSelfInitialization();
 
     /**
-     * Enables retransformation when this agent is installed. Note that retransformation on does not currently allow
-     * for adding or removing fields or methods on the Hot Spot Virtual machine.
+     * Enables retransformation when this agent is installed. Note that retransformation does not currently allow
+     * for adding or removing fields or methods on the HotSpot Virtual machine.
      *
-     * @return A new instance of this agent builder which does not apply self initialization.
+     * @return A new instance of this agent builder which allows for retransformation.
      */
     AgentBuilder allowRetransformation();
 
@@ -1340,11 +1340,10 @@ public interface AgentBuilder {
                          */
                         Accessor() {
                             try {
-                                ClassLoader classLoader = ClassLoader.getSystemClassLoader();
                                 TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                                Class<?> nexus = new ClassInjector.UsingReflection(classLoader)
-                                        .inject(Collections.singletonMap(nexusType,
-                                                new StreamDrainer().drain(classLoader.getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
+                                Class<?> nexus = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
+                                        .inject(Collections.singletonMap(nexusType, new StreamDrainer()
+                                                .drain(getClass().getClassLoader().getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
                                         .get(nexusType);
                                 registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, Object.class);
                                 systemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()

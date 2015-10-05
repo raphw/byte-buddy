@@ -235,6 +235,8 @@ public class ByteArrayClassLoader extends ClassLoader {
             protected URL url(String resourceName, Map<String, byte[]> typeDefinitions, AccessControlContext accessControlContext) {
                 if (!resourceName.endsWith(CLASS_FILE_SUFFIX)) {
                     return NO_URL;
+                } else if (resourceName.startsWith("/")) {
+                    resourceName = resourceName.substring(1);
                 }
                 String typeName = resourceName.replace('/', '.').substring(FROM_BEGINNING, resourceName.length() - CLASS_FILE_SUFFIX.length());
                 byte[] binaryRepresentation = typeDefinitions.get(typeName);
