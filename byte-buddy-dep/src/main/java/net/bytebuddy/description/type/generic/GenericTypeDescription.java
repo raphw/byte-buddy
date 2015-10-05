@@ -394,12 +394,12 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         T onGenericArray(GenericTypeDescription genericArray);
 
         /**
-         * Visits a wildcard type ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD}).
+         * Visits a wildcard ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD}).
          *
-         * @param wildcardType The generic array type.
+         * @param wildcard The wildcard.
          * @return The visitor's return value.
          */
-        T onWildcardType(GenericTypeDescription wildcardType);
+        T onWildcard(GenericTypeDescription wildcard);
 
         /**
          * Visits a parameterized type ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}).
@@ -443,8 +443,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
-                return wildcardType;
+            public GenericTypeDescription onWildcard(GenericTypeDescription wildcard) {
+                return wildcard;
             }
 
             @Override
@@ -484,7 +484,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public TypeDescription onWildcardType(GenericTypeDescription wildcardType) {
+            public TypeDescription onWildcard(GenericTypeDescription wildcard) {
                 throw new IllegalArgumentException("Cannot erase a wilcard type");
             }
 
@@ -533,11 +533,11 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
+            public GenericTypeDescription onWildcard(GenericTypeDescription wildcard) {
                 // Wildcards which are used within parameterized types are taken care of by the calling method.
-                GenericTypeList lowerBounds = wildcardType.getLowerBounds();
+                GenericTypeList lowerBounds = wildcard.getLowerBounds();
                 return lowerBounds.isEmpty()
-                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcardType.getUpperBounds().getOnly().accept(this))
+                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
                         : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
             }
 
@@ -591,10 +591,10 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 }
 
                 @Override
-                public Boolean onWildcardType(GenericTypeDescription wildcardType) {
-                    GenericTypeList lowerBounds = wildcardType.getLowerBounds();
+                public Boolean onWildcard(GenericTypeDescription wildcard) {
+                    GenericTypeList lowerBounds = wildcard.getLowerBounds();
                     return lowerBounds.isEmpty()
-                            ? wildcardType.getUpperBounds().getOnly().accept(this)
+                            ? wildcard.getUpperBounds().getOnly().accept(this)
                             : lowerBounds.getOnly().accept(this);
                 }
 
@@ -651,8 +651,8 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public SignatureVisitor onWildcardType(GenericTypeDescription wildcardType) {
-                throw new IllegalStateException("Unexpected wildcard: " + wildcardType);
+            public SignatureVisitor onWildcard(GenericTypeDescription wildcard) {
+                throw new IllegalStateException("Unexpected wildcard: " + wildcard);
             }
 
             @Override
@@ -732,9 +732,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 }
 
                 @Override
-                public SignatureVisitor onWildcardType(GenericTypeDescription wildcardType) {
-                    GenericTypeList upperBounds = wildcardType.getUpperBounds();
-                    GenericTypeList lowerBounds = wildcardType.getLowerBounds();
+                public SignatureVisitor onWildcard(GenericTypeDescription wildcard) {
+                    GenericTypeList upperBounds = wildcard.getUpperBounds();
+                    GenericTypeList lowerBounds = wildcard.getLowerBounds();
                     if (lowerBounds.isEmpty() && upperBounds.getOnly().represents(Object.class)) {
                         signatureVisitor.visitTypeArgument();
                     } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
@@ -802,10 +802,10 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
 
             @Override
-            public GenericTypeDescription onWildcardType(GenericTypeDescription wildcardType) {
-                GenericTypeList lowerBounds = wildcardType.getLowerBounds();
+            public GenericTypeDescription onWildcard(GenericTypeDescription wildcard) {
+                GenericTypeList lowerBounds = wildcard.getLowerBounds();
                 return lowerBounds.isEmpty()
-                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcardType.getUpperBounds().getOnly().accept(this))
+                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
                         : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
             }
 
@@ -1117,6 +1117,334 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                     return "GenericTypeDescription.Visitor.Substitutor.ForTypeVariableBinding{" +
                             "bindings=" + bindings +
                             '}';
+                }
+            }
+        }
+
+        /**
+         * A visitor that determines the direct assignability of a type to another generic type. This visitor only checks
+         * for strict assignability and does not perform any form of boxing or primitive type widening that are allowed
+         * in the Java language.
+         */
+        enum Assigner implements Visitor<Assigner.Dispatcher> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Dispatcher onGenericArray(GenericTypeDescription genericArray) {
+                return new Dispatcher.ForGenericArray(genericArray);
+            }
+
+            @Override
+            public Dispatcher onWildcard(GenericTypeDescription wildcard) {
+                return new Dispatcher.ForWildcard(wildcard);
+            }
+
+            @Override
+            public Dispatcher onParameterizedType(GenericTypeDescription parameterizedType) {
+                return new Dispatcher.ForParameterizedType(parameterizedType);
+            }
+
+            @Override
+            public Dispatcher onTypeVariable(GenericTypeDescription typeVariable) {
+                return new Dispatcher.ForTypeVariable(typeVariable);
+            }
+
+            @Override
+            public Dispatcher onNonGenericType(GenericTypeDescription typeDescription) {
+                return new Dispatcher.ForNonGenericType(typeDescription.asErasure());
+            }
+
+            @Override
+            public String toString() {
+                return "GenericTypeDescription.Visitor.Assigner." + name();
+            }
+
+            /**
+             * A dispatcher that allows if a type is assignable
+             */
+            interface Dispatcher {
+
+                /**
+                 * Checks if the represented type is a super type of the type that is supplied as an argument.
+                 *
+                 * @param typeDescription The type to check for being assignable to the represented type.
+                 * @return {@code true} if the represented type is assignable to the supplied type.
+                 */
+                boolean isAssignableFrom(GenericTypeDescription typeDescription);
+
+                /**
+                 * An abstract base implementation of a dispatcher that forwards the decision to a visitor implementation.
+                 */
+                abstract class AbstractBase implements Dispatcher, Visitor<Boolean> {
+
+                    @Override
+                    public boolean isAssignableFrom(GenericTypeDescription typeDescription) {
+                        return typeDescription.accept(this);
+                    }
+                }
+
+                class ForNonGenericType extends AbstractBase {
+
+                    private final TypeDescription typeDescription;
+
+                    protected ForNonGenericType(TypeDescription typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    public Boolean onGenericArray(GenericTypeDescription genericArray) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onWildcard(GenericTypeDescription wildcard) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(GenericTypeDescription parameterizedType) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(GenericTypeDescription typeVariable) {
+                        return false;
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(GenericTypeDescription typeDescription) {
+                        return this.typeDescription.isAssignableFrom(typeDescription.asErasure());
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeDescription.equals(((ForNonGenericType) other).typeDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "GenericTypeDescription.Visitor.Assigner.Dispatcher.ForNonGenericType{" +
+                                "typeVariable=" + typeDescription +
+                                '}';
+                    }
+                }
+
+                class ForTypeVariable extends AbstractBase {
+
+                    private final GenericTypeDescription typeVariable;
+
+                    protected ForTypeVariable(GenericTypeDescription typeVariable) {
+                        this.typeVariable = typeVariable;
+                    }
+
+                    @Override
+                    public Boolean onGenericArray(GenericTypeDescription genericArray) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onWildcard(GenericTypeDescription wildcard) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(GenericTypeDescription parameterizedType) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(GenericTypeDescription typeVariable) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(GenericTypeDescription typeDescription) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeVariable.equals(((ForTypeVariable) other).typeVariable);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeVariable.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "GenericTypeDescription.Visitor.Assigner.Dispatcher.ForTypeVariable{" +
+                                "typeVariable=" + typeVariable +
+                                '}';
+                    }
+                }
+
+                class ForWildcard extends AbstractBase {
+
+                    private final GenericTypeDescription wildcard;
+
+                    protected ForWildcard(GenericTypeDescription wildcard) {
+                        this.wildcard = wildcard;
+                    }
+
+                    @Override
+                    public Boolean onGenericArray(GenericTypeDescription genericArray) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onWildcard(GenericTypeDescription wildcard) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(GenericTypeDescription parameterizedType) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(GenericTypeDescription typeVariable) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(GenericTypeDescription typeDescription) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && wildcard.equals(((ForWildcard) other).wildcard);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return wildcard.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "GenericTypeDescription.Visitor.Assigner.Dispatcher.ForWildcard{" +
+                                "wildcard=" + wildcard +
+                                '}';
+                    }
+                }
+
+                class ForParameterizedType extends AbstractBase {
+
+                    private final GenericTypeDescription parameterizedType;
+
+                    protected ForParameterizedType(GenericTypeDescription parameterizedType) {
+                        this.parameterizedType = parameterizedType;
+                    }
+
+                    @Override
+                    public Boolean onGenericArray(GenericTypeDescription genericArray) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onWildcard(GenericTypeDescription wildcard) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(GenericTypeDescription parameterizedType) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(GenericTypeDescription typeVariable) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(GenericTypeDescription typeDescription) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && parameterizedType.equals(((ForParameterizedType) other).parameterizedType);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return parameterizedType.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "GenericTypeDescription.Visitor.Assigner.Dispatcher.ForParameterizedType{" +
+                                "parameterizedType=" + parameterizedType +
+                                '}';
+                    }
+                }
+
+                class ForGenericArray extends AbstractBase {
+
+                    private final GenericTypeDescription genericArray;
+
+                    protected ForGenericArray(GenericTypeDescription genericArray) {
+                        this.genericArray = genericArray;
+                    }
+
+                    @Override
+                    public Boolean onGenericArray(GenericTypeDescription genericArray) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onWildcard(GenericTypeDescription wildcard) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(GenericTypeDescription parameterizedType) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(GenericTypeDescription typeVariable) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(GenericTypeDescription typeDescription) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && genericArray.equals(((ForGenericArray) other).genericArray);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return genericArray.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "GenericTypeDescription.Visitor.Assigner.Dispatcher.ForGenericArray{" +
+                                "genericArray=" + genericArray +
+                                '}';
+                    }
                 }
             }
         }
@@ -1438,7 +1766,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
         @Override
         public <T> T accept(Visitor<T> visitor) {
-            return visitor.onWildcardType(this);
+            return visitor.onWildcard(this);
         }
 
         @Override

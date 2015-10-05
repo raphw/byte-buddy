@@ -26,7 +26,7 @@ public class GenericTypeDescriptionVisitorNoOpTest {
 
     @Test
     public void testVisitWildcard() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onWildcardType(typeDescription), is((GenericTypeDescription) typeDescription));
+        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onWildcard(typeDescription), is((GenericTypeDescription) typeDescription));
     }
 
     @Test

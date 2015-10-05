@@ -36,7 +36,7 @@ public class GenericTypeDescriptionVisitorTypeErasingTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testWildcard() throws Exception {
-        GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onWildcardType(genericTypeDescription);
+        GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onWildcard(genericTypeDescription);
     }
 
     @Test
