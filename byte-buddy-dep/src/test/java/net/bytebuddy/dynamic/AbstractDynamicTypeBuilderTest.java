@@ -16,6 +16,7 @@ import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
@@ -38,6 +39,7 @@ import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Collections;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -336,14 +338,14 @@ public abstract class AbstractDynamicTypeBuilderTest {
         }
     }
 
-    public static class SuperCall<T> extends CallTraceable {
+    public static class CallSuperMethod<T> extends CallTraceable {
 
         public T foo(T value) {
             register(FOO);
             return value;
         }
 
-        public static class Inner extends SuperCall<String> {
+        public static class Inner extends CallSuperMethod<String> {
             /* empty */
         }
     }
@@ -382,6 +384,13 @@ public abstract class AbstractDynamicTypeBuilderTest {
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE);
+        }
+    }
+
+    public static class InterfaceOverrideInterceptor {
+
+        public static String intercept(@SuperCall Callable<String> zuper) throws Exception {
+            return zuper.call() + BAR;
         }
     }
 }

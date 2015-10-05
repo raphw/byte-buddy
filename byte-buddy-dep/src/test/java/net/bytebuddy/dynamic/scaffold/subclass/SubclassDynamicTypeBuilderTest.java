@@ -12,8 +12,8 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
-import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
@@ -269,6 +269,27 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    public void testDefaultInterfaceSubInterface() throws Exception {
+        Class<?> interfaceType = Class.forName(DEFAULT_METHOD_INTERFACE);
+        Class<?> dynamicInterfaceType = new ByteBuddy()
+                .subclass(interfaceType)
+                .modifiers(Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT)
+                .method(named(FOO)).intercept(MethodDelegation.to(InterfaceOverrideInterceptor.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Class<?> dynamicClassType = new ByteBuddy()
+                .subclass(dynamicInterfaceType)
+                .make()
+                .load(dynamicInterfaceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicClassType.getMethod(FOO).invoke(dynamicClassType.newInstance()), is((Object) (FOO + BAR)));
+        assertThat(dynamicInterfaceType.getDeclaredMethods().length, is(2));
+        assertThat(dynamicClassType.getDeclaredMethods().length, is(0));
+    }
+
+    @Test
     public void testDoesNotOverrideMethodWithPackagePrivateReturnType() throws Exception {
         Class<?> type = create(PackagePrivateReturnType.class)
                 .name("net.bytebuddy.test.generated." + FOO)
@@ -373,8 +394,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @SuppressWarnings("unchecked")
     public void testBridgeMethodCreationForExistingBridgeMethod() throws Exception {
-        Class<?> dynamicType = create(SuperCall.Inner.class)
-                .method(named(FOO)).intercept(SuperMethodCall.INSTANCE)
+        Class<?> dynamicType = create(CallSuperMethod.Inner.class)
+                .method(named(FOO)).intercept(net.bytebuddy.implementation.SuperMethodCall.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
@@ -385,9 +406,9 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertEquals(Object.class, dynamicType.getDeclaredMethod(FOO, Object.class).getReturnType());
         assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).getGenericReturnType(), is((Type) Object.class));
         assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).isBridge(), is(true));
-        SuperCall<String> superCall = (SuperCall<String>) dynamicType.newInstance();
-        assertThat(superCall.foo(FOO), is(FOO));
-        superCall.assertOnlyCall(FOO);
+        CallSuperMethod<String> callSuperMethod = (CallSuperMethod<String>) dynamicType.newInstance();
+        assertThat(callSuperMethod.foo(FOO), is(FOO));
+        callSuperMethod.assertOnlyCall(FOO);
     }
 
     @Test

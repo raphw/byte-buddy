@@ -844,9 +844,29 @@ public interface Implementation {
             }
 
             /**
+             * A base implementation of a method that accesses a property of an instrumented type.
+             */
+            protected abstract static class AbstractPropertyAccessorMethod extends MethodDescription.InDefinedShape.AbstractBase {
+
+                @Override
+                public int getModifiers() {
+                    return Opcodes.ACC_SYNTHETIC | getBaseModifiers() | (getDeclaringType().isClassType()
+                            ? Opcodes.ACC_FINAL
+                            : Opcodes.ACC_PUBLIC);
+                }
+
+                /**
+                 * Returns the base modifiers, i.e. the modifiers that define the accessed property's features.
+                 *
+                 * @return Returns the base modifiers of the represented methods.
+                 */
+                protected abstract int getBaseModifiers();
+            }
+
+            /**
              * A description of an accessor method to access another method from outside the instrumented type.
              */
-            protected static class AccessorMethod extends MethodDescription.InDefinedShape.AbstractBase {
+            protected static class AccessorMethod extends AbstractPropertyAccessorMethod {
 
                 /**
                  * The instrumented type.
@@ -912,10 +932,10 @@ public interface Implementation {
                 }
 
                 @Override
-                public int getModifiers() {
+                public int getBaseModifiers() {
                     return methodDescription.isStatic()
-                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
-                            : ACCESSOR_METHOD_MODIFIER;
+                            ? Opcodes.ACC_STATIC
+                            : EMPTY_MASK;
                 }
 
                 @Override
@@ -927,7 +947,7 @@ public interface Implementation {
             /**
              * A description of a field getter method.
              */
-            protected static class FieldGetter extends MethodDescription.InDefinedShape.AbstractBase {
+            protected static class FieldGetter extends AbstractPropertyAccessorMethod {
 
                 /**
                  * The instrumented type.
@@ -993,10 +1013,10 @@ public interface Implementation {
                 }
 
                 @Override
-                public int getModifiers() {
+                protected int getBaseModifiers() {
                     return fieldDescription.isStatic()
-                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
-                            : ACCESSOR_METHOD_MODIFIER;
+                            ? Opcodes.ACC_STATIC
+                            : EMPTY_MASK;
                 }
 
                 @Override
@@ -1008,7 +1028,7 @@ public interface Implementation {
             /**
              * A description of a field setter method.
              */
-            protected static class FieldSetter extends MethodDescription.InDefinedShape.AbstractBase {
+            protected static class FieldSetter extends AbstractPropertyAccessorMethod {
 
                 /**
                  * The instrumented type.
@@ -1074,10 +1094,10 @@ public interface Implementation {
                 }
 
                 @Override
-                public int getModifiers() {
+                protected int getBaseModifiers() {
                     return fieldDescription.isStatic()
-                            ? ACCESSOR_METHOD_MODIFIER | Opcodes.ACC_STATIC
-                            : ACCESSOR_METHOD_MODIFIER;
+                            ? Opcodes.ACC_STATIC
+                            : EMPTY_MASK;
                 }
 
                 @Override

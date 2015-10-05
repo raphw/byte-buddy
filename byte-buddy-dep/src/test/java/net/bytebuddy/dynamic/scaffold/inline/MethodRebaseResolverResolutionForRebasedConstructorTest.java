@@ -54,6 +54,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
+        when(typeDescription.isClassType()).thenReturn(true);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
@@ -77,7 +78,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is((GenericTypeDescription) typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
-        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(resolution.getResolvedMethod(),
                 Arrays.asList(parameterType, placeholderType))));

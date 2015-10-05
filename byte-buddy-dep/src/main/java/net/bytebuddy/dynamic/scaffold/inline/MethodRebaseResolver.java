@@ -34,11 +34,6 @@ import static net.bytebuddy.utility.ByteBuddyCommons.join;
 public interface MethodRebaseResolver {
 
     /**
-     * The modifier that is used for rebased methods.
-     */
-    int REBASED_METHOD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
-
-    /**
      * Checks if a method is eligible for rebasing and resolves this possibly rebased method.
      *
      * @param methodDescription A description of the method to resolve.
@@ -411,9 +406,10 @@ public interface MethodRebaseResolver {
 
                 @Override
                 public int getModifiers() {
-                    return REBASED_METHOD_MODIFIER
-                            | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : 0)
-                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : 0);
+                    return Opcodes.ACC_SYNTHETIC
+                            | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : EMPTY_MASK)
+                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : EMPTY_MASK)
+                            | (methodDescription.getDeclaringType().isClassType() ? Opcodes.ACC_PRIVATE : Opcodes.ACC_PUBLIC);
                 }
 
                 @Override
@@ -547,7 +543,7 @@ public interface MethodRebaseResolver {
 
                 @Override
                 public int getModifiers() {
-                    return REBASED_METHOD_MODIFIER;
+                    return Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE;
                 }
 
                 @Override

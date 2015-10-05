@@ -13,7 +13,6 @@ import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
-import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
@@ -210,8 +209,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @Test
     @SuppressWarnings("unchecked")
     public void testBridgeMethodCreationForExistingBridgeMethod() throws Exception {
-        Class<?> dynamicType = create(SuperCall.Inner.class)
-                .method(named(FOO)).intercept(SuperMethodCall.INSTANCE)
+        Class<?> dynamicType = create(CallSuperMethod.Inner.class)
+                .method(named(FOO)).intercept(net.bytebuddy.implementation.SuperMethodCall.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
@@ -222,9 +221,9 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertEquals(Object.class, dynamicType.getDeclaredMethod(FOO, Object.class).getReturnType());
         assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).getGenericReturnType(), is((Type) Object.class));
         assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).isBridge(), is(true));
-        SuperCall<String> superCall = (SuperCall<String>) dynamicType.newInstance();
-        assertThat(superCall.foo(FOO), is(FOO));
-        superCall.assertOnlyCall(FOO);
+        CallSuperMethod<String> callSuperMethod = (CallSuperMethod<String>) dynamicType.newInstance();
+        assertThat(callSuperMethod.foo(FOO), is(FOO));
+        callSuperMethod.assertOnlyCall(FOO);
     }
 
     @Test

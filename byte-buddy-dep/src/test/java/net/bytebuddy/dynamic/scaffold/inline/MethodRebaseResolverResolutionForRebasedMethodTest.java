@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
 
@@ -57,6 +58,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(typeDescription.getDescriptor()).thenReturn(BAR);
+        when(typeDescription.isClassType()).thenReturn(true);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
@@ -73,7 +75,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is((GenericTypeDescription) typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));
-        assertThat(resolution.getResolvedMethod().getModifiers(), is(MethodRebaseResolver.REBASED_METHOD_MODIFIER));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(resolution.getResolvedMethod(),
                 Collections.singletonList(parameterType))));

@@ -218,7 +218,6 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 classFileVersion).make();
     }
 
-
     /**
      * Applies this builder's constructor strategy to the given instrumented type.
      *
@@ -226,6 +225,9 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @return The instrumented type with the constructor strategy applied onto.
      */
     private InstrumentedType applyConstructorStrategy(InstrumentedType instrumentedType) {
+        if (!instrumentedType.isClassType()) {
+            return instrumentedType;
+        }
         for (MethodDescription.Token methodToken : constructorStrategy.extractConstructors(instrumentedType)) {
             instrumentedType = instrumentedType.withMethod(methodToken);
         }

@@ -10,8 +10,10 @@ import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.visibility.PackageAnnotation;
 import net.bytebuddy.test.visibility.Sample;
@@ -38,6 +40,8 @@ import static org.mockito.Mockito.when;
 public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForInliningTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
+    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
     @Override
     protected DynamicType.Builder<?> createPlain() {
@@ -121,6 +125,26 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
                 .rebase(Foo.class)
                 .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList()).intercept(SuperMethodCall.INSTANCE)
                 .make();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testDefaultInterfaceSubInterface() throws Exception {
+        Class<?> interfaceType = Class.forName(DEFAULT_METHOD_INTERFACE);
+        Class<?> dynamicInterfaceType = new ByteBuddy()
+                .rebase(interfaceType)
+                .method(named(FOO)).intercept(MethodDelegation.to(InterfaceOverrideInterceptor.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        Class<?> dynamicClassType = new ByteBuddy()
+                .subclass(dynamicInterfaceType)
+                .make()
+                .load(dynamicInterfaceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicClassType.getMethod(FOO).invoke(dynamicClassType.newInstance()), is((Object) (FOO + BAR)));
+        assertThat(dynamicInterfaceType.getDeclaredMethods().length, is(3));
+        assertThat(dynamicClassType.getDeclaredMethods().length, is(0));
     }
 
     @Test

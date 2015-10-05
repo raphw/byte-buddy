@@ -48,6 +48,7 @@ public class ModifierReviewableTest {
                 {Opcodes.ACC_TRANSIENT, "isTransient"},
                 {Opcodes.ACC_VARARGS, "isVarArgs"},
                 {Opcodes.ACC_VOLATILE, "isVolatile"},
+                {0, "isClassType"},
                 {0, "isPackagePrivate"}
         });
     }

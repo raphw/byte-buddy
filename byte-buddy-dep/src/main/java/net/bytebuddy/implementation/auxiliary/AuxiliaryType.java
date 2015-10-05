@@ -10,7 +10,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.utility.RandomString;
-import org.objectweb.asm.Opcodes;
 
 /**
  * An auxiliary type that provides services to the instrumentation of another type. Implementations should provide
@@ -43,11 +42,6 @@ public interface AuxiliaryType {
      * by the Java compiler that creates accessor methods for example to implement inner classes.
      */
     interface MethodAccessorFactory {
-
-        /**
-         * The modifier for accessor methods. Accessor methods might additionally be {@code static}.
-         */
-        int ACCESSOR_METHOD_MODIFIER = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL;
 
         /**
          * Registers an accessor method for a

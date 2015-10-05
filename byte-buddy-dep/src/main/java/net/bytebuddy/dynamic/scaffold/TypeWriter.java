@@ -1836,7 +1836,7 @@ public interface TypeWriter<T> {
                                              boolean isNonStaticNonVirtual,
                                              boolean isGeneric) {
                         if (!isPublic || isNonStaticNonVirtual) {
-                            throw new IllegalStateException("Cannot define non-public or non-virtual method '" + name + "' for annotation type");
+                            throw new IllegalStateException("Cannot define non-public or non-virtual method '" + name + "' for interface type");
                         } else if (classic && isStatic) {
                             throw new IllegalStateException("Cannot define static method '" + name + "' for a pre-Java 8 interface type");
                         } else if (!isAbstract && (classic || isDefaultValueIncompatible)) {

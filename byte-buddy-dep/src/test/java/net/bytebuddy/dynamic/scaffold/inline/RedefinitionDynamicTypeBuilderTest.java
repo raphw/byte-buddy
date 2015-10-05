@@ -8,8 +8,12 @@ import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -30,6 +34,8 @@ import static org.mockito.Mockito.when;
 public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForInliningTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
+    private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
     @Override
     protected DynamicType.Builder<?> create(Class<?> type) {
@@ -89,6 +95,26 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
         assertThat(type.getDeclaredMethod(BAR).invoke(null), nullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testDefaultInterfaceSubInterface() throws Exception {
+        Class<?> interfaceType = Class.forName(DEFAULT_METHOD_INTERFACE);
+        Class<?> dynamicInterfaceType = new ByteBuddy()
+                .redefine(interfaceType)
+                .method(named(FOO)).intercept(new Implementation.Simple(new TextConstant(BAR), MethodReturn.REFERENCE))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        Class<?> dynamicClassType = new ByteBuddy()
+                .subclass(dynamicInterfaceType)
+                .make()
+                .load(dynamicInterfaceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicClassType.getMethod(FOO).invoke(dynamicClassType.newInstance()), is((Object) BAR));
+        assertThat(dynamicInterfaceType.getDeclaredMethods().length, is(1));
+        assertThat(dynamicClassType.getDeclaredMethods().length, is(0));
     }
 
     @Test
