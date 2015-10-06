@@ -12,7 +12,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.when;
 
-public class MethodDelegationOtherrTest {
+public class MethodDelegationOtherTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -23,6 +23,11 @@ public class MethodDelegationOtherrTest {
                 .method(isToString())
                 .intercept(MethodDelegation.to(new Qux()))
                 .make();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDelegationWithIllegalType() throws Exception {
+        MethodDelegation.to(new Object(), String.class);
     }
 
     @Test

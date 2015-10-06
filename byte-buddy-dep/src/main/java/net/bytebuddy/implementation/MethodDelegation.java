@@ -281,13 +281,7 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate, MethodGraph.Compiler methodGraphCompiler) {
-        return new MethodDelegation(new ImplementationDelegate.ForStaticField(nonNull(delegate)),
-                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
-                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
-                Assigner.DEFAULT,
-                new MethodContainer.ForVirtualMethods(methodGraphCompiler, new TypeDescription.ForLoadedType(delegate.getClass())));
+        return to(delegate, delegate.getClass(), methodGraphCompiler);
     }
 
     /**
@@ -330,13 +324,103 @@ public class MethodDelegation implements Implementation {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+        return to(delegate, delegate.getClass(), fieldName, methodGraphCompiler);
+    }
+
+    /**
+     * Creates an implementation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+     * selection by explicitly selecting methods with calling the
+     * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     *
+     * @param delegate A delegate instance which will be injected by a
+     *                 {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+     *                 then delegated to this instance.
+     * @return A method delegation implementation to the given instance methods.
+     */
+    public static MethodDelegation to(Object delegate, Class<?> type) {
+        return to(nonNull(delegate), type, MethodGraph.Compiler.DEFAULT);
+    }
+
+    /**
+     * Creates an implementation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+     * selection by explicitly selecting methods with calling the
+     * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     *
+     * @param delegate            A delegate instance which will be injected by a
+     *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+     *                            then delegated to this instance.
+     * @param type                The type as which the delegate is treated for resolving its methods.
+     * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+     * @return A method delegation implementation to the given instance methods.
+     */
+    public static MethodDelegation to(Object delegate, Class<?> type, MethodGraph.Compiler methodGraphCompiler) {
+        return to(delegate, type, String.format("%s$%d", ImplementationDelegate.ForStaticField.PREFIX, delegate.hashCode()), methodGraphCompiler);
+    }
+
+    /**
+     * Creates an implementation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+     * selection by explicitly selecting methods with calling the
+     * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     *
+     * @param delegate  A delegate instance which will be injected by a
+     *                  {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+     *                  then delegated to this instance.
+     * @param type      The type as which the delegate is treated for resolving its methods.
+     * @param fieldName The name of the field for storing the delegate instance.
+     * @return A method delegation implementation to the given {@code static} methods.
+     */
+    public static MethodDelegation to(Object delegate, Class<?> type, String fieldName) {
+        return to(delegate, type, fieldName, MethodGraph.Compiler.DEFAULT);
+    }
+
+    /**
+     * Creates an implementation where only instance methods of the given object are considered as binding targets.
+     * This method will never bind to constructors but will consider methods that are defined in super types. Note
+     * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+     * selection by explicitly selecting methods with calling the
+     * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+     * method on the returned method delegation as for example:
+     * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+     * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+     * for delegation.
+     *
+     * @param delegate            A delegate instance which will be injected by a
+     *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+     *                            then delegated to this instance.
+     * @param type                The type as which the delegate is treated for resolving its methods.
+     * @param fieldName           The name of the field for storing the delegate instance.
+     * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+     * @return A method delegation implementation to the given {@code static} methods.
+     */
+    public static MethodDelegation to(Object delegate, Class<?> type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+        if (!type.isInstance(delegate)) {
+            throw new IllegalArgumentException(delegate + " is not an instance of " + type);
+        }
         return new MethodDelegation(new ImplementationDelegate.ForStaticField(nonNull(delegate), isValidIdentifier(fieldName)),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT,
-                new MethodContainer.ForVirtualMethods(methodGraphCompiler, new TypeDescription.ForLoadedType(delegate.getClass())));
+                new MethodContainer.ForVirtualMethods(methodGraphCompiler, new TypeDescription.ForLoadedType(type)));
     }
 
     /**
@@ -729,7 +813,7 @@ public class MethodDelegation implements Implementation {
             /**
              * The name prefix for the {@code static} field that is containing the delegation target.
              */
-            private static final String PREFIX = "methodDelegate";
+            protected static final String PREFIX = "delegate";
 
             /**
              * The name of the field that is containing the delegation target.
@@ -740,16 +824,6 @@ public class MethodDelegation implements Implementation {
              * The delegation target.
              */
             private final Object delegate;
-
-            /**
-             * Creates a new implementation for delegating to an instance that is stored in a {@code static} field.
-             * The field name will be created randomly.
-             *
-             * @param delegate The actual delegation target.
-             */
-            public ForStaticField(Object delegate) {
-                this(delegate, String.format("%s$%d", PREFIX, delegate.hashCode()));
-            }
 
             /**
              * Creates a new implementation for delegating to an instance that is stored in a {@code static} field.
