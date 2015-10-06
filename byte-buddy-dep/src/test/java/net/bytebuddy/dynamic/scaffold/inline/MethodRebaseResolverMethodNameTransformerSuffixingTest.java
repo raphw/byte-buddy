@@ -8,14 +8,13 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
 
 public class MethodRebaseResolverMethodNameTransformerSuffixingTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -26,9 +25,8 @@ public class MethodRebaseResolverMethodNameTransformerSuffixingTest {
     @Test
     public void testTransformation() throws Exception {
         when(methodDescription.getInternalName()).thenReturn(FOO);
-        String transformed = new MethodRebaseResolver.MethodNameTransformer.Suffixing().transform(methodDescription);
-        assertThat(transformed, not(FOO));
-        assertThat(transformed, startsWith(FOO));
+        String transformed = new MethodRebaseResolver.MethodNameTransformer.Suffixing(BAR).transform(methodDescription);
+        assertThat(transformed, is(FOO + "$" + BAR));
     }
 
     @Test

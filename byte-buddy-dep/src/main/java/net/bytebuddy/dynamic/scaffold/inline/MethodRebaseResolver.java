@@ -14,6 +14,7 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.auxiliary.TrivialType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
@@ -99,7 +100,7 @@ public interface MethodRebaseResolver {
             /**
              * The default suffix to add to an original method name.
              */
-            private static final String DEFAULT_SUFFIX = "original";
+            private static final String DEFAULT_SUFFIX = "original$";
 
             /**
              * The suffix to append to a method name.
@@ -107,10 +108,12 @@ public interface MethodRebaseResolver {
             private final String suffix;
 
             /**
-             * Creates a new suffixing method name transformer which adds a default suffix.
+             * Creates a new suffixing method name transformer which adds a default suffix with a random name component.
+             *
+             * @return A method name transformer that adds a randomized suffix to the original method name.
              */
-            public Suffixing() {
-                this(DEFAULT_SUFFIX);
+            public static MethodNameTransformer withRandomSuffix() {
+                return new Suffixing(DEFAULT_SUFFIX + RandomString.make());
             }
 
             /**
