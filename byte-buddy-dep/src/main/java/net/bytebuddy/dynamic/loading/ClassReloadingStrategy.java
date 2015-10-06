@@ -415,7 +415,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
 
             @Override
             public ClassInjector make(Instrumentation instrumentation) {
-                return new ClassInjector.UsingInstrumentation(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
+                return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
             }
 
             @Override

@@ -761,7 +761,7 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription levelType, ClassFileLocator classFileLocator) {
-        return rebase(levelType, classFileLocator, new MethodRebaseResolver.MethodNameTransformer.Suffixing());
+        return rebase(levelType, classFileLocator, MethodRebaseResolver.MethodNameTransformer.Suffixing.withRandomSuffix());
     }
 
     /**

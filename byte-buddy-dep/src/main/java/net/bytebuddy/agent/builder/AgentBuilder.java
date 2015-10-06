@@ -1473,7 +1473,7 @@ public interface AgentBuilder {
 
                 @Override
                 public ClassInjector make(ProtectionDomain protectionDomain) {
-                    return new ClassInjector.UsingInstrumentation(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
+                    return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
                 }
 
                 @Override
@@ -1586,7 +1586,7 @@ public interface AgentBuilder {
              */
             public ExecutingTransformer() {
                 methodNameTransformer = NO_NATIVE_PREFIX.equals(nativeMethodPrefix)
-                        ? new MethodRebaseResolver.MethodNameTransformer.Suffixing()
+                        ? MethodRebaseResolver.MethodNameTransformer.Suffixing.withRandomSuffix()
                         : new MethodRebaseResolver.MethodNameTransformer.Prefixing(nativeMethodPrefix);
                 initializationStrategy = disableSelfInitialization
                         ? InitializationStrategy.NoOp.INSTANCE
@@ -1613,7 +1613,7 @@ public interface AgentBuilder {
                             if (loadedTypeInitializers.size() > 1) {
                                 ClassInjector classInjector = classLoader == null
                                         ? bootstrapInjectionStrategy.make(protectionDomain)
-                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext, PackageDefinitionStrategy.NoOp.INSTANCE);
+                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext, PackageDefinitionStrategy.NoOp.INSTANCE, true);
                                 for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(dynamicType.getRawAuxiliaryTypes()).entrySet()) {
                                     initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
                                 }

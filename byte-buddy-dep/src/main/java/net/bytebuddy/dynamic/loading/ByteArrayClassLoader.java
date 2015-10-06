@@ -143,7 +143,8 @@ public class ByteArrayClassLoader extends ClassLoader {
                                                       AccessControlContext accessControlContext,
                                                       PersistenceHandler persistenceHandler,
                                                       PackageDefinitionStrategy packageDefinitionStrategy,
-                                                      boolean childFirst) {
+                                                      boolean childFirst,
+                                                      boolean forbidExisting) {
         Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
         classLoader = ByteArrayClassLoader.of(classLoader,
                 types,
@@ -154,7 +155,11 @@ public class ByteArrayClassLoader extends ClassLoader {
                 childFirst);
         for (TypeDescription typeDescription : types.keySet()) {
             try {
-                loadedTypes.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
+                Class<?> type = classLoader.loadClass(typeDescription.getName());
+                if (forbidExisting && type.getClassLoader() != classLoader) {
+                    throw new IllegalStateException("Class already loaded: " + type);
+                }
+                loadedTypes.put(typeDescription, type);
             } catch (ClassNotFoundException exception) {
                 throw new IllegalStateException("Cannot load class " + typeDescription, exception);
             }
@@ -606,7 +611,8 @@ public class ByteArrayClassLoader extends ClassLoader {
 
             /**
              * Creates a new prepending enumeration.
-             * @param url The first element of the enumeration.
+             *
+             * @param url         The first element of the enumeration.
              * @param enumeration An enumeration that is used for pulling subsequent urls.
              */
             protected PrependingEnumeration(URL url, Enumeration<URL> enumeration) {

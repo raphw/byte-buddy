@@ -33,6 +33,11 @@ public interface ClassInjector {
     ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     /**
+     * Determines the default behavior for type injections when a type is already loaded.
+     */
+    boolean DEFAULT_FORBID_EXISTING = false;
+
+    /**
      * Injects the given types into the represented class loader.
      *
      * @param types The types to load via injection.
@@ -108,6 +113,11 @@ public interface ClassInjector {
         private final PackageDefinitionStrategy packageDefinitionStrategy;
 
         /**
+         * Determines if an exception should be thrown when attempting to load a type that already exists.
+         */
+        private final boolean forbidExisting;
+
+        /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain}
          * and {@link PackageDefinitionStrategy}.
          *
@@ -117,7 +127,8 @@ public interface ClassInjector {
             this(classLoader,
                     DEFAULT_PROTECTION_DOMAIN,
                     AccessController.getContext(),
-                    PackageDefinitionStrategy.Trivial.INSTANCE);
+                    PackageDefinitionStrategy.Trivial.INSTANCE,
+                    DEFAULT_FORBID_EXISTING);
         }
 
         /**
@@ -127,11 +138,13 @@ public interface ClassInjector {
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param accessControlContext      The access control context of this class loader's instantiation.
          * @param protectionDomain          The protection domain to apply during class definition.
+         * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
          */
         public UsingReflection(ClassLoader classLoader,
                                ProtectionDomain protectionDomain,
                                AccessControlContext accessControlContext,
-                               PackageDefinitionStrategy packageDefinitionStrategy) {
+                               PackageDefinitionStrategy packageDefinitionStrategy,
+                               boolean forbidExisting) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader");
             }
@@ -139,6 +152,7 @@ public interface ClassInjector {
             this.protectionDomain = protectionDomain;
             this.packageDefinitionStrategy = packageDefinitionStrategy;
             this.accessControlContext = accessControlContext;
+            this.forbidExisting = forbidExisting;
         }
 
         @Override
@@ -178,6 +192,8 @@ public interface ClassInjector {
                                 FROM_BEGINNING,
                                 binaryRepresentation.length,
                                 protectionDomain);
+                    } else if (forbidExisting) {
+                        throw new IllegalStateException("Cannot inject already loaded type: " + type);
                     }
                     loadedTypes.put(entry.getKey(), type);
                 }
@@ -192,6 +208,7 @@ public interface ClassInjector {
             UsingReflection that = (UsingReflection) other;
             return accessControlContext.equals(that.accessControlContext)
                     && classLoader.equals(that.classLoader)
+                    && forbidExisting == that.forbidExisting
                     && packageDefinitionStrategy.equals(that.packageDefinitionStrategy)
                     && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null);
         }
@@ -200,6 +217,7 @@ public interface ClassInjector {
         public int hashCode() {
             int result = classLoader.hashCode();
             result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
+            result = 31 * result + (forbidExisting ? 1 : 0);
             result = 31 * result + packageDefinitionStrategy.hashCode();
             result = 31 * result + accessControlContext.hashCode();
             return result;
@@ -212,6 +230,7 @@ public interface ClassInjector {
                     ", protectionDomain=" + protectionDomain +
                     ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                     ", accessControlContext=" + accessControlContext +
+                    ", forbidExisting=" + forbidExisting +
                     '}';
         }
 
@@ -533,11 +552,23 @@ public interface ClassInjector {
          * @param target          A representation of the target path to which classes are to be appended.
          * @param instrumentation The instrumentation to use for appending to the class path or the boot path.
          */
-        public UsingInstrumentation(File folder, Target target, Instrumentation instrumentation) {
+        public static ClassInjector of(File folder, Target target, Instrumentation instrumentation) {
+            return new UsingInstrumentation(folder, target, instrumentation, new RandomString());
+        }
+
+        /**
+         * Creates an instrumentation-based class injector.
+         *
+         * @param folder          The folder to be used for storing jar files.
+         * @param target          A representation of the target path to which classes are to be appended.
+         * @param instrumentation The instrumentation to use for appending to the class path or the boot path.
+         * @param randomString    The random string generator to use.
+         */
+        protected UsingInstrumentation(File folder, Target target, Instrumentation instrumentation, RandomString randomString) {
             this.folder = folder;
             this.target = target;
             this.instrumentation = instrumentation;
-            randomString = new RandomString();
+            this.randomString = randomString;
         }
 
         @Override
@@ -577,7 +608,8 @@ public interface ClassInjector {
             UsingInstrumentation that = (UsingInstrumentation) other;
             return folder.equals(that.folder)
                     && instrumentation.equals(that.instrumentation)
-                    && target == that.target;
+                    && target == that.target
+                    && randomString.equals(that.randomString);
         }
 
         @Override
@@ -585,6 +617,7 @@ public interface ClassInjector {
             int result = instrumentation.hashCode();
             result = 31 * result + target.hashCode();
             result = 31 * result + folder.hashCode();
+            result = 31 * result + randomString.hashCode();
             return result;
         }
 

@@ -91,6 +91,11 @@ public interface ClassLoadingStrategy {
         private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
         /**
+         * The default behavior when attempting to load a type that was already loaded.
+         */
+        private static final boolean DEFAULT_FORBID_EXISTING = true;
+
+        /**
          * The dispatcher to be used when loading a class.
          */
         private final Configurable dispatcher;
@@ -125,6 +130,11 @@ public interface ClassLoadingStrategy {
         }
 
         @Override
+        public Configurable allowExistingTypes() {
+            return dispatcher.allowExistingTypes();
+        }
+
+        @Override
         public String toString() {
             return "ClassLoadingStrategy.Default." + name();
         }
@@ -151,10 +161,15 @@ public interface ClassLoadingStrategy {
             private final PackageDefinitionStrategy packageDefinitionStrategy;
 
             /**
+             * Determines if an exception should be thrown when attempting to load a type that already exists.
+             */
+            private final boolean forbidExisting;
+
+            /**
              * Creates a new injection dispatcher.
              */
             protected InjectionDispatcher() {
-                this(DEFAULT_PROTECTION_DOMAIN, AccessController.getContext(), PackageDefinitionStrategy.NoOp.INSTANCE);
+                this(DEFAULT_PROTECTION_DOMAIN, AccessController.getContext(), PackageDefinitionStrategy.NoOp.INSTANCE, DEFAULT_FORBID_EXISTING);
             }
 
             /**
@@ -163,33 +178,45 @@ public interface ClassLoadingStrategy {
              * @param protectionDomain          The protection domain to apply.
              * @param accessControlContext      The access control context to use for loading classes.
              * @param packageDefinitionStrategy The package definer to be used for querying information on package information.
+             * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
              */
             private InjectionDispatcher(ProtectionDomain protectionDomain,
                                         AccessControlContext accessControlContext,
-                                        PackageDefinitionStrategy packageDefinitionStrategy) {
+                                        PackageDefinitionStrategy packageDefinitionStrategy,
+                                        boolean forbidExisting) {
                 this.protectionDomain = protectionDomain;
                 this.accessControlContext = accessControlContext;
                 this.packageDefinitionStrategy = packageDefinitionStrategy;
+                this.forbidExisting = forbidExisting;
             }
 
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext, packageDefinitionStrategy).inject(types);
+                return new ClassInjector.UsingReflection(classLoader,
+                        protectionDomain,
+                        accessControlContext,
+                        packageDefinitionStrategy,
+                        forbidExisting).inject(types);
             }
 
             @Override
             public Configurable withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new InjectionDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy);
+                return new InjectionDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, forbidExisting);
             }
 
             @Override
             public Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy) {
-                return new InjectionDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy);
+                return new InjectionDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, forbidExisting);
             }
 
             @Override
             public Configurable withAccessControlContext(AccessControlContext accessControlContext) {
-                return new InjectionDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy);
+                return new InjectionDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, forbidExisting);
+            }
+
+            @Override
+            public Configurable allowExistingTypes() {
+                return new InjectionDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, false);
             }
 
             @Override
@@ -199,6 +226,7 @@ public interface ClassLoadingStrategy {
                 InjectionDispatcher that = (InjectionDispatcher) other;
                 return !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
                         && accessControlContext.equals(that.accessControlContext)
+                        && forbidExisting == that.forbidExisting
                         && packageDefinitionStrategy.equals(that.packageDefinitionStrategy);
             }
 
@@ -207,6 +235,7 @@ public interface ClassLoadingStrategy {
                 int result = protectionDomain != null ? protectionDomain.hashCode() : 0;
                 result = 31 * result + packageDefinitionStrategy.hashCode();
                 result = 31 * result + accessControlContext.hashCode();
+                result = 31 * result + (forbidExisting ? 1 : 0);
                 return result;
             }
 
@@ -214,8 +243,9 @@ public interface ClassLoadingStrategy {
             public String toString() {
                 return "ClassLoadingStrategy.Default.InjectionDispatcher{" +
                         "protectionDomain=" + protectionDomain +
-                        "accessControlContext=" + accessControlContext +
-                        "packageDefinitionStrategy=" + packageDefinitionStrategy +
+                        ", accessControlContext=" + accessControlContext +
+                        ", packageDefinitionStrategy=" + packageDefinitionStrategy +
+                        ", forbidExisting=" + forbidExisting +
                         '}';
             }
         }
@@ -262,13 +292,23 @@ public interface ClassLoadingStrategy {
             private final boolean childFirst;
 
             /**
+             * Determines if an exception should be thrown when attempting to load a type that already exists.
+             */
+            private final boolean forbidExisting;
+
+            /**
              * Creates a new wrapping dispatcher with a default protection domain and a default access control context.
              *
              * @param persistenceHandler The persistence handler to apply.
              * @param childFirst         {@code true} if the created class loader should apply child-first semantics.
              */
             protected WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler persistenceHandler, boolean childFirst) {
-                this(DEFAULT_PROTECTION_DOMAIN, AccessController.getContext(), PackageDefinitionStrategy.Trivial.INSTANCE, persistenceHandler, childFirst);
+                this(DEFAULT_PROTECTION_DOMAIN,
+                        AccessController.getContext(),
+                        PackageDefinitionStrategy.Trivial.INSTANCE,
+                        persistenceHandler,
+                        childFirst,
+                        DEFAULT_FORBID_EXISTING);
             }
 
             /**
@@ -279,17 +319,20 @@ public interface ClassLoadingStrategy {
              * @param packageDefinitionStrategy The package definer to be used for querying information on package information.
              * @param persistenceHandler        The persistence handler to apply.
              * @param childFirst                {@code true} if the created class loader should apply child-first semantics.
+             * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
              */
             private WrappingDispatcher(ProtectionDomain protectionDomain,
                                        AccessControlContext accessControlContext,
                                        PackageDefinitionStrategy packageDefinitionStrategy,
                                        ByteArrayClassLoader.PersistenceHandler persistenceHandler,
-                                       boolean childFirst) {
+                                       boolean childFirst,
+                                       boolean forbidExisting) {
                 this.protectionDomain = protectionDomain;
                 this.accessControlContext = accessControlContext;
                 this.packageDefinitionStrategy = packageDefinitionStrategy;
                 this.persistenceHandler = persistenceHandler;
                 this.childFirst = childFirst;
+                this.forbidExisting = forbidExisting;
             }
 
             @Override
@@ -300,22 +343,28 @@ public interface ClassLoadingStrategy {
                         accessControlContext,
                         persistenceHandler,
                         packageDefinitionStrategy,
-                        childFirst);
+                        childFirst,
+                        forbidExisting);
             }
 
             @Override
             public Configurable withProtectionDomain(ProtectionDomain protectionDomain) {
-                return new WrappingDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, persistenceHandler, childFirst);
+                return new WrappingDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
             }
 
             @Override
             public Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy) {
-                return new WrappingDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, persistenceHandler, childFirst);
+                return new WrappingDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
             }
 
             @Override
             public Configurable withAccessControlContext(AccessControlContext accessControlContext) {
-                return new WrappingDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, persistenceHandler, childFirst);
+                return new WrappingDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
+            }
+
+            @Override
+            public Configurable allowExistingTypes() {
+                return new InjectionDispatcher(protectionDomain, accessControlContext, packageDefinitionStrategy, false);
             }
 
             @Override
@@ -324,6 +373,7 @@ public interface ClassLoadingStrategy {
                 if (other == null || getClass() != other.getClass()) return false;
                 WrappingDispatcher that = (WrappingDispatcher) other;
                 return childFirst == that.childFirst
+                        && forbidExisting == that.forbidExisting
                         && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
                         && persistenceHandler == that.persistenceHandler
                         && accessControlContext.equals(that.accessControlContext)
@@ -337,6 +387,7 @@ public interface ClassLoadingStrategy {
                 result = 31 * result + persistenceHandler.hashCode();
                 result = 31 * result + packageDefinitionStrategy.hashCode();
                 result = 31 * result + (childFirst ? 1 : 0);
+                result = 31 * result + (forbidExisting ? 1 : 0);
                 return result;
             }
 
@@ -348,6 +399,7 @@ public interface ClassLoadingStrategy {
                         ", accessControlContext=" + accessControlContext +
                         ", childFirst=" + childFirst +
                         ", persistenceHandler=" + persistenceHandler +
+                        ", forbidExisting=" + forbidExisting +
                         '}';
             }
         }
@@ -381,6 +433,14 @@ public interface ClassLoadingStrategy {
          * @return A version of this class loading strategy that applies the supplied access control context.
          */
         Configurable withAccessControlContext(AccessControlContext accessControlContext);
+
+        /**
+         * Determines if this class loading strategy should not throw an exception when attempting to load a class that
+         * was already loaded. In this case, the already loaded class is used instead of the generated class.
+         *
+         * @return A version of this class loading strategy that does not throw an exception when a class is already loaded.
+         */
+        Configurable allowExistingTypes();
     }
 
     /**
@@ -413,7 +473,7 @@ public interface ClassLoadingStrategy {
         @Override
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             ClassInjector classInjector = classLoader == null
-                    ? new ClassInjector.UsingInstrumentation(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
+                    ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
                     : new ClassInjector.UsingReflection(classLoader);
             return classInjector.inject(types);
         }

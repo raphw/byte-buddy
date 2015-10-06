@@ -20,7 +20,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ClassInjectorUsingImplementationTest {
+public class ClassInjectorUsingInstrumentationTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -40,7 +40,7 @@ public class ClassInjectorUsingImplementationTest {
     @Test
     @AgentAttachmentRule.Enforce
     public void testBootstrapInjection() throws Exception {
-        ClassInjector classInjector = new ClassInjector.UsingInstrumentation(folder,
+        ClassInjector classInjector = ClassInjector.UsingInstrumentation.of(folder,
                 ClassInjector.UsingInstrumentation.Target.BOOTSTRAP,
                 ByteBuddyAgent.install());
         String name = FOO + RandomString.make();
@@ -54,7 +54,7 @@ public class ClassInjectorUsingImplementationTest {
     @Test
     @AgentAttachmentRule.Enforce
     public void testSystemInjection() throws Exception {
-        ClassInjector classInjector = new ClassInjector.UsingInstrumentation(folder,
+        ClassInjector classInjector = ClassInjector.UsingInstrumentation.of(folder,
                 ClassInjector.UsingInstrumentation.Target.SYSTEM,
                 ByteBuddyAgent.install());
         String name = BAR + RandomString.make();

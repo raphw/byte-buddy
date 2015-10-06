@@ -14,9 +14,11 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
@@ -200,6 +202,48 @@ public class ClassLoadingStrategyDefaultTest {
         verify(packageDefinitionStrategy).define(any(ClassLoader.class), eq(Foo.class.getPackage().getName()), eq(Foo.class.getName()));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testWrapperThrowsExceptionOnExistingClass() throws Exception {
+        ClassLoadingStrategy.Default.WRAPPER.load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWrapperPersistentThrowsExceptionOnExistingClass() throws Exception {
+        ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInjectionThrowsExceptionOnExistingClass() throws Exception {
+        ClassLoadingStrategy.Default.INJECTION.load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
+    }
+
+    @Test
+    public void testWrapperDoesNotThrowExceptionOnExistingClassWhenSupressed() throws Exception {
+        Map<TypeDescription, Class<?>> types = ClassLoadingStrategy.Default.WRAPPER
+                .allowExistingTypes()
+                .load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
+        assertThat(types.size(), is(1));
+        assertEquals(String.class, types.get(TypeDescription.STRING));
+    }
+
+    @Test
+    public void testWrapperPersistentDoesNotThrowExceptionOnExistingClassWhenSupressed() throws Exception {
+        Map<TypeDescription, Class<?>> types = ClassLoadingStrategy.Default.WRAPPER_PERSISTENT
+                .allowExistingTypes()
+                .load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
+        assertThat(types.size(), is(1));
+        assertEquals(String.class, types.get(TypeDescription.STRING));
+    }
+
+    @Test
+    public void testInjectionDoesNotThrowExceptionOnExistingClassWhenSupressed() throws Exception {
+        Map<TypeDescription, Class<?>> types = ClassLoadingStrategy.Default.INJECTION
+                .allowExistingTypes()
+                .load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
+        assertThat(types.size(), is(1));
+        assertEquals(String.class, types.get(TypeDescription.STRING));
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.class).apply();
@@ -214,7 +258,7 @@ public class ClassLoadingStrategyDefaultTest {
             public AccessControlContext create() {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
-        }).apply();
+        }).skipSynthetic().apply();
     }
 
     private static class Foo {
