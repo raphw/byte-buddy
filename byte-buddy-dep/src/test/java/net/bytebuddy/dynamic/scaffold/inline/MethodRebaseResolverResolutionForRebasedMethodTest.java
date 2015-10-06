@@ -14,19 +14,41 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
+@RunWith(Parameterized.class)
 public class MethodRebaseResolverResolutionForRebasedMethodTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] {
+                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE},
+                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC}
+        });
+    }
+
+    private final boolean classType;
+
+    private final int rebasedMethodModifiers;
+
+    public MethodRebaseResolverResolutionForRebasedMethodTest(boolean classType, int rebasedMethodModifiers) {
+        this.classType = classType;
+        this.rebasedMethodModifiers = rebasedMethodModifiers;
+    }
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -58,7 +80,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(typeDescription.getDescriptor()).thenReturn(BAR);
-        when(typeDescription.isClassType()).thenReturn(true);
+        when(typeDescription.isClassType()).thenReturn(classType);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
@@ -75,7 +97,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is((GenericTypeDescription) typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));
-        assertThat(resolution.getResolvedMethod().getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE));
+        assertThat(resolution.getResolvedMethod().getModifiers(), is(rebasedMethodModifiers));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(resolution.getResolvedMethod(),
                 Collections.singletonList(parameterType))));

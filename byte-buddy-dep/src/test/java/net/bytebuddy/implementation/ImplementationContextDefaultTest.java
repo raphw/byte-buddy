@@ -20,6 +20,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -28,6 +30,8 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -36,9 +40,27 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.Mockito.*;
 
+@RunWith(Parameterized.class)
 public class ImplementationContextDefaultTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] {
+                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL},
+                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC}
+        });
+    }
+
+    private final boolean classType;
+
+    private final int accessorMethodModifiers;
+
+    public ImplementationContextDefaultTest(boolean classType, int accessorMethodModifiers) {
+        this.classType = classType;
+        this.accessorMethodModifiers = accessorMethodModifiers;
+    }
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -114,7 +136,7 @@ public class ImplementationContextDefaultTest {
         secondSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
-        when(instrumentedType.isClassType()).thenReturn(true);
+        when(instrumentedType.isClassType()).thenReturn(classType);
         when(methodPool.target(any(MethodDescription.class))).thenReturn(record);
         when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(firstDynamicType);
@@ -412,7 +434,7 @@ public class ImplementationContextDefaultTest {
                 Collections.singletonList(firstSpecialParameterType))));
         assertThat(firstMethodDescription.getReturnType(), is((GenericTypeDescription) firstSpecialReturnType));
         assertThat(firstMethodDescription.getInternalName(), startsWith(FOO));
-        assertThat(firstMethodDescription.getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL));
+        assertThat(firstMethodDescription.getModifiers(), is(accessorMethodModifiers));
         assertThat(firstMethodDescription.getExceptionTypes(), is(firstSpecialExceptionTypes));
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         when(secondSpecialMethod.isStatic()).thenReturn(true);
@@ -421,15 +443,15 @@ public class ImplementationContextDefaultTest {
                 Collections.singletonList(secondSpecialParameterType))));
         assertThat(secondMethodDescription.getReturnType(), is((GenericTypeDescription) secondSpecialReturnType));
         assertThat(secondMethodDescription.getInternalName(), startsWith(BAR));
-        assertThat(secondMethodDescription.getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC));
+        assertThat(secondMethodDescription.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
         assertThat(secondMethodDescription.getExceptionTypes(), is(secondSpecialExceptionTypes));
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL), Matchers.startsWith(FOO),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + BAR + ")" + FOO), isNull(String.class), aryEq(new String[]{BAZ}));
     }
 
@@ -443,7 +465,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL), Matchers.startsWith(FOO),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
@@ -465,7 +487,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + BAR + ")" + FOO), isNull(String.class), aryEq(new String[]{BAZ}));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
@@ -485,7 +507,7 @@ public class ImplementationContextDefaultTest {
         assertThat(firstFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(firstFieldGetter.getReturnType(), is((GenericTypeDescription) firstFieldType));
         assertThat(firstFieldGetter.getInternalName(), startsWith(FOO));
-        assertThat(firstFieldGetter.getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL));
+        assertThat(firstFieldGetter.getModifiers(), is(accessorMethodModifiers));
         assertThat(firstFieldGetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         when(secondField.isStatic()).thenReturn(true);
@@ -493,15 +515,15 @@ public class ImplementationContextDefaultTest {
         assertThat(secondFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(secondFieldGetter.getReturnType(), is((GenericTypeDescription) secondFieldType));
         assertThat(secondFieldGetter.getInternalName(), startsWith(BAR));
-        assertThat(secondFieldGetter.getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC));
+        assertThat(secondFieldGetter.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
         assertThat(secondFieldGetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         assertThat(implementationContext.registerGetterFor(secondField), is(secondFieldGetter));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL), Matchers.startsWith(FOO),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("()" + QUX), isNull(String.class), isNull(String[].class));
     }
 
@@ -515,7 +537,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerGetterFor(firstField), is(firstMethodDescription));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL), Matchers.startsWith(FOO),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
@@ -536,7 +558,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerGetterFor(secondField), is(secondMethodDescription));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("()" + QUX), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, BAR, FOO);
@@ -556,7 +578,7 @@ public class ImplementationContextDefaultTest {
                 Collections.singletonList(firstFieldType))));
         assertThat(firstFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
-        assertThat(firstFieldSetter.getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL));
+        assertThat(firstFieldSetter.getModifiers(), is(accessorMethodModifiers));
         assertThat(firstFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
@@ -565,15 +587,15 @@ public class ImplementationContextDefaultTest {
                 Collections.singletonList(secondFieldType))));
         assertThat(secondFieldSetter.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
-        assertThat(secondFieldSetter.getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC));
+        assertThat(secondFieldSetter.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
         assertThat(secondFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         assertThat(implementationContext.registerSetterFor(secondField), is(secondFieldSetter));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL), Matchers.startsWith(FOO),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
     }
 
@@ -587,7 +609,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerSetterFor(firstField), is(firstMethodDescription));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL), Matchers.startsWith(FOO),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
@@ -609,7 +631,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerSetterFor(secondField), is(secondMethodDescription));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitMethod(eq(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
