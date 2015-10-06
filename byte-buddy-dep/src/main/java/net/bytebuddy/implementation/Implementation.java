@@ -549,9 +549,9 @@ public interface Implementation {
             private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
 
             /**
-             * An instance for supporting the creation of random values.
+             * A random suffix to append to the names of accessor methods.
              */
-            private final RandomString randomString;
+            private final String suffix;
 
             /**
              * Signals if this type extension delegate is still capable of registering field cache entries. Such entries
@@ -582,7 +582,7 @@ public interface Implementation {
                 accessorMethods = new LinkedList<TypeWriter.MethodPool.Record>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
-                randomString = new RandomString();
+                suffix = RandomString.make();
                 canRegisterFieldCache = true;
             }
 
@@ -590,7 +590,7 @@ public interface Implementation {
             public MethodDescription.InDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
                 MethodDescription.InDefinedShape accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
                 if (accessorMethod == null) {
-                    accessorMethod = new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), randomString.nextString());
+                    accessorMethod = new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), suffix);
                     registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
                     accessorMethods.add(new AccessorMethodDelegation(accessorMethod, specialMethodInvocation));
                 }
@@ -601,7 +601,7 @@ public interface Implementation {
             public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription) {
                 MethodDescription.InDefinedShape accessorMethod = registeredGetters.get(fieldDescription);
                 if (accessorMethod == null) {
-                    accessorMethod = new FieldGetter(instrumentedType, fieldDescription, randomString.nextString());
+                    accessorMethod = new FieldGetter(instrumentedType, fieldDescription, suffix);
                     registeredGetters.put(fieldDescription, accessorMethod);
                     accessorMethods.add(new FieldGetterDelegation(accessorMethod, fieldDescription));
                 }
@@ -612,7 +612,7 @@ public interface Implementation {
             public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription) {
                 MethodDescription.InDefinedShape accessorMethod = registeredSetters.get(fieldDescription);
                 if (accessorMethod == null) {
-                    accessorMethod = new FieldSetter(instrumentedType, fieldDescription, randomString.nextString());
+                    accessorMethod = new FieldSetter(instrumentedType, fieldDescription, suffix);
                     registeredSetters.put(fieldDescription, accessorMethod);
                     accessorMethods.add(new FieldSetterDelegation(accessorMethod, fieldDescription));
                 }
@@ -642,7 +642,7 @@ public interface Implementation {
                     return fieldCache;
                 }
                 validateFieldCacheAccessibility();
-                fieldCache = new CacheValueField(instrumentedType, fieldType, randomString.nextString());
+                fieldCache = new CacheValueField(instrumentedType, fieldType, suffix);
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
@@ -702,7 +702,7 @@ public interface Implementation {
                         ", accessorMethods=" + accessorMethods +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
-                        ", randomString=" + randomString +
+                        ", suffix=" + suffix +
                         ", canRegisterFieldCache=" + canRegisterFieldCache +
                         '}';
             }
