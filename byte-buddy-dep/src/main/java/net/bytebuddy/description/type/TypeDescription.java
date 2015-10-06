@@ -475,9 +475,15 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public boolean isVisibleTo(TypeDescription typeDescription) {
-            return isPrimitive() || (isArray()
-                    ? getComponentType().isVisibleTo(typeDescription)
-                    : (isPublic() || isProtected() || isSamePackage(typeDescription)));
+            if (isPrimitive()) {
+                return true;
+            } else if (isArray()) {
+                return getComponentType().isVisibleTo(typeDescription);
+            } else if (isAnonymousClass()) {
+                return equals(typeDescription) || getOwnerType().equals(typeDescription);
+            } else {
+                return isPublic() || isProtected() || isSamePackage(typeDescription)/* || equals(typeDescription) */;
+            }
         }
 
         @Override
