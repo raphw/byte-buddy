@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. October 2015: version 0.7 (release candidate 3)
+
+- Read `Nexus` instances of the Byte Buddy agents from the enclosing class loader rather than from the system class loader. This allows for their usage from OSGi environments and for user with other custom class loaders.
+- Changed modifiers for accessor methods and rebased methods to be public when rebasing or accessing methods of a Java 8 interface. For interfaces, all modifiers must be public, even for such synthetic members.
+- Support absolute path names for accessing class file ressources of the `ByteArrayClassLoader`.
+- Added random suffix to the names of rebased methods to avoid naming conflicts.
+
+*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
+
 ### 16. September 2015: version 0.7 (release candidate 2)
 
 - Refactored runtime attachment of Java agents to support Java 9 and additional legacy VM (version 8-).
