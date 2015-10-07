@@ -252,7 +252,7 @@ public interface AgentBuilder {
          * @param typeDescription     A description of the type to be instrumented.
          * @param classLoader         The class loader of the instrumented type. Might be {@code null} if this class
          *                            loader represents the bootstrap class loader.
-         * @param classBeingRedefined The class being redefined which is only not {@code null} if a retransofmration
+         * @param classBeingRedefined The class being redefined which is only not {@code null} if a retransformation
          *                            is applied.
          * @param protectionDomain    The protection domain of the type being transformed.
          * @return {@code true} if the entailed {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should
@@ -1248,7 +1248,6 @@ public interface AgentBuilder {
                      * @param type The loaded type to initialize.
                      * @throws Exception If an exception occurs.
                      */
-                    @SuppressWarnings("unused")
                     public static void initialize(Class<?> type) throws Exception {
                         Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type));
                         if (typeInitializer != null) {
@@ -1263,7 +1262,6 @@ public interface AgentBuilder {
                      *                        of {@link net.bytebuddy.implementation.LoadedTypeInitializer} where
                      *                        it does however not matter which class loader loaded this latter type.
                      */
-                    @SuppressWarnings("unused")
                     public static void register(String name, ClassLoader classLoader, Object typeInitializer) {
                         TYPE_INITIALIZERS.put(new Nexus(name, classLoader), typeInitializer);
                     }
