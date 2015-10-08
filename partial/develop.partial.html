@@ -180,6 +180,11 @@ mvn package
         of usage cannot be anticipated. Whenever possible, delegation is to be the preferred extension mechanism over
         class extension. <b>All code</b> is to be documented what makes this property
         <a href="https://en.wikipedia.org/wiki/Broken_windows_theory">easier to validate</a> by automatic checks.
+        Within Byte Buddy, it is considered a bad practice to use <code>null</code> as a value of a field, parameter
+        or as a method return. An exception are the description types that mimic the Java reflection API where null
+        values are common. As description instances are exposed to end users, it was decided that the similarity is to
+        be considered a more important factor than consistency. All potential <code>null</code> values have to be
+        documented on the method. For Byte Buddy, unchecked exceptions are to be preferred over checked exceptions.
     </p>
 
     <h2>Contribute</h2>
