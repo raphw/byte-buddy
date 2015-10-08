@@ -3026,6 +3026,236 @@ public interface TypePool {
     }
 
     /**
+     * A lazy facade of a type pool that delegates any lookups to another type pool only if another value than the type's name is looked up.
+     */
+    class LazyFacade extends AbstractBase {
+
+        /**
+         * The type pool to delegate to.
+         */
+        private final TypePool typePool;
+
+        /**
+         * Creates a lazy facade for a type pool.
+         *
+         * @param typePool The type pool to delegate to.
+         */
+        public LazyFacade(TypePool typePool) {
+            super(CacheProvider.NoOp.INSTANCE);
+            this.typePool = typePool;
+        }
+
+        @Override
+        protected Resolution doDescribe(String name) {
+            return new LazyResolution(typePool, name);
+        }
+
+        @Override
+        public void clear() {
+            typePool.clear();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && typePool.equals(((LazyFacade) other).typePool);
+        }
+
+        @Override
+        public int hashCode() {
+            return typePool.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "TypePool.LazyFacade{" +
+                    "typePool=" + typePool +
+                    '}';
+        }
+
+        /**
+         * The lazy resolution for a lazy facade for a type pool.
+         */
+        protected static class LazyResolution implements Resolution {
+
+            /**
+             * The type pool to delegate to.
+             */
+            private final TypePool typePool;
+
+            /**
+             * The name of the type that is represented by this resolution.
+             */
+            private final String name;
+
+            /**
+             * Creates a lazy resolution for a lazy facade for a type pool.
+             *
+             * @param typePool The type pool to delegate to.
+             * @param name     The name of the type that is represented by this resolution.
+             */
+            protected LazyResolution(TypePool typePool, String name) {
+                this.typePool = typePool;
+                this.name = name;
+            }
+
+            @Override
+            public boolean isResolved() {
+                return typePool.describe(name).isResolved();
+            }
+
+            @Override
+            public TypeDescription resolve() {
+                return new LazyTypeDescription(typePool, name);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                LazyResolution that = (LazyResolution) other;
+                return typePool.equals(that.typePool) && name.equals(that.name);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = typePool.hashCode();
+                result = 31 * result + name.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.LazyFacade.LazyResolution{" +
+                        "typePool=" + typePool +
+                        ", name=" + name +
+                        '}';
+            }
+
+            /**
+             * A lazy type description for a lazy facade of a type pool.
+             */
+            protected static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
+
+                /**
+                 * The type pool to delegate to.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * The name of the type that is represented by this resolution.
+                 */
+                private final String name;
+
+                /**
+                 * Creates a lazy type description for a lazy facade of a type pool.
+                 *
+                 * @param typePool The type pool to delegate to.
+                 * @param name     The name of the type that is represented by this resolution.
+                 */
+                protected LazyTypeDescription(TypePool typePool, String name) {
+                    this.typePool = typePool;
+                    this.name = name;
+                }
+
+                /**
+                 * Resolves the actual type by querying the actual type pool.
+                 *
+                 * @return A representation of the actual type description.
+                 */
+                private TypeDescription resolve() {
+                    return typePool.describe(name).resolve();
+                }
+
+                @Override
+                public GenericTypeDescription getSuperType() {
+                    return resolve().getSuperType();
+                }
+
+                @Override
+                protected GenericTypeDescription getDeclaredSuperType() {
+                    throw new IllegalStateException("Cannot resolve declared super type for lazy facade: " + this);
+                }
+
+                @Override
+                public GenericTypeList getInterfaces() {
+                    return resolve().getInterfaces();
+                }
+
+                @Override
+                protected GenericTypeList getDeclaredInterfaces() {
+                    throw new IllegalStateException("Cannot resolve declared interfaces for lazy facade: " + this);
+                }
+
+                @Override
+                public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
+                    return resolve().getDeclaredFields();
+                }
+
+                @Override
+                public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
+                    return resolve().getDeclaredMethods();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return resolve().getDeclaringType();
+                }
+
+                @Override
+                public MethodDescription getEnclosingMethod() {
+                    return resolve().getEnclosingMethod();
+                }
+
+                @Override
+                public TypeDescription getEnclosingType() {
+                    return resolve().getEnclosingType();
+                }
+
+                @Override
+                public boolean isAnonymousClass() {
+                    return resolve().isAnonymousClass();
+                }
+
+                @Override
+                public boolean isLocalClass() {
+                    return resolve().isLocalClass();
+                }
+
+                @Override
+                public boolean isMemberClass() {
+                    return resolve().isMemberClass();
+                }
+
+                @Override
+                public PackageDescription getPackage() {
+                    return resolve().getPackage();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return resolve().getDeclaredAnnotations();
+                }
+
+                @Override
+                public GenericTypeList getTypeVariables() {
+                    return resolve().getTypeVariables();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return resolve().getModifiers();
+                }
+
+                @Override
+                public String getName() {
+                    return name;
+                }
+            }
+        }
+    }
+
+    /**
      * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
      * {@link AnnotationDescription} by querying a type pool at lookup time.
      */

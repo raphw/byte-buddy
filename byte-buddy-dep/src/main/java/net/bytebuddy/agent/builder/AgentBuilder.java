@@ -443,13 +443,8 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public BinaryLocator.Initialized initialize(String typeName,
-                                                        byte[] binaryRepresentation,
-                                                        ClassLoader classLoader) {
-                return new Initialized(typeName,
-                        binaryRepresentation,
-                        new TypePool.CacheProvider.Simple(),
-                        ClassFileLocator.ForClassLoader.of(classLoader));
+            public BinaryLocator.Initialized initialize(String typeName, byte[] binaryRepresentation, ClassLoader classLoader) {
+                return Initialized.of(typeName, binaryRepresentation, new TypePool.CacheProvider.Simple(), ClassFileLocator.ForClassLoader.of(classLoader));
             }
 
             @Override
@@ -490,14 +485,32 @@ public interface AgentBuilder {
                  * @param cacheProvider        The cache provider to use.
                  * @param classFileLocator     The class file locator to use.
                  */
+                public static Initialized of(String typeName,
+                                             byte[] binaryRepresentation,
+                                             TypePool.CacheProvider cacheProvider,
+                                             ClassFileLocator classFileLocator) {
+                    return new Initialized(typeName,
+                            binaryRepresentation,
+                            new TypePool.LazyFacade(new TypePool.Default(cacheProvider, classFileLocator)),
+                            classFileLocator);
+                }
+
+                /**
+                 * Creates a new initialized form of a default binary locator.
+                 *
+                 * @param typeName             The binary name of the type that is being instrumented.
+                 * @param binaryRepresentation The binary representation of the instrumented type. The provided array must not be modified.
+                 * @param typePool             The type pool to use.
+                 * @param classFileLocator     The class file locator to use.
+                 */
                 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received array must be immutable by contract")
-                public Initialized(String typeName,
-                                   byte[] binaryRepresentation,
-                                   TypePool.CacheProvider cacheProvider,
-                                   ClassFileLocator classFileLocator) {
+                protected Initialized(String typeName,
+                                      byte[] binaryRepresentation,
+                                      TypePool typePool,
+                                      ClassFileLocator classFileLocator) {
                     this.typeName = typeName;
                     this.binaryRepresentation = binaryRepresentation;
-                    typePool = new TypePool.Default(cacheProvider, classFileLocator);
+                    this.typePool = typePool;
                     this.classFileLocator = classFileLocator;
                 }
 
@@ -832,7 +845,7 @@ public interface AgentBuilder {
          *                                   {@link java.lang.instrument.ClassFileTransformer} should also apply
          *                                   for retransformations.
          * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
-         * @param transformations                    The list of transformation entries that are registered with this
+         * @param transformations            The list of transformation entries that are registered with this
          *                                   agent builder.
          */
         protected Default(ByteBuddy byteBuddy,
