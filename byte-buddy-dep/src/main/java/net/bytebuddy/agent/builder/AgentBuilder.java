@@ -29,15 +29,13 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.lang.instrument.UnmodifiableClassException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -197,7 +195,8 @@ public interface AgentBuilder {
 
     /**
      * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
-     * this agent builder with a given {@link java.lang.instrument.Instrumentation}.
+     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
+     * the installation also causes all loaded types to be retransformed.
      *
      * @param instrumentation The instrumentation on which this agent builder's configuration is to be installed.
      * @return The installed class file transformer.
@@ -789,7 +788,7 @@ public interface AgentBuilder {
         /**
          * The list of transformation entries that are registered with this agent builder.
          */
-        private final List<Transformation> entries;
+        private final List<Transformation> transformations;
 
         /**
          * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for
@@ -833,7 +832,7 @@ public interface AgentBuilder {
          *                                   {@link java.lang.instrument.ClassFileTransformer} should also apply
          *                                   for retransformations.
          * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
-         * @param entries                    The list of transformation entries that are registered with this
+         * @param transformations                    The list of transformation entries that are registered with this
          *                                   agent builder.
          */
         protected Default(ByteBuddy byteBuddy,
@@ -844,7 +843,7 @@ public interface AgentBuilder {
                           boolean disableSelfInitialization,
                           boolean retransformation,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                          List<Transformation> entries) {
+                          List<Transformation> transformations) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
             this.listener = listener;
@@ -853,7 +852,7 @@ public interface AgentBuilder {
             this.disableSelfInitialization = disableSelfInitialization;
             this.retransformation = retransformation;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
-            this.entries = entries;
+            this.transformations = transformations;
         }
 
         @Override
@@ -881,7 +880,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    entries);
+                    transformations);
         }
 
         @Override
@@ -894,7 +893,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    entries);
+                    transformations);
         }
 
         @Override
@@ -907,7 +906,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    entries);
+                    transformations);
         }
 
         @Override
@@ -923,7 +922,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    entries);
+                    transformations);
         }
 
         @Override
@@ -936,7 +935,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    entries);
+                    transformations);
         }
 
         @Override
@@ -949,7 +948,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     true,
                     bootstrapInjectionStrategy,
-                    entries);
+                    transformations);
         }
 
         @Override
@@ -962,7 +961,7 @@ public interface AgentBuilder {
                     true,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    entries);
+                    transformations);
         }
 
         @Override
@@ -975,7 +974,7 @@ public interface AgentBuilder {
                     true,
                     retransformation,
                     new BootstrapInjectionStrategy.Enabled(nonNull(folder), nonNull(instrumentation)),
-                    entries);
+                    transformations);
         }
 
         @Override
@@ -989,6 +988,23 @@ public interface AgentBuilder {
             instrumentation.addTransformer(classFileTransformer, retransformation);
             if (!NO_NATIVE_PREFIX.equals(nonNull(nativeMethodPrefix))) {
                 instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodPrefix);
+            }
+            if (retransformation) {
+                List<Class<?>> retransformedTypes = new LinkedList<Class<?>>();
+                for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                    // The list of all loaded types can be significant what can crash the JVM such that this preselection becomes  necessary.
+                    for (Transformation transformation : transformations) {
+                        if (transformation.matches(new TypeDescription.ForLoadedType(type), type.getClassLoader(), type, type.getProtectionDomain())) {
+                            retransformedTypes.add(type);
+                            break;
+                        }
+                    }
+                }
+                try {
+                    instrumentation.retransformClasses(retransformedTypes.toArray(new Class<?>[retransformedTypes.size()]));
+                } catch (UnmodifiableClassException exception) {
+                    throw new IllegalStateException("Cannot retransform classes: " + retransformedTypes, exception);
+                }
             }
             return classFileTransformer;
         }
@@ -1020,7 +1036,7 @@ public interface AgentBuilder {
                     && disableSelfInitialization == aDefault.disableSelfInitialization
                     && retransformation == aDefault.retransformation
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
-                    && entries.equals(aDefault.entries);
+                    && transformations.equals(aDefault.transformations);
 
         }
 
@@ -1034,7 +1050,7 @@ public interface AgentBuilder {
             result = 31 * result + (disableSelfInitialization ? 1 : 0);
             result = 31 * result + (retransformation ? 1 : 0);
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
-            result = 31 * result + entries.hashCode();
+            result = 31 * result + transformations.hashCode();
             return result;
         }
 
@@ -1049,7 +1065,7 @@ public interface AgentBuilder {
                     ", disableSelfInitialization=" + disableSelfInitialization +
                     ", retransformation=" + retransformation +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                    ", entries=" + entries +
+                    ", transformations=" + transformations +
                     '}';
         }
 
@@ -1603,7 +1619,7 @@ public interface AgentBuilder {
                 try {
                     BinaryLocator.Initialized initialized = binaryLocator.initialize(binaryTypeName, binaryRepresentation, classLoader);
                     TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName).resolve();
-                    for (Transformation transformation : entries) {
+                    for (Transformation transformation : transformations) {
                         if (transformation.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
                             DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(
                                     transformation.transform(byteBuddy.rebase(typeDescription,
@@ -1761,7 +1777,7 @@ public interface AgentBuilder {
                         disableSelfInitialization,
                         retransformation,
                         bootstrapInjectionStrategy,
-                        join(new Transformation(rawMatcher, transformer), entries));
+                        join(new Transformation(rawMatcher, transformer), transformations));
             }
 
             /**

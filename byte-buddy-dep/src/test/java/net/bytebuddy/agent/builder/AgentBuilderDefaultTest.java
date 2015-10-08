@@ -107,6 +107,7 @@ public class AgentBuilderDefaultTest {
         when(binaryLocator.initialize(FOO, QUX, classLoader)).thenReturn(initialized);
         when(initialized.getTypePool()).thenReturn(typePool);
         when(typePool.describe(FOO)).thenReturn(resolution);
+        when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
     }
 
     @Test
@@ -130,7 +131,7 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
-    public void testSuccessfulWithRetransformation() throws Exception {
+    public void testSuccessfulWithRetransformationNonMatched() throws Exception {
         when(unloaded.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(typeDescription);
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(true);
@@ -147,6 +148,26 @@ public class AgentBuilderDefaultTest {
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
+        verify(instrumentation).retransformClasses();
+        verify(instrumentation).getAllLoadedClasses();
+        verifyNoMoreInteractions(instrumentation);
+    }
+
+    @Test
+    public void testSuccessfulWithRetransformationMatched() throws Exception {
+        when(rawMatcher.matches(TypeDescription.OBJECT, REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .disableSelfInitialization()
+                .allowRetransformation()
+                .withBinaryLocator(binaryLocator)
+                .withListener(listener)
+                .rebase(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        assertThat(classFileTransformers.size(), is(1));
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, true);
+        verify(instrumentation).retransformClasses(REDEFINED);
+        verify(instrumentation).getAllLoadedClasses();
         verifyNoMoreInteractions(instrumentation);
     }
 
