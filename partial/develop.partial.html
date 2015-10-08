@@ -49,7 +49,7 @@ mvn package
         tests requires a significant amount of additional runtime compared to computing line coverage. Finally, the
         <code>integration</code> profile for Maven can be activated for scanning the code base for potential
         errors. This progile is always activated on the continous integration server. The <code>checks</code>
-        prfoile on the other hand aggregates faster-running code checks and is activated by default for any 
+        prfoile on the other hand aggregates faster-running code checks and is activated by default for any
         Maven build.
     </p>
 
@@ -75,6 +75,111 @@ mvn package
         contains a <code>ClassLoadingStrategy</code> that functions on the Android platform where
         <code>byte-buddy-android-test</code> defines a test application to apply this strategy. It is only built
         if the <code>android</code> profile is activated as building the module requires an Android SDK.
+    </p>
+
+    <h2>Architectural overview</h2>
+
+    <p>
+        Every code generation framework requires a means of reflecting over types and their members. Byte Buddy
+        accesses type information by the <code>TypeDescription</code> interface. This interface offers a similar
+        API as the <code>Class</code> type of the Java reflection API and it is possible to represent a loaded Java
+        class as a type description using the <code>TypeDescription.ForLoadedType</code> implementation which wraps
+        such instances. However, Byte Buddy can also be used for creating Java agents where classes need to be
+        manipulated before being loaded. Therefore, Byte Buddy never operates on loaded types but always depends on
+        descriptions. All description interfaces are found in the <code>net.bytebuddy.description</code> package.
+    </p>
+
+    <p>
+        Byte Buddy builds on top of the <a href="http://asm.ow2.org/">ASM byte code parser</a> which has become the
+        de facto standard for byte code parsing in the Java ecosystem. ASM operates with low-level constructs, often
+        string values that represent names and descriptors. Byte Buddy offers the <code>StackManipulation</code>
+        interface to represent type-safe wrappers around such visitor commands which interact with Byte Buddy's
+        description interfaces, extract the required values into the appropriate format and interact with ASM.
+        Furthermore, each stack manipulation is aware of its impact on the JVM's operand stack size. This way,
+        several stack manipulations can be combined to compute their common requirement on the minimum stack size.
+        Several stack manipulations can be grouped to represent a <code>ByteCodeAppender</code>. A byte code appender
+        represents a <i>block of code</i> and is required to leave the operand stack empty. Additionally, a byte code
+        appender is required to expose the space for local variables it assigns for executing its code. Typically,
+        a byte code appender is composed of one or several stack manipulations. All classes related to code generation
+        are collected in the <code>net.bytebuddy.implementation.bytecode</code> package.
+    </p>
+
+    <p>
+        Each byte code appender receives the method it is implementing as an argument to its <code>apply</code> method.
+        Furthermore, it receives an ASM visitor for registering the code of the method and an instance of
+        <code>Implementation.Context</code>. An implementation context allows the registration of auxiliary types.
+        Auxiliary types represent helper types that are required to execute the method. An example of an auxiliary
+        type would be a proxy class for invoking another method of the instrumented type as it is used by the
+        <code>MethodDelegation</code> instrumentation for the <code>@SuperCall</code> annotation. The implementation
+        of implementation context is one of the few mutable classes within Byte Buddy as it accompanies ASM's
+        method visitor which is itself mutable. As implementation context is however not being exposed to the public
+        API and should neither be exposed by a byte code appender.
+    </p>
+
+    <p>
+        The top-level construct for representing a method instrumentation is the <code>Implementation</code> interface.
+        Instances of this interface are required to yield a <code>ByteCodeAppender</code> given an instrumented type.
+        Furthermore, implementations are given a chance to register additional methods, fields or code blocks to be
+        run within the static initializer of the instrumented type. Finally, any implementation instance receives
+        an instance of <code>Implementation.Target</code> that offers a way of accessing properties of the instrumented
+        type that is agnostic of the way that a type is instrumented. For example, it is possible to query for a super
+        method invocation on the instrumented type. If a user conducts a subclass instrumentation, this query returns
+        an invocation of the actual super method. If a user conducts a type-rebasement, the implementation target
+        implementation will however invoke the original code of the rebased method which was copied into another method
+        of the same class.
+    </p>
+
+    <p>
+        In Byte Buddy, any type is constructed by registering properties to a <code>DynamicType.Builder</code>. The
+        builder itself constructs an instance of <code>InstrumentedType</code> which extends
+        <code>TypeDescription</code> to allow Byte Buddy's other component to reflect over the instrumented type before
+        its creation. Furthermore, method and field implementations are registered in a <code>FieldRegistry</code> or
+        <code>MethodRegistry</code> accordingly. Finally, all implementations are applied on their matched method
+        descriptions by the dynamic type builder supplying all of its collected information to a
+        <code>TypeWriter</code> which interacts with the ASM API for generating a class file.
+    </p>
+
+    <h2>Coding conventions</h2>
+
+    <p>
+        Byte Buddy aims for full immutability with the exception of mutable classes for interacting with the mostly
+        mutable ASM library. Mutable components must however be isolated to the scope of interacting with ASM and
+        must not be exposed to an end user. Neither should such instances ever be stored as the value of a field.
+        Furthermore, some components like for example Byte Buddy's class loaders are mutable by their nature of
+        being class loaders. All collections within Byte Buddy should however be considered immutable and this property
+        must also be enforced when a collection is returned from the public API.
+    </p>
+
+    <p>
+        All immutable classes must implement appropriate <code>hashCode</code> and <code>equals</code> methods as
+        object equality is an important concept for some of Byte Buddy's components. For example, any
+        <code>Implementation</code> instance must only prepare the instrumented type a single time because it is not
+        legal in Java to register a field with the same name twice. To assure this, any <code>Implementation</code>
+        is checked against its equality with previous implementations that already had a chance to prepare the
+        instrumented type. If an implementation depends on different objects internally, it is important that all
+        these components fulfill their equality contracts. Also, any component should implement an appropriate
+        <code>toString</code> method to improve debugging, especially when stack traces of users are posted on help
+        forums. With the <code>ObjectPropertyAssertion</code>, Byte Buddy runs unit tests for correct implementations
+        of all of these methods.
+    </p>
+
+    <p>
+        Byte Buddy is strongly object-oriented but takes some inspiration of functional design. Unfortunately, being
+        a meta library that is used by many other library developers, Byte Buddy is bound by strong compatibility
+        requirements and is compiled on Java 6. To mimic functions, Byte Buddy often implements interfaces by
+        enumerations where the enumeration yields a <i>named function</i>. Finally, class files are used as
+        containers for related classes rather than packages. Within a class file, it is possible to define a finer
+        visibility scope than for top-level classes, for example by allowing for <code>protected</code> classes that
+        are only to be seen by subclasses or within the class that is using another class internally. Also, when
+        a class is not longer needed as the result of refactoring, this grouping convention makes it easy to
+        delete all dependant code.
+    </p>
+
+    <p>
+        Being a meta library, Byte Buddy tries to offer APIs that are as open to extension as possible as the scope
+        of usage cannot be anticipated. Whenever possible, delegation is to be the preferred extension mechanism over
+        class extension. <b>All code</b> is to be documented what makes this property
+        <a href="https://en.wikipedia.org/wiki/Broken_windows_theory">easier to validate</a> by automatic checks.
     </p>
 
     <h2>Contribute</h2>
