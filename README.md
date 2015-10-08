@@ -50,7 +50,8 @@ of the `ByteBuddy` class which represents a configuration for creating new types
 ```java
 Class<?> dynamicType = new ByteBuddy()
   .subclass(Object.class)
-  .method(named("toString")).intercept(FixedValue.value("Hello World!"))
+  .method(ElementMatchers.named("toString"))
+  .intercept(FixedValue.value("Hello World!"))
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded();
