@@ -14,6 +14,26 @@ import java.util.List;
 public interface ClassVisitorWrapper {
 
     /**
+     * Defines a hint that is provided to any {@code ClassWriter} when writing a class. Typically, this gives opportunity to instruct ASM
+     * to compute stack map frames or the size of the local variables array and the operand stack. If no specific hints are required for
+     * applying this wrapper, the given value is to be returned.
+     *
+     * @param hint The current hint. This value should be merged (e.g. {@code hint | foo}) into the value that is returned by this wrapper.
+     * @return The hint to be provided to the ASM {@code ClassWriter}.
+     */
+    int wrapWriter(int hint);
+
+    /**
+     * Defines a hint that is provided to any {@code ClassReader} when reading a class if applicable. Typically, this gives opportunity to
+     * instruct ASM to expand or skip frames and to skip code and debug information. If no specific hints are required for applying this
+     * wrapper, the given value is to be returned.
+     *
+     * @param hint The current hint. This value should be merged (e.g. {@code hint | foo}) into the value that is returned by this wrapper.
+     * @return The hint to be provided to the ASM {@code ClassReader}.
+     */
+    int wrapReader(int hint);
+
+    /**
      * Applies a {@code ClassVisitorWrapper} to the creation of a {@link net.bytebuddy.dynamic.DynamicType}.
      *
      * @param classVisitor A {@code ClassVisitor} to become the new primary class visitor to which the created
@@ -77,6 +97,22 @@ public interface ClassVisitorWrapper {
             appendedList.addAll(classVisitorWrappers);
             appendedList.add(classVisitorWrapper);
             return new Chain(appendedList);
+        }
+
+        @Override
+        public int wrapWriter(int hint) {
+            for (ClassVisitorWrapper classVisitorWrapper : classVisitorWrappers) {
+                hint = classVisitorWrapper.wrapWriter(hint);
+            }
+            return hint;
+        }
+
+        @Override
+        public int wrapReader(int hint) {
+            for (ClassVisitorWrapper classVisitorWrapper : classVisitorWrappers) {
+                hint = classVisitorWrapper.wrapReader(hint);
+            }
+            return hint;
         }
 
         @Override

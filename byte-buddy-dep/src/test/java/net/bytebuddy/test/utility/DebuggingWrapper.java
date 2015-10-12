@@ -32,6 +32,16 @@ public class DebuggingWrapper implements ClassVisitorWrapper {
     }
 
     @Override
+    public int wrapWriter(int hint) {
+        return hint;
+    }
+
+    @Override
+    public int wrapReader(int hint) {
+        return hint;
+    }
+
+    @Override
     public ClassVisitor wrap(ClassVisitor classVisitor) {
         return new TraceClassVisitor(classVisitor, printer, printWriter);
     }

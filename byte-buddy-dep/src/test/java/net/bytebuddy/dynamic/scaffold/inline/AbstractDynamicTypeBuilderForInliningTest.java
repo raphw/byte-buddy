@@ -1,6 +1,8 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import jdk.nashorn.internal.codegen.types.*;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
@@ -24,11 +26,16 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.objectweb.asm.Opcodes;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.objectweb.asm.*;
+import org.objectweb.asm.commons.LocalVariablesSorter;
+import org.objectweb.asm.commons.RemappingMethodAdapter;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
@@ -44,6 +51,10 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public abstract class AbstractDynamicTypeBuilderForInliningTest extends AbstractDynamicTypeBuilderTest {
 
@@ -347,6 +358,34 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertThat(foo.getModifiers(), is(Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC));
     }
 
+    @Test
+    public void testReaderHint() throws Exception {
+        ClassVisitorWrapper classVisitorWrapper = mock(ClassVisitorWrapper.class);
+        when(classVisitorWrapper.wrap(any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
+            @Override
+            public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[0]) {
+                    @Override
+                    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                        return new LocalVariablesSorter(access, desc, super.visitMethod(access, name, desc, signature, exceptions));
+                    }
+                };
+            }
+        });
+        when(classVisitorWrapper.wrapWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
+        when(classVisitorWrapper.wrapReader(0)).thenReturn(ClassReader.EXPAND_FRAMES);
+        Class<?> type = create(StackMapFrames.class)
+                .classVisitor(classVisitorWrapper)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+        verify(classVisitorWrapper).wrapWriter(0);
+        verify(classVisitorWrapper).wrapReader(0);
+        verify(classVisitorWrapper).wrap(any(ClassVisitor.class));
+        verifyNoMoreInteractions(classVisitorWrapper);
+    }
+
     public @interface Baz {
 
         String foo();
@@ -427,6 +466,17 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
         public abstract static class Inner extends AbstractGenericType<Void> {
             /* empty */
+        }
+    }
+
+    public static class StackMapFrames {
+
+        public boolean foo;
+
+        public String foo() {
+            return foo
+                    ? FOO
+                    : BAR;
         }
     }
 }

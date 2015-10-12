@@ -2310,8 +2310,9 @@ public interface TypeWriter<T> {
              */
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
-                ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL_FLAG);
-                classReader.accept(writeTo(classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter)), implementationContext), ASM_MANUAL_FLAG);
+                ClassWriter classWriter = new ClassWriter(classReader, classVisitorWrapper.wrapWriter(ASM_MANUAL_FLAG));
+                classReader.accept(writeTo(classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter)), implementationContext),
+                        classVisitorWrapper.wrapReader(ASM_MANUAL_FLAG));
                 return classWriter.toByteArray();
             }
 
@@ -2922,7 +2923,7 @@ public interface TypeWriter<T> {
 
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
-                ClassWriter classWriter = new ClassWriter(ASM_MANUAL_FLAG);
+                ClassWriter classWriter = new ClassWriter(classVisitorWrapper.wrapWriter(ASM_MANUAL_FLAG));
                 ClassVisitor classVisitor = classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter));
                 classVisitor.visit(classFileVersion.getVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),

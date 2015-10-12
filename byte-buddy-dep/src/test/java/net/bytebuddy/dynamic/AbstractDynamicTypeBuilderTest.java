@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -25,7 +26,9 @@ import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
-import org.objectweb.asm.Opcodes;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.objectweb.asm.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -48,6 +51,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public abstract class AbstractDynamicTypeBuilderTest {
 
@@ -305,6 +310,38 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(parameterAnnotation.annotationType().getName(), is(SampleAnnotation.class.getName()));
         Method parameterMethod = parameterAnnotation.annotationType().getDeclaredMethod(FOO);
         assertThat(parameterMethod.invoke(parameterAnnotation), is((Object) QUX));
+    }
+
+    @Test
+    public void testWriterHint() throws Exception {
+        ClassVisitorWrapper classVisitorWrapper = mock(ClassVisitorWrapper.class);
+        when(classVisitorWrapper.wrap(any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
+            @Override
+            public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[0]) {
+                    @Override
+                    public void visitEnd() {
+                        MethodVisitor mv = visitMethod(Opcodes.ACC_PUBLIC, FOO, "()Ljava/lang/String;", null, null);
+                        mv.visitCode();
+                        mv.visitLdcInsn(FOO);
+                        mv.visitInsn(Opcodes.ARETURN);
+                        mv.visitMaxs(-1, -1);
+                        mv.visitEnd();
+                    }
+                };
+            }
+        });
+        when(classVisitorWrapper.wrapWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
+        Class<?> type = createPlain()
+                .classVisitor(classVisitorWrapper)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        verify(classVisitorWrapper).wrapWriter(0);
+        verify(classVisitorWrapper, atMost(1)).wrapReader(0);
+        verify(classVisitorWrapper).wrap(any(ClassVisitor.class));
+        verifyNoMoreInteractions(classVisitorWrapper);
     }
 
     @Retention(RetentionPolicy.RUNTIME)

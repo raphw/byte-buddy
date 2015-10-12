@@ -207,6 +207,16 @@ public class ByteArrayClassLoaderChildFirstTest {
         }
 
         @Override
+        public int wrapWriter(int hint) {
+            return hint;
+        }
+
+        @Override
+        public int wrapReader(int hint) {
+            return hint;
+        }
+
+        @Override
         public ClassVisitor wrap(ClassVisitor classVisitor) {
             return new RemappingClassAdapter(classVisitor, new SimpleRemapper(oldName, newName));
         }
