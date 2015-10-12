@@ -3,6 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
@@ -241,8 +242,7 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testWithParameterNonAssignable() throws Exception {
-        implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper()
-                .withArgument(0).withAssigner(nonAssigner, Assigner.Typing.STATIC));
+        implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper().withArgument(0).withAssigner(nonAssigner, Assigner.Typing.STATIC));
     }
 
     @Test
@@ -532,6 +532,11 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     public void testMethodCallDefaultCallNonInvokable() throws Exception {
         implement(Object.class, MethodCall.invoke(Bar.class.getDeclaredMethod("bar")).onDefault());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodCallOnInterfaceToInstanceField() throws Exception {
+        MethodCall.invoke(String.class.getDeclaredMethod("toString")).onInstanceField(String.class, FOO).prepare(mock(InstrumentedType.class));
     }
 
     @Test

@@ -35,8 +35,10 @@ public class FieldAccessorPreparationTest {
 
     @Test
     public void testPreparationDefineField() throws Exception {
+        when(instrumentedType.isClassType()).thenReturn(true);
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE).prepare(instrumentedType), is(instrumentedType));
         verify(instrumentedType).withField(new FieldDescription.Token(FOO, NO_MODIFIERS, new TypeDescription.ForLoadedType(TYPE)));
+        verify(instrumentedType).isClassType();
         verifyNoMoreInteractions(instrumentedType);
     }
 

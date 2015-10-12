@@ -1532,11 +1532,6 @@ public class InvokeDynamic implements Implementation {
                 private static final String FIELD_PREFIX = "invokeDynamic";
 
                 /**
-                 * The field modifier for the randomly created fields.
-                 */
-                private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
-
-                /**
                  * The value that is stored in the static field.
                  */
                 private final Object value;
@@ -1587,8 +1582,8 @@ public class InvokeDynamic implements Implementation {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
-                            .withField(new FieldDescription.Token(name, FIELD_MODIFIER, typeDescription))
-                            .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(name, value));
+                            .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, typeDescription))
+                            .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(name, value));
                 }
 
                 @Override
@@ -1617,11 +1612,6 @@ public class InvokeDynamic implements Implementation {
              * An argument provider that loads a value from an instance field.
              */
             class ForInstanceField implements ArgumentProvider {
-
-                /**
-                 * The modifier for the generated instance fields.
-                 */
-                private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
                 /**
                  * The name of the field.
@@ -1655,7 +1645,7 @@ public class InvokeDynamic implements Implementation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(new FieldDescription.Token(fieldName, FIELD_MODIFIER, fieldType));
+                    return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, fieldType));
                 }
 
                 @Override

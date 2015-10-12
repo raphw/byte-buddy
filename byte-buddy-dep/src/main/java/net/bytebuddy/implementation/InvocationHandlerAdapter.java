@@ -37,6 +37,11 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     private static final boolean NO_CACHING = false;
 
     /**
+     * Indicates that a {@link java.lang.reflect.Method} should be cached.
+     */
+    protected static final boolean CACHING = true;
+
+    /**
      * The prefix for field that are created for storing the instrumented value.
      */
     private static final String PREFIX = "invocationHandler";
@@ -234,17 +239,14 @@ public abstract class InvocationHandlerAdapter implements Implementation {
          * @param assigner          The assigner to apply when defining this implementation.
          * @param invocationHandler The invocation handler to which all method calls are delegated.
          */
-        protected ForStaticDelegation(String fieldName,
-                                      boolean cacheMethods,
-                                      Assigner assigner,
-                                      InvocationHandler invocationHandler) {
+        protected ForStaticDelegation(String fieldName, boolean cacheMethods, Assigner assigner, InvocationHandler invocationHandler) {
             super(fieldName, cacheMethods, assigner);
             this.invocationHandler = invocationHandler;
         }
 
         @Override
         public AssignerConfigurable withMethodCache() {
-            return new ForStaticDelegation(fieldName, true, assigner, invocationHandler);
+            return new ForStaticDelegation(fieldName, CACHING, assigner, invocationHandler);
         }
 
         @Override
@@ -255,8 +257,8 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
-                    .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_STATIC, INVOCATION_HANDLER_TYPE))
-                    .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, invocationHandler));
+                    .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC, INVOCATION_HANDLER_TYPE))
+                    .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, invocationHandler));
         }
 
         @Override
@@ -305,9 +307,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             }
 
             @Override
-            public Size apply(MethodVisitor methodVisitor,
-                              Context implementationContext,
-                              MethodDescription instrumentedMethod) {
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return ForStaticDelegation.this.apply(methodVisitor,
                         implementationContext,
                         instrumentedMethod,
@@ -367,7 +367,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public AssignerConfigurable withMethodCache() {
-            return new ForInstanceDelegation(fieldName, true, assigner);
+            return new ForInstanceDelegation(fieldName, CACHING, assigner);
         }
 
         @Override
@@ -377,7 +377,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PUBLIC, INVOCATION_HANDLER_TYPE));
+            return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, INVOCATION_HANDLER_TYPE));
         }
 
         @Override

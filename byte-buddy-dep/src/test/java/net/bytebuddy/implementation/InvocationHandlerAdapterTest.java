@@ -4,6 +4,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -73,7 +74,7 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Field field = loaded.getLoaded().getDeclaredField(QUX);
-        assertThat(field.getModifiers(), is(Modifier.PUBLIC));
+        assertThat(field.getModifiers(), is(Modifier.PUBLIC | Opcodes.ACC_SYNTHETIC));
         field.setAccessible(true);
         Bar instance = loaded.getLoaded().newInstance();
         Foo foo = new Foo();
@@ -93,7 +94,7 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(2));
         Field field = loaded.getLoaded().getDeclaredField(QUX);
-        assertThat(field.getModifiers(), is(Modifier.PUBLIC));
+        assertThat(field.getModifiers(), is(Modifier.PUBLIC | Opcodes.ACC_SYNTHETIC));
         field.setAccessible(true);
         Bar instance = loaded.getLoaded().newInstance();
         Foo foo = new Foo();

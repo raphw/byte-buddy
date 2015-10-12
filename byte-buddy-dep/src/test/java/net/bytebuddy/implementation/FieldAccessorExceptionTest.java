@@ -1,8 +1,15 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import org.junit.Test;
 
+import static org.mockito.Mockito.mock;
+
 public class FieldAccessorExceptionTest extends AbstractImplementationTest {
+
+    private static final String FOO = "foo";
 
     @Test(expected = IllegalArgumentException.class)
     public void testFinalFieldSetter() throws Exception {
@@ -17,6 +24,16 @@ public class FieldAccessorExceptionTest extends AbstractImplementationTest {
     @Test(expected = IllegalArgumentException.class)
     public void testFieldNoBeanMethodName() throws Exception {
         implement(Qux.class, FieldAccessor.ofBeanProperty());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldNonStaticOnInterface() throws Exception {
+        FieldAccessor.ofField(FOO).defineAs(String.class, Visibility.PUBLIC).prepare(mock(InstrumentedType.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldNonPublicOnInterface() throws Exception {
+        FieldAccessor.ofField(FOO).defineAs(String.class, Ownership.STATIC).prepare(mock(InstrumentedType.class));
     }
 
     @SuppressWarnings("unused")

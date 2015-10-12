@@ -665,11 +665,6 @@ public class MethodCall implements Implementation {
             private static final String FIELD_PREFIX = "invocationTarget";
 
             /**
-             * The modifiers of the static field to store the instance.
-             */
-            private static final int FIELD_MODIFIERS = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
-
-            /**
              * The target on which the method is to be invoked.
              */
             private final Object target;
@@ -697,8 +692,10 @@ public class MethodCall implements Implementation {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(new FieldDescription.Token(fieldName, FIELD_MODIFIERS, new TypeDescription.ForLoadedType(target.getClass())))
-                        .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, target));
+                        .withField(new FieldDescription.Token(fieldName,
+                                Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                                new TypeDescription.ForLoadedType(target.getClass())))
+                        .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, target));
             }
 
             @Override
@@ -725,11 +722,6 @@ public class MethodCall implements Implementation {
          * Creates a target handler that stores the instance to invoke a method on in an instance field.
          */
         class ForInstanceField implements TargetHandler {
-
-            /**
-             * The modifiers of the field.
-             */
-            private static final int FIELD_MODIFIERS = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
             /**
              * The name of the field.
@@ -764,7 +756,10 @@ public class MethodCall implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(new FieldDescription.Token(fieldName, FIELD_MODIFIERS, fieldType));
+                if (!instrumentedType.isClassType()) {
+                    throw new IllegalStateException("Cannot define non-static field '" + fieldName + "' on " + instrumentedType);
+                }
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, fieldType));
             }
 
             @Override
@@ -1002,11 +997,6 @@ public class MethodCall implements Implementation {
             private static final String FIELD_PREFIX = "methodCall";
 
             /**
-             * The modifier of the field.
-             */
-            private static final int FIELD_MODIFIER = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
-
-            /**
              * The value to be stored in the field.
              */
             private final Object value;
@@ -1084,7 +1074,9 @@ public class MethodCall implements Implementation {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(new FieldDescription.Token(fieldName, FIELD_MODIFIER, new TypeDescription.ForLoadedType(value.getClass())))
+                        .withField(new FieldDescription.Token(fieldName,
+                                Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                                new TypeDescription.ForLoadedType(value.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField<Object>(fieldName, value, true));
             }
 
@@ -1112,11 +1104,6 @@ public class MethodCall implements Implementation {
          * Loads a value onto the operand stack that is stored in an instance field.
          */
         class ForInstanceField implements ArgumentLoader {
-
-            /**
-             * The modifier to be applied to the instance field.
-             */
-            private static final int MODIFIERS = Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
 
             /**
              * The type of the field.
@@ -1153,15 +1140,17 @@ public class MethodCall implements Implementation {
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter(),
                         assigner.assign(fieldType, targetType, typing));
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign field " + fieldName + " of type "
-                            + fieldType + " to " + targetType);
+                    throw new IllegalStateException("Cannot assign field " + fieldName + " of type " + fieldType + " to " + targetType);
                 }
                 return stackManipulation;
             }
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withField(new FieldDescription.Token(fieldName, MODIFIERS, fieldType));
+                if (!instrumentedType.isClassType()) {
+                    throw new IllegalStateException("Cannot define non-static field '" + fieldName + "' for " + instrumentedType);
+                }
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, fieldType));
             }
 
             @Override

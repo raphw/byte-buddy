@@ -806,11 +806,6 @@ public class MethodDelegation implements Implementation {
         class ForStaticField implements ImplementationDelegate {
 
             /**
-             * The modifier to be assigned to a static field interceptor.
-             */
-            private static final int FIELD_MODIFIERS = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC;
-
-            /**
              * The name prefix for the {@code static} field that is containing the delegation target.
              */
             protected static final String PREFIX = "delegate";
@@ -839,8 +834,10 @@ public class MethodDelegation implements Implementation {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(new FieldDescription.Token(fieldName, FIELD_MODIFIERS, new TypeDescription.ForLoadedType(delegate.getClass())))
-                        .withInitializer(LoadedTypeInitializer.ForStaticField.nonAccessible(fieldName, delegate));
+                        .withField(new FieldDescription.Token(fieldName,
+                                Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
+                                new TypeDescription.ForLoadedType(delegate.getClass())))
+                        .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, delegate));
             }
 
             @Override

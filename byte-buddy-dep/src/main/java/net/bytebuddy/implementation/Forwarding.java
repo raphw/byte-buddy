@@ -217,7 +217,10 @@ public class Forwarding implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
-                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PRIVATE, fieldType));
+                if (!instrumentedType.isClassType()) {
+                    throw new IllegalStateException("Cannot define instance field '" + fieldName + "' for " + instrumentedType);
+                }
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, fieldType));
             }
 
             @Override
@@ -243,7 +246,9 @@ public class Forwarding implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
-                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, fieldType));
+                return instrumentedType.withField(new FieldDescription.Token(fieldName,
+                        Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                        fieldType));
             }
 
             @Override
@@ -279,8 +284,8 @@ public class Forwarding implements Implementation {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
                 return instrumentedType
-                        .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, fieldType))
-                        .withInitializer(new LoadedTypeInitializer.ForStaticField<Object>(fieldName, target, true));
+                        .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
+                        .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, target));
             }
 
             @Override
@@ -327,9 +332,7 @@ public class Forwarding implements Implementation {
         }
 
         @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Context implementationContext,
-                          MethodDescription instrumentedMethod) {
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             if (!instrumentedMethod.isInvokableOn(fieldType)) {
                 throw new IllegalArgumentException("Cannot forward " + instrumentedMethod + " to " + fieldType);
             } else if (instrumentedMethod.isStatic()) {

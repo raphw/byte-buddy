@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
@@ -869,6 +870,9 @@ public abstract class FieldAccessor implements Implementation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    if (!instrumentedType.isClassType() && ((modifiers & Opcodes.ACC_PUBLIC) == 0 || (modifiers & Opcodes.ACC_STATIC) == 0)) {
+                        throw new IllegalStateException("Cannot define a non-public, non-static field for " + instrumentedType);
+                    }
                     return instrumentedType.withField(new FieldDescription.Token(name, modifiers, typeDescription));
                 }
 
