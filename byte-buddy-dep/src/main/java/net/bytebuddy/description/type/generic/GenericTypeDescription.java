@@ -23,11 +23,6 @@ import java.util.*;
 public interface GenericTypeDescription extends NamedElement, Iterable<GenericTypeDescription> {
 
     /**
-     * Represents a generic type without an owner type.
-     */
-    TypeDescription NO_OWNER_TYPE = null;
-
-    /**
      * Returns the sort of the generic type this instance represents.
      *
      * @return The sort of the generic type.
@@ -554,7 +549,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure(),
                         parameters,
                         ownerType == null
-                                ? null
+                                ? TypeDescription.UNDEFINED
                                 : ownerType.accept(this));
             }
 
@@ -792,7 +787,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
                 return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure().accept(this).asErasure(),
                         parameters,
                         ownerType == null
-                                ? null
+                                ? TypeDescription.UNDEFINED
                                 : ownerType.accept(this));
             }
 
@@ -1182,7 +1177,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
         @Override
         public GenericTypeDescription getOwnerType() {
-            return NO_OWNER_TYPE;
+            return TypeDescription.UNDEFINED;
         }
 
         @Override
@@ -1755,7 +1750,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             public GenericTypeDescription getOwnerType() {
                 Type ownerType = parameterizedType.getOwnerType();
                 return ownerType == null
-                        ? null
+                        ? TypeDescription.UNDEFINED
                         : Sort.describe(ownerType);
             }
 
@@ -1860,7 +1855,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             public GenericTypeDescription getSuperType() {
                 GenericTypeDescription superType = typeDescription.getSuperType();
                 return superType == null
-                        ? null
+                        ? TypeDescription.UNDEFINED
                         : superType.accept(Visitor.TypeVariableErasing.INSTANCE);
             }
 
@@ -1883,7 +1878,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             public GenericTypeDescription getOwnerType() {
                 TypeDescription ownerType = typeDescription.getOwnerType();
                 return ownerType == null
-                        ? null
+                        ? TypeDescription.UNDEFINED
                         : new Raw(ownerType);
             }
 
@@ -1926,7 +1921,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             public GenericTypeDescription getComponentType() {
                 TypeDescription componentType = typeDescription.getComponentType();
                 return componentType == null
-                        ? null
+                        ? TypeDescription.UNDEFINED
                         : new Raw(componentType);
             }
 
@@ -2344,7 +2339,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
              */
             public static GenericTypeDescription of(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
                 return unresolvedType == null
-                        ? null
+                        ? TypeDescription.UNDEFINED
                         : new OfPotentiallyRawType(unresolvedType, transformer);
             }
 
@@ -2382,7 +2377,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             protected GenericTypeDescription resolve() {
                 Type superClass = type.getGenericSuperclass();
                 return superClass == null
-                        ? null
+                        ? TypeDescription.UNDEFINED
                         : Sort.describe(superClass);
             }
 
@@ -2390,7 +2385,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             public TypeDescription asErasure() {
                 Class<?> superClass = type.getSuperclass();
                 return superClass == null
-                        ? null
+                        ? TypeDescription.UNDEFINED
                         : new TypeDescription.ForLoadedType(superClass);
             }
         }

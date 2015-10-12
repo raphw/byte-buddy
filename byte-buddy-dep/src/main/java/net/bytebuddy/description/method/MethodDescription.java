@@ -879,7 +879,7 @@ public interface MethodDescription extends TypeVariableSource,
         public Object getDefaultValue() {
             Object value = method.getDefaultValue();
             return value == null
-                    ? null
+                    ? NO_DEFAULT_VALUE
                     : AnnotationDescription.ForLoadedAnnotation.describe(value, new TypeDescription.ForLoadedType(method.getReturnType()));
         }
 
@@ -1214,7 +1214,7 @@ public interface MethodDescription extends TypeVariableSource,
                 return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure(),
                         parameters,
                         ownerType == null
-                                ? null
+                                ? TypeDescription.UNDEFINED
                                 : ownerType.accept(this));
             }
 

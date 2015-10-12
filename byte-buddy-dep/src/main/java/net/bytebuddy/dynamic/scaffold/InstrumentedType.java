@@ -475,7 +475,7 @@ public interface InstrumentedType extends TypeDescription {
         public PackageDescription getPackage() {
             int packageIndex = name.lastIndexOf('.');
             return packageIndex == -1
-                    ? null
+                    ? PackageDescription.UNDEFINED
                     : new PackageDescription.Simple(name.substring(0, packageIndex));
         }
 
@@ -492,7 +492,7 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         protected GenericTypeDescription getDeclaredSuperType() {
             return superType == null
-                    ? null
+                    ? TypeDescription.UNDEFINED
                     : superType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
         }
 

@@ -3253,6 +3253,11 @@ public interface TypePool {
     class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
         /**
+         * Specifies a type without a super type definition, i.e. the {@link Object} type.
+         */
+        private static final String NO_SUPER_TYPE = null;
+
+        /**
          * The type pool to be used for looking up linked types.
          */
         private final TypePool typePool;
@@ -3337,7 +3342,7 @@ public interface TypePool {
             this.modifiers = modifiers;
             this.name = Type.getObjectType(name).getClassName();
             this.superTypeDescriptor = superTypeInternalName == null
-                    ? null
+                    ? NO_SUPER_TYPE
                     : Type.getObjectType(superTypeInternalName).getDescriptor();
             this.signatureResolution = signatureResolution;
             if (interfaceInternalName == null) {
@@ -3367,7 +3372,7 @@ public interface TypePool {
         @Override
         protected GenericTypeDescription getDeclaredSuperType() {
             return superTypeDescriptor == null || isInterface()
-                    ? null
+                    ? TypeDescription.UNDEFINED
                     : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, this);
         }
 
@@ -3416,7 +3421,7 @@ public interface TypePool {
             String name = getName();
             int index = name.lastIndexOf('.');
             return index == -1
-                    ? null
+                    ? PackageDescription.UNDEFINED
                     : new LazyPackageDescription(typePool, name.substring(0, index));
         }
 
@@ -3429,7 +3434,7 @@ public interface TypePool {
         public TypeDescription getDeclaringType() {
             return declarationContext.isDeclaredInType()
                     ? declarationContext.getEnclosingType(typePool)
-                    : null;
+                    : TypeDescription.UNDEFINED;
         }
 
         @Override
@@ -6127,7 +6132,7 @@ public interface TypePool {
             @Override
             public Object getDefaultValue() {
                 return defaultValue == null
-                        ? null
+                        ? NO_DEFAULT_VALUE
                         : defaultValue.resolve();
             }
 

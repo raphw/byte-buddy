@@ -833,7 +833,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         public TypeDescription getComponentType() {
             Class<?> componentType = type.getComponentType();
             return componentType == null
-                    ? null
+                    ? TypeDescription.UNDEFINED
                     : new TypeDescription.ForLoadedType(componentType);
         }
 
@@ -850,7 +850,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public GenericTypeDescription getDeclaredSuperType() {
             return type.getSuperclass() == null
-                    ? null
+                    ? TypeDescription.UNDEFINED
                     : new LazyProjection.OfLoadedSuperType(type);
         }
 
@@ -865,7 +865,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         public TypeDescription getDeclaringType() {
             Class<?> declaringType = type.getDeclaringClass();
             return declaringType == null
-                    ? null
+                    ? TypeDescription.UNDEFINED
                     : new TypeDescription.ForLoadedType(declaringType);
         }
 
@@ -886,7 +886,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         public TypeDescription getEnclosingType() {
             Class<?> enclosingType = type.getEnclosingClass();
             return enclosingType == null
-                    ? null
+                    ? TypeDescription.UNDEFINED
                     : new TypeDescription.ForLoadedType(enclosingType);
         }
 
@@ -929,7 +929,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         public PackageDescription getPackage() {
             Package aPackage = type.getPackage();
             return aPackage == null
-                    ? null
+                    ? PackageDescription.UNDEFINED
                     : new PackageDescription.ForLoadedPackage(aPackage);
         }
 
@@ -1287,7 +1287,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             String name = getName();
             int index = name.lastIndexOf('.');
             return index == -1
-                    ? null
+                    ? PackageDescription.UNDEFINED
                     : new PackageDescription.Simple(name.substring(0, index));
         }
 
