@@ -2320,9 +2320,7 @@ public interface TypePool {
             @Override
             public void visitOuterClass(String typeName, String methodName, String methodDescriptor) {
                 if (methodName != null) {
-                    declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInMethod(typeName,
-                            methodName,
-                            methodDescriptor);
+                    declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInMethod(typeName, methodName, methodDescriptor);
                 } else if (typeName != null) {
                     declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInType(typeName);
                 }
@@ -2335,7 +2333,8 @@ public interface TypePool {
                     if (innerName == null) {
                         anonymousType = true;
                     }
-                    if (declarationContext.isSelfDeclared()) {
+                    // Older Java compilers do not add the outer class attribute.
+                    if (outerName != null && declarationContext.isSelfDeclared()) {
                         declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInType(outerName);
                     }
                 }
@@ -2348,20 +2347,12 @@ public interface TypePool {
             }
 
             @Override
-            public FieldVisitor visitField(int modifiers,
-                                           String internalName,
-                                           String descriptor,
-                                           String genericSignature,
-                                           Object defaultValue) {
+            public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String genericSignature, Object defaultValue) {
                 return new FieldExtractor(modifiers, internalName, descriptor, genericSignature);
             }
 
             @Override
-            public MethodVisitor visitMethod(int modifiers,
-                                             String internalName,
-                                             String descriptor,
-                                             String genericSignature,
-                                             String[] exceptionName) {
+            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String genericSignature, String[] exceptionName) {
                 return internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)
                         ? IGNORE_METHOD
                         : new MethodExtractor(modifiers, internalName, descriptor, genericSignature, exceptionName);
