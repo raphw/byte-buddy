@@ -119,6 +119,17 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     }
 
     @Test
+    public void testSourceName() throws Exception {
+        for (Class<?> type : TYPES) {
+            if (type.isArray()) {
+                assertThat(describe(type).getSourceCodeName(), is(type.getComponentType().getName() + "[]"));
+            } else {
+                assertThat(describe(type).getSourceCodeName(), is(type.getName()));
+            }
+        }
+    }
+
+    @Test
     public void testInternalName() throws Exception {
         for (Class<?> type : TYPES) {
             assertThat(describe(type).getInternalName(), is(Type.getInternalName(type)));
