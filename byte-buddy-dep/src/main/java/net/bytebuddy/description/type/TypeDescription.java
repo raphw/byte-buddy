@@ -309,6 +309,67 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
          */
         protected abstract GenericTypeList getDeclaredInterfaces();
 
+        /**
+         * Checks if a specific type is assignable to another type where the source type must be a super
+         * type of the target type.
+         *
+         * @param sourceType The source type to which another type is to be assigned to.
+         * @param targetType The target type that is to be assigned to the source type.
+         * @return {@code true} if the target type is assignable to the source type.
+         */
+        private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
+            // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
+            // (1) Both types are equal (implies primitive types.)
+            if (sourceType.equals(targetType)) {
+                return true;
+            }
+            // (3) For arrays, there are special assignment rules.
+            if (targetType.isArray()) {
+                return sourceType.isArray()
+                        ? isAssignable(sourceType.getComponentType(), targetType.getComponentType())
+                        : sourceType.represents(Object.class) || TypeDescription.ARRAY_INTERFACES.contains(sourceType);
+            }
+            // (2) Interfaces do not extend the Object type but are assignable to the Object type.
+            if (sourceType.represents(Object.class)) {
+                return !targetType.isPrimitive();
+            }
+            // (4) The sub type has a super type and this super type is assignable to the super type.
+            GenericTypeDescription superType = targetType.getSuperType();
+            if (superType != null && sourceType.isAssignableFrom(superType.asErasure())) {
+                return true;
+            }
+            // (5) If the target type is an interface, any of this type's interfaces might be assignable to it.
+            if (sourceType.isInterface()) {
+                for (TypeDescription interfaceType : targetType.getInterfaces().asErasures()) {
+                    if (sourceType.isAssignableFrom(interfaceType)) {
+                        return true;
+                    }
+                }
+            }
+            // (6) None of these criteria are true, i.e. the types are not assignable.
+            return false;
+        }
+
+        @Override
+        public boolean isAssignableFrom(Class<?> type) {
+            return isAssignableFrom(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableFrom(TypeDescription typeDescription) {
+            return isAssignable(this, typeDescription);
+        }
+
+        @Override
+        public boolean isAssignableTo(Class<?> type) {
+            return isAssignableTo(new ForLoadedType(type));
+        }
+
+        @Override
+        public boolean isAssignableTo(TypeDescription typeDescription) {
+            return isAssignable(typeDescription, this);
+        }
+
         @Override
         public Sort getSort() {
             return Sort.NON_GENERIC;
@@ -363,7 +424,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                     || (represents(long.class) && value instanceof Long)
                     || (represents(float.class) && value instanceof Float)
                     || (represents(double.class) && value instanceof Double);
-
         }
 
         @Override
@@ -627,66 +687,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
          */
         public abstract static class OfSimpleType extends TypeDescription.AbstractBase {
 
-            /**
-             * Checks if a specific type is assignable to another type where the source type must be a super
-             * type of the target type.
-             *
-             * @param sourceType The source type to which another type is to be assigned to.
-             * @param targetType The target type that is to be assigned to the source type.
-             * @return {@code true} if the target type is assignable to the source type.
-             */
-            private static boolean isAssignable(TypeDescription sourceType, TypeDescription targetType) {
-                // Means that '[sourceType] var = ([targetType]) val;' is a valid assignment. This is true, if:
-                // (1) Both types are equal.
-                if (sourceType.equals(targetType)) {
-                    return true;
-                }
-                // Interfaces do not extend the Object type but are assignable to the Object type.
-                if (sourceType.represents(Object.class) && !targetType.isPrimitive()) {
-                    return true;
-                }
-                // The sub type has a super type and this super type is assignable to the super type.
-                GenericTypeDescription targetTypeSuperType = targetType.getSuperType();
-                if (targetTypeSuperType != null && targetTypeSuperType.asErasure().isAssignableTo(sourceType)) {
-                    return true;
-                }
-                // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
-                if (sourceType.isInterface()) {
-                    for (TypeDescription interfaceType : targetType.getInterfaces().asErasures()) {
-                        if (interfaceType.isAssignableTo(sourceType)) {
-                            return true;
-                        }
-                    }
-                }
-                // (3) None of these criteria are true, i.e. the types are not assignable.
-                return false;
-            }
-
-            @Override
-            public boolean isAssignableFrom(Class<?> type) {
-                return isAssignableFrom(new ForLoadedType(type));
-            }
-
-            @Override
-            public boolean isAssignableFrom(TypeDescription typeDescription) {
-                return isAssignable(this, typeDescription);
-            }
-
-            @Override
-            public boolean isAssignableTo(Class<?> type) {
-                return isAssignableTo(new ForLoadedType(type));
-            }
-
-            @Override
-            public boolean isAssignableTo(TypeDescription typeDescription) {
-                return isAssignable(typeDescription, this);
-            }
-
-            @Override
-            public boolean isInstance(Object value) {
-                return isAssignableFrom(value.getClass());
-            }
-
             @Override
             public boolean isPrimitive() {
                 return false;
@@ -747,86 +747,22 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             this.type = type;
         }
 
-        /**
-         * Checks if two types are assignable to each other. This check makes use of the fact that two types are loaded and
-         * have a {@link ClassLoader} which allows to check a type's assignability in a more efficient manner. However, two
-         * {@link Class} instances are considered assignable by this method, even if their loaded versions are not assignable
-         * as of class loader conflicts.
-         *
-         * @param sourceType The type to which another type should be assigned to.
-         * @param targetType The type which is to be assigned to another type.
-         * @return {@code true} if the source type is assignable from the target type.
-         */
-        private static boolean isAssignable(Class<?> sourceType, Class<?> targetType) {
-            if (sourceType.isAssignableFrom(targetType)) {
-                return true;
-            } else if (sourceType.isPrimitive() || targetType.isPrimitive()) {
-                return false; // Implied by 'sourceType.isAssignableFrom(targetType)'
-            } else if (targetType.isArray()) {
-                // Checks for 'Object', 'Serializable' and 'Cloneable' are implied by 'sourceType.isAssignableFrom(targetType)'
-                return sourceType.isArray() && isAssignable(sourceType.getComponentType(), targetType.getComponentType());
-            } else if (sourceType.getClassLoader() != targetType.getClassLoader()) {
-                // (1) Both types are equal by their name which means that they represent the same class on the byte code level.
-                if (sourceType.getName().equals(targetType.getName())) {
-                    return true;
-                }
-                Class<?> targetTypeSuperType = targetType.getSuperclass();
-                if (targetTypeSuperType != null && isAssignable(sourceType, targetTypeSuperType)) {
-                    return true;
-                }
-                // (2) If the target type is an interface, any of this type's interfaces might be assignable to it.
-                if (sourceType.isInterface()) {
-                    for (Class<?> interfaceType : targetType.getInterfaces()) {
-                        if (isAssignable(sourceType, interfaceType)) {
-                            return true;
-                        }
-                    }
-                }
-                // (3) None of these criteria are true, i.e. the types are not assignable.
-                return false;
-            } else /* if (sourceType.getClassLoader() == targetType.getClassLoader() // implied by assignable check */ {
-                return false; // For equal class loader, the check is implied by 'sourceType.isAssignableFrom(targetType)'
-            }
-        }
-
-        @Override
-        public boolean isInstance(Object value) {
-            return type.isInstance(value) || super.isInstance(value); // Consider class loaded by multiple class loaders.
-        }
-
         @Override
         public boolean isAssignableFrom(Class<?> type) {
-            return isAssignable(this.type, type);
-        }
-
-        @Override
-        public boolean isAssignableFrom(TypeDescription typeDescription) {
-            return typeDescription.isAssignableTo(type);
+            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
+            return this.type.isAssignableFrom(type) || (this.type.getClassLoader() != type.getClassLoader() && super.isAssignableFrom(type));
         }
 
         @Override
         public boolean isAssignableTo(Class<?> type) {
-            return isAssignable(type, this.type);
-        }
-
-        @Override
-        public boolean isAssignableTo(TypeDescription typeDescription) {
-            return typeDescription.isAssignableFrom(type);
+            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
+            return type.isAssignableFrom(this.type) || (this.type.getClassLoader() != type.getClassLoader() && super.isAssignableTo(type));
         }
 
         @Override
         public boolean represents(java.lang.reflect.Type type) {
+            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return type == this.type || super.represents(type);
-        }
-
-        @Override
-        public boolean isInterface() {
-            return type.isInterface();
-        }
-
-        @Override
-        public boolean isArray() {
-            return type.isArray();
         }
 
         @Override
@@ -835,6 +771,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             return componentType == null
                     ? TypeDescription.UNDEFINED
                     : new TypeDescription.ForLoadedType(componentType);
+        }
+
+        @Override
+        public boolean isArray() {
+            return type.isArray();
         }
 
         @Override
@@ -896,11 +837,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public String getCanonicalName() {
-            return type.getCanonicalName();
-        }
-
-        @Override
         public boolean isAnonymousClass() {
             return type.isAnonymousClass();
         }
@@ -944,6 +880,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
+        public String getCanonicalName() {
+            return type.getCanonicalName();
+        }
+
+        @Override
         public String getDescriptor() {
             return Type.getDescriptor(type);
         }
@@ -961,11 +902,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotation(type.getDeclaredAnnotations());
-        }
-
-        @Override
-        public AnnotationList getInheritedAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation(type.getAnnotations());
         }
     }
 
@@ -1013,49 +949,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
             return arity == 0
                     ? componentType
                     : new ArrayProjection(componentType, arity);
-        }
-
-        /**
-         * Checks if two types are assignable to another by first checking the array dimensions and by later
-         * checking the component types if the arity matches.
-         *
-         * @param sourceType The source type to which another type is to be assigned to.
-         * @param targetType The target type that is to be assigned to the source type.
-         * @return {@code true} if both types are assignable to one another.
-         */
-        private static boolean isArrayAssignable(TypeDescription sourceType, TypeDescription targetType) {
-            int sourceArity = 0, targetArity = 0;
-            while (sourceType.isArray()) {
-                sourceArity++;
-                sourceType = sourceType.getComponentType();
-            }
-            while (targetType.isArray()) {
-                targetArity++;
-                targetType = targetType.getComponentType();
-            }
-            return sourceArity == targetArity && sourceType.isAssignableFrom(targetType);
-        }
-
-        @Override
-        public boolean isAssignableFrom(Class<?> type) {
-            return isAssignableFrom(new ForLoadedType(type));
-        }
-
-        @Override
-        public boolean isAssignableFrom(TypeDescription typeDescription) {
-            return isArrayAssignable(this, typeDescription);
-        }
-
-        @Override
-        public boolean isAssignableTo(Class<?> type) {
-            return isAssignableTo(new ForLoadedType(type));
-        }
-
-        @Override
-        public boolean isAssignableTo(TypeDescription typeDescription) {
-            return typeDescription.represents(Object.class)
-                    || ARRAY_INTERFACES.contains(typeDescription)
-                    || isArrayAssignable(typeDescription, this);
         }
 
         @Override
