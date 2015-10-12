@@ -759,7 +759,7 @@ public interface Implementation {
 
                 @Override
                 public int getModifiers() {
-                    return Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | (instrumentedType.isClassType()
+                    return Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | (instrumentedType.isClassType()
                             ? Opcodes.ACC_PRIVATE
                             : Opcodes.ACC_PUBLIC);
                 }

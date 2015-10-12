@@ -48,8 +48,8 @@ public class ImplementationContextDefaultTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE},
-                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC}
+                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL, Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE},
+                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC}
         });
     }
 
