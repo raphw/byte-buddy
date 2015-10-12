@@ -409,11 +409,6 @@ public interface Implementation {
         interface ExtractableView extends Context {
 
             /**
-             * A default modifier for a field that serves as a cache.
-             */
-            int FIELD_CACHE_MODIFIER = Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC;
-
-            /**
              * Returns any {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType} that was registered
              * with this {@link Implementation.Context}.
              *
@@ -764,7 +759,9 @@ public interface Implementation {
 
                 @Override
                 public int getModifiers() {
-                    return FIELD_CACHE_MODIFIER;
+                    return Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | (instrumentedType.isClassType()
+                            ? Opcodes.ACC_PRIVATE
+                            : Opcodes.ACC_PUBLIC);
                 }
 
                 @Override

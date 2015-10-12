@@ -15,7 +15,6 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,8 +48,8 @@ public class ImplementationContextDefaultTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL},
-                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC}
+                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE},
+                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC}
         });
     }
 
@@ -58,9 +57,12 @@ public class ImplementationContextDefaultTest {
 
     private final int accessorMethodModifiers;
 
-    public ImplementationContextDefaultTest(boolean classType, int accessorMethodModifiers) {
+    private final int cacheFieldModifiers;
+
+    public ImplementationContextDefaultTest(boolean classType, int accessorMethodModifiers, int cacheFieldModifiers) {
         this.classType = classType;
         this.accessorMethodModifiers = accessorMethodModifiers;
+        this.cacheFieldModifiers = cacheFieldModifiers;
     }
 
     @Rule
@@ -391,12 +393,12 @@ public class ImplementationContextDefaultTest {
         when(thirdTypeInitializer.withReturn()).thenReturn(terminationAppender);
         when(thirdTypeInitializer.isDefined()).thenReturn(true);
         implementationContext.drain(classVisitor, methodPool, injectedCode);
-        verify(classVisitor).visitField(eq(Implementation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
+        verify(classVisitor).visitField(eq(cacheFieldModifiers),
                 Mockito.startsWith(Implementation.Context.Default.FIELD_CACHE_PREFIX),
                 eq(BAR),
                 Mockito.isNull(String.class),
                 Mockito.isNull(Object.class));
-        verify(classVisitor).visitField(eq(Implementation.Context.ExtractableView.FIELD_CACHE_MODIFIER),
+        verify(classVisitor).visitField(eq(cacheFieldModifiers),
                 Mockito.startsWith(Implementation.Context.Default.FIELD_CACHE_PREFIX),
                 eq(QUX),
                 Mockito.isNull(String.class),
@@ -641,14 +643,5 @@ public class ImplementationContextDefaultTest {
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verify(methodVisitor).visitMaxs(1, 0);
         verify(methodVisitor).visitEnd();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyBasic();
-        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldCacheEntry.class).apply();
-        ObjectPropertyAssertion.of(Implementation.Context.Default.AccessorMethodDelegation.class).apply();
-        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldSetterDelegation.class).apply();
-        ObjectPropertyAssertion.of(Implementation.Context.Default.FieldGetterDelegation.class).apply();
     }
 }
