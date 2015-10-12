@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import jdk.nashorn.internal.codegen.types.*;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.modifier.MethodManifestation;
@@ -30,7 +29,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.LocalVariablesSorter;
-import org.objectweb.asm.commons.RemappingMethodAdapter;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -53,8 +51,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public abstract class AbstractDynamicTypeBuilderForInliningTest extends AbstractDynamicTypeBuilderTest {
 
