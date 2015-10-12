@@ -642,7 +642,7 @@ public interface Implementation {
                     return fieldCache;
                 }
                 validateFieldCacheAccessibility();
-                fieldCache = new CacheValueField(instrumentedType, fieldType, suffix);
+                fieldCache = new CacheValueField(instrumentedType, fieldType, suffix, fieldValue.hashCode());
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
@@ -728,16 +728,23 @@ public interface Implementation {
                 private final String suffix;
 
                 /**
+                 * The hash value of the field's value for creating a unique field name.
+                 */
+                private final int valueHashCode;
+
+                /**
                  * Creates a new cache value field.
                  *
                  * @param instrumentedType The instrumented type.
                  * @param fieldType        The type of the cache's field.
                  * @param suffix           The suffix to use for the cache field's name.
+                 * @param valueHashCode    The hash value of the field's value for creating a unique field name.
                  */
-                protected CacheValueField(TypeDescription instrumentedType, TypeDescription fieldType, String suffix) {
+                protected CacheValueField(TypeDescription instrumentedType, TypeDescription fieldType, String suffix, int valueHashCode) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
                     this.suffix = suffix;
+                    this.valueHashCode = valueHashCode;
                 }
 
                 @Override
@@ -762,7 +769,7 @@ public interface Implementation {
 
                 @Override
                 public String getName() {
-                    return String.format("%s$%s", FIELD_CACHE_PREFIX, suffix);
+                    return String.format("%s$%s$%d", FIELD_CACHE_PREFIX, suffix, Math.abs(valueHashCode % Integer.MAX_VALUE));
                 }
             }
 

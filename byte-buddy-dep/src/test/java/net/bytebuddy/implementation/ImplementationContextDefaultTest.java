@@ -34,10 +34,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
@@ -383,6 +384,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.cache(firstFieldValue, firstFieldType), is(firstField));
         FieldDescription secondField = implementationContext.cache(secondFieldValue, secondFieldType);
         assertThat(implementationContext.cache(secondFieldValue, secondFieldType), is(secondField));
+        assertThat(firstField.getName(), not(secondField.getName()));
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         when(typeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(otherTypeInitializer);
         when(otherTypeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(thirdTypeInitializer);
