@@ -64,19 +64,18 @@
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.jxr>2.5</version.plugin.jxr>
         <version.plugin.jar>2.6</version.plugin.jar>
-        <version.plugin.release>2.5.1</version.plugin.release>
+        <version.plugin.release>2.5.2</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
         <version.plugin.surefire>2.18.1</version.plugin.surefire>
-        <version.plugin.pitest>1.1.6</version.plugin.pitest>
+        <version.plugin.pitest>1.1.7</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
         <!-- Versions 2.6 and 2.7 fail on Travis. -->
         <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
-        <version.plugin.coveralls>3.1.0</version.plugin.coveralls>
+        <version.plugin.coveralls>4.0.0</version.plugin.coveralls>
         <!-- Subsequent versions of checkstyle require Java 7. -->
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
         <version.plugin.findbugs>3.0.1</version.plugin.findbugs>
-        <version.annotations.findbugs>3.0.0</version.annotations.findbugs>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
 
@@ -154,7 +153,7 @@
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
-            <version>${version.annotations.findbugs}</version>
+            <version>${version.plugin.findbugs}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
