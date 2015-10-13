@@ -341,6 +341,7 @@ public class MethodDelegation implements Implementation {
      * @param delegate A delegate instance which will be injected by a
      *                 {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                 then delegated to this instance.
+     * @param type     The type as which the delegate is treated for resolving its methods.
      * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate, Class<?> type) {

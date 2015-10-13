@@ -551,6 +551,7 @@ public interface ClassInjector {
          * @param folder          The folder to be used for storing jar files.
          * @param target          A representation of the target path to which classes are to be appended.
          * @param instrumentation The instrumentation to use for appending to the class path or the boot path.
+         * @return An appropriate class injector that applies instrumentation.
          */
         public static ClassInjector of(File folder, Target target, Instrumentation instrumentation) {
             return new UsingInstrumentation(folder, target, instrumentation, new RandomString());

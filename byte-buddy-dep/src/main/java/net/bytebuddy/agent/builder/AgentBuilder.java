@@ -484,11 +484,12 @@ public interface AgentBuilder {
                  * @param binaryRepresentation The binary representation of the instrumented type. The provided array must not be modified.
                  * @param cacheProvider        The cache provider to use.
                  * @param classFileLocator     The class file locator to use.
+                 * @return An initialized binary locator.
                  */
-                public static Initialized of(String typeName,
-                                             byte[] binaryRepresentation,
-                                             TypePool.CacheProvider cacheProvider,
-                                             ClassFileLocator classFileLocator) {
+                public static BinaryLocator.Initialized of(String typeName,
+                                                           byte[] binaryRepresentation,
+                                                           TypePool.CacheProvider cacheProvider,
+                                                           ClassFileLocator classFileLocator) {
                     return new Initialized(typeName,
                             binaryRepresentation,
                             new TypePool.LazyFacade(new TypePool.Default(cacheProvider, classFileLocator)),

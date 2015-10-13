@@ -133,8 +133,8 @@ public class ByteArrayClassLoader extends ClassLoader {
      * @param accessControlContext      The access control context to use for loading classes.
      * @param persistenceHandler        The persistence handler of the created class loader.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
-     * @param childFirst                {@code true} {@code true} if the created class loader should apply child-first
-     *                                  semantics when loading the {@code types}.
+     * @param childFirst                {@code true} if the created class loader should apply child-first semantics when loading the {@code types}.
+     * @param forbidExisting            {@code true} if the class loading should throw an exception if a class was already loaded by a parent class loader.
      * @return A map of the given type descriptions pointing to their loaded representations.
      */
     public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
