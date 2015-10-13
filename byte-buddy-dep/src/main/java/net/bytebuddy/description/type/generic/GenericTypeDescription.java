@@ -560,7 +560,7 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
             @Override
             public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
-                return new ForParameterizedType.Raw(typeDescription.asErasure());
+                return new ForNonGenericType(typeDescription.asErasure());
             }
 
             @Override
@@ -1118,6 +1118,160 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
     }
 
     /**
+     * <p>
+     * A raw type representation of a non-generic type. This raw type differs from a raw type in the Java programming language by
+     * representing a minimal erasure compared to Java's full erasure. This means that generic types are preserved as long as they
+     * do not involve a type variable. Nested type variables are erased on the deepest possible level.
+     * </p>
+     * <p>
+     * All fields, methods, interfaces and the super type that are returned from this instance represent appropriately erased types.
+     * </p>
+     */
+    class ForNonGenericType implements GenericTypeDescription {
+
+        /**
+         * The represented non-generic type.
+         */
+        private final TypeDescription typeDescription;
+
+        /**
+         * Creates a new raw type representation.
+         *
+         * @param typeDescription The represented non-generic type.
+         */
+        public ForNonGenericType(TypeDescription typeDescription) {
+            this.typeDescription = typeDescription;
+        }
+
+        @Override
+        public GenericTypeDescription getSuperType() {
+            return LazyProjection.OfTransformedType.of(typeDescription.getSuperType(), Visitor.TypeVariableErasing.INSTANCE);
+        }
+
+        @Override
+        public GenericTypeList getInterfaces() {
+            return new GenericTypeList.OfTransformedTypes(typeDescription.getInterfaces(), Visitor.TypeVariableErasing.INSTANCE);
+        }
+
+        @Override
+        public FieldList getDeclaredFields() {
+            return new FieldList.TypeSubstituting(this, typeDescription.getDeclaredFields(), Visitor.TypeVariableErasing.INSTANCE);
+        }
+
+        @Override
+        public MethodList getDeclaredMethods() {
+            return new MethodList.TypeSubstituting(this, typeDescription.getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
+        }
+
+        @Override
+        public GenericTypeDescription getOwnerType() {
+            TypeDescription ownerType = typeDescription.getOwnerType();
+            return ownerType == null
+                    ? TypeDescription.UNDEFINED
+                    : new ForNonGenericType(ownerType);
+        }
+
+        @Override
+        public TypeDescription asErasure() {
+            return typeDescription;
+        }
+
+        @Override
+        public Sort getSort() {
+            return Sort.NON_GENERIC;
+        }
+
+        @Override
+        public GenericTypeList getParameters() {
+            return typeDescription.getParameters();
+        }
+
+        @Override
+        public <T> T accept(Visitor<T> visitor) {
+            return visitor.onNonGenericType(this);
+        }
+
+        @Override
+        public String getTypeName() {
+            return typeDescription.getTypeName();
+        }
+
+        @Override
+        public GenericTypeList getUpperBounds() {
+            return typeDescription.getUpperBounds();
+        }
+
+        @Override
+        public GenericTypeList getLowerBounds() {
+            return typeDescription.getLowerBounds();
+        }
+
+        @Override
+        public GenericTypeDescription getComponentType() {
+            TypeDescription componentType = typeDescription.getComponentType();
+            return componentType == null
+                    ? TypeDescription.UNDEFINED
+                    : new ForNonGenericType(componentType);
+        }
+
+        @Override
+        public TypeVariableSource getVariableSource() {
+            return typeDescription.getVariableSource();
+        }
+
+        @Override
+        public String getSymbol() {
+            return typeDescription.getSymbol();
+        }
+
+        @Override
+        public StackSize getStackSize() {
+            return typeDescription.getStackSize();
+        }
+
+        @Override
+        public String getSourceCodeName() {
+            return typeDescription.getSourceCodeName();
+        }
+
+        @Override
+        public boolean isArray() {
+            return typeDescription.isArray();
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return typeDescription.isPrimitive();
+        }
+
+        @Override
+        public boolean represents(Type type) {
+            return typeDescription.represents(type);
+        }
+
+        @Override
+        public Iterator<GenericTypeDescription> iterator() {
+            return new SuperTypeIterator(this);
+        }
+
+        @Override
+        public int hashCode() {
+            return typeDescription.hashCode();
+        }
+
+        @Override
+        @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure instance")
+        public boolean equals(Object other) {
+            return typeDescription.equals(other);
+        }
+
+        @Override
+        public String toString() {
+            return typeDescription.toString();
+        }
+    }
+
+    /**
      * A base implementation of a generic type description that represents a potentially generic array. Instances represent a non-generic type
      * if the given component type is non-generic.
      */
@@ -1587,12 +1741,12 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return LazyProjection.OfPotentiallyRawType.of(asErasure().getSuperType(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return LazyProjection.OfTransformedType.of(asErasure().getSuperType(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
         public GenericTypeList getInterfaces() {
-            return new GenericTypeList.OfPotentiallyRawType(asErasure().getInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            return new GenericTypeList.OfTransformedTypes(asErasure().getInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
@@ -1806,179 +1960,6 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             @Override
             public GenericTypeDescription getOwnerType() {
                 return ownerType;
-            }
-        }
-
-        /**
-         * <p>
-         * A raw type representation of a non-generic type. This raw type differs from a raw type in the Java programming language by
-         * representing a minimal erasure compared to Java's full erasure. This means that generic types are preserved as long as they
-         * do not involve a type variable. Nested type variables are erased on the deepest possible level.
-         * </p>
-         * <p>
-         * All fields, methods, interfaces and the super type that are returned from this instance represent appropriately erased types.
-         * </p>
-         */
-        public static class Raw implements GenericTypeDescription {
-
-            /**
-             * The represented non-generic type.
-             */
-            private final TypeDescription typeDescription;
-
-            /**
-             * Creates a new raw type representation.
-             *
-             * @param typeDescription The represented non-generic type.
-             */
-            protected Raw(TypeDescription typeDescription) {
-                this.typeDescription = typeDescription;
-            }
-
-            /**
-             * Resolves a generic type to a potentially raw type. A raw type is returned if the given type declares a different number of type variables
-             * than parameters.
-             *
-             * @param typeDescription The type to resolve as a potentially raw type. Only non-generic types
-             *                        ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}) and parameterized types
-             *                        ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#PARAMETERIZED}) are well-defined input.
-             * @param transformer     A transformer to apply to a non-raw types.
-             * @return Either a raw type, or a transformed generic type.
-             */
-            public static GenericTypeDescription check(GenericTypeDescription typeDescription, Visitor<? extends GenericTypeDescription> transformer) {
-                return typeDescription.getParameters().size() != typeDescription.asErasure().getTypeVariables().size()
-                        ? new Raw(typeDescription.asErasure())
-                        : typeDescription.accept(transformer);
-            }
-
-            @Override
-            public GenericTypeDescription getSuperType() {
-                GenericTypeDescription superType = typeDescription.getSuperType();
-                return superType == null
-                        ? TypeDescription.UNDEFINED
-                        : superType.accept(Visitor.TypeVariableErasing.INSTANCE);
-            }
-
-            @Override
-            public GenericTypeList getInterfaces() {
-                return typeDescription.getInterfaces().accept(Visitor.TypeVariableErasing.INSTANCE);
-            }
-
-            @Override
-            public FieldList getDeclaredFields() {
-                return new FieldList.TypeSubstituting(this, typeDescription.getDeclaredFields(), Visitor.TypeVariableErasing.INSTANCE);
-            }
-
-            @Override
-            public MethodList getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(this, typeDescription.getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
-            }
-
-            @Override
-            public GenericTypeDescription getOwnerType() {
-                TypeDescription ownerType = typeDescription.getOwnerType();
-                return ownerType == null
-                        ? TypeDescription.UNDEFINED
-                        : new Raw(ownerType);
-            }
-
-            @Override
-            public TypeDescription asErasure() {
-                return typeDescription;
-            }
-
-            @Override
-            public Sort getSort() {
-                return typeDescription.getSort();
-            }
-
-            @Override
-            public GenericTypeList getParameters() {
-                return typeDescription.getParameters();
-            }
-
-            @Override
-            public <T> T accept(Visitor<T> visitor) {
-                return visitor.onNonGenericType(this);
-            }
-
-            @Override
-            public String getTypeName() {
-                return typeDescription.getTypeName();
-            }
-
-            @Override
-            public GenericTypeList getUpperBounds() {
-                return typeDescription.getUpperBounds();
-            }
-
-            @Override
-            public GenericTypeList getLowerBounds() {
-                return typeDescription.getLowerBounds();
-            }
-
-            @Override
-            public GenericTypeDescription getComponentType() {
-                TypeDescription componentType = typeDescription.getComponentType();
-                return componentType == null
-                        ? TypeDescription.UNDEFINED
-                        : new Raw(componentType);
-            }
-
-            @Override
-            public TypeVariableSource getVariableSource() {
-                return typeDescription.getVariableSource();
-            }
-
-            @Override
-            public String getSymbol() {
-                return typeDescription.getSymbol();
-            }
-
-            @Override
-            public StackSize getStackSize() {
-                return typeDescription.getStackSize();
-            }
-
-            @Override
-            public String getSourceCodeName() {
-                return typeDescription.getSourceCodeName();
-            }
-
-            @Override
-            public boolean isArray() {
-                return typeDescription.isArray();
-            }
-
-            @Override
-            public boolean isPrimitive() {
-                return typeDescription.isPrimitive();
-            }
-
-            @Override
-            public boolean represents(Type type) {
-                return typeDescription.represents(type);
-            }
-
-            @Override
-            public Iterator<GenericTypeDescription> iterator() {
-                return new SuperTypeIterator(this);
-            }
-
-            @Override
-            public int hashCode() {
-                return typeDescription.hashCode();
-            }
-
-            @Override
-            @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure instance")
-            public boolean equals(Object other) {
-                return typeDescription.equals(other);
-            }
-
-            @Override
-            public String toString() {
-                return typeDescription.toString();
             }
         }
     }
@@ -2305,28 +2286,28 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
         }
 
         /**
-         * A lazy projection of potentially raw types.
+         * A lazy projection of an untransformed type.
          */
-        public static class OfPotentiallyRawType extends LazyProjection {
+        public static class OfTransformedType extends LazyProjection {
 
             /**
-             * The unresolved type to resolve.
+             * The represented type in its untransformed form.
              */
-            private final GenericTypeDescription unresolvedType;
+            private final GenericTypeDescription untransformedType;
 
             /**
-             * The transformer to apply to non-raw types.
+             * The transformer to apply to the untransformed type.
              */
             private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer;
 
             /**
-             * Creates a new lazy projection of a potentially raw type.
+             * Creates a new lazy projection of a type that is being transformed.
              *
-             * @param unresolvedType The unresolved type to resolve.
-             * @param transformer    The transformer to apply to non-raw types.
+             * @param untransformedType The represented type in its untransformed form.
+             * @param transformer       The transformer to apply to the untransformed type.
              */
-            public OfPotentiallyRawType(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
-                this.unresolvedType = unresolvedType;
+            public OfTransformedType(GenericTypeDescription untransformedType, Visitor<? extends GenericTypeDescription> transformer) {
+                this.untransformedType = untransformedType;
                 this.transformer = transformer;
             }
 
@@ -2340,17 +2321,17 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             public static GenericTypeDescription of(GenericTypeDescription unresolvedType, Visitor<? extends GenericTypeDescription> transformer) {
                 return unresolvedType == null
                         ? TypeDescription.UNDEFINED
-                        : new OfPotentiallyRawType(unresolvedType, transformer);
+                        : new OfTransformedType(unresolvedType, transformer);
             }
 
             @Override
             protected GenericTypeDescription resolve() {
-                return GenericTypeDescription.ForParameterizedType.Raw.check(unresolvedType, transformer);
+                return untransformedType.accept(transformer);
             }
 
             @Override
             public TypeDescription asErasure() {
-                return unresolvedType.asErasure();
+                return untransformedType.asErasure();
             }
         }
 

@@ -393,40 +393,40 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
     }
 
     /**
-     * A list of potentially raw generic type descriptions.
+     * Represents a list of types in an untransformed form.
      */
-    class OfPotentiallyRawType extends AbstractBase {
+    class OfTransformedTypes extends AbstractBase {
 
         /**
-         * The potentially raw types that are represented by this list.
+         * The represented types in their untransformed form.
          */
-        private final List<? extends GenericTypeDescription> typeDescriptions;
+        private final List<? extends GenericTypeDescription> untransformedTypes;
 
         /**
-         * The transformer to apply to non-raw types.
+         * The transformer to apply to these types.
          */
         private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer;
 
         /**
-         * Creates a new list of potentially raw types.
+         * Creates a new list of untransformed types.
          *
-         * @param typeDescriptions The potentially raw types that are represented by this list.
-         * @param transformer      The transformer to apply to non-raw types.
+         * @param untransformedTypes The represented types in their untransformed form.
+         * @param transformer        The transformer to apply to these types.
          */
-        public OfPotentiallyRawType(List<? extends GenericTypeDescription> typeDescriptions,
-                                    GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer) {
-            this.typeDescriptions = typeDescriptions;
+        public OfTransformedTypes(List<? extends GenericTypeDescription> untransformedTypes,
+                                  GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer) {
+            this.untransformedTypes = untransformedTypes;
             this.transformer = transformer;
         }
 
         @Override
         public GenericTypeDescription get(int index) {
-            return GenericTypeDescription.LazyProjection.OfPotentiallyRawType.of(typeDescriptions.get(index), transformer);
+            return new GenericTypeDescription.LazyProjection.OfTransformedType(untransformedTypes.get(index), transformer);
         }
 
         @Override
         public int size() {
-            return typeDescriptions.size();
+            return untransformedTypes.size();
         }
     }
 

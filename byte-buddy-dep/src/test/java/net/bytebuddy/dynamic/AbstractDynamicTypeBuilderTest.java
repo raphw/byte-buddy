@@ -28,7 +28,10 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -331,15 +334,15 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 };
             }
         });
-        when(classVisitorWrapper.wrapWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
+        when(classVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
         Class<?> type = createPlain()
                 .classVisitor(classVisitorWrapper)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-        verify(classVisitorWrapper).wrapWriter(0);
-        verify(classVisitorWrapper, atMost(1)).wrapReader(0);
+        verify(classVisitorWrapper).mergeWriter(0);
+        verify(classVisitorWrapper, atMost(1)).mergeReader(0);
         verify(classVisitorWrapper).wrap(any(ClassVisitor.class));
         verifyNoMoreInteractions(classVisitorWrapper);
     }

@@ -22,10 +22,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.utility.ByteBuddyCommons.join;
@@ -287,7 +284,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return LazyProjection.OfPotentiallyRawType.of(getDeclaredSuperType(), GenericTypeDescription.Visitor.NoOp.INSTANCE);
+            return LazyProjection.OfTransformedType.of(getDeclaredSuperType(), RawTypeWrapper.INSTANCE);
         }
 
         /**
@@ -299,7 +296,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeList getInterfaces() {
-            return new GenericTypeList.OfPotentiallyRawType(getDeclaredInterfaces(), GenericTypeDescription.Visitor.NoOp.INSTANCE);
+            return new GenericTypeList.OfTransformedTypes(getDeclaredInterfaces(), RawTypeWrapper.INSTANCE);
         }
 
         /**
@@ -679,6 +676,95 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public String toString() {
             return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
+        }
+
+        /**
+         * A visitor that represents all {@link TypeDescription} instances as raw generic types.
+         */
+        protected enum RawTypeWrapper implements GenericTypeDescription.Visitor<GenericTypeDescription> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericArray) {
+                return ForGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
+            }
+
+            @Override
+            public GenericTypeDescription onWildcard(GenericTypeDescription wildcard) {
+                // Wildcards which are used within parameterized types are taken care of by the calling method.
+                GenericTypeList lowerBounds = wildcard.getLowerBounds();
+                return lowerBounds.isEmpty()
+                        ? GenericTypeDescription.ForWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
+                        : GenericTypeDescription.ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+            }
+
+            @Override
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
+                for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
+                    parameters.add(parameter.accept(this));
+                }
+                GenericTypeDescription ownerType = parameterizedType.getOwnerType();
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure(),
+                        parameters,
+                        ownerType == null
+                                ? TypeDescription.UNDEFINED
+                                : ownerType.accept(this));
+            }
+
+            @Override
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                return new RawTypeVariable(typeVariable);
+            }
+
+            @Override
+            public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
+                return new ForNonGenericType(typeDescription.asErasure());
+            }
+
+            @Override
+            public String toString() {
+                return "TypeDescription.AbstractBase.RawTypeWrapper." + name();
+            }
+
+            /**
+             * An representation of a type variable with raw type bounds.
+             */
+            protected static class RawTypeVariable extends ForTypeVariable {
+
+                /**
+                 * The type variable in its declared form.
+                 */
+                private final GenericTypeDescription typeVariable;
+
+                /**
+                 * Creates a new raw type representation of a type variable.
+                 *
+                 * @param typeVariable The type variable in its declared form.
+                 */
+                protected RawTypeVariable(GenericTypeDescription typeVariable) {
+                    this.typeVariable = typeVariable;
+                }
+
+                @Override
+                public GenericTypeList getUpperBounds() {
+                    return new GenericTypeList.OfTransformedTypes(typeVariable.getUpperBounds(), RawTypeWrapper.INSTANCE);
+                }
+
+                @Override
+                public TypeVariableSource getVariableSource() {
+                    return typeVariable.getVariableSource();
+                }
+
+                @Override
+                public String getSymbol() {
+                    return typeVariable.getSymbol();
+                }
+            }
         }
 
         /**

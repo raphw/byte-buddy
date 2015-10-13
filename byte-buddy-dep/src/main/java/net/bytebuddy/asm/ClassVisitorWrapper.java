@@ -21,7 +21,7 @@ public interface ClassVisitorWrapper {
      * @param hint The current hint. This value should be merged (e.g. {@code hint | foo}) into the value that is returned by this wrapper.
      * @return The hint to be provided to the ASM {@code ClassWriter}.
      */
-    int wrapWriter(int hint);
+    int mergeWriter(int hint);
 
     /**
      * Defines a hint that is provided to any {@code ClassReader} when reading a class if applicable. Typically, this gives opportunity to
@@ -31,7 +31,7 @@ public interface ClassVisitorWrapper {
      * @param hint The current hint. This value should be merged (e.g. {@code hint | foo}) into the value that is returned by this wrapper.
      * @return The hint to be provided to the ASM {@code ClassReader}.
      */
-    int wrapReader(int hint);
+    int mergeReader(int hint);
 
     /**
      * Applies a {@code ClassVisitorWrapper} to the creation of a {@link net.bytebuddy.dynamic.DynamicType}.
@@ -100,17 +100,17 @@ public interface ClassVisitorWrapper {
         }
 
         @Override
-        public int wrapWriter(int hint) {
+        public int mergeWriter(int hint) {
             for (ClassVisitorWrapper classVisitorWrapper : classVisitorWrappers) {
-                hint = classVisitorWrapper.wrapWriter(hint);
+                hint = classVisitorWrapper.mergeWriter(hint);
             }
             return hint;
         }
 
         @Override
-        public int wrapReader(int hint) {
+        public int mergeReader(int hint) {
             for (ClassVisitorWrapper classVisitorWrapper : classVisitorWrappers) {
-                hint = classVisitorWrapper.wrapReader(hint);
+                hint = classVisitorWrapper.mergeReader(hint);
             }
             return hint;
         }

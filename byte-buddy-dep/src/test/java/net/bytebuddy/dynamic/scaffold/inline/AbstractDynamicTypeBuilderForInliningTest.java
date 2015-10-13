@@ -368,16 +368,16 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 };
             }
         });
-        when(classVisitorWrapper.wrapWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
-        when(classVisitorWrapper.wrapReader(0)).thenReturn(ClassReader.EXPAND_FRAMES);
+        when(classVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
+        when(classVisitorWrapper.mergeReader(0)).thenReturn(ClassReader.EXPAND_FRAMES);
         Class<?> type = create(StackMapFrames.class)
                 .classVisitor(classVisitorWrapper)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
-        verify(classVisitorWrapper).wrapWriter(0);
-        verify(classVisitorWrapper).wrapReader(0);
+        verify(classVisitorWrapper).mergeWriter(0);
+        verify(classVisitorWrapper).mergeReader(0);
         verify(classVisitorWrapper).wrap(any(ClassVisitor.class));
         verifyNoMoreInteractions(classVisitorWrapper);
     }
