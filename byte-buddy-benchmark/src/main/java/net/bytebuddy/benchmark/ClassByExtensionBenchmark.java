@@ -6,7 +6,6 @@ import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.benchmark.specimen.ExampleClass;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
@@ -80,7 +79,7 @@ public class ClassByExtensionBenchmark {
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(MethodDelegation.to(ByteBuddyInterceptor.class))
                 .make()
-                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefinitionStrategy(PackageDefinitionStrategy.NoOp.INSTANCE))
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded()
                 .newInstance();
     }
@@ -99,7 +98,7 @@ public class ClassByExtensionBenchmark {
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(SuperMethodCall.INSTANCE)
                 .make()
-                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION.withPackageDefinitionStrategy(PackageDefinitionStrategy.NoOp.INSTANCE))
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded()
                 .newInstance();
     }
