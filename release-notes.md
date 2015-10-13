@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. October 2015: version 0.7 (release candidate 4)
+
+- Fixed naming strategy for fields that cache values which chose duplicate names.
+- Fixed resolution of raw types within the type hierarchy which were represented as non-generic `TypeDescription` instances where type variables of members were not resolved.
+- Added possibility to specify hints for `ClassReader` and `ClassWriter` instances.
+- Fixed resolution for modifiers of members that are defined by Byte Buddy. Previsouly, Byte Buddy would sometimes attempt to define private syntehtic methods on generated interfaces.
+- Fixed assignability resolution for arrays.
+- Fixed class file parser which would not recognize outer classes for version 1.3 byte code.
+
+*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
+
 ### 6. October 2015: version 0.7 (release candidate 3)
 
 - Read `Nexus` instances of the Byte Buddy agents from the enclosing class loader rather than from the system class loader. This allows for their usage from OSGi environments and for user with other custom class loaders.
