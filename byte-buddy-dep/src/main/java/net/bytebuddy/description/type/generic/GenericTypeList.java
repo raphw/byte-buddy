@@ -154,25 +154,25 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
     class ForDetachedTypes extends AbstractBase {
 
         /**
-         * The visitor to use for attaching the detached types.
-         */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
-
-        /**
          * The detached types this list represents.
          */
         private final List<? extends GenericTypeDescription> detachedTypes;
 
         /**
+         * The visitor to use for attaching the detached types.
+         */
+        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+
+        /**
          * Creates a list of detached types that are attached on reception.
          *
-         * @param visitor       The visitor to use for attaching the detached types.
          * @param detachedTypes The detached types this list represents.
+         * @param visitor       The visitor to use for attaching the detached types.
          */
-        protected ForDetachedTypes(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor,
-                                   List<? extends GenericTypeDescription> detachedTypes) {
-            this.visitor = visitor;
+        public ForDetachedTypes(List<? extends GenericTypeDescription> detachedTypes,
+                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             this.detachedTypes = detachedTypes;
+            this.visitor = visitor;
         }
 
         /**
@@ -183,7 +183,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
          * @return A type list representing the detached types being attached to the provided type description.
          */
         public static GenericTypeList attach(TypeDescription typeDescription, List<? extends GenericTypeDescription> detachedTypes) {
-            return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(typeDescription), detachedTypes);
+            return new ForDetachedTypes(detachedTypes, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(typeDescription));
         }
 
         /**
@@ -194,7 +194,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
          * @return A type list representing the detached types being attached to the provided field description.
          */
         public static GenericTypeList attach(FieldDescription fieldDescription, List<? extends GenericTypeDescription> detachedTypes) {
-            return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(fieldDescription), detachedTypes);
+            return new ForDetachedTypes(detachedTypes, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(fieldDescription));
         }
 
         /**
@@ -205,7 +205,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
          * @return A type list representing the detached types being attached to the provided method description.
          */
         public static GenericTypeList attach(MethodDescription methodDescription, List<? extends GenericTypeDescription> detachedTypes) {
-            return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(methodDescription), detachedTypes);
+            return new ForDetachedTypes(detachedTypes, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(methodDescription));
         }
 
         /**
@@ -216,7 +216,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
          * @return A type list representing the detached types being attached to the provided parameter description.
          */
         public static GenericTypeList attach(ParameterDescription parameterDescription, List<? extends GenericTypeDescription> detachedTypes) {
-            return new ForDetachedTypes(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(parameterDescription), detachedTypes);
+            return new ForDetachedTypes(detachedTypes, GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(parameterDescription));
         }
 
         @Override
@@ -326,13 +326,13 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                  *
                  * @param symbol             The represented symbol of the represented type variable.
                  * @param typeVariableSource The type variable source of this type variable.
-                 * @param visitor            The visitor to use for attaching the represented type variable bounds.
                  * @param detachedBounds     The detached bounds of this type variable.
+                 * @param visitor            The visitor to use for attaching the represented type variable bounds.
                  */
                 protected LazyTypeVariable(String symbol,
                                            TypeVariableSource typeVariableSource,
-                                           GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor,
-                                           List<? extends GenericTypeDescription> detachedBounds) {
+                                           List<? extends GenericTypeDescription> detachedBounds,
+                                           GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
                     this.symbol = symbol;
                     this.typeVariableSource = typeVariableSource;
                     this.visitor = visitor;
@@ -350,12 +350,12 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 public static GenericTypeDescription of(GenericTypeDescription detachedVariable,
                                                         TypeVariableSource typeVariableSource,
                                                         GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-                    return new LazyTypeVariable(detachedVariable.getSymbol(), typeVariableSource, visitor, detachedVariable.getUpperBounds());
+                    return new LazyTypeVariable(detachedVariable.getSymbol(), typeVariableSource, detachedVariable.getUpperBounds(), visitor);
                 }
 
                 @Override
                 public GenericTypeList getUpperBounds() {
-                    return new ForDetachedTypes(visitor, detachedBounds);
+                    return new ForDetachedTypes(detachedBounds, visitor);
                 }
 
                 @Override
@@ -367,6 +367,243 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 public String getSymbol() {
                     return symbol;
                 }
+            }
+        }
+    }
+
+    /**
+     * A lazy projection of a type's generic interface types.
+     */
+    class OfLoadedInterfaceTypes extends AbstractBase {
+
+        /**
+         * The type of which the interface types are represented by this list.
+         */
+        private final Class<?> type;
+
+        /**
+         * Creates a lazy projection of interface types.
+         *
+         * @param type The type of which the interface types are represented by this list.
+         */
+        public OfLoadedInterfaceTypes(Class<?> type) {
+            this.type = type;
+        }
+
+        @Override
+        public GenericTypeDescription get(int index) {
+            return new TypeProjection(type, index, type.getInterfaces()[index]);
+        }
+
+        @Override
+        public int size() {
+            return type.getInterfaces().length;
+        }
+
+        @Override
+        public TypeList asErasures() {
+            return new TypeList.ForLoadedType(type.getInterfaces());
+        }
+
+        /**
+         * A type projection of an interface type.
+         */
+        private static class TypeProjection extends GenericTypeDescription.LazyProjection {
+
+            /**
+             * The type of which an interface type is represented.
+             */
+            private final Class<?> type;
+
+            /**
+             * The index of the generic interface type that is represented.
+             */
+            private final int index;
+
+            /**
+             * The erasure of the type of the interface this lazy projection represents.
+             */
+            private final Class<?> erasure;
+
+            /**
+             * Creates a new lazy type projection of a generic interface type.
+             *
+             * @param type    The type of which an interface type is represented.
+             * @param index   The index of the generic interface type that is represented.
+             * @param erasure The erasure of the type of the interface this lazy projection represents.
+             */
+            private TypeProjection(Class<?> type, int index, Class<?> erasure) {
+                this.type = type;
+                this.index = index;
+                this.erasure = erasure;
+            }
+
+            @Override
+            protected GenericTypeDescription resolve() {
+                return GenericTypeDescription.Sort.describe(type.getGenericInterfaces()[index]);
+            }
+
+            @Override
+            public TypeDescription asErasure() {
+                return new TypeDescription.ForLoadedType(erasure);
+            }
+        }
+    }
+
+    /**
+     * A lazy projection of a constructor's exception types.
+     */
+    class OfConstructorExceptionTypes extends AbstractBase {
+
+        /**
+         * The constructor of which the exception types are represented.
+         */
+        private final Constructor<?> constructor;
+
+        /**
+         * Creates a new lazy projection of a constructor's exception types.
+         *
+         * @param constructor The constructor of which the exception types are represented.
+         */
+        public OfConstructorExceptionTypes(Constructor<?> constructor) {
+            this.constructor = constructor;
+        }
+
+        @Override
+        public GenericTypeDescription get(int index) {
+            return new TypeProjection(constructor, index, constructor.getExceptionTypes()[index]);
+        }
+
+        @Override
+        public int size() {
+            return constructor.getExceptionTypes().length;
+        }
+
+        @Override
+        public TypeList asErasures() {
+            return new TypeList.ForLoadedType(constructor.getExceptionTypes());
+        }
+
+        /**
+         * A projection of a specific exception type.
+         */
+        private static class TypeProjection extends GenericTypeDescription.LazyProjection {
+
+            /**
+             * The constructor of which the exception types are represented.
+             */
+            private final Constructor<?> constructor;
+
+            /**
+             * The index of the exception type.
+             */
+            private final int index;
+
+            /**
+             * The erasure of the type of the interface this lazy projection represents.
+             */
+            private final Class<?> erasure;
+
+            /**
+             * Creates a lazy type projection of a constructor's exception type.
+             *
+             * @param constructor The constructor of which the exception types are represented.
+             * @param index       The index of the exception type.
+             * @param erasure     The erasure of the type of the interface this lazy projection represents.
+             */
+            private TypeProjection(Constructor<?> constructor, int index, Class<?> erasure) {
+                this.constructor = constructor;
+                this.index = index;
+                this.erasure = erasure;
+            }
+
+            @Override
+            protected GenericTypeDescription resolve() {
+                return GenericTypeDescription.Sort.describe(constructor.getGenericExceptionTypes()[index]);
+            }
+
+            @Override
+            public TypeDescription asErasure() {
+                return new TypeDescription.ForLoadedType(erasure);
+            }
+        }
+    }
+
+    /**
+     * A lazy projection of a method's exception types.
+     */
+    class OfMethodExceptionTypes extends AbstractBase {
+
+        /**
+         * The method of which the exception types are represented.
+         */
+        private final Method method;
+
+        /**
+         * Creates a new lazy projection of a constructor's exception types.
+         *
+         * @param method The method of which the exception types are represented.
+         */
+        public OfMethodExceptionTypes(Method method) {
+            this.method = method;
+        }
+
+        @Override
+        public GenericTypeDescription get(int index) {
+            return new TypeProjection(method, index, method.getExceptionTypes()[index]);
+        }
+
+        @Override
+        public int size() {
+            return method.getExceptionTypes().length;
+        }
+
+        @Override
+        public TypeList asErasures() {
+            return new TypeList.ForLoadedType(method.getExceptionTypes());
+        }
+
+        /**
+         * A projection of a specific exception type.
+         */
+        private static class TypeProjection extends GenericTypeDescription.LazyProjection {
+
+            /**
+             * The method of which the exception types are represented.
+             */
+            private final Method method;
+
+            /**
+             * The index of the exception type.
+             */
+            private final int index;
+
+            /**
+             * The erasure of the type of the interface this lazy projection represents.
+             */
+            private final Class<?> erasure;
+
+            /**
+             * Creates a lazy type projection of a constructor's exception type.
+             *
+             * @param method  The method of which the exception types are represented.
+             * @param index   The index of the exception type.
+             * @param erasure The erasure of the type of the interface this lazy projection represents.
+             */
+            public TypeProjection(Method method, int index, Class<?> erasure) {
+                this.method = method;
+                this.index = index;
+                this.erasure = erasure;
+            }
+
+            @Override
+            protected GenericTypeDescription resolve() {
+                return GenericTypeDescription.Sort.describe(method.getGenericExceptionTypes()[index]);
+            }
+
+            @Override
+            public TypeDescription asErasure() {
+                return new TypeDescription.ForLoadedType(erasure);
             }
         }
     }
@@ -389,287 +626,6 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         @Override
         public int getStackSize() {
             return 0;
-        }
-    }
-
-    /**
-     * Represents a list of types in an untransformed form.
-     */
-    class OfTransformedTypes extends AbstractBase {
-
-        /**
-         * The represented types in their untransformed form.
-         */
-        private final List<? extends GenericTypeDescription> untransformedTypes;
-
-        /**
-         * The transformer to apply to these types.
-         */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer;
-
-        /**
-         * Creates a new list of untransformed types.
-         *
-         * @param untransformedTypes The represented types in their untransformed form.
-         * @param transformer        The transformer to apply to these types.
-         */
-        public OfTransformedTypes(List<? extends GenericTypeDescription> untransformedTypes,
-                                  GenericTypeDescription.Visitor<? extends GenericTypeDescription> transformer) {
-            this.untransformedTypes = untransformedTypes;
-            this.transformer = transformer;
-        }
-
-        @Override
-        public GenericTypeDescription get(int index) {
-            return new GenericTypeDescription.LazyProjection.OfTransformedType(untransformedTypes.get(index), transformer);
-        }
-
-        @Override
-        public int size() {
-            return untransformedTypes.size();
-        }
-    }
-
-    /**
-     * A lazy projection that only locates generic types on demand.
-     */
-    abstract class LazyProjection extends AbstractBase {
-
-        /**
-         * A lazy projection of a type's generic interface types.
-         */
-        public static class OfInterfaces extends LazyProjection {
-
-            /**
-             * The type of which the interface types are represented by this list.
-             */
-            private final Class<?> type;
-
-            /**
-             * Creates a lazy projection of interface types.
-             *
-             * @param type The type of which the interface types are represented by this list.
-             */
-            public OfInterfaces(Class<?> type) {
-                this.type = type;
-            }
-
-            @Override
-            public GenericTypeDescription get(int index) {
-                return new TypeProjection(type, index, type.getInterfaces()[index]);
-            }
-
-            @Override
-            public int size() {
-                return type.getInterfaces().length;
-            }
-
-            @Override
-            public TypeList asErasures() {
-                return new TypeList.ForLoadedType(type.getInterfaces());
-            }
-
-            /**
-             * A type projection of an interface type.
-             */
-            private static class TypeProjection extends GenericTypeDescription.LazyProjection {
-
-                /**
-                 * The type of which an interface type is represented.
-                 */
-                private final Class<?> type;
-
-                /**
-                 * The index of the generic interface type that is represented.
-                 */
-                private final int index;
-
-                /**
-                 * The erasure of the type of the interface this lazy projection represents.
-                 */
-                private final Class<?> erasure;
-
-                /**
-                 * Creates a new lazy type projection of a generic interface type.
-                 *
-                 * @param type    The type of which an interface type is represented.
-                 * @param index   The index of the generic interface type that is represented.
-                 * @param erasure The erasure of the type of the interface this lazy projection represents.
-                 */
-                private TypeProjection(Class<?> type, int index, Class<?> erasure) {
-                    this.type = type;
-                    this.index = index;
-                    this.erasure = erasure;
-                }
-
-                @Override
-                protected GenericTypeDescription resolve() {
-                    return GenericTypeDescription.Sort.describe(type.getGenericInterfaces()[index]);
-                }
-
-                @Override
-                public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
-                }
-            }
-        }
-
-        /**
-         * A lazy projection of a constructor's exception types.
-         */
-        public static class OfConstructorExceptionTypes extends LazyProjection {
-
-            /**
-             * The constructor of which the exception types are represented.
-             */
-            private final Constructor<?> constructor;
-
-            /**
-             * Creates a new lazy projection of a constructor's exception types.
-             *
-             * @param constructor The constructor of which the exception types are represented.
-             */
-            public OfConstructorExceptionTypes(Constructor<?> constructor) {
-                this.constructor = constructor;
-            }
-
-            @Override
-            public GenericTypeDescription get(int index) {
-                return new TypeProjection(constructor, index, constructor.getExceptionTypes()[index]);
-            }
-
-            @Override
-            public int size() {
-                return constructor.getExceptionTypes().length;
-            }
-
-            @Override
-            public TypeList asErasures() {
-                return new TypeList.ForLoadedType(constructor.getExceptionTypes());
-            }
-
-            /**
-             * A projection of a specific exception type.
-             */
-            private static class TypeProjection extends GenericTypeDescription.LazyProjection {
-
-                /**
-                 * The constructor of which the exception types are represented.
-                 */
-                private final Constructor<?> constructor;
-
-                /**
-                 * The index of the exception type.
-                 */
-                private final int index;
-
-                /**
-                 * The erasure of the type of the interface this lazy projection represents.
-                 */
-                private final Class<?> erasure;
-
-                /**
-                 * Creates a lazy type projection of a constructor's exception type.
-                 *
-                 * @param constructor The constructor of which the exception types are represented.
-                 * @param index       The index of the exception type.
-                 * @param erasure     The erasure of the type of the interface this lazy projection represents.
-                 */
-                private TypeProjection(Constructor<?> constructor, int index, Class<?> erasure) {
-                    this.constructor = constructor;
-                    this.index = index;
-                    this.erasure = erasure;
-                }
-
-                @Override
-                protected GenericTypeDescription resolve() {
-                    return GenericTypeDescription.Sort.describe(constructor.getGenericExceptionTypes()[index]);
-                }
-
-                @Override
-                public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
-                }
-            }
-        }
-
-        /**
-         * A lazy projection of a method's exception types.
-         */
-        public static class OfMethodExceptionTypes extends LazyProjection {
-
-            /**
-             * The method of which the exception types are represented.
-             */
-            private final Method method;
-
-            /**
-             * Creates a new lazy projection of a constructor's exception types.
-             *
-             * @param method The method of which the exception types are represented.
-             */
-            public OfMethodExceptionTypes(Method method) {
-                this.method = method;
-            }
-
-            @Override
-            public GenericTypeDescription get(int index) {
-                return new TypeProjection(method, index, method.getExceptionTypes()[index]);
-            }
-
-            @Override
-            public int size() {
-                return method.getExceptionTypes().length;
-            }
-
-            @Override
-            public TypeList asErasures() {
-                return new TypeList.ForLoadedType(method.getExceptionTypes());
-            }
-
-            /**
-             * A projection of a specific exception type.
-             */
-            private static class TypeProjection extends GenericTypeDescription.LazyProjection {
-
-                /**
-                 * The method of which the exception types are represented.
-                 */
-                private final Method method;
-
-                /**
-                 * The index of the exception type.
-                 */
-                private final int index;
-
-                /**
-                 * The erasure of the type of the interface this lazy projection represents.
-                 */
-                private final Class<?> erasure;
-
-                /**
-                 * Creates a lazy type projection of a constructor's exception type.
-                 *
-                 * @param method  The method of which the exception types are represented.
-                 * @param index   The index of the exception type.
-                 * @param erasure The erasure of the type of the interface this lazy projection represents.
-                 */
-                public TypeProjection(Method method, int index, Class<?> erasure) {
-                    this.method = method;
-                    this.index = index;
-                    this.erasure = erasure;
-                }
-
-                @Override
-                protected GenericTypeDescription resolve() {
-                    return GenericTypeDescription.Sort.describe(method.getGenericExceptionTypes()[index]);
-                }
-
-                @Override
-                public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
-                }
-            }
         }
     }
 }

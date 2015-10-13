@@ -284,7 +284,10 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return LazyProjection.OfTransformedType.of(getDeclaredSuperType(), RawTypeWrapper.INSTANCE);
+            GenericTypeDescription superType = getDeclaredSuperType();
+            return superType == null
+                    ? TypeDescription.UNDEFINED
+                    : superType.accept(RawTypeWrapper.INSTANCE);
         }
 
         /**
@@ -296,7 +299,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeList getInterfaces() {
-            return new GenericTypeList.OfTransformedTypes(getDeclaredInterfaces(), RawTypeWrapper.INSTANCE);
+            return new GenericTypeList.ForDetachedTypes(getDeclaredInterfaces(), RawTypeWrapper.INSTANCE);
         }
 
         /**
@@ -723,7 +726,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
             @Override
             public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
-                return new ForNonGenericType(typeDescription.asErasure());
+                return new ForNonGenericType.Latent(typeDescription.asErasure());
             }
 
             @Override
@@ -752,7 +755,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
                 @Override
                 public GenericTypeList getUpperBounds() {
-                    return new GenericTypeList.OfTransformedTypes(typeVariable.getUpperBounds(), RawTypeWrapper.INSTANCE);
+                    return new GenericTypeList.ForDetachedTypes(typeVariable.getUpperBounds(), RawTypeWrapper.INSTANCE);
                 }
 
                 @Override
@@ -885,7 +888,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         public GenericTypeList getDeclaredInterfaces() {
             return isArray()
                     ? ARRAY_INTERFACES
-                    : new GenericTypeList.LazyProjection.OfInterfaces(type);
+                    : new GenericTypeList.OfLoadedInterfaceTypes(type);
         }
 
         @Override

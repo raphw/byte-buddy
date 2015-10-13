@@ -467,21 +467,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         iterator.next();
     }
 
-    @Test
-    public void testMalformedTypeHasLegalErasure() throws Exception {
-        TypeDescription malformed = new TypeDescription.ForLoadedType(Callable.class);
-        TypeDescription typeDescription = describe(SignatureMalformer.malform(MalformedBase.class));
-        assertThat(typeDescription.getSuperType().asErasure(), is(TypeDescription.OBJECT));
-        assertThat(typeDescription.getInterfaces().asErasures().size(), is(1));
-        assertThat(typeDescription.getInterfaces().asErasures().getOnly(), is(malformed));
-        assertThat(typeDescription.getDeclaredFields().getOnly().getType().asErasure(), is(malformed));
-        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().asErasure(), is(malformed));
-        assertThat(typeDescription.getGenericSignature(), nullValue(String.class));
-        assertThat(typeDescription.getGenericSignature(), nullValue(String.class));
-        assertThat(typeDescription.getDeclaredFields().getOnly().getGenericSignature(), nullValue(String.class));
-        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getGenericSignature(), nullValue(String.class));
-    }
-
     @Test(expected = GenericSignatureFormatError.class)
     public void testMalformedTypeSignature() throws Exception {
         TypeDescription typeDescription = describe(SignatureMalformer.malform(MalformedBase.class));

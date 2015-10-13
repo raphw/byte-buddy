@@ -708,7 +708,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public GenericTypeList getExceptionTypes() {
-            return new GenericTypeList.LazyProjection.OfConstructorExceptionTypes(constructor);
+            return new GenericTypeList.OfConstructorExceptionTypes(constructor);
         }
 
         @Override
@@ -808,7 +808,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public GenericTypeList getExceptionTypes() {
-            return new GenericTypeList.LazyProjection.OfMethodExceptionTypes(method);
+            return new GenericTypeList.OfMethodExceptionTypes(method);
         }
 
         @Override
@@ -1139,7 +1139,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public GenericTypeList getTypeVariables() {
-            return methodDescription.getTypeVariables().accept(new VariableRetainingDelegator());
+            return new GenericTypeList.ForDetachedTypes(methodDescription.getTypeVariables(), new VariableRetainingDelegator());
         }
 
         @Override
@@ -1154,7 +1154,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public GenericTypeList getExceptionTypes() {
-            return methodDescription.getExceptionTypes().accept(new VariableRetainingDelegator());
+            return new GenericTypeList.ForDetachedTypes(methodDescription.getExceptionTypes(), new VariableRetainingDelegator());
         }
 
         @Override
@@ -1281,7 +1281,7 @@ public interface MethodDescription extends TypeVariableSource,
 
                 @Override
                 public GenericTypeList getUpperBounds() {
-                    return typeVariable.getUpperBounds().accept(VariableRetainingDelegator.this);
+                    return new GenericTypeList.ForDetachedTypes(typeVariable.getUpperBounds(), VariableRetainingDelegator.this);
                 }
 
                 @Override
