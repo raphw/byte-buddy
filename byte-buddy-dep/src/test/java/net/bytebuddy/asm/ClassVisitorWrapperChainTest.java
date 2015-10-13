@@ -31,12 +31,12 @@ public class ClassVisitorWrapperChainTest {
         when(prepend.wrap(prependVisitor)).thenReturn(wrapperVisitor);
         when(wrapper.wrap(wrapperVisitor)).thenReturn(appendVisitor);
         when(append.wrap(appendVisitor)).thenReturn(resultVisitor);
-        when(prepend.wrapReader(FOO)).thenReturn(BAR);
-        when(wrapper.wrapReader(BAR)).thenReturn(QUX);
-        when(append.wrapReader(QUX)).thenReturn(BAZ);
-        when(prepend.wrapWriter(FOO)).thenReturn(BAR);
-        when(wrapper.wrapWriter(BAR)).thenReturn(QUX);
-        when(append.wrapWriter(QUX)).thenReturn(BAZ);
+        when(prepend.mergeReader(FOO)).thenReturn(BAR);
+        when(wrapper.mergeReader(BAR)).thenReturn(QUX);
+        when(append.mergeReader(QUX)).thenReturn(BAZ);
+        when(prepend.mergeWriter(FOO)).thenReturn(BAR);
+        when(wrapper.mergeWriter(BAR)).thenReturn(QUX);
+        when(append.mergeWriter(QUX)).thenReturn(BAZ);
     }
 
     @Test
@@ -56,12 +56,12 @@ public class ClassVisitorWrapperChainTest {
     public void testReaderHint() throws Exception {
         ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain();
         chain = chain.append(wrapper).append(append).prepend(prepend);
-        assertThat(chain.wrapReader(FOO), is(BAZ));
-        verify(prepend).wrapReader(FOO);
+        assertThat(chain.mergeReader(FOO), is(BAZ));
+        verify(prepend).mergeReader(FOO);
         verifyNoMoreInteractions(prepend);
-        verify(wrapper).wrapReader(BAR);
+        verify(wrapper).mergeReader(BAR);
         verifyNoMoreInteractions(wrapper);
-        verify(append).wrapReader(QUX);
+        verify(append).mergeReader(QUX);
         verifyNoMoreInteractions(append);
     }
 
@@ -69,12 +69,12 @@ public class ClassVisitorWrapperChainTest {
     public void testWriterHint() throws Exception {
         ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain();
         chain = chain.append(wrapper).append(append).prepend(prepend);
-        assertThat(chain.wrapWriter(FOO), is(BAZ));
-        verify(prepend).wrapWriter(FOO);
+        assertThat(chain.mergeWriter(FOO), is(BAZ));
+        verify(prepend).mergeWriter(FOO);
         verifyNoMoreInteractions(prepend);
-        verify(wrapper).wrapWriter(BAR);
+        verify(wrapper).mergeWriter(BAR);
         verifyNoMoreInteractions(wrapper);
-        verify(append).wrapWriter(QUX);
+        verify(append).mergeWriter(QUX);
         verifyNoMoreInteractions(append);
     }
 

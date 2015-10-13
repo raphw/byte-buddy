@@ -32,12 +32,12 @@ public class DebuggingWrapper implements ClassVisitorWrapper {
     }
 
     @Override
-    public int wrapWriter(int hint) {
+    public int mergeWriter(int hint) {
         return hint;
     }
 
     @Override
-    public int wrapReader(int hint) {
+    public int mergeReader(int hint) {
         return hint;
     }
 
