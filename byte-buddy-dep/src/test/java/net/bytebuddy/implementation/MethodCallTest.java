@@ -536,7 +536,9 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testMethodCallOnInterfaceToInstanceField() throws Exception {
-        MethodCall.invoke(String.class.getDeclaredMethod("toString")).onInstanceField(String.class, FOO).prepare(mock(InstrumentedType.class));
+        InstrumentedType instrumentedType = mock(InstrumentedType.class);
+        when(instrumentedType.isInterface()).thenReturn(true);
+        MethodCall.invoke(String.class.getDeclaredMethod("toString")).onInstanceField(String.class, FOO).prepare(instrumentedType);
     }
 
     @Test

@@ -870,7 +870,7 @@ public abstract class FieldAccessor implements Implementation {
 
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    if (!instrumentedType.isClassType() && ((modifiers & Opcodes.ACC_PUBLIC) == 0 || (modifiers & Opcodes.ACC_STATIC) == 0)) {
+                    if (instrumentedType.isInterface() && ((modifiers & Opcodes.ACC_PUBLIC) == 0 || (modifiers & Opcodes.ACC_STATIC) == 0)) {
                         throw new IllegalStateException("Cannot define a non-public, non-static field for " + instrumentedType);
                     }
                     return instrumentedType.withField(new FieldDescription.Token(name, modifiers, typeDescription));

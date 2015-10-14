@@ -412,7 +412,7 @@ public interface MethodRebaseResolver {
                     return Opcodes.ACC_SYNTHETIC
                             | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : EMPTY_MASK)
                             | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : EMPTY_MASK)
-                            | (methodDescription.getDeclaringType().isClassType() ? Opcodes.ACC_PRIVATE : Opcodes.ACC_PUBLIC);
+                            | (methodDescription.getDeclaringType().isInterface() ? Opcodes.ACC_PUBLIC : Opcodes.ACC_PRIVATE);
                 }
 
                 @Override

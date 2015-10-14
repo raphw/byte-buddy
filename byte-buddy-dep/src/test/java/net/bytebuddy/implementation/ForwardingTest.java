@@ -12,6 +12,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ForwardingTest extends AbstractImplementationTest {
 
@@ -61,7 +62,9 @@ public class ForwardingTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testInstanceFieldForwardingForInterfaceThrowsException() throws Exception {
-        Forwarding.toInstanceField(FOO, Foo.class).prepare(mock(InstrumentedType.class));
+        InstrumentedType instrumentedType = mock(InstrumentedType.class);
+        when(instrumentedType.isInterface()).thenReturn(true);
+        Forwarding.toInstanceField(FOO, Foo.class).prepare(instrumentedType);
     }
 
     @Test(expected = IllegalArgumentException.class)

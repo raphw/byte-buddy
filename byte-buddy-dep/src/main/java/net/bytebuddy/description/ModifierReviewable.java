@@ -141,13 +141,6 @@ public interface ModifierReviewable {
     boolean isInterface();
 
     /**
-     * Specifies if the modifier described by this object describes a non-interface and non-annotation type.
-     *
-     * @return {@code true} if the modifier described by this object represents a class, i.e. not an interface or an annotation.
-     */
-    boolean isClassType();
-
-    /**
      * Specifies if the modifier described by this object represents the transient flag.
      *
      * @return {@code true} if the modifier described by this object represents the transient flag.
@@ -268,11 +261,6 @@ public interface ModifierReviewable {
         @Override
         public boolean isInterface() {
             return matchesMask(Opcodes.ACC_INTERFACE);
-        }
-
-        @Override
-        public boolean isClassType() {
-            return !(isInterface() || isAnnotation());
         }
 
         @Override

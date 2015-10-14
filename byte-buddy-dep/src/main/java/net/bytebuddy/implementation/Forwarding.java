@@ -217,7 +217,7 @@ public class Forwarding implements Implementation {
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
-                if (!instrumentedType.isClassType()) {
+                if (instrumentedType.isInterface()) {
                     throw new IllegalStateException("Cannot define instance field '" + fieldName + "' for " + instrumentedType);
                 }
                 return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, fieldType));

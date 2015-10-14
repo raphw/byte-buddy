@@ -6,6 +6,7 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class FieldAccessorExceptionTest extends AbstractImplementationTest {
 
@@ -28,12 +29,16 @@ public class FieldAccessorExceptionTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testFieldNonStaticOnInterface() throws Exception {
-        FieldAccessor.ofField(FOO).defineAs(String.class, Visibility.PUBLIC).prepare(mock(InstrumentedType.class));
+        InstrumentedType instrumentedType = mock(InstrumentedType.class);
+        when(instrumentedType.isInterface()).thenReturn(true);
+        FieldAccessor.ofField(FOO).defineAs(String.class, Visibility.PUBLIC).prepare(instrumentedType);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldNonPublicOnInterface() throws Exception {
-        FieldAccessor.ofField(FOO).defineAs(String.class, Ownership.STATIC).prepare(mock(InstrumentedType.class));
+        InstrumentedType instrumentedType = mock(InstrumentedType.class);
+        when(instrumentedType.isInterface()).thenReturn(true);
+        FieldAccessor.ofField(FOO).defineAs(String.class, Ownership.STATIC).prepare(instrumentedType);
     }
 
     @SuppressWarnings("unused")

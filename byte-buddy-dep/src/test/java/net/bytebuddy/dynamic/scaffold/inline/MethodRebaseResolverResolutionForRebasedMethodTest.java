@@ -36,17 +36,17 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE},
-                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC}
+                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE},
+                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC}
         });
     }
 
-    private final boolean classType;
+    private final boolean interfaceType;
 
     private final int rebasedMethodModifiers;
 
-    public MethodRebaseResolverResolutionForRebasedMethodTest(boolean classType, int rebasedMethodModifiers) {
-        this.classType = classType;
+    public MethodRebaseResolverResolutionForRebasedMethodTest(boolean interfaceType, int rebasedMethodModifiers) {
+        this.interfaceType = interfaceType;
         this.rebasedMethodModifiers = rebasedMethodModifiers;
     }
 
@@ -80,7 +80,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(typeDescription.getDescriptor()).thenReturn(BAR);
-        when(typeDescription.isClassType()).thenReturn(classType);
+        when(typeDescription.isInterface()).thenReturn(interfaceType);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);

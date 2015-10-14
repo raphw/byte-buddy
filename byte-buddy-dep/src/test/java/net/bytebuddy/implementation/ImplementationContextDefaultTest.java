@@ -48,19 +48,19 @@ public class ImplementationContextDefaultTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL, Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE},
-                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC}
+                {false, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL, Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE},
+                {true, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC}
         });
     }
 
-    private final boolean classType;
+    private final boolean interfaceType;
 
     private final int accessorMethodModifiers;
 
     private final int cacheFieldModifiers;
 
-    public ImplementationContextDefaultTest(boolean classType, int accessorMethodModifiers, int cacheFieldModifiers) {
-        this.classType = classType;
+    public ImplementationContextDefaultTest(boolean interfaceType, int accessorMethodModifiers, int cacheFieldModifiers) {
+        this.interfaceType = interfaceType;
         this.accessorMethodModifiers = accessorMethodModifiers;
         this.cacheFieldModifiers = cacheFieldModifiers;
     }
@@ -139,7 +139,7 @@ public class ImplementationContextDefaultTest {
         secondSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
-        when(instrumentedType.isClassType()).thenReturn(classType);
+        when(instrumentedType.isInterface()).thenReturn(interfaceType);
         when(methodPool.target(any(MethodDescription.class))).thenReturn(record);
         when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(firstDynamicType);

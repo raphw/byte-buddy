@@ -54,7 +54,6 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
-        when(typeDescription.isClassType()).thenReturn(true);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
