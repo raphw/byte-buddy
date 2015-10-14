@@ -30,7 +30,7 @@ public abstract class AbstractMethodDescriptionTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private Method firstMethod, secondMethod, thirdMethod, genericMethod;
+    private Method firstMethod, secondMethod, thirdMethod, genericMethod, genericMethodWithRawException;
 
     private Constructor<?> firstConstructor, secondConstructor;
 
@@ -60,6 +60,7 @@ public abstract class AbstractMethodDescriptionTest {
         firstConstructor = Sample.class.getDeclaredConstructor(Void.class);
         secondConstructor = Sample.class.getDeclaredConstructor(int[].class, long.class);
         genericMethod = GenericMethod.class.getDeclaredMethod("foo", Exception.class);
+        genericMethodWithRawException = GenericMethod.class.getDeclaredMethod("bar", Exception.class);
     }
 
     @Test
@@ -677,6 +678,16 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
+    public void testGenericTypesOfMethodWithoutException() throws Exception {
+        assertThat(describe(genericMethodWithRawException).getReturnType(),
+                is(GenericTypeDescription.Sort.describe(genericMethodWithRawException.getGenericReturnType())));
+        assertThat(describe(genericMethodWithRawException).getParameters().asTypeList(),
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(genericMethodWithRawException.getGenericParameterTypes())));
+        assertThat(describe(genericMethodWithRawException).getExceptionTypes(),
+                is((GenericTypeList) new GenericTypeList.ForLoadedType(genericMethodWithRawException.getGenericExceptionTypes())));
+    }
+
+    @Test
     public void testToGenericString() throws Exception {
         assertThat(describe(genericMethod).toGenericString(), is(genericMethod.toGenericString()));
     }
@@ -809,6 +820,10 @@ public abstract class AbstractMethodDescriptionTest {
     static class GenericMethod<T extends Exception> {
 
         T foo(T t) throws T {
+            return null;
+        }
+
+        T bar(T t) throws Exception {
             return null;
         }
     }
