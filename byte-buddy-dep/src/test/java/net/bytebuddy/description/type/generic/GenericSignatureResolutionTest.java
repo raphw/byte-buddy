@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GenericSignatureResolutionTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
     @Test
     public void testGenericType() throws Exception {
@@ -49,12 +49,28 @@ public class GenericSignatureResolutionTest {
     public void testGenericMethod() throws Exception {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(GenericMethod.class)
-                .method(named("foo"))
+                .method(named(FOO))
                 .intercept(FixedValue.nullValue())
                 .make();
         Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         MethodDescription createdMethod = new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(FOO, Exception.class));
         MethodDescription originalMethod = new MethodDescription.ForLoadedMethod(GenericMethod.class.getDeclaredMethod(FOO, Exception.class));
+        assertThat(createdMethod.getTypeVariables(), is(originalMethod.getTypeVariables()));
+        assertThat(createdMethod.getReturnType(), is(originalMethod.getReturnType()));
+        assertThat(createdMethod.getParameters().getOnly().getType(), is(originalMethod.getParameters().getOnly().getType()));
+        assertThat(createdMethod.getExceptionTypes().getOnly(), is(originalMethod.getExceptionTypes().getOnly()));
+    }
+
+    @Test
+    public void testGenericMethodWithoutGenericExceptionTypes() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(GenericMethod.class)
+                .method(named(BAR))
+                .intercept(FixedValue.nullValue())
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        MethodDescription createdMethod = new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(BAR, Object.class));
+        MethodDescription originalMethod = new MethodDescription.ForLoadedMethod(GenericMethod.class.getDeclaredMethod(BAR, Object.class));
         assertThat(createdMethod.getTypeVariables(), is(originalMethod.getTypeVariables()));
         assertThat(createdMethod.getReturnType(), is(originalMethod.getReturnType()));
         assertThat(createdMethod.getParameters().getOnly().getType(), is(originalMethod.getParameters().getOnly().getType()));
@@ -178,9 +194,14 @@ public class GenericSignatureResolutionTest {
 
     }
 
+    @SuppressWarnings("unused")
     public static class GenericMethod {
 
         <T extends Exception & Callable<T>> T foo(T arg) throws T {
+            return null;
+        }
+
+        <T> T bar(T arg) throws Exception {
             return null;
         }
     }

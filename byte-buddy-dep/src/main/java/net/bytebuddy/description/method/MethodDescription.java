@@ -28,8 +28,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
@@ -360,9 +359,12 @@ public interface MethodDescription extends TypeVariableSource,
                 GenericTypeDescription returnType = getReturnType();
                 returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
                 generic = generic || !returnType.getSort().isNonGeneric();
-                for (GenericTypeDescription exceptionType : getExceptionTypes()) {
-                    exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
-                    generic = generic || !exceptionType.getSort().isNonGeneric();
+                GenericTypeList exceptionTypes = getExceptionTypes();
+                if (!exceptionTypes.filter(not(ofSort(GenericTypeDescription.Sort.NON_GENERIC))).isEmpty()) {
+                    for (GenericTypeDescription exceptionType : exceptionTypes) {
+                        exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
+                        generic = generic || !exceptionType.getSort().isNonGeneric();
+                    }
                 }
                 return generic
                         ? signatureWriter.toString()
