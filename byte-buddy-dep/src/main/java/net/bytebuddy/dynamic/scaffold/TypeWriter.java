@@ -2452,7 +2452,9 @@ public interface TypeWriter<T> {
 
                 @Override
                 public int getModifiers() {
-                    return Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+                    return Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | (instrumentedType.isClassType()
+                            ? Opcodes.ACC_PRIVATE
+                            : Opcodes.ACC_PUBLIC);
                 }
 
                 @Override
