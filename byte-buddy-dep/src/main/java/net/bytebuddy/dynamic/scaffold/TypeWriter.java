@@ -1591,7 +1591,8 @@ public interface TypeWriter<T> {
                         name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
                                 || name.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)
                                 || (modifiers & Opcodes.ACC_PRIVATE) != 0,
-                        signature != null);
+                        signature != null,
+                        name.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME));
                 return new ValidatingMethodVisitor(super.visitMethod(modifiers, name, descriptor, signature, exceptions), name);
             }
 
@@ -1627,6 +1628,7 @@ public interface TypeWriter<T> {
                  * @param isDefaultValueIncompatible {@code true} if a method's signature cannot describe an annotation property method.
                  * @param isNonStaticNonVirtual      {@code true} if the method is non-virtual and non-static, i.e. a constructor, type initializer or private.
                  * @param isGeneric                  {@code true} if this method defines a generic signature.
+                 * @param isTypeInitializer          {@code true} if this method represents the type initializer.
                  */
                 void assertMethod(String name,
                                   boolean isAbstract,
@@ -1634,7 +1636,8 @@ public interface TypeWriter<T> {
                                   boolean isStatic,
                                   boolean isDefaultValueIncompatible,
                                   boolean isNonStaticNonVirtual,
-                                  boolean isGeneric);
+                                  boolean isGeneric,
+                                  boolean isTypeInitializer);
 
                 /**
                  * Asserts the legitimacy of an annotation for the instrumented type.
@@ -1703,7 +1706,8 @@ public interface TypeWriter<T> {
                                              boolean isStatic,
                                              boolean isDefaultValueIncompatible,
                                              boolean isNonStaticNonVirtual,
-                                             boolean isGeneric) {
+                                             boolean isGeneric,
+                                             boolean isTypeInitializer) {
                         if (isAbstract && manifestType) {
                             throw new IllegalStateException("Cannot define abstract method '" + name + "' for non-abstract class");
                         }
@@ -1757,7 +1761,8 @@ public interface TypeWriter<T> {
                                              boolean isStatic,
                                              boolean isDefaultValueIncompatible,
                                              boolean isNonStaticNonVirtual,
-                                             boolean isGeneric) {
+                                             boolean isGeneric,
+                                             boolean isTypeInitializer) {
                         throw new IllegalStateException("Cannot define a method for a package description type");
                     }
 
@@ -1834,8 +1839,9 @@ public interface TypeWriter<T> {
                                              boolean isStatic,
                                              boolean isDefaultValueIncompatible,
                                              boolean isNonStaticNonVirtual,
-                                             boolean isGeneric) {
-                        if (!isPublic || isNonStaticNonVirtual) {
+                                             boolean isGeneric,
+                                             boolean isTypeInitializer) {
+                        if ((!isPublic || isNonStaticNonVirtual) && (classic || !isTypeInitializer)) {
                             throw new IllegalStateException("Cannot define non-public or non-virtual method '" + name + "' for interface type");
                         } else if (classic && isStatic) {
                             throw new IllegalStateException("Cannot define static method '" + name + "' for a pre-Java 8 interface type");
@@ -1913,7 +1919,8 @@ public interface TypeWriter<T> {
                                              boolean isStatic,
                                              boolean isDefaultValueIncompatible,
                                              boolean isNonStaticNonVirtual,
-                                             boolean isGeneric) {
+                                             boolean isGeneric,
+                                             boolean isTypeInitializer) {
                         if (!isPublic || isNonStaticNonVirtual) {
                             throw new IllegalStateException("Cannot define non-public, non-abstract or non-virtual method '" + name + "' for annotation type");
                         } else if (classic && isStatic) {
@@ -1993,7 +2000,8 @@ public interface TypeWriter<T> {
                                              boolean isStatic,
                                              boolean isDefaultValueIncompatible,
                                              boolean isNonStaticNonVirtual,
-                                             boolean isGeneric) {
+                                             boolean isGeneric,
+                                             boolean isTypeInitializer) {
                         if (isGeneric && !classFileVersion.isAtLeastJava5()) {
                             throw new IllegalStateException("Cannot define generic method '" + name + "' for class file version " + classFileVersion);
                         } else if ((isStatic || isNonStaticNonVirtual) && isAbstract) {
@@ -2072,9 +2080,17 @@ public interface TypeWriter<T> {
                                              boolean isStatic,
                                              boolean isDefaultValueIncompatible,
                                              boolean isNonStaticNonVirtual,
-                                             boolean isGeneric) {
+                                             boolean isGeneric,
+                                             boolean isTypeInitializer) {
                         for (Constraint constraint : constraints) {
-                            constraint.assertMethod(name, isAbstract, isPublic, isStatic, isDefaultValueIncompatible, isNonStaticNonVirtual, isGeneric);
+                            constraint.assertMethod(name,
+                                    isAbstract,
+                                    isPublic,
+                                    isStatic,
+                                    isDefaultValueIncompatible,
+                                    isNonStaticNonVirtual,
+                                    isGeneric,
+                                    isTypeInitializer);
                         }
                     }
 
