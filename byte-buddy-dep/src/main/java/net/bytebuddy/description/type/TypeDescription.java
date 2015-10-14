@@ -1226,42 +1226,37 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public MethodDescription getEnclosingMethod() {
-            return MethodDescription.UNDEFINED;
+            throw new IllegalStateException("Cannot resolve enclosing method of a latent type description: " + this);
         }
 
         @Override
         public TypeDescription getEnclosingType() {
-            return UNDEFINED;
-        }
-
-        @Override
-        public String getCanonicalName() {
-            return getName().replace('$', '.');
+            throw new IllegalStateException("Cannot resolve enclosing type of a latent type description: " + this);
         }
 
         @Override
         public boolean isAnonymousClass() {
-            return false;
+            throw new IllegalStateException("Cannot resolve anonymous type property of a latent type description: " + this);
         }
 
         @Override
         public boolean isLocalClass() {
-            return false;
+            throw new IllegalStateException("Cannot resolve local class property of a latent type description: " + this);
         }
 
         @Override
         public boolean isMemberClass() {
-            return false;
+            throw new IllegalStateException("Cannot resolve member class property of a latent type description: " + this);
         }
 
         @Override
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-            return new FieldList.Empty();
+            throw new IllegalStateException("Cannot resolve declared fields of a latent type description: " + this);
         }
 
         @Override
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
-            return new MethodList.Empty();
+            throw new IllegalStateException("Cannot resolve declared methods of a latent type description: " + this);
         }
 
         @Override
@@ -1275,12 +1270,12 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Empty();
+            throw new IllegalStateException("Cannot resolve declared annotations of a latent type description: " + this);
         }
 
         @Override
         public TypeDescription getDeclaringType() {
-            return UNDEFINED;
+            throw new IllegalStateException("Cannot resolve declared type of a latent type description: " + this);
         }
 
         @Override
@@ -1295,7 +1290,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeList getTypeVariables() {
-            return new GenericTypeList.Empty();
+            throw new IllegalStateException("Cannot resolve type variables of a latent type description: " + this);
         }
     }
 

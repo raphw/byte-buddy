@@ -54,23 +54,48 @@ public class TypeDescriptionLatentTest {
         assertThat(new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getInterfaces().getOnly(), is(interfaceType));
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testFields() throws Exception {
-        assertThat(new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getDeclaredFields().size(), is(0));
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getDeclaredFields();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testMethods() throws Exception {
-        assertThat(new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getDeclaredMethods().size(), is(0));
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getDeclaredMethods();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testAnnotations() throws Exception {
-        assertThat(new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getDeclaredAnnotations().size(), is(0));
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getDeclaredAnnotations();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testTypeVariables() throws Exception {
-        assertThat(new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getTypeVariables().size(), is(0));
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getTypeVariables();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMemberClass() throws Exception {
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).isMemberClass();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnoynmousClass() throws Exception {
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).isAnonymousClass();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLocalClass() throws Exception {
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).isLocalClass();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testEnclosingMethod() throws Exception {
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getEnclosingMethod();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testEnclosingType() throws Exception {
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getEnclosingType();
     }
 }
