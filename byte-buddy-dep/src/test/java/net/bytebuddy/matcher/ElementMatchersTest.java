@@ -23,7 +23,9 @@ import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -49,6 +51,12 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.is(value).matches(new Object()), is(false));
         assertThat(ElementMatchers.is((Object) null).matches(null), is(true));
         assertThat(ElementMatchers.is((Object) null).matches(new Object()), is(false));
+    }
+
+    @Test
+    public void testIsInterface() throws Exception {
+        assertThat(ElementMatchers.isInterface().matches(new TypeDescription.ForLoadedType(Collection.class)), is(true));
+        assertThat(ElementMatchers.isInterface().matches(new TypeDescription.ForLoadedType(ArrayList.class)), is(false));
     }
 
     @Test
@@ -536,6 +544,14 @@ public class ElementMatchersTest {
         when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_PRIVATE);
         assertThat(ElementMatchers.isPrivate().matches(modifierReviewable), is(true));
         assertThat(ElementMatchers.isPrivate().matches(mock(ModifierReviewable.class)), is(false));
+    }
+
+    @Test
+    public void testIsAbstract() throws Exception {
+        ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
+        when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_ABSTRACT);
+        assertThat(ElementMatchers.isAbstract().matches(modifierReviewable), is(true));
+        assertThat(ElementMatchers.isAbstract().matches(mock(ModifierReviewable.class)), is(false));
     }
 
     @Test
