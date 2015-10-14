@@ -35,8 +35,10 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
+                {ModifierMatcher.Mode.ABSTRACT, Opcodes.ACC_ABSTRACT},
                 {ModifierMatcher.Mode.BRIDGE, Opcodes.ACC_BRIDGE},
                 {ModifierMatcher.Mode.FINAL, Opcodes.ACC_FINAL},
+                {ModifierMatcher.Mode.INTERFACE, Opcodes.ACC_INTERFACE},
                 {ModifierMatcher.Mode.NATIVE, Opcodes.ACC_NATIVE},
                 {ModifierMatcher.Mode.PRIVATE, Opcodes.ACC_PRIVATE},
                 {ModifierMatcher.Mode.PROTECTED, Opcodes.ACC_PROTECTED},

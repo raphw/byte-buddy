@@ -103,7 +103,17 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
         /**
          * Matches an element that is considered a bridge method.
          */
-        BRIDGE(Opcodes.ACC_BRIDGE, "isBridge()");
+        BRIDGE(Opcodes.ACC_BRIDGE, "isBridge()"),
+
+        /**
+         * Matches an element that is considered {@code abstract}.
+         */
+        ABSTRACT(Opcodes.ACC_ABSTRACT, "isAbstract()"),
+
+        /**
+         * Matches a type that is considered an interface.
+         */
+        INTERFACE(Opcodes.ACC_INTERFACE, "isInterface()");
 
         /**
          * The mask of the modifier to match.

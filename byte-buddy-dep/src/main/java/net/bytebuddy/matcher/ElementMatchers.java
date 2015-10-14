@@ -784,6 +784,16 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a {@link ModifierReviewable} that is {@code abstract}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code abstract} modifier reviewable.
+     */
+    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isAbstract() {
+      return new ModifierMatcher<T>(ModifierMatcher.Mode.ABSTRACT);
+    }
+
+    /**
      * Matches an {@link net.bytebuddy.description.annotation.AnnotatedCodeElement} for declared annotations.
      * This matcher does not match inherited annotations which only exist for classes. Use
      * {@link net.bytebuddy.matcher.ElementMatchers#inheritsAnnotation(Class)} for matching inherited annotations.
@@ -1226,6 +1236,16 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresGenericException(
             ElementMatcher<? super Iterable<? extends GenericTypeDescription>> exceptionMatcher) {
         return new MethodExceptionTypeMatcher<T>(nonNull(exceptionMatcher));
+    }
+
+    /**
+     * Matches a {@link TypeDescription} that is an interface.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for an interface.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> isInterface() {
+      return new ModifierMatcher<T>(ModifierMatcher.Mode.INTERFACE);
     }
 
     /**
