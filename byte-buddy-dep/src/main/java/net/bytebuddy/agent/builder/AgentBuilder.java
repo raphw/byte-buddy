@@ -1014,10 +1014,12 @@ public interface AgentBuilder {
                         }
                     }
                 }
-                try {
-                    instrumentation.retransformClasses(retransformedTypes.toArray(new Class<?>[retransformedTypes.size()]));
-                } catch (UnmodifiableClassException exception) {
-                    throw new IllegalStateException("Cannot retransform classes: " + retransformedTypes, exception);
+                if (retransformedTypes.size() > 0) {
+                  try {
+                      instrumentation.retransformClasses(retransformedTypes.toArray(new Class<?>[retransformedTypes.size()]));
+                  } catch (UnmodifiableClassException exception) {
+                      throw new IllegalStateException("Cannot retransform classes: " + retransformedTypes, exception);
+                  }
                 }
             }
             return classFileTransformer;

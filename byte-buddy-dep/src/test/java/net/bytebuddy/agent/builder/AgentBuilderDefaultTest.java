@@ -131,7 +131,7 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
-    public void testSuccessfulWithRetransformationNonMatched() throws Exception {
+    public void testSkipRetransformationWithNonMatched() throws Exception {
         when(unloaded.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(typeDescription);
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(true);
@@ -148,8 +148,8 @@ public class AgentBuilderDefaultTest {
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
-        verify(instrumentation).retransformClasses();
         verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation, never()).retransformClasses();
         verifyNoMoreInteractions(instrumentation);
     }
 
@@ -166,8 +166,8 @@ public class AgentBuilderDefaultTest {
         assertThat(classFileTransformers.size(), is(1));
         verifyZeroInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
-        verify(instrumentation).retransformClasses(REDEFINED);
         verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).retransformClasses(REDEFINED);
         verifyNoMoreInteractions(instrumentation);
     }
 
