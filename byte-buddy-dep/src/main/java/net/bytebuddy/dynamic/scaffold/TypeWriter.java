@@ -1839,9 +1839,8 @@ public interface TypeWriter<T> {
                             throw new IllegalStateException("Cannot define non-public or non-virtual method '" + name + "' for interface type");
                         } else if (classic && isStatic) {
                             throw new IllegalStateException("Cannot define static method '" + name + "' for a pre-Java 8 interface type");
-                        } else if (!isAbstract && (classic || isDefaultValueIncompatible)) {
-                            throw new IllegalStateException("Cannot define default method '" + name + "' for "
-                                    + (isDefaultValueIncompatible ? "method sort" : "pre-Java 8 interface type"));
+                        } else if (classic && !isAbstract) {
+                            throw new IllegalStateException("Cannot define default method '" + name + "' for pre-Java 8 interface type");
                         }
                     }
 
