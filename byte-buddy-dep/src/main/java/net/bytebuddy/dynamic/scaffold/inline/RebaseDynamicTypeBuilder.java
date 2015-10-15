@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -47,6 +48,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
      * @param classFileVersion                      The class file version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
+     * @param implementationContextFactory          The implementation context factory to use.
      * @param levelType                             The type that is to be rebased.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -66,6 +68,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
     public RebaseDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                     NamingStrategy namingStrategy,
                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                    Implementation.Context.Factory implementationContextFactory,
                                     TypeDescription levelType,
                                     List<TypeDescription> interfaceTypes,
                                     int modifiers,
@@ -82,6 +85,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         this(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
                 levelType,
                 joinUniqueRaw(interfaceTypes, levelType.getInterfaces()),
                 modifiers,
@@ -105,6 +109,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
      * @param classFileVersion                      The class file version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
+     * @param implementationContextFactory          The implementation context factory to use.
      * @param levelType                             The type that is to be rebased.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -128,6 +133,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
     protected RebaseDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                        NamingStrategy namingStrategy,
                                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                       Implementation.Context.Factory implementationContextFactory,
                                        TypeDescription levelType,
                                        List<GenericTypeDescription> interfaceTypes,
                                        int modifiers,
@@ -146,6 +152,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         super(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
                 levelType,
                 interfaceTypes,
                 modifiers,
@@ -167,6 +174,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
     protected DynamicType.Builder<T> materialize(ClassFileVersion classFileVersion,
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                 Implementation.Context.Factory implementationContextFactory,
                                                  TypeDescription levelType,
                                                  List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
@@ -183,6 +191,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         return new RebaseDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
                 levelType,
                 interfaceTypes,
                 modifiers,
@@ -233,6 +242,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         return TypeWriter.Default.<T>forRebasing(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
                 classVisitorWrapperChain,
                 attributeAppender,
                 classFileVersion,
@@ -263,6 +273,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 "classFileVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", implementationContextFactory=" + implementationContextFactory +
                 ", targetType=" + targetType +
                 ", interfaceTypes=" + interfaceTypes +
                 ", modifiers=" + modifiers +

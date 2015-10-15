@@ -1280,6 +1280,11 @@ public interface TypeWriter<T> {
         protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
         /**
+         * The implementation context factory to use.
+         */
+        protected final Implementation.Context.Factory implementationContextFactory;
+
+        /**
          * A class visitor wrapper to apply during instrumentation.
          */
         protected final ClassVisitorWrapper classVisitorWrapper;
@@ -1307,17 +1312,18 @@ public interface TypeWriter<T> {
         /**
          * Creates a new default type writer.
          *
-         * @param instrumentedType            The instrumented type that is to be written.
-         * @param loadedTypeInitializer       The loaded type initializer of the instrumented type.
-         * @param typeInitializer             The type initializer of the instrumented type.
-         * @param explicitAuxiliaryTypes      A list of explicit auxiliary types that are to be added to the created dynamic type.
-         * @param classFileVersion            The class file version of the written type.
-         * @param auxiliaryTypeNamingStrategy A naming strategy that is used for naming auxiliary types.
-         * @param classVisitorWrapper         A class visitor wrapper to apply during instrumentation.
-         * @param attributeAppender           The type attribute appender to apply.
-         * @param fieldPool                   The field pool to be used for instrumenting fields.
-         * @param methodPool                  The method pool to be used for instrumenting methods.
-         * @param instrumentedMethods         A list of all instrumented methods.
+         * @param instrumentedType             The instrumented type that is to be written.
+         * @param loadedTypeInitializer        The loaded type initializer of the instrumented type.
+         * @param typeInitializer              The type initializer of the instrumented type.
+         * @param explicitAuxiliaryTypes       A list of explicit auxiliary types that are to be added to the created dynamic type.
+         * @param classFileVersion             The class file version of the written type.
+         * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
+         * @param implementationContextFactory The implementation context factory to use.
+         * @param classVisitorWrapper          A class visitor wrapper to apply during instrumentation.
+         * @param attributeAppender            The type attribute appender to apply.
+         * @param fieldPool                    The field pool to be used for instrumenting fields.
+         * @param methodPool                   The method pool to be used for instrumenting methods.
+         * @param instrumentedMethods          A list of all instrumented methods.
          */
         protected Default(TypeDescription instrumentedType,
                           LoadedTypeInitializer loadedTypeInitializer,
@@ -1325,6 +1331,7 @@ public interface TypeWriter<T> {
                           List<DynamicType> explicitAuxiliaryTypes,
                           ClassFileVersion classFileVersion,
                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                          Implementation.Context.Factory implementationContextFactory,
                           ClassVisitorWrapper classVisitorWrapper,
                           TypeAttributeAppender attributeAppender,
                           FieldPool fieldPool,
@@ -1336,6 +1343,7 @@ public interface TypeWriter<T> {
             this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
             this.classFileVersion = classFileVersion;
             this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
+            this.implementationContextFactory = implementationContextFactory;
             this.classVisitorWrapper = classVisitorWrapper;
             this.attributeAppender = attributeAppender;
             this.fieldPool = fieldPool;
@@ -1346,18 +1354,20 @@ public interface TypeWriter<T> {
         /**
          * Creates a type writer for creating a new type.
          *
-         * @param methodRegistry              The method registry to use for creating the type.
-         * @param fieldPool                   The field pool to use.
-         * @param auxiliaryTypeNamingStrategy A naming strategy for naming auxiliary types.
-         * @param classVisitorWrapper         The class visitor wrapper to apply when creating the type.
-         * @param attributeAppender           The attribute appender to use.
-         * @param classFileVersion            The class file version of the created type.
-         * @param <U>                         The best known loaded type for the dynamically created type.
+         * @param methodRegistry               The method registry to use for creating the type.
+         * @param fieldPool                    The field pool to use.
+         * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
+         * @param implementationContextFactory The implementation context factory to use.
+         * @param classVisitorWrapper          The class visitor wrapper to apply when creating the type.
+         * @param attributeAppender            The attribute appender to use.
+         * @param classFileVersion             The class file version of the created type.
+         * @param <U>                          The best known loaded type for the dynamically created type.
          * @return An appropriate type writer.
          */
         public static <U> TypeWriter<U> forCreation(MethodRegistry.Compiled methodRegistry,
                                                     FieldPool fieldPool,
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                    Implementation.Context.Factory implementationContextFactory,
                                                     ClassVisitorWrapper classVisitorWrapper,
                                                     TypeAttributeAppender attributeAppender,
                                                     ClassFileVersion classFileVersion) {
@@ -1367,6 +1377,7 @@ public interface TypeWriter<T> {
                     Collections.<DynamicType>emptyList(),
                     classFileVersion,
                     auxiliaryTypeNamingStrategy,
+                    implementationContextFactory,
                     classVisitorWrapper,
                     attributeAppender,
                     fieldPool,
@@ -1377,21 +1388,23 @@ public interface TypeWriter<T> {
         /**
          * Creates a type writer for creating a new type.
          *
-         * @param methodRegistry              The method registry to use for creating the type.
-         * @param fieldPool                   The field pool to use.
-         * @param auxiliaryTypeNamingStrategy A naming strategy for naming auxiliary types.
-         * @param classVisitorWrapper         The class visitor wrapper to apply when creating the type.
-         * @param attributeAppender           The attribute appender to use.
-         * @param classFileVersion            The minimum class file version of the created type.
-         * @param classFileLocator            The class file locator to use.
-         * @param methodRebaseResolver        The method rebase resolver to use.
-         * @param targetType                  The target type that is to be rebased.
-         * @param <U>                         The best known loaded type for the dynamically created type.
+         * @param methodRegistry               The method registry to use for creating the type.
+         * @param fieldPool                    The field pool to use.
+         * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
+         * @param implementationContextFactory The implementation context factory to use.
+         * @param classVisitorWrapper          The class visitor wrapper to apply when creating the type.
+         * @param attributeAppender            The attribute appender to use.
+         * @param classFileVersion             The minimum class file version of the created type.
+         * @param classFileLocator             The class file locator to use.
+         * @param methodRebaseResolver         The method rebase resolver to use.
+         * @param targetType                   The target type that is to be rebased.
+         * @param <U>                          The best known loaded type for the dynamically created type.
          * @return An appropriate type writer.
          */
         public static <U> TypeWriter<U> forRebasing(MethodRegistry.Compiled methodRegistry,
                                                     FieldPool fieldPool,
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                    Implementation.Context.Factory implementationContextFactory,
                                                     ClassVisitorWrapper classVisitorWrapper,
                                                     TypeAttributeAppender attributeAppender,
                                                     ClassFileVersion classFileVersion,
@@ -1404,6 +1417,7 @@ public interface TypeWriter<T> {
                     methodRebaseResolver.getAuxiliaryTypes(),
                     classFileVersion,
                     auxiliaryTypeNamingStrategy,
+                    implementationContextFactory,
                     classVisitorWrapper,
                     attributeAppender,
                     fieldPool,
@@ -1417,20 +1431,22 @@ public interface TypeWriter<T> {
         /**
          * Creates a type writer for creating a new type.
          *
-         * @param methodRegistry              The method registry to use for creating the type.
-         * @param fieldPool                   The field pool to use.
-         * @param auxiliaryTypeNamingStrategy A naming strategy for naming auxiliary types.
-         * @param classVisitorWrapper         The class visitor wrapper to apply when creating the type.
-         * @param attributeAppender           The attribute appender to use.
-         * @param classFileVersion            The minimum class file version of the created type.
-         * @param classFileLocator            The class file locator to use.
-         * @param targetType                  The target type that is to be rebased.
-         * @param <U>                         The best known loaded type for the dynamically created type.
+         * @param methodRegistry               The method registry to use for creating the type.
+         * @param fieldPool                    The field pool to use.
+         * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
+         * @param implementationContextFactory The implementation context factory to use.
+         * @param classVisitorWrapper          The class visitor wrapper to apply when creating the type.
+         * @param attributeAppender            The attribute appender to use.
+         * @param classFileVersion             The minimum class file version of the created type.
+         * @param classFileLocator             The class file locator to use.
+         * @param targetType                   The target type that is to be rebased.
+         * @param <U>                          The best known loaded type for the dynamically created type.
          * @return An appropriate type writer.
          */
         public static <U> TypeWriter<U> forRedefinition(MethodRegistry.Compiled methodRegistry,
                                                         FieldPool fieldPool,
                                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                        Implementation.Context.Factory implementationContextFactory,
                                                         ClassVisitorWrapper classVisitorWrapper,
                                                         TypeAttributeAppender attributeAppender,
                                                         ClassFileVersion classFileVersion,
@@ -1442,6 +1458,7 @@ public interface TypeWriter<T> {
                     Collections.<DynamicType>emptyList(),
                     classFileVersion,
                     auxiliaryTypeNamingStrategy,
+                    implementationContextFactory,
                     classVisitorWrapper,
                     attributeAppender,
                     fieldPool,
@@ -1454,7 +1471,7 @@ public interface TypeWriter<T> {
 
         @Override
         public DynamicType.Unloaded<S> make() {
-            Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
+            Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                     auxiliaryTypeNamingStrategy,
                     typeInitializer,
                     classFileVersion);
@@ -1475,6 +1492,7 @@ public interface TypeWriter<T> {
                     && explicitAuxiliaryTypes.equals(aDefault.explicitAuxiliaryTypes)
                     && classFileVersion.equals(aDefault.classFileVersion)
                     && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
+                    && implementationContextFactory.equals(aDefault.implementationContextFactory)
                     && classVisitorWrapper.equals(aDefault.classVisitorWrapper)
                     && attributeAppender.equals(aDefault.attributeAppender)
                     && fieldPool.equals(aDefault.fieldPool)
@@ -1490,6 +1508,7 @@ public interface TypeWriter<T> {
             result = 31 * result + explicitAuxiliaryTypes.hashCode();
             result = 31 * result + classFileVersion.hashCode();
             result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
+            result = 31 * result + implementationContextFactory.hashCode();
             result = 31 * result + classVisitorWrapper.hashCode();
             result = 31 * result + attributeAppender.hashCode();
             result = 31 * result + fieldPool.hashCode();
@@ -2252,20 +2271,21 @@ public interface TypeWriter<T> {
             /**
              * Creates a new type writer for inling a type into an existing type description.
              *
-             * @param instrumentedType            The instrumented type that is to be written.
-             * @param loadedTypeInitializer       The loaded type initializer of the instrumented type.
-             * @param typeInitializer             The type initializer of the instrumented type.
-             * @param explicitAuxiliaryTypes      A list of explicit auxiliary types that are to be added to the created dynamic type.
-             * @param classFileVersion            The class file version of the written type.
-             * @param auxiliaryTypeNamingStrategy A naming strategy that is used for naming auxiliary types.
-             * @param classVisitorWrapper         A class visitor wrapper to apply during instrumentation.
-             * @param attributeAppender           The type attribute appender to apply.
-             * @param fieldPool                   The field pool to be used for instrumenting fields.
-             * @param methodPool                  The method pool to be used for instrumenting methods.
-             * @param instrumentedMethods         A list of all instrumented methods.
-             * @param classFileLocator            The class file locator to use.
-             * @param targetType                  The target type that is to be redefined via inlining.
-             * @param methodRebaseResolver        The method rebase resolver to use.
+             * @param instrumentedType             The instrumented type that is to be written.
+             * @param loadedTypeInitializer        The loaded type initializer of the instrumented type.
+             * @param typeInitializer              The type initializer of the instrumented type.
+             * @param explicitAuxiliaryTypes       A list of explicit auxiliary types that are to be added to the created dynamic type.
+             * @param classFileVersion             The class file version of the written type.
+             * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
+             * @param implementationContextFactory The implementation context factory to use.
+             * @param classVisitorWrapper          A class visitor wrapper to apply during instrumentation.
+             * @param attributeAppender            The type attribute appender to apply.
+             * @param fieldPool                    The field pool to be used for instrumenting fields.
+             * @param methodPool                   The method pool to be used for instrumenting methods.
+             * @param instrumentedMethods          A list of all instrumented methods.
+             * @param classFileLocator             The class file locator to use.
+             * @param targetType                   The target type that is to be redefined via inlining.
+             * @param methodRebaseResolver         The method rebase resolver to use.
              */
             protected ForInlining(TypeDescription instrumentedType,
                                   LoadedTypeInitializer loadedTypeInitializer,
@@ -2273,6 +2293,7 @@ public interface TypeWriter<T> {
                                   List<DynamicType> explicitAuxiliaryTypes,
                                   ClassFileVersion classFileVersion,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                  Implementation.Context.Factory implementationContextFactory,
                                   ClassVisitorWrapper classVisitorWrapper,
                                   TypeAttributeAppender attributeAppender,
                                   FieldPool fieldPool,
@@ -2287,6 +2308,7 @@ public interface TypeWriter<T> {
                         explicitAuxiliaryTypes,
                         classFileVersion,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         classVisitorWrapper,
                         attributeAppender,
                         fieldPool,
@@ -2642,13 +2664,17 @@ public interface TypeWriter<T> {
                                                  String genericSignature,
                                                  String[] exceptionTypeInternalName) {
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                        TypeInitializerInjection injectedCode = new TypeInitializerInjection(instrumentedType);
-                        this.injectedCode = injectedCode;
-                        return super.visitMethod(injectedCode.getInjectorProxyMethod().getModifiers(),
-                                injectedCode.getInjectorProxyMethod().getInternalName(),
-                                injectedCode.getInjectorProxyMethod().getDescriptor(),
-                                injectedCode.getInjectorProxyMethod().getGenericSignature(),
-                                injectedCode.getInjectorProxyMethod().getExceptionTypes().asErasures().toInternalNames());
+                        if (implementationContext.isRetainTypeInitializer()) {
+                            return super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionTypeInternalName);
+                        } else {
+                            TypeInitializerInjection injectedCode = new TypeInitializerInjection(instrumentedType);
+                            this.injectedCode = injectedCode;
+                            return super.visitMethod(injectedCode.getInjectorProxyMethod().getModifiers(),
+                                    injectedCode.getInjectorProxyMethod().getInternalName(),
+                                    injectedCode.getInjectorProxyMethod().getDescriptor(),
+                                    injectedCode.getInjectorProxyMethod().getGenericSignature(),
+                                    injectedCode.getInjectorProxyMethod().getExceptionTypes().asErasures().toInternalNames());
+                        }
                     }
                     MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                     return methodDescription == RETAIN_METHOD
@@ -2896,17 +2922,18 @@ public interface TypeWriter<T> {
             /**
              * Creates a new type writer for creating a new type.
              *
-             * @param instrumentedType            The instrumented type that is to be written.
-             * @param loadedTypeInitializer       The loaded type initializer of the instrumented type.
-             * @param typeInitializer             The type initializer of the instrumented type.
-             * @param explicitAuxiliaryTypes      A list of explicit auxiliary types that are to be added to the created dynamic type.
-             * @param classFileVersion            The class file version of the written type.
-             * @param auxiliaryTypeNamingStrategy A naming strategy that is used for naming auxiliary types.
-             * @param classVisitorWrapper         A class visitor wrapper to apply during instrumentation.
-             * @param attributeAppender           The type attribute appender to apply.
-             * @param fieldPool                   The field pool to be used for instrumenting fields.
-             * @param methodPool                  The method pool to be used for instrumenting methods.
-             * @param instrumentedMethods         A list of all instrumented methods.
+             * @param instrumentedType             The instrumented type that is to be written.
+             * @param loadedTypeInitializer        The loaded type initializer of the instrumented type.
+             * @param typeInitializer              The type initializer of the instrumented type.
+             * @param explicitAuxiliaryTypes       A list of explicit auxiliary types that are to be added to the created dynamic type.
+             * @param classFileVersion             The class file version of the written type.
+             * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
+             * @param implementationContextFactory The implementation context factory to use.
+             * @param classVisitorWrapper          A class visitor wrapper to apply during instrumentation.
+             * @param attributeAppender            The type attribute appender to apply.
+             * @param fieldPool                    The field pool to be used for instrumenting fields.
+             * @param methodPool                   The method pool to be used for instrumenting methods.
+             * @param instrumentedMethods          A list of all instrumented methods.
              */
             protected ForCreation(TypeDescription instrumentedType,
                                   LoadedTypeInitializer loadedTypeInitializer,
@@ -2914,6 +2941,7 @@ public interface TypeWriter<T> {
                                   List<DynamicType> explicitAuxiliaryTypes,
                                   ClassFileVersion classFileVersion,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                  Implementation.Context.Factory implementationContextFactory,
                                   ClassVisitorWrapper classVisitorWrapper,
                                   TypeAttributeAppender attributeAppender,
                                   FieldPool fieldPool,
@@ -2925,6 +2953,7 @@ public interface TypeWriter<T> {
                         explicitAuxiliaryTypes,
                         classFileVersion,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         classVisitorWrapper,
                         attributeAppender,
                         fieldPool,
@@ -2965,6 +2994,7 @@ public interface TypeWriter<T> {
                         ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
                         ", classFileVersion=" + classFileVersion +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                        ", implementationContextFactory=" + implementationContextFactory +
                         ", classVisitorWrapper=" + classVisitorWrapper +
                         ", attributeAppender=" + attributeAppender +
                         ", fieldPool=" + fieldPool +

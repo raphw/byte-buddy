@@ -382,6 +382,14 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         verifyNoMoreInteractions(classVisitorWrapper);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testForbidTypeInitilizerInterception() throws Exception {
+        createPlain()
+                .context(Implementation.Context.Disabled.Factory.INSTANCE)
+                .invokable(isTypeInitializer()).intercept(StubMethod.INSTANCE)
+                .make();
+    }
+
     public @interface Baz {
 
         String foo();

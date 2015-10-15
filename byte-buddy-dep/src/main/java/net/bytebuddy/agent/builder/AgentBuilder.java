@@ -131,6 +131,14 @@ public interface AgentBuilder {
     AgentBuilder withBinaryLocator(BinaryLocator binaryLocator);
 
     /**
+     * efines the use of the given definition handler that determines if a type should be rebased or redefined.
+     *
+     * @param definitionHandler The definition handler to use.
+     * @return A new instance of this agent builder which uses the given definition handler.
+     */
+    AgentBuilder withDefinitionHandler(DefinitionHandler definitionHandler);
+
+    /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
      * applied when preserving non-native methods. The use of this prefix is also registered when installing the
      * final agent with an {@link java.lang.instrument.Instrumentation}.
@@ -323,6 +331,63 @@ public interface AgentBuilder {
                         "typeMatcher=" + typeMatcher +
                         ", classLoaderMatcher=" + classLoaderMatcher +
                         '}';
+            }
+        }
+    }
+
+    /**
+     * A definition handler is responsible for creating a type builder for a type that is being instrumented.
+     */
+    interface DefinitionHandler {
+
+        /**
+         * Creates a type builder for a given type.
+         *
+         * @param typeDescription       The type being instrumented.
+         * @param byteBuddy             The Byte Buddy configuration.
+         * @param classFileLocator      The class file locator to use.
+         * @param methodNameTransformer The method name transformer to use.
+         * @return A type builder for the given arguments.
+         */
+        DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                       ByteBuddy byteBuddy,
+                                       ClassFileLocator classFileLocator,
+                                       MethodRebaseResolver.MethodNameTransformer methodNameTransformer);
+
+        /**
+         * A default implementation of a definition handler.
+         */
+        enum Default implements DefinitionHandler {
+
+            /**
+             * A definition handler that performs a rebasing for all types.
+             */
+            REBASE {
+                @Override
+                public DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                                      ByteBuddy byteBuddy,
+                                                      ClassFileLocator classFileLocator,
+                                                      MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                    return byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer);
+                }
+            },
+
+            /**
+             * A definition handler that performas a redefition for all types.
+             */
+            REDEFINE {
+                @Override
+                public DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                                      ByteBuddy byteBuddy,
+                                                      ClassFileLocator classFileLocator,
+                                                      MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                    return byteBuddy.redefine(typeDescription, classFileLocator);
+                }
+            };
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.DefinitionHandler.Default." + name();
             }
         }
     }
@@ -766,6 +831,11 @@ public interface AgentBuilder {
         private final BinaryLocator binaryLocator;
 
         /**
+         * The definition handler to use.
+         */
+        private final DefinitionHandler definitionHandler;
+
+        /**
          * The listener to notify on transformations.
          */
         private final Listener listener;
@@ -820,6 +890,7 @@ public interface AgentBuilder {
         public Default(ByteBuddy byteBuddy) {
             this(nonNull(byteBuddy),
                     BinaryLocator.Default.INSTANCE,
+                    DefinitionHandler.Default.REBASE,
                     Listener.NoOp.INSTANCE,
                     NO_NATIVE_PREFIX,
                     AccessController.getContext(),
@@ -834,6 +905,7 @@ public interface AgentBuilder {
          *
          * @param byteBuddy                  The Byte Buddy instance to be used.
          * @param binaryLocator              The binary locator to use.
+         * @param definitionHandler          The definition handler to use.
          * @param listener                   The listener to notify on transformations.
          * @param nativeMethodPrefix         The native method prefix to use which might also represent
          *                                   {@link net.bytebuddy.agent.builder.AgentBuilder.Default#NO_NATIVE_PREFIX}
@@ -851,6 +923,7 @@ public interface AgentBuilder {
          */
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
+                          DefinitionHandler definitionHandler,
                           Listener listener,
                           String nativeMethodPrefix,
                           AccessControlContext accessControlContext,
@@ -860,6 +933,7 @@ public interface AgentBuilder {
                           List<Transformation> transformations) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
+            this.definitionHandler = definitionHandler;
             this.listener = listener;
             this.nativeMethodPrefix = nativeMethodPrefix;
             this.accessControlContext = accessControlContext;
@@ -888,6 +962,7 @@ public interface AgentBuilder {
         public AgentBuilder withByteBuddy(ByteBuddy byteBuddy) {
             return new Default(nonNull(byteBuddy),
                     binaryLocator,
+                    definitionHandler,
                     listener,
                     nativeMethodPrefix,
                     accessControlContext,
@@ -901,7 +976,22 @@ public interface AgentBuilder {
         public AgentBuilder withListener(Listener listener) {
             return new Default(byteBuddy,
                     binaryLocator,
+                    definitionHandler,
                     new Listener.Compound(this.listener, nonNull(listener)),
+                    nativeMethodPrefix,
+                    accessControlContext,
+                    disableSelfInitialization,
+                    retransformation,
+                    bootstrapInjectionStrategy,
+                    transformations);
+        }
+
+        @Override
+        public AgentBuilder withDefinitionHandler(DefinitionHandler definitionHandler) {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    nonNull(definitionHandler),
+                    listener,
                     nativeMethodPrefix,
                     accessControlContext,
                     disableSelfInitialization,
@@ -914,6 +1004,7 @@ public interface AgentBuilder {
         public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
             return new Default(byteBuddy,
                     nonNull(binaryLocator),
+                    definitionHandler,
                     listener,
                     nativeMethodPrefix,
                     accessControlContext,
@@ -930,6 +1021,7 @@ public interface AgentBuilder {
             }
             return new Default(byteBuddy,
                     binaryLocator,
+                    definitionHandler,
                     listener,
                     prefix,
                     accessControlContext,
@@ -943,6 +1035,7 @@ public interface AgentBuilder {
         public AgentBuilder withAccessControlContext(AccessControlContext accessControlContext) {
             return new Default(byteBuddy,
                     binaryLocator,
+                    definitionHandler,
                     listener,
                     nativeMethodPrefix,
                     accessControlContext,
@@ -956,6 +1049,7 @@ public interface AgentBuilder {
         public AgentBuilder allowRetransformation() {
             return new Default(byteBuddy,
                     binaryLocator,
+                    definitionHandler,
                     listener,
                     nativeMethodPrefix,
                     accessControlContext,
@@ -969,6 +1063,7 @@ public interface AgentBuilder {
         public AgentBuilder disableSelfInitialization() {
             return new Default(byteBuddy,
                     binaryLocator,
+                    definitionHandler,
                     listener,
                     nativeMethodPrefix,
                     accessControlContext,
@@ -982,6 +1077,7 @@ public interface AgentBuilder {
         public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
             return new Default(byteBuddy,
                     binaryLocator,
+                    definitionHandler,
                     listener,
                     nativeMethodPrefix,
                     accessControlContext,
@@ -1015,11 +1111,11 @@ public interface AgentBuilder {
                     }
                 }
                 if (retransformedTypes.size() > 0) {
-                  try {
-                      instrumentation.retransformClasses(retransformedTypes.toArray(new Class<?>[retransformedTypes.size()]));
-                  } catch (UnmodifiableClassException exception) {
-                      throw new IllegalStateException("Cannot retransform classes: " + retransformedTypes, exception);
-                  }
+                    try {
+                        instrumentation.retransformClasses(retransformedTypes.toArray(new Class<?>[retransformedTypes.size()]));
+                    } catch (UnmodifiableClassException exception) {
+                        throw new IllegalStateException("Cannot retransform classes: " + retransformedTypes, exception);
+                    }
                 }
             }
             return classFileTransformer;
@@ -1048,6 +1144,7 @@ public interface AgentBuilder {
                     && byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
                     && nativeMethodPrefix.equals(aDefault.nativeMethodPrefix)
+                    && definitionHandler.equals(aDefault.definitionHandler)
                     && accessControlContext.equals(aDefault.accessControlContext)
                     && disableSelfInitialization == aDefault.disableSelfInitialization
                     && retransformation == aDefault.retransformation
@@ -1061,6 +1158,7 @@ public interface AgentBuilder {
             int result = byteBuddy.hashCode();
             result = 31 * result + binaryLocator.hashCode();
             result = 31 * result + listener.hashCode();
+            result = 31 * result + definitionHandler.hashCode();
             result = 31 * result + nativeMethodPrefix.hashCode();
             result = 31 * result + accessControlContext.hashCode();
             result = 31 * result + (disableSelfInitialization ? 1 : 0);
@@ -1075,6 +1173,7 @@ public interface AgentBuilder {
             return "AgentBuilder.Default{" +
                     "byteBuddy=" + byteBuddy +
                     ", binaryLocator=" + binaryLocator +
+                    ", definitionHandler=" + definitionHandler +
                     ", listener=" + listener +
                     ", nativeMethodPrefix=" + nativeMethodPrefix +
                     ", accessControlContext=" + accessControlContext +
@@ -1636,7 +1735,7 @@ public interface AgentBuilder {
                     for (Transformation transformation : transformations) {
                         if (transformation.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
                             DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(
-                                    transformation.transform(byteBuddy.rebase(typeDescription,
+                                    transformation.transform(definitionHandler.builder(typeDescription, byteBuddy,
                                             initialized.getClassFileLocator(),
                                             methodNameTransformer), typeDescription)).make();
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
@@ -1733,6 +1832,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder withDefinitionHandler(DefinitionHandler definitionHandler) {
+                return materialize().withDefinitionHandler(definitionHandler);
+            }
+
+            @Override
             public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
                 return materialize().withBinaryLocator(binaryLocator);
             }
@@ -1785,6 +1889,7 @@ public interface AgentBuilder {
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
                         binaryLocator,
+                        definitionHandler,
                         listener,
                         nativeMethodPrefix,
                         accessControlContext,

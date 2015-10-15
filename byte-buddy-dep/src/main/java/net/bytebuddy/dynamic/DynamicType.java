@@ -252,6 +252,14 @@ public interface DynamicType {
         Builder<T> name(AuxiliaryType.NamingStrategy namingStrategy);
 
         /**
+         * Defines a factory for creating an implementation context.
+         *
+         * @param implementationContextFactory The implementation context factory to use.
+         * @return This builder where the implementation context factory was set to be used.
+         */
+        Builder<T> context(Implementation.Context.Factory implementationContextFactory);
+
+        /**
          * Defines modifiers for the created dynamic type.
          *
          * @param modifier A collection of modifiers to be reflected by the created dynamic type.
@@ -1189,6 +1197,11 @@ public interface DynamicType {
             protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
             /**
+             * The currently defined implementation context factory.
+             */
+            protected final Implementation.Context.Factory implementationContextFactory;
+
+            /**
              * The target type description that is specified for this builder.
              */
             protected final TypeDescription targetType;
@@ -1261,6 +1274,7 @@ public interface DynamicType {
              * @param classFileVersion                      The class file version for the created dynamic type.
              * @param namingStrategy                        The naming strategy for naming the dynamic type.
              * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
+             * @param implementationContextFactory          The currently defined implementation context factory.
              * @param targetType                            A description of the type that the dynamic type should represent.
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -1282,6 +1296,7 @@ public interface DynamicType {
             protected AbstractBase(ClassFileVersion classFileVersion,
                                    NamingStrategy namingStrategy,
                                    AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                   Implementation.Context.Factory implementationContextFactory,
                                    TypeDescription targetType,
                                    List<GenericTypeDescription> interfaceTypes,
                                    int modifiers,
@@ -1298,6 +1313,7 @@ public interface DynamicType {
                 this.classFileVersion = classFileVersion;
                 this.namingStrategy = namingStrategy;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
+                this.implementationContextFactory = implementationContextFactory;
                 this.targetType = targetType;
                 this.interfaceTypes = interfaceTypes;
                 this.modifiers = modifiers;
@@ -1334,9 +1350,7 @@ public interface DynamicType {
             }
 
             @Override
-            public FieldValueTarget<S> defineField(String name,
-                                                   Class<?> fieldType,
-                                                   ModifierContributor.ForField... modifier) {
+            public FieldValueTarget<S> defineField(String name, Class<?> fieldType, ModifierContributor.ForField... modifier) {
                 return defineField(name, new TypeDescription.ForLoadedType(fieldType), modifier);
             }
 
@@ -1362,6 +1376,7 @@ public interface DynamicType {
                 return materialize(nonNull(classFileVersion),
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1382,6 +1397,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         new NamingStrategy.Fixed(isValidTypeName(name)),
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1402,6 +1418,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         nonNull(namingStrategy),
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1422,6 +1439,28 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         namingStrategy,
                         nonNull(auxiliaryTypeNamingStrategy),
+                        implementationContextFactory,
+                        targetType,
+                        interfaceTypes,
+                        modifiers,
+                        attributeAppender,
+                        ignoredMethods,
+                        classVisitorWrapperChain,
+                        fieldRegistry,
+                        methodRegistry,
+                        methodGraphCompiler,
+                        defaultFieldAttributeAppenderFactory,
+                        defaultMethodAttributeAppenderFactory,
+                        fieldTokens,
+                        methodTokens);
+            }
+
+            @Override
+            public Builder<S> context(Implementation.Context.Factory implementationContextFactory) {
+                return materialize(classFileVersion,
+                        namingStrategy,
+                        auxiliaryTypeNamingStrategy,
+                        nonNull(implementationContextFactory),
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1442,6 +1481,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         resolveModifierContributors(TYPE_MODIFIER_MASK, nonNull(modifier)),
@@ -1462,6 +1502,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1482,6 +1523,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1502,6 +1544,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1543,6 +1586,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1563,6 +1607,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1743,6 +1788,7 @@ public interface DynamicType {
              * @param classFileVersion                      The class file version for the created dynamic type.
              * @param namingStrategy                        The naming strategy for naming the dynamic type.
              * @param auxiliaryTypeNamingStrategy           The naming strategy for naming the auxiliary type of the dynamic type.
+             * @param implementationContextFactory          The currently defined implementation context factory.
              * @param targetType                            A description of the type that the dynamic type should represent.
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -1765,6 +1811,7 @@ public interface DynamicType {
             protected abstract Builder<S> materialize(ClassFileVersion classFileVersion,
                                                       NamingStrategy namingStrategy,
                                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                      Implementation.Context.Factory implementationContextFactory,
                                                       TypeDescription targetType,
                                                       List<GenericTypeDescription> interfaceTypes,
                                                       int modifiers,
@@ -1801,6 +1848,7 @@ public interface DynamicType {
                         && methodRegistry.equals(that.methodRegistry)
                         && methodTokens.equals(that.methodTokens)
                         && namingStrategy.equals(that.namingStrategy)
+                        && implementationContextFactory.equals(that.implementationContextFactory)
                         && auxiliaryTypeNamingStrategy.equals(that.auxiliaryTypeNamingStrategy);
             }
 
@@ -1809,6 +1857,7 @@ public interface DynamicType {
                 int result = classFileVersion.hashCode();
                 result = 31 * result + namingStrategy.hashCode();
                 result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
+                result = 31 * result + implementationContextFactory.hashCode();
                 result = 31 * result + targetType.hashCode();
                 result = 31 * result + interfaceTypes.hashCode();
                 result = 31 * result + modifiers;
@@ -1872,6 +1921,11 @@ public interface DynamicType {
                 @Override
                 public Builder<U> name(AuxiliaryType.NamingStrategy namingStrategy) {
                     return materialize().name(namingStrategy);
+                }
+
+                @Override
+                public Builder<U> context(Implementation.Context.Factory implementationContextFactory) {
+                    return materialize().context(implementationContextFactory);
                 }
 
                 @Override
@@ -2131,6 +2185,7 @@ public interface DynamicType {
                     return AbstractBase.this.materialize(classFileVersion,
                             namingStrategy,
                             auxiliaryTypeNamingStrategy,
+                            implementationContextFactory,
                             targetType,
                             interfaceTypes,
                             modifiers,
@@ -2579,6 +2634,7 @@ public interface DynamicType {
                     return AbstractBase.this.materialize(classFileVersion,
                             namingStrategy,
                             auxiliaryTypeNamingStrategy,
+                            implementationContextFactory,
                             targetType,
                             interfaceTypes,
                             modifiers,
@@ -2757,6 +2813,7 @@ public interface DynamicType {
                     return AbstractBase.this.materialize(classFileVersion,
                             namingStrategy,
                             auxiliaryTypeNamingStrategy,
+                            implementationContextFactory,
                             targetType,
                             joinUniqueRaw(interfaceTypes, additionalInterfaceTypes),
                             modifiers,

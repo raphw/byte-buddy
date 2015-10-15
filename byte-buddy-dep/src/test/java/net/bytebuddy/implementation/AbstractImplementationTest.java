@@ -49,6 +49,7 @@ public abstract class AbstractImplementationTest {
                 ClassFileVersion.forCurrentJavaVersion(),
                 new NamingStrategy.SuffixingRandom(SUFFIX),
                 new AuxiliaryType.NamingStrategy.SuffixingRandom(SUFFIX),
+                Implementation.Context.Default.Factory.INSTANCE,
                 new TypeDescription.ForLoadedType(target),
                 new TypeList.ForLoadedType(Arrays.asList(interfaces)),
                 Opcodes.ACC_PUBLIC,

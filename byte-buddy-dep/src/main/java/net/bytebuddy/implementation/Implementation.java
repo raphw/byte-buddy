@@ -409,6 +409,14 @@ public interface Implementation {
         interface ExtractableView extends Context {
 
             /**
+             * Determines if this implementation context allows for the retention of a static type initializer.
+             *
+             * @return {@code true} if the original type initializer can be retained. {@code false} if the original type
+             * initializer needs to be copied to another method for allowing code injection into the initializer.
+             */
+            boolean isRetainTypeInitializer();
+
+            /**
              * Returns any {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType} that was registered
              * with this {@link Implementation.Context}.
              *
@@ -478,10 +486,124 @@ public interface Implementation {
         }
 
         /**
+         * A factory for creating a new implementation context.
+         */
+        interface Factory {
+
+            /**
+             * Creates a new implementation context.
+             *
+             * @param instrumentedType            The description of the type that is currently subject of creation.
+             * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
+             * @param typeInitializer             The type initializer of the created instrumented type.
+             * @param classFileVersion            The class file version of the created class.
+             * @return An implementation context in its extractable view.
+             */
+            ExtractableView make(TypeDescription instrumentedType,
+                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                 InstrumentedType.TypeInitializer typeInitializer,
+                                 ClassFileVersion classFileVersion);
+        }
+
+        /**
+         * An implementation context that does not allow for any injections into the static initializer block. This can be useful when
+         * redefining a class when it is not allowed to add methods to a class what is an implicit requirement when copying the static
+         * initializer block into another method.
+         */
+        class Disabled implements ExtractableView {
+
+            /**
+             * The instrumented type.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates a new disabled implementation context.
+             *
+             * @param instrumentedType The instrumented type.
+             */
+            protected Disabled(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public boolean isRetainTypeInitializer() {
+                return true;
+            }
+
+            @Override
+            public List<DynamicType> getRegisteredAuxiliaryTypes() {
+                return Collections.emptyList();
+            }
+
+            @Override
+            public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
+                if (injectedCode.isDefined() || methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType)).getSort().isDefined()) {
+                    throw new IllegalStateException("Type initializer definition was explicitly disabled");
+                }
+            }
+
+            @Override
+            public TypeDescription register(AuxiliaryType auxiliaryType) {
+                throw new IllegalStateException("Registration of auxiliary types was disabled: " + auxiliaryType);
+            }
+
+            @Override
+            public FieldDescription cache(StackManipulation fieldValue, TypeDescription fieldType) {
+                throw new IllegalStateException("Field values caching was disabled: " + fieldType);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && instrumentedType.equals(((Disabled) other).instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Implementation.Context.Disabled{" +
+                        "instrumentedType=" + instrumentedType +
+                        '}';
+            }
+
+            /**
+             * A factory for creating a {@link net.bytebuddy.implementation.Implementation.Context.Disabled}.
+             */
+            public enum Factory implements Context.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public ExtractableView make(TypeDescription instrumentedType,
+                                            AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                            InstrumentedType.TypeInitializer typeInitializer,
+                                            ClassFileVersion classFileVersion) {
+                    if (typeInitializer.isDefined()) {
+                        throw new IllegalStateException("Cannot define type initializer which was explicitly disabled: " + typeInitializer);
+                    }
+                    return new Disabled(instrumentedType);
+                }
+
+                @Override
+                public String toString() {
+                    return "Implementation.Context.Disabled.Factory." + name();
+                }
+            }
+        }
+
+        /**
          * A default implementation of an {@link Implementation.Context.ExtractableView}
          * which serves as its own {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType.MethodAccessorFactory}.
          */
-        class Default implements Implementation.Context.ExtractableView, AuxiliaryType.MethodAccessorFactory {
+        class Default implements ExtractableView, AuxiliaryType.MethodAccessorFactory {
 
             /**
              * The name suffix to be appended to an accessor method.
@@ -556,17 +678,17 @@ public interface Implementation {
             private boolean canRegisterFieldCache;
 
             /**
-             * Creates a new implementation context.
+             * Creates a new default implementation context.
              *
              * @param instrumentedType            The description of the type that is currently subject of creation.
              * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              * @param typeInitializer             The type initializer of the created instrumented type.
              * @param classFileVersion            The class file version of the created class.
              */
-            public Default(TypeDescription instrumentedType,
-                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                           InstrumentedType.TypeInitializer typeInitializer,
-                           ClassFileVersion classFileVersion) {
+            protected Default(TypeDescription instrumentedType,
+                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                              InstrumentedType.TypeInitializer typeInitializer,
+                              ClassFileVersion classFileVersion) {
                 this.instrumentedType = instrumentedType;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
@@ -622,6 +744,11 @@ public interface Implementation {
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
                 return dynamicType.getTypeDescription();
+            }
+
+            @Override
+            public boolean isRetainTypeInitializer() {
+                return false;
             }
 
             @Override
@@ -1325,6 +1452,30 @@ public interface Implementation {
                             "fieldDescription=" + fieldDescription +
                             ", methodDescription=" + methodDescription +
                             '}';
+                }
+            }
+
+            /**
+             * A factory for creating a {@link net.bytebuddy.implementation.Implementation.Context.Default}.
+             */
+            public enum Factory implements ExtractableView.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public ExtractableView make(TypeDescription instrumentedType,
+                                            AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                            InstrumentedType.TypeInitializer typeInitializer,
+                                            ClassFileVersion classFileVersion) {
+                    return new Default(instrumentedType, auxiliaryTypeNamingStrategy, typeInitializer, classFileVersion);
+                }
+
+                @Override
+                public String toString() {
+                    return "Implementation.Context.Default.Factory." + name();
                 }
             }
         }

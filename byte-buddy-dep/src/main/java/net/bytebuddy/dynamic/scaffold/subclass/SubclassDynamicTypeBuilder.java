@@ -10,6 +10,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -42,6 +43,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param classFileVersion                      The class file version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param auxiliaryTypeNamingStrategy           The naming strategy to apply to auxiliary types.
+     * @param implementationContextFactory          The implementation context factory to use.
      * @param superType                             The super class that the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -61,6 +63,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     public SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                       NamingStrategy namingStrategy,
                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                      Implementation.Context.Factory implementationContextFactory,
                                       TypeDescription superType,
                                       List<TypeDescription> interfaceTypes,
                                       int modifiers,
@@ -76,6 +79,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
                 superType,
                 new ArrayList<GenericTypeDescription>(interfaceTypes),
                 modifiers,
@@ -98,6 +102,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param classFileVersion                      The class file version for the created dynamic type.
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param auxiliaryTypeNamingStrategy           The naming strategy to apply to auxiliary types.
+     * @param implementationContextFactory          The implementation context factory to use.
      * @param superType                             The super class that the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -121,6 +126,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     protected SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                          NamingStrategy namingStrategy,
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                         Implementation.Context.Factory implementationContextFactory,
                                          TypeDescription superType,
                                          List<GenericTypeDescription> interfaceTypes,
                                          int modifiers,
@@ -138,6 +144,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         super(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
                 superType,
                 interfaceTypes,
                 modifiers,
@@ -158,6 +165,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     protected DynamicType.Builder<T> materialize(ClassFileVersion classFileVersion,
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                 Implementation.Context.Factory implementationContextFactory,
                                                  TypeDescription targetType,
                                                  List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
@@ -174,6 +182,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
                 targetType,
                 interfaceTypes,
                 modifiers,
@@ -213,6 +222,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return TypeWriter.Default.<T>forCreation(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
+                implementationContextFactory,
                 classVisitorWrapperChain,
                 attributeAppender,
                 classFileVersion).make();
@@ -252,6 +262,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 "classFileVersion=" + classFileVersion +
                 ", namingStrategy=" + namingStrategy +
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", implementationContextFactory=" + implementationContextFactory +
                 ", targetType=" + targetType +
                 ", interfaceTypes=" + interfaceTypes +
                 ", modifiers=" + modifiers +

@@ -2,7 +2,6 @@ package net.bytebuddy;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -22,8 +21,6 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
-
-import java.lang.annotation.Retention;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -55,7 +52,7 @@ public class ByteBuddyTest {
     private ElementMatcher<? super MethodDescription> methodMatcher;
 
     @Mock
-    private TypeDescription typeDescription;
+    private TypeDescription interfaceTypes;
 
     @Mock
     private MethodGraph.Compiler methodGraphCompiler;
@@ -70,14 +67,17 @@ public class ByteBuddyTest {
     private AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
     @Mock
+    private Implementation.Context.Factory implementationContextFactory;
+
+    @Mock
     private Implementation implementation;
 
     @Before
     public void setUp() throws Exception {
         when(modifierContributorForType.getMask()).thenReturn(MASK);
-        when(typeDescription.isInterface()).thenReturn(true);
-        when(typeDescription.asErasure()).thenReturn(typeDescription);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(interfaceTypes.isInterface()).thenReturn(true);
+        when(interfaceTypes.asErasure()).thenReturn(interfaceTypes);
+        when(interfaceTypes.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
     }
 
     @Test
@@ -90,11 +90,12 @@ public class ByteBuddyTest {
                 .withDefaultFieldAttributeAppender(fieldAttributeAppenderFactory)
                 .withDefaultMethodAttributeAppender(methodAttributeAppenderFactory)
                 .withIgnoredMethods(methodMatcher)
-                .withImplementing(typeDescription)
+                .withImplementing(interfaceTypes)
                 .withMethodGraphCompiler(methodGraphCompiler)
                 .withModifiers(modifierContributorForType)
                 .withNamingStrategy(namingStrategy)
-                .withNamingStrategy(auxiliaryTypeNamingStrategy));
+                .withNamingStrategy(auxiliaryTypeNamingStrategy)
+                .withContext(implementationContextFactory));
     }
 
     @Test
@@ -106,38 +107,40 @@ public class ByteBuddyTest {
                 .withDefaultFieldAttributeAppender(fieldAttributeAppenderFactory)
                 .withDefaultMethodAttributeAppender(methodAttributeAppenderFactory)
                 .withIgnoredMethods(methodMatcher)
-                .withImplementing(typeDescription)
+                .withImplementing(interfaceTypes)
                 .withMethodGraphCompiler(methodGraphCompiler)
                 .withModifiers(modifierContributorForType)
                 .withNamingStrategy(namingStrategy)
                 .withNamingStrategy(auxiliaryTypeNamingStrategy)
+                .withContext(implementationContextFactory)
                 .method(methodMatcher).intercept(implementation));
     }
 
     @SuppressWarnings("unchecked")
     private void assertProperties(ByteBuddy byteBuddy) {
-        assertThat(byteBuddy.getTypeAttributeAppender(), is(typeAttributeAppender));
-        assertThat(byteBuddy.getClassFileVersion(), is(classFileVersion));
-        assertThat(byteBuddy.getDefaultFieldAttributeAppenderFactory(), is(fieldAttributeAppenderFactory));
-        assertThat(byteBuddy.getDefaultMethodAttributeAppenderFactory(), is(methodAttributeAppenderFactory));
-        assertThat(byteBuddy.getIgnoredMethods(), is((ElementMatcher) methodMatcher));
-        assertThat(byteBuddy.getInterfaceTypes().size(), is(1));
-        assertThat(byteBuddy.getInterfaceTypes(), hasItem(typeDescription));
-        assertThat(byteBuddy.getMethodGraphCompiler(), is(methodGraphCompiler));
-        assertThat(byteBuddy.getModifiers().isDefined(), is(true));
-        assertThat(byteBuddy.getModifiers().resolve(0), is(MASK));
-        assertThat(byteBuddy.getNamingStrategy(), is(namingStrategy));
-        assertThat(byteBuddy.getAuxiliaryTypeNamingStrategy(), is(auxiliaryTypeNamingStrategy));
-        assertThat(byteBuddy.getClassVisitorWrapperChain(), instanceOf(ClassVisitorWrapper.Chain.class));
+        assertThat(byteBuddy.typeAttributeAppender, is(typeAttributeAppender));
+        assertThat(byteBuddy.classFileVersion, is(classFileVersion));
+        assertThat(byteBuddy.defaultFieldAttributeAppenderFactory, is(fieldAttributeAppenderFactory));
+        assertThat(byteBuddy.defaultMethodAttributeAppenderFactory, is(methodAttributeAppenderFactory));
+        assertThat(byteBuddy.ignoredMethods, is((ElementMatcher) methodMatcher));
+        assertThat(byteBuddy.interfaceTypes.size(), is(1));
+        assertThat(byteBuddy.interfaceTypes, hasItem(interfaceTypes));
+        assertThat(byteBuddy.methodGraphCompiler, is(methodGraphCompiler));
+        assertThat(byteBuddy.modifiers.isDefined(), is(true));
+        assertThat(byteBuddy.modifiers.resolve(0), is(MASK));
+        assertThat(byteBuddy.namingStrategy, is(namingStrategy));
+        assertThat(byteBuddy.auxiliaryTypeNamingStrategy, is(auxiliaryTypeNamingStrategy));
+        assertThat(byteBuddy.implementationContextFactory, is(implementationContextFactory));
+        assertThat(byteBuddy.classVisitorWrapperChain, instanceOf(ClassVisitorWrapper.Chain.class));
         ClassVisitor classVisitor = mock(ClassVisitor.class);
-        byteBuddy.getClassVisitorWrapperChain().wrap(classVisitor);
+        byteBuddy.classVisitorWrapperChain.wrap(classVisitor);
         verify(classVisitorWrapper).wrap(classVisitor);
         verifyNoMoreInteractions(classVisitorWrapper);
     }
 
     @Test
     public void testClassFileVersionConstructor() throws Exception {
-        assertThat(new ByteBuddy(ClassFileVersion.JAVA_V6).getClassFileVersion(), is(ClassFileVersion.JAVA_V6));
+        assertThat(new ByteBuddy(ClassFileVersion.JAVA_V6).classFileVersion, is(ClassFileVersion.JAVA_V6));
     }
 
     @Test

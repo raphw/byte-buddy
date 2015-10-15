@@ -73,6 +73,9 @@ public class AgentBuilderDefaultTest {
     private AgentBuilder.BinaryLocator binaryLocator;
 
     @Mock
+    private AgentBuilder.DefinitionHandler definitionHandler;
+
+    @Mock
     private AgentBuilder.BinaryLocator.Initialized initialized;
 
     @Mock
@@ -96,10 +99,12 @@ public class AgentBuilderDefaultTest {
                 return classFileTransformers.add((ClassFileTransformer) invocation.getArguments()[0]);
             }
         }).when(instrumentation).addTransformer(any(ClassFileTransformer.class), anyBoolean());
-        when(byteBuddy.rebase(any(TypeDescription.class), any(ClassFileLocator.class), any(MethodRebaseResolver.MethodNameTransformer.class)))
-                .thenReturn((DynamicType.Builder) builder);
         when(builder.make()).thenReturn((DynamicType.Unloaded) unloaded);
         when(unloaded.getTypeDescription()).thenReturn(typeDescription);
+        when(definitionHandler.builder(any(TypeDescription.class),
+                eq(byteBuddy),
+                any(ClassFileLocator.class),
+                any(MethodRebaseResolver.MethodNameTransformer.class))).thenReturn((DynamicType.Builder) builder);
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
         loadedTypeInitializers.put(typeDescription, loadedTypeInitializer);
         when(unloaded.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
@@ -118,6 +123,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .disableSelfInitialization()
                 .withBinaryLocator(binaryLocator)
+                .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -139,6 +145,7 @@ public class AgentBuilderDefaultTest {
                 .disableSelfInitialization()
                 .allowRetransformation()
                 .withBinaryLocator(binaryLocator)
+                .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -149,7 +156,6 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).getAllLoadedClasses();
-        verify(instrumentation, never()).retransformClasses();
         verifyNoMoreInteractions(instrumentation);
     }
 
@@ -160,6 +166,7 @@ public class AgentBuilderDefaultTest {
                 .disableSelfInitialization()
                 .allowRetransformation()
                 .withBinaryLocator(binaryLocator)
+                .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -180,6 +187,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .disableSelfInitialization()
                 .withBinaryLocator(binaryLocator)
+                .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -200,6 +208,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .disableSelfInitialization()
                 .withBinaryLocator(binaryLocator)
+                .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
                 .rebase(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
