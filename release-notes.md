@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### Current `HEAD`
+
+- Fixed parser to supress exceptions from generic signatures which are not supposed to be included in the class file if no array type is generic.
+- Fixed class validator which did not allow `<clinit>` blocks in interface types.
+- Added restriction to retransformation to not attempt a retransformation at all if no class should be retransformed.
+
 ### 13. October 2015: version 0.7 (release candidate 4)
 
 - Fixed naming strategy for fields that cache values which chose duplicate names.
