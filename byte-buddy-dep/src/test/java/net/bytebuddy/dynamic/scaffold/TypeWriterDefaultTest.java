@@ -6,6 +6,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
@@ -19,6 +20,10 @@ import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Collections;
+
+import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TypeWriterDefaultTest {
 
@@ -271,6 +276,24 @@ public class TypeWriterDefaultTest {
                 .intercept(StubMethod.INSTANCE)
                 .annotateMethod(AnnotationDescription.Builder.forType(Foo.class).make())
                 .make();
+    }
+
+    @Test
+    public void testTypeInitializerOnInterface() throws Exception {
+        assertThat(new ByteBuddy()
+                .makeInterface()
+                .invokable(isTypeInitializer())
+                .intercept(StubMethod.INSTANCE)
+                .make(), notNullValue(DynamicType.class));
+    }
+
+    @Test
+    public void testTypeInitializerOnAnnotation() throws Exception {
+        assertThat(new ByteBuddy()
+                .makeAnnotation()
+                .invokable(isTypeInitializer())
+                .intercept(StubMethod.INSTANCE)
+                .make(), notNullValue(DynamicType.class));
     }
 
     @Test
