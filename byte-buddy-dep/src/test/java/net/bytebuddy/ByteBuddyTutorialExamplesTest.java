@@ -161,7 +161,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @Test
     public void testTutorialGettingStartedJavaAgent() throws Exception {
-        new AgentBuilder.Default().rebase(isAnnotatedWith(Rebase.class)).transform(new AgentBuilder.Transformer() {
+        new AgentBuilder.Default().type(isAnnotatedWith(Rebase.class)).transform(new AgentBuilder.Transformer() {
             @Override
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
                 return builder.method(named("toString")).intercept(FixedValue.value("transformed"));

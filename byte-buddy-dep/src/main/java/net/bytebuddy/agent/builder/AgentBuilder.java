@@ -46,9 +46,9 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 /**
  * <p>
  * An agent builder provides a convenience API for defining a
- * <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/instrument/package-summary.html">Java agent</a> using
- * Byte Buddy's
- * {@link net.bytebuddy.ByteBuddy#rebase(TypeDescription, ClassFileLocator)}.
+ * <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/instrument/package-summary.html">Java agent</a>. By default,
+ * this transformation is applied by rebasing the type if not specified otherwise by setting a
+ * {@link net.bytebuddy.agent.builder.AgentBuilder.DefinitionHandler}.
  * </p>
  * <p>
  * When defining several {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s, the agent builder always
@@ -69,7 +69,7 @@ public interface AgentBuilder {
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code matcher}
      * indicates a match.
      */
-    Identified rebase(RawMatcher matcher);
+    Identified type(RawMatcher matcher);
 
     /**
      * Matches a type being loaded in order to apply the supplied
@@ -83,7 +83,7 @@ public interface AgentBuilder {
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code typeMatcher}
      * indicates a match.
      */
-    Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher);
+    Identified type(ElementMatcher<? super TypeDescription> typeMatcher);
 
     /**
      * Matches a type being loaded in order to apply the supplied
@@ -101,7 +101,7 @@ public interface AgentBuilder {
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
      * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
      */
-    Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
+    Identified type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
     /**
      * Defines the given {@link net.bytebuddy.ByteBuddy} instance to be used by the created agent.
@@ -131,7 +131,7 @@ public interface AgentBuilder {
     AgentBuilder withBinaryLocator(BinaryLocator binaryLocator);
 
     /**
-     * efines the use of the given definition handler that determines if a type should be rebased or redefined.
+     * Defines the use of the given definition handler that determines if a type should be rebased or redefined.
      *
      * @param definitionHandler The definition handler to use.
      * @return A new instance of this agent builder which uses the given definition handler.
@@ -944,18 +944,18 @@ public interface AgentBuilder {
         }
 
         @Override
-        public Identified rebase(RawMatcher matcher) {
+        public Identified type(RawMatcher matcher) {
             return new Matched(nonNull(matcher), Transformer.NoOp.INSTANCE);
         }
 
         @Override
-        public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher) {
-            return rebase(typeMatcher, any());
+        public Identified type(ElementMatcher<? super TypeDescription> typeMatcher) {
+            return type(typeMatcher, any());
         }
 
         @Override
-        public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-            return rebase(new RawMatcher.ForElementMatcherPair(nonNull(typeMatcher), nonNull(classLoaderMatcher)));
+        public Identified type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+            return type(new RawMatcher.ForElementMatcherPair(nonNull(typeMatcher), nonNull(classLoaderMatcher)));
         }
 
         @Override
@@ -1806,19 +1806,19 @@ public interface AgentBuilder {
             }
 
             @Override
-            public Identified rebase(RawMatcher matcher) {
-                return materialize().rebase(matcher);
+            public Identified type(RawMatcher matcher) {
+                return materialize().type(matcher);
             }
 
             @Override
-            public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher) {
-                return materialize().rebase(typeMatcher);
+            public Identified type(ElementMatcher<? super TypeDescription> typeMatcher) {
+                return materialize().type(typeMatcher);
             }
 
             @Override
-            public Identified rebase(ElementMatcher<? super TypeDescription> typeMatcher,
-                                     ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                return materialize().rebase(typeMatcher, classLoaderMatcher);
+            public Identified type(ElementMatcher<? super TypeDescription> typeMatcher,
+                                   ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                return materialize().type(typeMatcher, classLoaderMatcher);
             }
 
             @Override

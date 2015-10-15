@@ -125,7 +125,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
-                .rebase(rawMatcher).transform(transformer)
+                .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformers.size(), is(1));
         assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
@@ -147,7 +147,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
-                .rebase(rawMatcher).transform(transformer)
+                .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformers.size(), is(1));
         assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
@@ -168,7 +168,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
-                .rebase(rawMatcher).transform(transformer)
+                .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformers.size(), is(1));
         verifyZeroInteractions(listener);
@@ -189,7 +189,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
-                .rebase(rawMatcher).transform(transformer)
+                .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformers.size(), is(1));
         assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
@@ -210,7 +210,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
-                .rebase(rawMatcher).transform(transformer)
+                .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformers.size(), is(1));
         assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
