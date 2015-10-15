@@ -12,7 +12,7 @@ Byte Buddy release notes
 - Fixed naming strategy for fields that cache values which chose duplicate names.
 - Fixed resolution of raw types within the type hierarchy which were represented as non-generic `TypeDescription` instances where type variables of members were not resolved.
 - Added possibility to specify hints for `ClassReader` and `ClassWriter` instances.
-- Fixed resolution for modifiers of members that are defined by Byte Buddy. Previsouly, Byte Buddy would sometimes attempt to define private syntehtic methods on generated interfaces.
+- Fixed resolution for modifiers of members that are defined by Byte Buddy. Previously, Byte Buddy would sometimes attempt to define private synthetic methods on generated interfaces.
 - Fixed assignability resolution for arrays.
 - Fixed class file parser which would not recognize outer classes for version 1.3 byte code.
 
@@ -22,7 +22,7 @@ Byte Buddy release notes
 
 - Read `Nexus` instances of the Byte Buddy agents from the enclosing class loader rather than from the system class loader. This allows for their usage from OSGi environments and for user with other custom class loaders.
 - Changed modifiers for accessor methods and rebased methods to be public when rebasing or accessing methods of a Java 8 interface. For interfaces, all modifiers must be public, even for such synthetic members.
-- Support absolute path names for accessing class file ressources of the `ByteArrayClassLoader`.
+- Support absolute path names for accessing class file resources of the `ByteArrayClassLoader`.
 - Added random suffix to the names of rebased methods to avoid naming conflicts.
 
 *Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
@@ -60,7 +60,7 @@ Byte Buddy release notes
 ### 17. July 2015: version 0.6.13
 
 - Fixed resolution of field accessors to not attempt reading of non-static fields from static methods.
-- Fixed renaming strategy for type redefinitions to work arround a constraint of ASM where stack map frames required to be expanded even though this was not strictly necessary.
+- Fixed renaming strategy for type redefinitions to work around a constraint of ASM where stack map frames required to be expanded even though this was not strictly necessary.
 
 ### 10. July 2015: version 0.6.12
 
@@ -87,15 +87,15 @@ Corrected incorrect deployment of version 0.6.7 which does not use a dependency 
 
 *Warning*: The *byte-buddy* artifact of version 0.6.7 is accidentally deployed with a defect POM file which does not exclude the shaded resources.
 
-### 28. Mai 2015: version 0.6.6
+### 28. May 2015: version 0.6.6
 
 Fixed error in resolution of the `TargetType` pseudo-variable when used as component type of an array.
 
-### 7. Mai 2015: version 0.6.5
+### 7. May 2015: version 0.6.5
 
 Extended public API with convenience methods.
 
-### 6. Mai 2015: version 0.6.4
+### 6. May 2015: version 0.6.4
 
 - Extended public API to accept more general argument types when appropriate.
 - Extended `@Origin` annotation to allow for accepting modifiers.
@@ -220,6 +220,6 @@ Added several bug fixes for existing features. Beyond that the following feature
    this hopefully allows for class redefinitions using today's API for creating subclasses.
  - Upgraded to ASM 5.0.3.
  
-### 02. Mai 2014: version 0.1
+### 02. May 2014: version 0.1
 
 First general release.
