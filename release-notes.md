@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### Current `HEAD`
+### 15. October 2015: version 0.7 (release candidate 5)
 
 - Fixed parser to supress exceptions from generic signatures which are not supposed to be included in the class file if no array type is generic.
 - Fixed class validator which did not allow `<clinit>` blocks in interface types.
