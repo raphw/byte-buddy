@@ -343,7 +343,7 @@ public interface AnnotationAppender {
             @Override
             public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
                 Object defaultValue = methodDescription.getDefaultValue();
-                return defaultValue != null && defaultValue.equals(annotationDescription.getValue(methodDescription));
+                return defaultValue == null || !defaultValue.equals(annotationDescription.getValue(methodDescription));
             }
 
             @Override
