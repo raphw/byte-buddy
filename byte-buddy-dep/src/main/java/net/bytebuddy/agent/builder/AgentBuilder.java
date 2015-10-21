@@ -1127,7 +1127,7 @@ public interface AgentBuilder {
         public ClassFileTransformer installOn(Instrumentation instrumentation) {
             ClassFileTransformer classFileTransformer = makeRaw();
             instrumentation.addTransformer(classFileTransformer, retransformation);
-            if (!NO_NATIVE_PREFIX.equals(nonNull(nativeMethodPrefix))) {
+            if (!NO_NATIVE_PREFIX.equals(nativeMethodPrefix)) {
                 instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodPrefix);
             }
             if (retransformation) { // If retransformation was unsupported the above transformer registration had thrown an exception.
