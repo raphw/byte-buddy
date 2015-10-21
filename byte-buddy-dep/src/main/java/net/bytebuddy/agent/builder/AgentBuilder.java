@@ -1130,7 +1130,7 @@ public interface AgentBuilder {
             if (!NO_NATIVE_PREFIX.equals(nonNull(nativeMethodPrefix))) {
                 instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodPrefix);
             }
-            if (retransformation) {
+            if (retransformation) { // If retransformation was unsupported the above transformer registration had thrown an exception.
                 List<Class<?>> retransformedTypes = new LinkedList<Class<?>>();
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                     // The list of all loaded types can be significant what can crash the JVM such that this preselection becomes  necessary.
@@ -1766,7 +1766,8 @@ public interface AgentBuilder {
                     for (Transformation transformation : transformations) {
                         if (transformation.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
                             DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(
-                                    transformation.transform(definitionHandler.builder(typeDescription, byteBuddy,
+                                    transformation.transform(definitionHandler.builder(typeDescription,
+                                            byteBuddy,
                                             initialized.getClassFileLocator(),
                                             methodNameTransformer), typeDescription)).make();
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
