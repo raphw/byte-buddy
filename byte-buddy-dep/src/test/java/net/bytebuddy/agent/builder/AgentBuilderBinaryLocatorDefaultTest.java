@@ -25,14 +25,26 @@ public class AgentBuilderBinaryLocatorDefaultTest {
     private ClassLoader classLoader;
 
     @Test
-    public void testTypePool() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.INSTANCE.initialize(FOO, QUX, classLoader).getTypePool(),
+    public void testTypePoolExtended() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.initialize(FOO, QUX, classLoader).getTypePool(),
+                notNullValue(TypePool.class));
+    }
+
+    @Test
+    public void testClassFileLocatorExtended() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.initialize(FOO, QUX, classLoader).getClassFileLocator(),
+                notNullValue(ClassFileLocator.class));
+    }
+
+    @Test
+    public void testTypePoolFast() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.Default.FAST.initialize(FOO, QUX, classLoader).getTypePool(),
                 notNullValue(TypePool.class));
     }
 
     @Test
     public void testClassFileLocator() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.INSTANCE.initialize(FOO, QUX, classLoader).getClassFileLocator(),
+        assertThat(AgentBuilder.BinaryLocator.Default.FAST.initialize(FOO, QUX, classLoader).getClassFileLocator(),
                 notNullValue(ClassFileLocator.class));
     }
 

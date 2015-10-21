@@ -30,9 +30,9 @@ public abstract class AbstractMethodDescriptionTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private Method firstMethod, secondMethod, thirdMethod, genericMethod, genericMethodWithRawException;
+    protected Method firstMethod, secondMethod, thirdMethod, genericMethod, genericMethodWithRawException;
 
-    private Constructor<?> firstConstructor, secondConstructor;
+    protected Constructor<?> firstConstructor, secondConstructor;
 
     private static int hashCode(Method method) {
         int hashCode = new TypeDescription.ForLoadedType(method.getDeclaringClass()).hashCode();

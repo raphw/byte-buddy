@@ -2,13 +2,17 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.description.method.AbstractMethodDescriptionTest;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescriptionTest {
 
@@ -17,7 +21,9 @@ public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescript
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        typePool = TypePool.Default.ofClassPath();
+        typePool = new TypePool.Default(TypePool.CacheProvider.NoOp.INSTANCE,
+                ClassFileLocator.ForClassLoader.ofClassPath(),
+                TypePool.Default.ReaderMode.EXTENDED); // In order to allow debug information parsing.
     }
 
     @After

@@ -10,12 +10,13 @@ import java.lang.reflect.Method;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 
-public class TypePoolLazyFacadeTypeDescriptionTest  extends AbstractTypeDescriptionTest {
+public class TypePoolLazyFacadeTypeDescriptionTest extends AbstractTypeDescriptionTest {
 
     @Override
     protected TypeDescription describe(Class<?> type) {
         TypePool typePool = new TypePool.LazyFacade(new TypePool.Default(TypePool.CacheProvider.NoOp.INSTANCE,
-                ClassFileLocator.ForClassLoader.of(type.getClassLoader())));
+                ClassFileLocator.ForClassLoader.of(type.getClassLoader()),
+                TypePool.Default.ReaderMode.EXTENDED));
         try {
             return typePool.describe(type.getName()).resolve();
         } finally {

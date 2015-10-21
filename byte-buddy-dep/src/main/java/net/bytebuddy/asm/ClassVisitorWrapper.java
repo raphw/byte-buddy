@@ -14,24 +14,24 @@ import java.util.List;
 public interface ClassVisitorWrapper {
 
     /**
-     * Defines a hint that is provided to any {@code ClassWriter} when writing a class. Typically, this gives opportunity to instruct ASM
-     * to compute stack map frames or the size of the local variables array and the operand stack. If no specific hints are required for
+     * Defines the flags that are provided to any {@code ClassWriter} when writing a class. Typically, this gives opportunity to instruct ASM
+     * to compute stack map frames or the size of the local variables array and the operand stack. If no specific flags are required for
      * applying this wrapper, the given value is to be returned.
      *
-     * @param hint The current hint. This value should be merged (e.g. {@code hint | foo}) into the value that is returned by this wrapper.
-     * @return The hint to be provided to the ASM {@code ClassWriter}.
+     * @param flags The currently set flags. This value should be combined (e.g. {@code flags | foo}) into the value that is returned by this wrapper.
+     * @return The flags to be provided to the ASM {@code ClassWriter}.
      */
-    int mergeWriter(int hint);
+    int mergeWriter(int flags);
 
     /**
-     * Defines a hint that is provided to any {@code ClassReader} when reading a class if applicable. Typically, this gives opportunity to
-     * instruct ASM to expand or skip frames and to skip code and debug information. If no specific hints are required for applying this
+     * Defines the flags that are provided to any {@code ClassReader} when reading a class if applicable. Typically, this gives opportunity to
+     * instruct ASM to expand or skip frames and to skip code and debug information. If no specific flags are required for applying this
      * wrapper, the given value is to be returned.
      *
-     * @param hint The current hint. This value should be merged (e.g. {@code hint | foo}) into the value that is returned by this wrapper.
-     * @return The hint to be provided to the ASM {@code ClassReader}.
+     * @param flags The currently set flags. This value should be combined (e.g. {@code flags | foo}) into the value that is returned by this wrapper.
+     * @return The flags to be provided to the ASM {@code ClassReader}.
      */
-    int mergeReader(int hint);
+    int mergeReader(int flags);
 
     /**
      * Applies a {@code ClassVisitorWrapper} to the creation of a {@link net.bytebuddy.dynamic.DynamicType}.
@@ -100,19 +100,19 @@ public interface ClassVisitorWrapper {
         }
 
         @Override
-        public int mergeWriter(int hint) {
+        public int mergeWriter(int flags) {
             for (ClassVisitorWrapper classVisitorWrapper : classVisitorWrappers) {
-                hint = classVisitorWrapper.mergeWriter(hint);
+                flags = classVisitorWrapper.mergeWriter(flags);
             }
-            return hint;
+            return flags;
         }
 
         @Override
-        public int mergeReader(int hint) {
+        public int mergeReader(int flags) {
             for (ClassVisitorWrapper classVisitorWrapper : classVisitorWrappers) {
-                hint = classVisitorWrapper.mergeReader(hint);
+                flags = classVisitorWrapper.mergeReader(flags);
             }
-            return hint;
+            return flags;
         }
 
         @Override

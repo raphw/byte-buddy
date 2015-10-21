@@ -180,7 +180,7 @@ public interface TypePool {
         /**
          * The value that is returned on a cache-miss.
          */
-        Resolution NOTHING = null;
+        Resolution UNRESOLVED = null;
 
         /**
          * Attempts to find a resolution in this cache.
@@ -218,7 +218,7 @@ public interface TypePool {
 
             @Override
             public Resolution find(String name) {
-                return NOTHING;
+                return UNRESOLVED;
             }
 
             @Override
@@ -262,7 +262,9 @@ public interface TypePool {
             @Override
             public Resolution register(String name, Resolution resolution) {
                 Resolution cached = cache.putIfAbsent(name, resolution);
-                return cached == NOTHING ? resolution : cached;
+                return cached == null
+                        ? resolution
+                        : cached;
             }
 
             @Override
@@ -933,24 +935,26 @@ public interface TypePool {
         private static final int ASM_API_VERSION = Opcodes.ASM5;
 
         /**
-         * A flag to indicate ASM that no automatic calculations are requested.
-         */
-        private static final int ASM_MANUAL_FLAG = 0;
-
-        /**
          * The locator to query for finding binary data of a type.
          */
         private final ClassFileLocator classFileLocator;
+
+        /**
+         * The reader mode to apply by this default type pool.
+         */
+        private final ReaderMode readerMode;
 
         /**
          * Creates a new default type pool.
          *
          * @param cacheProvider    The cache provider to be used.
          * @param classFileLocator The class file locator to be used.
+         * @param readerMode       The reader mode to apply by this default type pool.
          */
-        public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator) {
+        public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
             super(cacheProvider);
             this.classFileLocator = classFileLocator;
+            this.readerMode = readerMode;
         }
 
         /**
@@ -960,7 +964,7 @@ public interface TypePool {
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool ofClassPath() {
-            return new Default(new CacheProvider.Simple(), ClassFileLocator.ForClassLoader.ofClassPath());
+            return new Default(new CacheProvider.Simple(), ClassFileLocator.ForClassLoader.ofClassPath(), ReaderMode.FAST);
         }
 
         @Override
@@ -984,7 +988,7 @@ public interface TypePool {
         private TypeDescription parse(byte[] binaryRepresentation) {
             ClassReader classReader = new ClassReader(binaryRepresentation);
             TypeExtractor typeExtractor = new TypeExtractor();
-            classReader.accept(typeExtractor, ASM_MANUAL_FLAG);
+            classReader.accept(typeExtractor, readerMode.getFlags());
             return typeExtractor.toTypeDescription();
         }
 
@@ -992,12 +996,13 @@ public interface TypePool {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && super.equals(other)
-                    && classFileLocator.equals(((Default) other).classFileLocator);
+                    && classFileLocator.equals(((Default) other).classFileLocator)
+                    && readerMode.equals(((Default) other).readerMode);
         }
 
         @Override
         public int hashCode() {
-            return 31 * super.hashCode() + classFileLocator.hashCode();
+            return 31 * (31 * super.hashCode() + classFileLocator.hashCode()) + readerMode.hashCode();
         }
 
         @Override
@@ -1005,6 +1010,7 @@ public interface TypePool {
             return "TypePool.Default{" +
                     "classFileLocator=" + classFileLocator +
                     ", cacheProvider=" + cacheProvider +
+                    ", readerMode=" + readerMode +
                     '}';
         }
 
@@ -2850,14 +2856,14 @@ public interface TypePool {
 
                 @Override
                 public void visitLabel(Label label) {
-                    if (firstLabel == null) {
+                    if (readerMode.isExtended() && firstLabel == null) {
                         firstLabel = label;
                     }
                 }
 
                 @Override
                 public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-                    if (start == firstLabel) {
+                    if (readerMode.isExtended() && start == firstLabel) {
                         legacyParameterBag.register(index, name);
                     }
                 }
@@ -3012,6 +3018,62 @@ public interface TypePool {
                                 '}';
                     }
                 }
+            }
+        }
+
+        /**
+         * Determines the granularity of the class file parsing that is conducted by a {@link net.bytebuddy.pool.TypePool.Default}.
+         */
+        public enum ReaderMode {
+
+            /**
+             * The extended reader mode parses the code segment of each method in order to detect parameter names
+             * that are only stored in a method's debugging information but are not explicitly included.
+             */
+            EXTENDED(ClassReader.SKIP_FRAMES),
+
+            /**
+             * The fast reader mode skips the code segment of each method and cannot detect parameter names that are
+             * only contained within the debugging information. This mode still detects explicitly included method
+             * parameter names.
+             */
+            FAST(ClassReader.SKIP_CODE);
+
+            /**
+             * The flags to provide to a {@link ClassReader} for parsing a file.
+             */
+            private final int flags;
+
+            /**
+             * Creates a new reader mode constant.
+             *
+             * @param flags The flags to provide to a {@link ClassReader} for parsing a file.
+             */
+            ReaderMode(int flags) {
+                this.flags = flags;
+            }
+
+            /**
+             * Returns the flags to provide to a {@link ClassReader} for parsing a file.
+             *
+             * @return The flags to provide to a {@link ClassReader} for parsing a file.
+             */
+            protected int getFlags() {
+                return flags;
+            }
+
+            /**
+             * Determines if this reader mode represents extended reading.
+             *
+             * @return {@code true} if this reader mode represents extended reading.
+             */
+            public boolean isExtended() {
+                return this == EXTENDED;
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.Default.ReaderMode." + name();
             }
         }
     }

@@ -503,13 +503,42 @@ public interface AgentBuilder {
         enum Default implements BinaryLocator {
 
             /**
-             * The singleton instance.
+             * A binary locator that parses the code segment of each method for extracting information about parameter
+             * names even if they are not explicitly included in a class file.
+             *
+             * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#EXTENDED
              */
-            INSTANCE;
+            EXTENDED(TypePool.Default.ReaderMode.EXTENDED),
+
+            /**
+             * A binary locator that skips the code segment of each method and does therefore not extract information
+             * about parameter names. Parameter names are still included if they are explicitly included in a class file.
+             *
+             * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#FAST
+             */
+            FAST(TypePool.Default.ReaderMode.FAST);
+
+            /**
+             * The reader mode to apply by this binary locator.
+             */
+            private final TypePool.Default.ReaderMode readerMode;
+
+            /**
+             * Creates a new binary locator.
+             *
+             * @param readerMode The reader mode to apply by this binary locator.
+             */
+            Default(TypePool.Default.ReaderMode readerMode) {
+                this.readerMode = readerMode;
+            }
 
             @Override
             public BinaryLocator.Initialized initialize(String typeName, byte[] binaryRepresentation, ClassLoader classLoader) {
-                return Initialized.of(typeName, binaryRepresentation, new TypePool.CacheProvider.Simple(), ClassFileLocator.ForClassLoader.of(classLoader));
+                return Initialized.of(typeName,
+                        binaryRepresentation,
+                        new TypePool.CacheProvider.Simple(),
+                        ClassFileLocator.ForClassLoader.of(classLoader),
+                        readerMode);
             }
 
             @Override
@@ -549,15 +578,17 @@ public interface AgentBuilder {
                  * @param binaryRepresentation The binary representation of the instrumented type. The provided array must not be modified.
                  * @param cacheProvider        The cache provider to use.
                  * @param classFileLocator     The class file locator to use.
+                 * @param readerMode           The reader mode to use.
                  * @return An initialized binary locator.
                  */
                 public static BinaryLocator.Initialized of(String typeName,
                                                            byte[] binaryRepresentation,
                                                            TypePool.CacheProvider cacheProvider,
-                                                           ClassFileLocator classFileLocator) {
+                                                           ClassFileLocator classFileLocator,
+                                                           TypePool.Default.ReaderMode readerMode) {
                     return new Initialized(typeName,
                             binaryRepresentation,
-                            new TypePool.LazyFacade(new TypePool.Default(cacheProvider, classFileLocator)),
+                            new TypePool.LazyFacade(new TypePool.Default(cacheProvider, classFileLocator, readerMode)),
                             classFileLocator);
                 }
 
@@ -889,7 +920,7 @@ public interface AgentBuilder {
          */
         public Default(ByteBuddy byteBuddy) {
             this(nonNull(byteBuddy),
-                    BinaryLocator.Default.INSTANCE,
+                    BinaryLocator.Default.FAST,
                     DefinitionHandler.Default.REBASE,
                     Listener.NoOp.INSTANCE,
                     NO_NATIVE_PREFIX,

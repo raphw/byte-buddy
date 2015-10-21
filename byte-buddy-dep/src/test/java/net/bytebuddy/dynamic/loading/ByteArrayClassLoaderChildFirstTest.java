@@ -207,13 +207,13 @@ public class ByteArrayClassLoaderChildFirstTest {
         }
 
         @Override
-        public int mergeWriter(int hint) {
-            return hint;
+        public int mergeWriter(int flags) {
+            return flags;
         }
 
         @Override
-        public int mergeReader(int hint) {
-            return hint;
+        public int mergeReader(int flags) {
+            return flags;
         }
 
         @Override

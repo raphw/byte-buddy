@@ -1242,7 +1242,7 @@ public interface TypeWriter<T> {
         /**
          * A flag for ASM not to automatically compute any information such as operand stack sizes and stack map frames.
          */
-        protected static final int ASM_MANUAL_FLAG = 0;
+        protected static final int ASM_NO_FLAGS = 0;
 
         /**
          * The ASM API version to use.
@@ -2341,9 +2341,9 @@ public interface TypeWriter<T> {
              */
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
-                ClassWriter classWriter = new ClassWriter(classReader, classVisitorWrapper.mergeWriter(ASM_MANUAL_FLAG));
+                ClassWriter classWriter = new ClassWriter(classReader, classVisitorWrapper.mergeWriter(ASM_NO_FLAGS));
                 classReader.accept(writeTo(classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter)), implementationContext),
-                        classVisitorWrapper.mergeReader(ASM_MANUAL_FLAG));
+                        classVisitorWrapper.mergeReader(ASM_NO_FLAGS));
                 return classWriter.toByteArray();
             }
 
@@ -2963,7 +2963,7 @@ public interface TypeWriter<T> {
 
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
-                ClassWriter classWriter = new ClassWriter(classVisitorWrapper.mergeWriter(ASM_MANUAL_FLAG));
+                ClassWriter classWriter = new ClassWriter(classVisitorWrapper.mergeWriter(ASM_NO_FLAGS));
                 ClassVisitor classVisitor = classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter));
                 classVisitor.visit(classFileVersion.getVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),

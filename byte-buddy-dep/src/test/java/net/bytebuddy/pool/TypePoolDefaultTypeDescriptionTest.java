@@ -14,7 +14,9 @@ public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionT
 
     @Override
     protected TypeDescription describe(Class<?> type) {
-        TypePool typePool = new TypePool.Default(TypePool.CacheProvider.NoOp.INSTANCE, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+        TypePool typePool = new TypePool.Default(TypePool.CacheProvider.NoOp.INSTANCE,
+                ClassFileLocator.ForClassLoader.of(type.getClassLoader()),
+                TypePool.Default.ReaderMode.EXTENDED);
         try {
             return typePool.describe(type.getName()).resolve();
         } finally {
