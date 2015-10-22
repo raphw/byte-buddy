@@ -131,6 +131,7 @@ public class AgentBuilderDefaultApplicationTest {
                 .withTypeStrategy(AgentBuilder.TypeStrategy.REDEFINE)
                 .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .withListener(AgentBuilder.Listener.NoOp.INSTANCE)
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
