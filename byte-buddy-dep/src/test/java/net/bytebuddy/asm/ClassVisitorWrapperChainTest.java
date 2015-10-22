@@ -41,8 +41,7 @@ public class ClassVisitorWrapperChainTest {
 
     @Test
     public void testWrapperChain() throws Exception {
-        ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain();
-        chain = chain.append(wrapper).append(append).prepend(prepend);
+        ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain(prepend, wrapper, append);
         assertThat(chain.wrap(prependVisitor), is(resultVisitor));
         verify(prepend).wrap(prependVisitor);
         verifyNoMoreInteractions(prepend);
@@ -53,9 +52,8 @@ public class ClassVisitorWrapperChainTest {
     }
 
     @Test
-    public void testReaderHint() throws Exception {
-        ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain();
-        chain = chain.append(wrapper).append(append).prepend(prepend);
+    public void testReaderFlags() throws Exception {
+        ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain(prepend, wrapper, append);
         assertThat(chain.mergeReader(FOO), is(BAZ));
         verify(prepend).mergeReader(FOO);
         verifyNoMoreInteractions(prepend);
@@ -66,9 +64,8 @@ public class ClassVisitorWrapperChainTest {
     }
 
     @Test
-    public void testWriterHint() throws Exception {
-        ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain();
-        chain = chain.append(wrapper).append(append).prepend(prepend);
+    public void testWriterFlags() throws Exception {
+        ClassVisitorWrapper.Chain chain = new ClassVisitorWrapper.Chain(prepend, wrapper, append);
         assertThat(chain.mergeWriter(FOO), is(BAZ));
         verify(prepend).mergeWriter(FOO);
         verifyNoMoreInteractions(prepend);

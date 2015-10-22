@@ -1227,9 +1227,9 @@ public interface DynamicType {
             protected final ElementMatcher<? super MethodDescription> ignoredMethods;
 
             /**
-             * The class visitor wrapper chain that is applied on created types by this builder.
+             * A class visitor wrapper that is applied on created types by this builder.
              */
-            protected final ClassVisitorWrapper.Chain classVisitorWrapperChain;
+            protected final ClassVisitorWrapper classVisitorWrapper;
 
             /**
              * The field registry of this builder.
@@ -1280,7 +1280,7 @@ public interface DynamicType {
              * @param modifiers                             The modifiers to be represented by the dynamic type.
              * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
              * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-             * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+             * @param classVisitorWrapper                   A ASM class visitor to apply to the writing process.
              * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
              * @param methodRegistry                        The method registry to apply to the dynamic type creation.
              * @param methodGraphCompiler                   The method graph compiler to be used.
@@ -1302,7 +1302,7 @@ public interface DynamicType {
                                    int modifiers,
                                    TypeAttributeAppender attributeAppender,
                                    ElementMatcher<? super MethodDescription> ignoredMethods,
-                                   ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                   ClassVisitorWrapper classVisitorWrapper,
                                    FieldRegistry fieldRegistry,
                                    MethodRegistry methodRegistry,
                                    MethodGraph.Compiler methodGraphCompiler,
@@ -1319,7 +1319,7 @@ public interface DynamicType {
                 this.modifiers = modifiers;
                 this.attributeAppender = attributeAppender;
                 this.ignoredMethods = ignoredMethods;
-                this.classVisitorWrapperChain = classVisitorWrapperChain;
+                this.classVisitorWrapper = classVisitorWrapper;
                 this.fieldRegistry = fieldRegistry;
                 this.methodRegistry = methodRegistry;
                 this.methodGraphCompiler = methodGraphCompiler;
@@ -1382,7 +1382,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1403,7 +1403,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1424,7 +1424,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1445,7 +1445,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1466,7 +1466,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1487,7 +1487,7 @@ public interface DynamicType {
                         resolveModifierContributors(TYPE_MODIFIER_MASK, nonNull(modifier)),
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1508,7 +1508,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1529,7 +1529,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignoredMethods, nonNull(ignoredMethods)),
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1550,7 +1550,7 @@ public interface DynamicType {
                         modifiers,
                         new TypeAttributeAppender.Compound(this.attributeAppender, nonNull(attributeAppender)),
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1592,7 +1592,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain.append(nonNull(classVisitorWrapper)),
+                        new ClassVisitorWrapper.Chain(nonNull(classVisitorWrapper), this.classVisitorWrapper),
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1613,7 +1613,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        classVisitorWrapperChain,
+                        classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
                         nonNull(methodGraphCompiler),
@@ -1794,7 +1794,7 @@ public interface DynamicType {
              * @param modifiers                             The modifiers to be represented by the dynamic type.
              * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
              * @param ignoredMethods                        A matcher for determining methods that are to be ignored for implementation.
-             * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+             * @param classVisitorWrapper                   A ASM class visitor to apply to the writing process.
              * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
              * @param methodRegistry                        The method registry to apply to the dynamic type creation.
              * @param methodGraphCompiler                   The method graph compiler to be used.
@@ -1817,7 +1817,7 @@ public interface DynamicType {
                                                       int modifiers,
                                                       TypeAttributeAppender attributeAppender,
                                                       ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                      ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                                      ClassVisitorWrapper classVisitorWrapper,
                                                       FieldRegistry fieldRegistry,
                                                       MethodRegistry methodRegistry,
                                                       MethodGraph.Compiler methodGraphCompiler,
@@ -1836,7 +1836,7 @@ public interface DynamicType {
                 return modifiers == that.modifiers
                         && attributeAppender.equals(that.attributeAppender)
                         && classFileVersion.equals(that.classFileVersion)
-                        && classVisitorWrapperChain.equals(that.classVisitorWrapperChain)
+                        && classVisitorWrapper.equals(that.classVisitorWrapper)
                         && defaultFieldAttributeAppenderFactory.equals(that.defaultFieldAttributeAppenderFactory)
                         && defaultMethodAttributeAppenderFactory.equals(that.defaultMethodAttributeAppenderFactory)
                         && fieldRegistry.equals(that.fieldRegistry)
@@ -1863,7 +1863,7 @@ public interface DynamicType {
                 result = 31 * result + modifiers;
                 result = 31 * result + attributeAppender.hashCode();
                 result = 31 * result + ignoredMethods.hashCode();
-                result = 31 * result + classVisitorWrapperChain.hashCode();
+                result = 31 * result + classVisitorWrapper.hashCode();
                 result = 31 * result + fieldRegistry.hashCode();
                 result = 31 * result + methodRegistry.hashCode();
                 result = 31 * result + methodGraphCompiler.hashCode();
@@ -2191,7 +2191,7 @@ public interface DynamicType {
                             modifiers,
                             attributeAppender,
                             ignoredMethods,
-                            classVisitorWrapperChain,
+                            classVisitorWrapper,
                             fieldRegistry.include(fieldToken, attributeAppenderFactory, defaultValue),
                             methodRegistry,
                             methodGraphCompiler,
@@ -2640,7 +2640,7 @@ public interface DynamicType {
                             modifiers,
                             attributeAppender,
                             ignoredMethods,
-                            classVisitorWrapperChain,
+                            classVisitorWrapper,
                             fieldRegistry,
                             methodRegistry.prepend(methodMatcher, handler, attributeAppenderFactory, methodTransformer),
                             methodGraphCompiler,
@@ -2819,7 +2819,7 @@ public interface DynamicType {
                             modifiers,
                             attributeAppender,
                             ignoredMethods,
-                            classVisitorWrapperChain,
+                            classVisitorWrapper,
                             fieldRegistry,
                             methodRegistry,
                             methodGraphCompiler,

@@ -2,8 +2,7 @@ package net.bytebuddy.asm;
 
 import org.objectweb.asm.ClassVisitor;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,6 +42,37 @@ public interface ClassVisitorWrapper {
     ClassVisitor wrap(ClassVisitor classVisitor);
 
     /**
+     * A class visitor wrapper that does not apply any changes.
+     */
+    enum NoOp implements ClassVisitorWrapper {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public int mergeWriter(int flags) {
+            return flags;
+        }
+
+        @Override
+        public int mergeReader(int flags) {
+            return flags;
+        }
+
+        @Override
+        public ClassVisitor wrap(ClassVisitor classVisitor) {
+            return classVisitor;
+        }
+
+        @Override
+        public String toString() {
+            return "ClassVisitorWrapper.NoOp." + name();
+        }
+    }
+
+    /**
      * An ordered, immutable chain of {@link net.bytebuddy.asm.ClassVisitorWrapper}s.
      */
     class Chain implements ClassVisitorWrapper {
@@ -50,13 +80,10 @@ public interface ClassVisitorWrapper {
         /**
          * The class visitor wrappers that are represented by this chain in their order. This list must not be mutated.
          */
-        private final List<ClassVisitorWrapper> classVisitorWrappers;
+        private final List<? extends ClassVisitorWrapper> classVisitorWrappers;
 
-        /**
-         * Creates an immutable empty chain.
-         */
-        public Chain() {
-            this.classVisitorWrappers = Collections.emptyList();
+        public Chain(ClassVisitorWrapper... classVisitorWrapper) {
+            this(Arrays.asList(classVisitorWrapper));
         }
 
         /**
@@ -67,36 +94,8 @@ public interface ClassVisitorWrapper {
          *                             at the beginning of the list are applied first, i.e. will be at the bottom of the generated
          *                             {@link org.objectweb.asm.ClassVisitor}.
          */
-        protected Chain(List<ClassVisitorWrapper> classVisitorWrappers) {
+        public Chain(List<? extends ClassVisitorWrapper> classVisitorWrappers) {
             this.classVisitorWrappers = classVisitorWrappers;
-        }
-
-        /**
-         * Adds a {@code ClassVisitorWrapper} to the <b>beginning</b> of the chain such that the wrapped
-         * ASM {@code ClassVisitor} will be applied before the other class visitors.
-         *
-         * @param classVisitorWrapper The {@code ClassVisitorWrapper} to add to the beginning of the chain.
-         * @return A new chain incorporating the {@code ClassVisitorWrapper}.
-         */
-        public Chain prepend(ClassVisitorWrapper classVisitorWrapper) {
-            List<ClassVisitorWrapper> appendedList = new ArrayList<ClassVisitorWrapper>(classVisitorWrappers.size() + 1);
-            appendedList.add(classVisitorWrapper);
-            appendedList.addAll(classVisitorWrappers);
-            return new Chain(appendedList);
-        }
-
-        /**
-         * Adds a {@code ClassVisitorWrapper} to the <b>end</b> of the chain such that the wrapped
-         * ASM {@code ClassVisitor} will be applied after the other class visitors.
-         *
-         * @param classVisitorWrapper The {@code ClassVisitorWrapper} to add to the end of the chain.
-         * @return A new chain incorporating the {@code ClassVisitorWrapper}.
-         */
-        public Chain append(ClassVisitorWrapper classVisitorWrapper) {
-            List<ClassVisitorWrapper> appendedList = new ArrayList<ClassVisitorWrapper>(classVisitorWrappers.size() + 1);
-            appendedList.addAll(classVisitorWrappers);
-            appendedList.add(classVisitorWrapper);
-            return new Chain(appendedList);
         }
 
         @Override

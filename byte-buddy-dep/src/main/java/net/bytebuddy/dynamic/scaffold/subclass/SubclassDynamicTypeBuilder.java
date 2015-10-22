@@ -49,7 +49,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param classVisitorWrapper                   An ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
      * @param methodGraphCompiler                   The method graph compiler to be used.
@@ -69,7 +69,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       int modifiers,
                                       TypeAttributeAppender attributeAppender,
                                       ElementMatcher<? super MethodDescription> ignoredMethods,
-                                      ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                      ClassVisitorWrapper classVisitorWrapper,
                                       FieldRegistry fieldRegistry,
                                       MethodRegistry methodRegistry,
                                       MethodGraph.Compiler methodGraphCompiler,
@@ -85,7 +85,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapperChain,
+                classVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -108,7 +108,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapperChain              A chain of ASM class visitors to apply to the writing process.
+     * @param classVisitorWrapper                   An ASM class visitor to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
      * @param methodGraphCompiler                   The method graph compiler to be used.
@@ -132,7 +132,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          int modifiers,
                                          TypeAttributeAppender attributeAppender,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
-                                         ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                         ClassVisitorWrapper classVisitorWrapper,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,
                                          MethodGraph.Compiler methodGraphCompiler,
@@ -150,7 +150,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapperChain,
+                classVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -171,7 +171,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                 ClassVisitorWrapper.Chain classVisitorWrapperChain,
+                                                 ClassVisitorWrapper classVisitorWrapper,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
                                                  MethodGraph.Compiler methodGraphCompiler,
@@ -188,7 +188,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapperChain,
+                classVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -223,7 +223,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                classVisitorWrapperChain,
+                classVisitorWrapper,
                 attributeAppender,
                 classFileVersion).make();
     }
@@ -268,7 +268,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", modifiers=" + modifiers +
                 ", attributeAppender=" + attributeAppender +
                 ", ignoredMethods=" + ignoredMethods +
-                ", classVisitorWrapperChain=" + classVisitorWrapperChain +
+                ", classVisitorWrapper=" + classVisitorWrapper +
                 ", fieldRegistry=" + fieldRegistry +
                 ", methodRegistry=" + methodRegistry +
                 ", methodGraphCompiler=" + methodGraphCompiler +
