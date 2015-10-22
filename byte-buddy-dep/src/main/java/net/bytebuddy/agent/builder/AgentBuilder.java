@@ -1122,10 +1122,10 @@ public interface AgentBuilder {
             if (retransformation) { // If retransformation was unsupported the above transformer registration had thrown an exception.
                 List<Class<?>> retransformedTypes = new LinkedList<Class<?>>();
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                    // The list of all loaded types can be significant what can crash the JVM such that this preselection becomes  necessary.
-                    if (transformation.resolve(new TypeDescription.ForLoadedType(type), type.getClassLoader(), type, type.getProtectionDomain()).isResolved()) {
+                    // The list of all loaded types can be significant what can crash the JVM such that this preselection becomes necessary.
+                    if (instrumentation.isModifiableClass(type) && transformation.resolve(new TypeDescription.ForLoadedType(type), type.getClassLoader(),
+                            type, type.getProtectionDomain()).isResolved()) {
                         retransformedTypes.add(type);
-                        break;
                     }
                 }
                 if (!retransformedTypes.isEmpty()) {
@@ -1648,14 +1648,48 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A transformation serves as a handler for modifying a class.
+         */
         protected interface Transformation {
 
+            /**
+             * Resolves an attempted transformation to a specific transformation.
+             *
+             * @param typeDescription     A description of the type that is to be transformed.
+             * @param classLoader         The class loader of the type being transformed.
+             * @param classBeingRedefined In case of a type redefinition, the loaded type being transformed or {@code null} if that is not the case.
+             * @param protectionDomain    The protection domain of the type being transformed.
+             * @return A resolution for the given type.
+             */
             Resolution resolve(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain);
 
+            /**
+             * A resolution to a transformation.
+             */
             interface Resolution {
 
+                /**
+                 * Returns {@code true} if this resolution represents an actual type transformation. If this value is {@code false},
+                 * this resolution will not attempt to transform a class.
+                 *
+                 * @return {@code true} if this resolution attempts to transform a type, {@code false} otherwise.
+                 */
                 boolean isResolved();
 
+                /**
+                 * Transforms a type or returns {@code null} if a type is not to be transformed.
+                 *
+                 * @param initializationStrategy     The initialization strategy to use.
+                 * @param initialized                The initialized binary locator to use.
+                 * @param definitionHandler          The definition handler to use.
+                 * @param byteBuddy                  The Byte Buddy instance to use.
+                 * @param methodNameTransformer      The method name transformer to be used.
+                 * @param bootstrapInjectionStrategy The bootstrap injection strategy to be used.
+                 * @param accessControlContext       The access control context to be used.
+                 * @param listener                   The listener to be invoked to inform about an applied or non-applied transformation.
+                 * @return The class file of the transformed class or {@code null} if no transformation is attempted.
+                 */
                 byte[] apply(InitializationStrategy initializationStrategy,
                              BinaryLocator.Initialized initialized,
                              DefinitionHandler definitionHandler,
@@ -1665,10 +1699,21 @@ public interface AgentBuilder {
                              AccessControlContext accessControlContext,
                              Listener listener);
 
+                /**
+                 * A canonical implementation of a non-resolved resolution.
+                 */
                 class Unresolved implements Resolution {
 
+                    /**
+                     * The type that is not transformed.
+                     */
                     private final TypeDescription typeDescription;
 
+                    /**
+                     * Creates a new unresolved resolution.
+                     *
+                     * @param typeDescription The type that is not transformed.
+                     */
                     protected Unresolved(TypeDescription typeDescription) {
                         this.typeDescription = typeDescription;
                     }
@@ -1690,11 +1735,35 @@ public interface AgentBuilder {
                         listener.onIgnored(typeDescription);
                         return NO_TRANSFORMATION;
                     }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeDescription.equals(((Unresolved) other).typeDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.Transformation.Resolution.Unresolved{" +
+                                "typeDescription=" + typeDescription +
+                                '}';
+                    }
                 }
             }
 
+            /**
+             * A transformation that does not attempt to transform any type.
+             */
             enum Ignored implements Transformation {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -1704,8 +1773,16 @@ public interface AgentBuilder {
                                           ProtectionDomain protectionDomain) {
                     return new Resolution.Unresolved(typeDescription);
                 }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.Transformation.Ignored." + name();
+                }
             }
 
+            /**
+             * A simple, active transformation.
+             */
             class Simple implements Transformation {
 
                 /**
@@ -1761,16 +1838,39 @@ public interface AgentBuilder {
                             '}';
                 }
 
+                /**
+                 * A resolution that performs a type transformation.
+                 */
                 protected static class Resolution implements Transformation.Resolution {
 
+                    /**
+                     * A description of the transformed type.
+                     */
                     private final TypeDescription typeDescription;
 
+                    /**
+                     * The class loader of the transformed type.
+                     */
                     private final ClassLoader classLoader;
 
+                    /**
+                     * The protection domain of the transformed type.
+                     */
                     private final ProtectionDomain protectionDomain;
 
+                    /**
+                     * The transformer to be applied.
+                     */
                     private final Transformer transformer;
 
+                    /**
+                     * Creates a new active transformation.
+                     *
+                     * @param typeDescription  A description of the transformed type.
+                     * @param classLoader      The class loader of the transformed type.
+                     * @param protectionDomain The protection domain of the transformed type.
+                     * @param transformer      The transformer to be applied.
+                     */
                     protected Resolution(TypeDescription typeDescription,
                                          ClassLoader classLoader,
                                          ProtectionDomain protectionDomain,
@@ -1810,17 +1910,63 @@ public interface AgentBuilder {
                         listener.onTransformation(typeDescription, dynamicType);
                         return dynamicType.getBytes();
                     }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        Resolution that = (Resolution) other;
+                        return typeDescription.equals(that.typeDescription)
+                                && !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
+                                && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
+                                && transformer.equals(that.transformer);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = typeDescription.hashCode();
+                        result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+                        result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
+                        result = 31 * result + transformer.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.Transformation.Simple.Resolution{" +
+                                "typeDescription=" + typeDescription +
+                                ", classLoader=" + classLoader +
+                                ", protectionDomain=" + protectionDomain +
+                                ", transformer=" + transformer +
+                                '}';
+                    }
                 }
             }
 
+            /**
+             * A compound transformation that applied several transformation in the given order and applies the first active transformation.
+             */
             class Compound implements Transformation {
 
+                /**
+                 * The list of transformations to apply in their application order.
+                 */
                 private final List<? extends Transformation> transformations;
 
+                /**
+                 * Creates a new compound transformation.
+                 *
+                 * @param transformation An array of transformations to apply in their application order.
+                 */
                 protected Compound(Transformation... transformation) {
                     this(Arrays.asList(transformation));
                 }
 
+                /**
+                 * Creates a new compound transformation.
+                 *
+                 * @param transformations A list of transformations to apply in their application order.
+                 */
                 protected Compound(List<? extends Transformation> transformations) {
                     this.transformations = transformations;
                 }
@@ -1837,6 +1983,24 @@ public interface AgentBuilder {
                         }
                     }
                     return new Resolution.Unresolved(typeDescription);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && transformations.equals(((Compound) other).transformations);
+                }
+
+                @Override
+                public int hashCode() {
+                    return transformations.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.Transformation.Compound{" +
+                            "transformations=" + transformations +
+                            '}';
                 }
             }
         }
