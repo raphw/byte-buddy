@@ -56,7 +56,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentWithoutSelfInitialization() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .disableSelfInitialization()
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -102,7 +102,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentWithoutSelfInitializationWithNativeMethodPrefix() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .disableSelfInitialization()
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .withNativeMethodPrefix(QUX)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();

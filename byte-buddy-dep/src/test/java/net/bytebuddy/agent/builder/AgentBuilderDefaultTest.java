@@ -113,7 +113,7 @@ public class AgentBuilderDefaultTest {
         when(resolution.resolve()).thenReturn(typeDescription);
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
-                .disableSelfInitialization()
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
@@ -134,7 +134,7 @@ public class AgentBuilderDefaultTest {
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(false);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
-                .disableSelfInitialization()
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .allowRetransformation()
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
@@ -156,7 +156,7 @@ public class AgentBuilderDefaultTest {
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
-                .disableSelfInitialization()
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .allowRetransformation()
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
@@ -177,7 +177,7 @@ public class AgentBuilderDefaultTest {
         when(rawMatcher.matches(TypeDescription.OBJECT, REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
-                .disableSelfInitialization()
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .allowRetransformation()
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
@@ -201,7 +201,7 @@ public class AgentBuilderDefaultTest {
         when(resolution.resolve()).thenThrow(exception);
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
-                .disableSelfInitialization()
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
@@ -221,7 +221,7 @@ public class AgentBuilderDefaultTest {
         when(resolution.resolve()).thenReturn(typeDescription);
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(false);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
-                .disableSelfInitialization()
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
