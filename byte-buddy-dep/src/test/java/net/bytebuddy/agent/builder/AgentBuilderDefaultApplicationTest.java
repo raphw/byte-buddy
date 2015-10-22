@@ -131,6 +131,27 @@ public class AgentBuilderDefaultApplicationTest {
                 .withTypeStrategy(AgentBuilder.TypeStrategy.REDEFINE)
                 .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .withListener(new AgentBuilder.Listener() {
+                    @Override
+                    public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+
+                    }
+
+                    @Override
+                    public void onIgnored(TypeDescription typeDescription) {
+
+                    }
+
+                    @Override
+                    public void onError(String typeName, Throwable throwable) {
+                        throwable.printStackTrace(System.err);
+                    }
+
+                    @Override
+                    public void onComplete(String typeName) {
+
+                    }
+                })
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
