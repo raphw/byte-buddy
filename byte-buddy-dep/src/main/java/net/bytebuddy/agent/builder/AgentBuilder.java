@@ -135,7 +135,7 @@ public interface AgentBuilder {
      * @param definitionStrategy The definition handler to use.
      * @return A new instance of this agent builder which uses the given definition handler.
      */
-    AgentBuilder withDefinitionHandler(DefinitionStrategy definitionStrategy);
+    AgentBuilder withDefinitionStrategy(DefinitionStrategy definitionStrategy);
 
     /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
@@ -1346,7 +1346,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withDefinitionHandler(DefinitionStrategy definitionStrategy) {
+        public AgentBuilder withDefinitionStrategy(DefinitionStrategy definitionStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
                     nonNull(definitionStrategy),
@@ -2345,8 +2345,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder withDefinitionHandler(DefinitionStrategy definitionStrategy) {
-                return materialize().withDefinitionHandler(definitionStrategy);
+            public AgentBuilder withDefinitionStrategy(DefinitionStrategy definitionStrategy) {
+                return materialize().withDefinitionStrategy(definitionStrategy);
             }
 
             @Override
