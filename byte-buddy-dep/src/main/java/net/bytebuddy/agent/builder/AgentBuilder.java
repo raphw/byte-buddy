@@ -192,6 +192,13 @@ public interface AgentBuilder {
     AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation);
 
     /**
+     * Disables injection of auxiliary classes into the bootstrap class path.
+     *
+     * @return An agent builder with bootstrap class loader class injection disbaled.
+     */
+    AgentBuilder disableBootstrapInjection();
+
+    /**
      * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
      * agent builder.
      *
@@ -1269,7 +1276,7 @@ public interface AgentBuilder {
          *
          * @param byteBuddy                  The Byte Buddy instance to be used.
          * @param binaryLocator              The binary locator to use.
-         * @param definitionStrategy          The definition handler to use.
+         * @param definitionStrategy         The definition handler to use.
          * @param listener                   The listener to notify on transformations.
          * @param nativeMethodStrategy       The native method strategy to apply.
          * @param accessControlContext       The access control context to use for loading classes.
@@ -1451,9 +1458,23 @@ public interface AgentBuilder {
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
-                    InitializationStrategy.SelfInjection.INSTANCE,
+                    initializationStrategy,
                     retransformation,
                     new BootstrapInjectionStrategy.Enabled(nonNull(folder), nonNull(instrumentation)),
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder disableBootstrapInjection() {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    definitionStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    retransformation,
+                    BootstrapInjectionStrategy.Disabled.INSTANCE,
                     transformation);
         }
 
@@ -1807,7 +1828,7 @@ public interface AgentBuilder {
                  *
                  * @param initializationStrategy     The initialization strategy to use.
                  * @param initialized                The initialized binary locator to use.
-                 * @param definitionStrategy          The definition handler to use.
+                 * @param definitionStrategy         The definition handler to use.
                  * @param byteBuddy                  The Byte Buddy instance to use.
                  * @param methodNameTransformer      The method name transformer to be used.
                  * @param bootstrapInjectionStrategy The bootstrap injection strategy to be used.
@@ -2186,7 +2207,7 @@ public interface AgentBuilder {
              *
              * @param byteBuddy                  The Byte Buddy instance to be used.
              * @param binaryLocator              The binary locator to use.
-             * @param definitionStrategy          The definition handler to use.
+             * @param definitionStrategy         The definition handler to use.
              * @param listener                   The listener to notify on transformations.
              * @param nativeMethodStrategy       The native method strategy to apply.
              * @param accessControlContext       The access control context to use for loading classes.
@@ -2382,6 +2403,11 @@ public interface AgentBuilder {
             @Override
             public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
                 return materialize().enableBootstrapInjection(folder, instrumentation);
+            }
+
+            @Override
+            public AgentBuilder disableBootstrapInjection() {
+                return materialize().disableBootstrapInjection();
             }
 
             @Override
