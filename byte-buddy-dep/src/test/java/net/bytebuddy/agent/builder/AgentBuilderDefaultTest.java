@@ -197,7 +197,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(rawMatcher);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRetransformationNotSupported() throws Exception {
         new AgentBuilder.Default(byteBuddy)
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
@@ -292,7 +292,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(rawMatcher);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRedefinitionNotSupported() throws Exception {
         new AgentBuilder.Default(byteBuddy)
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)

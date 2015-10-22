@@ -1267,7 +1267,7 @@ public interface AgentBuilder {
 
             @Override
             protected Collector makeCollector(Default.Transformation transformation) {
-                throw new IllegalStateException();
+                throw new IllegalStateException("A disabled redefinition strategy cannot create a collector");
             }
         },
 
@@ -1279,7 +1279,7 @@ public interface AgentBuilder {
             @Override
             protected boolean isRetransforming(Instrumentation instrumentation) {
                 if (!instrumentation.isRedefineClassesSupported()) {
-                    throw new IllegalStateException("Cannot redefine classes: " + instrumentation);
+                    throw new IllegalArgumentException("Cannot redefine classes: " + instrumentation);
                 }
                 return false;
             }
@@ -1298,7 +1298,7 @@ public interface AgentBuilder {
             @Override
             protected boolean isRetransforming(Instrumentation instrumentation) {
                 if (!instrumentation.isRetransformClassesSupported()) {
-                    throw new IllegalStateException("Cannot retransform classes: " + instrumentation);
+                    throw new IllegalArgumentException("Cannot retransform classes: " + instrumentation);
                 }
                 return true;
             }
@@ -1929,7 +1929,7 @@ public interface AgentBuilder {
         public ClassFileTransformer installOn(Instrumentation instrumentation) {
             ClassFileTransformer classFileTransformer = makeRaw();
             instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
-            if (nativeMethodStrategy.isEnabled()) {
+            if (nativeMethodStrategy.isEnabled(instrumentation)) {
                 instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
             }
             if (redefinitionStrategy.isEnabled()) {
@@ -2119,9 +2119,10 @@ public interface AgentBuilder {
             /**
              * Determines if this strategy enables name prefixing for native methods.
              *
+             * @param instrumentation The instrumentation used.
              * @return {@code true} if this strategy indicates that a native method prefix should be used.
              */
-            boolean isEnabled();
+            boolean isEnabled(Instrumentation instrumentation);
 
             /**
              * Resolves the method name transformer for this strategy.
@@ -2153,7 +2154,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean isEnabled() {
+                public boolean isEnabled(Instrumentation instrumentation) {
                     return false;
                 }
 
@@ -2206,7 +2207,10 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean isEnabled() {
+                public boolean isEnabled(Instrumentation instrumentation) {
+                    if (!instrumentation.isNativeMethodPrefixSupported()) {
+                        throw new IllegalArgumentException("A prefix for native methods is not supported: " + instrumentation);
+                    }
                     return true;
                 }
 

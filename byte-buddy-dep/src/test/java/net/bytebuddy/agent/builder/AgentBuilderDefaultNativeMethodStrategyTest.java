@@ -9,10 +9,13 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.instrument.Instrumentation;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class AgentBuilderDefaultNativeMethodStrategyTest {
@@ -37,7 +40,7 @@ public class AgentBuilderDefaultNativeMethodStrategyTest {
 
     @Test
     public void testDisabledStrategyIsDisabled() throws Exception {
-        assertThat(AgentBuilder.Default.NativeMethodStrategy.Disabled.INSTANCE.isEnabled(), is(false));
+        assertThat(AgentBuilder.Default.NativeMethodStrategy.Disabled.INSTANCE.isEnabled(mock(Instrumentation.class)), is(false));
     }
 
     @Test
@@ -57,8 +60,15 @@ public class AgentBuilderDefaultNativeMethodStrategyTest {
     }
 
     @Test
-    public void testEnabledStrategyIsDisabled() throws Exception {
-        assertThat(new AgentBuilder.Default.NativeMethodStrategy.ForPrefix(FOO).isEnabled(), is(true));
+    public void testEnabledStrategyIsEnabled() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        when(instrumentation.isNativeMethodPrefixSupported()).thenReturn(true);
+        assertThat(new AgentBuilder.Default.NativeMethodStrategy.ForPrefix(FOO).isEnabled(instrumentation), is(true));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEnabledStrategyThrowsExceptionIfNotSupported() throws Exception {
+        new AgentBuilder.Default.NativeMethodStrategy.ForPrefix(FOO).isEnabled(mock(Instrumentation.class));
     }
 
     @Test
