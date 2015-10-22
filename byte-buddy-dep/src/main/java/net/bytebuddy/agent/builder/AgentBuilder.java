@@ -694,14 +694,19 @@ public interface AgentBuilder {
         void onTransformation(TypeDescription typeDescription, DynamicType dynamicType);
 
         /**
+         * Invoked when a type is not transformed but ignored.
+         *
+         * @param typeDescription The type being ignored.
+         */
+        void onIgnored(TypeDescription typeDescription);
+
+        /**
          * Invoked when an error has occurred.
          *
          * @param typeName  The binary name of the instrumented type.
          * @param throwable The occurred error.
          */
         void onError(String typeName, Throwable throwable);
-
-        void onIgnored(TypeDescription typeDescription);
 
         /**
          * Invoked after a class was attempted to be loaded, independently of its treatment.
@@ -726,12 +731,12 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onError(String typeName, Throwable throwable) {
+            public void onIgnored(TypeDescription typeDescription) {
                 /* do nothing */
             }
 
             @Override
-            public void onIgnored(TypeDescription typeDescription) {
+            public void onError(String typeName, Throwable throwable) {
                 /* do nothing */
             }
 
@@ -754,7 +759,7 @@ public interface AgentBuilder {
             /**
              * The listeners that are represented by this compound listener in their application order.
              */
-            private final Listener[] listener;
+            private final List<? extends Listener> listeners;
 
             /**
              * Creates a new compound listener.
@@ -762,33 +767,42 @@ public interface AgentBuilder {
              * @param listener The listeners to apply in their application order.
              */
             public Compound(Listener... listener) {
-                this.listener = listener;
+                this(Arrays.asList(listener));
+            }
+
+            /**
+             * Creates a new compound listener.
+             *
+             * @param listeners The listeners to apply in their application order.
+             */
+            public Compound(List<? extends Listener> listeners) {
+                this.listeners = listeners;
             }
 
             @Override
             public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
-                for (Listener listener : this.listener) {
+                for (Listener listener : listeners) {
                     listener.onTransformation(typeDescription, dynamicType);
                 }
             }
 
             @Override
-            public void onError(String typeName, Throwable throwable) {
-                for (Listener listener : this.listener) {
-                    listener.onError(typeName, throwable);
-                }
-            }
-
-            @Override
             public void onIgnored(TypeDescription typeDescription) {
-                for (Listener listener : this.listener) {
+                for (Listener listener : listeners) {
                     listener.onIgnored(typeDescription);
                 }
             }
 
             @Override
+            public void onError(String typeName, Throwable throwable) {
+                for (Listener listener : listeners) {
+                    listener.onError(typeName, throwable);
+                }
+            }
+
+            @Override
             public void onComplete(String typeName) {
-                for (Listener listener : this.listener) {
+                for (Listener listener : listeners) {
                     listener.onComplete(typeName);
                 }
             }
@@ -796,18 +810,18 @@ public interface AgentBuilder {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && Arrays.equals(listener, ((Compound) other).listener);
+                        && listeners.equals(((Compound) other).listeners);
             }
 
             @Override
             public int hashCode() {
-                return Arrays.hashCode(listener);
+                return listeners.hashCode();
             }
 
             @Override
             public String toString() {
                 return "AgentBuilder.Listener.Compound{" +
-                        "listener=" + Arrays.toString(listener) +
+                        "listeners=" + listeners +
                         '}';
             }
         }
@@ -894,6 +908,9 @@ public interface AgentBuilder {
          */
         private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
+        /**
+         * The transformation object for handling type transformations.
+         */
         private final Transformation transformation;
 
         /**
@@ -940,6 +957,7 @@ public interface AgentBuilder {
          *                                   {@link java.lang.instrument.ClassFileTransformer} should also apply
          *                                   for retransformations.
          * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
+         * @param transformation             The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
