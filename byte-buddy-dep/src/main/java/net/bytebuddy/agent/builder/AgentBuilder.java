@@ -40,7 +40,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
@@ -702,12 +701,7 @@ public interface AgentBuilder {
          */
         void onError(String typeName, Throwable throwable);
 
-        /**
-         * Invokes when a type is not transformed.
-         *
-         * @param typeName The binary name of the type.
-         */
-        void onIgnored(String typeName);
+        void onIgnored(TypeDescription typeDescription);
 
         /**
          * Invoked after a class was attempted to be loaded, independently of its treatment.
@@ -737,7 +731,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onIgnored(String typeName) {
+            public void onIgnored(TypeDescription typeDescription) {
                 /* do nothing */
             }
 
@@ -786,9 +780,9 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onIgnored(String typeName) {
+            public void onIgnored(TypeDescription typeDescription) {
                 for (Listener listener : this.listener) {
-                    listener.onIgnored(typeName);
+                    listener.onIgnored(typeDescription);
                 }
             }
 
@@ -900,10 +894,7 @@ public interface AgentBuilder {
          */
         private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
-        /**
-         * The list of transformation entries that are registered with this agent builder.
-         */
-        private final List<Transformation> transformations;
+        private final Transformation transformation;
 
         /**
          * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for
@@ -928,7 +919,7 @@ public interface AgentBuilder {
                     false,
                     false,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
-                    Collections.<Transformation>emptyList());
+                    Transformation.Ignored.INSTANCE);
         }
 
         /**
@@ -949,8 +940,6 @@ public interface AgentBuilder {
          *                                   {@link java.lang.instrument.ClassFileTransformer} should also apply
          *                                   for retransformations.
          * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
-         * @param transformations            The list of transformation entries that are registered with this
-         *                                   agent builder.
          */
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
@@ -961,7 +950,7 @@ public interface AgentBuilder {
                           boolean disableSelfInitialization,
                           boolean retransformation,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                          List<Transformation> transformations) {
+                          Transformation transformation) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
             this.definitionHandler = definitionHandler;
@@ -971,7 +960,7 @@ public interface AgentBuilder {
             this.disableSelfInitialization = disableSelfInitialization;
             this.retransformation = retransformation;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
-            this.transformations = transformations;
+            this.transformation = transformation;
         }
 
         @Override
@@ -1000,7 +989,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1014,7 +1003,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1028,7 +1017,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1042,7 +1031,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1059,7 +1048,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1073,7 +1062,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1087,7 +1076,7 @@ public interface AgentBuilder {
                     disableSelfInitialization,
                     true,
                     bootstrapInjectionStrategy,
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1101,7 +1090,7 @@ public interface AgentBuilder {
                     true,
                     retransformation,
                     bootstrapInjectionStrategy,
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1115,7 +1104,7 @@ public interface AgentBuilder {
                     true,
                     retransformation,
                     new BootstrapInjectionStrategy.Enabled(nonNull(folder), nonNull(instrumentation)),
-                    transformations);
+                    transformation);
         }
 
         @Override
@@ -1134,11 +1123,9 @@ public interface AgentBuilder {
                 List<Class<?>> retransformedTypes = new LinkedList<Class<?>>();
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                     // The list of all loaded types can be significant what can crash the JVM such that this preselection becomes  necessary.
-                    for (Transformation transformation : transformations) {
-                        if (transformation.matches(new TypeDescription.ForLoadedType(type), type.getClassLoader(), type, type.getProtectionDomain())) {
-                            retransformedTypes.add(type);
-                            break;
-                        }
+                    if (transformation.resolve(new TypeDescription.ForLoadedType(type), type.getClassLoader(), type, type.getProtectionDomain()).isResolved()) {
+                        retransformedTypes.add(type);
+                        break;
                     }
                 }
                 if (!retransformedTypes.isEmpty()) {
@@ -1180,7 +1167,7 @@ public interface AgentBuilder {
                     && disableSelfInitialization == aDefault.disableSelfInitialization
                     && retransformation == aDefault.retransformation
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
-                    && transformations.equals(aDefault.transformations);
+                    && transformation.equals(aDefault.transformation);
 
         }
 
@@ -1195,7 +1182,7 @@ public interface AgentBuilder {
             result = 31 * result + (disableSelfInitialization ? 1 : 0);
             result = 31 * result + (retransformation ? 1 : 0);
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
-            result = 31 * result + transformations.hashCode();
+            result = 31 * result + transformation.hashCode();
             return result;
         }
 
@@ -1211,7 +1198,7 @@ public interface AgentBuilder {
                     ", disableSelfInitialization=" + disableSelfInitialization +
                     ", retransformation=" + retransformation +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                    ", transformations=" + transformations +
+                    ", transformation=" + transformation +
                     '}';
         }
 
@@ -1661,18 +1648,63 @@ public interface AgentBuilder {
             }
         }
 
-        protected interface Transformation extends RawMatcher {
+        protected interface Transformation {
 
-            byte[] apply(TypeDescription typeDescription,
-                         BinaryLocator.Initialized initialized,
-                         ClassLoader classLoader,
-                         ProtectionDomain protectionDomain,
-                         InitializationStrategy initializationStrategy,
-                         DefinitionHandler definitionHandler,
-                         ByteBuddy byteBuddy,
-                         MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
-                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                         AccessControlContext accessControlContext);
+            Resolution resolve(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain);
+
+            interface Resolution {
+
+                boolean isResolved();
+
+                byte[] apply(InitializationStrategy initializationStrategy,
+                             BinaryLocator.Initialized initialized,
+                             DefinitionHandler definitionHandler,
+                             ByteBuddy byteBuddy,
+                             MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
+                             BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                             AccessControlContext accessControlContext,
+                             Listener listener);
+
+                class Unresolved implements Resolution {
+
+                    private final TypeDescription typeDescription;
+
+                    protected Unresolved(TypeDescription typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    public boolean isResolved() {
+                        return false;
+                    }
+
+                    @Override
+                    public byte[] apply(InitializationStrategy initializationStrategy,
+                                        BinaryLocator.Initialized initialized,
+                                        DefinitionHandler definitionHandler,
+                                        ByteBuddy byteBuddy,
+                                        MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
+                                        BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        AccessControlContext accessControlContext,
+                                        Listener listener) {
+                        listener.onIgnored(typeDescription);
+                        return NO_TRANSFORMATION;
+                    }
+                }
+            }
+
+            enum Ignored implements Transformation {
+
+                INSTANCE;
+
+                @Override
+                public Resolution resolve(TypeDescription typeDescription,
+                                          ClassLoader classLoader,
+                                          Class<?> classBeingRedefined,
+                                          ProtectionDomain protectionDomain) {
+                    return new Resolution.Unresolved(typeDescription);
+                }
+            }
 
             class Simple implements Transformation {
 
@@ -1698,41 +1730,13 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean matches(TypeDescription typeDescription,
-                                       ClassLoader classLoader,
-                                       Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain) {
-                    return rawMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain);
-                }
-
-
-                @Override
-                public byte[] apply(TypeDescription typeDescription,
-                                    BinaryLocator.Initialized initialized,
-                                    ClassLoader classLoader,
-                                    ProtectionDomain protectionDomain,
-                                    InitializationStrategy initializationStrategy,
-                                    DefinitionHandler definitionHandler,
-                                    ByteBuddy byteBuddy,
-                                    MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
-                                    BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                                    AccessControlContext accessControlContext) {
-                    DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(
-                            transformer.transform(definitionHandler.builder(typeDescription,
-                                    byteBuddy,
-                                    initialized.getClassFileLocator(),
-                                    methodNameTransformer), typeDescription)).make();
-                    Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                    if (!loadedTypeInitializers.isEmpty()) {
-                        ClassInjector classInjector = classLoader == null
-                                ? bootstrapInjectionStrategy.make(protectionDomain)
-                                : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext, PackageDefinitionStrategy.NoOp.INSTANCE, true);
-                        for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(dynamicType.getRawAuxiliaryTypes()).entrySet()) {
-                            initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
-                        }
-                    }
-                    initializationStrategy.register(typeDescription.getName(), classLoader, loadedTypeInitializers.get(dynamicType.getTypeDescription()));
-                    return dynamicType.getBytes();
+                public Transformation.Resolution resolve(TypeDescription typeDescription,
+                                                         ClassLoader classLoader,
+                                                         Class<?> classBeingRedefined,
+                                                         ProtectionDomain protectionDomain) {
+                    return rawMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
+                            ? new Resolution(typeDescription, classLoader, protectionDomain, transformer)
+                            : new Transformation.Resolution.Unresolved(typeDescription);
                 }
 
                 @Override
@@ -1755,6 +1759,84 @@ public interface AgentBuilder {
                             "rawMatcher=" + rawMatcher +
                             ", transformer=" + transformer +
                             '}';
+                }
+
+                protected static class Resolution implements Transformation.Resolution {
+
+                    private final TypeDescription typeDescription;
+
+                    private final ClassLoader classLoader;
+
+                    private final ProtectionDomain protectionDomain;
+
+                    private final Transformer transformer;
+
+                    protected Resolution(TypeDescription typeDescription,
+                                         ClassLoader classLoader,
+                                         ProtectionDomain protectionDomain,
+                                         Transformer transformer) {
+                        this.typeDescription = typeDescription;
+                        this.classLoader = classLoader;
+                        this.protectionDomain = protectionDomain;
+                        this.transformer = transformer;
+                    }
+
+                    @Override
+                    public boolean isResolved() {
+                        return true;
+                    }
+
+                    @Override
+                    public byte[] apply(InitializationStrategy initializationStrategy,
+                                        BinaryLocator.Initialized initialized,
+                                        DefinitionHandler definitionHandler,
+                                        ByteBuddy byteBuddy,
+                                        MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
+                                        BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        AccessControlContext accessControlContext,
+                                        Listener listener) {
+                        DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(transformer.transform(definitionHandler.builder(typeDescription,
+                                byteBuddy, initialized.getClassFileLocator(), methodNameTransformer), typeDescription)).make();
+                        Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
+                        if (!loadedTypeInitializers.isEmpty()) {
+                            ClassInjector classInjector = classLoader == null
+                                    ? bootstrapInjectionStrategy.make(protectionDomain)
+                                    : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext, PackageDefinitionStrategy.NoOp.INSTANCE, true);
+                            for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(dynamicType.getRawAuxiliaryTypes()).entrySet()) {
+                                initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
+                            }
+                        }
+                        initializationStrategy.register(typeDescription.getName(), classLoader, loadedTypeInitializers.get(dynamicType.getTypeDescription()));
+                        listener.onTransformation(typeDescription, dynamicType);
+                        return dynamicType.getBytes();
+                    }
+                }
+            }
+
+            class Compound implements Transformation {
+
+                private final List<? extends Transformation> transformations;
+
+                protected Compound(Transformation... transformation) {
+                    this(Arrays.asList(transformation));
+                }
+
+                protected Compound(List<? extends Transformation> transformations) {
+                    this.transformations = transformations;
+                }
+
+                @Override
+                public Resolution resolve(TypeDescription typeDescription,
+                                          ClassLoader classLoader,
+                                          Class<?> classBeingRedefined,
+                                          ProtectionDomain protectionDomain) {
+                    for (Transformation transformation : transformations) {
+                        Resolution resolution = transformation.resolve(typeDescription, classLoader, classBeingRedefined, protectionDomain);
+                        if (resolution.isResolved()) {
+                            return resolution;
+                        }
+                    }
+                    return new Resolution.Unresolved(typeDescription);
                 }
             }
         }
@@ -1797,24 +1879,14 @@ public interface AgentBuilder {
                 try {
                     BinaryLocator.Initialized initialized = binaryLocator.initialize(binaryTypeName, binaryRepresentation, classLoader);
                     TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName).resolve();
-                    for (Transformation transformation : transformations) {
-                        if (transformation.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)) {
-                            byte[] transformed = transformation.apply(typeDescription,
-                                    initialized,
-                                    classLoader,
-                                    protectionDomain,
-                                    initializationStrategy,
-                                    definitionHandler,
-                                    byteBuddy,
-                                    methodNameTransformer,
-                                    bootstrapInjectionStrategy,
-                                    accessControlContext);
-                            listener.onTransformation(typeDescription, null);
-                            return transformed;
-                        }
-                    }
-                    listener.onIgnored(binaryTypeName);
-                    return NO_TRANSFORMATION;
+                    return transformation.resolve(typeDescription, classLoader, classBeingRedefined, protectionDomain).apply(initializationStrategy,
+                            initialized,
+                            definitionHandler,
+                            byteBuddy,
+                            methodNameTransformer,
+                            bootstrapInjectionStrategy,
+                            accessControlContext,
+                            listener);
                 } catch (Throwable throwable) {
                     listener.onError(binaryTypeName, throwable);
                     return NO_TRANSFORMATION;
@@ -1957,7 +2029,7 @@ public interface AgentBuilder {
                         disableSelfInitialization,
                         retransformation,
                         bootstrapInjectionStrategy,
-                        join(new Transformation.Simple(rawMatcher, transformer), transformations));
+                        new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer), transformation));
             }
 
             /**

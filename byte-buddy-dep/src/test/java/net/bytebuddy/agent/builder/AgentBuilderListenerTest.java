@@ -39,7 +39,7 @@ public class AgentBuilderListenerTest {
         verifyZeroInteractions(dynamicType);
         AgentBuilder.Listener.NoOp.INSTANCE.onError(FOO, throwable);
         verifyZeroInteractions(throwable);
-        AgentBuilder.Listener.NoOp.INSTANCE.onIgnored(FOO);
+        AgentBuilder.Listener.NoOp.INSTANCE.onIgnored(typeDescription);
         AgentBuilder.Listener.NoOp.INSTANCE.onComplete(FOO);
     }
 
@@ -63,10 +63,10 @@ public class AgentBuilderListenerTest {
 
     @Test
     public void testCompoundOnIgnored() throws Exception {
-        new AgentBuilder.Listener.Compound(first, second).onIgnored(FOO);
-        verify(first).onIgnored(FOO);
+        new AgentBuilder.Listener.Compound(first, second).onIgnored(typeDescription);
+        verify(first).onIgnored(typeDescription);
         verifyNoMoreInteractions(first);
-        verify(second).onIgnored(FOO);
+        verify(second).onIgnored(typeDescription);
         verifyNoMoreInteractions(second);
     }
 

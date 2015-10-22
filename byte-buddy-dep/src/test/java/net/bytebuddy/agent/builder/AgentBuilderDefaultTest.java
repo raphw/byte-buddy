@@ -214,7 +214,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(classFileTransformers.size(), is(1));
         assertThat(classFileTransformers.get(0).transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
-        verify(listener).onIgnored(FOO);
+        verify(listener).onIgnored(typeDescription);
         verify(listener).onComplete(FOO);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
