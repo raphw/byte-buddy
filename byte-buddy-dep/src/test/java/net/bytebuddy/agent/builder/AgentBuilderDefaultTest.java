@@ -74,7 +74,7 @@ public class AgentBuilderDefaultTest {
     private AgentBuilder.BinaryLocator binaryLocator;
 
     @Mock
-    private AgentBuilder.DefinitionStrategy definitionStrategy;
+    private AgentBuilder.TypeStrategy typeStrategy;
 
     @Mock
     private AgentBuilder.BinaryLocator.Initialized initialized;
@@ -93,7 +93,7 @@ public class AgentBuilderDefaultTest {
     public void setUp() throws Exception {
         when(builder.make()).thenReturn((DynamicType.Unloaded) unloaded);
         when(unloaded.getTypeDescription()).thenReturn(typeDescription);
-        when(definitionStrategy.builder(any(TypeDescription.class),
+        when(typeStrategy.builder(any(TypeDescription.class),
                 eq(byteBuddy),
                 any(ClassFileLocator.class),
                 any(MethodRebaseResolver.MethodNameTransformer.class))).thenReturn((DynamicType.Builder) builder);
@@ -115,7 +115,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .withBinaryLocator(binaryLocator)
-                .withDefinitionStrategy(definitionStrategy)
+                .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
@@ -138,7 +138,7 @@ public class AgentBuilderDefaultTest {
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .allowRetransformation()
                 .withBinaryLocator(binaryLocator)
-                .withDefinitionStrategy(definitionStrategy)
+                .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
@@ -161,7 +161,7 @@ public class AgentBuilderDefaultTest {
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .allowRetransformation()
                 .withBinaryLocator(binaryLocator)
-                .withDefinitionStrategy(definitionStrategy)
+                .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
@@ -183,7 +183,7 @@ public class AgentBuilderDefaultTest {
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .allowRetransformation()
                 .withBinaryLocator(binaryLocator)
-                .withDefinitionStrategy(definitionStrategy)
+                .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
@@ -207,7 +207,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .withBinaryLocator(binaryLocator)
-                .withDefinitionStrategy(definitionStrategy)
+                .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
@@ -228,7 +228,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .withBinaryLocator(binaryLocator)
-                .withDefinitionStrategy(definitionStrategy)
+                .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)

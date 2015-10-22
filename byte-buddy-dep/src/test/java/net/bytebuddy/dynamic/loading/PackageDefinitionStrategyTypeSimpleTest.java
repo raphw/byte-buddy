@@ -19,7 +19,7 @@ import java.util.jar.Manifest;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class PackageDefinitionStrategyDefinitionSimpleTest {
+public class PackageDefinitionStrategyTypeSimpleTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 

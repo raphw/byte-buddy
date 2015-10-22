@@ -6,7 +6,7 @@ import org.junit.Test;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class PackageDefinitionStrategyNoOpTest {
+public class PackageTypeStrategyNoOpTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
