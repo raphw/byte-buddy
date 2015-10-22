@@ -10,6 +10,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -101,7 +102,7 @@ public class AgentBuilderDefaultTest {
         loadedTypeInitializers.put(typeDescription, loadedTypeInitializer);
         when(unloaded.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
         when(transformer.transform(builder, typeDescription)).thenReturn((DynamicType.Builder) builder);
-        when(binaryLocator.initialize(FOO, QUX, classLoader)).thenReturn(initialized);
+        when(binaryLocator.initialize(classLoader, FOO, QUX)).thenReturn(initialized);
         when(initialized.getTypePool()).thenReturn(typePool);
         when(typePool.describe(FOO)).thenReturn(resolution);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
@@ -134,9 +135,10 @@ public class AgentBuilderDefaultTest {
         when(resolution.resolve()).thenReturn(typeDescription);
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(false);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .allowRetransformation()
+                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .withBinaryLocator(binaryLocator)
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
@@ -147,6 +149,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).isModifiableClass(REDEFINED);
         verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(rawMatcher);
     }
@@ -157,9 +160,10 @@ public class AgentBuilderDefaultTest {
         when(resolution.resolve()).thenReturn(typeDescription);
         when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .allowRetransformation()
+                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .withBinaryLocator(binaryLocator)
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
@@ -170,6 +174,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).isModifiableClass(REDEFINED);
         verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verify(rawMatcher).matches(TypeDescription.OBJECT, REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(rawMatcher);
@@ -179,9 +184,10 @@ public class AgentBuilderDefaultTest {
     public void testSuccessfulWithRetransformationMatched() throws Exception {
         when(rawMatcher.matches(TypeDescription.OBJECT, REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .allowRetransformation()
+                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .withBinaryLocator(binaryLocator)
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
@@ -193,6 +199,85 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
         verify(instrumentation).retransformClasses(REDEFINED);
+        verify(instrumentation).isRetransformClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verify(rawMatcher).matches(TypeDescription.OBJECT, REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(rawMatcher);
+    }
+
+    @Test
+    public void testSkipRedefinitionWithNonRedefinable() throws Exception {
+        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(typeDescription);
+        when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(false);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .withBinaryLocator(binaryLocator)
+                .withTypeStrategy(typeStrategy)
+                .withListener(listener)
+                .withoutNativeMethodPrefix()
+                .type(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verifyZeroInteractions(rawMatcher);
+    }
+
+    @Test
+    public void testSkipRedefinitionWithNonMatched() throws Exception {
+        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(typeDescription);
+        when(rawMatcher.matches(typeDescription, classLoader, REDEFINED, protectionDomain)).thenReturn(false);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .withBinaryLocator(binaryLocator)
+                .withTypeStrategy(typeStrategy)
+                .withListener(listener)
+                .withoutNativeMethodPrefix()
+                .type(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verify(rawMatcher).matches(TypeDescription.OBJECT, REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(rawMatcher);
+    }
+
+    @Test
+    @Ignore("Throws null pointer because resolution of entry is not mocked")
+    public void testSuccessfulWithRedefinitionMatched() throws Exception {
+        when(rawMatcher.matches(TypeDescription.OBJECT, REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        when(binaryLocator.initialize(REDEFINED.getClassLoader())).thenReturn(initialized);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .withBinaryLocator(binaryLocator)
+                .withTypeStrategy(typeStrategy)
+                .withListener(listener)
+                .withoutNativeMethodPrefix()
+                .type(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).retransformClasses(REDEFINED);
+        verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verify(rawMatcher).matches(TypeDescription.OBJECT, REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(rawMatcher);
@@ -262,7 +347,12 @@ public class AgentBuilderDefaultTest {
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Unresolved.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class).applyBasic();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
         final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, AgentBuilderDefaultTest.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
