@@ -1,10 +1,7 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -12,6 +9,7 @@ import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -57,6 +55,15 @@ public class ByteBuddyAgentInstallerTest {
     public void testAgentMain() throws Exception {
         ByteBuddyAgent.Installer.agentmain(FOO, instrumentation);
         assertThat(ByteBuddyAgent.getInstrumentation(), is(instrumentation));
+    }
+
+    @Test
+    public void testAgentInstallerIsPublic() throws Exception {
+        Class<?> type = ByteBuddyAgent.Installer.class;
+        while (type != null) {
+            Assert.assertThat(Modifier.isPublic(type.getModifiers()), is(true));
+            type = type.getDeclaringClass();
+        }
     }
 
     @Test(expected = UnsupportedOperationException.class)

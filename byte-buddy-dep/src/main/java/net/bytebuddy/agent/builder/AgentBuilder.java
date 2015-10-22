@@ -148,6 +148,13 @@ public interface AgentBuilder {
     AgentBuilder withNativeMethodPrefix(String prefix);
 
     /**
+     * Disables the use of a native method prefix for instrumented methods.
+     *
+     * @return A new instance of this agent builder which does not use a native method prefix.
+     */
+    AgentBuilder withoutNativeMethodPrefix();
+
+    /**
      * Defines classes to be loaded using the given access control context.
      *
      * @param accessControlContext The access control context to be used for loading classes.
@@ -155,6 +162,15 @@ public interface AgentBuilder {
      */
     AgentBuilder withAccessControlContext(AccessControlContext accessControlContext);
 
+    /**
+     * Defines a given initialization strategy to be applied to generated types. An initialization strategy is responsible
+     * for setting up a type after it was loaded. This initialization must be performed after the transformation because
+     * a Java agent is only invoked before loading a type. By default, the initialization logic is added to a class's type
+     * initializer which queries a global object for any objects that are to be injected into the generated type.
+     *
+     * @param initializationStrategy The initialization strategy to use.
+     * @return A new instance of this agent builder that applies the given initialization strategy.
+     */
     AgentBuilder withInitialization(InitializationStrategy initializationStrategy);
 
     /**
@@ -983,6 +999,7 @@ public interface AgentBuilder {
                  * @param type The loaded type to initialize.
                  * @throws Exception If an exception occurs.
                  */
+                @SuppressWarnings("unused")
                 public static void initialize(Class<?> type) throws Exception {
                     Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type));
                     if (typeInitializer != null) {
@@ -1150,12 +1167,6 @@ public interface AgentBuilder {
     class Default implements AgentBuilder {
 
         /**
-         * The string value that is used to indicate that no name prefix for native methods should be used.
-         * This value is not a valid prefix.
-         */
-        protected static final String NO_NATIVE_PREFIX = "";
-
-        /**
          * The name of the Byte Buddy agent class.
          */
         private static final String BYTE_BUDDY_AGENT_TYPE = "net.bytebuddy.agent.ByteBuddyAgent";
@@ -1197,17 +1208,18 @@ public interface AgentBuilder {
         private final Listener listener;
 
         /**
-         * The native method prefix to use which might also represent
-         * {@link net.bytebuddy.agent.builder.AgentBuilder.Default#NO_NATIVE_PREFIX} to indicate that no
-         * prefix should be added but rather a random suffix.
+         * The native method strategy to use.
          */
-        private final String nativeMethodPrefix;
+        private final NativeMethodStrategy nativeMethodStrategy;
 
         /**
          * The access control context to use for loading classes.
          */
         private final AccessControlContext accessControlContext;
 
+        /**
+         * The initialization strategy to use for creating classes.
+         */
         private final InitializationStrategy initializationStrategy;
 
         /**
@@ -1244,7 +1256,7 @@ public interface AgentBuilder {
                     BinaryLocator.Default.FAST,
                     DefinitionHandler.Default.REBASE,
                     Listener.NoOp.INSTANCE,
-                    NO_NATIVE_PREFIX,
+                    NativeMethodStrategy.Disabled.INSTANCE,
                     AccessController.getContext(),
                     InitializationStrategy.SelfInjection.INSTANCE,
                     false,
@@ -1259,10 +1271,9 @@ public interface AgentBuilder {
          * @param binaryLocator              The binary locator to use.
          * @param definitionHandler          The definition handler to use.
          * @param listener                   The listener to notify on transformations.
-         * @param nativeMethodPrefix         The native method prefix to use which might also represent
-         *                                   {@link net.bytebuddy.agent.builder.AgentBuilder.Default#NO_NATIVE_PREFIX}
-         *                                   to indicate that no prefix should be added but rather a random suffix.
+         * @param nativeMethodStrategy       The native method strategy to apply.
          * @param accessControlContext       The access control context to use for loading classes.
+         * @param initializationStrategy     The initialization strategy to use for transformed types.
          * @param retransformation           {@code true} if the generated
          *                                   {@link java.lang.instrument.ClassFileTransformer} should also apply
          *                                   for retransformations.
@@ -1273,7 +1284,7 @@ public interface AgentBuilder {
                           BinaryLocator binaryLocator,
                           DefinitionHandler definitionHandler,
                           Listener listener,
-                          String nativeMethodPrefix,
+                          NativeMethodStrategy nativeMethodStrategy,
                           AccessControlContext accessControlContext,
                           InitializationStrategy initializationStrategy,
                           boolean retransformation,
@@ -1283,7 +1294,7 @@ public interface AgentBuilder {
             this.binaryLocator = binaryLocator;
             this.definitionHandler = definitionHandler;
             this.listener = listener;
-            this.nativeMethodPrefix = nativeMethodPrefix;
+            this.nativeMethodStrategy = nativeMethodStrategy;
             this.accessControlContext = accessControlContext;
             this.initializationStrategy = initializationStrategy;
             this.retransformation = retransformation;
@@ -1312,7 +1323,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     definitionHandler,
                     listener,
-                    nativeMethodPrefix,
+                    nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
                     retransformation,
@@ -1326,7 +1337,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     definitionHandler,
                     new Listener.Compound(this.listener, nonNull(listener)),
-                    nativeMethodPrefix,
+                    nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
                     retransformation,
@@ -1340,7 +1351,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     nonNull(definitionHandler),
                     listener,
-                    nativeMethodPrefix,
+                    nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
                     retransformation,
@@ -1354,7 +1365,7 @@ public interface AgentBuilder {
                     nonNull(binaryLocator),
                     definitionHandler,
                     listener,
-                    nativeMethodPrefix,
+                    nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
                     retransformation,
@@ -1364,14 +1375,25 @@ public interface AgentBuilder {
 
         @Override
         public AgentBuilder withNativeMethodPrefix(String prefix) {
-            if (nonNull(prefix).length() == 0) {
-                throw new IllegalArgumentException("The empty string is not a legal value for a native method prefix");
-            }
             return new Default(byteBuddy,
                     binaryLocator,
                     definitionHandler,
                     listener,
-                    prefix,
+                    NativeMethodStrategy.ForPrefix.of(prefix),
+                    accessControlContext,
+                    initializationStrategy,
+                    retransformation,
+                    bootstrapInjectionStrategy,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder withoutNativeMethodPrefix() {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    definitionHandler,
+                    listener,
+                    NativeMethodStrategy.Disabled.INSTANCE,
                     accessControlContext,
                     initializationStrategy,
                     retransformation,
@@ -1385,7 +1407,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     definitionHandler,
                     listener,
-                    nativeMethodPrefix,
+                    nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
                     retransformation,
@@ -1399,7 +1421,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     definitionHandler,
                     listener,
-                    nativeMethodPrefix,
+                    nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
                     true,
@@ -1413,7 +1435,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     definitionHandler,
                     listener,
-                    nativeMethodPrefix,
+                    nativeMethodStrategy,
                     accessControlContext,
                     nonNull(initializationStrategy),
                     retransformation,
@@ -1427,7 +1449,7 @@ public interface AgentBuilder {
                     binaryLocator,
                     definitionHandler,
                     listener,
-                    nativeMethodPrefix,
+                    nativeMethodStrategy,
                     accessControlContext,
                     InitializationStrategy.SelfInjection.INSTANCE,
                     retransformation,
@@ -1444,8 +1466,8 @@ public interface AgentBuilder {
         public ClassFileTransformer installOn(Instrumentation instrumentation) {
             ClassFileTransformer classFileTransformer = makeRaw();
             instrumentation.addTransformer(classFileTransformer, retransformation);
-            if (!NO_NATIVE_PREFIX.equals(nativeMethodPrefix)) {
-                instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodPrefix);
+            if (nativeMethodStrategy.isEnabled()) {
+                instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
             }
             if (retransformation) { // If retransformation was unsupported the above transformer registration had thrown an exception.
                 List<Class<?>> retransformedTypes = new LinkedList<Class<?>>();
@@ -1489,7 +1511,7 @@ public interface AgentBuilder {
             return binaryLocator.equals(aDefault.binaryLocator)
                     && byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
-                    && nativeMethodPrefix.equals(aDefault.nativeMethodPrefix)
+                    && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
                     && definitionHandler.equals(aDefault.definitionHandler)
                     && accessControlContext.equals(aDefault.accessControlContext)
                     && initializationStrategy == aDefault.initializationStrategy
@@ -1505,7 +1527,7 @@ public interface AgentBuilder {
             result = 31 * result + binaryLocator.hashCode();
             result = 31 * result + listener.hashCode();
             result = 31 * result + definitionHandler.hashCode();
-            result = 31 * result + nativeMethodPrefix.hashCode();
+            result = 31 * result + nativeMethodStrategy.hashCode();
             result = 31 * result + accessControlContext.hashCode();
             result = 31 * result + initializationStrategy.hashCode();
             result = 31 * result + (retransformation ? 1 : 0);
@@ -1521,7 +1543,7 @@ public interface AgentBuilder {
                     ", binaryLocator=" + binaryLocator +
                     ", definitionHandler=" + definitionHandler +
                     ", listener=" + listener +
-                    ", nativeMethodPrefix=" + nativeMethodPrefix +
+                    ", nativeMethodStrategy=" + nativeMethodStrategy +
                     ", accessControlContext=" + accessControlContext +
                     ", initializationStrategy=" + initializationStrategy +
                     ", retransformation=" + retransformation +
@@ -1615,6 +1637,129 @@ public interface AgentBuilder {
                     return "AgentBuilder.Default.BootstrapInjectionStrategy.Enabled{" +
                             "folder=" + folder +
                             ", instrumentation=" + instrumentation +
+                            '}';
+                }
+            }
+        }
+
+        /**
+         * A strategy for determining if a native method name prefix should be used when rebasing methods.
+         */
+        protected interface NativeMethodStrategy {
+
+            /**
+             * Determines if this strategy enables name prefixing for native methods.
+             *
+             * @return {@code true} if this strategy indicates that a native method prefix should be used.
+             */
+            boolean isEnabled();
+
+            /**
+             * Resolves the method name transformer for this strategy.
+             *
+             * @return A method name transformer for this strategy.
+             */
+            MethodRebaseResolver.MethodNameTransformer resolve();
+
+            /**
+             * Returns the method prefix if the strategy is enabled. This method must only be called if this strategy enables prefixing.
+             *
+             * @return The method prefix.
+             */
+            String getPrefix();
+
+            /**
+             * A native method strategy that suffixes method names with a random suffix and disables native method rebasement.
+             */
+            enum Disabled implements NativeMethodStrategy {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public MethodRebaseResolver.MethodNameTransformer resolve() {
+                    return MethodRebaseResolver.MethodNameTransformer.Suffixing.withRandomSuffix();
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return false;
+                }
+
+                @Override
+                public String getPrefix() {
+                    throw new IllegalStateException("A disabled native method strategy does not define a method name prefix");
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.NativeMethodStrategy.Disabled." + name();
+                }
+            }
+
+            /**
+             * A native method strategy that prefixes method names with a fixed value for supporting rebasing of native methods.
+             */
+            class ForPrefix implements NativeMethodStrategy {
+
+                /**
+                 * The method name prefix.
+                 */
+                private final String prefix;
+
+                /**
+                 * Creates a new name prefixing native method strategy.
+                 *
+                 * @param prefix The method name prefix.
+                 */
+                protected ForPrefix(String prefix) {
+                    this.prefix = prefix;
+                }
+
+                /**
+                 * Creates a new native method strategy for prefixing method names.
+                 *
+                 * @param prefix The method name prefix.
+                 * @return An appropriate native method strategy.
+                 */
+                protected static NativeMethodStrategy of(String prefix) {
+                    if (prefix.length() == 0) {
+                        throw new IllegalArgumentException("A method name prefix must not be the empty string");
+                    }
+                    return new ForPrefix(prefix);
+                }
+
+                @Override
+                public MethodRebaseResolver.MethodNameTransformer resolve() {
+                    return new MethodRebaseResolver.MethodNameTransformer.Prefixing(prefix);
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return true;
+                }
+
+                @Override
+                public String getPrefix() {
+                    return prefix;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass()) && prefix.equals(((ForPrefix) other).prefix);
+                }
+
+                @Override
+                public int hashCode() {
+                    return prefix.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.NativeMethodStrategy.ForPrefix{" +
+                            "prefix='" + prefix + '\'' +
                             '}';
                 }
             }
@@ -1983,20 +2128,6 @@ public interface AgentBuilder {
          */
         protected class ExecutingTransformer implements ClassFileTransformer {
 
-            /**
-             * The method name transformer to be used for rebasing methods.
-             */
-            private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
-
-            /**
-             * Creates a new executing transformer that reflects the enclosing agent builder's configuration.
-             */
-            public ExecutingTransformer() {
-                methodNameTransformer = NO_NATIVE_PREFIX.equals(nativeMethodPrefix)
-                        ? MethodRebaseResolver.MethodNameTransformer.Suffixing.withRandomSuffix()
-                        : new MethodRebaseResolver.MethodNameTransformer.Prefixing(nativeMethodPrefix);
-            }
-
             @Override
             public byte[] transform(ClassLoader classLoader,
                                     String internalTypeName,
@@ -2011,7 +2142,7 @@ public interface AgentBuilder {
                             initialized,
                             definitionHandler,
                             byteBuddy,
-                            methodNameTransformer,
+                            nativeMethodStrategy.resolve(),
                             bootstrapInjectionStrategy,
                             accessControlContext,
                             listener);
@@ -2027,7 +2158,6 @@ public interface AgentBuilder {
             public String toString() {
                 return "AgentBuilder.Default.ExecutingTransformer{" +
                         "agentBuilder=" + Default.this +
-                        ", methodNameTransformer=" + methodNameTransformer +
                         '}';
             }
         }
@@ -2106,6 +2236,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder withoutNativeMethodPrefix() {
+                return materialize().withoutNativeMethodPrefix();
+            }
+
+            @Override
             public AgentBuilder withAccessControlContext(AccessControlContext accessControlContext) {
                 return materialize().withAccessControlContext(accessControlContext);
             }
@@ -2150,7 +2285,7 @@ public interface AgentBuilder {
                         binaryLocator,
                         definitionHandler,
                         listener,
-                        nativeMethodPrefix,
+                        nativeMethodStrategy,
                         accessControlContext,
                         initializationStrategy,
                         retransformation,

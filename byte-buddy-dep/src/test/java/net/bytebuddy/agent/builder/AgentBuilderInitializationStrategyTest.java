@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -26,6 +27,15 @@ public class AgentBuilderInitializationStrategyTest {
     @SuppressWarnings("unchecked")
     public void testNoOp() throws Exception {
         assertThat(AgentBuilder.Default.InitializationStrategy.NoOp.INSTANCE.apply(builder), is((DynamicType.Builder) builder));
+    }
+
+    @Test
+    public void testNexusIsPublic() throws Exception {
+        Class<?> type = AgentBuilder.InitializationStrategy.SelfInjection.Nexus.class;
+        while (type != null) {
+            assertThat(Modifier.isPublic(type.getModifiers()), is(true));
+            type = type.getDeclaringClass();
+        }
     }
 
     @Test

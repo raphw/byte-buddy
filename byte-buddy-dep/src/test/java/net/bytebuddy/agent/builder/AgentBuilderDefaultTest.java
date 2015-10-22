@@ -117,6 +117,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
+                .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), is(BAZ));
@@ -139,6 +140,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
+                .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verifyZeroInteractions(listener);
@@ -161,6 +163,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
+                .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verifyZeroInteractions(listener);
@@ -182,6 +185,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
+                .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verifyZeroInteractions(listener);
@@ -205,6 +209,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
+                .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
@@ -225,6 +230,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withDefinitionHandler(definitionHandler)
                 .withListener(listener)
+                .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(classLoader, FOO, REDEFINED, protectionDomain, QUX), nullValue(byte[].class));
