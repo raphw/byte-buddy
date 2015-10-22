@@ -23,6 +23,7 @@ public enum TrivialType implements AuxiliaryType {
                             MethodAccessorFactory methodAccessorFactory) {
         return new ByteBuddy(classFileVersion)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .methodGraphCompiler(MethodGraph.Empty.INSTANCE) // avoid parsing the graph
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .methodGraphCompiler(MethodGraph.Empty.INSTANCE)

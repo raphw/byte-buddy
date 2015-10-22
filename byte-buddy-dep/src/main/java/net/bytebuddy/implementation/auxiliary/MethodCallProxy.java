@@ -11,6 +11,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -26,11 +27,13 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
@@ -134,6 +137,7 @@ public class MethodCallProxy implements AuxiliaryType {
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .methodGraphCompiler(PrecomputedMethodGraph.INSTANCE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(Runnable.class, Callable.class).intercept(new MethodCall(accessorMethod, assigner))
@@ -171,6 +175,47 @@ public class MethodCallProxy implements AuxiliaryType {
                 ", serializableProxy=" + serializableProxy +
                 ", assigner=" + assigner +
                 '}';
+    }
+
+    /**
+     * A precomputed method graph that only displays the methods that are relevant for creating a method call proxy.
+     */
+    protected enum PrecomputedMethodGraph implements MethodGraph.Compiler {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * The precomputed method graph.
+         */
+        private final MethodGraph.Linked methodGraph;
+
+        PrecomputedMethodGraph() {
+            LinkedHashMap<MethodDescription.Token, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.Token, MethodGraph.Node>(2);
+            MethodDescription callMethod = new TypeDescription.ForLoadedType(Callable.class).getDeclaredMethods().filter(named("call")).getOnly();
+            nodes.put(callMethod.asToken(), new MethodGraph.Node.Simple(callMethod));
+            MethodDescription runMethod = new TypeDescription.ForLoadedType(Runnable.class).getDeclaredMethods().filter(named("run")).getOnly();
+            nodes.put(runMethod.asToken(), new MethodGraph.Node.Simple(runMethod));
+            MethodGraph methodGraph = new MethodGraph.Simple(nodes);
+            this.methodGraph = new MethodGraph.Linked.Delegation(methodGraph, methodGraph, Collections.<TypeDescription, MethodGraph>emptyMap());
+        }
+
+        @Override
+        public MethodGraph.Linked compile(TypeDescription typeDescription) {
+            return compile(typeDescription, typeDescription);
+        }
+
+        @Override
+        public MethodGraph.Linked compile(TypeDescription typeDescription, TypeDescription viewPoint) {
+            return methodGraph;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodCallProxy.PrecomputedMethodGraph." + name();
+        }
     }
 
     /**
