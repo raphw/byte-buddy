@@ -1,6 +1,5 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -12,9 +11,7 @@ import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -26,8 +23,6 @@ import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
@@ -48,9 +43,19 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Before
     public void setUp() throws Exception {
-        // Need to add enclosing class. Otherwise, the child first semantics break runtime validation of inner class logic.
+        // Need to add all enclosing classes. Otherwise, eagerly validated types (Java 7- for redefinition)
+        // fail to validate type equality for outer/inner classes.
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                ClassFileExtraction.of(Foo.class, Bar.class, Qux.class, Baz.class, getClass()),
+                ClassFileExtraction.of(Foo.class,
+                        Bar.class,
+                        Qux.class,
+                        Baz.class,
+                        getClass(),
+                        ShouldRebase.class,
+                        FooTransformer.class,
+                        BarTransformer.class,
+                        BarTransformer.Interceptor.class,
+                        QuxTransformer.class),
                 DEFAULT_PROTECTION_DOMAIN,
                 AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
@@ -131,7 +136,6 @@ public class AgentBuilderDefaultApplicationTest {
                 .withTypeStrategy(AgentBuilder.TypeStrategy.REDEFINE)
                 .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
-                .withListener(AgentBuilder.Listener.NoOp.INSTANCE)
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
