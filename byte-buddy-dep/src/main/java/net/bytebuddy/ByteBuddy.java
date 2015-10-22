@@ -465,7 +465,7 @@ public class ByteBuddy {
      */
     @SuppressWarnings("unchecked")
     public DynamicType.Builder<? extends Enum<?>> makeEnumeration(Collection<? extends String> values) {
-        if (unique(nonNull(values)).size() == 0) {
+        if (unique(nonNull(values)).isEmpty()) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
         return new SubclassDynamicTypeBuilder<Enum<?>>(classFileVersion,

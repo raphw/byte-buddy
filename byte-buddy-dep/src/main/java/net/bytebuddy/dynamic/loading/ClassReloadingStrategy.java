@@ -348,7 +348,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
              * Validates that all given classes were redefined.
              */
             public void assertTransformation() {
-                if (redefinedClasses.size() > 0) {
+                if (!redefinedClasses.isEmpty()) {
                     throw new IllegalStateException("Could not transform: " + redefinedClasses.keySet());
                 }
             }

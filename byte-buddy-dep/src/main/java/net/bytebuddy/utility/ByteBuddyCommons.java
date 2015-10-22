@@ -462,7 +462,7 @@ public final class ByteBuddyCommons {
      * @return The same collection that was validated.
      */
     public static <T extends Collection<?>> T isNotEmpty(T collection, String exceptionMessage) {
-        if (collection.size() == 0) {
+        if (collection.isEmpty()) {
             throw new IllegalArgumentException(exceptionMessage);
         }
         return collection;
@@ -477,7 +477,7 @@ public final class ByteBuddyCommons {
      * @return The same collection that was validated.
      */
     public static <T extends Collection<?>> T isEmpty(T collection, String exceptionMessage) {
-        if (collection.size() > 0) {
+        if (!collection.isEmpty()) {
             throw new IllegalArgumentException(exceptionMessage);
         }
         return collection;

@@ -1141,7 +1141,7 @@ public interface AgentBuilder {
                         }
                     }
                 }
-                if (retransformedTypes.size() > 0) {
+                if (!retransformedTypes.isEmpty()) {
                     try {
                         instrumentation.retransformClasses(retransformedTypes.toArray(new Class<?>[retransformedTypes.size()]));
                     } catch (UnmodifiableClassException exception) {
