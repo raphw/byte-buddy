@@ -47,7 +47,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * An agent builder provides a convenience API for defining a
  * <a href="http://docs.oracle.com/javase/6/docs/api/java/lang/instrument/package-summary.html">Java agent</a>. By default,
  * this transformation is applied by rebasing the type if not specified otherwise by setting a
- * {@link net.bytebuddy.agent.builder.AgentBuilder.DefinitionHandler}.
+ * {@link DefinitionStrategy}.
  * </p>
  * <p>
  * When defining several {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s, the agent builder always
@@ -132,10 +132,10 @@ public interface AgentBuilder {
     /**
      * Defines the use of the given definition handler that determines if a type should be rebased or redefined.
      *
-     * @param definitionHandler The definition handler to use.
+     * @param definitionStrategy The definition handler to use.
      * @return A new instance of this agent builder which uses the given definition handler.
      */
-    AgentBuilder withDefinitionHandler(DefinitionHandler definitionHandler);
+    AgentBuilder withDefinitionHandler(DefinitionStrategy definitionStrategy);
 
     /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
@@ -336,7 +336,7 @@ public interface AgentBuilder {
     /**
      * A definition handler is responsible for creating a type builder for a type that is being instrumented.
      */
-    interface DefinitionHandler {
+    interface DefinitionStrategy {
 
         /**
          * Creates a type builder for a given type.
@@ -355,7 +355,7 @@ public interface AgentBuilder {
         /**
          * A default implementation of a definition handler.
          */
-        enum Default implements DefinitionHandler {
+        enum Default implements DefinitionStrategy {
 
             /**
              * A definition handler that performs a rebasing for all types.
@@ -1200,7 +1200,7 @@ public interface AgentBuilder {
         /**
          * The definition handler to use.
          */
-        private final DefinitionHandler definitionHandler;
+        private final DefinitionStrategy definitionStrategy;
 
         /**
          * The listener to notify on transformations.
@@ -1254,7 +1254,7 @@ public interface AgentBuilder {
         public Default(ByteBuddy byteBuddy) {
             this(nonNull(byteBuddy),
                     BinaryLocator.Default.FAST,
-                    DefinitionHandler.Default.REBASE,
+                    DefinitionStrategy.Default.REBASE,
                     Listener.NoOp.INSTANCE,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     AccessController.getContext(),
@@ -1269,7 +1269,7 @@ public interface AgentBuilder {
          *
          * @param byteBuddy                  The Byte Buddy instance to be used.
          * @param binaryLocator              The binary locator to use.
-         * @param definitionHandler          The definition handler to use.
+         * @param definitionStrategy          The definition handler to use.
          * @param listener                   The listener to notify on transformations.
          * @param nativeMethodStrategy       The native method strategy to apply.
          * @param accessControlContext       The access control context to use for loading classes.
@@ -1282,7 +1282,7 @@ public interface AgentBuilder {
          */
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
-                          DefinitionHandler definitionHandler,
+                          DefinitionStrategy definitionStrategy,
                           Listener listener,
                           NativeMethodStrategy nativeMethodStrategy,
                           AccessControlContext accessControlContext,
@@ -1292,7 +1292,7 @@ public interface AgentBuilder {
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
-            this.definitionHandler = definitionHandler;
+            this.definitionStrategy = definitionStrategy;
             this.listener = listener;
             this.nativeMethodStrategy = nativeMethodStrategy;
             this.accessControlContext = accessControlContext;
@@ -1321,7 +1321,7 @@ public interface AgentBuilder {
         public AgentBuilder withByteBuddy(ByteBuddy byteBuddy) {
             return new Default(nonNull(byteBuddy),
                     binaryLocator,
-                    definitionHandler,
+                    definitionStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -1335,7 +1335,7 @@ public interface AgentBuilder {
         public AgentBuilder withListener(Listener listener) {
             return new Default(byteBuddy,
                     binaryLocator,
-                    definitionHandler,
+                    definitionStrategy,
                     new Listener.Compound(this.listener, nonNull(listener)),
                     nativeMethodStrategy,
                     accessControlContext,
@@ -1346,10 +1346,10 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withDefinitionHandler(DefinitionHandler definitionHandler) {
+        public AgentBuilder withDefinitionHandler(DefinitionStrategy definitionStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
-                    nonNull(definitionHandler),
+                    nonNull(definitionStrategy),
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -1363,7 +1363,7 @@ public interface AgentBuilder {
         public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
             return new Default(byteBuddy,
                     nonNull(binaryLocator),
-                    definitionHandler,
+                    definitionStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -1377,7 +1377,7 @@ public interface AgentBuilder {
         public AgentBuilder withNativeMethodPrefix(String prefix) {
             return new Default(byteBuddy,
                     binaryLocator,
-                    definitionHandler,
+                    definitionStrategy,
                     listener,
                     NativeMethodStrategy.ForPrefix.of(prefix),
                     accessControlContext,
@@ -1391,7 +1391,7 @@ public interface AgentBuilder {
         public AgentBuilder withoutNativeMethodPrefix() {
             return new Default(byteBuddy,
                     binaryLocator,
-                    definitionHandler,
+                    definitionStrategy,
                     listener,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     accessControlContext,
@@ -1405,7 +1405,7 @@ public interface AgentBuilder {
         public AgentBuilder withAccessControlContext(AccessControlContext accessControlContext) {
             return new Default(byteBuddy,
                     binaryLocator,
-                    definitionHandler,
+                    definitionStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -1419,7 +1419,7 @@ public interface AgentBuilder {
         public AgentBuilder allowRetransformation() {
             return new Default(byteBuddy,
                     binaryLocator,
-                    definitionHandler,
+                    definitionStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -1433,7 +1433,7 @@ public interface AgentBuilder {
         public AgentBuilder withInitialization(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
-                    definitionHandler,
+                    definitionStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -1447,7 +1447,7 @@ public interface AgentBuilder {
         public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
             return new Default(byteBuddy,
                     binaryLocator,
-                    definitionHandler,
+                    definitionStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -1459,7 +1459,15 @@ public interface AgentBuilder {
 
         @Override
         public ClassFileTransformer makeRaw() {
-            return new ExecutingTransformer();
+            return new ExecutingTransformer(byteBuddy,
+                    binaryLocator,
+                    definitionStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    bootstrapInjectionStrategy,
+                    transformation);
         }
 
         @Override
@@ -1482,7 +1490,7 @@ public interface AgentBuilder {
                     try {
                         instrumentation.retransformClasses(retransformedTypes.toArray(new Class<?>[retransformedTypes.size()]));
                     } catch (UnmodifiableClassException exception) {
-                        throw new IllegalStateException("Cannot retransform classes: " + retransformedTypes, exception);
+                        throw new IllegalStateException("Cannot modify classes: " + retransformedTypes, exception);
                     }
                 }
             }
@@ -1512,7 +1520,7 @@ public interface AgentBuilder {
                     && byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
-                    && definitionHandler.equals(aDefault.definitionHandler)
+                    && definitionStrategy.equals(aDefault.definitionStrategy)
                     && accessControlContext.equals(aDefault.accessControlContext)
                     && initializationStrategy == aDefault.initializationStrategy
                     && retransformation == aDefault.retransformation
@@ -1526,7 +1534,7 @@ public interface AgentBuilder {
             int result = byteBuddy.hashCode();
             result = 31 * result + binaryLocator.hashCode();
             result = 31 * result + listener.hashCode();
-            result = 31 * result + definitionHandler.hashCode();
+            result = 31 * result + definitionStrategy.hashCode();
             result = 31 * result + nativeMethodStrategy.hashCode();
             result = 31 * result + accessControlContext.hashCode();
             result = 31 * result + initializationStrategy.hashCode();
@@ -1541,7 +1549,7 @@ public interface AgentBuilder {
             return "AgentBuilder.Default{" +
                     "byteBuddy=" + byteBuddy +
                     ", binaryLocator=" + binaryLocator +
-                    ", definitionHandler=" + definitionHandler +
+                    ", definitionHandler=" + definitionStrategy +
                     ", listener=" + listener +
                     ", nativeMethodStrategy=" + nativeMethodStrategy +
                     ", accessControlContext=" + accessControlContext +
@@ -1799,7 +1807,7 @@ public interface AgentBuilder {
                  *
                  * @param initializationStrategy     The initialization strategy to use.
                  * @param initialized                The initialized binary locator to use.
-                 * @param definitionHandler          The definition handler to use.
+                 * @param definitionStrategy          The definition handler to use.
                  * @param byteBuddy                  The Byte Buddy instance to use.
                  * @param methodNameTransformer      The method name transformer to be used.
                  * @param bootstrapInjectionStrategy The bootstrap injection strategy to be used.
@@ -1809,7 +1817,7 @@ public interface AgentBuilder {
                  */
                 byte[] apply(InitializationStrategy initializationStrategy,
                              BinaryLocator.Initialized initialized,
-                             DefinitionHandler definitionHandler,
+                             DefinitionStrategy definitionStrategy,
                              ByteBuddy byteBuddy,
                              MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
                              BootstrapInjectionStrategy bootstrapInjectionStrategy,
@@ -1843,7 +1851,7 @@ public interface AgentBuilder {
                     @Override
                     public byte[] apply(InitializationStrategy initializationStrategy,
                                         BinaryLocator.Initialized initialized,
-                                        DefinitionHandler definitionHandler,
+                                        DefinitionStrategy definitionStrategy,
                                         ByteBuddy byteBuddy,
                                         MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
@@ -2006,13 +2014,13 @@ public interface AgentBuilder {
                     @Override
                     public byte[] apply(InitializationStrategy initializationStrategy,
                                         BinaryLocator.Initialized initialized,
-                                        DefinitionHandler definitionHandler,
+                                        DefinitionStrategy definitionStrategy,
                                         ByteBuddy byteBuddy,
                                         MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                         AccessControlContext accessControlContext,
                                         Listener listener) {
-                        DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(transformer.transform(definitionHandler.builder(typeDescription,
+                        DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(transformer.transform(definitionStrategy.builder(typeDescription,
                                 byteBuddy, initialized.getClassFileLocator(), methodNameTransformer), typeDescription)).make();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                         if (!loadedTypeInitializers.isEmpty()) {
@@ -2126,7 +2134,85 @@ public interface AgentBuilder {
          * A {@link java.lang.instrument.ClassFileTransformer} that implements the enclosing agent builder's
          * configuration.
          */
-        protected class ExecutingTransformer implements ClassFileTransformer {
+        protected static class ExecutingTransformer implements ClassFileTransformer {
+
+            /**
+             * The Byte Buddy instance to be used.
+             */
+            private final ByteBuddy byteBuddy;
+
+            /**
+             * The binary locator to use.
+             */
+            private final BinaryLocator binaryLocator;
+
+            /**
+             * The definition handler to use.
+             */
+            private final DefinitionStrategy definitionStrategy;
+
+            /**
+             * The listener to notify on transformations.
+             */
+            private final Listener listener;
+
+            /**
+             * The native method strategy to apply.
+             */
+            private final NativeMethodStrategy nativeMethodStrategy;
+
+            /**
+             * The access control context to use for loading classes.
+             */
+            private final AccessControlContext accessControlContext;
+
+            /**
+             * The initialization strategy to use for transformed types.
+             */
+            private final InitializationStrategy initializationStrategy;
+
+            /**
+             * The injection strategy for injecting classes into the bootstrap class loader.
+             */
+            private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
+
+            /**
+             * The transformation object for handling type transformations.
+             */
+            private final Transformation transformation;
+
+            /**
+             * Creates a new class file transformer.
+             *
+             * @param byteBuddy                  The Byte Buddy instance to be used.
+             * @param binaryLocator              The binary locator to use.
+             * @param definitionStrategy          The definition handler to use.
+             * @param listener                   The listener to notify on transformations.
+             * @param nativeMethodStrategy       The native method strategy to apply.
+             * @param accessControlContext       The access control context to use for loading classes.
+             * @param initializationStrategy     The initialization strategy to use for transformed types.
+             * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
+             * @param transformation             The transformation object for handling type transformations.
+             */
+            public ExecutingTransformer(ByteBuddy byteBuddy,
+                                        BinaryLocator binaryLocator,
+                                        DefinitionStrategy definitionStrategy,
+                                        Listener listener,
+                                        NativeMethodStrategy nativeMethodStrategy,
+                                        AccessControlContext accessControlContext,
+                                        InitializationStrategy initializationStrategy,
+                                        BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        Transformation transformation) {
+                this.binaryLocator = binaryLocator;
+                this.initializationStrategy = initializationStrategy;
+                this.definitionStrategy = definitionStrategy;
+                this.byteBuddy = byteBuddy;
+                this.nativeMethodStrategy = nativeMethodStrategy;
+                this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+                this.accessControlContext = accessControlContext;
+                this.listener = listener;
+                this.transformation = transformation;
+            }
 
             @Override
             public byte[] transform(ClassLoader classLoader,
@@ -2140,7 +2226,7 @@ public interface AgentBuilder {
                     TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName).resolve();
                     return transformation.resolve(typeDescription, classLoader, classBeingRedefined, protectionDomain).apply(initializationStrategy,
                             initialized,
-                            definitionHandler,
+                            definitionStrategy,
                             byteBuddy,
                             nativeMethodStrategy.resolve(),
                             bootstrapInjectionStrategy,
@@ -2155,9 +2241,47 @@ public interface AgentBuilder {
             }
 
             @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                ExecutingTransformer that = (ExecutingTransformer) other;
+                return byteBuddy.equals(that.byteBuddy)
+                        && binaryLocator.equals(that.binaryLocator)
+                        && definitionStrategy.equals(that.definitionStrategy)
+                        && initializationStrategy.equals(that.initializationStrategy)
+                        && listener.equals(that.listener)
+                        && nativeMethodStrategy.equals(that.nativeMethodStrategy)
+                        && bootstrapInjectionStrategy.equals(that.bootstrapInjectionStrategy)
+                        && accessControlContext.equals(that.accessControlContext)
+                        && transformation.equals(that.transformation);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = byteBuddy.hashCode();
+                result = 31 * result + binaryLocator.hashCode();
+                result = 31 * result + definitionStrategy.hashCode();
+                result = 31 * result + initializationStrategy.hashCode();
+                result = 31 * result + listener.hashCode();
+                result = 31 * result + nativeMethodStrategy.hashCode();
+                result = 31 * result + bootstrapInjectionStrategy.hashCode();
+                result = 31 * result + accessControlContext.hashCode();
+                result = 31 * result + transformation.hashCode();
+                return result;
+            }
+
+            @Override
             public String toString() {
                 return "AgentBuilder.Default.ExecutingTransformer{" +
-                        "agentBuilder=" + Default.this +
+                        "byteBuddy=" + byteBuddy +
+                        ", binaryLocator=" + binaryLocator +
+                        ", definitionHandler=" + definitionStrategy +
+                        ", initializationStrategy=" + initializationStrategy +
+                        ", listener=" + listener +
+                        ", nativeMethodStrategy=" + nativeMethodStrategy +
+                        ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
+                        ", accessControlContext=" + accessControlContext +
+                        ", transformation=" + transformation +
                         '}';
             }
         }
@@ -2221,8 +2345,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder withDefinitionHandler(DefinitionHandler definitionHandler) {
-                return materialize().withDefinitionHandler(definitionHandler);
+            public AgentBuilder withDefinitionHandler(DefinitionStrategy definitionStrategy) {
+                return materialize().withDefinitionHandler(definitionStrategy);
             }
 
             @Override
@@ -2283,7 +2407,7 @@ public interface AgentBuilder {
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
                         binaryLocator,
-                        definitionHandler,
+                        definitionStrategy,
                         listener,
                         nativeMethodStrategy,
                         accessControlContext,
