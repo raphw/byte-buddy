@@ -235,7 +235,7 @@ public class AgentBuilderDefaultTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Matched.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class).applyBasic();
