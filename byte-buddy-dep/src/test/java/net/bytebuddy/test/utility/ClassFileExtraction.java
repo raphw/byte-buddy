@@ -34,7 +34,7 @@ public class ClassFileExtraction {
     }
 
     public static byte[] extract(Class<?> type) throws IOException {
-        return extract(type, new ClassVisitorWrapper.Chain());
+        return extract(type, new ClassVisitorWrapper.Compound());
     }
 
     @Test

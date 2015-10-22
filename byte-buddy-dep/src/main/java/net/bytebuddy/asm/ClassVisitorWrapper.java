@@ -75,14 +75,22 @@ public interface ClassVisitorWrapper {
     /**
      * An ordered, immutable chain of {@link net.bytebuddy.asm.ClassVisitorWrapper}s.
      */
-    class Chain implements ClassVisitorWrapper {
+    class Compound implements ClassVisitorWrapper {
 
         /**
          * The class visitor wrappers that are represented by this chain in their order. This list must not be mutated.
          */
         private final List<? extends ClassVisitorWrapper> classVisitorWrappers;
 
-        public Chain(ClassVisitorWrapper... classVisitorWrapper) {
+        /**
+         * Creates a new immutable chain based on an existing list of {@link net.bytebuddy.asm.ClassVisitorWrapper}s
+         * where no copy of the received array is made.
+         *
+         * @param classVisitorWrapper An array of {@link net.bytebuddy.asm.ClassVisitorWrapper}s where elements
+         *                            at the beginning of the list are applied first, i.e. will be at the bottom of the generated
+         *                            {@link org.objectweb.asm.ClassVisitor}.
+         */
+        public Compound(ClassVisitorWrapper... classVisitorWrapper) {
             this(Arrays.asList(classVisitorWrapper));
         }
 
@@ -94,7 +102,7 @@ public interface ClassVisitorWrapper {
          *                             at the beginning of the list are applied first, i.e. will be at the bottom of the generated
          *                             {@link org.objectweb.asm.ClassVisitor}.
          */
-        public Chain(List<? extends ClassVisitorWrapper> classVisitorWrappers) {
+        public Compound(List<? extends ClassVisitorWrapper> classVisitorWrappers) {
             this.classVisitorWrappers = classVisitorWrappers;
         }
 
@@ -125,7 +133,7 @@ public interface ClassVisitorWrapper {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && classVisitorWrappers.equals(((Chain) other).classVisitorWrappers);
+                    && classVisitorWrappers.equals(((Compound) other).classVisitorWrappers);
         }
 
         @Override
@@ -135,7 +143,7 @@ public interface ClassVisitorWrapper {
 
         @Override
         public String toString() {
-            return "ClassVisitorWrapper.Chain{classVisitorWrappers=" + classVisitorWrappers + '}';
+            return "ClassVisitorWrapper.Compound{classVisitorWrappers=" + classVisitorWrappers + '}';
         }
     }
 }

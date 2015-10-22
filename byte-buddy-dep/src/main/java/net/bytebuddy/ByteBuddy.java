@@ -1008,7 +1008,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                new ClassVisitorWrapper.Chain(classVisitorWrapper, this.classVisitorWrapper),
+                new ClassVisitorWrapper.Compound(classVisitorWrapper, this.classVisitorWrapper),
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,

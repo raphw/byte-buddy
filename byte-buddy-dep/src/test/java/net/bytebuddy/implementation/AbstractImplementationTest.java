@@ -55,7 +55,7 @@ public abstract class AbstractImplementationTest {
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isSynthetic(),
-                new ClassVisitorWrapper.Chain(),
+                new ClassVisitorWrapper.Compound(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
                 MethodGraph.Compiler.DEFAULT,

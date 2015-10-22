@@ -1592,7 +1592,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        new ClassVisitorWrapper.Chain(nonNull(classVisitorWrapper), this.classVisitorWrapper),
+                        new ClassVisitorWrapper.Compound(nonNull(classVisitorWrapper), this.classVisitorWrapper),
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,

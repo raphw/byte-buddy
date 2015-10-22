@@ -131,7 +131,7 @@ public class ByteBuddyTest {
         assertThat(byteBuddy.namingStrategy, is(namingStrategy));
         assertThat(byteBuddy.auxiliaryTypeNamingStrategy, is(auxiliaryTypeNamingStrategy));
         assertThat(byteBuddy.implementationContextFactory, is(implementationContextFactory));
-        assertThat(byteBuddy.classVisitorWrapper, instanceOf(ClassVisitorWrapper.Chain.class));
+        assertThat(byteBuddy.classVisitorWrapper, instanceOf(ClassVisitorWrapper.Compound.class));
         ClassVisitor classVisitor = mock(ClassVisitor.class);
         byteBuddy.classVisitorWrapper.wrap(classVisitor);
         verify(classVisitorWrapper).wrap(classVisitor);
