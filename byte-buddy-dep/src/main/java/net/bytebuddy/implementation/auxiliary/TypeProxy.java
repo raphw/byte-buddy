@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.auxiliary;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
@@ -158,6 +159,7 @@ public class TypeProxy implements AuxiliaryType {
         /**
          * Creates the singleton instance.
          */
+        @SuppressFBWarnings(value = "SE_BAD_FIELD_STORE", justification = "Fields of enumerations are never serialized")
         AbstractMethodErrorThrow() {
             TypeDescription abstractMethodError = new TypeDescription.ForLoadedType(AbstractMethodError.class);
             MethodDescription constructor = abstractMethodError.getDeclaredMethods()
