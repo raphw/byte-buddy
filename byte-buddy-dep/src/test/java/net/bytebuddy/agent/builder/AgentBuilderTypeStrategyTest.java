@@ -40,7 +40,7 @@ public class AgentBuilderTypeStrategyTest {
     @SuppressWarnings("unchecked")
     public void testRebase() throws Exception {
         when(byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer)).thenReturn((DynamicType.Builder) dynamicTypeBuilder);
-        assertThat(AgentBuilder.TypeStrategy.REBASE.builder(typeDescription, byteBuddy, classFileLocator, methodNameTransformer),
+        assertThat(AgentBuilder.TypeStrategy.Default.REBASE.builder(typeDescription, byteBuddy, classFileLocator, methodNameTransformer),
                 is((DynamicType.Builder) dynamicTypeBuilder));
         verify(byteBuddy).rebase(typeDescription, classFileLocator, methodNameTransformer);
         verifyNoMoreInteractions(byteBuddy);
@@ -50,7 +50,7 @@ public class AgentBuilderTypeStrategyTest {
     @SuppressWarnings("unchecked")
     public void testRedefine() throws Exception {
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) dynamicTypeBuilder);
-        assertThat(AgentBuilder.TypeStrategy.REDEFINE.builder(typeDescription, byteBuddy, classFileLocator, methodNameTransformer),
+        assertThat(AgentBuilder.TypeStrategy.Default.REDEFINE.builder(typeDescription, byteBuddy, classFileLocator, methodNameTransformer),
                 is((DynamicType.Builder) dynamicTypeBuilder));
         verify(byteBuddy).redefine(typeDescription, classFileLocator);
         verifyNoMoreInteractions(byteBuddy);
@@ -58,6 +58,6 @@ public class AgentBuilderTypeStrategyTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.TypeStrategy.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.TypeStrategy.Default.class).apply();
     }
 }

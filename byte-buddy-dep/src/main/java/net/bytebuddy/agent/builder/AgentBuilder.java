@@ -342,35 +342,9 @@ public interface AgentBuilder {
     }
 
     /**
-     * A definition handler is responsible for creating a type builder for a type that is being instrumented.
+     * A type strategy is responsible for creating a type builder for a type that is being instrumented.
      */
-    enum TypeStrategy {
-
-        /**
-         * A definition handler that performs a rebasing for all types.
-         */
-        REBASE {
-            @Override
-            protected DynamicType.Builder<?> builder(TypeDescription typeDescription,
-                                                     ByteBuddy byteBuddy,
-                                                     ClassFileLocator classFileLocator,
-                                                     MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
-                return byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer);
-            }
-        },
-
-        /**
-         * A definition handler that performas a redefition for all types.
-         */
-        REDEFINE {
-            @Override
-            protected DynamicType.Builder<?> builder(TypeDescription typeDescription,
-                                                     ByteBuddy byteBuddy,
-                                                     ClassFileLocator classFileLocator,
-                                                     MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
-                return byteBuddy.redefine(typeDescription, classFileLocator);
-            }
-        };
+    interface TypeStrategy {
 
         /**
          * Creates a type builder for a given type.
@@ -381,14 +355,45 @@ public interface AgentBuilder {
          * @param methodNameTransformer The method name transformer to use.
          * @return A type builder for the given arguments.
          */
-        protected abstract DynamicType.Builder<?> builder(TypeDescription typeDescription,
-                                                          ByteBuddy byteBuddy,
-                                                          ClassFileLocator classFileLocator,
-                                                          MethodRebaseResolver.MethodNameTransformer methodNameTransformer);
+        DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                       ByteBuddy byteBuddy,
+                                       ClassFileLocator classFileLocator,
+                                       MethodRebaseResolver.MethodNameTransformer methodNameTransformer);
 
-        @Override
-        public String toString() {
-            return "AgentBuilder.TypeStrategy." + name();
+        /**
+         * Default implementations of type strategies.
+         */
+        enum Default implements TypeStrategy {
+
+            /**
+             * A definition handler that performs a rebasing for all types.
+             */
+            REBASE {
+                @Override
+                public DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                                      ByteBuddy byteBuddy,
+                                                      ClassFileLocator classFileLocator,
+                                                      MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                    return byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer);
+                }
+            },
+
+            /**
+             * A definition handler that performs a redefition for all types.
+             */
+            REDEFINE {
+                @Override
+                public DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                                      ByteBuddy byteBuddy,
+                                                      ClassFileLocator classFileLocator,
+                                                      MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                    return byteBuddy.redefine(typeDescription, classFileLocator);
+                }
+            };
+
+            public String toString() {
+                return "AgentBuilder.TypeStrategy.Default." + name();
+            }
         }
     }
 
@@ -484,24 +489,20 @@ public interface AgentBuilder {
     interface BinaryLocator {
 
         /**
-         * Initializes this binary locator.
+         * Creates a class file locator for the given class loader.
          *
-         * @param classLoader The class loader of the instrumented type. Might be {@code null} if this class
-         *                    loader represents the bootstrap class loader.
-         * @return This binary locator in its initialized form.
+         * @param classLoader The class loader for which a class file locator should be created.
+         *                    Can be {@code null} to represent the bootstrap class loader.
+         * @return An appropriate class file locator.
          */
-        Initialized initialize(ClassLoader classLoader);
+        ClassFileLocator classFileLocator(ClassLoader classLoader);
 
         /**
-         * Initializes this binary locator.
-         *
-         * @param classLoader          The class loader of the instrumented type. Might be {@code null} if this class
-         *                             loader represents the bootstrap class loader.
-         * @param typeName             The binary name of the type that is being instrumented.
-         * @param binaryRepresentation The binary representation of the instrumented type.
-         * @return This binary locator in its initialized form.
+         * Creates a type pool for a given class file locator.
+         * @param classFileLocator The class file locator to use.
+         * @return A type pool for the supplied class file locator.
          */
-        Initialized initialize(ClassLoader classLoader, String typeName, byte[] binaryRepresentation);
+        TypePool typePool(ClassFileLocator classFileLocator);
 
         /**
          * A default implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} that
@@ -542,229 +543,18 @@ public interface AgentBuilder {
             }
 
             @Override
-            public BinaryLocator.Initialized initialize(ClassLoader classLoader, String typeName, byte[] binaryRepresentation) {
-                return Initialized.Extended.of(typeName,
-                        binaryRepresentation,
-                        new TypePool.CacheProvider.Simple(),
-                        ClassFileLocator.ForClassLoader.of(classLoader),
-                        readerMode);
+            public ClassFileLocator classFileLocator(ClassLoader classLoader) {
+                return ClassFileLocator.ForClassLoader.of(classLoader);
             }
 
             @Override
-            public BinaryLocator.Initialized initialize(ClassLoader classLoader) {
-                return Initialized.Simple.of(new TypePool.CacheProvider.Simple(), ClassFileLocator.ForClassLoader.of(classLoader), readerMode);
+            public TypePool typePool(ClassFileLocator classFileLocator) {
+                return new TypePool.LazyFacade(new TypePool.Default(new TypePool.CacheProvider.Simple(), classFileLocator, readerMode));
             }
 
             @Override
             public String toString() {
                 return "AgentBuilder.BinaryLocator.Default." + name();
-            }
-        }
-
-        /**
-         * A {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} in initialized state.
-         */
-        interface Initialized {
-
-            /**
-             * Returns the type pool to be used of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
-             *
-             * @return The type pool to use.
-             */
-            TypePool getTypePool();
-
-            /**
-             * Returns the class file locator to be used of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
-             *
-             * @return The class file locator to use.
-             */
-            ClassFileLocator getClassFileLocator();
-
-            /**
-             * A simple initialized binary locator without a shortcut to retriving a prefetched class file.
-             */
-            class Simple implements Initialized {
-
-                /**
-                 * The type pool to use.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * The class file locator to use.
-                 */
-                private final ClassFileLocator classFileLocator;
-
-                /**
-                 * Creates a new simple, initialized binary locator.
-                 *
-                 * @param typePool         The type pool to use.
-                 * @param classFileLocator The class file locator to use.
-                 */
-                protected Simple(TypePool typePool, ClassFileLocator classFileLocator) {
-                    this.typePool = typePool;
-                    this.classFileLocator = classFileLocator;
-                }
-
-                /**
-                 * Creates a simple initialized binary locator.
-                 *
-                 * @param cacheProvider    The cache provider to use.
-                 * @param classFileLocator The class file locator to use.
-                 * @param readerMode       The reader mode to use.
-                 * @return An appropriate initialized binary locator.
-                 */
-                protected static Initialized of(TypePool.CacheProvider.Simple cacheProvider,
-                                                ClassFileLocator classFileLocator,
-                                                TypePool.Default.ReaderMode readerMode) {
-                    return new Simple(new TypePool.Default(cacheProvider, classFileLocator, readerMode), classFileLocator);
-                }
-
-                @Override
-                public TypePool getTypePool() {
-                    return typePool;
-                }
-
-                @Override
-                public ClassFileLocator getClassFileLocator() {
-                    return classFileLocator;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Simple simple = (Simple) other;
-                    return typePool.equals(simple.typePool) && classFileLocator.equals(simple.classFileLocator);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = typePool.hashCode();
-                    result = 31 * result + classFileLocator.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.BinaryLocator.Initialized.Simple{" +
-                            "typePool=" + typePool +
-                            ", classFileLocator=" + classFileLocator +
-                            '}';
-                }
-            }
-
-            /**
-             * The {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator.Default} in its initialized form.
-             */
-            class Extended implements Initialized, ClassFileLocator {
-
-                /**
-                 * The binary name of the instrumented type.
-                 */
-                private final String typeName;
-
-                /**
-                 * The binary representation of the instrumented type.
-                 */
-                private final byte[] binaryRepresentation;
-
-                /**
-                 * The class file locator to use.
-                 */
-                private final ClassFileLocator classFileLocator;
-
-                /**
-                 * The type pool to use.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * Creates a new initialized form of a default binary locator.
-                 *
-                 * @param typeName             The binary name of the type that is being instrumented.
-                 * @param binaryRepresentation The binary representation of the instrumented type. The provided array must not be modified.
-                 * @param cacheProvider        The cache provider to use.
-                 * @param classFileLocator     The class file locator to use.
-                 * @param readerMode           The reader mode to use.
-                 * @return An initialized binary locator.
-                 */
-                protected static Initialized of(String typeName,
-                                                byte[] binaryRepresentation,
-                                                TypePool.CacheProvider cacheProvider,
-                                                ClassFileLocator classFileLocator,
-                                                TypePool.Default.ReaderMode readerMode) {
-                    return new Extended(typeName,
-                            binaryRepresentation,
-                            new TypePool.LazyFacade(new TypePool.Default(cacheProvider, classFileLocator, readerMode)),
-                            classFileLocator);
-                }
-
-                /**
-                 * Creates a new initialized form of a default binary locator.
-                 *
-                 * @param typeName             The binary name of the type that is being instrumented.
-                 * @param binaryRepresentation The binary representation of the instrumented type. The provided array must not be modified.
-                 * @param typePool             The type pool to use.
-                 * @param classFileLocator     The class file locator to use.
-                 */
-                @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received array must be immutable by contract")
-                protected Extended(String typeName,
-                                   byte[] binaryRepresentation,
-                                   TypePool typePool,
-                                   ClassFileLocator classFileLocator) {
-                    this.typeName = typeName;
-                    this.binaryRepresentation = binaryRepresentation;
-                    this.typePool = typePool;
-                    this.classFileLocator = classFileLocator;
-                }
-
-                @Override
-                public TypePool getTypePool() {
-                    return typePool;
-                }
-
-                @Override
-                public ClassFileLocator getClassFileLocator() {
-                    return this;
-                }
-
-                @Override
-                public ClassFileLocator.Resolution locate(String typeName) throws IOException {
-                    return this.typeName.equals(typeName)
-                            ? new ClassFileLocator.Resolution.Explicit(binaryRepresentation)
-                            : classFileLocator.locate(typeName);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Extended that = (Extended) other;
-                    return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
-                            && classFileLocator.equals(that.classFileLocator)
-                            && typeName.equals(that.typeName)
-                            && typePool.equals(that.typePool);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = typeName.hashCode();
-                    result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                    result = 31 * result + classFileLocator.hashCode();
-                    result = 31 * result + typePool.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.BinaryLocator.Initialized.Extended{" +
-                            "typeName='" + typeName + '\'' +
-                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                            ", classFileLocator=" + classFileLocator +
-                            ", typePool=" + typePool +
-                            '}';
-                }
             }
         }
     }
@@ -1426,21 +1216,16 @@ public interface AgentBuilder {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
                     for (Entry entry : entries) {
                         try {
-                            BinaryLocator.Initialized initialized = binaryLocator.initialize(entry.getType().getClassLoader());
-                            try {
-                                classDefinitions.add(entry.resolve(initializationStrategy,
-                                        initialized,
-                                        typeStrategy,
-                                        byteBuddy,
-                                        nativeMethodStrategy.resolve(),
-                                        bootstrapInjectionStrategy,
-                                        accessControlContext,
-                                        listener));
-                            } catch (Throwable throwable) {
-                                listener.onError(entry.getType().getName(), throwable);
-                            } finally {
-                                initialized.getTypePool().clear();
-                            }
+                            classDefinitions.add(entry.resolve(initializationStrategy,
+                                    binaryLocator.classFileLocator(entry.getType().getClassLoader()),
+                                    typeStrategy,
+                                    byteBuddy,
+                                    nativeMethodStrategy.resolve(),
+                                    bootstrapInjectionStrategy,
+                                    accessControlContext,
+                                    listener));
+                        } catch (Throwable throwable) {
+                            listener.onError(entry.getType().getName(), throwable);
                         } finally {
                             listener.onComplete(entry.getType().getName());
                         }
@@ -1495,17 +1280,17 @@ public interface AgentBuilder {
                      * Resolves this entry into a fully defined class redefinition.
                      *
                      * @param initializationStrategy     The initialization strategy to use.
-                     * @param initialized                The initialize binary locator to use.
+                     * @param classFileLocator           The class file locator to use.
                      * @param typeStrategy               The type strategy to use.
                      * @param byteBuddy                  The Byte Buddy configuration to use.
                      * @param methodNameTransformer      The method name transformer to use.
-                     * @param bootstrapInjectionStrategy The bootrap injection strategy to use.
+                     * @param bootstrapInjectionStrategy The bootstrap injection strategy to use.
                      * @param accessControlContext       The access control context to use.
                      * @param listener                   The listener to report to.
                      * @return An appropriate class definition.
                      */
                     protected ClassDefinition resolve(InitializationStrategy initializationStrategy,
-                                                      BinaryLocator.Initialized initialized,
+                                                      ClassFileLocator classFileLocator,
                                                       TypeStrategy typeStrategy,
                                                       ByteBuddy byteBuddy,
                                                       MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
@@ -1513,7 +1298,7 @@ public interface AgentBuilder {
                                                       AccessControlContext accessControlContext,
                                                       Listener listener) {
                         return new ClassDefinition(type, resolution.apply(initializationStrategy,
-                                initialized,
+                                classFileLocator,
                                 typeStrategy,
                                 byteBuddy,
                                 methodNameTransformer,
@@ -1697,7 +1482,7 @@ public interface AgentBuilder {
         public Default(ByteBuddy byteBuddy) {
             this(nonNull(byteBuddy),
                     BinaryLocator.Default.FAST,
-                    TypeStrategy.REBASE,
+                    TypeStrategy.Default.REBASE,
                     Listener.NoOp.INSTANCE,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     AccessController.getContext(),
@@ -2252,7 +2037,10 @@ public interface AgentBuilder {
              * @param protectionDomain    The protection domain of the type being transformed.
              * @return A resolution for the given type.
              */
-            Resolution resolve(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain);
+            Resolution resolve(TypeDescription typeDescription,
+                               ClassLoader classLoader,
+                               Class<?> classBeingRedefined,
+                               ProtectionDomain protectionDomain);
 
             /**
              * A resolution to a transformation.
@@ -2271,7 +2059,7 @@ public interface AgentBuilder {
                  * Transforms a type or returns {@code null} if a type is not to be transformed.
                  *
                  * @param initializationStrategy     The initialization strategy to use.
-                 * @param initialized                The initialized binary locator to use.
+                 * @param classFileLocator           The class file locator to use.
                  * @param typeStrategy               The definition handler to use.
                  * @param byteBuddy                  The Byte Buddy instance to use.
                  * @param methodNameTransformer      The method name transformer to be used.
@@ -2281,7 +2069,7 @@ public interface AgentBuilder {
                  * @return The class file of the transformed class or {@code null} if no transformation is attempted.
                  */
                 byte[] apply(InitializationStrategy initializationStrategy,
-                             BinaryLocator.Initialized initialized,
+                             ClassFileLocator classFileLocator,
                              TypeStrategy typeStrategy,
                              ByteBuddy byteBuddy,
                              MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
@@ -2315,7 +2103,7 @@ public interface AgentBuilder {
 
                     @Override
                     public byte[] apply(InitializationStrategy initializationStrategy,
-                                        BinaryLocator.Initialized initialized,
+                                        ClassFileLocator classFileLocator,
                                         TypeStrategy typeStrategy,
                                         ByteBuddy byteBuddy,
                                         MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
@@ -2478,7 +2266,7 @@ public interface AgentBuilder {
 
                     @Override
                     public byte[] apply(InitializationStrategy initializationStrategy,
-                                        BinaryLocator.Initialized initialized,
+                                        ClassFileLocator classFileLocator,
                                         TypeStrategy typeStrategy,
                                         ByteBuddy byteBuddy,
                                         MethodRebaseResolver.MethodNameTransformer methodNameTransformer,
@@ -2486,7 +2274,7 @@ public interface AgentBuilder {
                                         AccessControlContext accessControlContext,
                                         Listener listener) {
                         DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(transformer.transform(typeStrategy.builder(typeDescription,
-                                byteBuddy, initialized.getClassFileLocator(), methodNameTransformer), typeDescription)).make();
+                                byteBuddy, classFileLocator, methodNameTransformer), typeDescription)).make();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                         if (!loadedTypeInitializers.isEmpty()) {
                             ClassInjector classInjector = classLoader == null
@@ -2687,23 +2475,25 @@ public interface AgentBuilder {
                                     byte[] binaryRepresentation) {
                 String binaryTypeName = internalTypeName.replace('/', '.');
                 try {
-                    BinaryLocator.Initialized initialized = binaryLocator.initialize(classLoader, binaryTypeName, binaryRepresentation);
-                    try {
-                        TypeDescription typeDescription = initialized.getTypePool().describe(binaryTypeName).resolve();
-                        return transformation.resolve(typeDescription, classLoader, classBeingRedefined, protectionDomain).apply(initializationStrategy,
-                                initialized,
-                                typeStrategy,
-                                byteBuddy,
-                                nativeMethodStrategy.resolve(),
-                                bootstrapInjectionStrategy,
-                                accessControlContext,
-                                listener);
-                    } catch (Throwable throwable) {
-                        listener.onError(binaryTypeName, throwable);
-                        return NO_TRANSFORMATION;
-                    } finally {
-                        initialized.getTypePool().clear();
-                    }
+                    ClassFileLocator classFileLocator = new InstrumentedTypeLocator(binaryLocator.classFileLocator(classLoader),
+                            binaryTypeName,
+                            binaryRepresentation);
+                    return transformation.resolve(classBeingRedefined == null
+                                    ? binaryLocator.typePool(classFileLocator).describe(binaryTypeName).resolve()
+                                    : new TypeDescription.ForLoadedType(classBeingRedefined),
+                            classLoader,
+                            classBeingRedefined,
+                            protectionDomain).apply(initializationStrategy,
+                            classFileLocator,
+                            typeStrategy,
+                            byteBuddy,
+                            nativeMethodStrategy.resolve(),
+                            bootstrapInjectionStrategy,
+                            accessControlContext,
+                            listener);
+                } catch (Throwable throwable) {
+                    listener.onError(binaryTypeName, throwable);
+                    return NO_TRANSFORMATION;
                 } finally {
                     listener.onComplete(binaryTypeName);
                 }
@@ -2752,6 +2542,76 @@ public interface AgentBuilder {
                         ", accessControlContext=" + accessControlContext +
                         ", transformation=" + transformation +
                         '}';
+            }
+
+            /**
+             * A class file locator that returns the already known class file for the instrumented type and
+             * only fall backs to the actual locator for other types.
+             */
+            protected static class InstrumentedTypeLocator implements ClassFileLocator {
+
+                /**
+                 * The delegate that serves as a fallback.
+                 */
+                private final ClassFileLocator delegate;
+
+                /**
+                 * The name of the instrumented type.
+                 */
+                private final String typeName;
+
+                /**
+                 * The binary representation of the instrumented type.
+                 */
+                private final byte[] binaryRepresentation;
+
+                /**
+                 * Creates a new instrumented type locator.
+                 *
+                 * @param delegate             The delegate that serves as a fallback.
+                 * @param typeName             The name of the instrumented type.
+                 * @param binaryRepresentation The binary representation of the instrumented type.
+                 */
+                @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received value is never modified by contract")
+                protected InstrumentedTypeLocator(ClassFileLocator delegate, String typeName, byte[] binaryRepresentation) {
+                    this.delegate = delegate;
+                    this.typeName = typeName;
+                    this.binaryRepresentation = binaryRepresentation;
+                }
+
+                @Override
+                public Resolution locate(String typeName) throws IOException {
+                    return typeName.equals(this.typeName)
+                            ? new Resolution.Explicit(binaryRepresentation)
+                            : delegate.locate(typeName);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    InstrumentedTypeLocator that = (InstrumentedTypeLocator) other;
+                    return delegate.equals(that.delegate)
+                            && typeName.equals(that.typeName)
+                            && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = delegate.hashCode();
+                    result = 31 * result + typeName.hashCode();
+                    result = 31 * result + Arrays.hashCode(binaryRepresentation);
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.ExecutingTransformer.InstrumentedTypeLocator{" +
+                            "delegate=" + delegate +
+                            ", typeName='" + typeName + '\'' +
+                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
+                            '}';
+                }
             }
         }
 

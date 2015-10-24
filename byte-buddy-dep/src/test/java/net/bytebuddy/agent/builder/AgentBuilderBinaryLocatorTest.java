@@ -11,12 +11,9 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 public class AgentBuilderBinaryLocatorTest {
-
-    private static final String FOO = "foo";
-
-    private static final byte[] QUX = new byte[]{1, 2, 3};
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -24,58 +21,33 @@ public class AgentBuilderBinaryLocatorTest {
     @Mock
     private ClassLoader classLoader;
 
+    @Mock
+    private ClassFileLocator classFileLocator;
+
     @Test
-    public void testTypePoolExtended() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.initialize(classLoader).getTypePool(),
-                notNullValue(TypePool.class));
+    public void testFastClassFileLocator() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.Default.FAST.classFileLocator(classLoader),
+                is(ClassFileLocator.ForClassLoader.of(classLoader)));
     }
 
     @Test
-    public void testClassFileLocatorExtended() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.initialize(classLoader).getClassFileLocator(),
-                notNullValue(ClassFileLocator.class));
+    public void testExtendedClassFileLocator() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.classFileLocator(classLoader),
+                is(ClassFileLocator.ForClassLoader.of(classLoader)));
     }
 
     @Test
-    public void testTypePoolExtendedWithExplicitType() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.initialize(classLoader, FOO, QUX).getTypePool(),
-                notNullValue(TypePool.class));
+    public void testFastTypePool() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.Default.FAST.typePool(classFileLocator), notNullValue(TypePool.class));
     }
 
     @Test
-    public void testClassFileLocatorExtendedWithExplicitType() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.initialize(classLoader, FOO, QUX).getClassFileLocator(),
-                notNullValue(ClassFileLocator.class));
-    }
-
-    @Test
-    public void testTypePoolFast() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.FAST.initialize(classLoader).getTypePool(),
-                notNullValue(TypePool.class));
-    }
-
-    @Test
-    public void testClassFileLocatorFast() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.FAST.initialize(classLoader).getClassFileLocator(),
-                notNullValue(ClassFileLocator.class));
-    }
-
-    @Test
-    public void testTypePoolFastWithExplicitType() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.FAST.initialize(classLoader, FOO, QUX).getTypePool(),
-                notNullValue(TypePool.class));
-    }
-
-    @Test
-    public void testClassFileLocatorFastWithExplicitType() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.FAST.initialize(classLoader, FOO, QUX).getClassFileLocator(),
-                notNullValue(ClassFileLocator.class));
+    public void testExtendedTypePool() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.typePool(classFileLocator), notNullValue(TypePool.class));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.BinaryLocator.Default.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.BinaryLocator.Initialized.Simple.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.BinaryLocator.Initialized.Extended.class).apply();
     }
 }

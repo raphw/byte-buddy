@@ -129,7 +129,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .withTypeStrategy(AgentBuilder.TypeStrategy.REDEFINE)
+                .withTypeStrategy(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
@@ -144,16 +144,18 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce
     public void testRetransformation() throws Exception {
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
-        assertThat(classLoader.loadClass(Foo.class.getName()).getName(), is(Foo.class.getName())); // ensure that class is loaded
+        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .withInitialization(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .withTypeStrategy(AgentBuilder.TypeStrategy.REDEFINE)
+                .withTypeStrategy(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
-            Class<?> type = classLoader.loadClass(Foo.class.getName());
+            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
             assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
