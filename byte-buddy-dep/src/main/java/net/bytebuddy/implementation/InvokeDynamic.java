@@ -39,7 +39,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * An implementation that applies a
  * <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html">dynamic method invocation</a>.
  */
-public class InvokeDynamic implements Implementation {
+public class InvokeDynamic implements Implementation.Composable {
 
     /**
      * The bootstrap method.
@@ -728,13 +728,7 @@ public class InvokeDynamic implements Implementation {
                 typing);
     }
 
-    /**
-     * Applies this invoke dynamic implementation and removes the return value of the bootstrapped method from
-     * the operand stack before applying the provided implementation.
-     *
-     * @param implementation The implementation to apply after executing the dynamic method invocation.
-     * @return An implementation that first applies this implementation and then the provided one.
-     */
+    @Override
     public Implementation andThen(Implementation implementation) {
         return new Implementation.Compound(new InvokeDynamic(bootstrapMethod,
                 handleArguments,

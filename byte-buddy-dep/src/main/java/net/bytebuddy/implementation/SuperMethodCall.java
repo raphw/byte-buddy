@@ -21,7 +21,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
  * annotations. Furthermore, this implementation allows to hard code a super method call to be performed after
  * performing another {@link Implementation}.
  */
-public enum SuperMethodCall implements Implementation {
+public enum SuperMethodCall implements Implementation.Composable {
 
     /**
      * The singleton instance.
@@ -38,13 +38,7 @@ public enum SuperMethodCall implements Implementation {
         return new Appender(implementationTarget, Appender.TerminationHandler.RETURNING);
     }
 
-    /**
-     * Appends another implementation to a super method call.
-     *
-     * @param implementation The implementation to append.
-     * @return An implementation that first invokes the instrumented method's super method and then applies
-     * the given implementation.
-     */
+    @Override
     public Implementation andThen(Implementation implementation) {
         return new Compound(WithoutReturn.INSTANCE, nonNull(implementation));
     }

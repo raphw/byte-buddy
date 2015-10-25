@@ -36,7 +36,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * This {@link Implementation} allows the invocation of a specified method while
  * providing explicit arguments to this method.
  */
-public class MethodCall implements Implementation {
+public class MethodCall implements Implementation.Composable {
 
     /**
      * The method locator to use.
@@ -423,13 +423,7 @@ public class MethodCall implements Implementation {
                 nonNull(typing));
     }
 
-    /**
-     * Applies another implementation after invoking this method call. A return value that is the result of this
-     * method call is dropped.
-     *
-     * @param implementation The implementation that is to be applied after applying this method call implementation.
-     * @return An implementation that first applies this method call and the given implementation right after.
-     */
+    @Override
     public Implementation andThen(Implementation implementation) {
         return new Implementation.Compound(new MethodCall(methodLocator,
                 targetHandler,

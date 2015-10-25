@@ -145,7 +145,7 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  *
  * @see Forwarding
  */
-public class MethodDelegation implements Implementation {
+public class MethodDelegation implements Implementation.Composable {
 
     /**
      * The implementation delegate for this method delegation.
@@ -662,16 +662,7 @@ public class MethodDelegation implements Implementation {
                 methodContainer.filter(methodMatcher));
     }
 
-    /**
-     * Appends another {@link Implementation} to a method delegation. The return
-     * value of the delegation target is dropped such that the given {@code implementation} becomes responsible for
-     * returning from the method instead. However, if an exception is thrown from the interception method, this
-     * exception is not catched and the chained implementation is never applied. Note that this changes the binding
-     * semantics as the target method's return value is not longer considered what might change the binding target.
-     *
-     * @param implementation The implementation to apply after the delegation.
-     * @return An implementation that represents this chained implementation application.
-     */
+    @Override
     public Implementation andThen(Implementation implementation) {
         return new Compound(new MethodDelegation(implementationDelegate,
                 parameterBinders,

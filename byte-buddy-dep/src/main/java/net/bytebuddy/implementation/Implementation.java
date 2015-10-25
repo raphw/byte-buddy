@@ -70,6 +70,20 @@ public interface Implementation {
     ByteCodeAppender appender(Target implementationTarget);
 
     /**
+     * Represents an implementation that can be chained together with another implementation.
+     */
+    interface Composable extends Implementation {
+
+        /**
+         * Appends the supplied implementation to this implementation.
+         *
+         * @param implementation The subsequent implementation.
+         * @return An implementation that combines this implementation with the provided one.
+         */
+        Implementation andThen(Implementation implementation);
+    }
+
+    /**
      * Represents an type-specific method invocation on the current instrumented type which is not legal from outside
      * the type such as a super method or default method invocation. Legal instances of special method invocations must
      * be equal to one another if they represent the same invocation target.
