@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -156,47 +157,17 @@
                             </instructions>
                         </configuration>
                     </plugin>
-                    <!-- Copy dependency version's javadoc artifact which is required for valid repository deployment. -->
+                    <!-- The shadowed source files of this module need to be included explicitly to create a javadoc artifact.-->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>${version.plugin.ant}</version>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <target>
-                                        <copy file="${project.basedir}/../byte-buddy-dep/target/byte-buddy-dep-${project.version}-javadoc.jar" tofile="${project.build.directory}/byte-buddy-${project.version}-javadoc.jar" />
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!--Because the javadoc files are copied manually, they must be added as an artifact to the build process. -->
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>${version.plugin.build-helper}</version>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>attach-artifact</goal>
-                                </goals>
-                                <configuration>
-                                    <artifacts>
-                                        <artifact>
-                                            <file>${project.build.directory}/byte-buddy-${project.version}-javadoc.jar</file>
-                                            <type>jar</type>
-                                            <classifier>javadoc</classifier>
-                                        </artifact>
-                                    </artifacts>
-                                </configuration>
-                            </execution>
-                        </executions>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${version.plugin.javadoc}</version>
+                        <configuration>
+                            <includeDependencySources>true</includeDependencySources>
+                            <dependencySourceIncludes>
+                                <dependencySourceInclude>${project.groupId}:byte-buddy-dep</dependencySourceInclude>
+                            </dependencySourceIncludes>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
