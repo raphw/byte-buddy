@@ -119,7 +119,7 @@ public interface ClassInjector {
 
         /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain},
-         * {@link PackageDefinitionStrategy}, {@link AccessControlContext} which triggers a failure when discovering existent classes.
+         * {@link PackageDefinitionStrategy}, {@link AccessControlContext} which does not trigger an error when discovering existent classes.
          *
          * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          */
@@ -129,7 +129,7 @@ public interface ClassInjector {
 
         /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link PackageDefinitionStrategy} where the
-         * injection of existent classes triggers an error.
+         * injection of existent classes does not trigger an error.
          *
          * @param classLoader          The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          * @param protectionDomain     The protection domain to apply during class definition.

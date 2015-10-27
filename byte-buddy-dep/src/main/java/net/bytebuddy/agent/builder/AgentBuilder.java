@@ -171,7 +171,7 @@ public interface AgentBuilder {
      * @param initializationStrategy The initialization strategy to use.
      * @return A new instance of this agent builder that applies the given initialization strategy.
      */
-    AgentBuilder withInitialization(InitializationStrategy initializationStrategy);
+    AgentBuilder withInitializationStrategy(InitializationStrategy initializationStrategy);
 
     /**
      * Specifies a strategy for modifying existing types.
@@ -1655,7 +1655,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withInitialization(InitializationStrategy initializationStrategy) {
+        public AgentBuilder withInitializationStrategy(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -2698,8 +2698,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder withInitialization(InitializationStrategy initializationStrategy) {
-                return materialize().withInitialization(initializationStrategy);
+            public AgentBuilder withInitializationStrategy(InitializationStrategy initializationStrategy) {
+                return materialize().withInitializationStrategy(initializationStrategy);
             }
 
             @Override
