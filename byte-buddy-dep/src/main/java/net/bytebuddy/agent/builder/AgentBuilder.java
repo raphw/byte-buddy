@@ -498,6 +498,7 @@ public interface AgentBuilder {
 
         /**
          * Creates a type pool for a given class file locator.
+         *
          * @param classFileLocator The class file locator to use.
          * @return A type pool for the supplied class file locator.
          */
@@ -1720,7 +1721,16 @@ public interface AgentBuilder {
                 RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                     if (instrumentation.isModifiableClass(type)) {
-                        collector.consider(type);
+                        // To enforce identical listener semantics for a redefinition as for an agent instrumentation, this catching is required.
+                        try {
+                            collector.consider(type);
+                        } catch (Throwable throwable) {
+                            try {
+                                listener.onError(type.getName(), throwable);
+                            } finally {
+                                listener.onComplete(type.getName());
+                            }
+                        }
                     }
                 }
                 try {
