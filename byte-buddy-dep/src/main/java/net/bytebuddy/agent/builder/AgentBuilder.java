@@ -1062,8 +1062,17 @@ public interface AgentBuilder {
         },
 
         /**
+         * <p>
          * Applies a <b>redefinition</b> to all classes that are already loaded and that would have been transformed if
          * the built agent was registered before they were loaded.
+         * </p>
+         * <p>
+         * <b>Important</b>: If a redefined class was previously instrumented, this instrumentation information is lost
+         * during the instrumentation. The redefinition is applied upon the original byte code that is provided by a class
+         * loader and not upon the code in its currently transformed format. Use
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy#RETRANSFORMATION} if this is a factual or
+         * potential limitation.
+         * </p>
          */
         REDEFINITION {
             @Override
@@ -1139,8 +1148,9 @@ public interface AgentBuilder {
              * Considers a loaded class for modification.
              *
              * @param type The type that is to be considered.
+             * @return {@code true} if the class is considered to be redefined.
              */
-            void consider(Class<?> type);
+            boolean consider(Class<?> type);
 
             /**
              * Applies the represented type modification on all collected types.
@@ -1193,14 +1203,12 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void consider(Class<?> type) {
+                public boolean consider(Class<?> type) {
                     Default.Transformation.Resolution resolution = transformation.resolve(new TypeDescription.ForLoadedType(type),
                             type.getClassLoader(),
                             type,
                             type.getProtectionDomain());
-                    if (resolution.isResolved()) {
-                        entries.add(new Entry(type, resolution));
-                    }
+                    return resolution.isResolved() && entries.add(new Entry(type, resolution));
                 }
 
                 @Override
@@ -1358,10 +1366,9 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void consider(Class<?> type) {
-                    if (transformation.resolve(new TypeDescription.ForLoadedType(type), type.getClassLoader(), type, type.getProtectionDomain()).isResolved()) {
-                        types.add(type);
-                    }
+                public boolean consider(Class<?> type) {
+                    return transformation.resolve(new TypeDescription.ForLoadedType(type),
+                            type.getClassLoader(), type, type.getProtectionDomain()).isResolved() && types.add(type);
                 }
 
                 @Override
@@ -1720,16 +1727,27 @@ public interface AgentBuilder {
             if (redefinitionStrategy.isEnabled()) {
                 RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                    if (instrumentation.isModifiableClass(type)) {
-                        // To enforce identical listener semantics for a redefinition as for an agent instrumentation, this catching is required.
+                    try {
+                        if (!instrumentation.isModifiableClass(type) || !collector.consider(type)) {
+                            try {
+                                try {
+                                    listener.onIgnored(new TypeDescription.ForLoadedType(type));
+                                } finally {
+                                    listener.onComplete(type.getName());
+                                }
+                            } catch (Throwable ignored) {
+                                // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                            }
+                        }
+                    } catch (Throwable throwable) {
                         try {
-                            collector.consider(type);
-                        } catch (Throwable throwable) {
                             try {
                                 listener.onError(type.getName(), throwable);
                             } finally {
                                 listener.onComplete(type.getName());
                             }
+                        } catch (Throwable ignored) {
+                            // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                         }
                     }
                 }
