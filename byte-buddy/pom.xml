@@ -29,8 +29,6 @@
     <properties>
         <shade.source>org.objectweb.asm</shade.source>
         <shade.target>net.bytebuddy.jar.asm</shade.target>
-        <version.plugin.ant>1.8</version.plugin.ant>
-        <version.plugin.build-helper>1.9.1</version.plugin.build-helper>
     </properties>
 
     <!--
