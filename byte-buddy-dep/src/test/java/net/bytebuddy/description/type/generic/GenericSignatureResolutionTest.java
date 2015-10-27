@@ -13,8 +13,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GenericSignatureResolutionTest {
@@ -186,6 +185,19 @@ public class GenericSignatureResolutionTest {
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
+    @Test
+    public void testInterfaceType() throws Exception {
+        DynamicType.Unloaded<?> unloaded = new ByteBuddy()
+                .redefine(InterfaceType.class)
+                .make();
+        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
+        TypeDescription originalType = new TypeDescription.ForLoadedType(InterfaceType.class);
+        assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
+        assertThat(createdType.getSuperType(), nullValue(GenericTypeDescription.class));
+        assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
+    }
+
     public static abstract class GenericType<T extends ArrayList<T> & Callable<T>,
             S extends Callable<?>,
             U extends Callable<? extends Callable<U>>,
@@ -240,6 +252,10 @@ public class GenericSignatureResolutionTest {
     }
 
     public static class TypeVariableWildcardLowerInterfaceBound<T extends ArrayList<? super Callable<T>>> {
+        /* empty */
+    }
+
+    public interface InterfaceType<T> extends Callable<T> {
         /* empty */
     }
 }
