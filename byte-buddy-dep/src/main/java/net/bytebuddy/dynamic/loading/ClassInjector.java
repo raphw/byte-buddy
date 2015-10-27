@@ -118,15 +118,27 @@ public interface ClassInjector {
         private final boolean forbidExisting;
 
         /**
-         * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain}
-         * and {@link PackageDefinitionStrategy}.
+         * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain},
+         * {@link PackageDefinitionStrategy}, {@link AccessControlContext} which triggers a failure when discovering existent classes.
          *
          * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          */
         public UsingReflection(ClassLoader classLoader) {
+            this(classLoader, DEFAULT_PROTECTION_DOMAIN,  AccessController.getContext());
+        }
+
+        /**
+         * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link PackageDefinitionStrategy} where the
+         * injection of existent classes triggers an error.
+         *
+         * @param classLoader          The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param protectionDomain     The protection domain to apply during class definition.
+         * @param accessControlContext The access control context of this class loader's instantiation.
+         */
+        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain, AccessControlContext accessControlContext) {
             this(classLoader,
-                    DEFAULT_PROTECTION_DOMAIN,
-                    AccessController.getContext(),
+                    protectionDomain,
+                    accessControlContext,
                     PackageDefinitionStrategy.Trivial.INSTANCE,
                     DEFAULT_FORBID_EXISTING);
         }
@@ -135,9 +147,9 @@ public interface ClassInjector {
          * Creates a new injector for the given {@link java.lang.ClassLoader} and {@link java.security.ProtectionDomain}.
          *
          * @param classLoader               The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
-         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
-         * @param accessControlContext      The access control context of this class loader's instantiation.
          * @param protectionDomain          The protection domain to apply during class definition.
+         * @param accessControlContext      The access control context of this class loader's instantiation.
+         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
          */
         public UsingReflection(ClassLoader classLoader,

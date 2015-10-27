@@ -7,7 +7,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.Implementation;
@@ -2276,10 +2275,10 @@ public interface AgentBuilder {
                         DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(transformer.transform(typeStrategy.builder(typeDescription,
                                 byteBuddy, classFileLocator, methodNameTransformer), typeDescription)).make();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                        if (!loadedTypeInitializers.isEmpty()) {
+                        if (loadedTypeInitializers.size() > 1) { // There exist auxiliary classes.
                             ClassInjector classInjector = classLoader == null
                                     ? bootstrapInjectionStrategy.make(protectionDomain)
-                                    : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext, PackageDefinitionStrategy.NoOp.INSTANCE, true);
+                                    : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext);
                             for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(dynamicType.getRawAuxiliaryTypes()).entrySet()) {
                                 initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
                             }
