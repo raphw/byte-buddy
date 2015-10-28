@@ -41,6 +41,17 @@ of using [*Plain Old Java Objects*](http://en.wikipedia.org/wiki/Plain_Old_Java_
 has become an ubiquitous concept in the Java space. Byte Buddy is an attempt to innovate the runtime creation of Java
 types in order to provide a better tool set to those relying on code generation.
 
+___
+
+<a href="http://bytebuddy.net">
+<img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/dukeschoice.jpg" alt="Duke's Choice award" height="110px" align="left" />
+</a>
+
+In October 2015, Byte Buddy was distinguished with a [*Duke's Choice award*](https://www.java.net/dukeschoice) 
+by Oracle. The award appreciates Byte Buddy for its "*tremendous amount of innovation in Java Technology*". 
+We feel very honored for having received this award and want to thank all users and everybody else who helped 
+making Byte Buddy the success it has become. We really appreciate it!
+
 Hello World
 -----------
 
