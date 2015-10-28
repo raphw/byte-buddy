@@ -25,7 +25,7 @@
     <properties>
         <benchmark.mainClass>net.bytebuddy.benchmark.runner.BenchmarkRunner</benchmark.mainClass>
         <version.jmh>1.11.1</version.jmh>
-        <version.cglib>3.1</version.cglib>
+        <version.cglib>3.2.0</version.cglib>
         <version.javassist>3.20.0-GA</version.javassist>
     </properties>
 
