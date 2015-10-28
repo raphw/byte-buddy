@@ -59,6 +59,25 @@
             the runtime creation of Java types in order to provide a better tool set to those relying on such
             functionality.
         </p>
+
+        <hr style="border: 1px dotted rgba(255, 153, 0, 1)"/>
+
+        <div>
+            <img alt="Duke's Choice award" src="images/dukeschoice.jpg"
+                 style="float: left; height: 110px; margin: 0 15px"/>
+
+            <p style="margin: 3px 10px;">
+                In October 2015, Byte Buddy was distinguished with a
+                <a href="https://www.java.net/dukeschoice"><i>Duke's Choice award</i></a> by Oracle. The
+                award appreciates Byte Buddy for its &quot;<i>tremendous amount of innovation in Java Technology</i>
+                &quot;. We feel very honored for having received this award and want to thank all users and everybody
+                else who helped making Byte Buddy the success it has become. We really appreciate it!
+            </p>
+
+            <div class="clearfix"></div>
+        </div>
+
+        <hr style="border: 1px dotted rgba(255, 153, 0, 1)"/>
     </div>
 </div>
 <div class="row" id="helloworld">
@@ -98,13 +117,13 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <p>
             The default <code>ByteBuddy</code> configuration which is used in the above example creates a Java
             class in the newest version of the class file format that is understood by the processing Java
-            virtual machine. As hopefully obvious from the example code, the created type will extend the 
-            <code>Object</code> class and overrides its <code>toString</code> method which should return a 
-            fixed value of <code>Hello World!</code>. The method to be overridden is identified by a so-called 
+            virtual machine. As hopefully obvious from the example code, the created type will extend the
+            <code>Object</code> class and overrides its <code>toString</code> method which should return a
+            fixed value of <code>Hello World!</code>. The method to be overridden is identified by a so-called
             <code>ElementMatcher</code>. In the above example, a predefined element matcher
-            <code>named(String)</code> is used which identifies methods by their exact names. Byte Buddy comes 
-            with numerous predefined and well-tested matchers which are collected in the 
-            <code>ElementMatchers</code> class and which can be easily composed. The creation of custom matchers 
+            <code>named(String)</code> is used which identifies methods by their exact names. Byte Buddy comes
+            with numerous predefined and well-tested matchers which are collected in the
+            <code>ElementMatchers</code> class and which can be easily composed. The creation of custom matchers
             is however as simple as implementing the
             (<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html">functional</a>)
             <code>ElementMatcher</code> interface.
@@ -133,17 +152,26 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <dl>
             <dt>Download</dt>
             <dd>
-                Byte Buddy is currently released in version {{version}}. You can download Byte Buddy directly
-                from <a href="https://bintray.com/raphw/maven/ByteBuddy">its Bintray page</a>.
-                Alternatively, you can also download the
-                <a href="https://github.com/raphw/byte-buddy/releases">source code from GitHub</a>.
-                <br/>
-                <iframe src="https://ghbtns.com/github-btn.html?user=raphw&repo=byte-buddy&type=star&count=true" 
-                  frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
-                <a href="https://bintray.com/raphw/maven/ByteBuddy/_latestVersion" class="social-link">
-                    <img src="https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg"
-                         alt="download latest version">
-                </a>
+                <div>
+                    Byte Buddy is currently released in version {{version}}. You can download Byte Buddy directly
+                    from <a href="https://bintray.com/raphw/maven/ByteBuddy">its Bintray page</a>.
+                    Alternatively, you can also download the
+                    <a href="https://github.com/raphw/byte-buddy/releases">source code from GitHub</a>.
+                </div>
+
+                <div style="margin-top: 8px;">
+                    <div style="float:left;">
+                        <iframe src="https://ghbtns.com/github-btn.html?user=raphw&repo=byte-buddy&type=star&count=true"
+                                frameborder="0" scrolling="0" width="100" height="20"></iframe>
+                    </div>
+                    <div style="float:left;">
+                        <a href="https://bintray.com/raphw/maven/ByteBuddy/_latestVersion" class="social-link">
+                            <img src="https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg"
+                                 alt="download latest version">
+                        </a>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
             </dd>
         </dl>
         <dl>
@@ -175,10 +203,11 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <dl>
             <dt>Documentation</dt>
             <dd>
-                There exists an extensive documentation of all of Byte Buddy's features on <a href="#/tutorial">the 
+                There exists an extensive documentation of all of Byte Buddy's features on <a href="#/tutorial">the
                 tutorial page</a>. Furthermore, Byte Buddy's in-code documentation is available from its source code
-                repositories <a href="/javadoc/{{version}}/index.html">and on this website</a>. A list of blog articles and 
-                conference presentations on Byte Buddy is available 
+                repositories <a href="/javadoc/{{version}}/index.html">and on this website</a>. A list of blog articles
+                and
+                conference presentations on Byte Buddy is available
                 <a href="https://github.com/raphw/byte-buddy/wiki/Web-resources">on the project's wiki</a>.
             </dd>
         </dl>
