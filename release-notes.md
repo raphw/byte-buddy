@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. October 2015: version 0.7 (release candidate 6)
+
+- Refactored `AgentBuilder.Default` to delegate exceptions during redefinitions to listener instead of throwing them.
+- Fixed bug where instrumented type would count to auxiliary types and trigger injection strategy.
+- Fixed bug where interface types would resolve to a non-generic type signature.
+- Added strategy to use redefinition or retransformation of the `Instrumentation` API when building agents.
+- Added lazy facade to be used by agent builder to improve performance for name-based matchers.
+
 ### 15. October 2015: version 0.7 (release candidate 5)
 
 - Fixed parser to supress exceptions from generic signatures which are not supposed to be included in the class file if no array type is generic.
