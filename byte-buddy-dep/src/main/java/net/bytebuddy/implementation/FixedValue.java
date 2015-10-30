@@ -419,7 +419,7 @@ public abstract class FixedValue implements Implementation {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
                     .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC, fieldType))
-                    .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, fixedValue));
+                    .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, fixedValue));
         }
 
         @Override

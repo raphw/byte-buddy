@@ -689,7 +689,7 @@ public class MethodCall implements Implementation.Composable {
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
                                 new TypeDescription.ForLoadedType(target.getClass())))
-                        .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, target));
+                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
             }
 
             @Override
@@ -1071,7 +1071,7 @@ public class MethodCall implements Implementation.Composable {
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
                                 new TypeDescription.ForLoadedType(value.getClass())))
-                        .withInitializer(new LoadedTypeInitializer.ForStaticField<Object>(fieldName, value, true));
+                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, value));
             }
 
             @Override

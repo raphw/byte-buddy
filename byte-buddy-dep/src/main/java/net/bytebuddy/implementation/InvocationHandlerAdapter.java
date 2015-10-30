@@ -258,7 +258,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
                     .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC, INVOCATION_HANDLER_TYPE))
-                    .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, invocationHandler));
+                    .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, invocationHandler));
         }
 
         @Override

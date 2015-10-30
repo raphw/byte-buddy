@@ -829,7 +829,7 @@ public class MethodDelegation implements Implementation.Composable {
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
                                 new TypeDescription.ForLoadedType(delegate.getClass())))
-                        .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, delegate));
+                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, delegate));
             }
 
             @Override

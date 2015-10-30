@@ -1577,7 +1577,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
                             .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, typeDescription))
-                            .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(name, value));
+                            .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
                 }
 
                 @Override

@@ -285,7 +285,7 @@ public class Forwarding implements Implementation {
             public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
-                        .withInitializer(LoadedTypeInitializer.ForStaticField.accessible(fieldName, target));
+                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
             }
 
             @Override

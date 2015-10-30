@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
@@ -58,10 +59,9 @@ public interface LoadedTypeInitializer {
 
     /**
      * A type initializer for setting a value for a static field.
-     *
-     * @param <T> The type of the value that is set as a value to the field.
      */
-    class ForStaticField<T> implements LoadedTypeInitializer, Serializable {
+    class ForStaticField implements LoadedTypeInitializer, Serializable {
+
         /**
          * This class's serial version UID.
          */
@@ -80,55 +80,24 @@ public interface LoadedTypeInitializer {
         /**
          * The value of the field.
          */
-        private final T value;
-
-        /**
-         * Determines if the field needs to be made accessible for setting it.
-         */
-        private final boolean makeAccessible;
+        private final Object value;
 
         /**
          * Creates a new {@link LoadedTypeInitializer} for setting a static field.
          *
-         * @param fieldName      the name of the field.
-         * @param value          The value to be set.
-         * @param makeAccessible Whether the field should be made accessible.
+         * @param fieldName the name of the field.
+         * @param value     The value to be set.
          */
-        protected ForStaticField(String fieldName, T value, boolean makeAccessible) {
+        protected ForStaticField(String fieldName, Object value) {
             this.fieldName = fieldName;
             this.value = value;
-            this.makeAccessible = makeAccessible;
-        }
-
-        /**
-         * Creates a {@link LoadedTypeInitializer} for given field name and value where the
-         * field is accessible by reflection.
-         *
-         * @param fieldName The name of the field.
-         * @param value     The value to set.
-         * @return A corresponding {@link LoadedTypeInitializer}.
-         */
-        public static LoadedTypeInitializer accessible(String fieldName, Object value) {
-            return new ForStaticField<Object>(fieldName, value, false);
-        }
-
-        /**
-         * Creates a {@link LoadedTypeInitializer} for given field name and value where the
-         * field is not accessible by reflection and needs to be prepared accordingly.
-         *
-         * @param fieldName The name of the field.
-         * @param value     The value to set.
-         * @return A corresponding {@link LoadedTypeInitializer}.
-         */
-        public static LoadedTypeInitializer nonAccessible(String fieldName, Object value) {
-            return new ForStaticField<Object>(fieldName, value, true);
         }
 
         @Override
         public void onLoad(Class<?> type) {
             try {
                 Field field = type.getDeclaredField(fieldName);
-                if (makeAccessible) {
+                if (!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers())) {
                     AccessController.doPrivileged(new FieldAccessibilityAction(field));
                 }
                 field.set(STATIC_FIELD, value);
@@ -149,8 +118,7 @@ public interface LoadedTypeInitializer {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             ForStaticField that = (ForStaticField) other;
-            return makeAccessible == that.makeAccessible
-                    && fieldName.equals(that.fieldName)
+            return fieldName.equals(that.fieldName)
                     && value.equals(that.value);
         }
 
@@ -158,7 +126,6 @@ public interface LoadedTypeInitializer {
         public int hashCode() {
             int result = fieldName.hashCode();
             result = 31 * result + value.hashCode();
-            result = 31 * result + (makeAccessible ? 1 : 0);
             return result;
         }
 
@@ -167,7 +134,6 @@ public interface LoadedTypeInitializer {
             return "LoadedTypeInitializer.ForStaticField{" +
                     "fieldName='" + fieldName + '\'' +
                     ", value=" + value +
-                    ", makeAccessible=" + makeAccessible +
                     '}';
         }
 
@@ -188,6 +154,7 @@ public interface LoadedTypeInitializer {
 
             /**
              * Creates a new field accessibility action.
+             *
              * @param field The field to make accessible.
              */
             protected FieldAccessibilityAction(Field field) {

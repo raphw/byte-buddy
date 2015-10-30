@@ -17,7 +17,7 @@ public class LoadedTypeInitializerForStaticFieldTest {
     @Test
     public void testAccessibleField() throws Exception {
         Object object = new Object();
-        LoadedTypeInitializer loadedTypeInitializer = LoadedTypeInitializer.ForStaticField.accessible(FOO, object);
+        LoadedTypeInitializer loadedTypeInitializer = new LoadedTypeInitializer.ForStaticField(FOO, object);
         assertThat(loadedTypeInitializer.isAlive(), is(true));
         loadedTypeInitializer.onLoad(Foo.class);
         assertThat(Foo.foo, is(object));
@@ -26,18 +26,10 @@ public class LoadedTypeInitializerForStaticFieldTest {
     @Test
     public void testNonAccessibleField() throws Exception {
         Object object = new Object();
-        LoadedTypeInitializer loadedTypeInitializer = LoadedTypeInitializer.ForStaticField.nonAccessible(FOO, object);
+        LoadedTypeInitializer loadedTypeInitializer = new LoadedTypeInitializer.ForStaticField(FOO, object);
         assertThat(loadedTypeInitializer.isAlive(), is(true));
         loadedTypeInitializer.onLoad(Bar.class);
         assertThat(Bar.foo, is(object));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNonAccessibleFieldThrowsException() throws Exception {
-        Object object = new Object();
-        LoadedTypeInitializer loadedTypeInitializer = LoadedTypeInitializer.ForStaticField.accessible(FOO, object);
-        assertThat(loadedTypeInitializer.isAlive(), is(true));
-        loadedTypeInitializer.onLoad(Bar.class);
     }
 
     @Test
