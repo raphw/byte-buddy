@@ -9,6 +9,8 @@ Byte Buddy release notes
 - Added strategy to use redefinition or retransformation of the `Instrumentation` API when building agents.
 - Added lazy facade to be used by agent builder to improve performance for name-based matchers.
 
+*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
+
 ### 15. October 2015: version 0.7 (release candidate 5)
 
 - Fixed parser to supress exceptions from generic signatures which are not supposed to be included in the class file if no array type is generic.
@@ -16,6 +18,8 @@ Byte Buddy release notes
 - Added restriction to retransformation to not attempt a retransformation at all if no class should be retransformed.
 - Added a factory for creating an `Implementation.Context` that is configurable. This way, it is possible to avoid a rebase of a type initializer which is not always possible.
 - Added a possibility to specify for an `AgentBuilder` how it should redefine or rebase a class that is intercepted.
+
+*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
 
 ### 13. October 2015: version 0.7 (release candidate 4)
 
