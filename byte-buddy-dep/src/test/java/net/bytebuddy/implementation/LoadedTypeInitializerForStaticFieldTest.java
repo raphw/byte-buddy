@@ -33,6 +33,15 @@ public class LoadedTypeInitializerForStaticFieldTest {
     }
 
     @Test
+    public void testNonAccessibleType() throws Exception {
+        Object object = new Object();
+        LoadedTypeInitializer loadedTypeInitializer = new LoadedTypeInitializer.ForStaticField(FOO, object);
+        assertThat(loadedTypeInitializer.isAlive(), is(true));
+        loadedTypeInitializer.onLoad(Qux.class);
+        assertThat(Qux.foo, is(object));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(LoadedTypeInitializer.ForStaticField.class).apply();
         final Iterator<Field> fields = Arrays.asList(Baz.class.getDeclaredFields()).iterator();
@@ -54,6 +63,12 @@ public class LoadedTypeInitializerForStaticFieldTest {
     public static class Bar {
 
         private static Object foo;
+    }
+
+    @SuppressWarnings("unused")
+    private static class Qux {
+
+        public static Object foo;
     }
 
     @SuppressWarnings("unused")

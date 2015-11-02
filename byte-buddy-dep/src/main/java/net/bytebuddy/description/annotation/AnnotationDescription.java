@@ -1620,7 +1620,7 @@ public interface AnnotationDescription {
                 throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
             }
             try {
-                boolean accessible = methodDescription.isAccessibleTo(new TypeDescription.ForLoadedType(getClass()));
+                boolean accessible = Modifier.isPublic(methodDescription.getDeclaringType().getModifiers()); // method is required to be public
                 Method method = methodDescription instanceof MethodDescription.ForLoadedMethod
                         ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
                         : null;
