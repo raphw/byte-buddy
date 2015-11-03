@@ -28,6 +28,7 @@
       - cobertura:cobertura - Computes line coverage for test suite (all modules)
       - org.pitest:pitest-maven:mutationCoverage - Runs mutation tests (all modules)
       - findbugs:findbugs findbugs:gui - Runs findbugs and shows a report in a graphical interface (module specific)
+      - com.github.ferstl:jitwatch-jarscan-maven-plugin:scan - Finds all methods above HotSpot's inlining threshold
     -->
 
     <modules>
@@ -76,6 +77,7 @@
         <!-- Subsequent versions of checkstyle require Java 7. -->
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
         <version.plugin.findbugs>3.0.1</version.plugin.findbugs>
+        <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
 
@@ -225,6 +227,12 @@
                     <failOnError>false</failOnError>
                     <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
                 </configuration>
+            </plugin>
+            <!-- Enable scanning for methods above the inlining threshold (JDK 7+) -->
+            <plugin>
+                <groupId>com.github.ferstl</groupId>
+                <artifactId>jitwatch-jarscan-maven-plugin</artifactId>
+                <version>${version.plugin.jitwatch}</version>
             </plugin>
         </plugins>
 
