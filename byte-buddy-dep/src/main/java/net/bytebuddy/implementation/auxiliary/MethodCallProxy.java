@@ -192,6 +192,9 @@ public class MethodCallProxy implements AuxiliaryType {
          */
         private final MethodGraph.Linked methodGraph;
 
+        /**
+         * Creates the precomputed method graph.
+         */
         PrecomputedMethodGraph() {
             LinkedHashMap<MethodDescription.Token, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.Token, MethodGraph.Node>(2);
             MethodDescription callMethod = new TypeDescription.ForLoadedType(Callable.class).getDeclaredMethods().filter(named("call")).getOnly();

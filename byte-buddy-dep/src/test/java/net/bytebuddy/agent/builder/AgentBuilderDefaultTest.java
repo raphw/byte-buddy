@@ -67,6 +67,9 @@ public class AgentBuilderDefaultTest {
     private AgentBuilder.InitializationStrategy initializationStrategy;
 
     @Mock
+    private AgentBuilder.InitializationStrategy.Dispatcher dispatcher;
+
+    @Mock
     private TypePool typePool;
 
     @Mock
@@ -96,7 +99,8 @@ public class AgentBuilderDefaultTest {
         when(binaryLocator.typePool(any(ClassFileLocator.class))).thenReturn(typePool);
         when(typePool.describe(REDEFINED.getName())).thenReturn(resolution);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
-        when(initializationStrategy.apply(builder)).thenReturn((DynamicType.Builder) builder);
+        when(initializationStrategy.dispatcher()).thenReturn(dispatcher);
+        when(dispatcher.apply(builder)).thenReturn((DynamicType.Builder) builder);
     }
 
     @Test
@@ -119,9 +123,11 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
-        verify(initializationStrategy).apply(builder);
-        verify(initializationStrategy).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
+        verify(dispatcher).apply(builder);
+        verify(dispatcher).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verifyNoMoreInteractions(dispatcher);
     }
 
     @Test
@@ -143,9 +149,11 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
-        verify(initializationStrategy).apply(builder);
-        verify(initializationStrategy).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
+        verify(dispatcher).apply(builder);
+        verify(dispatcher).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verifyNoMoreInteractions(dispatcher);
     }
 
     @Test
@@ -454,9 +462,11 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(rawMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(rawMatcher);
-        verify(initializationStrategy).apply(builder);
-        verify(initializationStrategy).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
+        verify(dispatcher).apply(builder);
+        verify(dispatcher).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verifyNoMoreInteractions(dispatcher);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -552,10 +562,12 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
-        verify(initializationStrategy).apply(builder);
-        verify(initializationStrategy).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verify(initializationStrategy).dispatcher();
         verify(initializationStrategy).initialize(AUXILIARY, auxiliaryInitializer);
         verifyNoMoreInteractions(initializationStrategy);
+        verify(dispatcher).apply(builder);
+        verify(dispatcher).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verifyNoMoreInteractions(dispatcher);
     }
 
     @Test

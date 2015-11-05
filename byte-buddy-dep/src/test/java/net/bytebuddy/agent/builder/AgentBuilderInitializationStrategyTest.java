@@ -42,6 +42,7 @@ public class AgentBuilderInitializationStrategyTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.Dispatcher.class).apply();
         final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
@@ -50,5 +51,6 @@ public class AgentBuilderInitializationStrategyTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.Accessor.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.Accessor.InitializationAppender.class).apply();
     }
 }

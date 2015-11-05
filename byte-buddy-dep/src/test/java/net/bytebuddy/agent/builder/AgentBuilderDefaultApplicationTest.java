@@ -12,6 +12,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -177,6 +178,39 @@ public class AgentBuilderDefaultApplicationTest {
             ByteBuddyAgent.getInstrumentation().removeTransformer(firstTransformer);
             ByteBuddyAgent.getInstrumentation().removeTransformer(secondTransformer);
         }
+    }
+
+    @Test
+    public void testName() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .withInitializationStrategy(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .withTypeStrategy(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new AgentBuilder.Transformer() {
+                    @Override
+                    public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+                        return builder.method(named(FOO)).intercept(FixedValue.value(RandomString.make()));
+                    }
+                })
+                .installOnByteBuddyAgent();
+        ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+        System.out.println(type.getDeclaredMethod(FOO).invoke(type.newInstance()));
+        new AgentBuilder.Default()
+                .withInitializationStrategy(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .withTypeStrategy(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new AgentBuilder.Transformer() {
+                    @Override
+                    public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+                        return builder.method(named(FOO)).intercept(FixedValue.value(RandomString.make()));
+                    }
+                })
+                .installOnByteBuddyAgent();
+        Class<?> type2 = classLoader.loadClass(SimpleType.class.getName());
+        System.out.println(type2.getDeclaredMethod(FOO).invoke(type.newInstance()));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

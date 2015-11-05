@@ -15,6 +15,7 @@ import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -390,6 +391,7 @@ public interface AgentBuilder {
                 }
             };
 
+            @Override
             public String toString() {
                 return "AgentBuilder.TypeStrategy.Default." + name();
             }
@@ -720,33 +722,51 @@ public interface AgentBuilder {
         void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer);
 
         /**
-         * Transforms the instrumented type to implement an appropriate initialization strategy.
+         * Creates a new dispatcher for injecting this initialization strategy during a transformation process.
          *
-         * @param builder The builder which should implement the initialization strategy.
-         * @return The given {@code builder} with the initialization strategy applied.
+         * @return The dispatcher to be used.
          */
-        DynamicType.Builder<?> apply(DynamicType.Builder<?> builder);
+        Dispatcher dispatcher();
 
         /**
-         * Registers a loaded type initializer for a type name and class loader pair.
-         *
-         * @param name                  The name of the type for which the loaded type initializer is to be
-         *                              registered.
-         * @param classLoader           The class loader of the instrumented type. Might be {@code null} if
-         *                              this class loader represents the bootstrap class loader.
-         * @param loadedTypeInitializer The loaded type initializer that is being registered.
+         * A dispatcher for changing a class file to adapt a self-initialization strategy.
          */
-        void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer);
+        interface Dispatcher {
+
+            /**
+             * Transforms the instrumented type to implement an appropriate initialization strategy.
+             *
+             * @param builder The builder which should implement the initialization strategy.
+             * @return The given {@code builder} with the initialization strategy applied.
+             */
+            DynamicType.Builder<?> apply(DynamicType.Builder<?> builder);
+
+            /**
+             * Registers a loaded type initializer for a type name and class loader pair.
+             *
+             * @param name                  The name of the type for which the loaded type initializer is to be
+             *                              registered.
+             * @param classLoader           The class loader of the instrumented type. Might be {@code null} if
+             *                              this class loader represents the bootstrap class loader.
+             * @param loadedTypeInitializer The loaded type initializer that is being registered.
+             */
+            void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer);
+        }
 
         /**
          * A non-initializing initialization strategy.
          */
-        enum NoOp implements InitializationStrategy {
+        enum NoOp implements InitializationStrategy, Dispatcher {
 
             /**
              * The singleton instance.
              */
             INSTANCE;
+
+            @Override
+            public Dispatcher dispatcher() {
+                return this;
+            }
 
             @Override
             public void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer) {
@@ -778,11 +798,20 @@ public interface AgentBuilder {
             /**
              * The singleton instance.
              */
-            INSTANCE;
+            INSTANCE(new Random());
 
-            @Override
-            public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                return builder.initialize(Nexus.Accessor.INSTANCE);
+            /**
+             * A generator for random identification values.
+             */
+            private final Random random;
+
+            /**
+             * Creates the self-injection strategy.
+             *
+             * @param random A generator for random identification values.
+             */
+            SelfInjection(Random random) {
+                this.random = random;
             }
 
             @Override
@@ -791,15 +820,63 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer) {
-                if (loadedTypeInitializer.isAlive()) {
-                    Nexus.Accessor.INSTANCE.register(name, classLoader, loadedTypeInitializer);
-                }
+            public InitializationStrategy.Dispatcher dispatcher() {
+                return new Dispatcher(random.nextInt());
             }
 
             @Override
             public String toString() {
                 return "AgentBuilder.InitializationStrategy.SelfInjection." + name();
+            }
+
+            /**
+             * A dispatcher for a self-initialization strategy.
+             */
+            protected static class Dispatcher implements InitializationStrategy.Dispatcher {
+
+                /**
+                 * A random identification for the applied self-initialization.
+                 */
+                private final int identification;
+
+                /**
+                 * Creates a new dispatcher.
+                 *
+                 * @param identification A random identification for the applied self-initialization.
+                 */
+                protected Dispatcher(int identification) {
+                    this.identification = identification;
+                }
+
+                @Override
+                public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
+                    return builder.initialize(Nexus.Accessor.INSTANCE.identifiedBy(identification));
+                }
+
+                @Override
+                public void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer) {
+                    if (loadedTypeInitializer.isAlive()) {
+                        Nexus.Accessor.INSTANCE.register(name, classLoader, identification, loadedTypeInitializer);
+                    }
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && identification == ((Dispatcher) other).identification;
+                }
+
+                @Override
+                public int hashCode() {
+                    return identification;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher{" +
+                            "identification=" + identification +
+                            '}';
+                }
             }
 
             /**
@@ -838,51 +915,63 @@ public interface AgentBuilder {
                 private final ClassLoader classLoader;
 
                 /**
+                 * A random value that uniquely identifies a Nexus entry in order to avoid conflicts when
+                 * applying the self-initialization strategy in multiple transformations.
+                 */
+                private final int identification;
+
+                /**
                  * Creates a key for identifying a loaded type initializer.
                  *
-                 * @param type The loaded type for which a key is to be created.
+                 * @param type           The loaded type for which a key is to be created.
+                 * @param identification An identification for the initializer to run.
                  */
-                private Nexus(Class<?> type) {
-                    name = type.getName();
-                    classLoader = type.getClassLoader();
+                private Nexus(Class<?> type, int identification) {
+                    this(type.getName(), type.getClassLoader(), identification);
                 }
 
                 /**
                  * Creates a key for identifying a loaded type initializer.
                  *
-                 * @param name        The name of a type for which a loaded type initializer is registered.
-                 * @param classLoader The class loader for which a loaded type initializer is registered.
+                 * @param name           The name of a type for which a loaded type initializer is registered.
+                 * @param classLoader    The class loader for which a loaded type initializer is registered.
+                 * @param identification An identification for the initializer to run.
                  */
-                private Nexus(String name, ClassLoader classLoader) {
+                private Nexus(String name, ClassLoader classLoader, int identification) {
                     this.name = name;
                     this.classLoader = classLoader;
+                    this.identification = identification;
                 }
 
                 /**
                  * Initializes a loaded type.
                  *
-                 * @param type The loaded type to initialize.
+                 * @param type           The loaded type to initialize.
+                 * @param identification An identification for the initializer to run.
                  * @throws Exception If an exception occurs.
                  */
                 @SuppressWarnings("unused")
-                public static void initialize(Class<?> type) throws Exception {
-                    Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type));
+                public static void initialize(Class<?> type, int identification) throws Exception {
+                    Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type, identification));
                     if (typeInitializer != null) {
                         typeInitializer.getClass().getMethod("onLoad", Class.class).invoke(typeInitializer, type);
                     } else {
-                        Logger.getAnonymousLogger().warning("Could not locate type initializer for " + type);
+                        Logger.getAnonymousLogger().warning("Could not locate type initializer for " + type + " with " + identification);
                     }
                 }
 
                 /**
                  * @param name            The name of the type for the loaded type initializer.
                  * @param classLoader     The class loader of the type for the loaded type initializer.
+                 * @param identification  An identification for the initializer to run.
                  * @param typeInitializer The type initializer to register. The initializer must be an instance
                  *                        of {@link net.bytebuddy.implementation.LoadedTypeInitializer} where
                  *                        it does however not matter which class loader loaded this latter type.
                  */
-                public static void register(String name, ClassLoader classLoader, Object typeInitializer) {
-                    TYPE_INITIALIZERS.put(new Nexus(name, classLoader), typeInitializer);
+                public static void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
+                    if (TYPE_INITIALIZERS.put(new Nexus(name, classLoader, identification), typeInitializer) != null) {
+                        Logger.getAnonymousLogger().warning("Initializer " + identification + " is already registered for " + name);
+                    }
                 }
 
                 @Override
@@ -890,13 +979,15 @@ public interface AgentBuilder {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     Nexus nexus = (Nexus) other;
-                    return !(classLoader != null ? !classLoader.equals(nexus.classLoader) : nexus.classLoader != null)
+                    return identification == nexus.identification
+                            && !(classLoader != null ? !classLoader.equals(nexus.classLoader) : nexus.classLoader != null)
                             && name.equals(nexus.name);
                 }
 
                 @Override
                 public int hashCode() {
                     int result = name.hashCode();
+                    result = 31 * result + identification;
                     result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
                     return result;
                 }
@@ -906,6 +997,7 @@ public interface AgentBuilder {
                     return "AgentBuilder.InitializationStrategy.SelfInjection.Nexus{" +
                             "name='" + name + '\'' +
                             ", classLoader=" + classLoader +
+                            ", identification=" + identification +
                             '}';
                 }
 
@@ -914,7 +1006,7 @@ public interface AgentBuilder {
                  * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus}
                  * is loaded by the system class loader.
                  */
-                protected enum Accessor implements ByteCodeAppender {
+                protected enum Accessor {
 
                     /**
                      * The singleton instance.
@@ -935,12 +1027,17 @@ public interface AgentBuilder {
                     /**
                      * The {@link ClassLoader#getSystemClassLoader()} method.
                      */
-                    private final MethodDescription systemClassLoader;
+                    private final MethodDescription.InDefinedShape getSystemClassLoader;
 
                     /**
                      * The {@link java.lang.ClassLoader#loadClass(String)} method.
                      */
-                    private final MethodDescription loadClass;
+                    private final MethodDescription.InDefinedShape loadClass;
+
+                    /**
+                     * The {@link Integer#valueOf(int)} method.
+                     */
+                    private final MethodDescription.InDefinedShape valueOf;
 
                     /**
                      * The {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
@@ -962,8 +1059,8 @@ public interface AgentBuilder {
                                     .inject(Collections.singletonMap(nexusType, new StreamDrainer()
                                             .drain(getClass().getClassLoader().getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
                                     .get(nexusType);
-                            registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, Object.class);
-                            systemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
+                            registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
+                            getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
                                     .filter(named("getSystemClassLoader")).getOnly();
                             loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
                                     .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
@@ -971,6 +1068,8 @@ public interface AgentBuilder {
                                     .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
                             invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
                                     .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
+                            valueOf = new TypeDescription.ForLoadedType(Integer.class).getDeclaredMethods()
+                                    .filter(named("valueOf").and(takesArguments(int.class))).getOnly();
                         } catch (RuntimeException exception) {
                             throw exception;
                         } catch (Exception exception) {
@@ -983,11 +1082,12 @@ public interface AgentBuilder {
                      *
                      * @param name            The name of a type for which a loaded type initializer is registered.
                      * @param classLoader     The class loader for which a loaded type initializer is registered.
+                     * @param identification  An identification for the initializer to run.
                      * @param typeInitializer The loaded type initializer to be registered.
                      */
-                    public void register(String name, ClassLoader classLoader, Object typeInitializer) {
+                    public void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
                         try {
-                            registration.invoke(STATIC_METHOD, name, classLoader, typeInitializer);
+                            registration.invoke(STATIC_METHOD, name, classLoader, identification, typeInitializer);
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot register type initializer for " + name, exception);
                         } catch (InvocationTargetException exception) {
@@ -995,27 +1095,83 @@ public interface AgentBuilder {
                         }
                     }
 
-                    @Override
-                    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                        return new ByteCodeAppender.Simple(new StackManipulation.Compound(
-                                MethodInvocation.invoke(systemClassLoader),
-                                new TextConstant(Nexus.class.getName()),
-                                MethodInvocation.invoke(loadClass),
-                                new TextConstant("initialize"),
-                                ArrayFactory.forType(TypeDescription.CLASS)
-                                        .withValues(Collections.singletonList(ClassConstant.of(TypeDescription.CLASS))),
-                                MethodInvocation.invoke(getDeclaredMethod),
-                                NullConstant.INSTANCE,
-                                ArrayFactory.forType(TypeDescription.OBJECT)
-                                        .withValues(Collections.singletonList(ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()))),
-                                MethodInvocation.invoke(invokeMethod),
-                                Removal.SINGLE
-                        )).apply(methodVisitor, implementationContext, instrumentedMethod);
+                    /**
+                     * Creates a byte code appender for injecting a self-initializing type initializer block into the generated class.
+                     *
+                     * @param identification The identification of the initialization.
+                     * @return An appropriate byte code appender.
+                     */
+                    public ByteCodeAppender identifiedBy(int identification) {
+                        return new InitializationAppender(identification);
                     }
 
                     @Override
                     public String toString() {
                         return "AgentBuilder.InitializationStrategy.SelfInjection.Nexus.Accessor." + name();
+                    }
+
+                    /**
+                     * A byte code appender for invoking a Nexus for initializing the instrumented type.
+                     */
+                    protected static class InitializationAppender implements ByteCodeAppender {
+
+                        /**
+                         * The identification for the self-initialization to execute.
+                         */
+                        private final int identification;
+
+                        /**
+                         * Creates a new initialization appender.
+                         *
+                         * @param identification The identification for the self-initialization to execute.
+                         */
+                        protected InitializationAppender(int identification) {
+                            this.identification = identification;
+                        }
+
+                        @Override
+                        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                            return new ByteCodeAppender.Simple(new StackManipulation.Compound(
+                                    MethodInvocation.invoke(Accessor.INSTANCE.getSystemClassLoader),
+                                    new TextConstant(Nexus.class.getName()),
+                                    MethodInvocation.invoke(Accessor.INSTANCE.loadClass),
+                                    new TextConstant("initialize"),
+                                    ArrayFactory.forType(TypeDescription.CLASS)
+                                            .withValues(Arrays.asList(
+                                                    ClassConstant.of(TypeDescription.CLASS),
+                                                    ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
+                                    MethodInvocation.invoke(Accessor.INSTANCE.getDeclaredMethod),
+                                    NullConstant.INSTANCE,
+                                    ArrayFactory.forType(TypeDescription.OBJECT)
+                                            .withValues(Arrays.asList(
+                                                    ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
+                                                    new StackManipulation.Compound(
+                                                            IntegerConstant.forValue(identification),
+                                                            MethodInvocation.invoke(INSTANCE.valueOf)))),
+                                    MethodInvocation.invoke(Accessor.INSTANCE.invokeMethod),
+                                    Removal.SINGLE
+                            )).apply(methodVisitor, implementationContext, instrumentedMethod);
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (other == null || getClass() != other.getClass()) return false;
+                            InitializationAppender that = (InitializationAppender) other;
+                            return identification == that.identification;
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return identification;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.InitializationStrategy.SelfInjection.Nexus.Accessor.InitializationAppender{" +
+                                    "identification=" + identification +
+                                    '}';
+                        }
                     }
                 }
             }
@@ -2281,7 +2437,8 @@ public interface AgentBuilder {
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                         AccessControlContext accessControlContext,
                                         Listener listener) {
-                        DynamicType.Unloaded<?> dynamicType = initializationStrategy.apply(transformer.transform(typeStrategy.builder(typeDescription,
+                        InitializationStrategy.Dispatcher dispatcher = initializationStrategy.dispatcher();
+                        DynamicType.Unloaded<?> dynamicType = dispatcher.apply(transformer.transform(typeStrategy.builder(typeDescription,
                                 byteBuddy, classFileLocator, methodNameTransformer.resolve()), typeDescription)).make();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                         if (loadedTypeInitializers.size() > 1) { // There exist auxiliary classes.
@@ -2292,7 +2449,7 @@ public interface AgentBuilder {
                                 initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
                             }
                         }
-                        initializationStrategy.register(typeDescription.getName(), classLoader, loadedTypeInitializers.get(dynamicType.getTypeDescription()));
+                        dispatcher.register(typeDescription.getName(), classLoader, loadedTypeInitializers.get(dynamicType.getTypeDescription()));
                         listener.onTransformation(typeDescription, dynamicType);
                         return dynamicType.getBytes();
                     }
