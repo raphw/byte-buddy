@@ -7,7 +7,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -773,7 +772,7 @@ public interface AgentBuilder {
          * An initialization strategy that adds a code block to an instrumented type's type initializer which
          * then calls a specific class that is responsible for the explicit initialization.
          */
-        enum SelfInjection implements InitializationStrategy, Implementation, ByteCodeAppender {
+        enum SelfInjection implements InitializationStrategy {
 
             /**
              * The singleton instance.
@@ -782,27 +781,12 @@ public interface AgentBuilder {
 
             @Override
             public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                return builder.invokable(none()).intercept(this);
+                return builder.initialize(Nexus.Accessor.INSTANCE);
             }
 
             @Override
             public void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer) {
                 loadedTypeInitializer.onLoad(type);
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType.withInitializer(Nexus.Accessor.INSTANCE.initializerFor(instrumentedType));
-            }
-
-            @Override
-            public ByteCodeAppender appender(Target implementationTarget) {
-                return this;
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                throw new IllegalStateException("Initialization strategy illegally applied to " + instrumentedMethod);
             }
 
             @Override
@@ -927,7 +911,7 @@ public interface AgentBuilder {
                  * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus}
                  * is loaded by the system class loader.
                  */
-                protected enum Accessor {
+                protected enum Accessor implements ByteCodeAppender {
 
                     /**
                      * The singleton instance.
@@ -1008,14 +992,8 @@ public interface AgentBuilder {
                         }
                     }
 
-                    /**
-                     * Creates a stack manipulation for a given instrumented type that injects a code block for
-                     * calling the system class loader's nexus in order to apply a self-initialization.
-                     *
-                     * @param instrumentedType The instrumented type for which the code block is to be injected.
-                     * @return A byte code appender that implements the self-initialization.
-                     */
-                    public ByteCodeAppender initializerFor(TypeDescription instrumentedType) {
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new ByteCodeAppender.Simple(new StackManipulation.Compound(
                                 MethodInvocation.invoke(systemClassLoader),
                                 new TextConstant(Nexus.class.getName()),
@@ -1026,10 +1004,10 @@ public interface AgentBuilder {
                                 MethodInvocation.invoke(getDeclaredMethod),
                                 NullConstant.INSTANCE,
                                 ArrayFactory.forType(TypeDescription.OBJECT)
-                                        .withValues(Collections.singletonList(ClassConstant.of(instrumentedType))),
+                                        .withValues(Collections.singletonList(ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()))),
                                 MethodInvocation.invoke(invokeMethod),
                                 Removal.SINGLE
-                        ));
+                        )).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
 
                     @Override
