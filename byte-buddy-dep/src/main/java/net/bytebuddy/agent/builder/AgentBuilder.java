@@ -37,6 +37,7 @@ import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
@@ -868,6 +869,8 @@ public interface AgentBuilder {
                     Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type));
                     if (typeInitializer != null) {
                         typeInitializer.getClass().getMethod("onLoad", Class.class).invoke(typeInitializer, type);
+                    } else {
+                        Logger.getAnonymousLogger().warning("Could not locate type initializer for " + type);
                     }
                 }
 

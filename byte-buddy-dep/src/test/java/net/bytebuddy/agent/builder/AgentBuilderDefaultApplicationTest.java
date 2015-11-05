@@ -162,6 +162,23 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
+    @Test
+    @AgentAttachmentRule.Enforce
+    public void testChainedAgent() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        AgentBuilder agentBuilder = new AgentBuilder.Default()
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer());
+        ClassFileTransformer firstTransformer = agentBuilder.installOnByteBuddyAgent();
+        ClassFileTransformer secondTransformer = agentBuilder.installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(Qux.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO + BAR + BAR)));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(firstTransformer);
+            ByteBuddyAgent.getInstrumentation().removeTransformer(secondTransformer);
+        }
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     public @interface ShouldRebase {
 
