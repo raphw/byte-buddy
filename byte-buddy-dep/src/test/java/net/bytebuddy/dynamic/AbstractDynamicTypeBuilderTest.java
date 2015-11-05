@@ -19,8 +19,10 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
@@ -345,6 +347,25 @@ public abstract class AbstractDynamicTypeBuilderTest {
         verify(classVisitorWrapper, atMost(1)).mergeReader(0);
         verify(classVisitorWrapper).wrap(any(ClassVisitor.class));
         verifyNoMoreInteractions(classVisitorWrapper);
+    }
+
+    @Test
+    public void testExplicitTypeInitializer() throws Exception {
+        assertThat(createPlain()
+                .defineField(FOO, String.class, Ownership.STATIC, Visibility.PUBLIC)
+                .initialize(new ByteCodeAppender() {
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                        return new Size(new StackManipulation.Compound(
+                                new TextConstant(FOO),
+                                FieldAccess.forField(instrumentedMethod.getDeclaringType().getDeclaredFields().filter(named(FOO)).getOnly()).putter()
+                        ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+                    }
+                }).make()
+        .load(null, ClassLoadingStrategy.Default.WRAPPER)
+        .getLoaded()
+        .getDeclaredField(FOO)
+        .get(null), is((Object) FOO));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

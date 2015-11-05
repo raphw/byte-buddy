@@ -80,6 +80,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
+                InstrumentedType.TypeInitializer.None.INSTANCE,
                 superType,
                 new ArrayList<GenericTypeDescription>(interfaceTypes),
                 modifiers,
@@ -103,6 +104,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param auxiliaryTypeNamingStrategy           The naming strategy to apply to auxiliary types.
      * @param implementationContextFactory          The implementation context factory to use.
+     * @param typeInitializer                       The type initializer to use.
      * @param superType                             The super class that the dynamic type should extend.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -127,6 +129,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          NamingStrategy namingStrategy,
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                          Implementation.Context.Factory implementationContextFactory,
+                                         InstrumentedType.TypeInitializer typeInitializer,
                                          TypeDescription superType,
                                          List<GenericTypeDescription> interfaceTypes,
                                          int modifiers,
@@ -145,6 +148,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
+                typeInitializer,
                 superType,
                 interfaceTypes,
                 modifiers,
@@ -166,6 +170,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  Implementation.Context.Factory implementationContextFactory,
+                                                 InstrumentedType.TypeInitializer typeInitializer,
                                                  TypeDescription targetType,
                                                  List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
@@ -183,6 +188,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
+                typeInitializer,
                 targetType,
                 interfaceTypes,
                 modifiers,
@@ -214,7 +220,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                 fieldTokens,
                                 methodTokens,
                                 Collections.<AnnotationDescription>emptyList(),
-                                InstrumentedType.TypeInitializer.None.INSTANCE,
+                                typeInitializer,
                                 LoadedTypeInitializer.NoOp.INSTANCE)),
                         methodGraphCompiler,
                         new InstrumentableMatcher(ignoredMethods))
@@ -263,6 +269,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", namingStrategy=" + namingStrategy +
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", implementationContextFactory=" + implementationContextFactory +
+                ", typeInitializer=" + typeInitializer +
                 ", targetType=" + targetType +
                 ", interfaceTypes=" + interfaceTypes +
                 ", modifiers=" + modifiers +

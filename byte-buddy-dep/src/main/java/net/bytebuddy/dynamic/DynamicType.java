@@ -15,6 +15,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.Implementation;
@@ -24,6 +25,7 @@ import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 import org.objectweb.asm.Opcodes;
@@ -258,6 +260,15 @@ public interface DynamicType {
          * @return This builder where the implementation context factory was set to be used.
          */
         Builder<T> context(Implementation.Context.Factory implementationContextFactory);
+
+        /**
+         * Defines an explicit type initialization block that is appended to any potentially existing
+         * type initializer. This initializer is run before any other code.
+         *
+         * @param byteCodeAppender The byte code appender that represents the code. This initializer must not return.
+         * @return A version of this builder with the supplied appender added as a type initilaization block.
+         */
+        Builder<T> initialize(ByteCodeAppender byteCodeAppender);
 
         /**
          * Defines modifiers for the created dynamic type.
@@ -1202,6 +1213,11 @@ public interface DynamicType {
             protected final Implementation.Context.Factory implementationContextFactory;
 
             /**
+             * The type initializer to use.
+             */
+            protected final InstrumentedType.TypeInitializer typeInitializer;
+
+            /**
              * The target type description that is specified for this builder.
              */
             protected final TypeDescription targetType;
@@ -1275,6 +1291,7 @@ public interface DynamicType {
              * @param namingStrategy                        The naming strategy for naming the dynamic type.
              * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
              * @param implementationContextFactory          The currently defined implementation context factory.
+             * @param typeInitializer                       The type initializer to use.
              * @param targetType                            A description of the type that the dynamic type should represent.
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -1297,6 +1314,7 @@ public interface DynamicType {
                                    NamingStrategy namingStrategy,
                                    AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                    Implementation.Context.Factory implementationContextFactory,
+                                   InstrumentedType.TypeInitializer typeInitializer,
                                    TypeDescription targetType,
                                    List<GenericTypeDescription> interfaceTypes,
                                    int modifiers,
@@ -1314,6 +1332,7 @@ public interface DynamicType {
                 this.namingStrategy = namingStrategy;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.implementationContextFactory = implementationContextFactory;
+                this.typeInitializer = typeInitializer;
                 this.targetType = targetType;
                 this.interfaceTypes = interfaceTypes;
                 this.modifiers = modifiers;
@@ -1377,6 +1396,7 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1398,6 +1418,7 @@ public interface DynamicType {
                         new NamingStrategy.Fixed(isValidTypeName(name)),
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1419,6 +1440,7 @@ public interface DynamicType {
                         nonNull(namingStrategy),
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1440,6 +1462,7 @@ public interface DynamicType {
                         namingStrategy,
                         nonNull(auxiliaryTypeNamingStrategy),
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1461,6 +1484,29 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         nonNull(implementationContextFactory),
+                        typeInitializer,
+                        targetType,
+                        interfaceTypes,
+                        modifiers,
+                        attributeAppender,
+                        ignoredMethods,
+                        classVisitorWrapper,
+                        fieldRegistry,
+                        methodRegistry,
+                        methodGraphCompiler,
+                        defaultFieldAttributeAppenderFactory,
+                        defaultMethodAttributeAppenderFactory,
+                        fieldTokens,
+                        methodTokens);
+            }
+
+            @Override
+            public Builder<S> initialize(ByteCodeAppender byteCodeAppender) {
+                return materialize(classFileVersion,
+                        namingStrategy,
+                        auxiliaryTypeNamingStrategy,
+                        implementationContextFactory,
+                        typeInitializer.expandWith(nonNull(byteCodeAppender)),
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1482,6 +1528,7 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         resolveModifierContributors(TYPE_MODIFIER_MASK, nonNull(modifier)),
@@ -1503,6 +1550,7 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1524,6 +1572,7 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1545,6 +1594,7 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1587,6 +1637,7 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1608,6 +1659,7 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
+                        typeInitializer,
                         targetType,
                         interfaceTypes,
                         modifiers,
@@ -1789,6 +1841,7 @@ public interface DynamicType {
              * @param namingStrategy                        The naming strategy for naming the dynamic type.
              * @param auxiliaryTypeNamingStrategy           The naming strategy for naming the auxiliary type of the dynamic type.
              * @param implementationContextFactory          The currently defined implementation context factory.
+             * @param typeInitializer                       The type initializer to use.
              * @param targetType                            A description of the type that the dynamic type should represent.
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -1812,6 +1865,7 @@ public interface DynamicType {
                                                       NamingStrategy namingStrategy,
                                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                       Implementation.Context.Factory implementationContextFactory,
+                                                      InstrumentedType.TypeInitializer typeInitializer,
                                                       TypeDescription targetType,
                                                       List<GenericTypeDescription> interfaceTypes,
                                                       int modifiers,
@@ -1828,14 +1882,13 @@ public interface DynamicType {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other)
-                    return true;
-                if (other == null || getClass() != other.getClass())
-                    return false;
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
                 AbstractBase that = (AbstractBase) other;
                 return modifiers == that.modifiers
                         && attributeAppender.equals(that.attributeAppender)
                         && classFileVersion.equals(that.classFileVersion)
+                        && typeInitializer.equals(that.typeInitializer)
                         && classVisitorWrapper.equals(that.classVisitorWrapper)
                         && defaultFieldAttributeAppenderFactory.equals(that.defaultFieldAttributeAppenderFactory)
                         && defaultMethodAttributeAppenderFactory.equals(that.defaultMethodAttributeAppenderFactory)
@@ -1858,6 +1911,7 @@ public interface DynamicType {
                 result = 31 * result + namingStrategy.hashCode();
                 result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
                 result = 31 * result + implementationContextFactory.hashCode();
+                result = 31 * result + typeInitializer.hashCode();
                 result = 31 * result + targetType.hashCode();
                 result = 31 * result + interfaceTypes.hashCode();
                 result = 31 * result + modifiers;
@@ -1926,6 +1980,11 @@ public interface DynamicType {
                 @Override
                 public Builder<U> context(Implementation.Context.Factory implementationContextFactory) {
                     return materialize().context(implementationContextFactory);
+                }
+
+                @Override
+                public Builder<U> initialize(ByteCodeAppender byteCodeAppender) {
+                    return materialize().initialize(byteCodeAppender);
                 }
 
                 @Override
@@ -2186,6 +2245,7 @@ public interface DynamicType {
                             namingStrategy,
                             auxiliaryTypeNamingStrategy,
                             implementationContextFactory,
+                            typeInitializer,
                             targetType,
                             interfaceTypes,
                             modifiers,
@@ -2635,6 +2695,7 @@ public interface DynamicType {
                             namingStrategy,
                             auxiliaryTypeNamingStrategy,
                             implementationContextFactory,
+                            typeInitializer,
                             targetType,
                             interfaceTypes,
                             modifiers,
@@ -2814,6 +2875,7 @@ public interface DynamicType {
                             namingStrategy,
                             auxiliaryTypeNamingStrategy,
                             implementationContextFactory,
+                            typeInitializer,
                             targetType,
                             joinUniqueRaw(interfaceTypes, additionalInterfaceTypes),
                             modifiers,

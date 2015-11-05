@@ -86,6 +86,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
+                InstrumentedType.TypeInitializer.None.INSTANCE,
                 levelType,
                 joinUniqueRaw(interfaceTypes, levelType.getInterfaces()),
                 modifiers,
@@ -110,6 +111,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
      * @param implementationContextFactory          The implementation context factory to use.
+     * @param typeInitializer                       The type initializer to use.
      * @param levelType                             The type that is to be rebased.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
@@ -134,6 +136,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        NamingStrategy namingStrategy,
                                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                        Implementation.Context.Factory implementationContextFactory,
+                                       InstrumentedType.TypeInitializer typeInitializer,
                                        TypeDescription levelType,
                                        List<GenericTypeDescription> interfaceTypes,
                                        int modifiers,
@@ -153,6 +156,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
+                typeInitializer,
                 levelType,
                 interfaceTypes,
                 modifiers,
@@ -175,6 +179,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                                  NamingStrategy namingStrategy,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  Implementation.Context.Factory implementationContextFactory,
+                                                 InstrumentedType.TypeInitializer typeInitializer,
                                                  TypeDescription levelType,
                                                  List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
@@ -192,6 +197,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
+                typeInitializer,
                 levelType,
                 interfaceTypes,
                 modifiers,
@@ -220,7 +226,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                         fieldTokens,
                         methodTokens,
                         targetType.getDeclaredAnnotations(),
-                        InstrumentedType.TypeInitializer.None.INSTANCE,
+                        typeInitializer,
                         LoadedTypeInitializer.NoOp.INSTANCE,
                         targetType.getDeclaringType(),
                         targetType.getEnclosingMethod(),
@@ -274,6 +280,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 ", namingStrategy=" + namingStrategy +
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", implementationContextFactory=" + implementationContextFactory +
+                ", typeInitializer=" + typeInitializer +
                 ", targetType=" + targetType +
                 ", interfaceTypes=" + interfaceTypes +
                 ", modifiers=" + modifiers +
