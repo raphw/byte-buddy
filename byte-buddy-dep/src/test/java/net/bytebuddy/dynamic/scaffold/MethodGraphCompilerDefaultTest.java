@@ -1,18 +1,26 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.objectweb.asm.Opcodes;
+
+import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.mockito.Mockito.mock;
 
 public class MethodGraphCompilerDefaultTest {
@@ -878,6 +886,31 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getMethodTypes().contains(genericMethod.asDefined().asTypeToken()), is(true));
         assertThat(methodNode.getRepresentative(), is(typeDescription.getSuperType().getDeclaredMethods()
                 .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly()));
+    }
+
+    @Test
+    public void testOrphanedBridge() throws Exception {
+        MethodDescription.Token bridgeMethod = new MethodDescription.Token("foo",
+                Opcodes.ACC_BRIDGE,
+                TypeDescription.VOID,
+                Collections.<GenericTypeDescription>emptyList());
+        TypeDescription typeDescription = new InstrumentedType.Default("foo",
+                Opcodes.ACC_PUBLIC,
+                Collections.<GenericTypeDescription>emptyList(),
+                TypeDescription.OBJECT,
+                Collections.<GenericTypeDescription>emptyList(),
+                Collections.<FieldDescription.Token>emptyList(),
+                Collections.singletonList(bridgeMethod),
+                Collections.<AnnotationDescription>emptyList(),
+                InstrumentedType.TypeInitializer.None.INSTANCE,
+                LoadedTypeInitializer.NoOp.INSTANCE);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.OBJECT.getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
+        MethodGraph.Node node = methodGraph.locate(bridgeMethod);
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getRepresentative().asToken(), is(bridgeMethod));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes(), hasItem(bridgeMethod.asTypeToken()));
     }
 
     @Test
