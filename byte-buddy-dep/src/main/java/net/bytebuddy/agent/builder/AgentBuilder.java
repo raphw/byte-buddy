@@ -955,8 +955,6 @@ public interface AgentBuilder {
                     Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type, identification));
                     if (typeInitializer != null) {
                         typeInitializer.getClass().getMethod("onLoad", Class.class).invoke(typeInitializer, type);
-                    } else {
-                        Logger.getAnonymousLogger().warning("Could not locate type initializer for " + type + " with id " + identification);
                     }
                 }
 
