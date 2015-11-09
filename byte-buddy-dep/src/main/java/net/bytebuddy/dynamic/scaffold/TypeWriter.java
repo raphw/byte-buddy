@@ -1557,7 +1557,7 @@ public interface TypeWriter<T> {
 
             @Override
             public void visit(int version, int modifiers, String name, String signature, String superName, String[] interfaces) {
-                ClassFileVersion classFileVersion = new ClassFileVersion(version);
+                ClassFileVersion classFileVersion = ClassFileVersion.of(version);
                 List<Constraint> constraints = new LinkedList<Constraint>();
                 constraints.add(new Constraint.ForClassFileVersion(classFileVersion));
                 if (name.endsWith('/' + PackageDescription.PACKAGE_CLASS_NAME)) {

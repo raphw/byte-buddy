@@ -64,13 +64,25 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     private final int versionNumber;
 
     /**
-     * Creates a wrapper for a given minor-major release of the Java class file file and validates the
-     * integrity of the version number.
+     * Creates a wrapper for a given minor-major release of the Java class file file.
      *
      * @param versionNumber The minor-major release number.
      */
-    public ClassFileVersion(int versionNumber) {
-        this.versionNumber = validateVersionNumber(versionNumber);
+    protected ClassFileVersion(int versionNumber) {
+        this.versionNumber = versionNumber;
+    }
+
+    /**
+     * Creates a wrapper for a given minor-major release of the Java class file file.
+     *
+     * @param versionNumber The minor-major release number.
+     * @return A representation of the version number.
+     */
+    public static ClassFileVersion of(int versionNumber) {
+        if (versionNumber < 1) {
+            throw new IllegalArgumentException("Class version " + versionNumber + " is not valid");
+        }
+        return new ClassFileVersion(versionNumber);
     }
 
     /**
@@ -121,19 +133,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             }
         }
         return ClassFileVersion.forKnownJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
-    }
-
-    /**
-     * Validates the version number.
-     *
-     * @param versionNumber The parsed version number.
-     * @return The same number.
-     */
-    private static int validateVersionNumber(int versionNumber) {
-        if (!(versionNumber > 0)) {
-            throw new IllegalArgumentException("Class version " + versionNumber + " is not valid");
-        }
-        return versionNumber;
     }
 
     /**

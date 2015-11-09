@@ -19,12 +19,12 @@ public class ClassFileVersionTest {
 
     @Test
     public void testExplicitConstructionOfUnknownVersion() throws Exception {
-        assertThat(new ClassFileVersion(Opcodes.V1_8 + 1).getVersion(), is(Opcodes.V1_8 + 1));
+        assertThat(ClassFileVersion.of(Opcodes.V1_8 + 1).getVersion(), is(Opcodes.V1_8 + 1));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalVersion() throws Exception {
-        new ClassFileVersion(0);
+        ClassFileVersion.of(0);
     }
 
     @Test
