@@ -956,7 +956,7 @@ public interface AgentBuilder {
                     if (typeInitializer != null) {
                         typeInitializer.getClass().getMethod("onLoad", Class.class).invoke(typeInitializer, type);
                     } else {
-                        Logger.getAnonymousLogger().warning("Could not locate type initializer for " + type + " with " + identification);
+                        Logger.getAnonymousLogger().warning("Could not locate type initializer for " + type + " with id " + identification);
                     }
                 }
 
@@ -970,7 +970,7 @@ public interface AgentBuilder {
                  */
                 public static void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
                     if (TYPE_INITIALIZERS.put(new Nexus(name, classLoader, identification), typeInitializer) != null) {
-                        Logger.getAnonymousLogger().warning("Initializer " + identification + " is already registered for " + name);
+                        Logger.getAnonymousLogger().warning("Initializer with id " + identification + " is already registered for " + name);
                     }
                 }
 
