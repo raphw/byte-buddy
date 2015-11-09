@@ -959,12 +959,22 @@ public interface TypePool {
 
         /**
          * Creates a default {@link net.bytebuddy.pool.TypePool} that looks up data by querying the system class
-         * loader.
+         * loader. The returned instance is configured to use a fast reading mode and a simple cache.
          *
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool ofClassPath() {
-            return new Default(new CacheProvider.Simple(), ClassFileLocator.ForClassLoader.ofClassPath(), ReaderMode.FAST);
+            return of(ClassFileLocator.ForClassLoader.ofClassPath());
+        }
+
+        /**
+         * Creates a default {@link net.bytebuddy.pool.TypePool} that looks up data by querying the supplied class
+         * file locator. The returned instance is configured to use a fast reading mode and a simple cache.
+         *
+         * @return A type pool that reads its data from the system class path.
+         */
+        public static TypePool of(ClassFileLocator classFileLocator) {
+            return new Default(new CacheProvider.Simple(), classFileLocator, ReaderMode.FAST);
         }
 
         @Override

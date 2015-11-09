@@ -26,6 +26,7 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.Remapper;
@@ -2227,6 +2228,67 @@ public interface TypeWriter<T> {
         }
 
         /**
+         * A class writer that piggy-backs on Byte Buddy's {@link ClassFileLocator} to avoid class loading or look-up errors when redefining a class.
+         * This is not available when creating a new class where automatic frame computation is however not normally a requirement.
+         */
+        protected static class FrameComputingClassWriter extends ClassWriter {
+
+            /**
+             * The type pool to query.
+             */
+            private final TypePool typePool;
+
+            /**
+             * Creates a new frame computing class writer.
+             *
+             * @param classReader The class reader from which the original class is read.
+             * @param flags       The flags to be handed to the writer.
+             * @param typePool    The type pool to use.
+             */
+            protected FrameComputingClassWriter(ClassReader classReader, int flags, TypePool typePool) {
+                super(classReader, flags);
+                this.typePool = typePool;
+            }
+
+            /**
+             * @param classReader      The class reader from which the original class is read.
+             * @param flags            The flags to be handed to the writer.
+             * @param classFileLocator The class file locator to use.
+             * @return An appropriate class writer.
+             */
+            protected static ClassWriter of(ClassReader classReader, int flags, ClassFileLocator classFileLocator) {
+                return (flags & ClassWriter.COMPUTE_FRAMES) != 0
+                        ? new FrameComputingClassWriter(classReader, flags, TypePool.Default.of(classFileLocator))
+                        : new ClassWriter(classReader, flags);
+            }
+
+            @Override
+            protected String getCommonSuperClass(String leftTypeName, String rightTypeName) {
+                TypeDescription leftType = typePool.describe(leftTypeName.replace('/', '.')).resolve();
+                TypeDescription rightType = typePool.describe(rightTypeName.replace('/', '.')).resolve();
+                if (leftType.isAssignableFrom(rightType)) {
+                    return leftType.getInternalName();
+                } else if (leftType.isAssignableTo(rightType)) {
+                    return rightType.getInternalName();
+                } else if (leftType.isInterface() || rightType.isInterface()) {
+                    return TypeDescription.OBJECT.getInternalName();
+                } else {
+                    do {
+                        leftType = leftType.getSuperType().asErasure();
+                    } while (!leftType.isAssignableFrom(rightType));
+                    return leftType.getInternalName();
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Default.FrameComputingClassWriter{" +
+                        "typePool=" + typePool +
+                        '}';
+            }
+        }
+
+        /**
          * A type writer that inlines the created type into an existing class file.
          *
          * @param <U> The best known loaded type for the dynamically created type.
@@ -2341,9 +2403,8 @@ public interface TypeWriter<T> {
              */
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
-                ClassWriter classWriter = new ClassWriter(classReader, classVisitorWrapper.mergeWriter(ASM_NO_FLAGS));
-                classReader.accept(writeTo(classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter)), implementationContext),
-                        classVisitorWrapper.mergeReader(ASM_NO_FLAGS));
+                ClassWriter classWriter = FrameComputingClassWriter.of(classReader, classVisitorWrapper.mergeWriter(ASM_NO_FLAGS), classFileLocator);
+                classReader.accept(writeTo(classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter)), implementationContext), classVisitorWrapper.mergeReader(ASM_NO_FLAGS));
                 return classWriter.toByteArray();
             }
 
