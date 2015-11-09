@@ -1056,7 +1056,9 @@ public interface MethodGraph {
                             TypeDescription leftType = leftMethod.getDeclaringType().asErasure();
                             for (MethodDescription rightMethod : rightMethods) {
                                 TypeDescription rightType = rightMethod.getDeclaringType().asErasure();
-                                if (leftType.isAssignableTo(rightType)) {
+                                if (leftType.equals(rightType)) {
+                                    break;
+                                } else if (leftType.isAssignableTo(rightType)) {
                                     combined.remove(rightMethod);
                                     break;
                                 } else if (leftType.isAssignableFrom(rightType)) {

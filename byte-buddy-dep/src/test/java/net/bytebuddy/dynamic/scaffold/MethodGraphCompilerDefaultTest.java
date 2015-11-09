@@ -134,6 +134,20 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    public void testInterfaceDuplicateInHierarchyImplementation() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(InterfaceBase.InterfaceDuplicate.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription method = typeDescription.getInterfaces().filter(ElementMatchers.is(InterfaceBase.class)).getOnly().getDeclaredMethods().getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(method.asToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.getMethodTypes().size(), is(1));
+        assertThat(methodNode.getMethodTypes().contains(method.asTypeToken()), is(true));
+        assertThat(methodNode.getRepresentative(), is(method));
+        assertThat(methodGraph.listNodes().contains(methodNode), is(true));
+    }
+
+    @Test
     public void testClassAndInterfaceDominantInheritance() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(ClassAndInterfaceInheritance.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
@@ -931,6 +945,10 @@ public class MethodGraphCompilerDefaultTest {
         }
 
         abstract class InnerClass implements InterfaceBase {
+            /* empty */
+        }
+
+        interface InterfaceDuplicate extends InnerInterface, InterfaceBase {
             /* empty */
         }
     }
