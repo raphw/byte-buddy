@@ -15,10 +15,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.*;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -112,6 +109,7 @@ public class DynamicTypeDefaultTest {
         when(auxiliaryType.getBytes()).thenReturn(BINARY_SECOND);
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
+        when(auxiliaryType.getAllTypes()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, BINARY_SECOND));
     }
 
     @Test
@@ -281,6 +279,16 @@ public class DynamicTypeDefaultTest {
             fileDeletion = file.delete();
         }
         assertThat(fileDeletion, is(true));
+    }
+
+    @Test
+    public void testIterationOrder() throws Exception {
+        Iterator<TypeDescription> types = dynamicType.getAllTypes().keySet().iterator();
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(typeDescription));
+        assertThat(types.hasNext(), is(true));
+        assertThat(types.next(), is(auxiliaryTypeDescription));
+        assertThat(types.hasNext(), is(false));
     }
 
     @Test

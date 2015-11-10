@@ -124,7 +124,7 @@ public interface ClassInjector {
          * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          */
         public UsingReflection(ClassLoader classLoader) {
-            this(classLoader, DEFAULT_PROTECTION_DOMAIN,  AccessController.getContext());
+            this(classLoader, DEFAULT_PROTECTION_DOMAIN, AccessController.getContext());
         }
 
         /**

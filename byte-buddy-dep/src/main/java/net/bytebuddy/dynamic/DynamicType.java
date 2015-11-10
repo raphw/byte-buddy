@@ -3071,11 +3071,11 @@ public interface DynamicType {
 
         @Override
         public Map<TypeDescription, byte[]> getAllTypes() {
-            Map<TypeDescription, byte[]> allTypes = new HashMap<TypeDescription, byte[]>(auxiliaryTypes.size() + 1);
+            Map<TypeDescription, byte[]> allTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes.size() + 1);
+            allTypes.put(typeDescription, binaryRepresentation);
             for (DynamicType auxiliaryType : auxiliaryTypes) {
                 allTypes.putAll(auxiliaryType.getAllTypes());
             }
-            allTypes.put(typeDescription, binaryRepresentation);
             return allTypes;
         }
 
