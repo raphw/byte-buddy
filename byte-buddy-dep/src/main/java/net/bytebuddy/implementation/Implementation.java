@@ -450,6 +450,11 @@ public interface Implementation {
             void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode);
 
             /**
+             * Prohibits any instrumentation of an instrumented class's type initializer.
+             */
+            void prohibitTypeInitializer();
+
+            /**
              * When draining an implementation context, a type initializer might be written to the created class
              * file. If any code must be explicitly invoked from within the type initializer, this can be achieved
              * by providing a code injection by this instance. The injected code is added after the class is set up but
@@ -553,7 +558,7 @@ public interface Implementation {
             @Override
             public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
                 if (injectedCode.isDefined() || methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType)).getSort().isDefined()) {
-                    throw new IllegalStateException("Type initializer definition was explicitly disabled");
+                    throw new IllegalStateException("Type initializer interception is impossible or was disabled for " + instrumentedType);
                 }
             }
 
@@ -565,6 +570,11 @@ public interface Implementation {
             @Override
             public FieldDescription cache(StackManipulation fieldValue, TypeDescription fieldType) {
                 throw new IllegalStateException("Field values caching was disabled: " + fieldType);
+            }
+
+            @Override
+            public void prohibitTypeInitializer() {
+                /* do nothing */
             }
 
             @Override
@@ -685,11 +695,15 @@ public interface Implementation {
             private final String suffix;
 
             /**
-             * Signals if this type extension delegate is still capable of registering field cache entries. Such entries
-             * must be explicitly initialized in the instrumented type's type initializer such that no entries can be
-             * registered after the type initializer was written.
+             * If {@code false}, the type initializer for this instance was already drained what prohibits the registration of additional cached field values.
              */
-            private boolean canRegisterFieldCache;
+            private boolean fieldCacheCanAppendEntries;
+
+            /**
+             * If {@code true}, this instance suggests the retention of the original type initializer and prohibits the definition of a custom initializer.
+             * This property is required for interfaces before the Java 8 byte code level where type initializers are not allowed.
+             */
+            private boolean prohibitTypeInitiailzer;
 
             /**
              * Creates a new default implementation context.
@@ -714,7 +728,8 @@ public interface Implementation {
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
                 suffix = RandomString.make();
-                canRegisterFieldCache = true;
+                fieldCacheCanAppendEntries = true;
+                prohibitTypeInitiailzer = false;
             }
 
             @Override
@@ -762,7 +777,7 @@ public interface Implementation {
 
             @Override
             public boolean isRetainTypeInitializer() {
-                return false;
+                return prohibitTypeInitiailzer;
             }
 
             @Override
@@ -777,29 +792,17 @@ public interface Implementation {
                 if (fieldCache != null) {
                     return fieldCache;
                 }
-                validateFieldCacheAccessibility();
+                if (!fieldCacheCanAppendEntries) {
+                    throw new IllegalStateException("Cached values cannot be registered after defining the type initiailizer for " + instrumentedType);
+                }
                 fieldCache = new CacheValueField(instrumentedType, fieldType, suffix, fieldValue.hashCode());
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
 
-            /**
-             * Validates that the field cache is still accessible. Once the type initializer of a class is written, no
-             * additional field caches can be defined. See
-             * {@link Implementation.Context.Default#canRegisterFieldCache} for a more
-             * detailed explanation of this validation.
-             */
-            private void validateFieldCacheAccessibility() {
-                if (!canRegisterFieldCache) {
-                    throw new IllegalStateException("A field cache cannot be registered during or after the creation of a " +
-                            "type initializer - instead, the field cache should be registered in the method that requires " +
-                            "the cached value");
-                }
-            }
-
             @Override
             public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
-                canRegisterFieldCache = false;
+                fieldCacheCanAppendEntries = false;
                 InstrumentedType.TypeInitializer typeInitializer = this.typeInitializer;
                 for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
                     classVisitor.visitField(entry.getValue().getModifiers(),
@@ -819,10 +822,18 @@ public interface Implementation {
                 } else if (typeInitializer.isDefined()) {
                     initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
                 }
+                if (prohibitTypeInitiailzer && initializerRecord.getSort().isDefined()) {
+                    throw new IllegalStateException("It is impossible to define a class initializer or cached values for " + instrumentedType);
+                }
                 initializerRecord.apply(classVisitor, this);
                 for (TypeWriter.MethodPool.Record record : accessorMethods) {
                     record.apply(classVisitor, this);
                 }
+            }
+
+            @Override
+            public void prohibitTypeInitializer() {
+                prohibitTypeInitiailzer = true;
             }
 
             @Override
@@ -839,7 +850,8 @@ public interface Implementation {
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
                         ", suffix=" + suffix +
-                        ", canRegisterFieldCache=" + canRegisterFieldCache +
+                        ", fieldCacheCanAppendEntries=" + fieldCacheCanAppendEntries +
+                        ", prohibitTypeInitiailzer=" + prohibitTypeInitiailzer +
                         '}';
             }
 

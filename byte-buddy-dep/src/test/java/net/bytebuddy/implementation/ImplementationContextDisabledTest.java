@@ -71,6 +71,13 @@ public class ImplementationContextDisabledTest {
         assertThat(new Implementation.Context.Disabled(instrumentedType).getRegisteredAuxiliaryTypes().size(), is(0));
     }
 
+    @Test
+    public void testFreezeHasNoEffect() throws Exception {
+        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Disabled(instrumentedType);
+        implementationContext.prohibitTypeInitializer();
+        assertThat(implementationContext.isRetainTypeInitializer(), is(true));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testCannotCacheValue() throws Exception {
         new Implementation.Context.Disabled(instrumentedType).cache(mock(StackManipulation.class), mock(TypeDescription.class));

@@ -2580,6 +2580,8 @@ public interface TypeWriter<T> {
                 @Override
                 public String toString() {
                     return "TypeWriter.Default.ForInlining.FramePreservingRemapper{" +
+                            "remapper=" + remapper +
+                            ", className=" + className +
                             "}";
                 }
 
@@ -2706,6 +2708,9 @@ public interface TypeWriter<T> {
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
                     attributeAppender.apply(this, instrumentedType, targetType);
+                    if (!ClassFileVersion.of(classFileVersionNumber).isAtLeastJava8() && instrumentedType.isInterface()) {
+                        implementationContext.prohibitTypeInitializer();
+                    }
                 }
 
                 @Override

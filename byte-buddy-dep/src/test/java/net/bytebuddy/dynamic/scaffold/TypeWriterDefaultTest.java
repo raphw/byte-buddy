@@ -29,8 +29,13 @@ public class TypeWriterDefaultTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    private static final String LEGACY_INTERFACE = "net.bytebuddy.test.precompiled.LegacyInterface";
+
+    private static final String JAVA_8_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
+
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
 
     @Test(expected = IllegalStateException.class)
     public void testConstructorOnInterfaceAssertion() throws Exception {
@@ -294,6 +299,25 @@ public class TypeWriterDefaultTest {
                 .invokable(isTypeInitializer())
                 .intercept(StubMethod.INSTANCE)
                 .make(), notNullValue(DynamicType.class));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testTypeInitializerOnRebasedModernInterface() throws Exception {
+        assertThat(new ByteBuddy()
+                .rebase(Class.forName(JAVA_8_INTERFACE))
+                .invokable(isTypeInitializer())
+                .intercept(StubMethod.INSTANCE)
+                .make(), notNullValue(DynamicType.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeInitializerOnRebasedLegacyInterface() throws Exception {
+        new ByteBuddy()
+                .rebase(Class.forName(LEGACY_INTERFACE))
+                .invokable(isTypeInitializer())
+                .intercept(StubMethod.INSTANCE)
+                .make();
     }
 
     @Test

@@ -971,6 +971,7 @@ public interface TypePool {
          * Creates a default {@link net.bytebuddy.pool.TypePool} that looks up data by querying the supplied class
          * file locator. The returned instance is configured to use a fast reading mode and a simple cache.
          *
+         * @param classFileLocator The class file locator to use.
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool of(ClassFileLocator classFileLocator) {
