@@ -1,5 +1,7 @@
 package net.bytebuddy.implementation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -192,6 +194,7 @@ public interface LoadedTypeInitializer {
     /**
      * A compound loaded type initializer that combines several type initializers.
      */
+    @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Serialization is considered opt-in for a rare use case")
     class Compound implements LoadedTypeInitializer, Serializable {
 
         /**
