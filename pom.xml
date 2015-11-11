@@ -76,7 +76,8 @@
         <version.plugin.coveralls>4.0.0</version.plugin.coveralls>
         <!-- Subsequent versions of checkstyle require Java 7. -->
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
-        <version.plugin.findbugs>3.0.1</version.plugin.findbugs>
+        <!-- Subsequent versions of findbugs require Java 7. -->
+        <version.plugin.findbugs>2.0.3</version.plugin.findbugs>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
