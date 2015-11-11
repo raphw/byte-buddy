@@ -9,8 +9,6 @@ Byte Buddy release notes
 - Added strategy to use redefinition or retransformation of the `Instrumentation` API when building agents.
 - Added lazy facade to be used by agent builder to improve performance for name-based matchers.
 
-*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
-
 ### 15. October 2015: version 0.7 (release candidate 5)
 
 - Fixed parser to supress exceptions from generic signatures which are not supposed to be included in the class file if no array type is generic.
@@ -18,8 +16,6 @@ Byte Buddy release notes
 - Added restriction to retransformation to not attempt a retransformation at all if no class should be retransformed.
 - Added a factory for creating an `Implementation.Context` that is configurable. This way, it is possible to avoid a rebase of a type initializer which is not always possible.
 - Added a possibility to specify for an `AgentBuilder` how it should redefine or rebase a class that is intercepted.
-
-*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
 
 ### 13. October 2015: version 0.7 (release candidate 4)
 
@@ -30,16 +26,12 @@ Byte Buddy release notes
 - Fixed assignability resolution for arrays.
 - Fixed class file parser which would not recognize outer classes for version 1.3 byte code.
 
-*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
-
 ### 6. October 2015: version 0.7 (release candidate 3)
 
 - Read `Nexus` instances of the Byte Buddy agents from the enclosing class loader rather than from the system class loader. This allows for their usage from OSGi environments and for user with other custom class loaders.
 - Changed modifiers for accessor methods and rebased methods to be public when rebasing or accessing methods of a Java 8 interface. For interfaces, all modifiers must be public, even for such synthetic members.
 - Support absolute path names for accessing class file resources of the `ByteArrayClassLoader`.
 - Added random suffix to the names of rebased methods to avoid naming conflicts.
-
-*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
 
 ### 16. September 2015: version 0.7 (release candidate 2)
 
@@ -50,8 +42,6 @@ Byte Buddy release notes
 - Added directional `AmbigouityResolver`.
 - Fixed detection of methods that can be rebased to not include methods that did not previously exist.
 
-*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
-
 ### 11. August 2015: version 0.7 (release candidate 1)
 
 - Added support for generic types.
@@ -59,8 +49,6 @@ Byte Buddy release notes
 - Added support for bridge methods (type and visibility bridges).
 - Refactored the predefined `ElementMatcher`s to allow for matching generic types.
 - Replaced the `ModifierResolver` with a more general `MethodTransformer`.
-
-*Note*: This version is published as a release candidate because the API for creating generic types is still subject to frequent change.
 
 ### 11. August 2015: version 0.6.15
 
