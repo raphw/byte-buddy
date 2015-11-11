@@ -709,17 +709,10 @@ public interface AgentBuilder {
     }
 
     /**
-     * An initialization strategy which determines the handling of {@link net.bytebuddy.implementation.LoadedTypeInitializer}s.
+     * An initialization strategy which determines the handling of {@link net.bytebuddy.implementation.LoadedTypeInitializer}s
+     * and the loading of auxiliary types.
      */
     interface InitializationStrategy {
-
-        /**
-         * Determines if and how a loaded type initializer is to be applied to a loaded type.
-         *
-         * @param type                  The loaded type.
-         * @param loadedTypeInitializer The {@code type}'s loaded type initializer.
-         */
-        void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer);
 
         /**
          * Creates a new dispatcher for injecting this initialization strategy during a transformation process.
@@ -742,15 +735,73 @@ public interface AgentBuilder {
             DynamicType.Builder<?> apply(DynamicType.Builder<?> builder);
 
             /**
-             * Registers a loaded type initializer for a type name and class loader pair.
+             * Registers a loaded type initializer for a type name and class loader pair. The loaded type initializer is created lazily
+             * and only on demand.
              *
-             * @param name                  The name of the type for which the loaded type initializer is to be
-             *                              registered.
-             * @param classLoader           The class loader of the instrumented type. Might be {@code null} if
-             *                              this class loader represents the bootstrap class loader.
-             * @param loadedTypeInitializer The loaded type initializer that is being registered.
+             * @param name                   The name of the type for which the loaded type initializer is to be
+             *                               registered.
+             * @param classLoader            The class loader of the instrumented type. Might be {@code null} if
+             *                               this class loader represents the bootstrap class loader.
+             * @param initializerConstructor A constructor for a {@link LoadedTypeInitializer} that fully initializes
+             *                               the created type and its potential auxiliary types.
              */
-            void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer);
+            void register(String name, ClassLoader classLoader, InitializerConstructor initializerConstructor);
+
+            /**
+             * A constructor for creating a {@link LoadedTypeInitializer} if required.
+             */
+            interface InitializerConstructor {
+
+                /**
+                 * Creates the {@link LoadedTypeInitializer}.
+                 *
+                 * @return A loaded type initializer for the built type.
+                 */
+                LoadedTypeInitializer make();
+
+                /**
+                 * A simple implementation of a lazy constructor for a {@link LoadedTypeInitializer} that simply returns a given instance.
+                 */
+                class Simple implements InitializerConstructor {
+
+                    /**
+                     * The represented instance.
+                     */
+                    private final LoadedTypeInitializer loadedTypeInitializer;
+
+                    /**
+                     * Creates a new simple initializer constructor.
+                     *
+                     * @param loadedTypeInitializer The represented instance.
+                     */
+                    public Simple(LoadedTypeInitializer loadedTypeInitializer) {
+                        this.loadedTypeInitializer = loadedTypeInitializer;
+                    }
+
+                    @Override
+                    public LoadedTypeInitializer make() {
+                        return loadedTypeInitializer;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && loadedTypeInitializer.equals(((Simple) other).loadedTypeInitializer);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return loadedTypeInitializer.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple{" +
+                                "loadedTypeInitializer=" + loadedTypeInitializer +
+                                '}';
+                    }
+                }
+            }
         }
 
         /**
@@ -769,18 +820,13 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer) {
-                    /* do nothing */
-            }
-
-            @Override
             public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
                 return builder;
             }
 
             @Override
-            public void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer) {
-                    /* do nothing */
+            public void register(String name, ClassLoader classLoader, InitializerConstructor initializerConstructor) {
+                /* do nothing */
             }
 
             @Override
@@ -812,11 +858,6 @@ public interface AgentBuilder {
              */
             SelfInjection(Random random) {
                 this.random = random;
-            }
-
-            @Override
-            public void initialize(Class<?> type, LoadedTypeInitializer loadedTypeInitializer) {
-                loadedTypeInitializer.onLoad(type);
             }
 
             @Override
@@ -854,7 +895,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void register(String name, ClassLoader classLoader, LoadedTypeInitializer loadedTypeInitializer) {
+                public void register(String name, ClassLoader classLoader, InitializerConstructor initializerConstructor) {
+                    LoadedTypeInitializer loadedTypeInitializer = initializerConstructor.make();
                     if (loadedTypeInitializer.isAlive()) {
                         Nexus.Accessor.INSTANCE.register(name, classLoader, identification, loadedTypeInitializer);
                     }
@@ -2437,17 +2479,14 @@ public interface AgentBuilder {
                                         Listener listener) {
                         InitializationStrategy.Dispatcher dispatcher = initializationStrategy.dispatcher();
                         DynamicType.Unloaded<?> dynamicType = dispatcher.apply(transformer.transform(typeStrategy.builder(typeDescription,
-                                byteBuddy, classFileLocator, methodNameTransformer.resolve()), typeDescription)).make();
-                        Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                        if (loadedTypeInitializers.size() > 1) { // There exist auxiliary classes.
-                            ClassInjector classInjector = classLoader == null
-                                    ? bootstrapInjectionStrategy.make(protectionDomain)
-                                    : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext);
-                            for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(dynamicType.getRawAuxiliaryTypes()).entrySet()) {
-                                initializationStrategy.initialize(auxiliary.getValue(), loadedTypeInitializers.get(auxiliary.getKey()));
-                            }
-                        }
-                        dispatcher.register(typeDescription.getName(), classLoader, loadedTypeInitializers.get(dynamicType.getTypeDescription()));
+                                byteBuddy,
+                                classFileLocator,
+                                methodNameTransformer.resolve()), typeDescription)).make();
+                        dispatcher.register(typeDescription.getName(), classLoader, AuxiliaryTypeInitializer.of(bootstrapInjectionStrategy,
+                                dynamicType,
+                                classLoader,
+                                protectionDomain,
+                                accessControlContext));
                         listener.onTransformation(typeDescription, dynamicType);
                         return dynamicType.getBytes();
                     }
@@ -2480,6 +2519,238 @@ public interface AgentBuilder {
                                 ", protectionDomain=" + protectionDomain +
                                 ", transformer=" + transformer +
                                 '}';
+                    }
+
+                    /**
+                     * An {@link InitializationStrategy.Dispatcher.InitializerConstructor} that initializes the instrumented type and
+                     * loads and initializes all auxiliary types after the instrumented type was loaded.
+                     */
+                    protected static class AuxiliaryTypeInitializer implements InitializationStrategy.Dispatcher.InitializerConstructor {
+
+                        /**
+                         * The used bootstrap injection strategy.
+                         */
+                        private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
+
+                        /**
+                         * The instrumented type.
+                         */
+                        private final TypeDescription instrumentedType;
+
+                        /**
+                         * The instrumented type's class loader.
+                         */
+                        private final ClassLoader classLoader;
+
+                        /**
+                         * The protection domain of the instrumented type.
+                         */
+                        private final ProtectionDomain protectionDomain;
+
+                        /**
+                         * The used access control context.
+                         */
+                        private final AccessControlContext accessControlContext;
+
+                        /**
+                         * The auxiliary types mapped to their class file representation.
+                         */
+                        private final Map<TypeDescription, byte[]> rawAuxiliaryTypes;
+
+                        /**
+                         * The instrumented types and auxiliary types mapped to their loaded type initializers.
+                         */
+                        private final Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers;
+
+                        /**
+                         * Creates a new auxiliary type initializer.
+                         *
+                         * @param bootstrapInjectionStrategy The used bootstrap injection strategy.
+                         * @param instrumentedType           The instrumented type.
+                         * @param classLoader                The instrumented type's class loader.
+                         * @param protectionDomain           The protection domain of the instrumented type.
+                         * @param accessControlContext       The used access control context.
+                         * @param rawAuxiliaryTypes          The auxiliary types mapped to their class file representation.
+                         * @param loadedTypeInitializers     The instrumented types and auxiliary types mapped to their loaded type initializers.
+                         */
+                        protected AuxiliaryTypeInitializer(BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                           TypeDescription instrumentedType,
+                                                           ClassLoader classLoader,
+                                                           ProtectionDomain protectionDomain,
+                                                           AccessControlContext accessControlContext,
+                                                           Map<TypeDescription, byte[]> rawAuxiliaryTypes,
+                                                           Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers) {
+                            this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+                            this.instrumentedType = instrumentedType;
+                            this.classLoader = classLoader;
+                            this.protectionDomain = protectionDomain;
+                            this.accessControlContext = accessControlContext;
+                            this.rawAuxiliaryTypes = rawAuxiliaryTypes;
+                            this.loadedTypeInitializers = loadedTypeInitializers;
+                        }
+
+                        /**
+                         * Creates an initializer constructor that is capable of initializing the given dynamic type.
+                         *
+                         * @param bootstrapInjectionStrategy The bootstrap injection strategy to be used.
+                         * @param dynamicType                The dynamic type that is being created.
+                         * @param classLoader                The class loader that is loading the instrumented type.
+                         * @param protectionDomain           The protection domain to be used.
+                         * @param accessControlContext       The access control context to be used.
+                         * @return An appropriate initializer constructor.
+                         */
+                        protected static InitializationStrategy.Dispatcher.InitializerConstructor of(BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                                                                     DynamicType dynamicType,
+                                                                                                     ClassLoader classLoader,
+                                                                                                     ProtectionDomain protectionDomain,
+                                                                                                     AccessControlContext accessControlContext) {
+                            Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
+                            return loadedTypeInitializers.size() > 1 // There exist auxiliary classes.
+                                    ? new AuxiliaryTypeInitializer(bootstrapInjectionStrategy,
+                                    dynamicType.getTypeDescription(),
+                                    classLoader,
+                                    protectionDomain,
+                                    accessControlContext,
+                                    dynamicType.getRawAuxiliaryTypes(),
+                                    dynamicType.getLoadedTypeInitializers())
+                                    : new InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializers.get(dynamicType.getTypeDescription()));
+                        }
+
+                        @Override
+                        public LoadedTypeInitializer make() {
+                            return new InjectingInitializer(instrumentedType,
+                                    rawAuxiliaryTypes,
+                                    loadedTypeInitializers,
+                                    classLoader == null
+                                            ? bootstrapInjectionStrategy.make(protectionDomain)
+                                            : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext));
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (other == null || getClass() != other.getClass()) return false;
+                            AuxiliaryTypeInitializer that = (AuxiliaryTypeInitializer) other;
+                            return bootstrapInjectionStrategy.equals(that.bootstrapInjectionStrategy)
+                                    && instrumentedType.equals(that.instrumentedType)
+                                    && !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
+                                    && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
+                                    && accessControlContext.equals(that.accessControlContext)
+                                    && rawAuxiliaryTypes.equals(that.rawAuxiliaryTypes)
+                                    && loadedTypeInitializers.equals(that.loadedTypeInitializers);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = bootstrapInjectionStrategy.hashCode();
+                            result = 31 * result + instrumentedType.hashCode();
+                            result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+                            result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
+                            result = 31 * result + accessControlContext.hashCode();
+                            result = 31 * result + rawAuxiliaryTypes.hashCode();
+                            result = 31 * result + loadedTypeInitializers.hashCode();
+                            return result;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.Transformation.Simple.Resolution.AuxiliaryTypeInitializer{" +
+                                    "bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
+                                    ", instrumentedType=" + instrumentedType +
+                                    ", classLoader=" + classLoader +
+                                    ", protectionDomain=" + protectionDomain +
+                                    ", accessControlContext=" + accessControlContext +
+                                    ", rawAuxiliaryTypes=" + rawAuxiliaryTypes +
+                                    ", loadedTypeInitializers=" + loadedTypeInitializers +
+                                    '}';
+                        }
+
+                        /**
+                         * A type initializer that injects all auxiliary types of the instrumented type.
+                         */
+                        protected static class InjectingInitializer implements LoadedTypeInitializer {
+
+                            /**
+                             * The instrumented type.
+                             */
+                            private final TypeDescription instrumentedType;
+
+                            /**
+                             * The auxiliary types mapped to their class file representation.
+                             */
+                            private final Map<TypeDescription, byte[]> rawAuxiliaryTypes;
+
+                            /**
+                             * The instrumented types and auxiliary types mapped to their loaded type initializers.
+                             */
+                            private final Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers;
+
+                            /**
+                             * The class injector to use.
+                             */
+                            private final ClassInjector classInjector;
+
+                            /**
+                             * Creates a new injection initializer.
+                             *
+                             * @param instrumentedType       The instrumented type.
+                             * @param rawAuxiliaryTypes      The auxiliary types mapped to their class file representation.
+                             * @param loadedTypeInitializers The instrumented types and auxiliary types mapped to their loaded type initializers.
+                             * @param classInjector          The class injector to use.
+                             */
+                            protected InjectingInitializer(TypeDescription instrumentedType,
+                                                           Map<TypeDescription, byte[]> rawAuxiliaryTypes,
+                                                           Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers,
+                                                           ClassInjector classInjector) {
+                                this.instrumentedType = instrumentedType;
+                                this.rawAuxiliaryTypes = rawAuxiliaryTypes;
+                                this.loadedTypeInitializers = loadedTypeInitializers;
+                                this.classInjector = classInjector;
+                            }
+
+                            @Override
+                            public void onLoad(Class<?> type) {
+                                for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(rawAuxiliaryTypes).entrySet()) {
+                                    loadedTypeInitializers.get(auxiliary.getKey()).onLoad(auxiliary.getValue());
+                                }
+                                loadedTypeInitializers.get(instrumentedType).onLoad(type);
+                            }
+
+                            @Override
+                            public boolean isAlive() {
+                                return true;
+                            }
+
+                            @Override
+                            public boolean equals(Object o) {
+                                if (this == o) return true;
+                                if (o == null || getClass() != o.getClass()) return false;
+                                InjectingInitializer that = (InjectingInitializer) o;
+                                return classInjector.equals(that.classInjector)
+                                        && instrumentedType.equals(that.instrumentedType)
+                                        && rawAuxiliaryTypes.equals(that.rawAuxiliaryTypes)
+                                        && loadedTypeInitializers.equals(that.loadedTypeInitializers);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = instrumentedType.hashCode();
+                                result = 31 * result + rawAuxiliaryTypes.hashCode();
+                                result = 31 * result + loadedTypeInitializers.hashCode();
+                                result = 31 * result + classInjector.hashCode();
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "AgentBuilder.Default.Transformation.Simple.Resolution.AuxiliaryTypeInitializer.InjectingInitializer{" +
+                                        "instrumentedType=" + instrumentedType +
+                                        ", rawAuxiliaryTypes=" + rawAuxiliaryTypes +
+                                        ", loadedTypeInitializers=" + loadedTypeInitializers +
+                                        ", classInjector=" + classInjector +
+                                        '}';
+                            }
+                        }
                     }
                 }
             }

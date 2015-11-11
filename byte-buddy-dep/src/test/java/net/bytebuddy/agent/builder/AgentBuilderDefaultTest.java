@@ -19,6 +19,7 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -81,6 +82,8 @@ public class AgentBuilderDefaultTest {
     @Mock
     private AgentBuilder.Listener listener;
 
+    private AccessControlContext accessControlContext;
+
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -101,6 +104,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         when(initializationStrategy.dispatcher()).thenReturn(dispatcher);
         when(dispatcher.apply(builder)).thenReturn((DynamicType.Builder) builder);
+        accessControlContext = AccessController.getContext();
     }
 
     @Test
@@ -115,6 +119,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
@@ -126,7 +131,9 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verify(dispatcher).register(REDEFINED.getName(),
+                REDEFINED.getClassLoader(),
+                new AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializer));
         verifyNoMoreInteractions(dispatcher);
     }
 
@@ -141,6 +148,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
@@ -152,7 +160,9 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verify(dispatcher).register(REDEFINED.getName(),
+                REDEFINED.getClassLoader(),
+                new AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializer));
         verifyNoMoreInteractions(dispatcher);
     }
 
@@ -170,6 +180,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
@@ -199,6 +210,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
@@ -230,6 +242,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
@@ -261,6 +274,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
@@ -288,6 +302,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verifyZeroInteractions(listener);
@@ -311,6 +326,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
     }
@@ -330,6 +346,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
@@ -359,6 +376,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
@@ -390,6 +408,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
@@ -421,6 +440,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
@@ -449,6 +469,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), unloaded);
@@ -465,7 +486,9 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verify(dispatcher).register(REDEFINED.getName(),
+                REDEFINED.getClassLoader(),
+                new AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializer));
         verifyNoMoreInteractions(dispatcher);
     }
 
@@ -477,6 +500,7 @@ public class AgentBuilderDefaultTest {
                 .withBinaryLocator(binaryLocator)
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
+                .withAccessControlContext(accessControlContext)
                 .withoutNativeMethodPrefix()
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -495,6 +519,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX),
@@ -519,6 +544,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX),
@@ -554,6 +580,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
@@ -563,10 +590,17 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
         verify(initializationStrategy).dispatcher();
-        verify(initializationStrategy).initialize(AUXILIARY, auxiliaryInitializer);
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(REDEFINED.getName(), REDEFINED.getClassLoader(), loadedTypeInitializer);
+        verify(dispatcher).register(REDEFINED.getName(),
+                REDEFINED.getClassLoader(),
+                new AgentBuilder.Default.Transformation.Simple.Resolution.AuxiliaryTypeInitializer(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
+                        new TypeDescription.ForLoadedType(REDEFINED),
+                        REDEFINED.getClassLoader(),
+                        REDEFINED.getProtectionDomain(),
+                        accessControlContext,
+                        Collections.singletonMap((TypeDescription) new TypeDescription.ForLoadedType(AUXILIARY), QUX),
+                        loadedTypeInitializers));
         verifyNoMoreInteractions(dispatcher);
     }
 
@@ -585,6 +619,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -608,6 +643,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, true);
@@ -632,6 +668,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -656,6 +693,7 @@ public class AgentBuilderDefaultTest {
                 .withTypeStrategy(typeStrategy)
                 .withListener(listener)
                 .withoutNativeMethodPrefix()
+                .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, true);

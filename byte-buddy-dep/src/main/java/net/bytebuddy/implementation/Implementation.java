@@ -793,7 +793,7 @@ public interface Implementation {
                     return fieldCache;
                 }
                 if (!fieldCacheCanAppendEntries) {
-                    throw new IllegalStateException("Cached values cannot be registered after defining the type initiailizer for " + instrumentedType);
+                    throw new IllegalStateException("Cached values cannot be registered after defining the type initializer for " + instrumentedType);
                 }
                 fieldCache = new CacheValueField(instrumentedType, fieldType, suffix, fieldValue.hashCode());
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
