@@ -75,8 +75,7 @@
         <!-- Versions 2.6 and 2.7 fail on Travis. -->
         <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
         <version.plugin.coveralls>4.0.0</version.plugin.coveralls>
-        <!-- Subsequent versions of checkstyle require Java 7. -->
-        <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
+        <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
         <version.plugin.findbugs>3.0.1</version.plugin.findbugs>
         <version.annotations.findbugs>3.0.1</version.annotations.findbugs>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
@@ -309,6 +308,7 @@
             <properties>
                 <version.plugin.findbugs>2.5.5</version.plugin.findbugs>
                 <version.annotations.findbugs>2.0.3</version.annotations.findbugs>
+                <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
             </properties>
         </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
