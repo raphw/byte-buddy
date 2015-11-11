@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -76,9 +77,8 @@
         <version.plugin.coveralls>4.0.0</version.plugin.coveralls>
         <!-- Subsequent versions of checkstyle require Java 7. -->
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
-        <!-- Subsequent versions of findbugs require Java 7. -->
-        <version.plugin.findbugs>2.5.5</version.plugin.findbugs>
-        <version.annotations.findbugs>2.0.3</version.annotations.findbugs>
+        <version.plugin.findbugs>3.0.1</version.plugin.findbugs>
+        <version.annotations.findbugs>3.0.1</version.annotations.findbugs>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
@@ -208,7 +208,7 @@
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis. -->
@@ -299,6 +299,18 @@
     </distributionManagement>
 
     <profiles>
+        <!-- Fallback for Java 6 build to use older, compatible versions of plugins. -->
+        <profile>
+            <id>java6</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.6</jdk>
+            </activation>
+            <properties>
+                <version.plugin.findbugs>2.5.5</version.plugin.findbugs>
+                <version.annotations.findbugs>2.0.3</version.annotations.findbugs>
+            </properties>
+        </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
         <profile>
             <id>extras</id>
