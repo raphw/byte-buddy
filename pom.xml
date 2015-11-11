@@ -77,7 +77,8 @@
         <!-- Subsequent versions of checkstyle require Java 7. -->
         <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
         <!-- Subsequent versions of findbugs require Java 7. -->
-        <version.plugin.findbugs>2.0.3</version.plugin.findbugs>
+        <version.plugin.findbugs>2.5.5</version.plugin.findbugs>
+        <version.annotations.findbugs>2.0.3</version.annotations.findbugs>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.android.sdk>4.1.1.4</version.android.sdk>
     </properties>
@@ -156,7 +157,7 @@
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
-            <version>${version.plugin.findbugs}</version>
+            <version>${version.annotations.findbugs}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
