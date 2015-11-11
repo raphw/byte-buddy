@@ -102,8 +102,8 @@ public interface FieldRegistry {
 
         @Override
         public FieldRegistry.Compiled compile(TypeDescription instrumentedType) {
-            Map<FieldDescription.Token, Compiled.Entry> entries = new HashMap<FieldDescription.Token, Compiled.Entry>(this.entries.size());
-            Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>(this.entries.size());
+            Map<FieldDescription.Token, Compiled.Entry> entries = new HashMap<FieldDescription.Token, Compiled.Entry>();
+            Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>();
             for (Map.Entry<FieldDescription.Token, Entry> entry : this.entries.entrySet()) {
                 FieldAttributeAppender attributeAppender = attributeAppenders.get(entry.getValue().getAttributeAppenderFactory());
                 if (attributeAppender == null) {

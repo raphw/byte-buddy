@@ -140,8 +140,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
 
     @Override
     public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-        Map<TypeDescription, Class<?>> loadedClasses = new HashMap<TypeDescription, Class<?>>(types.size());
-        Map<TypeDescription, byte[]> unloadedClasses = new HashMap<TypeDescription, byte[]>(types.size());
+        Map<TypeDescription, Class<?>> loadedClasses = new HashMap<TypeDescription, Class<?>>();
+        Map<TypeDescription, byte[]> unloadedClasses = new HashMap<TypeDescription, byte[]>();
         Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>(types.size());
         for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
             try {

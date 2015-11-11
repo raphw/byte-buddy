@@ -19,7 +19,7 @@ public class ClassFileExtraction {
     private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;
 
     public static Map<String, byte[]> of(Class<?>... type) throws IOException {
-        Map<String, byte[]> result = new HashMap<String, byte[]>(type.length);
+        Map<String, byte[]> result = new HashMap<String, byte[]>();
         for (Class<?> aType : type) {
             result.put(aType.getName(), extract(aType));
         }

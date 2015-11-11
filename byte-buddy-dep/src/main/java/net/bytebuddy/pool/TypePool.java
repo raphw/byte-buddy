@@ -1385,7 +1385,7 @@ public interface TypePool {
              */
             protected ParameterBag(Type[] parameterType) {
                 this.parameterType = parameterType;
-                parameterRegistry = new HashMap<Integer, String>(parameterType.length);
+                parameterRegistry = new HashMap<Integer, String>();
             }
 
             /**
@@ -2844,7 +2844,7 @@ public interface TypePool {
                     this.exceptionName = exceptionName;
                     annotationTokens = new LinkedList<LazyTypeDescription.AnnotationToken>();
                     Type[] parameterTypes = Type.getMethodType(descriptor).getArgumentTypes();
-                    parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>(parameterTypes.length);
+                    parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>();
                     for (int i = 0; i < parameterTypes.length; i++) {
                         parameterAnnotationTokens.put(i, new LinkedList<LazyTypeDescription.AnnotationToken>());
                     }

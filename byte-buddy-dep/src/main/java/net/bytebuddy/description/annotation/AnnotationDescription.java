@@ -1131,7 +1131,7 @@ public interface AnnotationDescription {
                                                                   Map<String, AnnotationDescription.AnnotationValue<?, ?>> values)
                 throws ClassNotFoundException {
             Method[] declaredMethod = annotationType.getDeclaredMethods();
-            LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>(declaredMethod.length);
+            LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>();
             for (Method method : declaredMethod) {
                 AnnotationDescription.AnnotationValue<?, ?> annotationValue = values.get(method.getName());
                 loadedValues.put(method, annotationValue == null
@@ -1871,7 +1871,7 @@ public interface AnnotationDescription {
             } else if (!methodDescriptions.getOnly().getReturnType().asErasure().isAnnotationValue(value.resolve())) {
                 throw new IllegalArgumentException(value + " cannot be assigned to " + property);
             }
-            Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>(this.annotationValues.size() + 1);
+            Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>();
             annotationValues.putAll(this.annotationValues);
             if (annotationValues.put(methodDescriptions.getOnly().getName(), nonNull(value)) != null) {
                 throw new IllegalArgumentException("Property already defined: " + property);

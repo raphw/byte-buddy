@@ -56,7 +56,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
                                               MethodGraph.Linked methodGraph,
                                               MethodList<MethodDescription.InDefinedShape> rebaseableMethods,
                                               MethodRebaseResolver methodRebaseResolver) {
-        Map<MethodDescription.Token, MethodRebaseResolver.Resolution> rebasements = new HashMap<MethodDescription.Token, MethodRebaseResolver.Resolution>(rebaseableMethods.size());
+        Map<MethodDescription.Token, MethodRebaseResolver.Resolution> rebasements = new HashMap<MethodDescription.Token, MethodRebaseResolver.Resolution>();
         for (MethodDescription.InDefinedShape methodDescription : rebaseableMethods) {
             rebasements.put(methodDescription.asToken(), methodRebaseResolver.resolve(methodDescription));
         }

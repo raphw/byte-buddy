@@ -421,7 +421,7 @@ public interface MethodDelegationBinder {
                 this.methodInvoker = methodInvoker;
                 this.target = target;
                 parameterStackManipulations = new ArrayList<StackManipulation>(target.getParameters().size());
-                registeredTargetIndices = new LinkedHashMap<Object, Integer>(target.getParameters().size());
+                registeredTargetIndices = new LinkedHashMap<Object, Integer>();
                 nextParameterIndex = 0;
             }
 

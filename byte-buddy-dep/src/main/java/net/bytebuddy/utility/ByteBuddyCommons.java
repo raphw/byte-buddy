@@ -275,7 +275,7 @@ public final class ByteBuddyCommons {
      * @return The given value.
      */
     public static <T extends Collection<?>> T unique(T elements) {
-        Set<Object> found = new HashSet<Object>(elements.size());
+        Set<Object> found = new HashSet<Object>();
         for (Object element : elements) {
             if (!found.add(element)) {
                 throw new IllegalArgumentException("Duplicate element: " + element);
@@ -377,7 +377,7 @@ public final class ByteBuddyCommons {
      * @return The input value.
      */
     public static <T extends Collection<? extends GenericTypeDescription>> T uniqueRaw(T typeDescriptions) {
-        Map<TypeDescription, GenericTypeDescription> types = new HashMap<TypeDescription, GenericTypeDescription>(typeDescriptions.size());
+        Map<TypeDescription, GenericTypeDescription> types = new HashMap<TypeDescription, GenericTypeDescription>();
         for (GenericTypeDescription typeDescription : typeDescriptions) {
             GenericTypeDescription conflictingType = types.put(typeDescription.asErasure(), typeDescription);
             if (conflictingType != null) {
@@ -492,7 +492,7 @@ public final class ByteBuddyCommons {
      */
     public static int resolveModifierContributors(int mask, ModifierContributor... modifierContributor) {
         int modifiers = 0;
-        Set<Class<?>> modifierContributorTypes = new HashSet<Class<?>>(modifierContributor.length);
+        Set<Class<?>> modifierContributorTypes = new HashSet<Class<?>>();
         for (ModifierContributor contributor : modifierContributor) {
             if (!modifierContributorTypes.add(contributor.getClass())) {
                 throw new IllegalArgumentException(contributor + " is already registered with a different value");

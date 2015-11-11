@@ -493,7 +493,7 @@ public interface PackageDefinitionStrategy {
                 try {
                     try {
                         Manifest manifest = new Manifest(inputStream);
-                        Map<Attributes.Name, String> values = new HashMap<Attributes.Name, String>(ATTRIBUTE_NAMES.length);
+                        Map<Attributes.Name, String> values = new HashMap<Attributes.Name, String>();
                         Attributes mainAttributes = manifest.getMainAttributes();
                         if (mainAttributes != null) {
                             for (Attributes.Name attributeName : ATTRIBUTE_NAMES) {

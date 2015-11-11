@@ -478,7 +478,7 @@ public interface MethodRegistry {
                                                MethodGraph.Compiler methodGraphCompiler,
                                                LatentMethodMatcher methodFilter) {
             LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>();
-            Set<Handler> handlers = new HashSet<Handler>(entries.size());
+            Set<Handler> handlers = new HashSet<Handler>();
             MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
             for (Entry entry : entries) {
                 if (handlers.add(entry.getHandler())) {
@@ -751,9 +751,9 @@ public interface MethodRegistry {
 
             @Override
             public MethodRegistry.Compiled compile(Implementation.Target.Factory implementationTargetFactory) {
-                Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>(implementations.size());
-                Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>(implementations.size());
-                LinkedHashMap<MethodDescription, Compiled.Entry> entries = new LinkedHashMap<MethodDescription, Compiled.Entry>(implementations.size());
+                Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>();
+                Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>();
+                LinkedHashMap<MethodDescription, Compiled.Entry> entries = new LinkedHashMap<MethodDescription, Compiled.Entry>();
                 Implementation.Target implementationTarget = implementationTargetFactory.make(instrumentedType, methodGraph);
                 for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) {
                     Handler.Compiled cachedHandler = compilationCache.get(entry.getValue().getHandler());

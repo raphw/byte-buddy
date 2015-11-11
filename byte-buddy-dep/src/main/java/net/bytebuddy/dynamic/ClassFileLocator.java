@@ -826,7 +826,7 @@ public interface ClassFileLocator {
                  */
                 public Explicit(ClassLoadingDelegate fallbackDelegate, Collection<Class<?>> types) {
                     this.fallbackDelegate = fallbackDelegate;
-                    this.types = new HashMap<String, Class<?>>(types.size());
+                    this.types = new HashMap<String, Class<?>>();
                     for (Class<?> type : types) {
                         this.types.put(type.getName(), type);
                     }

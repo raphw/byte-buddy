@@ -2679,11 +2679,11 @@ public interface TypeWriter<T> {
                     super(ASM_API_VERSION, classVisitor);
                     this.implementationContext = implementationContext;
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
-                    declaredFields = new HashMap<String, FieldDescription>(fieldDescriptions.size());
+                    declaredFields = new HashMap<String, FieldDescription>();
                     for (FieldDescription fieldDescription : fieldDescriptions) {
                         declaredFields.put(fieldDescription.getName(), fieldDescription);
                     }
-                    declarableMethods = new HashMap<String, MethodDescription>(instrumentedMethods.size());
+                    declarableMethods = new HashMap<String, MethodDescription>();
                     for (MethodDescription methodDescription : instrumentedMethods) {
                         declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
                     }

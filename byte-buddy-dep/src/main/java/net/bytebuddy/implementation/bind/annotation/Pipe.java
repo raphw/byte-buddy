@@ -270,7 +270,7 @@ public @interface Pipe {
              */
             private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
                 TypeList parameterTypes = methodDescription.getParameters().asTypeList().asErasures();
-                LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>(parameterTypes.size());
+                LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>();
                 int currentIndex = 0;
                 for (TypeDescription parameterType : parameterTypes) {
                     typeDescriptions.put(fieldName(currentIndex++), parameterType);

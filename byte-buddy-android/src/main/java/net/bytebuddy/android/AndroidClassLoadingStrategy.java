@@ -131,7 +131,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
                 zipOutputStream.close();
             }
             ClassLoader dexClassLoader = dexProcessor.makeClassLoader(zipFile, privateDirectory, classLoader);
-            Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>(types.size());
+            Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : types.keySet()) {
                 try {
                     loadedTypes.put(typeDescription, dexClassLoader.loadClass(typeDescription.getName()));

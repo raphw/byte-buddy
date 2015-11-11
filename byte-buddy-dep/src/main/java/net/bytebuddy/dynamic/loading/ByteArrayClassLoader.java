@@ -111,7 +111,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                                  PersistenceHandler persistenceHandler,
                                  PackageDefinitionStrategy packageDefinitionStrategy,
                                  boolean childFirst) {
-        Map<String, byte[]> namedTypeDefinitions = new HashMap<String, byte[]>(typeDefinitions.size());
+        Map<String, byte[]> namedTypeDefinitions = new HashMap<String, byte[]>();
         for (Map.Entry<TypeDescription, byte[]> entry : typeDefinitions.entrySet()) {
             namedTypeDefinitions.put(entry.getKey().getName(), entry.getValue());
         }
@@ -145,7 +145,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                                                       PackageDefinitionStrategy packageDefinitionStrategy,
                                                       boolean childFirst,
                                                       boolean forbidExisting) {
-        Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>(types.size());
+        Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>();
         classLoader = ByteArrayClassLoader.of(classLoader,
                 types,
                 protectionDomain,

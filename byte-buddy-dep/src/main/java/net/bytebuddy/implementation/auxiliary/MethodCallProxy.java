@@ -6,7 +6,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -107,13 +106,12 @@ public class MethodCallProxy implements AuxiliaryType {
      * method, including a reference to the instance of the instrumented type that is invoked if applicable.
      */
     private static LinkedHashMap<String, TypeDescription> extractFields(MethodDescription methodDescription) {
-        ParameterList<?> parameters = methodDescription.getParameters();
-        LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>((methodDescription.isStatic() ? 0 : 1) + parameters.size());
+        LinkedHashMap<String, TypeDescription> typeDescriptions = new LinkedHashMap<String, TypeDescription>();
         int currentIndex = 0;
         if (!methodDescription.isStatic()) {
             typeDescriptions.put(fieldName(currentIndex++), methodDescription.getDeclaringType().asErasure());
         }
-        for (ParameterDescription parameterDescription : parameters) {
+        for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
             typeDescriptions.put(fieldName(currentIndex++), parameterDescription.getType().asErasure());
         }
         return typeDescriptions;
@@ -196,7 +194,7 @@ public class MethodCallProxy implements AuxiliaryType {
          * Creates the precomputed method graph.
          */
         PrecomputedMethodGraph() {
-            LinkedHashMap<MethodDescription.Token, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.Token, MethodGraph.Node>(2);
+            LinkedHashMap<MethodDescription.Token, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.Token, MethodGraph.Node>();
             MethodDescription callMethod = new TypeDescription.ForLoadedType(Callable.class).getDeclaredMethods().filter(named("call")).getOnly();
             nodes.put(callMethod.asToken(), new MethodGraph.Node.Simple(callMethod));
             MethodDescription runMethod = new TypeDescription.ForLoadedType(Runnable.class).getDeclaredMethods().filter(named("run")).getOnly();

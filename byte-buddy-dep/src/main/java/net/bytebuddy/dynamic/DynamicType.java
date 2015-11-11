@@ -3071,7 +3071,7 @@ public interface DynamicType {
 
         @Override
         public Map<TypeDescription, byte[]> getAllTypes() {
-            Map<TypeDescription, byte[]> allTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes.size() + 1);
+            Map<TypeDescription, byte[]> allTypes = new LinkedHashMap<TypeDescription, byte[]>();
             allTypes.put(typeDescription, binaryRepresentation);
             for (DynamicType auxiliaryType : auxiliaryTypes) {
                 allTypes.putAll(auxiliaryType.getAllTypes());
@@ -3081,8 +3081,7 @@ public interface DynamicType {
 
         @Override
         public Map<TypeDescription, LoadedTypeInitializer> getLoadedTypeInitializers() {
-            Map<TypeDescription, LoadedTypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, LoadedTypeInitializer>(
-                    auxiliaryTypes.size() + 1);
+            Map<TypeDescription, LoadedTypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, LoadedTypeInitializer>();
             for (DynamicType auxiliaryType : auxiliaryTypes) {
                 classLoadingCallbacks.putAll(auxiliaryType.getLoadedTypeInitializers());
             }

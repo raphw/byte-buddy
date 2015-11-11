@@ -41,7 +41,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         MethodList<?> superConstructors = superType == null
                 ? new MethodList.Empty()
                 : superType.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
-        this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>(superConstructors.size());
+        this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>();
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.asToken(), superConstructor);
         }
