@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. November 2015: version 0.7
+
+- Refactored injection strategy to always inject and load the instrumented type first to avoid premature loading by reference from auxiliary types.
+- Refactored `AgentBuilder.Default` to delay auxiliary type injection until load time to avoid premature loading by reference from auxiliary types.
+- Added API to add additional code to type initializers while building a type.
+- Refactored agent `Nexus` to allow for multiple registrations of self initializers if multiple agents are registered via Byte Buddy.
+- Fixed resolution of interface methods that were represented in the type hierarchy multiple times.
+- Implemented custom ASM class writer to allow for frame computation via Byte Buddy's type pool when this is required by a user.
+- Fallback to no allowing for instrumenting type initializers for rebased or redefined interfaces before Java 8.
+
 ### 28. October 2015: version 0.7 (release candidate 6)
 
 - Refactored `AgentBuilder.Default` to delegate exceptions during redefinitions to listener instead of throwing them.
