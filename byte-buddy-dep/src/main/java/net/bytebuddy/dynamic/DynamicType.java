@@ -3295,14 +3295,11 @@ public interface DynamicType {
 
             @Override
             public DynamicType.Loaded<T> load(ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
-                LinkedHashMap<TypeDescription, byte[]> types = new LinkedHashMap<TypeDescription, byte[]>(
-                        getRawAuxiliaryTypes());
-                types.put(typeDescription, binaryRepresentation);
                 return new Default.Loaded<T>(typeDescription,
                         binaryRepresentation,
                         loadedTypeInitializer,
                         auxiliaryTypes,
-                        initialize(classLoadingStrategy.load(classLoader, types)));
+                        initialize(classLoadingStrategy.load(classLoader, getAllTypes())));
             }
 
             /**

@@ -1,6 +1,13 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.bind.annotation.AllArguments;
+import net.bytebuddy.implementation.bind.annotation.Origin;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -20,11 +27,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 
 public class ClassInjectorUsingReflectionTest {
+
+    private static final String FOO = "foo", BAR = "bar";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -62,6 +72,22 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    public void testInjectionOrderNoPrematureAuxiliaryInjection() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(Bar.class, Interceptor.class),
+                null,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.LATENT,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        Class<?> type = new ByteBuddy().rebase(Bar.class)
+                .method(named(BAR))
+                .intercept(MethodDelegation.to(Interceptor.class)).make()
+                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), FOO), is((Object) BAR));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override
@@ -81,5 +107,23 @@ public class ClassInjectorUsingReflectionTest {
 
     private static class Foo {
         /* Note: Foo is know to the system class loader but not to the bootstrap class loader */
+    }
+
+    public static class Bar {
+
+        public String bar(String value) {
+            return value;
+        }
+    }
+
+    public static class Interceptor {
+
+        @RuntimeType
+        public static Object intercept(@Super(proxyType = TargetType.class) Object zuper,
+                                       @AllArguments Object[] args,
+                                       @Origin Method method) throws Throwable {
+            args[0] = BAR;
+            return method.invoke(zuper, args);
+        }
     }
 }
