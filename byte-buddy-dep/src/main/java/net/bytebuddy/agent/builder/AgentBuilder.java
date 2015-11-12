@@ -1101,7 +1101,7 @@ public interface AgentBuilder {
                                     .get(nexusType);
                             registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
                             getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                                    .filter(named("getSystemClassLoader")).getOnly();
+                                    .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
                             loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
                                     .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
                             getDeclaredMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
