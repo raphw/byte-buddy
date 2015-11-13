@@ -203,8 +203,7 @@ Normally, you would use the first, no-dependency version. However, if you are us
 exposed ASM API, you **must** use the second version of Byte Buddy **and repackage it** into your own name space as
 suggested. This is in particularly true when you plan to redistribute your code for the use by others. Future versions
 of Byte Buddy will update their ASM dependency to newer version what will then lead to version clashes between
-different ASM versions that were repackaged by Byte Buddy, if you have not follow this recommendation! In contrast, the
-Byte Buddy API itself will only apply version compatible changes.
+different ASM versions that were repackaged by Byte Buddy, if you have not follow this recommendation!
 
 There exist several tools that allow for an easy automatization of the repacking of dependencies during your build
 processes. You can for example use the
