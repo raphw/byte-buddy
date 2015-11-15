@@ -158,6 +158,96 @@ public interface ClassFileLocator {
     }
 
     /**
+     * A class file locator that cannot locate any class files.
+     */
+    enum NoOp implements ClassFileLocator {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Resolution locate(String typeName) {
+            return Resolution.Illegal.INSTANCE;
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileLocator.NoOp." + name();
+        }
+    }
+
+    /**
+     * A simple class file locator that returns class files from a selection of given types.
+     */
+    class Simple implements ClassFileLocator {
+
+        /**
+         * The class files that are known to this class file locator mapped by their type name.
+         */
+        private final Map<String, byte[]> classFiles;
+
+        /**
+         * Creates a new simple class file locator.
+         *
+         * @param classFiles The class files that are known to this class file locator mapped by their type name.
+         */
+        public Simple(Map<String, byte[]> classFiles) {
+            this.classFiles = classFiles;
+        }
+
+        /**
+         * Creates a class file locator for a single known type.
+         *
+         * @param typeName             The name of the type.
+         * @param binaryRepresentation The binary representation of the type.
+         * @return An appropriate class file locator.
+         */
+        public static ClassFileLocator of(String typeName, byte[] binaryRepresentation) {
+            return new Simple(Collections.singletonMap(typeName, binaryRepresentation));
+        }
+
+        /**
+         * Creates a class file locator for a single known type with an additional fallback locator.
+         *
+         * @param typeName             The name of the type.
+         * @param binaryRepresentation The binary representation of the type.
+         * @param fallback             The class file locator to query in case that a lookup triggers any other type.
+         * @return An appropriate class file locator.
+         */
+        public static ClassFileLocator of(String typeName, byte[] binaryRepresentation, ClassFileLocator fallback) {
+            return new Compound(new Simple(Collections.singletonMap(typeName, binaryRepresentation)), fallback);
+        }
+
+        @Override
+        public Resolution locate(String typeName) {
+            byte[] binaryRepresentation = classFiles.get(typeName);
+            return binaryRepresentation == null
+                    ? Resolution.Illegal.INSTANCE
+                    : new Resolution.Explicit(binaryRepresentation);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && classFiles.equals(((Simple) other).classFiles);
+        }
+
+        @Override
+        public int hashCode() {
+            return classFiles.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileLocator.Simple{" +
+                    "classFiles=" + classFiles +
+                    '}';
+        }
+    }
+
+    /**
      * A class file locator that queries a class loader for binary representations of class files.
      */
     class ForClassLoader implements ClassFileLocator {

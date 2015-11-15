@@ -1,6 +1,5 @@
 package net.bytebuddy.agent.builder;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -25,7 +24,6 @@ import net.bytebuddy.utility.StreamDrainer;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -2911,9 +2909,9 @@ public interface AgentBuilder {
                                     byte[] binaryRepresentation) {
                 String binaryTypeName = internalTypeName.replace('/', '.');
                 try {
-                    ClassFileLocator classFileLocator = new InstrumentedTypeLocator(binaryLocator.classFileLocator(classLoader),
-                            binaryTypeName,
-                            binaryRepresentation);
+                    ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(binaryTypeName,
+                            binaryRepresentation,
+                            binaryLocator.classFileLocator(classLoader));
                     return transformation.resolve(classBeingRedefined == null
                                     ? binaryLocator.typePool(classFileLocator).describe(binaryTypeName).resolve()
                                     : new TypeDescription.ForLoadedType(classBeingRedefined),
@@ -2978,76 +2976,6 @@ public interface AgentBuilder {
                         ", accessControlContext=" + accessControlContext +
                         ", transformation=" + transformation +
                         '}';
-            }
-
-            /**
-             * A class file locator that returns the already known class file for the instrumented type and
-             * only fall backs to the actual locator for other types.
-             */
-            protected static class InstrumentedTypeLocator implements ClassFileLocator {
-
-                /**
-                 * The delegate that serves as a fallback.
-                 */
-                private final ClassFileLocator delegate;
-
-                /**
-                 * The name of the instrumented type.
-                 */
-                private final String typeName;
-
-                /**
-                 * The binary representation of the instrumented type.
-                 */
-                private final byte[] binaryRepresentation;
-
-                /**
-                 * Creates a new instrumented type locator.
-                 *
-                 * @param delegate             The delegate that serves as a fallback.
-                 * @param typeName             The name of the instrumented type.
-                 * @param binaryRepresentation The binary representation of the instrumented type.
-                 */
-                @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received value is never modified by contract")
-                protected InstrumentedTypeLocator(ClassFileLocator delegate, String typeName, byte[] binaryRepresentation) {
-                    this.delegate = delegate;
-                    this.typeName = typeName;
-                    this.binaryRepresentation = binaryRepresentation;
-                }
-
-                @Override
-                public Resolution locate(String typeName) throws IOException {
-                    return typeName.equals(this.typeName)
-                            ? new Resolution.Explicit(binaryRepresentation)
-                            : delegate.locate(typeName);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    InstrumentedTypeLocator that = (InstrumentedTypeLocator) other;
-                    return delegate.equals(that.delegate)
-                            && typeName.equals(that.typeName)
-                            && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = delegate.hashCode();
-                    result = 31 * result + typeName.hashCode();
-                    result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.InstrumentedTypeLocator{" +
-                            "delegate=" + delegate +
-                            ", typeName='" + typeName + '\'' +
-                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                            '}';
-                }
             }
         }
 
