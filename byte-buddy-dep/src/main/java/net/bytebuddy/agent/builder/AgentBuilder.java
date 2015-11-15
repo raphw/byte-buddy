@@ -1092,10 +1092,10 @@ public interface AgentBuilder {
                     Accessor() {
                         try {
                             TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                            Class<?> nexus = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
+                            registration = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
                                     .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Accessor.class).resolve()))
-                                    .get(nexusType);
-                            registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
+                                    .get(nexusType)
+                                    .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
                             getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
                                     .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
                             loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
