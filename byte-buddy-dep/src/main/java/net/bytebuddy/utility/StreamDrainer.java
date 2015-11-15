@@ -16,6 +16,11 @@ public class StreamDrainer {
     public static final int DEFAULT_BUFFER_SIZE = 1024;
 
     /**
+     * A default instance using the {@link StreamDrainer#DEFAULT_BUFFER_SIZE}.
+     */
+    public static final StreamDrainer DEFAULT = new StreamDrainer();
+
+    /**
      * A convenience constant referring to the value representing the end of a stream.
      */
     private static final int END_OF_STREAM = -1;

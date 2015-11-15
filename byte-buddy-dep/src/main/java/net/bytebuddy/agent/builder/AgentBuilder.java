@@ -20,7 +20,6 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.StreamDrainer;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.File;
@@ -1093,11 +1092,8 @@ public interface AgentBuilder {
                     Accessor() {
                         try {
                             TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                            ClassLoader classLoader = Accessor.class.getClassLoader(); // null if Byte Buddy is added to the bootstrap class path.
                             Class<?> nexus = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
-                                    .inject(Collections.singletonMap(nexusType, new StreamDrainer().drain((classLoader == null
-                                            ? ClassLoader.getSystemClassLoader()
-                                            : classLoader).getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
+                                    .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Accessor.class).resolve()))
                                     .get(nexusType);
                             registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
                             getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()

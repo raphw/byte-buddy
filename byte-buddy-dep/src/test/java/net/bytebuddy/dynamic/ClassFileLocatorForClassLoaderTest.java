@@ -1,13 +1,17 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.StreamDrainer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -57,7 +61,44 @@ public class ClassFileLocatorForClassLoaderTest {
     }
 
     @Test
+    public void testReadTypeBootstrapClassLoader() throws Exception {
+        ClassFileLocator.Resolution resolution = ClassFileLocator.ForClassLoader.read(Object.class);
+        assertThat(resolution.isResolved(), is(true));
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Object.class.getName().replace('.', '/') + ".class");
+        try {
+            assertThat(resolution.resolve(), is(StreamDrainer.DEFAULT.drain(inputStream)));
+        } finally {
+            inputStream.close();
+        }
+    }
+
+    @Test
+    public void testReadTypeNonBootstrapClassLoader() throws Exception {
+        ClassFileLocator.Resolution resolution = ClassFileLocator.ForClassLoader.read(Foo.class);
+        assertThat(resolution.isResolved(), is(true));
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Foo.class.getName().replace('.', '/') + ".class");
+        try {
+            assertThat(resolution.resolve(), is(StreamDrainer.DEFAULT.drain(inputStream)));
+        } finally {
+            inputStream.close();
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testReadTypeIllegal() throws Exception {
+        Class<?> nonClassFileType = new ByteBuddy().subclass(Object.class).make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        ClassFileLocator.Resolution resolution = ClassFileLocator.ForClassLoader.read(nonClassFileType);
+        assertThat(resolution.isResolved(), is(false));
+        resolution.resolve();
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.ForClassLoader.class).apply();
+    }
+
+    private static class Foo {
+        /* empty */
     }
 }

@@ -1,11 +1,9 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.StreamDrainer;
+import net.bytebuddy.dynamic.ClassFileLocator;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.instrument.*;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
@@ -174,20 +172,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      */
     public ClassReloadingStrategy reset(Class<?>... type) {
         Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>(type.length);
-        try {
-            for (Class<?> aType : type) {
-                ClassLoader classLoader = aType.getClassLoader();
-                InputStream inputStream = (classLoader == null
-                        ? ClassLoader.getSystemClassLoader()
-                        : classLoader).getResourceAsStream(aType.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
-                try {
-                    classDefinitions.put(aType, new ClassDefinition(aType, new StreamDrainer().drain(inputStream)));
-                } finally {
-                    inputStream.close();
-                }
-            }
-        } catch (IOException exception) {
-            throw new IllegalStateException("Exception while resetting types " + Arrays.toString(type), exception);
+        for (Class<?> aType : type) {
+            classDefinitions.put(aType, new ClassDefinition(aType, ClassFileLocator.ForClassLoader.read(aType).resolve()));
         }
         try {
             engine.apply(instrumentation, classDefinitions);

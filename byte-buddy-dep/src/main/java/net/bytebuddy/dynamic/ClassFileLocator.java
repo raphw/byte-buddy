@@ -103,29 +103,6 @@ public interface ClassFileLocator {
                 this.binaryRepresentation = binaryRepresentation;
             }
 
-            /**
-             * Attemts to create a binary representation of a loaded type by requesting data from its
-             * {@link java.lang.ClassLoader}.
-             *
-             * @param type The type of interest.
-             * @return The binary data to this type which might be illegal.
-             */
-            public static Resolution of(Class<?> type) {
-                ClassLoader classLoader = type.getClassLoader();
-                InputStream inputStream = (classLoader == null
-                        ? ClassLoader.getSystemClassLoader()
-                        : classLoader).getResourceAsStream(type.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
-                if (inputStream == null) {
-                    return Illegal.INSTANCE;
-                } else {
-                    try {
-                        return new Explicit(new StreamDrainer().drain(inputStream));
-                    } catch (IOException exception) {
-                        throw new IllegalStateException(exception);
-                    }
-                }
-            }
-
             @Override
             public boolean isResolved() {
                 return true;
@@ -289,12 +266,27 @@ public interface ClassFileLocator {
                     : classLoader);
         }
 
+        /**
+         * Attemts to create a binary representation of a loaded type by requesting data from its
+         * {@link java.lang.ClassLoader}.
+         *
+         * @param type The type of interest.
+         * @return The binary data to this type which might be illegal.
+         */
+        public static Resolution read(Class<?> type) {
+            try {
+                return ClassFileLocator.ForClassLoader.of(type.getClassLoader()).locate(type.getName());
+            } catch (IOException exception) {
+                throw new IllegalStateException("Cannot read class file for " + type, exception);
+            }
+        }
+
         @Override
         public Resolution locate(String typeName) throws IOException {
             InputStream inputStream = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
-                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
+                    return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
                 } finally {
                     inputStream.close();
                 }
@@ -349,7 +341,7 @@ public interface ClassFileLocator {
             } else {
                 InputStream inputStream = jarFile.getInputStream(zipEntry);
                 try {
-                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
+                    return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
                 } finally {
                     inputStream.close();
                 }
@@ -407,7 +399,7 @@ public interface ClassFileLocator {
             if (file.exists()) {
                 InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
                 try {
-                    return new Resolution.Explicit(new StreamDrainer().drain(inputStream));
+                    return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
                 } finally {
                     inputStream.close();
                 }
