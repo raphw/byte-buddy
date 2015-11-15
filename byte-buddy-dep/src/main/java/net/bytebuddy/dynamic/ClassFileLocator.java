@@ -111,9 +111,10 @@ public interface ClassFileLocator {
              * @return The binary data to this type which might be illegal.
              */
             public static Resolution of(Class<?> type) {
-                InputStream inputStream = (type.getClassLoader() == null
+                ClassLoader classLoader = type.getClassLoader();
+                InputStream inputStream = (classLoader == null
                         ? ClassLoader.getSystemClassLoader()
-                        : type.getClassLoader()).getResourceAsStream(type.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
+                        : classLoader).getResourceAsStream(type.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
                 if (inputStream == null) {
                     return Illegal.INSTANCE;
                 } else {

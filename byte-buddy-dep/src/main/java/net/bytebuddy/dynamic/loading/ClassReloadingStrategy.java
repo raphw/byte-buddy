@@ -176,7 +176,10 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>(type.length);
         try {
             for (Class<?> aType : type) {
-                InputStream inputStream = aType.getClassLoader().getResourceAsStream(aType.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
+                ClassLoader classLoader = aType.getClassLoader();
+                InputStream inputStream = (classLoader == null
+                        ? ClassLoader.getSystemClassLoader()
+                        : classLoader).getResourceAsStream(aType.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
                 try {
                     classDefinitions.put(aType, new ClassDefinition(aType, new StreamDrainer().drain(inputStream)));
                 } finally {

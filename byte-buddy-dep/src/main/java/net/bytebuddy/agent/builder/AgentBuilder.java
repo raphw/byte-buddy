@@ -1095,9 +1095,11 @@ public interface AgentBuilder {
                     Accessor() {
                         try {
                             TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
+                            ClassLoader classLoader = Accessor.class.getClassLoader(); // null if Byte Buddy is added to the bootstrap class path.
                             Class<?> nexus = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
-                                    .inject(Collections.singletonMap(nexusType, new StreamDrainer()
-                                            .drain(getClass().getClassLoader().getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
+                                    .inject(Collections.singletonMap(nexusType, new StreamDrainer().drain((classLoader == null
+                                            ? ClassLoader.getSystemClassLoader()
+                                            : classLoader).getResourceAsStream(Nexus.class.getName().replace('.', '/') + ".class"))))
                                     .get(nexusType);
                             registration = nexus.getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
                             getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
