@@ -3090,6 +3090,64 @@ public interface TypePool {
     }
 
     /**
+     * A class file locator that loads classes and describes the loaded classes as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType}.
+     */
+    class ClassLoading extends AbstractBase {
+
+        /**
+         * The class loader to query.
+         */
+        private final ClassLoader classLoader;
+
+        /**
+         * Creates a class loading type pool.
+         *
+         * @param classLoader The class loader to query.
+         */
+        public ClassLoading(ClassLoader classLoader) {
+            super(CacheProvider.NoOp.INSTANCE);
+            this.classLoader = classLoader;
+        }
+
+        @Override
+        public Resolution doDescribe(String name) {
+            try {
+                return new Resolution.Simple(new TypeDescription.ForLoadedType(Class.forName(name, false, classLoader)));
+            } catch (ClassNotFoundException ignored) {
+                return new Resolution.Illegal(name);
+            }
+        }
+
+        @Override
+        public void clear() {
+            /* do nothing */
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (!super.equals(other)) return false;
+            ClassLoading that = (ClassLoading) other;
+            return !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypePool.ClassLoading{" +
+                    "classLoader=" + classLoader +
+                    '}';
+        }
+    }
+
+    /**
      * A lazy facade of a type pool that delegates any lookups to another type pool only if another value than the type's name is looked up.
      */
     class LazyFacade extends AbstractBase {
