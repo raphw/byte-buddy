@@ -499,9 +499,10 @@ public interface AgentBuilder {
          * Creates a type pool for a given class file locator.
          *
          * @param classFileLocator The class file locator to use.
+         * @param classLoader      The class loader for which the class file locator was created.
          * @return A type pool for the supplied class file locator.
          */
-        TypePool typePool(ClassFileLocator classFileLocator);
+        TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader);
 
         /**
          * A default implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} that
@@ -547,13 +548,41 @@ public interface AgentBuilder {
             }
 
             @Override
-            public TypePool typePool(ClassFileLocator classFileLocator) {
+            public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.LazyFacade(new TypePool.Default(new TypePool.CacheProvider.Simple(), classFileLocator, readerMode));
             }
 
             @Override
             public String toString() {
                 return "AgentBuilder.BinaryLocator.Default." + name();
+            }
+        }
+
+        /**
+         * A binary locator that loads referenced classes. It is important to never query this binary locator for
+         * the currently instrumented type as this will yield a class loading circularity which aborts any instrumentation
+         * with an error.
+         */
+        enum ClassLoading implements BinaryLocator {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public ClassFileLocator classFileLocator(ClassLoader classLoader) {
+                return ClassFileLocator.ForClassLoader.of(classLoader);
+            }
+
+            @Override
+            public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
+                return new TypePool.ClassLoading(classLoader);
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.BinaryLocator.ClassLoading." + name();
             }
         }
     }
@@ -2909,7 +2938,7 @@ public interface AgentBuilder {
                             binaryRepresentation,
                             binaryLocator.classFileLocator(classLoader));
                     return transformation.resolve(classBeingRedefined == null
-                                    ? binaryLocator.typePool(classFileLocator).describe(binaryTypeName).resolve()
+                                    ? binaryLocator.typePool(classFileLocator, classLoader).describe(binaryTypeName).resolve()
                                     : new TypeDescription.ForLoadedType(classBeingRedefined),
                             classLoader,
                             classBeingRedefined,

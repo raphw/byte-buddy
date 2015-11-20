@@ -37,17 +37,29 @@ public class AgentBuilderBinaryLocatorTest {
     }
 
     @Test
+    public void testLoadingClassFileLocator() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.ClassLoading.INSTANCE.classFileLocator(classLoader),
+                is(ClassFileLocator.ForClassLoader.of(classLoader)));
+    }
+
+    @Test
     public void testFastTypePool() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.FAST.typePool(classFileLocator), notNullValue(TypePool.class));
+        assertThat(AgentBuilder.BinaryLocator.Default.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test
     public void testExtendedTypePool() throws Exception {
-        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.typePool(classFileLocator), notNullValue(TypePool.class));
+        assertThat(AgentBuilder.BinaryLocator.Default.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+    }
+
+    @Test
+    public void testLoadingTypePool() throws Exception {
+        assertThat(AgentBuilder.BinaryLocator.ClassLoading.INSTANCE.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.BinaryLocator.Default.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.BinaryLocator.ClassLoading.class).apply();
     }
 }
