@@ -2360,7 +2360,7 @@ public interface TypePool {
                     if (outerName != null && declarationContext.isSelfDeclared()) {
                         declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInType(outerName);
                     }
-                } else if (outerName != null && internalName.startsWith(this.internalName)) {
+                } else if (outerName != null && innerName != null && internalName.equals(this.internalName + "$" + innerName)) {
                     declaredTypes.add("L" + internalName + ";");
                 }
             }
