@@ -611,4 +611,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     public class SampleClassInheritedOverride extends SampleClass {
         /* empty */
     }
+
+    @SuppressWarnings("unused")
+    public static class InnerInnerClass {
+
+        public static class Foo {
+            /* empty */
+        }
+    }
 }
