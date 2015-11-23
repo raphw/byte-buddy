@@ -98,4 +98,9 @@ public class TypeDescriptionLatentTest {
     public void testEnclosingType() throws Exception {
         new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getEnclosingType();
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDeclaredTypes() throws Exception {
+        new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getDeclaredTypes();
+    }
 }

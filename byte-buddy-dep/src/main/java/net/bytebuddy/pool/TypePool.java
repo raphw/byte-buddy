@@ -2308,6 +2308,11 @@ public interface TypePool {
             private LazyTypeDescription.DeclarationContext declarationContext;
 
             /**
+             * A list of descriptors representing the types that are declared by the parsed type.
+             */
+            private final List<String> declaredTypes;
+
+            /**
              * Creates a new type extractor.
              */
             protected TypeExtractor() {
@@ -2317,6 +2322,7 @@ public interface TypePool {
                 methodTokens = new LinkedList<LazyTypeDescription.MethodToken>();
                 anonymousType = false;
                 declarationContext = LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE;
+                declaredTypes = new LinkedList<String>();
             }
 
             @Override
@@ -2354,6 +2360,8 @@ public interface TypePool {
                     if (outerName != null && declarationContext.isSelfDeclared()) {
                         declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInType(outerName);
                     }
+                } else if (outerName != null && internalName.startsWith(this.internalName)) {
+                    declaredTypes.add("L" + internalName + ";");
                 }
             }
 
@@ -2389,6 +2397,7 @@ public interface TypePool {
                         interfaceName,
                         GenericTypeExtractor.ForSignature.OfType.extract(genericSignature),
                         declarationContext,
+                        declaredTypes,
                         anonymousType,
                         annotationTokens,
                         fieldTokens,
@@ -3335,6 +3344,11 @@ public interface TypePool {
                 }
 
                 @Override
+                public TypeList getDeclaredTypes() {
+                    return resolve().getDeclaredTypes();
+                }
+
+                @Override
                 public boolean isAnonymousClass() {
                     return resolve().isAnonymousClass();
                 }
@@ -3424,6 +3438,11 @@ public interface TypePool {
         private final DeclarationContext declarationContext;
 
         /**
+         * A list of descriptors representing the types that are declared by this type.
+         */
+        private final List<String> declaredTypes;
+
+        /**
          * {@code true} if this type is an anonymous type.
          */
         private final boolean anonymousType;
@@ -3453,6 +3472,7 @@ public interface TypePool {
          * @param interfaceInternalName An array of this type's interfaces or {@code null} if this type does not define any interfaces.
          * @param signatureResolution   The resolution of this type's generic types.
          * @param declarationContext    The declaration context of this type.
+         * @param declaredTypes         A list of descriptors representing the types that are declared by this type.
          * @param anonymousType         {@code true} if this type is an anonymous type.
          * @param annotationTokens      A list of tokens describing the annotation's of this type.
          * @param fieldTokens           A list of field tokens describing the field's of this type.
@@ -3465,6 +3485,7 @@ public interface TypePool {
                                       String[] interfaceInternalName,
                                       GenericTypeToken.Resolution.ForType signatureResolution,
                                       DeclarationContext declarationContext,
+                                      List<String> declaredTypes,
                                       boolean anonymousType,
                                       List<AnnotationToken> annotationTokens,
                                       List<FieldToken> fieldTokens,
@@ -3485,6 +3506,7 @@ public interface TypePool {
                 }
             }
             this.declarationContext = declarationContext;
+            this.declaredTypes = declaredTypes;
             this.anonymousType = anonymousType;
             declaredAnnotations = new ArrayList<AnnotationDescription>(annotationTokens.size());
             for (AnnotationToken annotationToken : annotationTokens) {
@@ -3520,6 +3542,11 @@ public interface TypePool {
         @Override
         public TypeDescription getEnclosingType() {
             return declarationContext.getEnclosingType(typePool);
+        }
+
+        @Override
+        public TypeList getDeclaredTypes() {
+            return new LazyTypeList(typePool, declaredTypes);
         }
 
         @Override

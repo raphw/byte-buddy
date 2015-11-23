@@ -412,6 +412,13 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     }
 
     @Test
+    public void testDeclaredTypes() throws Exception {
+        assertThat(describe(SampleClass.class).getDeclaredTypes().size(), is(0));
+        assertThat(describe(AbstractTypeDescriptionTest.class).getDeclaredTypes(),
+                is((TypeList) new TypeList.ForLoadedType(AbstractTypeDescriptionTest.class.getDeclaredClasses())));
+    }
+
+    @Test
     public void testComponentType() throws Exception {
         assertThat(describe(Object.class).getComponentType(), nullValue(Object.class));
         assertThat(describe(Object[].class).getComponentType(), is(describe(Object.class)));

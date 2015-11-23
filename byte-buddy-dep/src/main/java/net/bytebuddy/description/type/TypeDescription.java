@@ -153,6 +153,13 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     TypeDescription getDeclaringType();
 
     /**
+     * Returns a list of types that are declared by this type excluding anonymous classes.
+     *
+     * @return A list of types that are declared within this type.
+     */
+    TypeList getDeclaredTypes();
+
+    /**
      * Returns a description of the enclosing method of this type.
      *
      * @return A description of the enclosing method of this type or {@code null} if there is no such method.
@@ -922,6 +929,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
+        public TypeList getDeclaredTypes() {
+            return new TypeList.ForLoadedType(type.getDeclaredClasses());
+        }
+
+        @Override
         public String getSimpleName() {
             return type.getSimpleName();
         }
@@ -1076,6 +1088,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public TypeDescription getEnclosingType() {
             return UNDEFINED;
+        }
+
+        @Override
+        public TypeList getDeclaredTypes() {
+            return new TypeList.Empty();
         }
 
         @Override
@@ -1236,6 +1253,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
+        public TypeList getDeclaredTypes() {
+            throw new IllegalStateException("Cannot resolve inner types of a latent type description: " + this);
+        }
+
+        @Override
         public boolean isAnonymousClass() {
             throw new IllegalStateException("Cannot resolve anonymous type property of a latent type description: " + this);
         }
@@ -1347,6 +1369,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         @Override
         public boolean isMemberClass() {
             return false;
+        }
+
+        @Override
+        public TypeList getDeclaredTypes() {
+            return new TypeList.Empty();
         }
 
         @Override

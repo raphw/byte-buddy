@@ -231,6 +231,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                         targetType.getDeclaringType(),
                         targetType.getEnclosingMethod(),
                         targetType.getEnclosingType(),
+                        targetType.getDeclaredTypes(),
                         targetType.isMemberClass(),
                         targetType.isAnonymousClass(),
                         targetType.isLocalClass()),

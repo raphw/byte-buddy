@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
@@ -16,6 +17,7 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.utility.ByteBuddyCommons.joinUnique;
@@ -270,6 +272,11 @@ public interface InstrumentedType extends TypeDescription {
         private final TypeDescription enclosingType;
 
         /**
+         * A list of types that are declared by this type.
+         */
+        private final List<? extends TypeDescription> declaredTypes;
+
+        /**
          * {@code true} if this type is a member class.
          */
         private final boolean memberClass;
@@ -321,6 +328,7 @@ public interface InstrumentedType extends TypeDescription {
                     null,
                     null,
                     null,
+                    Collections.<TypeDescription>emptyList(),
                     false,
                     false,
                     false);
@@ -342,6 +350,7 @@ public interface InstrumentedType extends TypeDescription {
          * @param declaringType          The declaring type of the instrumented type or {@code null} if no such type exists.
          * @param enclosingMethod        The enclosing method of the instrumented type or {@code null} if no such type exists.
          * @param enclosingType          The enclosing type of the instrumented type or {@code null} if no such type exists.
+         * @param declaredTypes          A list of types that are declared by this type.
          * @param memberClass            {@code true} if this type is a member class.
          * @param anonymousClass         {@code true} if this type is a anonymous class.
          * @param localClass             {@code true} if this type is a local class.
@@ -359,6 +368,7 @@ public interface InstrumentedType extends TypeDescription {
                        TypeDescription declaringType,
                        MethodDescription enclosingMethod,
                        TypeDescription enclosingType,
+                       List<? extends TypeDescription> declaredTypes,
                        boolean memberClass,
                        boolean anonymousClass,
                        boolean localClass) {
@@ -375,6 +385,7 @@ public interface InstrumentedType extends TypeDescription {
             this.declaringType = declaringType;
             this.enclosingMethod = enclosingMethod;
             this.enclosingType = enclosingType;
+            this.declaredTypes = declaredTypes;
             this.memberClass = memberClass;
             this.anonymousClass = anonymousClass;
             this.localClass = localClass;
@@ -454,6 +465,11 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public TypeDescription getEnclosingType() {
             return enclosingType;
+        }
+
+        @Override
+        public TypeList getDeclaredTypes() {
+            return new TypeList.Explicit(declaredTypes);
         }
 
         @Override

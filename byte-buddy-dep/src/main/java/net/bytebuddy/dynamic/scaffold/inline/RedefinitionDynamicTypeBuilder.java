@@ -218,6 +218,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                         targetType.getDeclaringType(),
                         targetType.getEnclosingMethod(),
                         targetType.getEnclosingType(),
+                        targetType.getDeclaredTypes(),
                         targetType.isMemberClass(),
                         targetType.isAnonymousClass(),
                         targetType.isLocalClass()),

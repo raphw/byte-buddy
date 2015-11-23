@@ -361,4 +361,9 @@ public class InstrumentedTypeTest {
     public void testIsMemberClass() throws Exception {
         assertThat(makePlainInstrumentedType().isMemberClass(), is(false));
     }
+
+    @Test
+    public void testDeclaredTypes() throws Exception {
+        assertThat(makePlainInstrumentedType().getDeclaredTypes().size(), is(0));
+    }
 }
