@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -155,7 +154,7 @@ public class ByteBuddyAgent {
      * not repeated after an agent was successfully installed for the first time. Instead, the previous
      * instrumentation instance is returned. However, invoking this method requires synchronization
      * such that subsequently to an installation, {@link ByteBuddyAgent#getInstrumentation()} should
-     * be invoked insted.
+     * be invoked instead.
      * </p>
      *
      * @return An instrumentation instance representing the currently running JVM.
@@ -226,21 +225,20 @@ public class ByteBuddyAgent {
      * @throws Exception If the writing to the file is not possible.
      */
     private static void saveAgentJar(File agentFile) throws Exception {
-        InputStream inputStream = ByteBuddyAgent.Installer.class.getResourceAsStream('/'
-                + ByteBuddyAgent.Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
+        InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
         if (inputStream == null) {
             throw new IllegalStateException("Cannot locate class file for Byte Buddy agent");
         }
         try {
             Manifest manifest = new Manifest();
             manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
-            manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), ByteBuddyAgent.Installer.class.getName());
+            manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
             manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
             manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
             manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
             JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentFile), manifest);
             try {
-                jarOutputStream.putNextEntry(new JarEntry('/' + ByteBuddyAgent.Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
+                jarOutputStream.putNextEntry(new JarEntry('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
                 byte[] buffer = new byte[BUFFER_SIZE];
                 int index;
                 while ((index = inputStream.read(buffer)) != END_OF_FILE) {
@@ -285,59 +283,14 @@ public class ByteBuddyAgent {
      */
     private static Instrumentation doGetInstrumentation() {
         try {
-            // The lookup classes must not be cached as the agent might be loaded at a later point.
-            Field field = ClassLoader.getSystemClassLoader()
-                    .loadClass(ByteBuddyAgent.Installer.class.getName())
-                    .getDeclaredField(INSTRUMENTATION_FIELD_NAME);
-            field.setAccessible(true);
-            return (Instrumentation) field.get(STATIC_MEMBER);
+            return (Instrumentation) ClassLoader.getSystemClassLoader()
+                    .loadClass(Installer.class.getName())
+                    .getDeclaredField(INSTRUMENTATION_FIELD_NAME)
+                    .get(STATIC_MEMBER);
         } catch (RuntimeException exception) {
             throw exception;
         } catch (Exception exception) {
             throw new IllegalStateException("The Byte Buddy agent is not properly initialized", exception);
-        }
-    }
-
-    /**
-     * An installer class which defined the hook-in methods that are required by the Java agent specification.
-     */
-    public static class Installer {
-
-        /**
-         * A field for carrying the {@link java.lang.instrument.Instrumentation} that was loaded by the Byte Buddy
-         * agent. Note that this field must never be accessed directly as the agent is injected into the VM's
-         * system class loader. This way, the field of this class might be {@code null} even after the installation
-         * of the Byte Buddy agent as this class might be loaded by a different class loader than the system class
-         * loader.
-         */
-        @SuppressWarnings("unused")
-        private static volatile Instrumentation instrumentation;
-
-        /**
-         * The installer provides only {@code static} hook-in methods and should not be instantiated.
-         */
-        private Installer() {
-            throw new UnsupportedOperationException();
-        }
-
-        /**
-         * Allows the installation of this agent via a command line argument.
-         *
-         * @param agentArguments  The unused agent arguments.
-         * @param instrumentation The instrumentation instance.
-         */
-        public static void premain(String agentArguments, Instrumentation instrumentation) {
-            Installer.instrumentation = instrumentation;
-        }
-
-        /**
-         * Allows the installation of this agent via the Attach API.
-         *
-         * @param agentArguments  The unused agent arguments.
-         * @param instrumentation The instrumentation instance.
-         */
-        public static void agentmain(@SuppressWarnings("unused") String agentArguments, Instrumentation instrumentation) {
-            Installer.instrumentation = instrumentation;
         }
     }
 
@@ -447,7 +400,7 @@ public class ByteBuddyAgent {
                  * @param virtualMachineType The {@code com.sun.tools.attach.VirtualMachine} class.
                  * @param processId          The current JVM instance's process id.
                  */
-                public Simple(Class<?> virtualMachineType, String processId) {
+                protected Simple(Class<?> virtualMachineType, String processId) {
                     this.virtualMachineType = virtualMachineType;
                     this.processId = processId;
                 }

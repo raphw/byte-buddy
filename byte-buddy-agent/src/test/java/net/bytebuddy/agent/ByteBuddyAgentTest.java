@@ -24,21 +24,21 @@ public class ByteBuddyAgentTest {
 
     @Before
     public void setUp() throws Exception {
-        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
         actualInstrumentation = (Instrumentation) field.get(STATIC_FIELD);
     }
 
     @After
     public void tearDown() throws Exception {
-        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
         field.set(STATIC_FIELD, actualInstrumentation);
     }
 
     @Test
     public void testInstrumentationExtraction() throws Exception {
-        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
         Instrumentation instrumentation = mock(Instrumentation.class);
         field.set(STATIC_FIELD, instrumentation);
@@ -47,7 +47,7 @@ public class ByteBuddyAgentTest {
 
     @Test(expected = IllegalStateException.class)
     public void testMissingInstrumentationThrowsException() throws Exception {
-        Field field = ByteBuddyAgent.Installer.class.getDeclaredField(INSTRUMENTATION);
+        Field field = Installer.class.getDeclaredField(INSTRUMENTATION);
         field.setAccessible(true);
         field.set(STATIC_FIELD, null);
         ByteBuddyAgent.getInstrumentation();

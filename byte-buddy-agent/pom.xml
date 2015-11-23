@@ -12,7 +12,7 @@
     <packaging>bundle</packaging>
 
     <properties>
-        <bytebuddy.agent>net.bytebuddy.agent.ByteBuddyAgent$Installer</bytebuddy.agent>
+        <bytebuddy.agent>net.bytebuddy.agent.Installer</bytebuddy.agent>
         <attach.package>com.sun.tools.attach</attach.package>
     </properties>
 
