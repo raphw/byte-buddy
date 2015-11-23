@@ -878,7 +878,7 @@ class MyApplication {
 class ToStringAgent {
   public static void premain(String arguments, Instrumentation instrumentation) {
     new AgentBuilder.Default()
-        .rebase(isAnnotatedWith(ToString.class))
+        .type(isAnnotatedWith(ToString.class))
         .transform(new AgentBuilder.Transformer() {
       @Override
       public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
