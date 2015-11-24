@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class AgentBuilderInitializationStrategyTest {
@@ -35,11 +36,17 @@ public class AgentBuilderInitializationStrategyTest {
 
     @Test
     public void testNexusIsPublic() throws Exception {
-        Class<?> type = AgentBuilder.InitializationStrategy.SelfInjection.Nexus.class;
-        while (type != null) {
-            assertThat(Modifier.isPublic(type.getModifiers()), is(true));
-            type = type.getDeclaringClass();
-        }
+        assertThat(Modifier.isPublic(Nexus.class.getModifiers()), is(true));
+    }
+
+    @Test
+    public void testNexusHasNoDeclaringType() throws Exception {
+        assertThat(Nexus.class.getDeclaringClass(), nullValue(Class.class));
+    }
+
+    @Test
+    public void testNexusHasNoDeclaredTypes() throws Exception {
+        assertThat(Nexus.class.getDeclaredClasses().length, is(0));
     }
 
     @Test
@@ -53,14 +60,14 @@ public class AgentBuilderInitializationStrategyTest {
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.class).apply();
         final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+        ObjectPropertyAssertion.of(Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return iterator.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Nexus.Accessor.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Nexus.Accessor.InitializationAppender.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.InitializationAppender.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple.class).apply();
     }
 }

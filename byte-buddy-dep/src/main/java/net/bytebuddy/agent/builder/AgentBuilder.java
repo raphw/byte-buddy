@@ -33,9 +33,6 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
@@ -917,14 +914,14 @@ public interface AgentBuilder {
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                    return builder.initialize(Nexus.Accessor.INSTANCE.identifiedBy(identification));
+                    return builder.initialize(NexusAccessor.INSTANCE.identifiedBy(identification));
                 }
 
                 @Override
                 public void register(String name, ClassLoader classLoader, InitializerConstructor initializerConstructor) {
                     LoadedTypeInitializer loadedTypeInitializer = initializerConstructor.make();
                     if (loadedTypeInitializer.isAlive()) {
-                        Nexus.Accessor.INSTANCE.register(name, classLoader, identification, loadedTypeInitializer);
+                        NexusAccessor.INSTANCE.register(name, classLoader, identification, loadedTypeInitializer);
                     }
                 }
 
@@ -948,295 +945,171 @@ public interface AgentBuilder {
             }
 
             /**
-             * <p>
-             * This nexus is a global dispatcher for initializing classes with
-             * {@link net.bytebuddy.implementation.LoadedTypeInitializer}s. To do so, this class is to be loaded
-             * by the system class loader in an explicit manner. Any instrumented class is then injected a code
-             * block into its static type initializer that makes a call to this very same nexus which had the
-             * loaded type initializer registered before hand.
-             * </p>
-             * <p>
-             * <b>Important</b>: The nexus must never be accessed directly but only by its
-             * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.Accessor}
-             * which makes sure that the nexus is loaded by the system class loader. Otherwise, a class might not
-             * be able to initialize itself if it is loaded by different class loader that does not have the
-             * system class loader in its hierarchy.
-             * </p>
+             * An accessor for making sure that the accessed {@link net.bytebuddy.agent.builder.Nexus} is the class that is loaded by the system class loader.
              */
-            public static class Nexus {
+            protected enum NexusAccessor {
 
                 /**
-                 * A map of keys identifying a loaded type by its name and class loader mapping their
-                 * potential {@link net.bytebuddy.implementation.LoadedTypeInitializer} where the class
-                 * loader of these initializers is however irrelevant.
+                 * The singleton instance.
                  */
-                private static final ConcurrentMap<Nexus, Object> TYPE_INITIALIZERS = new ConcurrentHashMap<Nexus, Object>();
+                INSTANCE;
 
                 /**
-                 * The name of a type for which a loaded type initializer is registered.
+                 * Indicates that a static method is invoked by reflection.
                  */
-                private final String name;
+                private static final Object STATIC_METHOD = null;
 
                 /**
-                 * The class loader for which a loaded type initializer is registered.
+                 * The method for registering a type initializer in the system class loader's {@link net.bytebuddy.agent.builder.Nexus}.
                  */
-                private final ClassLoader classLoader;
+                private final Method registration;
 
                 /**
-                 * A random value that uniquely identifies a Nexus entry in order to avoid conflicts when
-                 * applying the self-initialization strategy in multiple transformations.
+                 * The {@link ClassLoader#getSystemClassLoader()} method.
                  */
-                private final int identification;
+                private final MethodDescription.InDefinedShape getSystemClassLoader;
 
                 /**
-                 * Creates a key for identifying a loaded type initializer.
-                 *
-                 * @param type           The loaded type for which a key is to be created.
-                 * @param identification An identification for the initializer to run.
+                 * The {@link java.lang.ClassLoader#loadClass(String)} method.
                  */
-                private Nexus(Class<?> type, int identification) {
-                    this(type.getName(), type.getClassLoader(), identification);
-                }
+                private final MethodDescription.InDefinedShape loadClass;
 
                 /**
-                 * Creates a key for identifying a loaded type initializer.
-                 *
-                 * @param name           The name of a type for which a loaded type initializer is registered.
-                 * @param classLoader    The class loader for which a loaded type initializer is registered.
-                 * @param identification An identification for the initializer to run.
+                 * The {@link Integer#valueOf(int)} method.
                  */
-                private Nexus(String name, ClassLoader classLoader, int identification) {
-                    this.name = name;
-                    this.classLoader = classLoader;
-                    this.identification = identification;
-                }
+                private final MethodDescription.InDefinedShape valueOf;
 
                 /**
-                 * Initializes a loaded type.
-                 *
-                 * @param type           The loaded type to initialize.
-                 * @param identification An identification for the initializer to run.
-                 * @throws Exception If an exception occurs.
+                 * The {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
                  */
-                @SuppressWarnings("unused")
-                public static void initialize(Class<?> type, int identification) throws Exception {
-                    Object typeInitializer = TYPE_INITIALIZERS.remove(new Nexus(type, identification));
-                    if (typeInitializer != null) {
-                        typeInitializer.getClass().getMethod("onLoad", Class.class).invoke(typeInitializer, type);
+                private final MethodDescription getDeclaredMethod;
+
+                /**
+                 * The {@link java.lang.reflect.Method#invoke(Object, Object...)} method.
+                 */
+                private final MethodDescription invokeMethod;
+
+                /**
+                 * Creates the singleton accessor.
+                 */
+                NexusAccessor() {
+                    try {
+                        TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
+                        registration = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
+                                .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
+                                .get(nexusType)
+                                .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
+                        getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
+                                .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
+                        loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
+                                .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
+                        getDeclaredMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
+                                .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
+                        invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
+                                .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
+                        valueOf = new TypeDescription.ForLoadedType(Integer.class).getDeclaredMethods()
+                                .filter(named("valueOf").and(takesArguments(int.class))).getOnly();
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception exception) {
+                        throw new IllegalStateException("Cannot create type initialization accessor", exception);
                     }
                 }
 
                 /**
-                 * @param name            The name of the type for the loaded type initializer.
-                 * @param classLoader     The class loader of the type for the loaded type initializer.
+                 * Registers a type initializer with the class loader's nexus.
+                 *
+                 * @param name            The name of a type for which a loaded type initializer is registered.
+                 * @param classLoader     The class loader for which a loaded type initializer is registered.
                  * @param identification  An identification for the initializer to run.
-                 * @param typeInitializer The type initializer to register. The initializer must be an instance
-                 *                        of {@link net.bytebuddy.implementation.LoadedTypeInitializer} where
-                 *                        it does however not matter which class loader loaded this latter type.
+                 * @param typeInitializer The loaded type initializer to be registered.
                  */
-                public static void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
-                    if (TYPE_INITIALIZERS.put(new Nexus(name, classLoader, identification), typeInitializer) != null) {
-                        Logger.getAnonymousLogger().warning("Initializer with id " + identification + " is already registered for " + name);
+                public void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
+                    try {
+                        registration.invoke(STATIC_METHOD, name, classLoader, identification, typeInitializer);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot register type initializer for " + name, exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Cannot register type initializer for " + name, exception.getCause());
                     }
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Nexus nexus = (Nexus) other;
-                    return identification == nexus.identification
-                            && !(classLoader != null ? !classLoader.equals(nexus.classLoader) : nexus.classLoader != null)
-                            && name.equals(nexus.name);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = name.hashCode();
-                    result = 31 * result + identification;
-                    result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-                    return result;
+                /**
+                 * Creates a byte code appender for injecting a self-initializing type initializer block into the generated class.
+                 *
+                 * @param identification The identification of the initialization.
+                 * @return An appropriate byte code appender.
+                 */
+                public ByteCodeAppender identifiedBy(int identification) {
+                    return new InitializationAppender(identification);
                 }
 
                 @Override
                 public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.Nexus{" +
-                            "name='" + name + '\'' +
-                            ", classLoader=" + classLoader +
-                            ", identification=" + identification +
-                            '}';
+                    return "AgentBuilder.InitializationStrategy.SelfInjection.Nexus.Accessor." + name();
                 }
 
                 /**
-                 * An accessor for making sure that the accessed
-                 * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus}
-                 * is loaded by the system class loader.
+                 * A byte code appender for invoking a Nexus for initializing the instrumented type.
                  */
-                protected enum Accessor {
+                protected static class InitializationAppender implements ByteCodeAppender {
 
                     /**
-                     * The singleton instance.
+                     * The identification for the self-initialization to execute.
                      */
-                    INSTANCE;
+                    private final int identification;
 
                     /**
-                     * Indicates that a static method is invoked by reflection.
+                     * Creates a new initialization appender.
+                     *
+                     * @param identification The identification for the self-initialization to execute.
                      */
-                    private static final Object STATIC_METHOD = null;
-
-                    /**
-                     * The method for registering a type initializer in the system class loader's
-                     * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus}.
-                     */
-                    private final Method registration;
-
-                    /**
-                     * The {@link ClassLoader#getSystemClassLoader()} method.
-                     */
-                    private final MethodDescription.InDefinedShape getSystemClassLoader;
-
-                    /**
-                     * The {@link java.lang.ClassLoader#loadClass(String)} method.
-                     */
-                    private final MethodDescription.InDefinedShape loadClass;
-
-                    /**
-                     * The {@link Integer#valueOf(int)} method.
-                     */
-                    private final MethodDescription.InDefinedShape valueOf;
-
-                    /**
-                     * The {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
-                     */
-                    private final MethodDescription getDeclaredMethod;
-
-                    /**
-                     * The {@link java.lang.reflect.Method#invoke(Object, Object...)} method.
-                     */
-                    private final MethodDescription invokeMethod;
-
-                    /**
-                     * Creates the singleton accessor.
-                     */
-                    Accessor() {
-                        try {
-                            TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                            registration = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
-                                    .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Accessor.class).resolve()))
-                                    .get(nexusType)
-                                    .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
-                            getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                                    .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
-                            loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                                    .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
-                            getDeclaredMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
-                                    .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
-                            invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
-                                    .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
-                            valueOf = new TypeDescription.ForLoadedType(Integer.class).getDeclaredMethods()
-                                    .filter(named("valueOf").and(takesArguments(int.class))).getOnly();
-                        } catch (RuntimeException exception) {
-                            throw exception;
-                        } catch (Exception exception) {
-                            throw new IllegalStateException("Cannot create type initialization accessor", exception);
-                        }
+                    protected InitializationAppender(int identification) {
+                        this.identification = identification;
                     }
 
-                    /**
-                     * Registers a type initializer with the class loader's nexus.
-                     *
-                     * @param name            The name of a type for which a loaded type initializer is registered.
-                     * @param classLoader     The class loader for which a loaded type initializer is registered.
-                     * @param identification  An identification for the initializer to run.
-                     * @param typeInitializer The loaded type initializer to be registered.
-                     */
-                    public void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
-                        try {
-                            registration.invoke(STATIC_METHOD, name, classLoader, identification, typeInitializer);
-                        } catch (IllegalAccessException exception) {
-                            throw new IllegalStateException("Cannot register type initializer for " + name, exception);
-                        } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Cannot register type initializer for " + name, exception.getCause());
-                        }
+                    @Override
+                    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                        return new ByteCodeAppender.Simple(new StackManipulation.Compound(
+                                MethodInvocation.invoke(NexusAccessor.INSTANCE.getSystemClassLoader),
+                                new TextConstant(Nexus.class.getName()),
+                                MethodInvocation.invoke(NexusAccessor.INSTANCE.loadClass),
+                                new TextConstant("initialize"),
+                                ArrayFactory.forType(TypeDescription.CLASS)
+                                        .withValues(Arrays.asList(
+                                                ClassConstant.of(TypeDescription.CLASS),
+                                                ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
+                                MethodInvocation.invoke(NexusAccessor.INSTANCE.getDeclaredMethod),
+                                NullConstant.INSTANCE,
+                                ArrayFactory.forType(TypeDescription.OBJECT)
+                                        .withValues(Arrays.asList(
+                                                ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
+                                                new StackManipulation.Compound(
+                                                        IntegerConstant.forValue(identification),
+                                                        MethodInvocation.invoke(INSTANCE.valueOf)))),
+                                MethodInvocation.invoke(NexusAccessor.INSTANCE.invokeMethod),
+                                Removal.SINGLE
+                        )).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
 
-                    /**
-                     * Creates a byte code appender for injecting a self-initializing type initializer block into the generated class.
-                     *
-                     * @param identification The identification of the initialization.
-                     * @return An appropriate byte code appender.
-                     */
-                    public ByteCodeAppender identifiedBy(int identification) {
-                        return new InitializationAppender(identification);
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        InitializationAppender that = (InitializationAppender) other;
+                        return identification == that.identification;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return identification;
                     }
 
                     @Override
                     public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Nexus.Accessor." + name();
-                    }
-
-                    /**
-                     * A byte code appender for invoking a Nexus for initializing the instrumented type.
-                     */
-                    protected static class InitializationAppender implements ByteCodeAppender {
-
-                        /**
-                         * The identification for the self-initialization to execute.
-                         */
-                        private final int identification;
-
-                        /**
-                         * Creates a new initialization appender.
-                         *
-                         * @param identification The identification for the self-initialization to execute.
-                         */
-                        protected InitializationAppender(int identification) {
-                            this.identification = identification;
-                        }
-
-                        @Override
-                        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                            return new ByteCodeAppender.Simple(new StackManipulation.Compound(
-                                    MethodInvocation.invoke(Accessor.INSTANCE.getSystemClassLoader),
-                                    new TextConstant(Nexus.class.getName()),
-                                    MethodInvocation.invoke(Accessor.INSTANCE.loadClass),
-                                    new TextConstant("initialize"),
-                                    ArrayFactory.forType(TypeDescription.CLASS)
-                                            .withValues(Arrays.asList(
-                                                    ClassConstant.of(TypeDescription.CLASS),
-                                                    ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
-                                    MethodInvocation.invoke(Accessor.INSTANCE.getDeclaredMethod),
-                                    NullConstant.INSTANCE,
-                                    ArrayFactory.forType(TypeDescription.OBJECT)
-                                            .withValues(Arrays.asList(
-                                                    ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
-                                                    new StackManipulation.Compound(
-                                                            IntegerConstant.forValue(identification),
-                                                            MethodInvocation.invoke(INSTANCE.valueOf)))),
-                                    MethodInvocation.invoke(Accessor.INSTANCE.invokeMethod),
-                                    Removal.SINGLE
-                            )).apply(methodVisitor, implementationContext, instrumentedMethod);
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            InitializationAppender that = (InitializationAppender) other;
-                            return identification == that.identification;
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return identification;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.InitializationStrategy.SelfInjection.Nexus.Accessor.InitializationAppender{" +
-                                    "identification=" + identification +
-                                    '}';
-                        }
+                        return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.InitializationAppender{" +
+                                "identification=" + identification +
+                                '}';
                     }
                 }
             }

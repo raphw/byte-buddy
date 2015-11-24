@@ -21,7 +21,9 @@ import java.lang.instrument.Instrumentation;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -722,13 +724,6 @@ public class AgentBuilderDefaultTest {
             @Override
             public AccessControlContext create() {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).apply();
-        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, AgentBuilderDefaultTest.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.InitializationStrategy.SelfInjection.Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return iterator.next();
             }
         }).apply();
     }
