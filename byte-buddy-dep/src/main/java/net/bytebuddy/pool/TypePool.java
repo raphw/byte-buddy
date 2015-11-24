@@ -3099,9 +3099,10 @@ public interface TypePool {
     }
 
     /**
-     * A class file locator that loads classes and describes the loaded classes as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType}.
+     * A class file locator that loads classes and describes the loaded classes as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType}
+     * if a type cannot be located as its class file.
      */
-    class ClassLoading extends AbstractBase {
+    class ClassLoading extends Default {
 
         /**
          * The class loader to query.
@@ -3111,25 +3112,47 @@ public interface TypePool {
         /**
          * Creates a class loading type pool.
          *
-         * @param classLoader The class loader to query.
+         * @param cacheProvider    The cache provider to be used.
+         * @param classFileLocator The class file locator to be used.
+         * @param classLoader      The class loader to query.
          */
-        public ClassLoading(ClassLoader classLoader) {
-            super(CacheProvider.NoOp.INSTANCE);
+        public ClassLoading(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ClassLoader classLoader) {
+            super(cacheProvider, classFileLocator, ReaderMode.FAST);
             this.classLoader = classLoader;
+        }
+
+        /**
+         * Returns a class loading type pool that does not attempt to parse a class file but immediatly falls back to loading one.
+         *
+         * @param classLoader The class loader to query.
+         * @return An appropriate type pool.
+         */
+        public static TypePool of(ClassLoader classLoader) {
+            return of(ClassFileLocator.NoOp.INSTANCE, classLoader);
+        }
+
+        /**
+         * Returns a class loading type pool that uses a simple cache.
+         *
+         * @param classFileLocator The class file locator to be used.
+         * @param classLoader      The class loader to query.
+         * @return An appropriate type pool.
+         */
+        public static TypePool of(ClassFileLocator classFileLocator, ClassLoader classLoader) {
+            return new ClassLoading(new CacheProvider.Simple(), classFileLocator, classLoader);
         }
 
         @Override
         public Resolution doDescribe(String name) {
+            Resolution resolution = super.doDescribe(name);
+            if (resolution.isResolved()) {
+                return resolution;
+            }
             try {
                 return new Resolution.Simple(new TypeDescription.ForLoadedType(Class.forName(name, false, classLoader)));
             } catch (ClassNotFoundException ignored) {
                 return new Resolution.Illegal(name);
             }
-        }
-
-        @Override
-        public void clear() {
-            /* do nothing */
         }
 
         @Override

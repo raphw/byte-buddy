@@ -39,7 +39,7 @@ public class AgentBuilderBinaryLocatorTest {
     @Test
     public void testLoadingClassFileLocator() throws Exception {
         assertThat(AgentBuilder.BinaryLocator.ClassLoading.INSTANCE.classFileLocator(classLoader),
-                is(ClassFileLocator.ForClassLoader.of(classLoader)));
+                is((ClassFileLocator) ClassFileLocator.NoOp.INSTANCE));
     }
 
     @Test
