@@ -27,7 +27,7 @@ public class JavaVersionRule implements MethodRule {
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
         if (enforce != null) {
-            if (ClassFileVersion.ofJavaVersion(enforce.value()).compareTo(currentVersion) <= 0) {
+            if (ClassFileVersion.ofJavaVersion(enforce.value()).compareTo(currentVersion) > 0) {
                 return new NoOpStatement(enforce.value());
             } else if (!hotSpot) {
                 for (int javaVersion : enforce.hotSpot()) {
