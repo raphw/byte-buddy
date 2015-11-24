@@ -9,6 +9,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Locale;
 import java.util.logging.Logger;
 
 public class JavaVersionRule implements MethodRule {
@@ -22,6 +23,9 @@ public class JavaVersionRule implements MethodRule {
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
+        if (enforce != null && enforce.hotSpot() && !System.getProperty("java.vm.name", "").toLowerCase(Locale.US).contains("hotspot")) {
+            return new NoOpHotSpotStatement();
+        }
         return enforce == null || ClassFileVersion.forKnownJavaVersion(enforce.value()).compareTo(supportedVersion) <= 0
                 ? base
                 : new NoOpStatement(enforce.value());
@@ -32,9 +36,11 @@ public class JavaVersionRule implements MethodRule {
     public @interface Enforce {
 
         int value();
+
+        boolean hotSpot() default false;
     }
 
-    private class NoOpStatement extends Statement {
+    private static class NoOpStatement extends Statement {
 
         private final int requiredVersion;
 
@@ -45,6 +51,14 @@ public class JavaVersionRule implements MethodRule {
         @Override
         public void evaluate() throws Throwable {
             Logger.getAnonymousLogger().warning("Ignoring test case: Requires a Java version of at least " + requiredVersion);
+        }
+    }
+
+    private static class NoOpHotSpotStatement extends Statement {
+
+        @Override
+        public void evaluate() throws Throwable {
+            Logger.getAnonymousLogger().warning("Ignoring test case: Only works on HotSpot");
         }
     }
 }

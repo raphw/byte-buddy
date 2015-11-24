@@ -402,7 +402,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(value = 7, hotSpot = true)
     public void testJava7Types() throws Exception {
         DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
                 MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
@@ -419,7 +419,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(7)
+    @JavaVersionRule.Enforce(value = 7, hotSpot = true)
     public void testJava7TypesExplicit() throws Exception {
         DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
                 MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
